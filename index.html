@@ -6,6 +6,7 @@
 
   <title>Umma Global</title>
 
+  <!-- Telegram Mini App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -65,6 +66,7 @@
     .welcome h2 {
       margin: 0 0 8px;
       font-size: 20px;
+      line-height: 1.4;
     }
 
     .welcome p {
@@ -156,7 +158,9 @@
 
   <div class="container">
 
+    <!-- HEADER -->
     <div class="header">
+
       <div class="logo">UG</div>
 
       <h1>Umma Global</h1>
@@ -165,91 +169,226 @@
         Единая экосистема для жизни,<br>
         бизнеса и сообщества
       </div>
+
     </div>
 
+
+    <!-- WELCOME -->
     <div class="welcome">
-      <h2 id="welcome">Ассаляму алейкум!</h2>
-      <p>Добро пожаловать в Umma Global</p>
+
+      <h2 id="welcome">
+        Ассаляму алейкум ва рахматуллахи ва баракатух!
+      </h2>
+
+      <p>
+        Добро пожаловать в Umma Global
+      </p>
+
     </div>
 
+
+    <!-- ECOSYSTEM -->
     <div class="section-title">
       Экосистема Umma
     </div>
 
+
     <div class="grid">
 
-      <button class="card" type="button" onclick="showMessage('Сообщество')">
+      <!-- COMMUNITY -->
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Сообщество')"
+      >
         <div class="icon">🤝</div>
+
         <h3>Сообщество</h3>
-        <p>Люди, связи и взаимопомощь</p>
+
+        <p>
+          Люди, связи и взаимопомощь
+        </p>
       </button>
 
-      <button class="card" type="button" onclick="showMessage('Бизнес')">
+
+      <!-- BUSINESS -->
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Бизнес')"
+      >
         <div class="icon">💼</div>
+
         <h3>Бизнес</h3>
-        <p>Халяльные проекты и возможности</p>
+
+        <p>
+          Халяльные проекты и возможности
+        </p>
       </button>
 
-      <button class="card" type="button" onclick="showMessage('Сервисы')">
+
+      <!-- SERVICES -->
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Сервисы')"
+      >
         <div class="icon">🌍</div>
+
         <h3>Сервисы</h3>
-        <p>Полезные решения для жизни</p>
+
+        <p>
+          Полезные решения для жизни
+        </p>
       </button>
 
-      <button class="card" type="button" onclick="showMessage('Проекты')">
+
+      <!-- PROJECTS -->
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Проекты')"
+      >
         <div class="icon">🚀</div>
+
         <h3>Проекты</h3>
-        <p>Создаём и развиваем вместе</p>
+
+        <p>
+          Создаём и развиваем вместе
+        </p>
       </button>
 
     </div>
 
+
+    <!-- MISSION -->
     <div class="mission">
-      <h2>Наше намерение</h2>
+
+      <h2>
+        Наше намерение
+      </h2>
 
       <p>
         Создавать полезную экосистему для Уммы,
         объединять людей и развивать халяльные проекты —
         ради довольства Аллаха.
       </p>
+
     </div>
 
+
+    <!-- FOOTER -->
     <div class="footer">
+
       Umma Global<br>
       Ради довольства Аллаха
+
     </div>
 
   </div>
 
+
+  <!-- JAVASCRIPT -->
   <script>
-    const tg = window.Telegram && window.Telegram.WebApp
-      ? window.Telegram.WebApp
-      : null;
 
-    if (tg) {
-      tg.ready();
-      tg.expand();
+    /*
+     * Telegram Mini App
+     */
 
-      const user = tg.initDataUnsafe && tg.initDataUnsafe.user
-        ? tg.initDataUnsafe.user
+    const tg =
+      window.Telegram &&
+      window.Telegram.WebApp
+        ? window.Telegram.WebApp
         : null;
 
-      if (user && user.first_name) {
-        document.getElementById("welcome").textContent =
-          "Ассаляму алейкум, " + user.first_name + "!";
+
+    /*
+     * Запускаем Telegram WebApp
+     */
+
+    if (tg) {
+
+      tg.ready();
+
+      tg.expand();
+
+
+      /*
+       * Получаем данные пользователя Telegram
+       */
+
+      const user =
+        tg.initDataUnsafe &&
+        tg.initDataUnsafe.user
+          ? tg.initDataUnsafe.user
+          : null;
+
+
+      /*
+       * Находим элемент приветствия
+       */
+
+      const welcomeElement =
+        document.getElementById("welcome");
+
+
+      /*
+       * Персональное приветствие
+       */
+
+      if (
+        user &&
+        user.first_name &&
+        user.first_name.trim() !== ""
+      ) {
+
+        const firstName =
+          user.first_name.trim();
+
+
+        welcomeElement.textContent =
+          "Ассаляму алейкум ва рахматуллахи ва баракатух, "
+          + firstName
+          + "!";
+
+      } else {
+
+        /*
+         * Если имя недоступно
+         */
+
+        welcomeElement.textContent =
+          "Ассаляму алейкум ва рахматуллахи ва баракатух!";
+
       }
+
     }
+
+
+    /*
+     * Кнопки разделов
+     */
 
     function showMessage(section) {
+
       const message =
-        "Раздел «" + section + "» будет подключён следующим этапом.";
+        "Раздел «"
+        + section
+        + "» будет подключён следующим этапом.";
+
 
       if (tg) {
+
         tg.showAlert(message);
+
       } else {
+
         alert(message);
+
       }
+
     }
+
   </script>
 
 </body>
