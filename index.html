@@ -9,7 +9,6 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -26,10 +25,6 @@
       margin: auto;
       padding: 24px 16px 40px;
     }
-
-    /* =========================
-       ОБЩЕЕ
-       ========================= */
 
     .page {
       display: none;
@@ -82,6 +77,7 @@
     .welcome h2 {
       margin: 0 0 8px;
       font-size: 20px;
+      line-height: 1.4;
     }
 
     .welcome p {
@@ -112,6 +108,7 @@
       cursor: pointer;
       font-family: inherit;
       font-size: 16px;
+      transition: transform 0.1s ease;
     }
 
     .card:active {
@@ -161,7 +158,7 @@
     }
 
     /* =========================
-       ЗАГОЛОВОК СТРАНИЦЫ
+       КНОПКА НАЗАД
        ========================= */
 
     .back-button {
@@ -204,7 +201,7 @@
     }
 
     /* =========================
-       ПРОФИЛЬ
+       TELEGRAM ПРОФИЛЬ
        ========================= */
 
     .profile-card {
@@ -224,11 +221,13 @@
       font-size: 23px;
       font-weight: bold;
       margin-bottom: 6px;
+      word-break: break-word;
     }
 
     .profile-id {
       color: #68737d;
       font-size: 13px;
+      word-break: break-word;
     }
 
     /* =========================
@@ -263,8 +262,7 @@
     }
 
     .field input,
-    .field textarea,
-    .field select {
+    .field textarea {
       width: 100%;
       border: 1px solid #d9dee4;
       border-radius: 12px;
@@ -282,8 +280,7 @@
     }
 
     .field input:focus,
-    .field textarea:focus,
-    .field select:focus {
+    .field textarea:focus {
       border-color: #2196e0;
     }
 
@@ -313,12 +310,41 @@
       border: 0;
       border-radius: 16px;
       padding: 16px;
-      background: white;
-      color: #2196e0;
+      background: #f0f3f6;
+      color: #17202a;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
       margin-top: 12px;
+    }
+
+    /* =========================
+       СООБЩЕНИЕ О СОХРАНЕНИИ
+       ========================= */
+
+    .save-message {
+      display: none;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 17px;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .save-message.success {
+      display: block;
+      background: #e8f7ee;
+      color: #18763f;
+      border: 1px solid #b9e5c9;
+    }
+
+    .save-message.error {
+      display: block;
+      background: #fff0f0;
+      color: #b42318;
+      border: 1px solid #f1b8b4;
     }
 
     /* =========================
@@ -343,23 +369,10 @@
       line-height: 1.5;
     }
 
-    .success {
-      display: none;
-      background: #e9f7ef;
-      color: #237a45;
-      border-radius: 14px;
-      padding: 15px;
-      margin-bottom: 16px;
-      font-weight: bold;
-      text-align: center;
-    }
-
     @media (max-width: 400px) {
-
       .grid {
         grid-template-columns: 1fr;
       }
-
     }
 
   </style>
@@ -370,7 +383,7 @@
 
 
 <!-- ==================================================
-     ГЛАВНАЯ
+     ГЛАВНАЯ СТРАНИЦА
      ================================================== -->
 
 <div id="homePage" class="page active">
@@ -398,7 +411,7 @@
     <div class="welcome">
 
       <h2 id="welcome">
-        Ассаляму алейкум!
+        Ассаляму алейкум ва рахматуллахи ва баракатух!
       </h2>
 
       <p>
@@ -532,7 +545,7 @@
 
 
 <!-- ==================================================
-     СООБЩЕСТВО
+     СТРАНИЦА СООБЩЕСТВА
      ================================================== -->
 
 <div id="communityPage" class="page">
@@ -567,10 +580,6 @@
     </div>
 
 
-    <!-- =========================
-         ДАННЫЕ TELEGRAM
-         ========================= -->
-
     <div class="profile-card">
 
       <div class="profile-title">
@@ -594,21 +603,15 @@
     </div>
 
 
-    <!-- =========================
-         УСПЕШНОЕ СОХРАНЕНИЕ
-         ========================= -->
+    <!-- СООБЩЕНИЕ О СОХРАНЕНИИ -->
 
     <div
-      id="successMessage"
-      class="success"
-    >
-      ✓ Профиль сохранён
-    </div>
+      id="saveMessage"
+      class="save-message"
+    ></div>
 
 
-    <!-- =========================
-         АНКЕТА
-         ========================= -->
+    <!-- АНКЕТА -->
 
     <div class="form-card">
 
@@ -691,6 +694,7 @@
 
 
       <button
+        id="saveButton"
         class="primary-button"
         type="button"
         onclick="saveProfile()"
@@ -750,7 +754,7 @@ let telegramUser = null;
 
 
 /* ==================================================
-   ЗАПУСК
+   ПОЛУЧАЕМ ДАННЫЕ TELEGRAM
    ================================================== */
 
 if (tg) {
@@ -767,9 +771,9 @@ if (tg) {
       : null;
 
 
-  /* =========================
-     ПЕРСОНАЛЬНОЕ ПРИВЕТСТВИЕ
-     ========================= */
+  /* ================================================
+     ПОЛНОЕ ПРИВЕТСТВИЕ
+     ================================================ */
 
   if (
     telegramUser &&
@@ -779,16 +783,16 @@ if (tg) {
     document.getElementById(
       "welcome"
     ).textContent =
-      "Ассаляму алейкум, "
+      "Ассаляму алейкум ва рахматуллахи ва баракатух, "
       + telegramUser.first_name
       + "!";
 
   }
 
 
-  /* =========================
-     ИМЯ В ПРОФИЛЕ
-     ========================= */
+  /* ================================================
+     ИМЯ И ID В СООБЩЕСТВЕ
+     ================================================ */
 
   if (telegramUser) {
 
@@ -845,7 +849,7 @@ function openCommunity() {
 
 
 /* ==================================================
-   НА ГЛАВНУЮ
+   ВЕРНУТЬСЯ НА ГЛАВНУЮ
    ================================================== */
 
 function goHome() {
@@ -866,7 +870,7 @@ function goHome() {
 
 
 /* ==================================================
-   КЛЮЧ ДЛЯ ПРОФИЛЯ
+   КЛЮЧ СОХРАНЕНИЯ
    ================================================== */
 
 function getProfileKey() {
@@ -887,115 +891,219 @@ function getProfileKey() {
 
 
 /* ==================================================
-   СОХРАНЕНИЕ ПРОФИЛЯ
+   ПОКАЗАТЬ СООБЩЕНИЕ
    ================================================== */
 
-function saveProfile() {
+function showSaveMessage(
+  text,
+  type
+) {
 
-
-  const profile = {
-
-    telegram_id:
-      telegramUser
-        ? telegramUser.id
-        : null,
-
-    first_name:
-      telegramUser
-        ? telegramUser.first_name || ""
-        : "",
-
-    last_name:
-      telegramUser
-        ? telegramUser.last_name || ""
-        : "",
-
-    username:
-      telegramUser
-        ? telegramUser.username || ""
-        : "",
-
-    country:
-      document.getElementById(
-        "country"
-      ).value.trim(),
-
-    city:
-      document.getElementById(
-        "city"
-      ).value.trim(),
-
-    profession:
-      document.getElementById(
-        "profession"
-      ).value.trim(),
-
-    about:
-      document.getElementById(
-        "about"
-      ).value.trim(),
-
-    help:
-      document.getElementById(
-        "help"
-      ).value.trim(),
-
-    updated_at:
-      new Date().toISOString()
-
-  };
-
-
-  localStorage.setItem(
-    getProfileKey(),
-    JSON.stringify(profile)
-  );
-
-
-  document.getElementById(
-    "successMessage"
-  ).style.display = "block";
-
-
-  if (tg) {
-
-    tg.HapticFeedback.notificationOccurred(
-      "success"
+  const message =
+    document.getElementById(
+      "saveMessage"
     );
 
-  }
+
+  message.textContent = text;
+
+
+  message.className =
+    "save-message "
+    + type;
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 
 
   setTimeout(function() {
 
-    document.getElementById(
-      "successMessage"
-    ).style.display = "none";
+    message.className =
+      "save-message";
 
-  }, 3000);
+    message.textContent = "";
+
+  }, 5000);
 
 }
 
 
 /* ==================================================
-   ЗАГРУЗКА ПРОФИЛЯ
+   СОХРАНИТЬ ПРОФИЛЬ
+   ================================================== */
+
+function saveProfile() {
+
+  try {
+
+    const country =
+      document.getElementById(
+        "country"
+      ).value.trim();
+
+
+    const city =
+      document.getElementById(
+        "city"
+      ).value.trim();
+
+
+    const profession =
+      document.getElementById(
+        "profession"
+      ).value.trim();
+
+
+    const about =
+      document.getElementById(
+        "about"
+      ).value.trim();
+
+
+    const help =
+      document.getElementById(
+        "help"
+      ).value.trim();
+
+
+    const profile = {
+
+      telegram_id:
+        telegramUser
+          ? telegramUser.id
+          : null,
+
+      first_name:
+        telegramUser
+          ? telegramUser.first_name || ""
+          : "",
+
+      last_name:
+        telegramUser
+          ? telegramUser.last_name || ""
+          : "",
+
+      username:
+        telegramUser
+          ? telegramUser.username || ""
+          : "",
+
+      country: country,
+
+      city: city,
+
+      profession: profession,
+
+      about: about,
+
+      help: help,
+
+      updated_at:
+        new Date().toISOString()
+
+    };
+
+
+    const key =
+      getProfileKey();
+
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(profile)
+    );
+
+
+    /* ============================================
+       ПРОВЕРЯЕМ, ЧТО ДЕЙСТВИТЕЛЬНО СОХРАНИЛОСЬ
+       ============================================ */
+
+    const check =
+      localStorage.getItem(key);
+
+
+    if (!check) {
+
+      throw new Error(
+        "Данные не были сохранены"
+      );
+
+    }
+
+
+    /* ============================================
+       ПОКАЗЫВАЕМ УСПЕШНОЕ СОХРАНЕНИЕ
+       ============================================ */
+
+    showSaveMessage(
+      "✓ Профиль успешно сохранён!",
+      "success"
+    );
+
+
+    /* ============================================
+       ВИБРАЦИЯ TELEGRAM
+       ============================================ */
+
+    if (tg) {
+
+      try {
+
+        tg.HapticFeedback.notificationOccurred(
+          "success"
+        );
+
+      } catch (e) {
+
+        console.log(e);
+
+      }
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Ошибка сохранения:",
+      error
+    );
+
+
+    showSaveMessage(
+      "✕ Не удалось сохранить профиль.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ==================================================
+   ЗАГРУЗИТЬ ПРОФИЛЬ
    ================================================== */
 
 function loadProfile() {
 
-
-  const saved =
-    localStorage.getItem(
-      getProfileKey()
-    );
-
-
-  if (!saved) {
-    return;
-  }
-
-
   try {
+
+    const key =
+      getProfileKey();
+
+
+    const saved =
+      localStorage.getItem(key);
+
+
+    if (!saved) {
+      return;
+    }
+
 
     const profile =
       JSON.parse(saved);
@@ -1034,8 +1142,8 @@ function loadProfile() {
 
   catch (error) {
 
-    console.log(
-      "Ошибка загрузки профиля",
+    console.error(
+      "Ошибка загрузки профиля:",
       error
     );
 
@@ -1049,7 +1157,6 @@ function loadProfile() {
    ================================================== */
 
 function clearProfile() {
-
 
   document.getElementById(
     "country"
@@ -1080,6 +1187,12 @@ function clearProfile() {
     getProfileKey()
   );
 
+
+  showSaveMessage(
+    "Анкета очищена.",
+    "success"
+  );
+
 }
 
 
@@ -1088,7 +1201,6 @@ function clearProfile() {
    ================================================== */
 
 function showMessage(section) {
-
 
   const message =
     "Раздел «"
