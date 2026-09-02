@@ -6,7 +6,6 @@
 
   <title>Umma Global</title>
 
-  <!-- Telegram Mini App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -66,7 +65,6 @@
     .welcome h2 {
       margin: 0 0 8px;
       font-size: 20px;
-      line-height: 1.4;
     }
 
     .welcome p {
@@ -146,6 +144,113 @@
       font-size: 12px;
     }
 
+    /* =========================
+       ЭКРАН СООБЩЕСТВА
+       ========================= */
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .back-button {
+      border: 0;
+      background: white;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #17202a;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .community-header {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .community-header .big-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .community-header h2 {
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+
+    .community-header p {
+      margin: 0;
+      color: #68737d;
+      line-height: 1.5;
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .profile-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #2196e0;
+      margin-bottom: 6px;
+    }
+
+    .profile-id {
+      color: #68737d;
+      font-size: 14px;
+    }
+
+    .community-action {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 17px;
+      margin-top: 10px;
+      background: #2196e0;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .community-action:active {
+      transform: scale(0.98);
+    }
+
+    .info-card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-top: 14px;
+    }
+
+    .info-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .info-card p {
+      margin: 0;
+      color: #68737d;
+      line-height: 1.5;
+    }
+
     @media (max-width: 400px) {
       .grid {
         grid-template-columns: 1fr;
@@ -156,144 +261,287 @@
 
 <body>
 
-  <div class="container">
+  <!-- =========================
+       ГЛАВНАЯ СТРАНИЦА
+       ========================= -->
 
-    <!-- HEADER -->
-    <div class="header">
+  <div id="homePage" class="page active">
 
-      <div class="logo">UG</div>
+    <div class="container">
 
-      <h1>Umma Global</h1>
+      <div class="header">
 
-      <div class="subtitle">
-        Единая экосистема для жизни,<br>
-        бизнеса и сообщества
+        <div class="logo">
+          UG
+        </div>
+
+        <h1>
+          Umma Global
+        </h1>
+
+        <div class="subtitle">
+          Единая экосистема для жизни,<br>
+          бизнеса и сообщества
+        </div>
+
       </div>
 
-    </div>
 
+      <div class="welcome">
 
-    <!-- WELCOME -->
-    <div class="welcome">
-
-      <h2 id="welcome">
-        Ассаляму алейкум ва рахматуллахи ва баракатух!
-      </h2>
-
-      <p>
-        Добро пожаловать в Umma Global
-      </p>
-
-    </div>
-
-
-    <!-- ECOSYSTEM -->
-    <div class="section-title">
-      Экосистема Umma
-    </div>
-
-
-    <div class="grid">
-
-      <!-- COMMUNITY -->
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Сообщество')"
-      >
-        <div class="icon">🤝</div>
-
-        <h3>Сообщество</h3>
+        <h2 id="welcome">
+          Ассаляму алейкум!
+        </h2>
 
         <p>
-          Люди, связи и взаимопомощь
+          Добро пожаловать в Umma Global
         </p>
-      </button>
+
+      </div>
 
 
-      <!-- BUSINESS -->
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Бизнес')"
-      >
-        <div class="icon">💼</div>
+      <div class="section-title">
+        Экосистема Umma
+      </div>
 
-        <h3>Бизнес</h3>
+
+      <div class="grid">
+
+        <!-- СООБЩЕСТВО -->
+
+        <button
+          class="card"
+          type="button"
+          onclick="openCommunity()"
+        >
+
+          <div class="icon">
+            🤝
+          </div>
+
+          <h3>
+            Сообщество
+          </h3>
+
+          <p>
+            Люди, связи и взаимопомощь
+          </p>
+
+        </button>
+
+
+        <!-- БИЗНЕС -->
+
+        <button
+          class="card"
+          type="button"
+          onclick="showMessage('Бизнес')"
+        >
+
+          <div class="icon">
+            💼
+          </div>
+
+          <h3>
+            Бизнес
+          </h3>
+
+          <p>
+            Халяльные проекты и возможности
+          </p>
+
+        </button>
+
+
+        <!-- СЕРВИСЫ -->
+
+        <button
+          class="card"
+          type="button"
+          onclick="showMessage('Сервисы')"
+        >
+
+          <div class="icon">
+            🌍
+          </div>
+
+          <h3>
+            Сервисы
+          </h3>
+
+          <p>
+            Полезные решения для жизни
+          </p>
+
+        </button>
+
+
+        <!-- ПРОЕКТЫ -->
+
+        <button
+          class="card"
+          type="button"
+          onclick="showMessage('Проекты')"
+        >
+
+          <div class="icon">
+            🚀
+          </div>
+
+          <h3>
+            Проекты
+          </h3>
+
+          <p>
+            Создаём и развиваем вместе
+          </p>
+
+        </button>
+
+      </div>
+
+
+      <div class="mission">
+
+        <h2>
+          Наше намерение
+        </h2>
 
         <p>
-          Халяльные проекты и возможности
+          Создавать полезную экосистему для Уммы,
+          объединять людей и развивать халяльные проекты —
+          ради довольства Аллаха.
         </p>
-      </button>
+
+      </div>
 
 
-      <!-- SERVICES -->
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Сервисы')"
-      >
-        <div class="icon">🌍</div>
+      <div class="footer">
 
-        <h3>Сервисы</h3>
+        Umma Global<br>
+        Ради довольства Аллаха
 
-        <p>
-          Полезные решения для жизни
-        </p>
-      </button>
-
-
-      <!-- PROJECTS -->
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Проекты')"
-      >
-        <div class="icon">🚀</div>
-
-        <h3>Проекты</h3>
-
-        <p>
-          Создаём и развиваем вместе
-        </p>
-      </button>
-
-    </div>
-
-
-    <!-- MISSION -->
-    <div class="mission">
-
-      <h2>
-        Наше намерение
-      </h2>
-
-      <p>
-        Создавать полезную экосистему для Уммы,
-        объединять людей и развивать халяльные проекты —
-        ради довольства Аллаха.
-      </p>
-
-    </div>
-
-
-    <!-- FOOTER -->
-    <div class="footer">
-
-      Umma Global<br>
-      Ради довольства Аллаха
+      </div>
 
     </div>
 
   </div>
 
 
-  <!-- JAVASCRIPT -->
+  <!-- =========================
+       СТРАНИЦА СООБЩЕСТВА
+       ========================= -->
+
+  <div id="communityPage" class="page">
+
+    <div class="container">
+
+      <button
+        class="back-button"
+        type="button"
+        onclick="goHome()"
+      >
+        ← Назад
+      </button>
+
+
+      <div class="community-header">
+
+        <div class="big-icon">
+          🤝
+        </div>
+
+        <h2>
+          Сообщество Umma
+        </h2>
+
+        <p>
+          Люди, связи и взаимопомощь.
+          Здесь начинается объединение Уммы.
+        </p>
+
+      </div>
+
+
+      <!-- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ -->
+
+      <div class="profile-card">
+
+        <div class="profile-title">
+          Вы вошли как
+        </div>
+
+        <div
+          id="communityUserName"
+          class="profile-name"
+        >
+          Пользователь Telegram
+        </div>
+
+        <div
+          id="communityUserId"
+          class="profile-id"
+        >
+          Telegram ID: —
+        </div>
+
+      </div>
+
+
+      <!-- КНОПКА -->
+
+      <button
+        class="community-action"
+        type="button"
+        onclick="joinCommunity()"
+      >
+        🤝 Присоединиться к сообществу
+      </button>
+
+
+      <div class="info-card">
+
+        <h3>
+          Что здесь будет?
+        </h3>
+
+        <p>
+          В следующих этапах здесь появятся
+          участники Umma, поиск людей,
+          взаимопомощь, города и страны,
+          деловые связи и другие возможности
+          для общения внутри Уммы.
+        </p>
+
+      </div>
+
+
+      <div class="info-card">
+
+        <h3>
+          Ради чего мы объединяемся?
+        </h3>
+
+        <p>
+          Чтобы помогать друг другу,
+          создавать полезные связи,
+          поддерживать халяльный бизнес
+          и вместе развивать проекты
+          ради довольства Аллаха.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
   <script>
 
-    /*
-     * Telegram Mini App
-     */
+    /* =========================
+       TELEGRAM
+       ========================= */
 
     const tg =
       window.Telegram &&
@@ -302,9 +550,8 @@
         : null;
 
 
-    /*
-     * Запускаем Telegram WebApp
-     */
+    let telegramUser = null;
+
 
     if (tg) {
 
@@ -313,11 +560,7 @@
       tg.expand();
 
 
-      /*
-       * Получаем данные пользователя Telegram
-       */
-
-      const user =
+      telegramUser =
         tg.initDataUnsafe &&
         tg.initDataUnsafe.user
           ? tg.initDataUnsafe.user
@@ -325,49 +568,127 @@
 
 
       /*
-       * Находим элемент приветствия
-       */
-
-      const welcomeElement =
-        document.getElementById("welcome");
-
-
-      /*
-       * Персональное приветствие
+       * ПЕРСОНАЛЬНОЕ ПРИВЕТСТВИЕ
        */
 
       if (
-        user &&
-        user.first_name &&
-        user.first_name.trim() !== ""
+        telegramUser &&
+        telegramUser.first_name
       ) {
 
-        const firstName =
-          user.first_name.trim();
-
-
-        welcomeElement.textContent =
-          "Ассаляму алейкум ва рахматуллахи ва баракатух, "
-          + firstName
+        document.getElementById(
+          "welcome"
+        ).textContent =
+          "Ассаляму алейкум, "
+          + telegramUser.first_name
           + "!";
 
-      } else {
+      }
 
-        /*
-         * Если имя недоступно
-         */
 
-        welcomeElement.textContent =
-          "Ассаляму алейкум ва рахматуллахи ва баракатух!";
+      /*
+       * ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+       * НА СТРАНИЦЕ СООБЩЕСТВА
+       */
+
+      if (telegramUser) {
+
+        const fullName =
+          (
+            telegramUser.first_name || ""
+          )
+          +
+          (
+            telegramUser.last_name
+              ? " " + telegramUser.last_name
+              : ""
+          );
+
+
+        document.getElementById(
+          "communityUserName"
+        ).textContent =
+          fullName || "Пользователь Telegram";
+
+
+        document.getElementById(
+          "communityUserId"
+        ).textContent =
+          "Telegram ID: "
+          + telegramUser.id;
 
       }
 
     }
 
 
-    /*
-     * Кнопки разделов
-     */
+    /* =========================
+       ОТКРЫТЬ СООБЩЕСТВО
+       ========================= */
+
+    function openCommunity() {
+
+      document
+        .getElementById("homePage")
+        .classList.remove("active");
+
+
+      document
+        .getElementById("communityPage")
+        .classList.add("active");
+
+
+      window.scrollTo(0, 0);
+
+    }
+
+
+    /* =========================
+       ВЕРНУТЬСЯ НА ГЛАВНУЮ
+       ========================= */
+
+    function goHome() {
+
+      document
+        .getElementById("communityPage")
+        .classList.remove("active");
+
+
+      document
+        .getElementById("homePage")
+        .classList.add("active");
+
+
+      window.scrollTo(0, 0);
+
+    }
+
+
+    /* =========================
+       ПРИСОЕДИНИТЬСЯ
+       ========================= */
+
+    function joinCommunity() {
+
+      const message =
+        "Функция регистрации в сообществе будет подключена следующим этапом.";
+
+      if (tg) {
+
+        tg.showAlert(message);
+
+      } else {
+
+        alert(message);
+
+      }
+
+    }
+
+
+    /* =========================
+       ВРЕМЕННЫЕ КНОПКИ
+       ========================= */
 
     function showMessage(section) {
 
