@@ -9,6 +9,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -25,6 +26,22 @@
       margin: auto;
       padding: 24px 16px 40px;
     }
+
+    /* =========================
+       ОБЩЕЕ
+       ========================= */
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* =========================
+       ГЛАВНАЯ
+       ========================= */
 
     .header {
       text-align: center;
@@ -95,7 +112,6 @@
       cursor: pointer;
       font-family: inherit;
       font-size: 16px;
-      transition: transform 0.1s ease;
     }
 
     .card:active {
@@ -145,16 +161,8 @@
     }
 
     /* =========================
-       ЭКРАН СООБЩЕСТВА
+       ЗАГОЛОВОК СТРАНИЦЫ
        ========================= */
-
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
 
     .back-button {
       border: 0;
@@ -167,6 +175,10 @@
       cursor: pointer;
       margin-bottom: 20px;
     }
+
+    /* =========================
+       СООБЩЕСТВО
+       ========================= */
 
     .community-header {
       background: white;
@@ -191,53 +203,133 @@
       line-height: 1.5;
     }
 
+    /* =========================
+       ПРОФИЛЬ
+       ========================= */
+
     .profile-card {
       background: white;
       border-radius: 18px;
       padding: 20px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .profile-title {
-      font-size: 18px;
-      font-weight: bold;
+      font-size: 16px;
+      color: #68737d;
       margin-bottom: 8px;
     }
 
     .profile-name {
-      font-size: 22px;
+      font-size: 23px;
       font-weight: bold;
-      color: #2196e0;
       margin-bottom: 6px;
     }
 
     .profile-id {
       color: #68737d;
-      font-size: 14px;
+      font-size: 13px;
     }
 
-    .community-action {
+    /* =========================
+       ФОРМА
+       ========================= */
+
+    .form-card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .form-card h3 {
+      margin: 0 0 18px;
+      font-size: 19px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 1px solid #d9dee4;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 16px;
+      font-family: inherit;
+      background: #f8fafc;
+      color: #17202a;
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      border-color: #2196e0;
+    }
+
+    /* =========================
+       КНОПКИ
+       ========================= */
+
+    .primary-button {
       width: 100%;
       border: 0;
       border-radius: 16px;
       padding: 17px;
-      margin-top: 10px;
       background: #2196e0;
       color: white;
       font-size: 17px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 4px;
     }
 
-    .community-action:active {
+    .primary-button:active {
       transform: scale(0.98);
     }
+
+    .secondary-button {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 16px;
+      background: white;
+      color: #2196e0;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    /* =========================
+       ИНФОРМАЦИЯ
+       ========================= */
 
     .info-card {
       background: white;
       border-radius: 18px;
       padding: 20px;
-      margin-top: 14px;
+      margin-top: 16px;
     }
 
     .info-card h3 {
@@ -251,466 +343,774 @@
       line-height: 1.5;
     }
 
+    .success {
+      display: none;
+      background: #e9f7ef;
+      color: #237a45;
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+
     @media (max-width: 400px) {
+
       .grid {
         grid-template-columns: 1fr;
       }
+
     }
+
   </style>
 </head>
 
+
 <body>
 
-  <!-- =========================
-       ГЛАВНАЯ СТРАНИЦА
-       ========================= -->
 
-  <div id="homePage" class="page active">
+<!-- ==================================================
+     ГЛАВНАЯ
+     ================================================== -->
 
-    <div class="container">
+<div id="homePage" class="page active">
 
-      <div class="header">
+  <div class="container">
 
-        <div class="logo">
-          UG
-        </div>
+    <div class="header">
 
-        <h1>
-          Umma Global
-        </h1>
-
-        <div class="subtitle">
-          Единая экосистема для жизни,<br>
-          бизнеса и сообщества
-        </div>
-
+      <div class="logo">
+        UG
       </div>
 
+      <h1>
+        Umma Global
+      </h1>
 
-      <div class="welcome">
-
-        <h2 id="welcome">
-          Ассаляму алейкум!
-        </h2>
-
-        <p>
-          Добро пожаловать в Umma Global
-        </p>
-
-      </div>
-
-
-      <div class="section-title">
-        Экосистема Umma
-      </div>
-
-
-      <div class="grid">
-
-        <!-- СООБЩЕСТВО -->
-
-        <button
-          class="card"
-          type="button"
-          onclick="openCommunity()"
-        >
-
-          <div class="icon">
-            🤝
-          </div>
-
-          <h3>
-            Сообщество
-          </h3>
-
-          <p>
-            Люди, связи и взаимопомощь
-          </p>
-
-        </button>
-
-
-        <!-- БИЗНЕС -->
-
-        <button
-          class="card"
-          type="button"
-          onclick="showMessage('Бизнес')"
-        >
-
-          <div class="icon">
-            💼
-          </div>
-
-          <h3>
-            Бизнес
-          </h3>
-
-          <p>
-            Халяльные проекты и возможности
-          </p>
-
-        </button>
-
-
-        <!-- СЕРВИСЫ -->
-
-        <button
-          class="card"
-          type="button"
-          onclick="showMessage('Сервисы')"
-        >
-
-          <div class="icon">
-            🌍
-          </div>
-
-          <h3>
-            Сервисы
-          </h3>
-
-          <p>
-            Полезные решения для жизни
-          </p>
-
-        </button>
-
-
-        <!-- ПРОЕКТЫ -->
-
-        <button
-          class="card"
-          type="button"
-          onclick="showMessage('Проекты')"
-        >
-
-          <div class="icon">
-            🚀
-          </div>
-
-          <h3>
-            Проекты
-          </h3>
-
-          <p>
-            Создаём и развиваем вместе
-          </p>
-
-        </button>
-
-      </div>
-
-
-      <div class="mission">
-
-        <h2>
-          Наше намерение
-        </h2>
-
-        <p>
-          Создавать полезную экосистему для Уммы,
-          объединять людей и развивать халяльные проекты —
-          ради довольства Аллаха.
-        </p>
-
-      </div>
-
-
-      <div class="footer">
-
-        Umma Global<br>
-        Ради довольства Аллаха
-
+      <div class="subtitle">
+        Единая экосистема для жизни,<br>
+        бизнеса и сообщества
       </div>
 
     </div>
 
-  </div>
+
+    <div class="welcome">
+
+      <h2 id="welcome">
+        Ассаляму алейкум!
+      </h2>
+
+      <p>
+        Добро пожаловать в Umma Global
+      </p>
+
+    </div>
 
 
-  <!-- =========================
-       СТРАНИЦА СООБЩЕСТВА
-       ========================= -->
+    <div class="section-title">
+      Экосистема Umma
+    </div>
 
-  <div id="communityPage" class="page">
 
-    <div class="container">
+    <div class="grid">
+
 
       <button
-        class="back-button"
+        class="card"
         type="button"
-        onclick="goHome()"
+        onclick="openCommunity()"
       >
-        ← Назад
-      </button>
 
-
-      <div class="community-header">
-
-        <div class="big-icon">
+        <div class="icon">
           🤝
         </div>
 
-        <h2>
-          Сообщество Umma
-        </h2>
+        <h3>
+          Сообщество
+        </h3>
 
         <p>
-          Люди, связи и взаимопомощь.
-          Здесь начинается объединение Уммы.
+          Люди, связи и взаимопомощь
         </p>
 
-      </div>
-
-
-      <!-- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ -->
-
-      <div class="profile-card">
-
-        <div class="profile-title">
-          Вы вошли как
-        </div>
-
-        <div
-          id="communityUserName"
-          class="profile-name"
-        >
-          Пользователь Telegram
-        </div>
-
-        <div
-          id="communityUserId"
-          class="profile-id"
-        >
-          Telegram ID: —
-        </div>
-
-      </div>
-
-
-      <!-- КНОПКА -->
-
-      <button
-        class="community-action"
-        type="button"
-        onclick="joinCommunity()"
-      >
-        🤝 Присоединиться к сообществу
       </button>
 
 
-      <div class="info-card">
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Бизнес')"
+      >
+
+        <div class="icon">
+          💼
+        </div>
 
         <h3>
-          Что здесь будет?
+          Бизнес
         </h3>
 
         <p>
-          В следующих этапах здесь появятся
-          участники Umma, поиск людей,
-          взаимопомощь, города и страны,
-          деловые связи и другие возможности
-          для общения внутри Уммы.
+          Халяльные проекты и возможности
         </p>
 
-      </div>
+      </button>
 
 
-      <div class="info-card">
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Сервисы')"
+      >
+
+        <div class="icon">
+          🌍
+        </div>
 
         <h3>
-          Ради чего мы объединяемся?
+          Сервисы
         </h3>
 
         <p>
-          Чтобы помогать друг другу,
-          создавать полезные связи,
-          поддерживать халяльный бизнес
-          и вместе развивать проекты
-          ради довольства Аллаха.
+          Полезные решения для жизни
         </p>
 
-      </div>
+      </button>
+
+
+      <button
+        class="card"
+        type="button"
+        onclick="showMessage('Проекты')"
+      >
+
+        <div class="icon">
+          🚀
+        </div>
+
+        <h3>
+          Проекты
+        </h3>
+
+        <p>
+          Создаём и развиваем вместе
+        </p>
+
+      </button>
+
+
+    </div>
+
+
+    <div class="mission">
+
+      <h2>
+        Наше намерение
+      </h2>
+
+      <p>
+        Создавать полезную экосистему для Уммы,
+        объединять людей и развивать халяльные проекты —
+        ради довольства Аллаха.
+      </p>
+
+    </div>
+
+
+    <div class="footer">
+
+      Umma Global<br>
+      Ради довольства Аллаха
 
     </div>
 
   </div>
 
+</div>
 
-  <script>
 
-    /* =========================
-       TELEGRAM
-       ========================= */
 
-    const tg =
-      window.Telegram &&
-      window.Telegram.WebApp
-        ? window.Telegram.WebApp
-        : null;
+<!-- ==================================================
+     СООБЩЕСТВО
+     ================================================== -->
 
+<div id="communityPage" class="page">
 
-    let telegramUser = null;
+  <div class="container">
 
 
-    if (tg) {
+    <button
+      class="back-button"
+      type="button"
+      onclick="goHome()"
+    >
+      ← Назад
+    </button>
 
-      tg.ready();
 
-      tg.expand();
+    <div class="community-header">
 
+      <div class="big-icon">
+        🤝
+      </div>
 
-      telegramUser =
-        tg.initDataUnsafe &&
-        tg.initDataUnsafe.user
-          ? tg.initDataUnsafe.user
-          : null;
+      <h2>
+        Сообщество Umma
+      </h2>
 
+      <p>
+        Люди, связи и взаимопомощь.
+        Познакомьтесь с Уммой и расскажите о себе.
+      </p>
 
-      /*
-       * ПЕРСОНАЛЬНОЕ ПРИВЕТСТВИЕ
-       */
+    </div>
 
-      if (
-        telegramUser &&
-        telegramUser.first_name
-      ) {
 
-        document.getElementById(
-          "welcome"
-        ).textContent =
-          "Ассаляму алейкум, "
-          + telegramUser.first_name
-          + "!";
+    <!-- =========================
+         ДАННЫЕ TELEGRAM
+         ========================= -->
 
-      }
+    <div class="profile-card">
 
+      <div class="profile-title">
+        Ваш Telegram-профиль
+      </div>
 
-      /*
-       * ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
-       * НА СТРАНИЦЕ СООБЩЕСТВА
-       */
+      <div
+        id="communityUserName"
+        class="profile-name"
+      >
+        Пользователь Telegram
+      </div>
 
-      if (telegramUser) {
+      <div
+        id="communityUserId"
+        class="profile-id"
+      >
+        Telegram ID: —
+      </div>
 
-        const fullName =
-          (
-            telegramUser.first_name || ""
-          )
-          +
-          (
-            telegramUser.last_name
-              ? " " + telegramUser.last_name
-              : ""
-          );
+    </div>
 
 
-        document.getElementById(
-          "communityUserName"
-        ).textContent =
-          fullName || "Пользователь Telegram";
+    <!-- =========================
+         УСПЕШНОЕ СОХРАНЕНИЕ
+         ========================= -->
 
+    <div
+      id="successMessage"
+      class="success"
+    >
+      ✓ Профиль сохранён
+    </div>
 
-        document.getElementById(
-          "communityUserId"
-        ).textContent =
-          "Telegram ID: "
-          + telegramUser.id;
 
-      }
+    <!-- =========================
+         АНКЕТА
+         ========================= -->
 
-    }
+    <div class="form-card">
 
+      <h3>
+        Расскажите о себе
+      </h3>
 
-    /* =========================
-       ОТКРЫТЬ СООБЩЕСТВО
-       ========================= */
 
-    function openCommunity() {
+      <div class="field">
 
-      document
-        .getElementById("homePage")
-        .classList.remove("active");
+        <label for="country">
+          🌍 Страна
+        </label>
 
+        <input
+          id="country"
+          type="text"
+          placeholder="Например: Вьетнам"
+        >
 
-      document
-        .getElementById("communityPage")
-        .classList.add("active");
+      </div>
 
 
-      window.scrollTo(0, 0);
+      <div class="field">
 
-    }
+        <label for="city">
+          📍 Город
+        </label>
 
+        <input
+          id="city"
+          type="text"
+          placeholder="Например: Хошимин"
+        >
 
-    /* =========================
-       ВЕРНУТЬСЯ НА ГЛАВНУЮ
-       ========================= */
+      </div>
 
-    function goHome() {
 
-      document
-        .getElementById("communityPage")
-        .classList.remove("active");
+      <div class="field">
 
+        <label for="profession">
+          💼 Чем вы занимаетесь?
+        </label>
 
-      document
-        .getElementById("homePage")
-        .classList.add("active");
+        <input
+          id="profession"
+          type="text"
+          placeholder="Например: предприниматель"
+        >
 
+      </div>
 
-      window.scrollTo(0, 0);
 
-    }
+      <div class="field">
 
+        <label for="about">
+          📝 Немного о себе
+        </label>
 
-    /* =========================
-       ПРИСОЕДИНИТЬСЯ
-       ========================= */
+        <textarea
+          id="about"
+          placeholder="Расскажите немного о себе..."
+        ></textarea>
 
-    function joinCommunity() {
+      </div>
 
-      const message =
-        "Функция регистрации в сообществе будет подключена следующим этапом.";
 
-      if (tg) {
+      <div class="field">
 
-        tg.showAlert(message);
+        <label for="help">
+          🤝 Чем можете быть полезны Умме?
+        </label>
 
-      } else {
+        <textarea
+          id="help"
+          placeholder="Ваши знания, навыки, связи, помощь..."
+        ></textarea>
 
-        alert(message);
+      </div>
 
-      }
 
-    }
+      <button
+        class="primary-button"
+        type="button"
+        onclick="saveProfile()"
+      >
+        💾 Сохранить профиль
+      </button>
 
 
-    /* =========================
-       ВРЕМЕННЫЕ КНОПКИ
-       ========================= */
+      <button
+        class="secondary-button"
+        type="button"
+        onclick="clearProfile()"
+      >
+        Очистить анкету
+      </button>
 
-    function showMessage(section) {
+    </div>
 
-      const message =
-        "Раздел «"
-        + section
-        + "» будет подключён следующим этапом.";
 
+    <div class="info-card">
 
-      if (tg) {
+      <h3>
+        Для чего это нужно?
+      </h3>
 
-        tg.showAlert(message);
+      <p>
+        Umma Global создаётся как пространство,
+        где мусульмане могут находить друг друга,
+        помогать друг другу, создавать полезные связи
+        и совместно развивать халяльные проекты.
+      </p>
 
-      } else {
+    </div>
 
-        alert(message);
 
-      }
+  </div>
 
-    }
+</div>
 
-  </script>
+
+
+<script>
+
+
+/* ==================================================
+   TELEGRAM WEB APP
+   ================================================== */
+
+const tg =
+  window.Telegram &&
+  window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
+
+let telegramUser = null;
+
+
+/* ==================================================
+   ЗАПУСК
+   ================================================== */
+
+if (tg) {
+
+  tg.ready();
+
+  tg.expand();
+
+
+  telegramUser =
+    tg.initDataUnsafe &&
+    tg.initDataUnsafe.user
+      ? tg.initDataUnsafe.user
+      : null;
+
+
+  /* =========================
+     ПЕРСОНАЛЬНОЕ ПРИВЕТСТВИЕ
+     ========================= */
+
+  if (
+    telegramUser &&
+    telegramUser.first_name
+  ) {
+
+    document.getElementById(
+      "welcome"
+    ).textContent =
+      "Ассаляму алейкум, "
+      + telegramUser.first_name
+      + "!";
+
+  }
+
+
+  /* =========================
+     ИМЯ В ПРОФИЛЕ
+     ========================= */
+
+  if (telegramUser) {
+
+    const fullName =
+      (
+        telegramUser.first_name || ""
+      )
+      +
+      (
+        telegramUser.last_name
+          ? " " + telegramUser.last_name
+          : ""
+      );
+
+
+    document.getElementById(
+      "communityUserName"
+    ).textContent =
+      fullName || "Пользователь Telegram";
+
+
+    document.getElementById(
+      "communityUserId"
+    ).textContent =
+      "Telegram ID: "
+      + telegramUser.id;
+
+  }
+
+}
+
+
+/* ==================================================
+   ОТКРЫТЬ СООБЩЕСТВО
+   ================================================== */
+
+function openCommunity() {
+
+  document
+    .getElementById("homePage")
+    .classList.remove("active");
+
+
+  document
+    .getElementById("communityPage")
+    .classList.add("active");
+
+
+  loadProfile();
+
+  window.scrollTo(0, 0);
+
+}
+
+
+/* ==================================================
+   НА ГЛАВНУЮ
+   ================================================== */
+
+function goHome() {
+
+  document
+    .getElementById("communityPage")
+    .classList.remove("active");
+
+
+  document
+    .getElementById("homePage")
+    .classList.add("active");
+
+
+  window.scrollTo(0, 0);
+
+}
+
+
+/* ==================================================
+   КЛЮЧ ДЛЯ ПРОФИЛЯ
+   ================================================== */
+
+function getProfileKey() {
+
+  if (
+    telegramUser &&
+    telegramUser.id
+  ) {
+
+    return "umma_profile_"
+      + telegramUser.id;
+
+  }
+
+  return "umma_profile_guest";
+
+}
+
+
+/* ==================================================
+   СОХРАНЕНИЕ ПРОФИЛЯ
+   ================================================== */
+
+function saveProfile() {
+
+
+  const profile = {
+
+    telegram_id:
+      telegramUser
+        ? telegramUser.id
+        : null,
+
+    first_name:
+      telegramUser
+        ? telegramUser.first_name || ""
+        : "",
+
+    last_name:
+      telegramUser
+        ? telegramUser.last_name || ""
+        : "",
+
+    username:
+      telegramUser
+        ? telegramUser.username || ""
+        : "",
+
+    country:
+      document.getElementById(
+        "country"
+      ).value.trim(),
+
+    city:
+      document.getElementById(
+        "city"
+      ).value.trim(),
+
+    profession:
+      document.getElementById(
+        "profession"
+      ).value.trim(),
+
+    about:
+      document.getElementById(
+        "about"
+      ).value.trim(),
+
+    help:
+      document.getElementById(
+        "help"
+      ).value.trim(),
+
+    updated_at:
+      new Date().toISOString()
+
+  };
+
+
+  localStorage.setItem(
+    getProfileKey(),
+    JSON.stringify(profile)
+  );
+
+
+  document.getElementById(
+    "successMessage"
+  ).style.display = "block";
+
+
+  if (tg) {
+
+    tg.HapticFeedback.notificationOccurred(
+      "success"
+    );
+
+  }
+
+
+  setTimeout(function() {
+
+    document.getElementById(
+      "successMessage"
+    ).style.display = "none";
+
+  }, 3000);
+
+}
+
+
+/* ==================================================
+   ЗАГРУЗКА ПРОФИЛЯ
+   ================================================== */
+
+function loadProfile() {
+
+
+  const saved =
+    localStorage.getItem(
+      getProfileKey()
+    );
+
+
+  if (!saved) {
+    return;
+  }
+
+
+  try {
+
+    const profile =
+      JSON.parse(saved);
+
+
+    document.getElementById(
+      "country"
+    ).value =
+      profile.country || "";
+
+
+    document.getElementById(
+      "city"
+    ).value =
+      profile.city || "";
+
+
+    document.getElementById(
+      "profession"
+    ).value =
+      profile.profession || "";
+
+
+    document.getElementById(
+      "about"
+    ).value =
+      profile.about || "";
+
+
+    document.getElementById(
+      "help"
+    ).value =
+      profile.help || "";
+
+  }
+
+  catch (error) {
+
+    console.log(
+      "Ошибка загрузки профиля",
+      error
+    );
+
+  }
+
+}
+
+
+/* ==================================================
+   ОЧИСТИТЬ ПРОФИЛЬ
+   ================================================== */
+
+function clearProfile() {
+
+
+  document.getElementById(
+    "country"
+  ).value = "";
+
+
+  document.getElementById(
+    "city"
+  ).value = "";
+
+
+  document.getElementById(
+    "profession"
+  ).value = "";
+
+
+  document.getElementById(
+    "about"
+  ).value = "";
+
+
+  document.getElementById(
+    "help"
+  ).value = "";
+
+
+  localStorage.removeItem(
+    getProfileKey()
+  );
+
+}
+
+
+/* ==================================================
+   ВРЕМЕННЫЕ РАЗДЕЛЫ
+   ================================================== */
+
+function showMessage(section) {
+
+
+  const message =
+    "Раздел «"
+    + section
+    + "» будет подключён следующим этапом.";
+
+
+  if (tg) {
+
+    tg.showAlert(message);
+
+  }
+
+  else {
+
+    alert(message);
+
+  }
+
+}
+
+</script>
 
 </body>
 </html>
