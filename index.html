@@ -738,65 +738,28 @@
 
 <script>
 
+
+/* ==================================================
+   TELEGRAM WEB APP
+   ================================================== */
+
+const tg =
+  window.Telegram &&
+  window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
+
+let telegramUser = null;
+
 /* ==================================================
    UMMA GLOBAL — AI TRANSLATION
-   The OpenAI API key stays ONLY in Supabase Secrets.
+   OpenAI API key is NEVER stored in this HTML file.
+   It remains securely in Supabase Edge Function Secrets.
    ================================================== */
 
 const SUPABASE_TRANSLATE_URL =
   "https://zwzjougspldexyjlywpr.supabase.co/functions/v1/ai-translate";
-
-async function translateText(text, targetLanguage, sourceLanguage = null) {
-  if (!text || !String(text).trim()) {
-    return "";
-  }
-
-  if (!targetLanguage) {
-    throw new Error("Target language is required");
-  }
-
-  const response = await fetch(SUPABASE_TRANSLATE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: String(text),
-      target_language: targetLanguage,
-      source_language: sourceLanguage || "auto"
-    })
-  });
-
-  let data = {};
-  try {
-    data = await response.json();
-  } catch (e) {
-    throw new Error("Invalid response from translation service");
-  }
-
-  if (!response.ok || !data.success) {
-    const apiMessage =
-      data?.details?.error?.message ||
-      data?.error ||
-      "Translation service is temporarily unavailable";
-
-    throw new Error(apiMessage);
-  }
-
-  return data.translated_text || "";
-}
-
-/* Detect the language supplied by Telegram.
-   Telegram language codes are normalized to readable names. */
-function getTelegramLanguageCode() {
-  const code =
-    telegramUser?.language_code ||
-    tg?.initDataUnsafe?.user?.language_code ||
-    navigator.language ||
-    "en";
-
-  return String(code).split("-")[0].toLowerCase();
-}
 
 const UMMA_LANGUAGE_NAMES = {
   af: "Afrikaans",
@@ -818,14 +781,11 @@ const UMMA_LANGUAGE_NAMES = {
   fa: "Persian",
   fi: "Finnish",
   fr: "French",
-  ga: "Irish",
   he: "Hebrew",
   hi: "Hindi",
   hr: "Croatian",
   hu: "Hungarian",
-  hy: "Armenian",
   id: "Indonesian",
-  is: "Icelandic",
   it: "Italian",
   ja: "Japanese",
   ka: "Georgian",
@@ -864,14 +824,114 @@ const UMMA_LANGUAGE_NAMES = {
   zh: "Chinese"
 };
 
+function getTelegramLanguageCode() {
+  const telegramCode =
+    tg &&
+    tg.initDataUnsafe &&
+    tg.initDataUnsafe.user &&
+    tg.initDataUnsafe.user.language_code
+      ? tg.initDataUnsafe.user.language_code
+      : "";
+
+  const browserCode =
+    navigator.language ||
+    navigator.userLanguage ||
+    "en";
+
+  return String(telegramCode || browserCode)
+    .split("-")[0]
+    .toLowerCase();
+}
+
 function getTelegramLanguageName() {
   const code = getTelegramLanguageCode();
   return UMMA_LANGUAGE_NAMES[code] || "English";
 }
 
-/* Convenient helper for future UI elements:
-   translateTextToUserLanguage("Hello") */
-async function translateTextToUserLanguage(text, sourceLanguage = null) {
+async function translateText(
+  text,
+  targetLanguage,
+  sourceLanguage = null
+) {
+  if (!text || !String(text).trim()) {
+    return "";
+  }
+
+  if (!targetLanguage) {
+    throw new Error("Target language is required");
+  }
+
+  const response = await fetch(
+    SUPABASE_TRANSLATE_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: String(text),
+        target_language: targetLanguage,
+        source_language:
+          sourceLanguage || "auto"
+      })
+    }
+  );
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error(
+      "Invalid response from translation service"
+    );
+  }
+
+  if (!response.ok || !data.success) {
+    /*
+      Пока API-баланс OpenAI не пополнен,
+      Supabase вернёт ошибку insufficient_quota.
+      Не показываем пользователю технический JSON.
+    */
+    const rawMessage =
+      data &&
+      data.details &&
+      data.details.error &&
+      data.details.error.message
+        ? data.details.error.message
+        : data && data.error
+          ? data.error
+          : "";
+
+    if (
+      String(rawMessage)
+        .toLowerCase()
+        .includes("credit_balance_exhausted") ||
+      String(rawMessage)
+        .toLowerCase()
+        .includes("no credits") ||
+      String(rawMessage)
+        .toLowerCase()
+        .includes("insufficient_quota")
+    ) {
+      throw new Error(
+        "AI translation is temporarily unavailable. Please try again later."
+      );
+    }
+
+    throw new Error(
+      rawMessage ||
+      "Translation service is temporarily unavailable."
+    );
+  }
+
+  return data.translated_text || "";
+}
+
+async function translateTextToUserLanguage(
+  text,
+  sourceLanguage = null
+) {
   return translateText(
     text,
     getTelegramLanguageName(),
@@ -879,19 +939,11 @@ async function translateTextToUserLanguage(text, sourceLanguage = null) {
   );
 }
 
-
 /* ==================================================
-   TELEGRAM WEB APP
-   ================================================== */
+   END UMMA GLOBAL — AI TRANSLATION
+   ==================================================
+*/
 
-const tg =
-  window.Telegram &&
-  window.Telegram.WebApp
-    ? window.Telegram.WebApp
-    : null;
-
-
-let telegramUser = null;
 
 
 /* ==================================================
