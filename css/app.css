@@ -1,672 +1,1110 @@
-/* =========================================
-   UMMA GLOBAL — фирменный дизайн
-   Бирюзовый + золото + белый
-   ========================================= */
-
 :root {
-  --umma-turquoise: #08b8c4;
-  --umma-turquoise-dark: #007b83;
-  --umma-turquoise-deep: #005f65;
-  --umma-gold: #f4c229;
-  --umma-gold-dark: #c99a16;
+  --teal: #006f73;
+  --teal-dark: #004c52;
+  --teal-deep: #003e43;
 
-  --umma-bg: #f4faf9;
-  --umma-white: #ffffff;
-  --umma-text: #123f42;
-  --umma-text-light: #638084;
+  --turquoise: #12b8bd;
 
-  --umma-radius: 22px;
-  --umma-shadow: 0 10px 30px rgba(0, 95, 101, 0.08);
-  --umma-shadow-hover: 0 18px 40px rgba(0, 95, 101, 0.16);
+  --gold: #e6aa32;
+  --gold-light: #ffd66b;
+
+  --cream: #fffaf0;
+  --white: #ffffff;
+
+  --text: #123d42;
+  --muted: #6c8588;
+
+  --border: rgba(0, 80, 85, 0.10);
+
+  --radius-large: 26px;
+  --radius-medium: 20px;
+  --radius-small: 16px;
 }
 
-/* =========================================
-   ОСНОВА
-   ========================================= */
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
+
 
 html {
   scroll-behavior: smooth;
 }
 
+
 body {
   margin: 0;
-  font-family: Arial, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(
-      circle at 10% 0%,
-      rgba(8, 184, 196, 0.10),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 90% 10%,
-      rgba(244, 194, 41, 0.10),
-      transparent 25%
-    ),
-    var(--umma-bg);
 
-  color: var(--umma-text);
-  min-height: 100vh;
-}
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
 
-/* =========================================
-   ГЛАВНЫЙ КОНТЕЙНЕР
-   ========================================= */
-
-.container {
-  width: min(1100px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 50px;
-}
-
-/* =========================================
-   ШАПКА
-   ========================================= */
-
-header {
-  text-align: center;
-  padding: 10px 0 28px;
-}
-
-/* Логотип */
-
-.logo {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 18px;
-
-  border-radius: 50%;
+  color: var(--text);
 
   background:
     linear-gradient(
-      145deg,
-      #ffffff,
-      #eefafa
+      180deg,
+      #edfafa 0%,
+      #f7fbfb 45%,
+      #ffffff 100%
     );
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+}
+
+
+button {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+
+.app {
+  width: 100%;
+  max-width: 680px;
+
+  margin: 0 auto;
+
+  padding-bottom:
+    calc(92px + env(safe-area-inset-bottom));
+}
+
+
+/* =====================================================
+   TELEGRAM SAFE AREA
+   ===================================================== */
+
+.topbar {
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding-top:
+    calc(env(safe-area-inset-top, 0px) + 18px);
+
+  padding-left: 16px;
+  padding-right: 16px;
+
+  padding-bottom: 12px;
+
+  position: relative;
+  z-index: 20;
+}
+
+
+.topbar-spacer {
+  flex: 1;
+}
+
+
+.icon-button,
+.profile-button,
+.language-button {
+
+  background: rgba(255,255,255,0.92);
+
+  box-shadow:
+    0 8px 25px rgba(0,70,75,0.10);
+
+  border:
+    1px solid rgba(255,255,255,0.9);
+
+  color: var(--teal-dark);
+
+  backdrop-filter: blur(14px);
+}
+
+
+.icon-button {
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 50%;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  box-shadow:
-    0 8px 25px rgba(0, 95, 101, 0.14),
-    0 0 0 5px rgba(244, 194, 41, 0.18);
-
-  overflow: hidden;
-}
-
-.logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* Название */
-
-h1 {
-  margin: 0;
-  color: var(--umma-turquoise-deep);
-
-  font-size: clamp(30px, 5vw, 48px);
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.subtitle {
-  margin: 10px auto 0;
-
-  max-width: 650px;
-
-  color: var(--umma-text-light);
-
-  font-size: 17px;
-  line-height: 1.6;
-}
-
-/* Золотая линия */
-
-header::after {
-  content: "";
-  display: block;
-
-  width: 90px;
-  height: 4px;
-
-  margin: 20px auto 0;
-
-  border-radius: 10px;
-
-  background: linear-gradient(
-    90deg,
-    var(--umma-turquoise),
-    var(--umma-gold),
-    var(--umma-turquoise)
-  );
-}
-
-/* =========================================
-   ПРИВЕТСТВИЕ
-   ========================================= */
-
-.welcome {
-  position: relative;
-
-  background: rgba(255, 255, 255, 0.95);
-
-  border-radius: 26px;
-
-  padding: 26px 28px;
-
-  margin-bottom: 38px;
-
-  border: 1px solid rgba(8, 184, 196, 0.10);
-
-  box-shadow: var(--umma-shadow);
-
-  overflow: hidden;
-}
-
-.welcome::before {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  top: 0;
-  bottom: 0;
-
-  width: 5px;
-
-  background: linear-gradient(
-    180deg,
-    var(--umma-turquoise),
-    var(--umma-gold)
-  );
-}
-
-.welcome h2 {
-  margin: 0 0 10px;
-
-  color: var(--umma-turquoise-deep);
 
   font-size: 22px;
 }
 
-.welcome p {
-  margin: 0;
 
-  color: var(--umma-text-light);
+.language-button {
 
-  line-height: 1.6;
+  height: 46px;
+
+  padding: 0 15px;
+
+  border-radius: 25px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: var(--teal-dark);
 }
 
-/* =========================================
-   ЗАГОЛОВОК РАЗДЕЛА
-   ========================================= */
 
-.section-title {
-  margin: 0 0 22px;
-
-  color: var(--umma-turquoise-deep);
-
-  font-size: 27px;
-  font-weight: 800;
+.language-button span:first-child {
+  font-size: 18px;
 }
 
-.section-title::after {
-  content: "";
 
-  display: block;
-
-  width: 55px;
-  height: 3px;
-
-  margin-top: 9px;
-
-  border-radius: 5px;
-
-  background: var(--umma-gold);
+.language-button strong {
+  font-size: 14px;
 }
 
-/* =========================================
-   СЕТКА КАРТОЧЕК
-   ========================================= */
 
-.grid {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 18px;
-
-  margin-bottom: 38px;
+.chevron {
+  font-size: 18px;
 }
 
-/* =========================================
-   КАРТОЧКА
-   ========================================= */
 
-.card {
-  position: relative;
+.profile-button {
 
-  min-height: 180px;
-
-  padding: 24px;
-
-  background: var(--umma-white);
-
-  border: 1px solid rgba(8, 184, 196, 0.10);
-
-  border-radius: var(--umma-radius);
-
-  box-shadow: var(--umma-shadow);
-
-  cursor: pointer;
-
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-
-  overflow: hidden;
-}
-
-/* Декоративный круг */
-
-.card::after {
-  content: "";
-
-  position: absolute;
-
-  width: 150px;
-  height: 150px;
-
-  right: -65px;
-  top: -65px;
+  width: 46px;
+  height: 46px;
 
   border-radius: 50%;
 
-  background: rgba(8, 184, 196, 0.07);
-
-  transition: transform 0.3s ease;
+  font-size: 20px;
 }
 
-.card:hover {
-  transform: translateY(-5px);
 
-  box-shadow: var(--umma-shadow-hover);
-
-  border-color: rgba(8, 184, 196, 0.28);
+.notification-button {
+  position: relative;
 }
 
-.card:hover::after {
-  transform: scale(1.25);
-}
 
-/* =========================================
-   ИКОНКА
-   ========================================= */
+.notification-badge {
 
-.icon {
-  width: 56px;
-  height: 56px;
+  position: absolute;
+
+  top: -2px;
+  right: -1px;
+
+  min-width: 19px;
+  height: 19px;
+
+  padding: 0 5px;
+
+  border-radius: 20px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  margin-bottom: 16px;
-
-  border-radius: 17px;
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--umma-turquoise),
-      var(--umma-turquoise-dark)
-    );
+  background: #ef4d43;
 
   color: white;
 
-  font-size: 27px;
+  font-size: 10px;
+  font-weight: 700;
+
+  border: 2px solid white;
+}
+
+
+/* =====================================================
+   BRAND
+   ===================================================== */
+
+.brand {
+
+  text-align: center;
+
+  padding:
+    10px 20px 18px;
+}
+
+
+.brand-logo {
+
+  width: 126px;
+  height: 126px;
+
+  object-fit: contain;
+
+  display: block;
+
+  margin: 0 auto 5px;
+
+  filter:
+    drop-shadow(0 12px 22px rgba(0,75,80,0.20));
+}
+
+
+.brand-name {
+
+  display: flex;
+
+  align-items: baseline;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: -2px;
+}
+
+
+.brand-name span {
+
+  font-family: Georgia, serif;
+
+  font-size: 31px;
+
+  letter-spacing: 3px;
+
+  font-weight: 700;
+
+  color: var(--teal-dark);
+}
+
+
+.brand-name strong {
+
+  font-size: 17px;
+
+  letter-spacing: 4px;
+
+  color: var(--gold);
+}
+
+
+.brand p {
+
+  margin: 7px 0 0;
+
+  color: var(--muted);
+
+  font-size: 14px;
+
+  line-height: 1.45;
+}
+
+
+/* =====================================================
+   WELCOME
+   ===================================================== */
+
+.welcome-card {
+
+  margin: 4px 16px 12px;
+
+  padding: 15px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  background: rgba(255,255,255,0.96);
+
+  border:
+    1px solid var(--border);
+
+  border-radius: var(--radius-medium);
 
   box-shadow:
-    0 8px 18px rgba(0, 123, 131, 0.18);
-
-  position: relative;
-  z-index: 2;
+    0 10px 30px rgba(0,70,75,0.08);
 }
 
-/* =========================================
-   ТЕКСТ КАРТОЧКИ
-   ========================================= */
 
-.card h3 {
-  position: relative;
-  z-index: 2;
+.welcome-icon {
 
-  margin: 0 0 7px;
+  width: 50px;
+  height: 50px;
 
-  color: var(--umma-text);
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #fff4d8;
+
+  font-size: 25px;
+}
+
+
+.welcome-text {
+  flex: 1;
+}
+
+
+.welcome-text h2 {
+
+  margin: 0 0 3px;
+
+  font-family: Georgia, serif;
 
   font-size: 20px;
-  font-weight: 800;
+
+  color: var(--teal-dark);
 }
 
-.card p {
-  position: relative;
-  z-index: 2;
+
+.welcome-text p {
 
   margin: 0;
 
-  color: var(--umma-text-light);
+  color: var(--muted);
 
   font-size: 14px;
-  line-height: 1.5;
 }
 
-/* =========================================
-   АКТИВНАЯ КАРТОЧКА
-   ========================================= */
 
-.card-active {
-  border-color: rgba(244, 194, 41, 0.55);
+.arrow-button {
 
-  background:
-    linear-gradient(
-      145deg,
-      #ffffff,
-      #fffdf5
-    );
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  background: var(--teal);
+
+  color: white;
+
+  font-size: 22px;
 }
 
-.card-active .icon {
-  background:
-    linear-gradient(
-      145deg,
-      var(--umma-gold),
-      var(--umma-gold-dark)
-    );
-}
 
-/* =========================================
-   БЛОК "НАШЕ НАМЕРЕНИЕ"
-   ========================================= */
+/* =====================================================
+   AYAH
+   ===================================================== */
 
-.mission {
-  position: relative;
+.ayah-card {
 
-  padding: 32px;
+  margin: 0 16px 14px;
 
-  margin-top: 10px;
+  min-height: 105px;
 
-  border-radius: 26px;
+  padding: 14px 16px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  border-radius: var(--radius-medium);
 
   background:
     linear-gradient(
       135deg,
-      var(--umma-turquoise-deep),
-      var(--umma-turquoise-dark)
+      #eefafa,
+      #ffffff
     );
 
-  color: white;
+  border:
+    1px solid rgba(0,150,155,0.12);
 
-  box-shadow:
-    0 15px 40px rgba(0, 95, 101, 0.18);
+  position: relative;
 
   overflow: hidden;
 }
 
-.mission::before {
+
+.ayah-card::after {
+
   content: "";
 
   position: absolute;
 
-  width: 260px;
-  height: 260px;
+  right: -50px;
+  bottom: -60px;
 
-  right: -100px;
-  top: -120px;
-
-  border-radius: 50%;
-
-  border: 35px solid rgba(244, 194, 41, 0.12);
-}
-
-.mission::after {
-  content: "";
-
-  position: absolute;
-
-  width: 170px;
-  height: 170px;
-
-  left: -80px;
-  bottom: -100px;
+  width: 180px;
+  height: 180px;
 
   border-radius: 50%;
 
-  background: rgba(8, 184, 196, 0.18);
+  border: 22px solid rgba(18,184,189,0.08);
 }
 
-.mission h2 {
-  position: relative;
-  z-index: 2;
 
-  margin: 0 0 12px;
+.ayah-icon {
 
-  color: white;
+  width: 70px;
 
-  font-size: 27px;
+  font-size: 48px;
+
+  text-align: center;
+
+  flex-shrink: 0;
 }
 
-.mission p {
-  position: relative;
-  z-index: 2;
 
-  margin: 0;
-
-  max-width: 750px;
-
-  color: rgba(255, 255, 255, 0.88);
-
-  font-size: 16px;
-  line-height: 1.7;
+.ayah-content {
+  flex: 1;
 }
 
-/* Золотая черта */
 
-.mission h2::after {
-  content: "";
+.small-label {
 
   display: block;
 
-  width: 55px;
-  height: 3px;
+  margin-bottom: 4px;
 
-  margin-top: 10px;
+  font-size: 13px;
 
-  border-radius: 5px;
+  font-weight: 700;
 
-  background: var(--umma-gold);
+  color: var(--gold);
 }
 
-/* =========================================
-   ССЫЛКИ / КНОПКИ
-   ========================================= */
 
-button,
-.card,
-a {
-  -webkit-tap-highlight-color: transparent;
+.ayah-content p {
+
+  margin: 0;
+
+  font-size: 14px;
+
+  line-height: 1.4;
+
+  color: var(--teal-dark);
 }
 
-button {
-  font-family: inherit;
+
+.ayah-content small {
+
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 12px;
 }
 
-/* =========================================
-   АДАПТАЦИЯ ДЛЯ ПЛАНШЕТА
-   ========================================= */
 
-@media (max-width: 760px) {
+.circle-arrow {
 
-  .container {
-    width: min(100% - 24px, 600px);
-    padding-top: 20px;
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: white;
+
+  color: var(--teal);
+
+  box-shadow: 0 5px 15px rgba(0,70,75,0.10);
+
+  font-size: 20px;
+}
+
+
+/* =====================================================
+   HERO
+   ===================================================== */
+
+.hero-card {
+
+  margin: 0 16px 20px;
+
+  min-height: 230px;
+
+  border-radius: var(--radius-large);
+
+  overflow: hidden;
+
+  position: relative;
+
+  background:
+    linear-gradient(
+      110deg,
+      rgba(0,54,59,0.98) 0%,
+      rgba(0,79,83,0.90) 47%,
+      rgba(0,79,83,0.35) 100%
+    ),
+    url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85");
+
+  background-size: cover;
+  background-position: center;
+
+  border: 1px solid rgba(230,170,50,0.65);
+
+  box-shadow:
+    0 15px 35px rgba(0,70,75,0.18);
+}
+
+
+.hero-content {
+
+  position: relative;
+
+  z-index: 2;
+
+  padding: 25px;
+}
+
+
+.halal-badge {
+
+  display: inline-flex;
+
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  border:
+    1px solid rgba(255,211,105,0.75);
+
+  background: rgba(0,0,0,0.22);
+
+  color: var(--gold-light);
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+
+.hero-card h1 {
+
+  margin: 17px 0 5px;
+
+  color: white;
+
+  font-family: Georgia, serif;
+
+  font-size: 31px;
+}
+
+
+.hero-card p {
+
+  margin: 0 0 18px;
+
+  color: rgba(255,255,255,0.90);
+
+  font-size: 15px;
+
+  line-height: 1.45;
+}
+
+
+.primary-button {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px 18px;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light),
+      var(--gold)
+    );
+
+  color: #26382e;
+
+  font-weight: 800;
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.18);
+}
+
+
+.primary-button span {
+  font-size: 20px;
+}
+
+
+/* =====================================================
+   SERVICES
+   ===================================================== */
+
+.services-section {
+
+  padding: 0 16px;
+}
+
+
+.section-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 11px;
+}
+
+
+.section-header h2 {
+
+  margin: 0;
+
+  font-family: Georgia, serif;
+
+  font-size: 22px;
+
+  color: var(--teal-dark);
+}
+
+
+.section-header button {
+
+  background: transparent;
+
+  color: var(--teal);
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+
+.services-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+
+.service-card {
+
+  min-height: 82px;
+
+  padding: 11px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  text-align: left;
+
+  border-radius: var(--radius-small);
+
+  background: white;
+
+  border:
+    1px solid var(--border);
+
+  box-shadow:
+    0 6px 18px rgba(0,70,75,0.06);
+
+  color: var(--text);
+}
+
+
+.service-icon {
+
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 21px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eefafa,
+      #d9f4f3
+    );
+
+  border:
+    1px solid rgba(0,100,105,0.08);
+}
+
+
+.service-info {
+
+  flex: 1;
+
+  min-width: 0;
+}
+
+
+.service-info strong {
+
+  display: block;
+
+  font-size: 14px;
+
+  line-height: 1.2;
+
+  color: var(--teal-dark);
+}
+
+
+.service-info small {
+
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 11px;
+
+  line-height: 1.2;
+
+  color: var(--muted);
+}
+
+
+.service-arrow {
+
+  color: var(--teal);
+
+  font-size: 24px;
+
+  line-height: 1;
+}
+
+
+/* =====================================================
+   FARM
+   ===================================================== */
+
+.farm-card {
+
+  margin:
+    18px 16px 18px;
+
+  min-height: 110px;
+
+  padding: 18px;
+
+  border-radius: var(--radius-large);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0,60,64,0.98),
+      rgba(0,98,94,0.90)
+    ),
+    url("https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1000&q=80");
+
+  background-size: cover;
+  background-position: center;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 12px 30px rgba(0,70,75,0.14);
+}
+
+
+.farm-content {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+}
+
+
+.farm-icon {
+
+  width: 50px;
+  height: 50px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255,220,120,0.75);
+
+  font-size: 23px;
+
+  background: rgba(255,255,255,0.08);
+}
+
+
+.farm-card h2 {
+
+  margin: 0 0 4px;
+
+  font-family: Georgia, serif;
+
+  font-size: 21px;
+}
+
+
+.farm-card p {
+
+  margin: 0;
+
+  color: rgba(255,255,255,0.82);
+
+  font-size: 12px;
+
+  line-height: 1.35;
+}
+
+
+.farm-arrow {
+
+  width: 45px;
+  height: 45px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--gold-light);
+
+  color: var(--teal-dark);
+
+  font-size: 22px;
+}
+
+
+/* =====================================================
+   BOTTOM NAVIGATION
+   ===================================================== */
+
+.bottom-nav {
+
+  position: fixed;
+
+  left: 50%;
+
+  bottom: 0;
+
+  transform: translateX(-50%);
+
+  width: min(680px, 100%);
+
+  padding:
+    8px 8px
+    calc(8px + env(safe-area-inset-bottom));
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(6, 1fr);
+
+  gap: 3px;
+
+  background:
+    rgba(255,255,255,0.94);
+
+  border-top:
+    1px solid rgba(0,70,75,0.08);
+
+  box-shadow:
+    0 -8px 30px rgba(0,70,75,0.10);
+
+  backdrop-filter: blur(18px);
+
+  z-index: 50;
+}
+
+
+.nav-item {
+
+  min-height: 56px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 3px;
+
+  border-radius: 15px;
+
+  background: transparent;
+
+  color: #607c80;
+}
+
+
+.nav-item span {
+
+  font-size: 21px;
+
+  line-height: 1;
+}
+
+
+.nav-item small {
+
+  font-size: 10px;
+}
+
+
+.nav-item.active {
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff3d1,
+      #ffe7a4
+    );
+
+  color: var(--teal-dark);
+
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   TOAST
+   ===================================================== */
+
+.toast {
+
+  position: fixed;
+
+  left: 50%;
+
+  bottom:
+    calc(85px + env(safe-area-inset-bottom));
+
+  transform:
+    translate(-50%, 20px);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  padding: 12px 18px;
+
+  border-radius: 25px;
+
+  background: var(--teal-dark);
+
+  color: white;
+
+  font-size: 13px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.20);
+
+  transition:
+    all .25s ease;
+
+  z-index: 100;
+}
+
+
+.toast.show {
+
+  opacity: 1;
+
+  transform:
+    translate(-50%, 0);
+}
+
+
+/* =====================================================
+   DESKTOP
+   ===================================================== */
+
+@media (min-width: 700px) {
+
+  body {
+    padding: 25px 0;
   }
 
-  .logo {
-    width: 100px;
-    height: 100px;
+  .app {
+
+    background:
+      rgba(255,255,255,0.88);
+
+    border-radius: 30px;
+
+    box-shadow:
+      0 30px 80px rgba(0,70,75,0.14);
+
+    overflow: hidden;
   }
 
-  h1 {
-    font-size: 34px;
-  }
+  .bottom-nav {
 
-  .subtitle {
-    font-size: 15px;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .card {
-    min-height: 155px;
-    padding: 21px;
-  }
-
-  .mission {
-    padding: 26px 22px;
+    border-radius: 0 0 30px 30px;
   }
 }
 
-/* =========================================
-   МОБИЛЬНЫЙ ТЕЛЕФОН
-   ========================================= */
 
-@media (max-width: 480px) {
+/* =====================================================
+   SMALL PHONES
+   ===================================================== */
 
-  .container {
-    width: calc(100% - 20px);
+@media (max-width: 380px) {
+
+  .brand-logo {
+
+    width: 105px;
+    height: 105px;
   }
 
-  header {
-    padding-bottom: 22px;
+  .brand-name span {
+    font-size: 27px;
   }
 
-  .logo {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 14px;
+  .hero-card {
+    min-height: 215px;
   }
 
-  h1 {
-    font-size: 29px;
-    letter-spacing: 0.5px;
+  .service-card {
+    padding: 9px;
   }
 
-  .subtitle {
-    font-size: 14px;
-    line-height: 1.5;
+  .service-icon {
+    width: 40px;
+    height: 40px;
   }
 
-  .welcome {
-    padding: 21px 20px;
-    margin-bottom: 30px;
-    border-radius: 21px;
-  }
-
-  .welcome h2 {
-    font-size: 19px;
-  }
-
-  .section-title {
-    font-size: 23px;
-  }
-
-  .card {
-    min-height: 145px;
-    padding: 20px;
-    border-radius: 19px;
-  }
-
-  .icon {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    border-radius: 15px;
-    margin-bottom: 13px;
-  }
-
-  .card h3 {
-    font-size: 18px;
-  }
-
-  .card p {
+  .service-info strong {
     font-size: 13px;
   }
-
-  .mission {
-    padding: 23px 20px;
-    border-radius: 21px;
-  }
-
-  .mission h2 {
-    font-size: 23px;
-  }
-
-  .mission p {
-    font-size: 14px;
-  }
-}
-
-/* =========================================
-   ПЛАВНОЕ ПОЯВЛЕНИЕ
-   ========================================= */
-
-@keyframes ummaFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-header,
-.welcome,
-.section-title,
-.card,
-.mission {
-  animation: ummaFadeIn 0.55s ease both;
-}
-
-.card:nth-child(2) {
-  animation-delay: 0.05s;
-}
-
-.card:nth-child(3) {
-  animation-delay: 0.10s;
-}
-
-.card:nth-child(4) {
-  animation-delay: 0.15s;
-}
-
-.card:nth-child(5) {
-  animation-delay: 0.20s;
-}
-
-.card:nth-child(6) {
-  animation-delay: 0.25s;
 }
