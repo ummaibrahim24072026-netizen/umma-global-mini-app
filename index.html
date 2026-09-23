@@ -738,6 +738,147 @@
 
 <script>
 
+/* ==================================================
+   UMMA GLOBAL — AI TRANSLATION
+   The OpenAI API key stays ONLY in Supabase Secrets.
+   ================================================== */
+
+const SUPABASE_TRANSLATE_URL =
+  "https://zwzjougspldexyjlywpr.supabase.co/functions/v1/ai-translate";
+
+async function translateText(text, targetLanguage, sourceLanguage = null) {
+  if (!text || !String(text).trim()) {
+    return "";
+  }
+
+  if (!targetLanguage) {
+    throw new Error("Target language is required");
+  }
+
+  const response = await fetch(SUPABASE_TRANSLATE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text: String(text),
+      target_language: targetLanguage,
+      source_language: sourceLanguage || "auto"
+    })
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (e) {
+    throw new Error("Invalid response from translation service");
+  }
+
+  if (!response.ok || !data.success) {
+    const apiMessage =
+      data?.details?.error?.message ||
+      data?.error ||
+      "Translation service is temporarily unavailable";
+
+    throw new Error(apiMessage);
+  }
+
+  return data.translated_text || "";
+}
+
+/* Detect the language supplied by Telegram.
+   Telegram language codes are normalized to readable names. */
+function getTelegramLanguageCode() {
+  const code =
+    telegramUser?.language_code ||
+    tg?.initDataUnsafe?.user?.language_code ||
+    navigator.language ||
+    "en";
+
+  return String(code).split("-")[0].toLowerCase();
+}
+
+const UMMA_LANGUAGE_NAMES = {
+  af: "Afrikaans",
+  ar: "Arabic",
+  az: "Azerbaijani",
+  be: "Belarusian",
+  bg: "Bulgarian",
+  bn: "Bengali",
+  bs: "Bosnian",
+  ca: "Catalan",
+  cs: "Czech",
+  cy: "Welsh",
+  da: "Danish",
+  de: "German",
+  el: "Greek",
+  en: "English",
+  es: "Spanish",
+  et: "Estonian",
+  fa: "Persian",
+  fi: "Finnish",
+  fr: "French",
+  ga: "Irish",
+  he: "Hebrew",
+  hi: "Hindi",
+  hr: "Croatian",
+  hu: "Hungarian",
+  hy: "Armenian",
+  id: "Indonesian",
+  is: "Icelandic",
+  it: "Italian",
+  ja: "Japanese",
+  ka: "Georgian",
+  kk: "Kazakh",
+  km: "Khmer",
+  ko: "Korean",
+  lo: "Lao",
+  lt: "Lithuanian",
+  lv: "Latvian",
+  mk: "Macedonian",
+  mn: "Mongolian",
+  ms: "Malay",
+  my: "Burmese",
+  ne: "Nepali",
+  nl: "Dutch",
+  no: "Norwegian",
+  pa: "Punjabi",
+  pl: "Polish",
+  pt: "Portuguese",
+  ro: "Romanian",
+  ru: "Russian",
+  sk: "Slovak",
+  sl: "Slovenian",
+  sq: "Albanian",
+  sr: "Serbian",
+  sv: "Swedish",
+  sw: "Swahili",
+  ta: "Tamil",
+  te: "Telugu",
+  th: "Thai",
+  tr: "Turkish",
+  uk: "Ukrainian",
+  ur: "Urdu",
+  uz: "Uzbek",
+  vi: "Vietnamese",
+  zh: "Chinese"
+};
+
+function getTelegramLanguageName() {
+  const code = getTelegramLanguageCode();
+  return UMMA_LANGUAGE_NAMES[code] || "English";
+}
+
+/* Convenient helper for future UI elements:
+   translateTextToUserLanguage("Hello") */
+async function translateTextToUserLanguage(text, sourceLanguage = null) {
+  return translateText(
+    text,
+    getTelegramLanguageName(),
+    sourceLanguage
+  );
+}
+
 
 /* ==================================================
    TELEGRAM WEB APP
