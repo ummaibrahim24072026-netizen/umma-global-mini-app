@@ -1,491 +1,281 @@
+/* =====================================================
+   UMMA GLOBAL
+   Telegram Mini App
+   ===================================================== */
+
 const tg = window.Telegram?.WebApp;
 
+
+/* =====================================================
+   TELEGRAM
+   ===================================================== */
+
 if (tg) {
+
   tg.ready();
+
   tg.expand();
+
+  tg.setHeaderColor("#ffffff");
+
+  tg.setBackgroundColor("#edfafa");
+
+  tg.enableClosingConfirmation?.();
+
 }
 
-const pages = document.querySelectorAll(".page");
-const moduleButtons = document.querySelectorAll(".module-card");
+
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
+
 const toast = document.getElementById("toast");
 
-function showPage(pageId) {
-  pages.forEach((page) => {
-    page.classList.remove("active");
-  });
+const menuBtn = document.getElementById("menuBtn");
 
-  const targetPage = document.getElementById(pageId);
+const languageBtn =
+  document.getElementById("languageBtn");
 
-  if (!targetPage) {
-    return;
-  }
+const notificationBtn =
+  document.getElementById("notificationBtn");
 
-  targetPage.classList.add("active");
+const profileBtn =
+  document.getElementById("profileBtn");
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
+const allServicesBtn =
+  document.getElementById("allServicesBtn");
+
+
+/* =====================================================
+   TOAST
+   ===================================================== */
 
 function showToast(message) {
-  if (!toast) {
-    return;
-  }
 
   toast.textContent = message;
+
   toast.classList.add("show");
 
   setTimeout(() => {
+
     toast.classList.remove("show");
-  }, 2500);
+
+  }, 2200);
 }
 
-function getTelegramUser() {
-  if (!tg || !tg.initDataUnsafe) {
-    return null;
-  }
 
-  return tg.initDataUnsafe.user || null;
-}
+/* =====================================================
+   NAVIGATION
+   ===================================================== */
 
-function getUserLanguage() {
-  const user = getTelegramUser();
+function openPage(page) {
 
-  if (user?.language_code) {
-    return user.language_code;
-  }
+  const names = {
 
-  const browserLanguage = navigator.language;
+    home: "Главная",
 
-  if (browserLanguage) {
-    return browserLanguage.split("-")[0];
-  }
+    cafe: "Кафе Umma",
 
-  return "en";
-}
+    market: "Рынок Umma",
 
-function updateWelcomeMessage() {
-  const user = getTelegramUser();
-  const languageElement = document.getElementById("user-language");
+    travel: "Путешествия",
 
-  if (!languageElement) {
-    return;
-  }
+    hotels: "Отели Umma",
 
-  const language = getUserLanguage();
-
-  if (user) {
-    const firstName = user.first_name || "";
-
-    languageElement.textContent =
-      `Language: ${language} · ${firstName}`;
-  } else {
-    languageElement.textContent =
-      `Language: ${language}`;
-  }
-}
-
-function createBackButton() {
-  const button = document.createElement("button");
-
-  button.className = "back";
-  button.type = "button";
-  button.textContent = "← Back";
-
-  button.addEventListener("click", () => {
-    showPage("home-page");
-  });
-
-  return button;
-}
-
-function createIntro(icon, title, description) {
-  const intro = document.createElement("section");
-
-  intro.className = "intro";
-
-  intro.innerHTML = `
-    <div class="icon">${icon}</div>
-    <h2>${title}</h2>
-    <p class="muted">${description}</p>
-  `;
-
-  return intro;
-}
-
-function createProductCard(title, description, price = "") {
-  const card = document.createElement("article");
-
-  card.className = "product-card";
-
-  card.innerHTML = `
-    <h3>${title}</h3>
-    <p>${description}</p>
-    ${
-      price
-        ? `<div class="price">${price}</div>`
-        : ""
-    }
-  `;
-
-  return card;
-}
-
-function setupCafePage() {
-  const page = document.getElementById("cafe-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "🍽️",
-      "Umma Cafe",
-      "Halal food prepared with care and served for the pleasure of Allah."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "Shurpa",
-      "Traditional lamb soup · approximately 650 g",
-      "90,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Plov",
-      "Lamb plov · approximately 450 g",
-      "120,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Manti",
-      "Traditional manti · approximately 400 g",
-      "150,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "UMMA Flatbread",
-      "Fresh flatbread · approximately 230 g",
-      "25,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Salad",
-      "Fresh vegetable salad · approximately 200 g",
-      "50,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Samsa",
-      "Halal samsa · approximately 120 g",
-      "70,000 VND"
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Ayran",
-      "Traditional ayran · 300 ml",
-      "30,000 VND"
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupMarketPage() {
-  const page = document.getElementById("market-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "🛒",
-      "Umma Market",
-      "A marketplace for halal products and trusted suppliers."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "Halal Food",
-      "Halal meat and food products from trusted suppliers."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Household Products",
-      "Useful products for homes and businesses."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Business Supplies",
-      "Products and supplies for Umma businesses."
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupServicesPage() {
-  const page = document.getElementById("services-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "🌍",
-      "Services",
-      "Useful services for travel, accommodation, transport and everyday life."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "Umma Travel",
-      "Travel services and halal-friendly destinations."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Umma Hotel",
-      "Accommodation for Muslims and families."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Transport",
-      "Transportation and delivery services."
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupCommunityPage() {
-  const page = document.getElementById("community-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "🤝",
-      "Community",
-      "A place for people to connect, help one another and build useful projects."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "People",
-      "Connect with Muslims and members of the Ummah."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Help",
-      "Find and offer useful help within the community."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Announcements",
-      "Important community information and updates."
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupBusinessPage() {
-  const page = document.getElementById("business-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "💼",
-      "Business",
-      "Businesses, entrepreneurs, halal projects and opportunities."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "Businesses",
-      "Discover businesses operating within the Umma ecosystem."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Entrepreneurs",
-      "Connect with Muslim entrepreneurs and partners."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Opportunities",
-      "Projects, partnerships and business opportunities."
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupEducationPage() {
-  const page = document.getElementById("education-page");
-
-  if (!page) {
-    return;
-  }
-
-  page.innerHTML = "";
-
-  page.appendChild(createBackButton());
-
-  page.appendChild(
-    createIntro(
-      "📚",
-      "Education",
-      "Education for children, families and the wider Ummah."
-    )
-  );
-
-  const list = document.createElement("div");
-
-  list.className = "list";
-
-  list.appendChild(
-    createProductCard(
-      "Umma School",
-      "Education for Muslim children."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Umma Medrese",
-      "Islamic education and Quran studies."
-    )
-  );
-
-  list.appendChild(
-    createProductCard(
-      "Umma University",
-      "Higher education and professional development."
-    )
-  );
-
-  page.appendChild(list);
-}
-
-function setupNavigation() {
-  moduleButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const pageId = button.dataset.page;
-
-      if (!pageId) {
-        return;
-      }
-
-      showPage(pageId);
+    realestate: "Недвижимость",
+
+    community: "Сообщество",
+
+    business: "Бизнес",
+
+    education: "Образование",
+
+    health: "Здоровье",
+
+    services: "Услуги",
+
+    more: "Дополнительные сервисы"
+
+  };
+
+
+  if (page === "home") {
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
     });
-  });
-}
 
-function setupTelegramMainButton() {
-  if (!tg) {
+    setActiveNav("home");
+
     return;
   }
 
-  tg.MainButton.setText("Umma Global");
-  tg.MainButton.hide();
+
+  showToast(
+    `${names[page] || "Раздел"} — скоро будет доступен`
+  );
+
 }
 
-function init() {
-  setupNavigation();
 
-  setupCafePage();
-  setupMarketPage();
-  setupServicesPage();
-  setupCommunityPage();
-  setupBusinessPage();
-  setupEducationPage();
+/* =====================================================
+   SERVICE BUTTONS
+   ===================================================== */
 
-  updateWelcomeMessage();
-  setupTelegramMainButton();
+document
+  .querySelectorAll("[data-page]")
+  .forEach(button => {
 
-  showPage("home-page");
+    button.addEventListener("click", () => {
+
+      const page =
+        button.getAttribute("data-page");
+
+      openPage(page);
+
+    });
+
+  });
+
+
+/* =====================================================
+   BOTTOM NAV
+   ===================================================== */
+
+function setActiveNav(page) {
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(item => {
+
+      item.classList.remove("active");
+
+    });
+
+
+  const active =
+    document.querySelector(
+      `.nav-item[data-page="${page}"]`
+    );
+
+
+  if (active) {
+
+    active.classList.add("active");
+
+  }
+
 }
 
-document.addEventListener("DOMContentLoaded", init);
+
+/* =====================================================
+   MENU
+   ===================================================== */
+
+menuBtn?.addEventListener("click", () => {
+
+  showToast("Меню Umma Global");
+
+});
+
+
+/* =====================================================
+   LANGUAGE
+   ===================================================== */
+
+languageBtn?.addEventListener("click", () => {
+
+  showToast("Выбор языка");
+
+});
+
+
+/* =====================================================
+   NOTIFICATIONS
+   ===================================================== */
+
+notificationBtn?.addEventListener("click", () => {
+
+  showToast("Новых уведомлений: 3");
+
+});
+
+
+/* =====================================================
+   PROFILE
+   ===================================================== */
+
+profileBtn?.addEventListener("click", () => {
+
+  showToast("Профиль пользователя");
+
+});
+
+
+/* =====================================================
+   ALL SERVICES
+   ===================================================== */
+
+allServicesBtn?.addEventListener("click", () => {
+
+  showToast("Все сервисы Umma");
+
+});
+
+
+/* =====================================================
+   TELEGRAM USER
+   ===================================================== */
+
+function updateTelegramUser() {
+
+  if (!tg?.initDataUnsafe?.user) {
+    return;
+  }
+
+
+  const user =
+    tg.initDataUnsafe.user;
+
+
+  const firstName =
+    user.first_name || "";
+
+
+  const welcomeTitle =
+    document.querySelector(".welcome-text h2");
+
+
+  if (welcomeTitle && firstName) {
+
+    welcomeTitle.textContent =
+      `Ас-саляму алейкум, ${firstName}!`;
+
+  }
+
+}
+
+
+updateTelegramUser();
+
+
+/* =====================================================
+   HAPTIC FEEDBACK
+   ===================================================== */
+
+document
+  .querySelectorAll("button")
+  .forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      try {
+
+        tg?.HapticFeedback?.impactOccurred("light");
+
+      } catch (error) {}
+
+    });
+
+  });
