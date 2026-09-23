@@ -375,6 +375,114 @@
       }
     }
 
+    /* =========================
+       UMMA CAFE / MARKET
+       ========================= */
+
+    .product-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+
+    .product-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .product-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: #eef7fd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex: 0 0 54px;
+    }
+
+    .product-card h3 {
+      margin: 0 0 5px;
+      font-size: 17px;
+    }
+
+    .product-card p {
+      margin: 0;
+      color: #68737d;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .price {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .module-intro {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .module-intro h2 {
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+
+    .module-intro p {
+      margin: 0;
+      color: #68737d;
+      line-height: 1.5;
+    }
+
+    .action-button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      background: #2196e0;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .category-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .category-card h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+    }
+
+    .category-card p {
+      margin: 0;
+      color: #68737d;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status-note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #eef7fd;
+      color: #38627c;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
   </style>
 </head>
 
@@ -428,90 +536,41 @@
 
     <div class="grid">
 
-
-      <button
-        class="card"
-        type="button"
-        onclick="openCommunity()"
-      >
-
-        <div class="icon">
-          🤝
-        </div>
-
-        <h3>
-          Сообщество
-        </h3>
-
-        <p>
-          Люди, связи и взаимопомощь
-        </p>
-
+      <button class="card" type="button" onclick="openCafe()">
+        <div class="icon">🍽️</div>
+        <h3>Umma Cafe</h3>
+        <p>Халяльная еда, меню и заказ</p>
       </button>
 
-
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Бизнес')"
-      >
-
-        <div class="icon">
-          💼
-        </div>
-
-        <h3>
-          Бизнес
-        </h3>
-
-        <p>
-          Халяльные проекты и возможности
-        </p>
-
+      <button class="card" type="button" onclick="openMarket()">
+        <div class="icon">🛒</div>
+        <h3>Umma Market</h3>
+        <p>Халяльные товары и каталог</p>
       </button>
 
-
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Сервисы')"
-      >
-
-        <div class="icon">
-          🌍
-        </div>
-
-        <h3>
-          Сервисы
-        </h3>
-
-        <p>
-          Полезные решения для жизни
-        </p>
-
+      <button class="card" type="button" onclick="openCommunity()">
+        <div class="icon">🤝</div>
+        <h3>Сообщество</h3>
+        <p>Люди, связи и взаимопомощь</p>
       </button>
 
-
-      <button
-        class="card"
-        type="button"
-        onclick="showMessage('Проекты')"
-      >
-
-        <div class="icon">
-          🚀
-        </div>
-
-        <h3>
-          Проекты
-        </h3>
-
-        <p>
-          Создаём и развиваем вместе
-        </p>
-
+      <button class="card" type="button" onclick="openBusiness()">
+        <div class="icon">💼</div>
+        <h3>Бизнес</h3>
+        <p>Халяльные проекты и возможности</p>
       </button>
 
+      <button class="card" type="button" onclick="openServices()">
+        <div class="icon">🌍</div>
+        <h3>Сервисы</h3>
+        <p>Полезные решения для жизни</p>
+      </button>
+
+      <button class="card" type="button" onclick="openProjects()">
+        <div class="icon">🚀</div>
+        <h3>Проекты</h3>
+        <p>Создаём и развиваем вместе</p>
+      </button>
 
     </div>
 
@@ -542,6 +601,138 @@
 
 </div>
 
+
+
+
+<!-- ==================================================
+     UMMA CAFE
+     ================================================== -->
+
+<div id="cafePage" class="page">
+  <div class="container">
+    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
+
+    <div class="module-intro">
+      <div class="big-icon">🍽️</div>
+      <h2>Umma Cafe</h2>
+      <p>Халяльное кафе Umma. Еда ради довольства Аллаха.</p>
+    </div>
+
+    <div class="section-title">Меню</div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🍲</div><div><h3>Шурпа</h3><p>Ароматный суп с мясом и овощами · около 650 г</p></div></div>
+      <div class="price">90 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🍚</div><div><h3>Плов с бараниной</h3><p>Традиционный плов · около 450 г</p></div></div>
+      <div class="price">120 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🥟</div><div><h3>Манты</h3><p>Халяльные манты · около 400 г</p></div></div>
+      <div class="price">150 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🫓</div><div><h3>UMMA Flatbread</h3><p>Лепёшка · около 230 г</p></div></div>
+      <div class="price">25 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🥗</div><div><h3>Салат</h3><p>Свежий овощной салат · около 200 г</p></div></div>
+      <div class="price">50 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🥟</div><div><h3>Самса</h3><p>Халяльная самса · около 120 г</p></div></div>
+      <div class="price">70 000 ₫</div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-top"><div class="product-icon">🥛</div><div><h3>Айран</h3><p>Освежающий айран · 300 мл</p></div></div>
+      <div class="price">30 000 ₫</div>
+    </div>
+
+    <button class="action-button" type="button" onclick="showComingSoon('Заказ и доставка')">🛵 Заказать еду</button>
+    <div class="status-note">Следующий этап: корзина, заказ, QR-оплата и доставка через Telegram.</div>
+  </div>
+</div>
+
+
+<!-- ==================================================
+     UMMA MARKET
+     ================================================== -->
+
+<div id="marketPage" class="page">
+  <div class="container">
+    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
+
+    <div class="module-intro">
+      <div class="big-icon">🛒</div>
+      <h2>Umma Market</h2>
+      <p>Халяльный маркет для товаров, продуктов и услуг Umma.</p>
+    </div>
+
+    <div class="section-title">Каталог</div>
+
+    <div class="category-card"><h3>🥩 Халяльные продукты</h3><p>Мясо, продукты питания и товары с проверенным халяльным происхождением.</p></div>
+    <div class="category-card"><h3>🏠 Для дома</h3><p>Полезные товары для дома и повседневной жизни.</p></div>
+    <div class="category-card"><h3>👕 Одежда</h3><p>Одежда и товары Umma Clothing.</p></div>
+    <div class="category-card"><h3>🐑 Umma Farm</h3><p>Халяльное мясо и продукция фермерского направления.</p></div>
+
+    <button class="action-button" type="button" onclick="showComingSoon('Каталог и корзина')">🛒 Открыть каталог</button>
+    <div class="status-note">Сейчас показываем структуру магазина. Следующий этап — база товаров, остатки, корзина, заказ, доставка и оплата.</div>
+  </div>
+</div>
+
+
+<!-- ==================================================
+     UMMA BUSINESS
+     ================================================== -->
+
+<div id="businessPage" class="page">
+  <div class="container">
+    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
+    <div class="module-intro"><div class="big-icon">💼</div><h2>Umma Business</h2><p>Халяльные предприниматели, проекты и возможности внутри экосистемы Umma.</p></div>
+    <div class="category-card"><h3>🤝 Предприниматели</h3><p>Профили предпринимателей и их предложения.</p></div>
+    <div class="category-card"><h3>🏪 Бизнесы Umma</h3><p>Кафе, магазины, сервисы и другие проекты экосистемы.</p></div>
+    <div class="category-card"><h3>📣 Объявления</h3><p>Предложения, сотрудничество и поиск партнёров.</p></div>
+  </div>
+</div>
+
+
+<!-- ==================================================
+     UMMA SERVICES
+     ================================================== -->
+
+<div id="servicesPage" class="page">
+  <div class="container">
+    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
+    <div class="module-intro"><div class="big-icon">🌍</div><h2>Umma Services</h2><p>Полезные сервисы для жизни, семьи, путешествий и развития.</p></div>
+    <div class="category-card"><h3>✈️ Umma Travel</h3><p>Путешествия и услуги для мусульман.</p></div>
+    <div class="category-card"><h3>💪 Umma Fitness</h3><p>Здоровый образ жизни и спорт.</p></div>
+    <div class="category-card"><h3>🏨 Umma Hotel</h3><p>Размещение и гостеприимство.</p></div>
+    <div class="category-card"><h3>📚 Umma Medrese</h3><p>Образование и знания.</p></div>
+  </div>
+</div>
+
+
+<!-- ==================================================
+     UMMA PROJECTS
+     ================================================== -->
+
+<div id="projectsPage" class="page">
+  <div class="container">
+    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
+    <div class="module-intro"><div class="big-icon">🚀</div><h2>Umma Projects</h2><p>Проекты, которые создают пользу для Уммы.</p></div>
+    <div class="category-card"><h3>🏫 Umma School</h3><p>Образовательные проекты для детей.</p></div>
+    <div class="category-card"><h3>🎓 Umma University</h3><p>Высшее и профессиональное образование.</p></div>
+    <div class="category-card"><h3>🌾 Umma Farm</h3><p>Фермерство и производство халяльной продукции.</p></div>
+    <div class="category-card"><h3>🏭 Umma Production</h3><p>Производство товаров внутри экосистемы.</p></div>
+  </div>
+</div>
 
 
 <!-- ==================================================
@@ -1393,26 +1584,52 @@ function clearProfile() {
    ВРЕМЕННЫЕ РАЗДЕЛЫ
    ================================================== */
 
-function showMessage(section) {
+function hideAllPages() {
+  document.querySelectorAll(".page").forEach(function(page) {
+    page.classList.remove("active");
+  });
+  window.scrollTo(0, 0);
+}
 
-  const message =
-    "Раздел «"
-    + section
-    + "» будет подключён следующим этапом.";
+function openPage(id) {
+  hideAllPages();
+  const page = document.getElementById(id);
+  if (page) {
+    page.classList.add("active");
+  }
+}
 
+function openCafe() {
+  openPage("cafePage");
+}
 
-  if (tg) {
+function openMarket() {
+  openPage("marketPage");
+}
 
+function openBusiness() {
+  openPage("businessPage");
+}
+
+function openServices() {
+  openPage("servicesPage");
+}
+
+function openProjects() {
+  openPage("projectsPage");
+}
+
+function showComingSoon(section) {
+  const message = section + " будет подключено следующим этапом.";
+  if (tg && tg.showAlert) {
     tg.showAlert(message);
-
-  }
-
-  else {
-
+  } else {
     alert(message);
-
   }
+}
 
+function showMessage(section) {
+  showComingSoon(section);
 }
 
 </script>
