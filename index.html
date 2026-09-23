@@ -1,1638 +1,239 @@
-<!DOCTYPE html>
-<html lang="ru">
+<!doctype html>
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#fff">
 
   <title>Umma Global</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      color: #17202a;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      padding: 24px 16px 40px;
-    }
-
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    /* =========================
-       ГЛАВНАЯ
-       ========================= */
-
-    .header {
-      text-align: center;
-      padding: 20px 0 30px;
-    }
-
-    .logo {
-      width: 82px;
-      height: 82px;
-      margin: auto;
-      border-radius: 50%;
-      background: #2196e0;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    h1 {
-      margin: 16px 0 8px;
-      font-size: 30px;
-    }
-
-    .subtitle {
-      color: #68737d;
-      line-height: 1.5;
-    }
-
-    .welcome {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .welcome h2 {
-      margin: 0 0 8px;
-      font-size: 20px;
-      line-height: 1.4;
-    }
-
-    .welcome p {
-      margin: 0;
-      color: #68737d;
-    }
-
-    .section-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 14px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .card {
-      border: 0;
-      background: white;
-      border-radius: 18px;
-      padding: 20px 16px;
-      text-align: left;
-      min-height: 130px;
-      color: #17202a;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 16px;
-      transition: transform 0.1s ease;
-    }
-
-    .card:active {
-      transform: scale(0.98);
-    }
-
-    .icon {
-      font-size: 30px;
-      margin-bottom: 12px;
-    }
-
-    .card h3 {
-      margin: 0 0 6px;
-      font-size: 17px;
-    }
-
-    .card p {
-      margin: 0;
-      font-size: 13px;
-      color: #68737d;
-      line-height: 1.4;
-    }
-
-    .mission {
-      margin-top: 24px;
-      padding: 22px;
-      border-radius: 18px;
-      background: #2196e0;
-      color: white;
-    }
-
-    .mission h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
-    }
-
-    .mission p {
-      margin: 0;
-      line-height: 1.6;
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 28px;
-      color: #7b858e;
-      font-size: 12px;
-    }
-
-    /* =========================
-       КНОПКА НАЗАД
-       ========================= */
-
-    .back-button {
-      border: 0;
-      background: white;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #17202a;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-
-    /* =========================
-       СООБЩЕСТВО
-       ========================= */
-
-    .community-header {
-      background: white;
-      border-radius: 18px;
-      padding: 22px;
-      margin-bottom: 18px;
-    }
-
-    .community-header .big-icon {
-      font-size: 42px;
-      margin-bottom: 12px;
-    }
-
-    .community-header h2 {
-      margin: 0 0 8px;
-      font-size: 25px;
-    }
-
-    .community-header p {
-      margin: 0;
-      color: #68737d;
-      line-height: 1.5;
-    }
-
-    /* =========================
-       TELEGRAM ПРОФИЛЬ
-       ========================= */
-
-    .profile-card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .profile-title {
-      font-size: 16px;
-      color: #68737d;
-      margin-bottom: 8px;
-    }
-
-    .profile-name {
-      font-size: 23px;
-      font-weight: bold;
-      margin-bottom: 6px;
-      word-break: break-word;
-    }
-
-    .profile-id {
-      color: #68737d;
-      font-size: 13px;
-      word-break: break-word;
-    }
-
-    /* =========================
-       ФОРМА
-       ========================= */
-
-    .form-card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .form-card h3 {
-      margin: 0 0 18px;
-      font-size: 19px;
-    }
-
-    .field {
-      margin-bottom: 16px;
-    }
-
-    .field:last-child {
-      margin-bottom: 0;
-    }
-
-    .field label {
-      display: block;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 7px;
-    }
-
-    .field input,
-    .field textarea {
-      width: 100%;
-      border: 1px solid #d9dee4;
-      border-radius: 12px;
-      padding: 13px;
-      font-size: 16px;
-      font-family: inherit;
-      background: #f8fafc;
-      color: #17202a;
-      outline: none;
-    }
-
-    .field textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .field input:focus,
-    .field textarea:focus {
-      border-color: #2196e0;
-    }
-
-    /* =========================
-       КНОПКИ
-       ========================= */
-
-    .primary-button {
-      width: 100%;
-      border: 0;
-      border-radius: 16px;
-      padding: 17px;
-      background: #2196e0;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-
-    .primary-button:active {
-      transform: scale(0.98);
-    }
-
-    .secondary-button {
-      width: 100%;
-      border: 0;
-      border-radius: 16px;
-      padding: 16px;
-      background: #f0f3f6;
-      color: #17202a;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 12px;
-    }
-
-    /* =========================
-       СООБЩЕНИЕ О СОХРАНЕНИИ
-       ========================= */
-
-    .save-message {
-      display: none;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 16px;
-      text-align: center;
-      font-size: 17px;
-      font-weight: bold;
-      line-height: 1.4;
-    }
-
-    .save-message.success {
-      display: block;
-      background: #e8f7ee;
-      color: #18763f;
-      border: 1px solid #b9e5c9;
-    }
-
-    .save-message.error {
-      display: block;
-      background: #fff0f0;
-      color: #b42318;
-      border: 1px solid #f1b8b4;
-    }
-
-    /* =========================
-       ИНФОРМАЦИЯ
-       ========================= */
-
-    .info-card {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      margin-top: 16px;
-    }
-
-    .info-card h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-    }
-
-    .info-card p {
-      margin: 0;
-      color: #68737d;
-      line-height: 1.5;
-    }
-
-    @media (max-width: 400px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* =========================
-       UMMA CAFE / MARKET
-       ========================= */
-
-    .product-card {
-      background: white;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 12px;
-    }
-
-    .product-top {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .product-icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 14px;
-      background: #eef7fd;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      flex: 0 0 54px;
-    }
-
-    .product-card h3 {
-      margin: 0 0 5px;
-      font-size: 17px;
-    }
-
-    .product-card p {
-      margin: 0;
-      color: #68737d;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .price {
-      margin-top: 10px;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .module-intro {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .module-intro h2 {
-      margin: 0 0 8px;
-      font-size: 25px;
-    }
-
-    .module-intro p {
-      margin: 0;
-      color: #68737d;
-      line-height: 1.5;
-    }
-
-    .action-button {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-top: 12px;
-      background: #2196e0;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .category-card {
-      background: white;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
-
-    .category-card h3 {
-      margin: 0 0 6px;
-      font-size: 17px;
-    }
-
-    .category-card p {
-      margin: 0;
-      color: #68737d;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .status-note {
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      background: #eef7fd;
-      color: #38627c;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-  </style>
+  <link rel="stylesheet" href="./css/app.css">
 </head>
-
 
 <body>
 
+  <main id="app">
 
-<!-- ==================================================
-     ГЛАВНАЯ СТРАНИЦА
-     ================================================== -->
+    <!-- HOME -->
+    <section id="home-page" class="page active">
 
-<div id="homePage" class="page active">
+      <header class="hero">
+        <div class="logo">UG</div>
 
-  <div class="container">
+        <h1>Umma Global</h1>
 
-    <div class="header">
-
-      <div class="logo">
-        UG
-      </div>
-
-      <h1>
-        Umma Global
-      </h1>
-
-      <div class="subtitle">
-        Единая экосистема для жизни,<br>
-        бизнеса и сообщества
-      </div>
-
-    </div>
+        <p>
+          One ecosystem for life, business and community.
+        </p>
+      </header>
 
 
-    <div class="welcome">
+      <!-- WELCOME -->
+      <section class="card welcome">
 
-      <h2 id="welcome">
-        Ассаляму алейкум ва рахматуллахи ва баракатух!
+        <h2 id="welcome-message">
+          As-salamu alaykum wa rahmatullahi wa barakatuh!
+        </h2>
+
+        <p id="user-language"></p>
+
+      </section>
+
+
+      <!-- ECOSYSTEM -->
+      <h2 class="section-title">
+        Umma Ecosystem
       </h2>
 
-      <p>
-        Добро пожаловать в Umma Global
-      </p>
 
-    </div>
+      <div class="grid">
 
-
-    <div class="section-title">
-      Экосистема Umma
-    </div>
-
-
-    <div class="grid">
-
-      <button class="card" type="button" onclick="openCafe()">
-        <div class="icon">🍽️</div>
-        <h3>Umma Cafe</h3>
-        <p>Халяльная еда, меню и заказ</p>
-      </button>
-
-      <button class="card" type="button" onclick="openMarket()">
-        <div class="icon">🛒</div>
-        <h3>Umma Market</h3>
-        <p>Халяльные товары и каталог</p>
-      </button>
-
-      <button class="card" type="button" onclick="openCommunity()">
-        <div class="icon">🤝</div>
-        <h3>Сообщество</h3>
-        <p>Люди, связи и взаимопомощь</p>
-      </button>
-
-      <button class="card" type="button" onclick="openBusiness()">
-        <div class="icon">💼</div>
-        <h3>Бизнес</h3>
-        <p>Халяльные проекты и возможности</p>
-      </button>
-
-      <button class="card" type="button" onclick="openServices()">
-        <div class="icon">🌍</div>
-        <h3>Сервисы</h3>
-        <p>Полезные решения для жизни</p>
-      </button>
-
-      <button class="card" type="button" onclick="openProjects()">
-        <div class="icon">🚀</div>
-        <h3>Проекты</h3>
-        <p>Создаём и развиваем вместе</p>
-      </button>
-
-    </div>
-
-
-    <div class="mission">
-
-      <h2>
-        Наше намерение
-      </h2>
-
-      <p>
-        Создавать полезную экосистему для Уммы,
-        объединять людей и развивать халяльные проекты —
-        ради довольства Аллаха.
-      </p>
-
-    </div>
-
-
-    <div class="footer">
-
-      Umma Global<br>
-      Ради довольства Аллаха
-
-    </div>
-
-  </div>
-
-</div>
-
-
-
-
-<!-- ==================================================
-     UMMA CAFE
-     ================================================== -->
-
-<div id="cafePage" class="page">
-  <div class="container">
-    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
-
-    <div class="module-intro">
-      <div class="big-icon">🍽️</div>
-      <h2>Umma Cafe</h2>
-      <p>Халяльное кафе Umma. Еда ради довольства Аллаха.</p>
-    </div>
-
-    <div class="section-title">Меню</div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🍲</div><div><h3>Шурпа</h3><p>Ароматный суп с мясом и овощами · около 650 г</p></div></div>
-      <div class="price">90 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🍚</div><div><h3>Плов с бараниной</h3><p>Традиционный плов · около 450 г</p></div></div>
-      <div class="price">120 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🥟</div><div><h3>Манты</h3><p>Халяльные манты · около 400 г</p></div></div>
-      <div class="price">150 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🫓</div><div><h3>UMMA Flatbread</h3><p>Лепёшка · около 230 г</p></div></div>
-      <div class="price">25 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🥗</div><div><h3>Салат</h3><p>Свежий овощной салат · около 200 г</p></div></div>
-      <div class="price">50 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🥟</div><div><h3>Самса</h3><p>Халяльная самса · около 120 г</p></div></div>
-      <div class="price">70 000 ₫</div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-top"><div class="product-icon">🥛</div><div><h3>Айран</h3><p>Освежающий айран · 300 мл</p></div></div>
-      <div class="price">30 000 ₫</div>
-    </div>
-
-    <button class="action-button" type="button" onclick="showComingSoon('Заказ и доставка')">🛵 Заказать еду</button>
-    <div class="status-note">Следующий этап: корзина, заказ, QR-оплата и доставка через Telegram.</div>
-  </div>
-</div>
-
-
-<!-- ==================================================
-     UMMA MARKET
-     ================================================== -->
-
-<div id="marketPage" class="page">
-  <div class="container">
-    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
-
-    <div class="module-intro">
-      <div class="big-icon">🛒</div>
-      <h2>Umma Market</h2>
-      <p>Халяльный маркет для товаров, продуктов и услуг Umma.</p>
-    </div>
-
-    <div class="section-title">Каталог</div>
-
-    <div class="category-card"><h3>🥩 Халяльные продукты</h3><p>Мясо, продукты питания и товары с проверенным халяльным происхождением.</p></div>
-    <div class="category-card"><h3>🏠 Для дома</h3><p>Полезные товары для дома и повседневной жизни.</p></div>
-    <div class="category-card"><h3>👕 Одежда</h3><p>Одежда и товары Umma Clothing.</p></div>
-    <div class="category-card"><h3>🐑 Umma Farm</h3><p>Халяльное мясо и продукция фермерского направления.</p></div>
-
-    <button class="action-button" type="button" onclick="showComingSoon('Каталог и корзина')">🛒 Открыть каталог</button>
-    <div class="status-note">Сейчас показываем структуру магазина. Следующий этап — база товаров, остатки, корзина, заказ, доставка и оплата.</div>
-  </div>
-</div>
-
-
-<!-- ==================================================
-     UMMA BUSINESS
-     ================================================== -->
-
-<div id="businessPage" class="page">
-  <div class="container">
-    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
-    <div class="module-intro"><div class="big-icon">💼</div><h2>Umma Business</h2><p>Халяльные предприниматели, проекты и возможности внутри экосистемы Umma.</p></div>
-    <div class="category-card"><h3>🤝 Предприниматели</h3><p>Профили предпринимателей и их предложения.</p></div>
-    <div class="category-card"><h3>🏪 Бизнесы Umma</h3><p>Кафе, магазины, сервисы и другие проекты экосистемы.</p></div>
-    <div class="category-card"><h3>📣 Объявления</h3><p>Предложения, сотрудничество и поиск партнёров.</p></div>
-  </div>
-</div>
-
-
-<!-- ==================================================
-     UMMA SERVICES
-     ================================================== -->
-
-<div id="servicesPage" class="page">
-  <div class="container">
-    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
-    <div class="module-intro"><div class="big-icon">🌍</div><h2>Umma Services</h2><p>Полезные сервисы для жизни, семьи, путешествий и развития.</p></div>
-    <div class="category-card"><h3>✈️ Umma Travel</h3><p>Путешествия и услуги для мусульман.</p></div>
-    <div class="category-card"><h3>💪 Umma Fitness</h3><p>Здоровый образ жизни и спорт.</p></div>
-    <div class="category-card"><h3>🏨 Umma Hotel</h3><p>Размещение и гостеприимство.</p></div>
-    <div class="category-card"><h3>📚 Umma Medrese</h3><p>Образование и знания.</p></div>
-  </div>
-</div>
-
-
-<!-- ==================================================
-     UMMA PROJECTS
-     ================================================== -->
-
-<div id="projectsPage" class="page">
-  <div class="container">
-    <button class="back-button" type="button" onclick="goHome()">← Назад</button>
-    <div class="module-intro"><div class="big-icon">🚀</div><h2>Umma Projects</h2><p>Проекты, которые создают пользу для Уммы.</p></div>
-    <div class="category-card"><h3>🏫 Umma School</h3><p>Образовательные проекты для детей.</p></div>
-    <div class="category-card"><h3>🎓 Umma University</h3><p>Высшее и профессиональное образование.</p></div>
-    <div class="category-card"><h3>🌾 Umma Farm</h3><p>Фермерство и производство халяльной продукции.</p></div>
-    <div class="category-card"><h3>🏭 Umma Production</h3><p>Производство товаров внутри экосистемы.</p></div>
-  </div>
-</div>
-
-
-<!-- ==================================================
-     СТРАНИЦА СООБЩЕСТВА
-     ================================================== -->
-
-<div id="communityPage" class="page">
-
-  <div class="container">
-
-
-    <button
-      class="back-button"
-      type="button"
-      onclick="goHome()"
-    >
-      ← Назад
-    </button>
-
-
-    <div class="community-header">
-
-      <div class="big-icon">
-        🤝
-      </div>
-
-      <h2>
-        Сообщество Umma
-      </h2>
-
-      <p>
-        Люди, связи и взаимопомощь.
-        Познакомьтесь с Уммой и расскажите о себе.
-      </p>
-
-    </div>
-
-
-    <div class="profile-card">
-
-      <div class="profile-title">
-        Ваш Telegram-профиль
-      </div>
-
-      <div
-        id="communityUserName"
-        class="profile-name"
-      >
-        Пользователь Telegram
-      </div>
-
-      <div
-        id="communityUserId"
-        class="profile-id"
-      >
-        Telegram ID: —
-      </div>
-
-    </div>
-
-
-    <!-- СООБЩЕНИЕ О СОХРАНЕНИИ -->
-
-    <div
-      id="saveMessage"
-      class="save-message"
-    ></div>
-
-
-    <!-- АНКЕТА -->
-
-    <div class="form-card">
-
-      <h3>
-        Расскажите о себе
-      </h3>
-
-
-      <div class="field">
-
-        <label for="country">
-          🌍 Страна
-        </label>
-
-        <input
-          id="country"
-          type="text"
-          placeholder="Например: Вьетнам"
+        <!-- UMMA CAFE -->
+        <button
+          class="module-card"
+          data-page="cafe-page"
         >
+          <span>🍽️</span>
 
-      </div>
+          <strong>
+            Umma Cafe
+          </strong>
+
+          <small>
+            Halal food and ordering
+          </small>
+        </button>
 
 
-      <div class="field">
-
-        <label for="city">
-          📍 Город
-        </label>
-
-        <input
-          id="city"
-          type="text"
-          placeholder="Например: Хошимин"
+        <!-- UMMA MARKET -->
+        <button
+          class="module-card"
+          data-page="market-page"
         >
+          <span>🛒</span>
 
-      </div>
+          <strong>
+            Umma Market
+          </strong>
+
+          <small>
+            Halal products and catalog
+          </small>
+        </button>
 
 
-      <div class="field">
-
-        <label for="profession">
-          💼 Чем вы занимаетесь?
-        </label>
-
-        <input
-          id="profession"
-          type="text"
-          placeholder="Например: предприниматель"
+        <!-- SERVICES -->
+        <button
+          class="module-card"
+          data-page="services-page"
         >
+          <span>🌍</span>
+
+          <strong>
+            Services
+          </strong>
+
+          <small>
+            Travel, hotels, transport and more
+          </small>
+        </button>
+
+
+        <!-- COMMUNITY -->
+        <button
+          class="module-card"
+          data-page="community-page"
+        >
+          <span>🤝</span>
+
+          <strong>
+            Community
+          </strong>
+
+          <small>
+            People, help and connections
+          </small>
+        </button>
+
+
+        <!-- BUSINESS -->
+        <button
+          class="module-card"
+          data-page="business-page"
+        >
+          <span>💼</span>
+
+          <strong>
+            Business
+          </strong>
+
+          <small>
+            Businesses and opportunities
+          </small>
+        </button>
+
+
+        <!-- EDUCATION -->
+        <button
+          class="module-card"
+          data-page="education-page"
+        >
+          <span>📚</span>
+
+          <strong>
+            Education
+          </strong>
+
+          <small>
+            School, medrese and university
+          </small>
+        </button>
 
       </div>
 
 
-      <div class="field">
+      <!-- MISSION -->
+      <section class="mission">
 
-        <label for="about">
-          📝 Немного о себе
-        </label>
+        <h2>
+          Our intention
+        </h2>
 
-        <textarea
-          id="about"
-          placeholder="Расскажите немного о себе..."
-        ></textarea>
+        <p>
+          To build a useful ecosystem for the Ummah
+          and develop halal projects for the sake of Allah.
+        </p>
 
-      </div>
+      </section>
 
+    </section>
 
-      <div class="field">
 
-        <label for="help">
-          🤝 Чем можете быть полезны Умме?
-        </label>
+    <!-- CAFE -->
+    <section
+      id="cafe-page"
+      class="page"
+    ></section>
 
-        <textarea
-          id="help"
-          placeholder="Ваши знания, навыки, связи, помощь..."
-        ></textarea>
 
-      </div>
+    <!-- MARKET -->
+    <section
+      id="market-page"
+      class="page"
+    ></section>
 
 
-      <button
-        id="saveButton"
-        class="primary-button"
-        type="button"
-        onclick="saveProfile()"
-      >
-        💾 Сохранить профиль
-      </button>
+    <!-- SERVICES -->
+    <section
+      id="services-page"
+      class="page"
+    ></section>
 
 
-      <button
-        class="secondary-button"
-        type="button"
-        onclick="clearProfile()"
-      >
-        Очистить анкету
-      </button>
+    <!-- COMMUNITY -->
+    <section
+      id="community-page"
+      class="page"
+    ></section>
 
-    </div>
 
+    <!-- BUSINESS -->
+    <section
+      id="business-page"
+      class="page"
+    ></section>
 
-    <div class="info-card">
 
-      <h3>
-        Для чего это нужно?
-      </h3>
+    <!-- EDUCATION -->
+    <section
+      id="education-page"
+      class="page"
+    ></section>
 
-      <p>
-        Umma Global создаётся как пространство,
-        где мусульмане могут находить друг друга,
-        помогать друг другу, создавать полезные связи
-        и совместно развивать халяльные проекты.
-      </p>
+  </main>
 
-    </div>
 
+  <!-- TOAST -->
+  <div
+    id="toast"
+    class="toast"
+  ></div>
 
-  </div>
 
-</div>
-
-
-
-<script>
-
-
-/* ==================================================
-   TELEGRAM WEB APP
-   ================================================== */
-
-const tg =
-  window.Telegram &&
-  window.Telegram.WebApp
-    ? window.Telegram.WebApp
-    : null;
-
-
-let telegramUser = null;
-
-/* ==================================================
-   UMMA GLOBAL — AI TRANSLATION
-   OpenAI API key is NEVER stored in this HTML file.
-   It remains securely in Supabase Edge Function Secrets.
-   ================================================== */
-
-const SUPABASE_TRANSLATE_URL =
-  "https://zwzjougspldexyjlywpr.supabase.co/functions/v1/ai-translate";
-
-const UMMA_LANGUAGE_NAMES = {
-  af: "Afrikaans",
-  ar: "Arabic",
-  az: "Azerbaijani",
-  be: "Belarusian",
-  bg: "Bulgarian",
-  bn: "Bengali",
-  bs: "Bosnian",
-  ca: "Catalan",
-  cs: "Czech",
-  cy: "Welsh",
-  da: "Danish",
-  de: "German",
-  el: "Greek",
-  en: "English",
-  es: "Spanish",
-  et: "Estonian",
-  fa: "Persian",
-  fi: "Finnish",
-  fr: "French",
-  he: "Hebrew",
-  hi: "Hindi",
-  hr: "Croatian",
-  hu: "Hungarian",
-  id: "Indonesian",
-  it: "Italian",
-  ja: "Japanese",
-  ka: "Georgian",
-  kk: "Kazakh",
-  km: "Khmer",
-  ko: "Korean",
-  lo: "Lao",
-  lt: "Lithuanian",
-  lv: "Latvian",
-  mk: "Macedonian",
-  mn: "Mongolian",
-  ms: "Malay",
-  my: "Burmese",
-  ne: "Nepali",
-  nl: "Dutch",
-  no: "Norwegian",
-  pa: "Punjabi",
-  pl: "Polish",
-  pt: "Portuguese",
-  ro: "Romanian",
-  ru: "Russian",
-  sk: "Slovak",
-  sl: "Slovenian",
-  sq: "Albanian",
-  sr: "Serbian",
-  sv: "Swedish",
-  sw: "Swahili",
-  ta: "Tamil",
-  te: "Telugu",
-  th: "Thai",
-  tr: "Turkish",
-  uk: "Ukrainian",
-  ur: "Urdu",
-  uz: "Uzbek",
-  vi: "Vietnamese",
-  zh: "Chinese"
-};
-
-function getTelegramLanguageCode() {
-  const telegramCode =
-    tg &&
-    tg.initDataUnsafe &&
-    tg.initDataUnsafe.user &&
-    tg.initDataUnsafe.user.language_code
-      ? tg.initDataUnsafe.user.language_code
-      : "";
-
-  const browserCode =
-    navigator.language ||
-    navigator.userLanguage ||
-    "en";
-
-  return String(telegramCode || browserCode)
-    .split("-")[0]
-    .toLowerCase();
-}
-
-function getTelegramLanguageName() {
-  const code = getTelegramLanguageCode();
-  return UMMA_LANGUAGE_NAMES[code] || "English";
-}
-
-async function translateText(
-  text,
-  targetLanguage,
-  sourceLanguage = null
-) {
-  if (!text || !String(text).trim()) {
-    return "";
-  }
-
-  if (!targetLanguage) {
-    throw new Error("Target language is required");
-  }
-
-  const response = await fetch(
-    SUPABASE_TRANSLATE_URL,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: String(text),
-        target_language: targetLanguage,
-        source_language:
-          sourceLanguage || "auto"
-      })
-    }
-  );
-
-  let data = {};
-
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error(
-      "Invalid response from translation service"
-    );
-  }
-
-  if (!response.ok || !data.success) {
-    /*
-      Пока API-баланс OpenAI не пополнен,
-      Supabase вернёт ошибку insufficient_quota.
-      Не показываем пользователю технический JSON.
-    */
-    const rawMessage =
-      data &&
-      data.details &&
-      data.details.error &&
-      data.details.error.message
-        ? data.details.error.message
-        : data && data.error
-          ? data.error
-          : "";
-
-    if (
-      String(rawMessage)
-        .toLowerCase()
-        .includes("credit_balance_exhausted") ||
-      String(rawMessage)
-        .toLowerCase()
-        .includes("no credits") ||
-      String(rawMessage)
-        .toLowerCase()
-        .includes("insufficient_quota")
-    ) {
-      throw new Error(
-        "AI translation is temporarily unavailable. Please try again later."
-      );
-    }
-
-    throw new Error(
-      rawMessage ||
-      "Translation service is temporarily unavailable."
-    );
-  }
-
-  return data.translated_text || "";
-}
-
-async function translateTextToUserLanguage(
-  text,
-  sourceLanguage = null
-) {
-  return translateText(
-    text,
-    getTelegramLanguageName(),
-    sourceLanguage
-  );
-}
-
-/* ==================================================
-   END UMMA GLOBAL — AI TRANSLATION
-   ==================================================
-*/
-
-
-
-/* ==================================================
-   ПОЛУЧАЕМ ДАННЫЕ TELEGRAM
-   ================================================== */
-
-if (tg) {
-
-  tg.ready();
-
-  tg.expand();
-
-
-  telegramUser =
-    tg.initDataUnsafe &&
-    tg.initDataUnsafe.user
-      ? tg.initDataUnsafe.user
-      : null;
-
-
-  /* ================================================
-     ПОЛНОЕ ПРИВЕТСТВИЕ
-     ================================================ */
-
-  if (
-    telegramUser &&
-    telegramUser.first_name
-  ) {
-
-    document.getElementById(
-      "welcome"
-    ).textContent =
-      "Ассаляму алейкум ва рахматуллахи ва баракатух, "
-      + telegramUser.first_name
-      + "!";
-
-  }
-
-
-  /* ================================================
-     ИМЯ И ID В СООБЩЕСТВЕ
-     ================================================ */
-
-  if (telegramUser) {
-
-    const fullName =
-      (
-        telegramUser.first_name || ""
-      )
-      +
-      (
-        telegramUser.last_name
-          ? " " + telegramUser.last_name
-          : ""
-      );
-
-
-    document.getElementById(
-      "communityUserName"
-    ).textContent =
-      fullName || "Пользователь Telegram";
-
-
-    document.getElementById(
-      "communityUserId"
-    ).textContent =
-      "Telegram ID: "
-      + telegramUser.id;
-
-  }
-
-}
-
-
-/* ==================================================
-   ОТКРЫТЬ СООБЩЕСТВО
-   ================================================== */
-
-function openCommunity() {
-
-  document
-    .getElementById("homePage")
-    .classList.remove("active");
-
-
-  document
-    .getElementById("communityPage")
-    .classList.add("active");
-
-
-  loadProfile();
-
-  window.scrollTo(0, 0);
-
-}
-
-
-/* ==================================================
-   ВЕРНУТЬСЯ НА ГЛАВНУЮ
-   ================================================== */
-
-function goHome() {
-
-  document
-    .getElementById("communityPage")
-    .classList.remove("active");
-
-
-  document
-    .getElementById("homePage")
-    .classList.add("active");
-
-
-  window.scrollTo(0, 0);
-
-}
-
-
-/* ==================================================
-   КЛЮЧ СОХРАНЕНИЯ
-   ================================================== */
-
-function getProfileKey() {
-
-  if (
-    telegramUser &&
-    telegramUser.id
-  ) {
-
-    return "umma_profile_"
-      + telegramUser.id;
-
-  }
-
-  return "umma_profile_guest";
-
-}
-
-
-/* ==================================================
-   ПОКАЗАТЬ СООБЩЕНИЕ
-   ================================================== */
-
-function showSaveMessage(
-  text,
-  type
-) {
-
-  const message =
-    document.getElementById(
-      "saveMessage"
-    );
-
-
-  message.textContent = text;
-
-
-  message.className =
-    "save-message "
-    + type;
-
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-
-
-  setTimeout(function() {
-
-    message.className =
-      "save-message";
-
-    message.textContent = "";
-
-  }, 5000);
-
-}
-
-
-/* ==================================================
-   СОХРАНИТЬ ПРОФИЛЬ
-   ================================================== */
-
-function saveProfile() {
-
-  try {
-
-    const country =
-      document.getElementById(
-        "country"
-      ).value.trim();
-
-
-    const city =
-      document.getElementById(
-        "city"
-      ).value.trim();
-
-
-    const profession =
-      document.getElementById(
-        "profession"
-      ).value.trim();
-
-
-    const about =
-      document.getElementById(
-        "about"
-      ).value.trim();
-
-
-    const help =
-      document.getElementById(
-        "help"
-      ).value.trim();
-
-
-    const profile = {
-
-      telegram_id:
-        telegramUser
-          ? telegramUser.id
-          : null,
-
-      first_name:
-        telegramUser
-          ? telegramUser.first_name || ""
-          : "",
-
-      last_name:
-        telegramUser
-          ? telegramUser.last_name || ""
-          : "",
-
-      username:
-        telegramUser
-          ? telegramUser.username || ""
-          : "",
-
-      country: country,
-
-      city: city,
-
-      profession: profession,
-
-      about: about,
-
-      help: help,
-
-      updated_at:
-        new Date().toISOString()
-
-    };
-
-
-    const key =
-      getProfileKey();
-
-
-    localStorage.setItem(
-      key,
-      JSON.stringify(profile)
-    );
-
-
-    /* ============================================
-       ПРОВЕРЯЕМ, ЧТО ДЕЙСТВИТЕЛЬНО СОХРАНИЛОСЬ
-       ============================================ */
-
-    const check =
-      localStorage.getItem(key);
-
-
-    if (!check) {
-
-      throw new Error(
-        "Данные не были сохранены"
-      );
-
-    }
-
-
-    /* ============================================
-       ПОКАЗЫВАЕМ УСПЕШНОЕ СОХРАНЕНИЕ
-       ============================================ */
-
-    showSaveMessage(
-      "✓ Профиль успешно сохранён!",
-      "success"
-    );
-
-
-    /* ============================================
-       ВИБРАЦИЯ TELEGRAM
-       ============================================ */
-
-    if (tg) {
-
-      try {
-
-        tg.HapticFeedback.notificationOccurred(
-          "success"
-        );
-
-      } catch (e) {
-
-        console.log(e);
-
-      }
-
-    }
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Ошибка сохранения:",
-      error
-    );
-
-
-    showSaveMessage(
-      "✕ Не удалось сохранить профиль.",
-      "error"
-    );
-
-  }
-
-}
-
-
-/* ==================================================
-   ЗАГРУЗИТЬ ПРОФИЛЬ
-   ================================================== */
-
-function loadProfile() {
-
-  try {
-
-    const key =
-      getProfileKey();
-
-
-    const saved =
-      localStorage.getItem(key);
-
-
-    if (!saved) {
-      return;
-    }
-
-
-    const profile =
-      JSON.parse(saved);
-
-
-    document.getElementById(
-      "country"
-    ).value =
-      profile.country || "";
-
-
-    document.getElementById(
-      "city"
-    ).value =
-      profile.city || "";
-
-
-    document.getElementById(
-      "profession"
-    ).value =
-      profile.profession || "";
-
-
-    document.getElementById(
-      "about"
-    ).value =
-      profile.about || "";
-
-
-    document.getElementById(
-      "help"
-    ).value =
-      profile.help || "";
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Ошибка загрузки профиля:",
-      error
-    );
-
-  }
-
-}
-
-
-/* ==================================================
-   ОЧИСТИТЬ ПРОФИЛЬ
-   ================================================== */
-
-function clearProfile() {
-
-  document.getElementById(
-    "country"
-  ).value = "";
-
-
-  document.getElementById(
-    "city"
-  ).value = "";
-
-
-  document.getElementById(
-    "profession"
-  ).value = "";
-
-
-  document.getElementById(
-    "about"
-  ).value = "";
-
-
-  document.getElementById(
-    "help"
-  ).value = "";
-
-
-  localStorage.removeItem(
-    getProfileKey()
-  );
-
-
-  showSaveMessage(
-    "Анкета очищена.",
-    "success"
-  );
-
-}
-
-
-/* ==================================================
-   ВРЕМЕННЫЕ РАЗДЕЛЫ
-   ================================================== */
-
-function hideAllPages() {
-  document.querySelectorAll(".page").forEach(function(page) {
-    page.classList.remove("active");
-  });
-  window.scrollTo(0, 0);
-}
-
-function openPage(id) {
-  hideAllPages();
-  const page = document.getElementById(id);
-  if (page) {
-    page.classList.add("active");
-  }
-}
-
-function openCafe() {
-  openPage("cafePage");
-}
-
-function openMarket() {
-  openPage("marketPage");
-}
-
-function openBusiness() {
-  openPage("businessPage");
-}
-
-function openServices() {
-  openPage("servicesPage");
-}
-
-function openProjects() {
-  openPage("projectsPage");
-}
-
-function showComingSoon(section) {
-  const message = section + " будет подключено следующим этапом.";
-  if (tg && tg.showAlert) {
-    tg.showAlert(message);
-  } else {
-    alert(message);
-  }
-}
-
-function showMessage(section) {
-  showComingSoon(section);
-}
-
-</script>
+  <!-- APPLICATION -->
+  <script
+    type="module"
+    src="./js/app.js"
+  ></script>
 
 </body>
+
 </html>
