@@ -1,21 +1,23 @@
+```css
 /* =========================================================
-   UMMA GLOBAL
-   MAIN SCREEN — FINAL CLEAN VERSION
+   UMMA GLOBAL — FINAL HOME SCREEN
+   Чистая версия CSS
    ========================================================= */
 
 :root {
-  --umma-turquoise: #0FA3A8;
-  --umma-gold: #D4A72C;
-  --umma-white: #FFFFFF;
+  --turquoise: #0FA3A8;
+  --gold: #D4A72C;
+  --white: #FFFFFF;
+  --text: #0FA3A8;
+  --soft: #F4FBFB;
+  --border: rgba(15, 163, 168, 0.14);
 
-  --umma-bg: #FFFFFF;
-  --umma-border: rgba(15, 163, 168, 0.16);
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 13px;
 
-  --radius-xl: 24px;
-  --radius-lg: 20px;
-  --radius-md: 16px;
-
-  --nav-height: 64px;
+  --topbar-height: 52px;
+  --bottom-height: 58px;
 }
 
 
@@ -47,17 +49,17 @@ body {
     Arial,
     sans-serif;
 
-  background: var(--umma-bg);
-  color: var(--umma-turquoise);
+  background: var(--white);
+  color: var(--text);
 
   overflow: hidden;
 }
 
 button {
-  border: 0;
-  outline: 0;
-  background: none;
   font-family: inherit;
+  border: none;
+  outline: none;
+  background: none;
   cursor: pointer;
 }
 
@@ -67,86 +69,82 @@ button {
    ========================================================= */
 
 .app {
-  position: relative;
-
   width: 100%;
   height: 100dvh;
-
-  min-height: 0;
 
   display: flex;
   flex-direction: column;
 
-  background: var(--umma-bg);
+  background: var(--white);
 
   overflow: hidden;
 }
 
 
 /* =========================================================
-   TOP BAR
+   TOPBAR
    ========================================================= */
 
 .topbar {
-  flex: 0 0 54px;
+  flex: 0 0 var(--topbar-height);
 
-  width: 100%;
+  height: var(--topbar-height);
 
   display: flex;
   align-items: center;
 
-  padding: 7px 14px;
+  padding: 6px 12px;
 
-  gap: 10px;
+  gap: 8px;
 
-  border-bottom: 1px solid var(--umma-border);
+  background: var(--white);
 
-  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid var(--border);
 
-  position: relative;
-  z-index: 20;
+  z-index: 10;
 }
 
 .icon-button,
 .language-button,
 .profile-button {
-  height: 40px;
-
-  border: 1px solid var(--umma-border);
-
-  background: var(--umma-white);
-
-  border-radius: 14px;
-
-  color: var(--umma-gold);
+  height: 38px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border: 1px solid var(--border);
+
+  border-radius: 12px;
+
+  background: var(--white);
+
+  color: var(--gold);
 }
 
-.icon-button {
-  width: 44px;
-  font-size: 23px;
+.icon-button,
+.profile-button {
+  width: 40px;
+
+  font-size: 20px;
 }
 
 .language-button {
-  min-width: 118px;
+  min-width: 100px;
 
-  padding: 0 14px;
+  padding: 0 11px;
 
-  gap: 7px;
+  gap: 6px;
 
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 14px;
 }
 
 .language-button strong {
-  color: var(--umma-gold);
+  color: var(--gold);
 }
 
 .chevron {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .topbar-spacer {
@@ -160,11 +158,11 @@ button {
 .notification-badge {
   position: absolute;
 
-  top: -6px;
+  top: -5px;
   right: -4px;
 
-  width: 23px;
-  height: 23px;
+  width: 20px;
+  height: 20px;
 
   display: flex;
   align-items: center;
@@ -172,38 +170,11 @@ button {
 
   border-radius: 50%;
 
-  background: var(--umma-gold);
-  color: var(--umma-white);
+  background: var(--gold);
+  color: var(--white);
 
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
-}
-
-.profile-button {
-  width: 44px;
-
-  color: var(--umma-turquoise);
-
-  font-size: 21px;
-}
-
-
-/* =========================================================
-   MAIN CONTENT
-   ========================================================= */
-
-.app::after {
-  content: "";
-  display: none;
-}
-
-.brand,
-.welcome-card,
-.ayah-card,
-.hero-card,
-.services-section,
-.farm-card {
-  flex-shrink: 0;
 }
 
 
@@ -212,7 +183,9 @@ button {
    ========================================================= */
 
 .brand {
-  height: 108px;
+  flex: 0 0 92px;
+
+  height: 92px;
 
   display: flex;
   flex-direction: column;
@@ -221,18 +194,21 @@ button {
 
   text-align: center;
 
-  padding: 5px 20px 3px;
+  padding: 4px 16px 2px;
 }
 
 .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
+
+  max-width: 48px;
+  max-height: 48px;
 
   object-fit: contain;
 
   display: block;
 
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .brand-name {
@@ -240,166 +216,175 @@ button {
   align-items: baseline;
   justify-content: center;
 
-  gap: 7px;
+  gap: 5px;
 
   line-height: 1;
 }
 
 .brand-name span {
-  color: var(--umma-gold);
+  color: var(--gold);
 
-  font-size: 30px;
+  font-size: 25px;
   font-weight: 900;
 
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .brand-name strong {
-  color: var(--umma-gold);
+  color: var(--gold);
 
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 800;
 
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .brand p {
-  margin-top: 5px;
+  margin-top: 4px;
 
-  color: var(--umma-turquoise);
+  color: var(--turquoise);
 
-  font-size: 13px;
-  line-height: 1.25;
+  font-size: 10px;
+  line-height: 1.2;
 
   font-weight: 700;
 }
 
 
 /* =========================================================
-   WELCOME CARD
+   WELCOME
    ========================================================= */
 
 .welcome-card {
-  height: 88px;
+  flex: 0 0 72px;
 
-  margin: 0 16px 7px;
+  height: 72px;
 
-  padding: 10px 14px;
+  margin: 0 14px 6px;
+
+  padding: 8px 10px;
 
   display: flex;
   align-items: center;
 
   border-radius: var(--radius-xl);
 
-  background: var(--umma-turquoise);
+  background: var(--turquoise);
 
-  color: var(--umma-white);
+  color: var(--white);
 }
 
 .welcome-icon {
-  flex: 0 0 54px;
+  flex: 0 0 46px;
 
-  width: 54px;
-  height: 54px;
-
-  border-radius: 17px;
+  width: 46px;
+  height: 46px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  border-radius: 14px;
+
   background: rgba(255, 255, 255, 0.12);
 
-  font-size: 28px;
+  font-size: 23px;
 }
 
 .welcome-text {
   min-width: 0;
   flex: 1;
 
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .welcome-text h2 {
-  color: var(--umma-white);
+  color: var(--white);
 
-  font-size: 18px;
-  line-height: 1.15;
+  font-size: 13px;
+  line-height: 1.12;
 
   font-weight: 800;
 
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .welcome-text p {
-  color: var(--umma-white);
+  margin-top: 3px;
 
-  font-size: 12px;
-  line-height: 1.2;
+  color: var(--white);
 
-  opacity: 0.95;
+  opacity: 0.88;
+
+  font-size: 9px;
+  line-height: 1.1;
 }
 
 .arrow-button {
-  flex: 0 0 48px;
+  flex: 0 0 40px;
 
-  width: 48px;
-  height: 48px;
-
-  border-radius: 50%;
-
-  background: var(--umma-white);
-
-  color: var(--umma-gold);
-
-  font-size: 28px;
-  font-weight: 400;
-}
-
-
-/* =========================================================
-   AYAH CARD
-   ========================================================= */
-
-.ayah-card {
-  height: 94px;
-
-  margin: 0 16px 7px;
-
-  padding: 10px 13px;
-
-  display: flex;
-  align-items: center;
-
-  border: 1px solid var(--umma-border);
-
-  border-radius: var(--radius-xl);
-
-  background: var(--umma-white);
-}
-
-.ayah-icon {
-  flex: 0 0 54px;
-
-  width: 54px;
-  height: 54px;
-
-  border-radius: 17px;
+  width: 40px;
+  height: 40px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background: rgba(15, 163, 168, 0.08);
+  border-radius: 50%;
 
-  font-size: 27px;
+  background: var(--white);
+
+  color: var(--gold);
+
+  font-size: 23px;
+}
+
+
+/* =========================================================
+   AYAH
+   ========================================================= */
+
+.ayah-card {
+  flex: 0 0 70px;
+
+  height: 70px;
+
+  margin: 0 14px 6px;
+
+  padding: 7px 10px;
+
+  display: flex;
+  align-items: center;
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius-xl);
+
+  background: var(--white);
+}
+
+.ayah-icon {
+  flex: 0 0 44px;
+
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background: var(--soft);
+
+  font-size: 22px;
 }
 
 .ayah-content {
   min-width: 0;
   flex: 1;
 
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .small-label {
@@ -407,19 +392,17 @@ button {
 
   margin-bottom: 2px;
 
-  color: var(--umma-gold);
+  color: var(--gold);
 
-  font-size: 12px;
-  font-weight: 800;
-
-  text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 900;
 }
 
 .ayah-content p {
-  color: var(--umma-turquoise);
+  color: var(--turquoise);
 
-  font-size: 13px;
-  line-height: 1.25;
+  font-size: 10px;
+  line-height: 1.18;
 
   font-weight: 700;
 }
@@ -427,698 +410,168 @@ button {
 .ayah-content small {
   display: block;
 
-  margin-top: 3px;
+  margin-top: 2px;
 
-  color: var(--umma-gold);
+  color: var(--gold);
 
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
 }
 
 .circle-arrow {
-  flex: 0 0 46px;
+  flex: 0 0 38px;
 
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   border-radius: 50%;
 
-  background: var(--umma-turquoise);
+  background: var(--turquoise);
 
-  color: var(--umma-white);
+  color: var(--white);
 
-  font-size: 25px;
+  font-size: 21px;
 }
 
 
 /* =========================================================
-   CAFE HERO
+   CAFE UMMA
+   По высоте близко к Umma Farm
    ========================================================= */
 
 .hero-card {
+  flex: 0 0 76px;
+
+  height: 76px;
+
   position: relative;
 
-  height: 132px;
-
-  margin: 0 0 7px;
+  margin: 0 14px 6px;
 
   overflow: hidden;
 
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
 
-  border: 3px solid var(--umma-gold);
+  background: var(--turquoise);
 
-  background: var(--umma-turquoise);
+  border: 2px solid var(--gold);
 
-  color: var(--umma-white);
+  color: var(--white);
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
 
-  pointer-events: none;
-
   background:
     radial-gradient(
-      circle at 88% 110%,
-      rgba(212, 167, 44, 0.20) 0,
-      rgba(212, 167, 44, 0.08) 23%,
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 88% 110%,
-      transparent 0,
-      transparent 30%,
-      rgba(212, 167, 44, 0.22) 30%,
-      rgba(212, 167, 44, 0.22) 31%,
-      transparent 31%
+      circle at 95% 100%,
+      rgba(212, 167, 44, 0.25),
+      transparent 36%
     );
+
+  pointer-events: none;
 }
 
 .hero-content {
   position: relative;
-  z-index: 2;
 
+  width: 100%;
   height: 100%;
 
-  padding: 13px 18px;
+  padding: 7px 12px;
 
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+}
+
+.hero-main {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+}
+
+.hero-main h1 {
+  flex: 0 0 auto;
+
+  color: var(--white);
+
+  font-size: 18px;
+  line-height: 1;
+
+  font-weight: 900;
+}
+
+.hero-main p {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 0 10px;
+
+  color: var(--white);
+
+  opacity: 0.9;
+
+  font-size: 8px;
+  line-height: 1.2;
 }
 
 .hero-top {
   position: absolute;
 
-  top: 10px;
-  right: 13px;
+  top: 6px;
+  right: 9px;
 }
 
 .halal-badge {
   display: inline-flex;
   align-items: center;
 
-  padding: 5px 10px;
+  padding: 3px 7px;
 
-  border: 1px solid var(--umma-gold);
+  border: 1px solid var(--gold);
 
-  border-radius: 30px;
+  border-radius: 20px;
 
-  color: var(--umma-gold);
+  color: var(--gold);
 
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.hero-content h1 {
-  color: var(--umma-white);
-
-  font-size: 24px;
-  line-height: 1;
-
+  font-size: 7px;
   font-weight: 900;
-
-  margin-bottom: 5px;
-}
-
-.hero-content p {
-  color: var(--umma-white);
-
-  font-size: 12px;
-  line-height: 1.25;
-
-  margin-bottom: 9px;
 }
 
 .primary-button {
-  width: 145px;
-  height: 36px;
+  flex: 0 0 auto;
+
+  width: 106px;
+  height: 30px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 10px;
+  gap: 6px;
 
-  border-radius: 22px;
+  border-radius: 20px;
 
-  background: var(--umma-gold);
+  background: var(--gold);
 
-  color: var(--umma-turquoise);
+  color: var(--turquoise);
 
-  font-size: 13px;
+  font-size: 9px;
   font-weight: 900;
 }
 
 .primary-button span {
-  font-size: 21px;
-  line-height: 1;
+  font-size: 15px;
 }
 
 
 /* =========================================================
-   SERVICES
-   ========================================================= */
-
-.services-section {
-  padding: 0 16px;
-
-  height: 176px;
-}
-
-.section-header {
-  height: 29px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 5px;
-}
-
-.section-header h2 {
-  color: var(--umma-gold);
-
-  font-size: 20px;
-  line-height: 1;
-
-  font-weight: 900;
-}
-
-.section-header button {
-  color: var(--umma-turquoise);
-
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.services-grid {
-  width: 100%;
-  height: 142px;
-
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  grid-template-rows: repeat(4, 1fr);
-
-  gap: 5px 8px;
-}
-
-.service-card {
-  min-width: 0;
-
-  display: flex;
-  align-items: center;
-
-  padding: 4px 7px;
-
-  border: 1px solid var(--umma-border);
-
-  border-radius: 15px;
-
-  background: var(--umma-white);
-
-  text-align: left;
-}
-
-.service-icon {
-  flex: 0 0 35px;
-
-  width: 35px;
-  height: 35px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-
-  background: rgba(15, 163, 168, 0.07);
-
-  font-size: 20px;
-}
-
-.service-info {
-  min-width: 0;
-  flex: 1;
-
-  padding-left: 7px;
-}
-
-.service-info strong {
-  display: block;
-
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  color: var(--umma-turquoise);
-
-  font-size: 11px;
-  line-height: 1.1;
-
-  font-weight: 900;
-}
-
-.service-info small {
-  display: block;
-
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  margin-top: 2px;
-
-  color: var(--umma-turquoise);
-
-  opacity: 0.65;
-
-  font-size: 8px;
-  line-height: 1.1;
-}
-
-.service-arrow {
-  flex: 0 0 auto;
-
-  margin-left: 4px;
-
-  color: var(--umma-gold);
-
-  font-size: 20px;
-  font-weight: 700;
-}
-
-
-/* =========================================================
-   UMMA FARM
-   ========================================================= */
-
-.farm-card {
-  height: 76px;
-
-  margin: 0 16px;
-
-  padding: 8px 12px;
-
-  display: flex;
-  align-items: center;
-
-  border-radius: var(--radius-xl);
-
-  background: var(--umma-turquoise);
-
-  color: var(--umma-white);
-}
-
-.farm-content {
-  min-width: 0;
-  flex: 1;
-
-  display: flex;
-  align-items: center;
-}
-
-.farm-icon {
-  flex: 0 0 50px;
-
-  width: 50px;
-  height: 50px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 16px;
-
-  background: rgba(255, 255, 255, 0.12);
-
-  font-size: 25px;
-}
-
-.farm-content > div {
-  min-width: 0;
-
-  padding-left: 10px;
-}
-
-.farm-card h2 {
-  color: var(--umma-gold);
-
-  font-size: 18px;
-  line-height: 1;
-
-  font-weight: 900;
-
-  margin-bottom: 4px;
-}
-
-.farm-card p {
-  color: var(--umma-white);
-
-  font-size: 9px;
-  line-height: 1.2;
-}
-
-.farm-arrow {
-  flex: 0 0 46px;
-
-  width: 46px;
-  height: 46px;
-
-  border-radius: 50%;
-
-  background: var(--umma-white);
-
-  color: var(--umma-gold);
-
-  font-size: 25px;
-}
-
-
-/* =========================================================
-   BOTTOM NAVIGATION
-   ========================================================= */
-
-.bottom-nav {
-  flex: 0 0 var(--nav-height);
-
-  height: var(--nav-height);
-
-  width: 100%;
-
-  margin-top: auto;
-
-  display: grid;
-
-  grid-template-columns: repeat(6, 1fr);
-
-  align-items: center;
-
-  border-top: 1px solid var(--umma-border);
-
-  background: rgba(255, 255, 255, 0.98);
-
-  position: relative;
-  z-index: 30;
-}
-
-.nav-item {
-  height: 100%;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  gap: 2px;
-
-  color: var(--umma-turquoise);
-
-  opacity: 0.65;
-}
-
-.nav-item span {
-  height: 24px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 20px;
-}
-
-.nav-item small {
-  font-size: 9px;
-  line-height: 1;
-
-  font-weight: 700;
-}
-
-.nav-item.active {
-  color: var(--umma-gold);
-
-  opacity: 1;
-}
-
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-.toast {
-  position: fixed;
-
-  left: 50%;
-
-  bottom: calc(var(--nav-height) + 12px);
-
-  transform: translateX(-50%) translateY(20px);
-
-  width: max-content;
-  max-width: calc(100% - 30px);
-
-  padding: 10px 16px;
-
-  border-radius: 14px;
-
-  background: var(--umma-turquoise);
-
-  color: var(--umma-white);
-
-  font-size: 12px;
-  font-weight: 700;
-
-  opacity: 0;
-  pointer-events: none;
-
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-
-  z-index: 100;
-}
-
-.toast.show {
-  opacity: 1;
-
-  transform: translateX(-50%) translateY(0);
-}
-
-
-/* =========================================================
-   SMALL PHONES
-   ========================================================= */
-
-@media (max-height: 720px) {
-
-  .topbar {
-    flex-basis: 48px;
-    height: 48px;
-  }
-
-  .icon-button,
-  .language-button,
-  .profile-button {
-    height: 36px;
-  }
-
-  .icon-button,
-  .profile-button {
-    width: 40px;
-  }
-
-  .language-button {
-    min-width: 105px;
-  }
-
-  .brand {
-    height: 92px;
-  }
-
-  .brand-logo {
-    width: 48px;
-    height: 48px;
-  }
-
-  .brand-name span {
-    font-size: 25px;
-  }
-
-  .brand-name strong {
-    font-size: 18px;
-  }
-
-  .brand p {
-    font-size: 11px;
-  }
-
-  .welcome-card {
-    height: 76px;
-  }
-
-  .welcome-icon {
-    width: 46px;
-    height: 46px;
-    flex-basis: 46px;
-  }
-
-  .welcome-text h2 {
-    font-size: 16px;
-  }
-
-  .ayah-card {
-    height: 82px;
-  }
-
-  .ayah-icon {
-    width: 46px;
-    height: 46px;
-    flex-basis: 46px;
-  }
-
-  .hero-card {
-    height: 116px;
-  }
-
-  .hero-content h1 {
-    font-size: 21px;
-  }
-
-  .services-section {
-    height: 157px;
-  }
-
-  .services-grid {
-    height: 126px;
-  }
-
-  .service-card {
-    border-radius: 13px;
-  }
-
-  .service-icon {
-    width: 31px;
-    height: 31px;
-    flex-basis: 31px;
-    font-size: 17px;
-  }
-
-  .service-info strong {
-    font-size: 10px;
-  }
-
-  .service-info small {
-    font-size: 7px;
-  }
-
-  .farm-card {
-    height: 66px;
-  }
-
-  .farm-icon {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
-  }
-
-  .farm-card h2 {
-    font-size: 16px;
-  }
-
-  .farm-card p {
-    font-size: 8px;
-  }
-
-  :root {
-    --nav-height: 58px;
-  }
-}
-
-
-/* =========================================================
-   VERY SMALL HEIGHT
-   ========================================================= */
-
-@media (max-height: 650px) {
-
-  .brand {
-    height: 82px;
-  }
-
-  .brand-logo {
-    width: 40px;
-    height: 40px;
-  }
-
-  .welcome-card {
-    height: 66px;
-  }
-
-  .ayah-card {
-    height: 70px;
-  }
-
-  .hero-card {
-    height: 98px;
-  }
-
-  .services-section {
-    height: 140px;
-  }
-
-  .services-grid {
-    height: 112px;
-  }
-
-  .farm-card {
-    height: 58px;
-  }
-
-  .farm-icon {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
-  }
-
-  .farm-card h2 {
-    font-size: 14px;
-  }
-
-  .farm-card p {
-    font-size: 7px;
-  }
-}
-
-
-/* =========================================================
-   REMOVE ANY LEGACY SCROLL
-   ========================================================= */
-
-html,
-body,
-.app {
-  max-height: 100dvh;
-  overflow: hidden !important;
-}
-
-.app > * {
-  max-width: 100%;
-}
-
-
-/* =========================================================
-   TELEGRAM WEB APP SAFE AREA
-   ========================================================= */
-
-@supports (padding: env(safe-area-inset-bottom)) {
-
-  .bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom);
-    height: calc(
-      var(--nav-height) + env(safe-area-inset-bottom)
-    );
-  }
-}
+   SER
+```
