@@ -1,34 +1,40 @@
-```css
 /* =========================================================
-   UMMA GLOBAL — FINAL HOME SCREEN
-   Чистая версия CSS
-   ========================================================= */
+   UMMA GLOBAL — APPROVED HOME SCREEN
+   Clean replacement stylesheet
+========================================================= */
 
 :root {
-  --turquoise: #0FA3A8;
-  --gold: #D4A72C;
-  --white: #FFFFFF;
-  --text: #0FA3A8;
-  --soft: #F4FBFB;
-  --border: rgba(15, 163, 168, 0.14);
+  --turquoise: #0fa3a8;
+  --turquoise-dark: #087f84;
+  --turquoise-light: #dff5f4;
 
-  --radius-xl: 20px;
-  --radius-lg: 16px;
-  --radius-md: 13px;
+  --gold: #d4a72c;
+  --gold-light: #f5d56b;
+  --gold-dark: #a87d13;
 
-  --topbar-height: 52px;
-  --bottom-height: 58px;
+  --cream: #fffdf7;
+  --background: #f7fbfa;
+  --white: #ffffff;
+
+  --text: #173c3e;
+  --muted: #708889;
+
+  --border: #dceceb;
+
+  --radius: 22px;
+  --small-radius: 15px;
+
+  --shadow:
+    0 5px 18px rgba(15, 163, 168, 0.08);
 }
 
 
 /* =========================================================
    RESET
-   ========================================================= */
+========================================================= */
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -36,173 +42,202 @@ html,
 body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 body {
+  background: var(--background);
+  color: var(--text);
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
-    Helvetica,
     Arial,
     sans-serif;
-
-  background: var(--white);
-  color: var(--text);
 
   overflow: hidden;
 }
 
 button {
-  font-family: inherit;
-  border: none;
-  outline: none;
-  background: none;
+  font: inherit;
+  border: 0;
+  outline: 0;
   cursor: pointer;
+  background: none;
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 
 /* =========================================================
-   APP
-   ========================================================= */
+   MAIN APP
+========================================================= */
 
 .app {
   width: 100%;
-  height: 100dvh;
+  height: 100svh;
 
-  display: flex;
-  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
 
-  background: var(--white);
+  position: relative;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(15, 163, 168, 0.05),
+      transparent 28%
+    ),
+    var(--background);
 
   overflow: hidden;
 }
 
 
 /* =========================================================
-   TOPBAR
-   ========================================================= */
+   TOP BAR
+========================================================= */
 
 .topbar {
-  flex: 0 0 var(--topbar-height);
+  height: 57px;
 
-  height: var(--topbar-height);
+  padding:
+    max(8px, env(safe-area-inset-top))
+    18px
+    5px;
 
   display: flex;
   align-items: center;
+  gap: 9px;
 
-  padding: 6px 12px;
-
-  gap: 8px;
-
-  background: var(--white);
+  background: rgba(255, 255, 255, 0.96);
 
   border-bottom: 1px solid var(--border);
 
-  z-index: 10;
+  position: relative;
+  z-index: 20;
 }
 
-.icon-button,
-.language-button,
-.profile-button {
-  height: 38px;
+.top-button {
+  width: 48px;
+  height: 42px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  background: var(--white);
+
+  color: var(--gold);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 1px solid var(--border);
+  position: relative;
+}
 
-  border-radius: 12px;
+.hamburger {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.language-button {
+  height: 42px;
+
+  min-width: 115px;
+
+  padding: 0 15px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
 
   background: var(--white);
 
   color: var(--gold);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 17px;
 }
 
-.icon-button,
-.profile-button {
-  width: 40px;
+.language-button .globe {
+  font-size: 19px;
+}
 
+.language-button .down {
   font-size: 20px;
 }
 
-.language-button {
-  min-width: 100px;
-
-  padding: 0 11px;
-
-  gap: 6px;
-
-  font-size: 14px;
-}
-
-.language-button strong {
-  color: var(--gold);
-}
-
-.chevron {
-  font-size: 16px;
-}
-
-.topbar-spacer {
+.top-space {
   flex: 1;
 }
 
 .notification-button {
-  position: relative;
+  width: 50px;
 }
 
-.notification-badge {
+.notification-button .bell {
+  font-size: 20px;
+}
+
+.notification-button b {
   position: absolute;
 
-  top: -5px;
+  top: -7px;
   right: -4px;
 
-  width: 20px;
-  height: 20px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 25px;
+  height: 25px;
 
   border-radius: 50%;
 
   background: var(--gold);
-  color: var(--white);
+  color: white;
 
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 13px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-button {
+  font-size: 26px;
 }
 
 
 /* =========================================================
    BRAND
-   ========================================================= */
+========================================================= */
 
 .brand {
-  flex: 0 0 92px;
+  text-align: center;
 
-  height: 92px;
+  padding:
+    7px
+    20px
+    6px;
+
+  height: 150px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  text-align: center;
-
-  padding: 4px 16px 2px;
 }
 
 .brand-logo {
-  width: 48px;
-  height: 48px;
-
-  max-width: 48px;
-  max-height: 48px;
+  width: 74px;
+  height: 74px;
 
   object-fit: contain;
 
@@ -211,200 +246,244 @@ button {
   margin-bottom: 2px;
 }
 
-.brand-name {
+.brand-title {
   display: flex;
   align-items: baseline;
   justify-content: center;
 
-  gap: 5px;
+  gap: 7px;
 
   line-height: 1;
 }
 
-.brand-name span {
+.brand-title span {
   color: var(--gold);
 
-  font-size: 25px;
+  font-size: 36px;
   font-weight: 900;
-
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
-.brand-name strong {
+.brand-title strong {
   color: var(--gold);
 
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 800;
 
-  letter-spacing: 0.2px;
+  letter-spacing: 1px;
+}
+
+.brand-line {
+  width: 95px;
+  height: 2px;
+
+  margin: 4px auto;
+
+  background: var(--gold);
 }
 
 .brand p {
-  margin-top: 4px;
+  margin: 0;
 
   color: var(--turquoise);
 
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 15px;
+  line-height: 1.25;
 
   font-weight: 700;
 }
 
+.brand small {
+  color: var(--gold-dark);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  margin-top: 2px;
+}
+
 
 /* =========================================================
-   WELCOME
-   ========================================================= */
+   WELCOME CARD
+========================================================= */
 
 .welcome-card {
-  flex: 0 0 72px;
+  height: 94px;
 
-  height: 72px;
+  margin:
+    0
+    14px
+    7px;
 
-  margin: 0 14px 6px;
+  padding: 10px 12px;
 
-  padding: 8px 10px;
+  background:
+    linear-gradient(
+      135deg,
+      #fffefa,
+      #ffffff
+    );
 
-  display: flex;
-  align-items: center;
+  border: 1px solid var(--gold);
 
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius);
 
-  background: var(--turquoise);
-
-  color: var(--white);
-}
-
-.welcome-icon {
-  flex: 0 0 46px;
-
-  width: 46px;
-  height: 46px;
+  box-shadow: var(--shadow);
 
   display: flex;
   align-items: center;
-  justify-content: center;
 
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.12);
-
-  font-size: 23px;
+  gap: 12px;
 }
 
-.welcome-text {
-  min-width: 0;
-  flex: 1;
+.welcome-image {
+  width: 70px;
+  height: 70px;
 
-  padding: 0 8px;
-}
-
-.welcome-text h2 {
-  color: var(--white);
-
-  font-size: 13px;
-  line-height: 1.12;
-
-  font-weight: 800;
-
-  margin: 0;
-}
-
-.welcome-text p {
-  margin-top: 3px;
-
-  color: var(--white);
-
-  opacity: 0.88;
-
-  font-size: 9px;
-  line-height: 1.1;
-}
-
-.arrow-button {
-  flex: 0 0 40px;
-
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex: 0 0 70px;
 
   border-radius: 50%;
 
-  background: var(--white);
+  background:
+    radial-gradient(
+      circle,
+      #16a9ad,
+      #087f84
+    );
 
-  color: var(--gold);
+  border: 2px solid var(--gold);
 
-  font-size: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 34px;
+}
+
+.welcome-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.welcome-content h2 {
+  margin: 0;
+
+  color: var(--gold-dark);
+
+  font-family: Georgia, serif;
+
+  font-size: 15px;
+  line-height: 1.12;
+}
+
+.welcome-content h2 strong {
+  font-size: 18px;
+}
+
+.welcome-content p {
+  margin: 3px 0 0;
+
+  color: var(--text);
+
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.gold-circle,
+.turquoise-circle {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 25px;
+}
+
+.gold-circle {
+  background: var(--turquoise);
+  color: var(--gold-light);
+
+  border: 2px solid var(--gold);
 }
 
 
 /* =========================================================
    AYAH
-   ========================================================= */
+========================================================= */
 
 .ayah-card {
-  flex: 0 0 70px;
+  height: 79px;
 
-  height: 70px;
-
-  margin: 0 14px 6px;
+  margin:
+    0
+    14px
+    7px;
 
   padding: 7px 10px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  background: var(--white);
 
   display: flex;
   align-items: center;
 
-  border: 1px solid var(--border);
+  gap: 12px;
 
-  border-radius: var(--radius-xl);
-
-  background: var(--white);
+  box-shadow: var(--shadow);
 }
 
-.ayah-icon {
-  flex: 0 0 44px;
+.ayah-book {
+  width: 58px;
+  height: 58px;
 
-  width: 44px;
-  height: 44px;
+  flex: 0 0 58px;
+
+  border-radius: 16px;
+
+  background: var(--turquoise-light);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 13px;
-
-  background: var(--soft);
-
-  font-size: 22px;
+  font-size: 29px;
 }
 
 .ayah-content {
-  min-width: 0;
   flex: 1;
-
-  padding: 0 8px;
+  min-width: 0;
 }
 
-.small-label {
+.ayah-content span {
   display: block;
-
-  margin-bottom: 2px;
 
   color: var(--gold);
 
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 900;
+
+  text-transform: uppercase;
+
+  margin-bottom: 1px;
 }
 
 .ayah-content p {
+  margin: 0;
+
   color: var(--turquoise);
 
-  font-size: 10px;
-  line-height: 1.18;
+  font-size: 13px;
+  font-weight: 800;
 
-  font-weight: 700;
+  line-height: 1.17;
 }
 
 .ayah-content small {
@@ -412,166 +491,821 @@ button {
 
   margin-top: 2px;
 
-  color: var(--gold);
+  color: var(--gold-dark);
 
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.circle-arrow {
-  flex: 0 0 38px;
-
-  width: 38px;
-  height: 38px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
+.turquoise-circle {
   background: var(--turquoise);
+  color: white;
 
-  color: var(--white);
-
-  font-size: 21px;
+  border: 2px solid var(--turquoise);
 }
 
 
 /* =========================================================
-   CAFE UMMA
-   По высоте близко к Umma Farm
-   ========================================================= */
+   CAFE CARD
+   ВАЖНО: по высоте близко к FARM
+========================================================= */
 
-.hero-card {
-  flex: 0 0 76px;
+.cafe-card {
+  height: 128px;
 
-  height: 76px;
+  margin:
+    0
+    0
+    8px;
 
-  position: relative;
-
-  margin: 0 14px 6px;
-
-  overflow: hidden;
-
-  border-radius: var(--radius-xl);
-
-  background: var(--turquoise);
+  border-radius: 24px;
 
   border: 2px solid var(--gold);
 
-  color: var(--white);
+  position: relative;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0fa3a8 0%,
+      #079196 55%,
+      #087e82 100%
+    );
+
+  box-shadow:
+    0 6px 20px rgba(15, 163, 168, 0.16);
 }
 
-.hero-overlay {
+.cafe-background {
   position: absolute;
+
   inset: 0;
+
+  opacity: 0.25;
 
   background:
     radial-gradient(
-      circle at 95% 100%,
-      rgba(212, 167, 44, 0.25),
-      transparent 36%
+      circle at 80% 100%,
+      transparent 0 50px,
+      rgba(245, 213, 107, 0.7) 51px 53px,
+      transparent 54px 80px,
+      rgba(245, 213, 107, 0.45) 81px 83px,
+      transparent 84px
     );
-
-  pointer-events: none;
 }
 
-.hero-content {
+.halal {
+  position: absolute;
+
+  top: 10px;
+  right: 13px;
+
+  padding: 6px 13px;
+
+  border: 1px solid var(--gold-light);
+
+  border-radius: 20px;
+
+  color: var(--gold-light);
+
+  font-size: 12px;
+  font-weight: 900;
+
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.cafe-content {
   position: relative;
 
-  width: 100%;
   height: 100%;
 
-  padding: 7px 12px;
-
-  display: flex;
-  align-items: center;
+  padding:
+    29px
+    25px
+    10px;
 }
 
-.hero-main {
-  display: flex;
-  align-items: center;
+.cafe-content h1 {
+  margin: 0 0 3px;
 
-  width: 100%;
-}
+  color: white;
 
-.hero-main h1 {
-  flex: 0 0 auto;
+  font-family: Georgia, serif;
 
-  color: var(--white);
-
-  font-size: 18px;
+  font-size: 27px;
   line-height: 1;
 
   font-weight: 900;
 }
 
-.hero-main p {
-  flex: 1;
+.cafe-content p {
+  margin: 0 0 8px;
 
-  min-width: 0;
+  color: white;
 
-  padding: 0 10px;
-
-  color: var(--white);
-
-  opacity: 0.9;
-
-  font-size: 8px;
+  font-size: 13px;
   line-height: 1.2;
 }
 
-.hero-top {
-  position: absolute;
+.cafe-button {
+  height: 34px;
 
-  top: 6px;
-  right: 9px;
-}
-
-.halal-badge {
-  display: inline-flex;
-  align-items: center;
-
-  padding: 3px 7px;
-
-  border: 1px solid var(--gold);
+  padding: 0 16px;
 
   border-radius: 20px;
 
+  background:
+    linear-gradient(
+      180deg,
+      #ffe98e,
+      #f5c84c
+    );
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 900;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  box-shadow:
+    0 2px 7px rgba(0, 0, 0, 0.12);
+}
+
+.cafe-button span {
+  font-size: 19px;
+}
+
+
+/* =========================================================
+   SERVICES
+========================================================= */
+
+.services {
+  margin: 0 14px 7px;
+}
+
+.services-heading {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.services-heading h2 {
+  margin: 0;
+
   color: var(--gold);
 
-  font-size: 7px;
+  font-family: Georgia, serif;
+
+  font-size: 22px;
   font-weight: 900;
 }
 
-.primary-button {
-  flex: 0 0 auto;
+.services-heading button {
+  color: var(--turquoise);
 
-  width: 106px;
-  height: 30px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+/* 4 columns — как в утвержденном макете */
+
+.services-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 5px;
+}
+
+.service {
+  height: 75px;
+
+  padding: 5px 3px;
+
+  background: var(--white);
+
+  border: 1px solid #e9dfbb;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 3px 9px rgba(15, 163, 168, 0.07);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  min-width: 0;
+}
+
+.service-icon {
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+
+  margin-bottom: 2px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #0fa3a8,
+      #087e83
+    );
+
+  border: 1px solid var(--gold);
+
+  color: var(--gold-light);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 6px;
-
-  border-radius: 20px;
-
-  background: var(--gold);
-
-  color: var(--turquoise);
-
-  font-size: 9px;
-  font-weight: 900;
+  font-size: 17px;
 }
 
-.primary-button span {
-  font-size: 15px;
+.service strong {
+  display: block;
+
+  color: var(--gold-dark);
+
+  font-family: Georgia, serif;
+
+  font-size: 11px;
+
+  line-height: 1.05;
+
+  white-space: nowrap;
+}
+
+.service small {
+  display: block;
+
+  color: var(--text);
+
+  font-size: 8.5px;
+
+  line-height: 1.05;
+
+  margin-top: 2px;
 }
 
 
 /* =========================================================
-   SER
-```
+   FARM
+========================================================= */
+
+.farm-card {
+  height: 72px;
+
+  margin:
+    0
+    14px
+    6px;
+
+  padding:
+    7px
+    10px;
+
+  border-radius: 20px;
+
+  border: 2px solid var(--gold);
+
+  background:
+    linear-gradient(
+      100deg,
+      #087d70,
+      #0a998e 60%,
+      #126d62
+    );
+
+  display: flex;
+  align-items: center;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+.farm-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 190px;
+  height: 190px;
+
+  right: -65px;
+  top: -90px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,0.18),
+      transparent 68%
+    );
+}
+
+.farm-icon {
+  width: 55px;
+  height: 55px;
+
+  flex: 0 0 55px;
+
+  border-radius: 16px;
+
+  background:
+    rgba(255,255,255,0.14);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  position: relative;
+  z-index: 2;
+}
+
+.farm-content {
+  flex: 1;
+
+  padding-left: 10px;
+
+  position: relative;
+  z-index: 2;
+}
+
+.farm-content h2 {
+  margin: 0;
+
+  color: var(--gold-light);
+
+  font-family: Georgia, serif;
+
+  font-size: 20px;
+
+  line-height: 1;
+}
+
+.farm-content p {
+  margin: 3px 0 0;
+
+  color: white;
+
+  font-size: 10px;
+
+  line-height: 1.1;
+}
+
+.farm-button {
+  position: relative;
+  z-index: 2;
+
+  padding: 7px 11px;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffe98e,
+      #f2c24a
+    );
+
+  color: var(--text);
+
+  font-size: 10px;
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   BOTTOM NAV
+========================================================= */
+
+.bottom-nav {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 60px;
+
+  padding:
+    4px
+    8px
+    max(4px, env(safe-area-inset-bottom));
+
+  background:
+    rgba(255,255,255,0.98);
+
+  border-top: 1px solid var(--border);
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(6, 1fr);
+
+  z-index: 50;
+}
+
+.nav-item {
+  color: var(--gold-dark);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 1px;
+}
+
+.nav-item span {
+  font-size: 20px;
+
+  line-height: 1;
+
+  color: var(--gold-dark);
+}
+
+.nav-item small {
+  font-size: 9px;
+
+  font-weight: 800;
+
+  color: var(--gold-dark);
+}
+
+.nav-item.active span,
+.nav-item.active small {
+  color: var(--turquoise);
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast {
+  position: fixed;
+
+  left: 50%;
+
+  bottom: 75px;
+
+  transform:
+    translateX(-50%)
+    translateY(20px);
+
+  padding: 10px 17px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(20, 55, 57, 0.94);
+
+  color: white;
+
+  font-size: 12px;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity .2s ease,
+    transform .2s ease;
+
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media (max-height: 760px) {
+
+  .brand {
+    height: 125px;
+  }
+
+  .brand-logo {
+    width: 62px;
+    height: 62px;
+  }
+
+  .brand-title span {
+    font-size: 31px;
+  }
+
+  .brand-title strong {
+    font-size: 19px;
+  }
+
+  .brand p {
+    font-size: 13px;
+  }
+
+  .welcome-card {
+    height: 82px;
+  }
+
+  .welcome-image {
+    width: 60px;
+    height: 60px;
+    flex-basis: 60px;
+  }
+
+  .ayah-card {
+    height: 70px;
+  }
+
+  .ayah-book {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+
+  .cafe-card {
+    height: 113px;
+  }
+
+  .service {
+    height: 68px;
+  }
+
+  .service-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
+  }
+
+  .farm-card {
+    height: 63px;
+  }
+
+  .farm-icon {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+
+  .bottom-nav {
+    height: 55px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL HEIGHT
+========================================================= */
+
+@media (max-height: 680px) {
+
+  .topbar {
+    height: 50px;
+  }
+
+  .top-button,
+  .language-button {
+    height: 37px;
+  }
+
+  .brand {
+    height: 105px;
+  }
+
+  .brand-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .brand-title span {
+    font-size: 27px;
+  }
+
+  .brand-title strong {
+    font-size: 17px;
+  }
+
+  .brand p {
+    font-size: 11px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .welcome-card {
+    height: 70px;
+    margin-bottom: 5px;
+  }
+
+  .welcome-image {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
+    font-size: 25px;
+  }
+
+  .welcome-content h2 {
+    font-size: 12px;
+  }
+
+  .welcome-content h2 strong {
+    font-size: 14px;
+  }
+
+  .welcome-content p {
+    font-size: 9px;
+  }
+
+  .gold-circle,
+  .turquoise-circle {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .ayah-card {
+    height: 61px;
+    margin-bottom: 5px;
+  }
+
+  .ayah-book {
+    width: 45px;
+    height: 45px;
+    flex-basis: 45px;
+    font-size: 23px;
+  }
+
+  .ayah-content p {
+    font-size: 10px;
+  }
+
+  .ayah-content span {
+    font-size: 10px;
+  }
+
+  .ayah-content small {
+    font-size: 8px;
+  }
+
+  .cafe-card {
+    height: 98px;
+    margin-bottom: 5px;
+  }
+
+  .cafe-content {
+    padding:
+      23px
+      20px
+      7px;
+  }
+
+  .cafe-content h1 {
+    font-size: 23px;
+  }
+
+  .cafe-content p {
+    font-size: 10px;
+  }
+
+  .cafe-button {
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .halal {
+    top: 7px;
+    right: 9px;
+    font-size: 9px;
+  }
+
+  .services-heading {
+    height: 25px;
+  }
+
+  .services-heading h2 {
+    font-size: 18px;
+  }
+
+  .services-grid {
+    gap: 3px;
+  }
+
+  .service {
+    height: 57px;
+  }
+
+  .service-icon {
+    width: 23px;
+    height: 23px;
+    font-size: 12px;
+  }
+
+  .service strong {
+    font-size: 9px;
+  }
+
+  .service small {
+    font-size: 7px;
+  }
+
+  .farm-card {
+    height: 54px;
+    margin-bottom: 4px;
+  }
+
+  .farm-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    font-size: 22px;
+  }
+
+  .farm-content h2 {
+    font-size: 16px;
+  }
+
+  .farm-content p {
+    font-size: 8px;
+  }
+
+  .farm-button {
+    font-size: 8px;
+    padding: 5px 8px;
+  }
+}
+
+
+/* =========================================================
+   WIDTH ADAPTATION
+========================================================= */
+
+@media (max-width: 370px) {
+
+  .topbar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .language-button {
+    min-width: 95px;
+  }
+
+  .welcome-card,
+  .ayah-card {
+    margin-left: 9px;
+    margin-right: 9px;
+  }
+
+  .services {
+    margin-left: 9px;
+    margin-right: 9px;
+  }
+
+  .farm-card {
+    margin-left: 9px;
+    margin-right: 9px;
+  }
+
+  .cafe-content {
+    padding-left: 18px;
+  }
+
+  .cafe-content h1 {
+    font-size: 21px;
+  }
+
+  .service strong {
+    font-size: 8.5px;
+  }
+
+}
