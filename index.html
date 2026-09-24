@@ -1,953 +1,511 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
 
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-
->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  >
 
   <title>Umma Global</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <link rel="stylesheet" href="css/app.css">
-
-  <style>
-    /* =========================================
-       UMMA CAFE — ФИРМЕННЫЙ БИРЮЗОВЫЙ БЛОК
-       ========================================= */
-
-    .hero-card {
-      position: relative;
-      overflow: hidden;
-
-      min-height: 205px;
-      margin: 0 0 20px;
-
-      border-radius: 22px;
-
-      background:
-        radial-gradient(
-          circle at 85% 15%,
-          rgba(255, 215, 70, 0.22),
-          transparent 32%
-        ),
-        linear-gradient(
-          135deg,
-          #08b9cf 0%,
-          #009eb5 45%,
-          #007f96 100%
-        );
-
-      border: 2px solid #f5cf43;
-
-      box-shadow:
-        0 8px 25px rgba(0, 126, 150, 0.22);
-
-      color: white;
-    }
-
-    .hero-card::before {
-      content: "";
-      position: absolute;
-
-      width: 180px;
-      height: 180px;
-
-      right: -55px;
-      bottom: -70px;
-
-      border: 2px solid rgba(255, 215, 70, 0.35);
-      border-radius: 50%;
-    }
-
-    .hero-card::after {
-      content: "";
-      position: absolute;
-
-      width: 110px;
-      height: 110px;
-
-      right: 20px;
-      bottom: -45px;
-
-      border: 2px solid rgba(255, 215, 70, 0.22);
-      border-radius: 50%;
-    }
-
-    .hero-overlay {
-      display: none;
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 2;
-
-      padding: 22px 20px 20px;
-    }
-
-    .hero-top {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-    }
-
-    .halal-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-
-      min-width: 92px;
-      height: 34px;
-
-      padding: 0 12px;
-
-      border-radius: 17px;
-
-      background: rgba(0, 68, 80, 0.38);
-
-      border: 1px solid rgba(255, 218, 80, 0.85);
-
-      color: #ffe16a;
-
-      font-size: 13px;
-      font-weight: 700;
-
-      backdrop-filter: blur(8px);
-    }
-
-    .hero-content h1 {
-      margin: 12px 0 5px;
-
-      color: #ffffff;
-
-      font-size: 30px;
-      line-height: 1.1;
-      font-weight: 800;
-
-      letter-spacing: -0.5px;
-    }
-
-    .hero-content p {
-      margin: 0 0 18px;
-
-      color: rgba(255, 255, 255, 0.92);
-
-      font-size: 15px;
-      line-height: 1.45;
-    }
-
-    .primary-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-
-      min-width: 165px;
-      min-height: 45px;
-
-      padding: 0 20px;
-
-      border: none;
-      border-radius: 24px;
-
-      background: linear-gradient(
-        135deg,
-        #ffe27a,
-        #f4c73c
-      );
-
-      color: #064b5a;
-
-      font-size: 15px;
-      font-weight: 800;
-
-      box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.16);
-
-      cursor: pointer;
-    }
-
-    .primary-button span {
-      font-size: 21px;
-      line-height: 1;
-    }
-
-    .primary-button:active {
-      transform: scale(0.97);
-    }
-
-
-    /* =========================================
-       ПРИВЕТСТВИЕ
-       ========================================= */
-
-    .welcome-text h2 {
-      line-height: 1.25;
-    }
-
-    .welcome-text p {
-      line-height: 1.35;
-    }
-
-
-    /* =========================================
-       ЛОГОТИП UMMA
-       ========================================= */
-
-    .brand-logo {
-      object-fit: contain;
-    }
-
-
-    /* =========================================
-       БЕЗОПАСНАЯ ЗОНА TELEGRAM
-       ========================================= */
-
-    .topbar {
-      padding-top: max(
-        12px,
-        env(safe-area-inset-top)
-      );
-    }
-  </style>
-
 </head>
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-```
-<!-- =====================================
-     ВЕРХНЯЯ ПАНЕЛЬ
-     ===================================== -->
+  <!-- =========================
+       ВЕРХНЯЯ ПАНЕЛЬ
+  ========================== -->
 
-<header class="topbar">
+  <header class="topbar">
 
-  <button
-    class="icon-button"
-    id="menuBtn"
-    aria-label="Меню"
-  >
-    ☰
-  </button>
+    <button
+      class="icon-button"
+      id="menuBtn"
+      aria-label="Меню"
+    >
+      ☰
+    </button>
 
+    <button
+      class="language-button"
+      id="languageBtn"
+    >
+      <span>🌐</span>
+      <strong>RU</strong>
+      <span class="chevron">⌄</span>
+    </button>
 
-  <button
-    class="language-button"
-    id="languageBtn"
-  >
-    <span>🌐</span>
-    <strong>RU</strong>
-    <span class="chevron">⌄</span>
-  </button>
+    <div class="topbar-spacer"></div>
 
+    <button
+      class="icon-button notification-button"
+      id="notificationBtn"
+      aria-label="Уведомления"
+    >
+      🔔
+      <span class="notification-badge">3</span>
+    </button>
 
-  <div class="topbar-spacer"></div>
+    <button
+      class="profile-button"
+      id="profileBtn"
+      aria-label="Профиль"
+    >
+      👤
+    </button>
 
-
-  <button
-    class="icon-button notification-button"
-    id="notificationBtn"
-  >
-    🔔
-
-    <span class="notification-badge">
-      3
-    </span>
-
-  </button>
-
-
-  <button
-    class="profile-button"
-    id="profileBtn"
-  >
-    <span>👤</span>
-  </button>
-
-</header>
+  </header>
 
 
-<!-- =====================================
-     ЛОГОТИП UMMA GLOBAL
-     ===================================== -->
+  <!-- =========================
+       БРЕНД UMMA
+  ========================== -->
 
-<section class="brand">
+  <section class="brand">
 
-  <img
-    class="brand-logo"
-    src="logo/assets/umma-logo.png"
-    alt="Umma Global"
-  >
+    <img
+      class="brand-logo"
+      src="assets/logo.png"
+      alt="Umma Global"
+    >
 
-
-  <div class="brand-name">
-
-    <span>
-      UMMA
-    </span>
-
-    <strong>
-      GLOBAL
-    </strong>
-
-  </div>
-
-
-  <p>
-    Единая экосистема для жизни,<br>
-    бизнеса и общества.
-  </p>
-
-</section>
-
-
-<!-- =====================================
-     ПРИВЕТСТВИЕ
-     ===================================== -->
-
-<section class="welcome-card">
-
-  <div class="welcome-icon">
-    🕌
-  </div>
-
-
-  <div class="welcome-text">
-
-    <h2 id="welcomeGreeting">
-      Ассаляму алейкум ва рахматуллахи ва баракатух
-    </h2>
-
-
-    <p id="welcomeMessage">
-      Добро пожаловать в Umma Global
-    </p>
-
-  </div>
-
-
-  <button class="arrow-button">
-    →
-  </button>
-
-</section>
-
-
-<!-- =====================================
-     АЯТ ДНЯ
-     ===================================== -->
-
-<section class="ayah-card">
-
-  <div class="ayah-icon">
-    📖
-  </div>
-
-
-  <div class="ayah-content">
-
-    <span class="small-label">
-      Аят дня
-    </span>
-
-
-    <p>
-      «И помогайте друг другу<br>
-      в благочестии и богобоязненности...»
-    </p>
-
-
-    <small>
-      Коран, 5:2
-    </small>
-
-  </div>
-
-
-  <button class="circle-arrow">
-    →
-  </button>
-
-</section>
-
-
-<!-- =====================================
-     КАФЕ UMMA
-     ===================================== -->
-
-<section class="hero-card">
-
-  <div class="hero-overlay"></div>
-
-
-  <div class="hero-content">
-
-    <div class="hero-top">
-
-      <span class="halal-badge">
-        ☪ ХАЛЯЛЬ
-      </span>
-
+    <div class="brand-name">
+      <span>UMMA</span>
+      <strong>GLOBAL</strong>
     </div>
 
-
-    <h1>
-      Кафе Umma
-    </h1>
-
-
     <p>
-      Халяльная еда<br>
-      для вас и вашей семьи
+      Единая экосистема для жизни,<br>
+      бизнеса и общества.
     </p>
 
+  </section>
 
-    <button
-      class="primary-button"
-      data-page="cafe"
-    >
-      Открыть кафе
 
-      <span>
-        →
-      </span>
+  <!-- =========================
+       ПРИВЕТСТВИЕ
+  ========================== -->
 
-    </button>
+  <section class="welcome-card">
 
-  </div>
+    <div class="welcome-icon">
+      🕌
+    </div>
 
-</section>
-
-
-<!-- =====================================
-     СЕРВИСЫ
-     ===================================== -->
-
-<section class="services-section">
-
-  <div class="section-header">
-
-    <h2>
-      Сервисы Umma
-    </h2>
-
-
-    <button id="allServicesBtn">
-      Все
-    </button>
-
-  </div>
-
-
-  <div class="services-grid">
-
-
-    <!-- РЫНОК -->
-
-    <button
-      class="service-card"
-      data-page="market"
-    >
-
-      <span class="service-icon market">
-        🛒
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Рынок Umma
-        </strong>
-
-        <small>
-          Продукты и товары
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- ПУТЕШЕСТВИЯ -->
-
-    <button
-      class="service-card"
-      data-page="travel"
-    >
-
-      <span class="service-icon travel">
-        ✈️
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Путешествия
-        </strong>
-
-        <small>
-          Туры, билеты, отели
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- ОТЕЛИ -->
-
-    <button
-      class="service-card"
-      data-page="hotels"
-    >
-
-      <span class="service-icon hotels">
-        🏨
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Отели Umma
-        </strong>
-
-        <small>
-          Проживание по миру
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- НЕДВИЖИМОСТЬ -->
-
-    <button
-      class="service-card"
-      data-page="realestate"
-    >
-
-      <span class="service-icon realestate">
-        🏠
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Недвижимость
-        </strong>
-
-        <small>
-          Жильё, аренда, инвестиции
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- СООБЩЕСТВО -->
-
-    <button
-      class="service-card"
-      data-page="community"
-    >
-
-      <span class="service-icon community">
-        👥
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Сообщество
-        </strong>
-
-        <small>
-          Люди, помощь и связи
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- БИЗНЕС -->
-
-    <button
-      class="service-card"
-      data-page="business"
-    >
-
-      <span class="service-icon business">
-        💼
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Бизнес
-        </strong>
-
-        <small>
-          Возможности и партнёрства
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- ОБРАЗОВАНИЕ -->
-
-    <button
-      class="service-card"
-      data-page="education"
-    >
-
-      <span class="service-icon education">
-        🎓
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Образование
-        </strong>
-
-        <small>
-          Школа, медресе, университет
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-
-    <!-- ЗДОРОВЬЕ -->
-
-    <button
-      class="service-card"
-      data-page="health"
-    >
-
-      <span class="service-icon health">
-        ♥
-      </span>
-
-
-      <span class="service-info">
-
-        <strong>
-          Здоровье
-        </strong>
-
-        <small>
-          Спорт и здоровый образ жизни
-        </small>
-
-      </span>
-
-
-      <span class="service-arrow">
-        ›
-      </span>
-
-    </button>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================
-     UMMA FARM
-     ===================================== -->
-
-<section class="farm-card">
-
-  <div class="farm-content">
-
-    <span class="farm-icon">
-      🌿
-    </span>
-
-
-    <div>
+    <div class="welcome-text">
 
       <h2>
-        Umma Farm
+        Ассаляму алейкум<br>
+        ва рахматуллахи ва баракатух,<br>
+        УММА!
       </h2>
 
-
       <p>
-        Натуральные продукты<br>
-        и халяльное производство
+        Добро пожаловать в Umma Global.
       </p>
 
     </div>
 
-  </div>
+    <button
+      class="arrow-button"
+      aria-label="Открыть"
+    >
+      →
+    </button>
 
+  </section>
 
-  <button class="farm-arrow">
-    →
-  </button>
 
-</section>
+  <!-- =========================
+       АЯТ ДНЯ
+  ========================== -->
 
+  <section class="ayah-card">
 
-<!-- =====================================
-     НИЖНЯЯ НАВИГАЦИЯ
-     ===================================== -->
+    <div class="ayah-icon">
+      📖
+    </div>
 
-<nav class="bottom-nav">
+    <div class="ayah-content">
 
+      <span class="small-label">
+        АЯТ ДНЯ
+      </span>
 
-  <button
-    class="nav-item active"
-    data-page="home"
-  >
+      <p>
+        «И помогайте друг другу
+        в благочестии и богобоязненности...»
+      </p>
 
-    <span>
-      ⌂
-    </span>
+      <small>
+        Коран, 5:2
+      </small>
 
-    <small>
-      Главная
-    </small>
+    </div>
 
-  </button>
+    <button
+      class="circle-arrow"
+      aria-label="Аят дня"
+    >
+      →
+    </button>
 
+  </section>
 
-  <button
-    class="nav-item"
-    data-page="cafe"
-  >
 
-    <span>
-      🍽
-    </span>
+  <!-- =========================
+       КАФЕ UMMA
+  ========================== -->
 
-    <small>
-      Кафе
-    </small>
+  <section class="hero-card">
 
-  </button>
+    <div class="hero-overlay"></div>
 
+    <div class="hero-content">
 
-  <button
-    class="nav-item"
-    data-page="market"
-  >
+      <div class="hero-top">
 
-    <span>
-      🛒
-    </span>
+        <span class="halal-badge">
+          ☪ ХАЛЯЛЬ
+        </span>
 
-    <small>
-      Рынок
-    </small>
+      </div>
 
-  </button>
+      <div class="hero-main">
 
+        <h1>
+          Кафе Umma
+        </h1>
 
-  <button
-    class="nav-item"
-    data-page="services"
-  >
+        <p>
+          Халяльная еда для вас и вашей семьи
+        </p>
 
-    <span>
-      ✈
-    </span>
+        <button
+          class="primary-button"
+          data-page="cafe"
+        >
+          Открыть кафе
+          <span>→</span>
+        </button>
 
-    <small>
-      Услуги
-    </small>
+      </div>
 
-  </button>
+    </div>
 
+  </section>
 
-  <button
-    class="nav-item"
-    data-page="community"
-  >
 
-    <span>
-      👥
-    </span>
+  <!-- =========================
+       СЕРВИСЫ
+  ========================== -->
 
-    <small>
-      Сообщество
-    </small>
+  <section class="services-section">
 
-  </button>
+    <div class="section-header">
 
+      <h2>
+        Сервисы Umma
+      </h2>
 
-  <button
-    class="nav-item"
-    data-page="more"
-  >
+      <button id="allServicesBtn">
+        Все
+      </button>
 
-    <span>
-      •••
-    </span>
+    </div>
 
-    <small>
-      Ещё
-    </small>
 
-  </button>
+    <div class="services-grid">
 
-</nav>
-```
 
-  </div>
+      <button
+        class="service-card"
+        data-page="market"
+      >
 
-  <!-- =====================================
-       УВЕДОМЛЕНИЕ
-       ===================================== -->
+        <span class="service-icon">
+          🛒
+        </span>
 
-  <div
-    class="toast"
-    id="toast"
-  >
-    Скоро здесь появится этот раздел
-  </div>
+        <span class="service-info">
+          <strong>Рынок Umma</strong>
+          <small>Продукты и товары</small>
+        </span>
 
-  <!-- =====================================
-       TELEGRAM USER
-       ===================================== -->
+        <span class="service-arrow">
+          ›
+        </span>
 
-  <script>
+      </button>
 
-    const tg = window.Telegram?.WebApp;
 
+      <button
+        class="service-card"
+        data-page="travel"
+      >
 
-    /*
-      Инициализация Telegram Mini App
-    */
+        <span class="service-icon">
+          ✈️
+        </span>
 
-    if (tg) {
+        <span class="service-info">
+          <strong>Путешествия</strong>
+          <small>Туры, билеты, отели</small>
+        </span>
 
-      tg.ready();
+        <span class="service-arrow">
+          ›
+        </span>
 
-      tg.expand();
+      </button>
 
-    }
 
+      <button
+        class="service-card"
+        data-page="hotels"
+      >
 
-    /*
-      Получаем данные пользователя
-      непосредственно из Telegram.
-    */
+        <span class="service-icon">
+          🏨
+        </span>
 
-    const telegramUser =
-      tg?.initDataUnsafe?.user;
+        <span class="service-info">
+          <strong>Отели Umma</strong>
+          <small>Проживание по миру</small>
+        </span>
 
+        <span class="service-arrow">
+          ›
+        </span>
 
-    /*
-      Формируем имя пользователя.
-    */
+      </button>
 
-    if (telegramUser) {
 
-      const firstName =
-        telegramUser.first_name || "";
+      <button
+        class="service-card"
+        data-page="realestate"
+      >
 
+        <span class="service-icon">
+          🏠
+        </span>
 
-      const lastName =
-        telegramUser.last_name || "";
+        <span class="service-info">
+          <strong>Недвижимость</strong>
+          <small>Жильё, аренда, инвестиции</small>
+        </span>
 
+        <span class="service-arrow">
+          ›
+        </span>
 
-      const fullName =
-        `${firstName} ${lastName}`.trim();
+      </button>
 
 
-      const greeting =
-        document.getElementById(
-          "welcomeGreeting"
-        );
+      <button
+        class="service-card"
+        data-page="community"
+      >
 
+        <span class="service-icon">
+          👥
+        </span>
 
-      const message =
-        document.getElementById(
-          "welcomeMessage"
-        );
+        <span class="service-info">
+          <strong>Сообщество</strong>
+          <small>Люди, помощь и связи</small>
+        </span>
 
+        <span class="service-arrow">
+          ›
+        </span>
 
-      /*
-        Если Telegram передал имя —
-        показываем его в приветствии.
-      */
+      </button>
 
-      if (fullName) {
 
-        greeting.textContent =
-          `Ассаляму алейкум ва рахматуллахи ва баракатух, ${fullName}!`;
+      <button
+        class="service-card"
+        data-page="business"
+      >
 
+        <span class="service-icon">
+          💼
+        </span>
 
-        message.textContent =
-          "Добро пожаловать в Umma Global.";
+        <span class="service-info">
+          <strong>Бизнес</strong>
+          <small>Возможности и партнёрства</small>
+        </span>
 
-      }
+        <span class="service-arrow">
+          ›
+        </span>
 
-    }
+      </button>
 
-  </script>
 
-  <!-- Основной JavaScript приложения -->
+      <button
+        class="service-card"
+        data-page="education"
+      >
 
-  <script src="js/app.js"></script>
+        <span class="service-icon">
+          🎓
+        </span>
+
+        <span class="service-info">
+          <strong>Образование</strong>
+          <small>Школа, медресе, университет</small>
+        </span>
+
+        <span class="service-arrow">
+          ›
+        </span>
+
+      </button>
+
+
+      <button
+        class="service-card"
+        data-page="health"
+      >
+
+        <span class="service-icon">
+          ♥
+        </span>
+
+        <span class="service-info">
+          <strong>Здоровье</strong>
+          <small>Спорт и здоровый образ жизни</small>
+        </span>
+
+        <span class="service-arrow">
+          ›
+        </span>
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       UMMA FARM
+  ========================== -->
+
+  <section class="farm-card">
+
+    <div class="farm-content">
+
+      <span class="farm-icon">
+        🌿
+      </span>
+
+      <div>
+
+        <h2>
+          Umma Farm
+        </h2>
+
+        <p>
+          Натуральные продукты<br>
+          и халяльное производство
+        </p>
+
+      </div>
+
+    </div>
+
+    <button
+      class="farm-arrow"
+      aria-label="Umma Farm"
+    >
+      →
+    </button>
+
+  </section>
+
+
+  <!-- =========================
+       НИЖНЯЯ НАВИГАЦИЯ
+  ========================== -->
+
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-item active"
+      data-page="home"
+    >
+      <span>⌂</span>
+      <small>Главная</small>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="cafe"
+    >
+      <span>🍽</span>
+      <small>Кафе</small>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="market"
+    >
+      <span>🛒</span>
+      <small>Рынок</small>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="services"
+    >
+      <span>✈</span>
+      <small>Услуги</small>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="community"
+    >
+      <span>👥</span>
+      <small>Сообщество</small>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="more"
+    >
+      <span>•••</span>
+      <small>Ещё</small>
+    </button>
+
+  </nav>
+
+</div>
+
+
+<!-- =========================
+     TOAST
+========================== -->
+
+<div
+  class="toast"
+  id="toast"
+>
+  Скоро здесь появится этот раздел
+</div>
+
+
+<script src="js/app.js"></script>
 
 </body>
 </html>
