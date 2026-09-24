@@ -1,21 +1,32 @@
 :root {
+  /* =========================
+     UMMA — ФИРМЕННЫЕ ЦВЕТА
+     ========================= */
+
   --umma-turquoise: #0FA3A8;
-  --umma-gold: #D4A72C;
-  --umma-gold-light: #F2D06B;
+  --umma-gold: #D4AF37;
   --umma-white: #FFFFFF;
-  --umma-text: #17383A;
-  --umma-muted: #6B8587;
-  --umma-bg: #F5FAFA;
-  --umma-border: rgba(15, 163, 168, 0.16);
-  --umma-shadow: 0 8px 28px rgba(15, 163, 168, 0.12);
-  --radius-large: 24px;
-  --radius-medium: 18px;
+
+  /* Допустимые оттенки создаются только прозрачностью
+     основных цветов, а не новыми цветами */
+  --turquoise-soft: rgba(15, 163, 168, 0.08);
+  --turquoise-light: rgba(15, 163, 168, 0.14);
+  --turquoise-border: rgba(15, 163, 168, 0.18);
+
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --gold-border: rgba(212, 175, 55, 0.55);
+
+  --shadow-turquoise: 0 12px 30px rgba(15, 163, 168, 0.12);
+
+  --radius-large: 26px;
+  --radius-medium: 20px;
   --radius-small: 14px;
 }
 
+
 /* =========================
    ОСНОВА
-========================= */
+   ========================= */
 
 * {
   box-sizing: border-box;
@@ -23,12 +34,16 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
+  background: var(--umma-white);
 }
 
 body {
   margin: 0;
   padding: 0;
+  background: var(--umma-white);
+  color: var(--umma-turquoise);
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -37,8 +52,7 @@ body {
     Arial,
     sans-serif;
 
-  background: var(--umma-bg);
-  color: var(--umma-text);
+  overflow-x: hidden;
 }
 
 button {
@@ -48,24 +62,29 @@ button {
 }
 
 button:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
+
 /* =========================
-   APP
-========================= */
+   ПРИЛОЖЕНИЕ
+   ========================= */
 
 .app {
   width: 100%;
-  max-width: 600px;
+  max-width: 760px;
   min-height: 100vh;
   margin: 0 auto;
-  padding-bottom: 92px;
+
+  background: var(--umma-white);
+
+  padding-bottom: 96px;
 }
 
+
 /* =========================
-   TOPBAR
-========================= */
+   ВЕРХНЯЯ ПАНЕЛЬ
+   ========================= */
 
 .topbar {
   position: sticky;
@@ -74,329 +93,363 @@ button:active {
 
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 
-  height: 64px;
-  padding: 10px 16px;
+  width: 100%;
+  min-height: 74px;
 
-  background: rgba(245, 250, 250, 0.96);
+  padding: 12px 18px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border-bottom: 1px solid var(--turquoise-border);
+
   backdrop-filter: blur(12px);
-
-  border-bottom: 1px solid var(--umma-border);
-}
-
-.icon-button,
-.profile-button,
-.language-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: var(--umma-white);
-  color: var(--umma-gold);
-
-  border: 1px solid var(--umma-border);
-
-  box-shadow: 0 4px 14px rgba(15, 163, 168, 0.08);
-}
-
-.icon-button {
-  position: relative;
-
-  width: 42px;
-  height: 42px;
-
-  border-radius: 14px;
-  font-size: 20px;
-}
-
-.language-button {
-  height: 42px;
-  padding: 0 13px;
-  gap: 6px;
-
-  border-radius: 14px;
-
-  color: var(--umma-gold);
-}
-
-.language-button strong {
-  color: var(--umma-gold);
-  font-size: 13px;
-}
-
-.chevron {
-  font-size: 16px;
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .topbar-spacer {
   flex: 1;
 }
 
-.profile-button {
-  width: 42px;
-  height: 42px;
 
-  border-radius: 50%;
-  font-size: 19px;
+/* =========================
+   КНОПКИ ВЕРХНЕЙ ПАНЕЛИ
+   ========================= */
+
+.icon-button,
+.language-button,
+.profile-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 48px;
+
+  background: var(--umma-white);
+
+  color: var(--umma-gold);
+
+  border: 1px solid var(--turquoise-border);
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 4px 14px rgba(15, 163, 168, 0.06);
+}
+
+.icon-button {
+  width: 48px;
+  font-size: 22px;
+}
+
+.language-button {
+  min-width: 116px;
+  gap: 7px;
+
+  font-size: 16px;
+}
+
+.language-button strong {
+  color: var(--umma-gold);
+  font-size: 16px;
+}
+
+.language-button .chevron {
+  font-size: 18px;
+}
+
+.profile-button {
+  width: 48px;
+  font-size: 21px;
+}
+
+.notification-button {
+  position: relative;
 }
 
 .notification-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -5px;
+  right: -5px;
 
-  min-width: 18px;
-  height: 18px;
-
-  padding: 0 5px;
+  min-width: 21px;
+  height: 21px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 10px;
+  padding: 0 5px;
 
   background: var(--umma-gold);
-  color: white;
+  color: var(--umma-white);
 
-  font-size: 10px;
-  font-weight: 700;
+  border-radius: 50%;
 
-  border: 2px solid var(--umma-bg);
+  font-size: 11px;
+  font-weight: 800;
 }
 
+
 /* =========================
-   BRAND
-========================= */
+   БРЕНД UMMA
+   ========================= */
 
 .brand {
-  padding: 30px 20px 24px;
   text-align: center;
+
+  padding: 30px 22px 26px;
 }
 
 .brand-logo {
   display: block;
 
-  width: 108px;
-  height: 108px;
-
-  margin: 0 auto 16px;
+  width: 128px;
+  height: 128px;
 
   object-fit: contain;
+
+  margin: 0 auto 18px;
 }
 
 .brand-name {
   display: flex;
-  justify-content: center;
   align-items: baseline;
-  gap: 7px;
+  justify-content: center;
+  gap: 10px;
 
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 
-  letter-spacing: 1px;
+  color: var(--umma-gold);
 }
 
 .brand-name span {
-  color: var(--umma-gold);
-  font-size: 30px;
-  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 1px;
 }
 
 .brand-name strong {
-  color: var(--umma-gold);
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .brand p {
   margin: 0;
 
-  color: var(--umma-muted);
+  color: var(--umma-turquoise);
 
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.5;
+  font-weight: 500;
 }
 
+
 /* =========================
-   WELCOME CARD
-========================= */
+   ПРИВЕТСТВИЕ
+   ========================= */
 
 .welcome-card {
+  position: relative;
+
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 
-  margin: 0 16px 16px;
-  padding: 16px;
+  margin: 0 18px 18px;
+  padding: 22px;
+
+  min-height: 150px;
 
   background: var(--umma-turquoise);
-  color: white;
 
-  border-radius: var(--radius-medium);
+  border-radius: var(--radius-large);
 
-  box-shadow: var(--umma-shadow);
+  box-shadow: var(--shadow-turquoise);
+
+  overflow: hidden;
 }
 
 .welcome-icon {
-  width: 48px;
-  height: 48px;
+  flex: 0 0 76px;
+
+  width: 76px;
+  height: 76px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.14);
 
-  background: rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
 
-  border-radius: 15px;
-
-  font-size: 23px;
+  font-size: 36px;
 }
 
 .welcome-text {
   flex: 1;
+  min-width: 0;
 }
 
 .welcome-text h2 {
-  margin: 0 0 4px;
+  margin: 0 0 8px;
 
-  color: white;
+  color: var(--umma-white);
 
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 800;
 }
 
 .welcome-text p {
   margin: 0;
 
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--umma-white);
 
-  font-size: 13px;
-}
-
-.arrow-button,
-.circle-arrow,
-.farm-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  background: white;
-  color: var(--umma-gold);
-
-  border-radius: 50%;
-
-  font-size: 19px;
+  font-size: 16px;
+  line-height: 1.45;
+  opacity: 0.95;
 }
 
 .arrow-button {
-  width: 38px;
-  height: 38px;
+  flex: 0 0 54px;
+
+  width: 54px;
+  height: 54px;
+
+  border-radius: 50%;
+
+  background: var(--umma-white);
+  color: var(--umma-gold);
+
+  font-size: 28px;
+  font-weight: 500;
 }
 
+
 /* =========================
-   AYAH
-========================= */
+   АЯТ ДНЯ
+   ========================= */
 
 .ayah-card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 
-  margin: 0 16px 20px;
-  padding: 17px;
+  margin: 0 18px 22px;
+  padding: 22px;
 
-  background: white;
+  background: var(--umma-white);
 
-  border: 1px solid var(--umma-border);
-  border-radius: var(--radius-medium);
+  border: 1px solid var(--turquoise-border);
 
-  box-shadow: 0 5px 20px rgba(15, 163, 168, 0.07);
+  border-radius: var(--radius-large);
+
+  box-shadow: 0 8px 24px rgba(15, 163, 168, 0.06);
 }
 
 .ayah-icon {
-  width: 45px;
-  height: 45px;
+  flex: 0 0 62px;
+
+  width: 62px;
+  height: 62px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  flex-shrink: 0;
+  background: var(--turquoise-soft);
 
-  background: rgba(15, 163, 168, 0.09);
+  border-radius: 20px;
 
-  border-radius: 14px;
-
-  font-size: 21px;
+  font-size: 28px;
 }
 
 .ayah-content {
   flex: 1;
+  min-width: 0;
 }
 
 .small-label {
   display: block;
 
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 
   color: var(--umma-gold);
 
-  font-size: 11px;
-  font-weight: 800;
-
-  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 900;
   letter-spacing: 0.7px;
+  text-transform: uppercase;
 }
 
 .ayah-content p {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 
-  color: var(--umma-text);
+  color: var(--umma-turquoise);
 
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 600;
 }
 
 .ayah-content small {
-  color: var(--umma-muted);
-  font-size: 11px;
+  color: var(--umma-gold);
+
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .circle-arrow {
-  width: 34px;
-  height: 34px;
+  flex: 0 0 50px;
+
+  width: 50px;
+  height: 50px;
+
+  border-radius: 50%;
 
   background: var(--umma-turquoise);
-  color: white;
+  color: var(--umma-white);
+
+  font-size: 25px;
 }
 
+
 /* =========================
-   HERO CAFE
-========================= */
+   ГЛАВНЫЙ БЛОК — КАФЕ UMMA
+   ========================= */
 
 .hero-card {
   position: relative;
-  overflow: hidden;
 
-  min-height: 270px;
+  margin: 0 12px 28px;
 
-  margin: 0 16px 26px;
+  min-height: 330px;
 
-  border-radius: var(--radius-large);
+  display: flex;
+  align-items: flex-end;
 
   background:
-    linear-gradient(
-      135deg,
-      var(--umma-turquoise),
-      #087F84
-    );
+    radial-gradient(
+      circle at 88% 25%,
+      rgba(212, 175, 55, 0.24),
+      transparent 34%
+    ),
+    var(--umma-turquoise);
 
-  box-shadow: 0 12px 35px rgba(15, 163, 168, 0.22);
+  border: 3px solid var(--umma-gold);
+
+  border-radius: 30px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 16px 34px rgba(15, 163, 168, 0.18);
 }
 
 .hero-overlay {
@@ -405,61 +458,91 @@ button:active {
 
   background:
     radial-gradient(
-      circle at 90% 10%,
-      rgba(242, 208, 107, 0.25),
-      transparent 35%
+      circle at 85% 80%,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 3px
     );
+
+  opacity: 0.45;
+}
+
+.hero-card::before,
+.hero-card::after {
+  content: "";
+
+  position: absolute;
+
+  border: 2px solid rgba(212, 175, 55, 0.45);
+
+  border-radius: 50%;
+}
+
+.hero-card::before {
+  width: 190px;
+  height: 190px;
+
+  right: -70px;
+  bottom: -80px;
+}
+
+.hero-card::after {
+  width: 130px;
+  height: 130px;
+
+  right: -35px;
+  bottom: -48px;
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
 
-  padding: 24px;
-  min-height: 270px;
+  width: 100%;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding: 28px;
 }
 
 .hero-top {
-  margin-bottom: 15px;
+  display: flex;
+  justify-content: flex-end;
+
+  margin-bottom: 44px;
 }
 
 .halal-badge {
   display: inline-flex;
   align-items: center;
 
-  padding: 7px 11px;
+  padding: 10px 16px;
 
-  border-radius: 20px;
+  color: var(--umma-gold);
 
-  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid var(--umma-gold);
 
-  color: var(--umma-gold-light);
+  border-radius: 999px;
 
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .hero-content h1 {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 
-  color: var(--umma-gold-light);
+  color: var(--umma-white);
 
-  font-size: 31px;
+  font-size: 36px;
   line-height: 1.1;
+  font-weight: 900;
 }
 
 .hero-content p {
-  margin: 0 0 20px;
+  margin: 0 0 24px;
 
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--umma-white);
 
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 18px;
+  line-height: 1.45;
 }
 
 .primary-button {
@@ -468,31 +551,32 @@ button:active {
   justify-content: center;
   gap: 14px;
 
-  width: fit-content;
+  min-height: 56px;
 
-  padding: 12px 17px;
+  padding: 0 25px;
 
-  background: white;
-  color: var(--umma-gold);
+  background: var(--umma-gold);
+  color: var(--umma-turquoise);
 
-  border-radius: 14px;
+  border-radius: 999px;
 
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
 
-  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.22);
 }
 
 .primary-button span {
-  font-size: 18px;
+  font-size: 25px;
 }
 
+
 /* =========================
-   SECTION HEADER
-========================= */
+   СЕРВИСЫ
+   ========================= */
 
 .services-section {
-  margin: 0 16px 24px;
+  margin: 0 18px 24px;
 }
 
 .section-header {
@@ -500,7 +584,7 @@ button:active {
   align-items: center;
   justify-content: space-between;
 
-  margin-bottom: 13px;
+  margin-bottom: 16px;
 }
 
 .section-header h2 {
@@ -508,129 +592,53 @@ button:active {
 
   color: var(--umma-gold);
 
-  font-size: 20px;
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 900;
 }
 
 .section-header button {
-  padding: 7px 11px;
+  padding: 4px 0;
 
   background: transparent;
-
   color: var(--umma-turquoise);
 
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
 }
-
-/* =========================
-   SERVICES
-========================= */
 
 .services-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
 }
 
 .service-card {
   display: flex;
   align-items: center;
-  gap: 10px;
 
-  min-width: 0;
+  width: 100%;
+  min-height: 92px;
 
-  padding: 13px 11px;
+  padding: 13px;
+
+  background: var(--umma-white);
+
+  border: 1px solid var(--turquoise-border);
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 6px 18px rgba(15, 163, 168, 0.055);
 
   text-align: left;
-
-  background: white;
-
-  border: 1px solid var(--umma-border);
-  border-radius: var(--radius-small);
-
-  box-shadow: 0 4px 15px rgba(15, 163, 168, 0.06);
 }
 
 .service-icon {
-  width: 39px;
-  height: 39px;
+  flex: 0 0 48px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 12px;
-
-  background: rgba(15, 163, 168, 0.09);
-
-  font-size: 18px;
-}
-
-.service-info {
-  min-width: 0;
-  flex: 1;
-}
-
-.service-info strong {
-  display: block;
-
-  margin-bottom: 3px;
-
-  color: var(--umma-text);
-
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.service-info small {
-  display: block;
-
-  overflow: hidden;
-
-  color: var(--umma-muted);
-
-  font-size: 9px;
-  line-height: 1.3;
-
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.service-arrow {
-  color: var(--umma-gold);
-
-  font-size: 20px;
-  line-height: 1;
-}
-
-/* =========================
-   UMMA FARM
-========================= */
-
-.farm-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin: 0 16px 24px;
-  padding: 18px;
-
-  background: var(--umma-turquoise);
-
-  border-radius: var(--radius-medium);
-
-  box-shadow: var(--umma-shadow);
-}
-
-.farm-content {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-}
-
-.farm-icon {
   width: 48px;
   height: 48px;
 
@@ -638,62 +646,169 @@ button:active {
   align-items: center;
   justify-content: center;
 
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--turquoise-soft);
 
-  border-radius: 14px;
+  border-radius: 16px;
 
-  font-size: 24px;
+  font-size: 25px;
 }
 
-.farm-card h2 {
-  margin: 0 0 4px;
+.service-info {
+  flex: 1;
+  min-width: 0;
 
-  color: var(--umma-gold-light);
+  display: flex;
+  flex-direction: column;
 
-  font-size: 18px;
+  margin-left: 11px;
 }
 
-.farm-card p {
+.service-info strong {
+  color: var(--umma-turquoise);
+
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 850;
+}
+
+.service-info small {
+  margin-top: 4px;
+
+  color: var(--umma-turquoise);
+
+  font-size: 11px;
+  line-height: 1.25;
+
+  opacity: 0.7;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service-arrow {
+  flex: 0 0 auto;
+
+  margin-left: 5px;
+
+  color: var(--umma-gold);
+
+  font-size: 25px;
+  font-weight: 700;
+}
+
+
+/* =========================
+   UMMA FARM
+   ========================= */
+
+.farm-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin: 0 18px 26px;
+  padding: 22px;
+
+  background: var(--umma-turquoise);
+
+  border-radius: var(--radius-large);
+
+  box-shadow: var(--shadow-turquoise);
+}
+
+.farm-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  min-width: 0;
+}
+
+.farm-icon {
+  flex: 0 0 62px;
+
+  width: 62px;
+  height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.14);
+
+  border-radius: 20px;
+
+  font-size: 30px;
+}
+
+.farm-content h2 {
+  margin: 0 0 5px;
+
+  color: var(--umma-gold);
+
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.farm-content p {
   margin: 0;
 
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--umma-white);
 
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .farm-arrow {
-  width: 39px;
-  height: 39px;
+  flex: 0 0 52px;
+
+  width: 52px;
+  height: 52px;
+
+  border-radius: 50%;
+
+  background: var(--umma-white);
+  color: var(--umma-gold);
+
+  font-size: 26px;
 }
 
+
 /* =========================
-   BOTTOM NAVIGATION
-========================= */
+   НИЖНЯЯ НАВИГАЦИЯ
+   ========================= */
 
 .bottom-nav {
   position: fixed;
+
   left: 50%;
   bottom: 0;
 
   z-index: 200;
 
-  transform: translateX(-50%);
+  width: 100%;
+  max-width: 760px;
 
-  width: min(600px, 100%);
+  transform: translateX(-50%);
 
   display: grid;
   grid-template-columns: repeat(6, 1fr);
 
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  min-height: 76px;
+
+  padding:
+    7px
+    8px
+    calc(7px + env(safe-area-inset-bottom));
 
   background: rgba(255, 255, 255, 0.97);
 
-  border-top: 1px solid var(--umma-border);
-
-  box-shadow: 0 -8px 25px rgba(15, 163, 168, 0.08);
+  border-top: 1px solid var(--turquoise-border);
 
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .nav-item {
@@ -701,60 +816,65 @@ button:active {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   gap: 3px;
 
-  min-height: 55px;
+  min-width: 0;
+
+  padding: 4px 2px;
 
   background: transparent;
 
-  color: var(--umma-muted);
+  color: var(--umma-turquoise);
 
-  border-radius: 13px;
+  opacity: 0.65;
 }
 
 .nav-item span {
-  font-size: 19px;
+  display: block;
+
+  font-size: 22px;
   line-height: 1;
 }
 
 .nav-item small {
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
 .nav-item.active {
   color: var(--umma-gold);
+  opacity: 1;
 }
 
-.nav-item.active span {
-  color: var(--umma-gold);
-}
 
 /* =========================
    TOAST
-========================= */
+   ========================= */
 
 .toast {
   position: fixed;
+
   left: 50%;
-  bottom: 90px;
+  bottom: 94px;
 
-  z-index: 300;
+  z-index: 500;
 
-  transform: translateX(-50%) translateY(20px);
+  transform: translate(-50%, 20px);
 
-  width: max-content;
-  max-width: calc(100% - 32px);
+  max-width: calc(100% - 40px);
 
-  padding: 11px 16px;
+  padding: 12px 18px;
 
-  background: var(--umma-text);
-  color: white;
+  background: var(--umma-turquoise);
+  color: var(--umma-white);
 
-  border-radius: 12px;
+  border: 1px solid var(--umma-gold);
 
-  font-size: 12px;
+  border-radius: 999px;
+
+  font-size: 14px;
+  font-weight: 700;
 
   opacity: 0;
   pointer-events: none;
@@ -766,55 +886,173 @@ button:active {
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, 0);
 }
 
-/* =========================
-   MOBILE
-========================= */
 
-@media (max-width: 420px) {
+/* =========================
+   АДАПТАЦИЯ ПОД ТЕЛЕФОН
+   ========================= */
+
+@media (max-width: 430px) {
+
+  .topbar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
 
   .brand {
-    padding-top: 24px;
+    padding-top: 25px;
   }
 
   .brand-logo {
-    width: 94px;
-    height: 94px;
+    width: 116px;
+    height: 116px;
+  }
+
+  .brand-name {
+    gap: 8px;
   }
 
   .brand-name span {
-    font-size: 27px;
+    font-size: 34px;
   }
 
   .brand-name strong {
-    font-size: 19px;
+    font-size: 21px;
   }
 
-  .hero-card,
+  .brand p {
+    font-size: 16px;
+  }
+
+  .welcome-card {
+    padding: 18px;
+  }
+
+  .welcome-icon {
+    flex-basis: 64px;
+    width: 64px;
+    height: 64px;
+    font-size: 30px;
+  }
+
+  .welcome-text h2 {
+    font-size: 18px;
+  }
+
+  .welcome-text p {
+    font-size: 14px;
+  }
+
+  .arrow-button {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .hero-card {
+    min-height: 315px;
+  }
+
   .hero-content {
-    min-height: 250px;
+    padding: 24px;
   }
 
   .hero-content h1 {
-    font-size: 28px;
+    font-size: 32px;
+  }
+
+  .hero-content p {
+    font-size: 17px;
   }
 
   .service-card {
-    padding: 11px 9px;
+    min-height: 88px;
+    padding: 11px;
   }
 
   .service-icon {
-    width: 35px;
-    height: 35px;
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .service-info {
+    margin-left: 8px;
   }
 
   .service-info strong {
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .service-info small {
-    font-size: 8px;
+    font-size: 10px;
+  }
+}
+
+
+/* =========================
+   МАЛЕНЬКИЕ ЭКРАНЫ
+   ========================= */
+
+@media (max-width: 360px) {
+
+  .language-button {
+    min-width: 94px;
+  }
+
+  .notification-button,
+  .profile-button {
+    width: 43px;
+  }
+
+  .icon-button {
+    width: 43px;
+  }
+
+  .brand-name span {
+    font-size: 30px;
+  }
+
+  .brand-name strong {
+    font-size: 18px;
+  }
+
+  .services-grid {
+    gap: 9px;
+  }
+
+  .service-card {
+    min-height: 84px;
+  }
+
+  .service-info strong {
+    font-size: 13px;
+  }
+
+  .hero-content h1 {
+    font-size: 29px;
+  }
+
+  .hero-content p {
+    font-size: 15px;
+  }
+}
+
+
+/* =========================
+   БОЛЬШИЕ ЭКРАНЫ
+   ========================= */
+
+@media (min-width: 761px) {
+
+  body {
+    background: var(--turquoise-soft);
+  }
+
+  .app {
+    box-shadow:
+      0 0 60px rgba(15, 163, 168, 0.08);
   }
 }
