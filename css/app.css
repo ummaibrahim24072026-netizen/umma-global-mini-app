@@ -1,515 +1,892 @@
-/* =========================================================
-   UMMA GLOBAL — COMPACT HOME SCREEN
-   Эталонная компоновка главной страницы
-   ========================================================= */
-
 :root {
   --umma-turquoise: #0FA3A8;
-  --umma-gold: #D4AF37;
+  --umma-gold: #D4A72C;
   --umma-gold-light: #F2D06B;
   --umma-white: #FFFFFF;
+  --umma-text: #17383A;
+  --umma-muted: #6B8587;
+  --umma-bg: #F7FCFC;
+  --umma-border: rgba(15, 163, 168, 0.16);
+  --umma-shadow: 0 5px 18px rgba(15, 163, 168, 0.08);
+
+  --radius-large: 22px;
+  --radius-medium: 16px;
+  --radius-small: 12px;
 }
 
-/* Основной экран */
+/* =========================
+   ОСНОВА
+========================= */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
 html,
 body {
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
-  width: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 body {
-  background: #F8FCFC;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  background: var(--umma-bg);
+  color: var(--umma-text);
 }
+
+button {
+  font-family: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* =========================
+   ГЛАВНЫЙ ЭКРАН
+========================= */
 
 .app {
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 12px 78px;
-  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fcfc 45%,
+      #f4fbfb 100%
+    );
 }
 
-/* =========================================================
+/* =========================
    ВЕРХНЯЯ ПАНЕЛЬ
-   ========================================================= */
+========================= */
 
 .topbar {
-  height: 58px;
-  min-height: 58px;
-  padding: 6px 0;
+  flex: 0 0 54px;
+  height: 54px;
+
   display: flex;
   align-items: center;
   gap: 8px;
-  box-sizing: border-box;
+
+  padding: 7px 14px;
+
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid var(--umma-border);
+
+  z-index: 20;
 }
 
-/* =========================================================
-   ЛОГОТИП И БРЕНД
-   ========================================================= */
+.icon-button,
+.language-button,
+.profile-button {
+  height: 40px;
+
+  border: 1px solid var(--umma-border);
+  background: #ffffff;
+
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--umma-gold);
+
+  box-shadow: 0 2px 8px rgba(15, 163, 168, 0.04);
+}
+
+.icon-button {
+  width: 48px;
+  font-size: 22px;
+}
+
+.language-button {
+  min-width: 112px;
+  padding: 0 12px;
+  gap: 7px;
+
+  color: var(--umma-gold);
+  font-size: 16px;
+}
+
+.language-button span:first-child {
+  font-size: 19px;
+}
+
+.language-button strong {
+  font-size: 16px;
+}
+
+.chevron {
+  font-size: 17px;
+}
+
+.topbar-spacer {
+  flex: 1;
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+
+  top: -5px;
+  right: -4px;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--umma-gold);
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-button {
+  width: 48px;
+  font-size: 21px;
+}
+
+/* =========================
+   ОСНОВНОЕ СОДЕРЖИМОЕ
+========================= */
+
+.app {
+  position: relative;
+}
+
+.brand,
+.welcome-card,
+.ayah-card,
+.hero-card,
+.services-section,
+.farm-card {
+  flex-shrink: 0;
+}
+
+/* =========================
+   ЛОГОТИП
+========================= */
 
 .brand {
-  padding: 4px 0 8px;
+  height: 118px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 15px 3px;
   text-align: center;
 }
 
 .brand-logo {
-  width: 82px;
-  height: 82px;
+  width: 58px;
+  height: 58px;
+
   object-fit: contain;
+
   display: block;
-  margin: 0 auto 4px;
+  margin-bottom: 4px;
 }
 
 .brand-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 7px;
+
   line-height: 1;
-  margin: 0 0 6px;
+  color: var(--umma-gold);
 }
 
 .brand-name span {
   font-size: 28px;
   font-weight: 800;
-  color: var(--umma-gold);
   letter-spacing: 1px;
 }
 
 .brand-name strong {
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 700;
-  color: var(--umma-gold);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
 }
 
 .brand p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.25;
+  margin: 5px 0 0;
+
   color: var(--umma-turquoise);
+
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
 }
 
-/* =========================================================
+/* =========================
    ПРИВЕТСТВИЕ
-   ========================================================= */
+========================= */
 
 .welcome-card {
-  min-height: 94px;
-  padding: 12px 14px;
-  margin: 8px 0;
+  height: 82px;
+
+  margin: 0 18px 7px;
+  padding: 10px 13px;
+
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-sizing: border-box;
-  border-radius: 22px;
+
   background: var(--umma-turquoise);
+  border-radius: var(--radius-large);
+
+  color: #ffffff;
+
+  box-shadow: var(--umma-shadow);
 }
 
 .welcome-icon {
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
+  width: 55px;
+  height: 55px;
+
+  flex: 0 0 55px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.13);
-  font-size: 25px;
+
+  background: rgba(255, 255, 255, 0.13);
+  border-radius: 17px;
+
+  font-size: 27px;
 }
 
 .welcome-text {
-  flex: 1;
   min-width: 0;
+  flex: 1;
+
+  margin-left: 12px;
 }
 
 .welcome-text h2 {
-  margin: 0 0 3px;
-  font-size: 17px;
-  line-height: 1.15;
-  color: #FFFFFF;
+  margin: 0;
+
+  font-size: 16px;
+  line-height: 1.18;
   font-weight: 800;
+
+  color: #ffffff;
 }
 
 .welcome-text p {
-  margin: 0;
-  font-size: 13px;
+  margin: 4px 0 0;
+
+  font-size: 11px;
   line-height: 1.2;
-  color: rgba(255,255,255,0.9);
+
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .arrow-button {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
+  width: 45px;
+  height: 45px;
+
+  flex: 0 0 45px;
+
   border-radius: 50%;
-  border: none;
-  background: #FFFFFF;
+
+  background: #ffffff;
   color: var(--umma-gold);
+
   font-size: 24px;
+  font-weight: 500;
 }
 
-/* =========================================================
+/* =========================
    АЯТ ДНЯ
-   ========================================================= */
+========================= */
 
 .ayah-card {
-  min-height: 96px;
-  padding: 12px 14px;
-  margin: 8px 0;
+  height: 78px;
+
+  margin: 0 18px 7px;
+  padding: 9px 12px;
+
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-sizing: border-box;
-  border-radius: 22px;
-  background: #FFFFFF;
-  border: 1px solid rgba(15,163,168,0.16);
+
+  background: #ffffff;
+
+  border: 1px solid var(--umma-border);
+  border-radius: var(--radius-large);
+
+  box-shadow: 0 3px 12px rgba(15, 163, 168, 0.04);
 }
 
 .ayah-icon {
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: #EEF9F9;
-  font-size: 25px;
+
+  background: #edf8f8;
+  border-radius: 15px;
+
+  font-size: 23px;
 }
 
 .ayah-content {
-  flex: 1;
   min-width: 0;
+  flex: 1;
+
+  margin-left: 11px;
 }
 
 .small-label {
   display: block;
-  margin-bottom: 3px;
+
+  margin-bottom: 2px;
+
   color: var(--umma-gold);
-  font-size: 12px;
+
+  font-size: 10px;
+  line-height: 1;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .ayah-content p {
-  margin: 0 0 3px;
-  color: #1E3C3E;
-  font-size: 13px;
+  margin: 0;
+
+  color: var(--umma-turquoise);
+
+  font-size: 11px;
   line-height: 1.22;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .ayah-content small {
-  font-size: 11px;
-  color: #809596;
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--umma-gold);
+
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .circle-arrow {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border: none;
+  width: 39px;
+  height: 39px;
+
+  flex: 0 0 39px;
+
   border-radius: 50%;
+
   background: var(--umma-turquoise);
-  color: #FFFFFF;
-  font-size: 20px;
+  color: #ffffff;
+
+  font-size: 21px;
 }
 
-/* =========================================================
-   КАФЕ UMMA
-   ========================================================= */
+/* =========================
+   КАФЕ
+========================= */
 
 .hero-card {
-  min-height: 148px;
-  height: 148px;
-  margin: 8px 0;
-  border-radius: 24px;
-  overflow: hidden;
-  border: 3px solid var(--umma-gold);
-  background: var(--umma-turquoise);
+  height: 112px;
+
+  margin: 0 18px 7px;
+
   position: relative;
-  box-sizing: border-box;
+  overflow: hidden;
+
+  border-radius: var(--radius-large);
+
+  background:
+    linear-gradient(
+      135deg,
+      #10adb2 0%,
+      var(--umma-turquoise) 65%,
+      #07959a 100%
+    );
+
+  border: 2px solid var(--umma-gold);
+
+  box-shadow: var(--umma-shadow);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at 88% 120%,
+      rgba(212, 167, 44, 0.25),
+      transparent 34%
+    );
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
+
   height: 100%;
-  padding: 16px 18px;
-  box-sizing: border-box;
+
+  padding: 10px 13px;
+
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   justify-content: center;
 }
 
 .hero-top {
   position: absolute;
-  top: 12px;
-  right: 14px;
+
+  top: 9px;
+  right: 12px;
 }
 
 .halal-badge {
-  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+
   border: 1px solid var(--umma-gold-light);
-  border-radius: 20px;
+  border-radius: 30px;
+
   color: var(--umma-gold-light);
-  font-size: 11px;
+
+  font-size: 9px;
   font-weight: 800;
 }
 
 .hero-content h1 {
   margin: 0 0 3px;
-  color: #FFFFFF;
-  font-size: 25px;
+
+  color: #ffffff;
+
+  font-size: 22px;
   line-height: 1;
+  font-weight: 800;
 }
 
 .hero-content p {
-  margin: 0 0 10px;
-  color: #FFFFFF;
-  font-size: 13px;
+  margin: 0 0 7px;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  font-size: 10px;
   line-height: 1.25;
 }
 
 .primary-button {
-  min-height: 38px;
-  padding: 7px 16px;
-  border: none;
-  border-radius: 22px;
-  background: var(--umma-gold-light);
-  color: #17484A;
-  font-size: 13px;
+  width: fit-content;
+
+  padding: 7px 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border-radius: 25px;
+
+  background: linear-gradient(
+    135deg,
+    #ffe38a,
+    #ffd45b
+  );
+
+  color: #31585a;
+
+  font-size: 11px;
   font-weight: 800;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
 }
 
-/* =========================================================
+.primary-button span {
+  font-size: 17px;
+}
+
+/* =========================
    СЕРВИСЫ
-   ========================================================= */
+========================= */
 
 .services-section {
-  margin-top: 8px;
+  height: 168px;
+
+  margin: 0 18px 6px;
 }
 
 .section-header {
-  height: 30px;
-  margin-bottom: 6px;
+  height: 25px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  margin-bottom: 5px;
 }
 
 .section-header h2 {
   margin: 0;
-  color: var(--umma-gold);
-  font-size: 20px;
-  line-height: 1;
-}
 
-.section-header button {
-  border: none;
-  background: transparent;
-  color: var(--umma-turquoise);
-  font-size: 13px;
+  color: var(--umma-gold);
+
+  font-size: 17px;
+  line-height: 1;
   font-weight: 800;
 }
 
-/* 2 колонки */
+.section-header button {
+  padding: 0;
+
+  color: var(--umma-turquoise);
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .services-grid {
+  height: 138px;
+
   display: grid;
+
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  grid-template-rows: repeat(4, 1fr);
+
+  gap: 5px 7px;
 }
 
 .service-card {
   min-width: 0;
-  height: 58px;
-  padding: 7px 9px;
+  min-height: 0;
+
+  padding: 5px 7px;
+
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-radius: 17px;
-  background: #FFFFFF;
-  border: 1px solid rgba(15,163,168,0.14);
-  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid var(--umma-border);
+  border-radius: 14px;
+
+  box-shadow: 0 2px 7px rgba(15, 163, 168, 0.03);
+
+  text-align: left;
 }
 
 .service-icon {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
+  width: 31px;
+  height: 31px;
+
+  flex: 0 0 31px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 13px;
-  background: #EEF9F9;
-  font-size: 20px;
+
+  border-radius: 10px;
+
+  background: #edf8f8;
+
+  font-size: 17px;
 }
 
 .service-info {
   min-width: 0;
   flex: 1;
-  overflow: hidden;
-  text-align: left;
+
+  margin-left: 7px;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .service-info strong {
-  display: block;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: #17484A;
-  font-size: 12px;
+
+  color: var(--umma-text);
+
+  font-size: 10px;
   line-height: 1.1;
   font-weight: 800;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .service-info small {
-  display: block;
-  margin-top: 2px;
   overflow: hidden;
+
+  margin-top: 2px;
+
+  color: var(--umma-muted);
+
+  font-size: 7.5px;
+  line-height: 1;
+
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: #86A0A1;
-  font-size: 9px;
-  line-height: 1.1;
 }
 
 .service-arrow {
+  flex: 0 0 auto;
+
+  margin-left: 3px;
+
   color: var(--umma-gold);
-  font-size: 20px;
-  font-weight: 700;
+
+  font-size: 18px;
+  line-height: 1;
 }
 
-/* =========================================================
+/* =========================
    UMMA FARM
-   ========================================================= */
+========================= */
 
 .farm-card {
-  min-height: 76px;
-  height: 76px;
-  margin: 9px 0 4px;
-  padding: 10px 13px;
+  height: 61px;
+
+  margin: 0 18px 6px;
+  padding: 7px 10px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  box-sizing: border-box;
-  border-radius: 22px;
+
   background: var(--umma-turquoise);
+
+  border-radius: var(--radius-large);
+
+  color: #ffffff;
+
+  box-shadow: var(--umma-shadow);
 }
 
 .farm-content {
   min-width: 0;
+
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .farm-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: 43px;
+  height: 43px;
+
+  flex: 0 0 43px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.12);
-  font-size: 25px;
+
+  background: rgba(255, 255, 255, 0.13);
+  border-radius: 14px;
+
+  font-size: 23px;
+}
+
+.farm-content > div {
+  min-width: 0;
+  margin-left: 10px;
 }
 
 .farm-content h2 {
-  margin: 0 0 2px;
+  margin: 0;
+
   color: var(--umma-gold-light);
-  font-size: 17px;
-  line-height: 1;
+
+  font-size: 14px;
+  line-height: 1.05;
+  font-weight: 800;
 }
 
 .farm-content p {
-  margin: 0;
-  color: #FFFFFF;
-  font-size: 11px;
-  line-height: 1.2;
+  margin: 3px 0 0;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  font-size: 8px;
+  line-height: 1.15;
 }
 
 .farm-arrow {
-  width: 43px;
-  height: 43px;
-  min-width: 43px;
-  border: none;
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
   border-radius: 50%;
-  background: #FFFFFF;
+
+  background: #ffffff;
+
   color: var(--umma-gold);
+
   font-size: 22px;
 }
 
-/* =========================================================
+/* =========================
    НИЖНЯЯ НАВИГАЦИЯ
-   ========================================================= */
+========================= */
 
 .bottom-nav {
-  position: fixed;
-  z-index: 100;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 62px;
-  padding: 5px 5px 4px;
+  flex: 0 0 57px;
+  height: 57px;
+
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  box-sizing: border-box;
-  background: rgba(255,255,255,0.97);
-  border-top: 1px solid rgba(15,163,168,0.12);
-  backdrop-filter: blur(10px);
+
+  background: rgba(255, 255, 255, 0.98);
+
+  border-top: 1px solid var(--umma-border);
+
+  z-index: 30;
 }
 
 .nav-item {
   min-width: 0;
-  padding: 2px;
-  border: none;
-  background: transparent;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   gap: 2px;
+
+  color: #78a0a2;
 }
 
 .nav-item span {
+  height: 23px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   font-size: 18px;
   line-height: 1;
 }
 
 .nav-item small {
-  font-size: 9px;
+  font-size: 7px;
   line-height: 1;
   font-weight: 700;
-  color: #779091;
 }
 
-.nav-item.active span,
-.nav-item.active small {
+.nav-item.active {
   color: var(--umma-gold);
 }
 
-/* =========================================================
-   КОМПАКТНЫЕ ТЕЛЕФОНЫ
-   ========================================================= */
+.nav-item[data-page="cafe"] span,
+.nav-item[data-page="market"] span,
+.nav-item[data-page="services"] span,
+.nav-item[data-page="community"] span,
+.nav-item[data-page="more"] span {
+  color: inherit;
+}
 
-@media (max-height: 750px) {
+/* =========================
+   УВЕДОМЛЕНИЕ
+========================= */
 
-  .app {
-    padding-bottom: 70px;
-  }
+.toast {
+  position: fixed;
+
+  left: 50%;
+  bottom: 70px;
+
+  transform: translateX(-50%) translateY(15px);
+
+  max-width: 85%;
+
+  padding: 9px 14px;
+
+  background: rgba(23, 56, 58, 0.94);
+  color: #ffffff;
+
+  border-radius: 12px;
+
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+}
+
+/* =========================
+   АДАПТАЦИЯ ПОД НЕБОЛЬШИЕ
+   ЭКРАНЫ
+========================= */
+
+@media (max-height: 760px) {
 
   .topbar {
-    height: 50px;
-    min-height: 50px;
+    flex-basis: 49px;
+    height: 49px;
+    padding: 5px 12px;
+  }
+
+  .icon-button,
+  .language-button,
+  .profile-button {
+    height: 36px;
+  }
+
+  .brand {
+    height: 101px;
   }
 
   .brand-logo {
-    width: 66px;
-    height: 66px;
+    width: 48px;
+    height: 48px;
   }
 
   .brand-name span {
@@ -517,44 +894,116 @@ body {
   }
 
   .brand-name strong {
-    font-size: 18px;
-  }
-
-  .brand p {
-    font-size: 12px;
-  }
-
-  .welcome-card,
-  .ayah-card {
-    min-height: 78px;
-    padding: 9px 11px;
-  }
-
-  .welcome-icon,
-  .ayah-icon {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-  }
-
-  .hero-card {
-    height: 128px;
-    min-height: 128px;
-  }
-
-  .service-card {
-    height: 50px;
-  }
-
-  .service-icon {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
     font-size: 17px;
   }
 
+  .welcome-card {
+    height: 75px;
+  }
+
+  .ayah-card {
+    height: 71px;
+  }
+
+  .hero-card {
+    height: 101px;
+  }
+
+  .services-section {
+    height: 154px;
+  }
+
+  .services-grid {
+    height: 126px;
+  }
+
   .farm-card {
+    height: 55px;
+  }
+
+  .bottom-nav {
+    flex-basis: 53px;
+    height: 53px;
+  }
+}
+
+/* =========================
+   ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ
+========================= */
+
+@media (max-height: 680px) {
+
+  .brand {
+    height: 88px;
+  }
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand-name span {
+    font-size: 21px;
+  }
+
+  .brand-name strong {
+    font-size: 15px;
+  }
+
+  .brand p {
+    font-size: 10px;
+  }
+
+  .welcome-card {
+    height: 68px;
+  }
+
+  .welcome-icon {
+    width: 45px;
+    height: 45px;
+    flex-basis: 45px;
+    font-size: 22px;
+  }
+
+  .arrow-button {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .ayah-card {
     height: 64px;
-    min-height: 64px;
+  }
+
+  .ayah-icon {
+    width: 41px;
+    height: 41px;
+    flex-basis: 41px;
+  }
+
+  .circle-arrow {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .hero-card {
+    height: 91px;
+  }
+
+  .hero-content h1 {
+    font-size: 19px;
+  }
+
+  .services-section {
+    height: 143px;
+  }
+
+  .services-grid {
+    height: 116px;
+  }
+
+  .farm-card {
+    height: 49px;
   }
 }
