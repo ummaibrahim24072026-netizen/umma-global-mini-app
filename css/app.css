@@ -1,450 +1,15 @@
-:root {
-  /* ОСНОВНЫЕ ЦВЕТА UMMA */
-  --umma-turquoise: #0FA3A8;
-  --umma-gold: #D4A72C;
-  --umma-gold-light: #F2D06B;
-
-  --umma-white: #FFFFFF;
-  --umma-text: #17383A;
-  --umma-muted: #6B8587;
-  --umma-bg: #F5FAFA;
-
-  --umma-border: rgba(15, 163, 168, 0.16);
-
-  --radius-large: 26px;
-  --radius-medium: 20px;
-  --radius-small: 16px;
-
-  --shadow-soft: 0 8px 24px rgba(15, 163, 168, 0.10);
-}
-
-
-/* =========================
-   ОСНОВА
-========================= */
-
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100%;
-  background: var(--umma-bg);
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100%;
-  background: var(--umma-bg);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
-
-  color: var(--umma-text);
-
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-button {
-  font: inherit;
-  border: 0;
-  outline: none;
-  cursor: pointer;
-}
-
-.app {
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-
-  padding:
-    0
-    16px
-    calc(78px + env(safe-area-inset-bottom))
-    16px;
-
-  background: var(--umma-bg);
-}
-
-
-/* =========================
-   ВЕРХНЯЯ ПАНЕЛЬ
-========================= */
-
-.topbar {
-  height: 74px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  position: relative;
-  z-index: 10;
-
-  border-bottom: 1px solid var(--umma-border);
-}
-
-.icon-button,
-.language-button,
-.profile-button {
-  background: var(--umma-white);
-
-  border: 1px solid var(--umma-border);
-
-  box-shadow: 0 4px 14px rgba(15, 163, 168, 0.05);
-
-  color: var(--umma-gold);
-
-  height: 54px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 18px;
-}
-
-.icon-button {
-  width: 54px;
-
-  font-size: 25px;
-}
-
-.language-button {
-  min-width: 132px;
-
-  padding: 0 16px;
-
-  gap: 8px;
-
-  font-size: 17px;
-
-  color: var(--umma-gold);
-}
-
-.language-button strong {
-  font-size: 17px;
-}
-
-.language-button .chevron {
-  font-size: 17px;
-}
-
-.topbar-spacer {
-  flex: 1;
-}
-
-.notification-button {
-  position: relative;
-}
-
-.notification-badge {
-  position: absolute;
-
-  top: -7px;
-  right: -4px;
-
-  min-width: 25px;
-  height: 25px;
-
-  padding: 0 6px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: var(--umma-gold);
-  color: white;
-
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.profile-button {
-  width: 54px;
-}
-
-
-/* =========================
-   БРЕНД
-========================= */
-
-.brand {
-  text-align: center;
-
-  padding:
-    22px
-    0
-    16px;
-}
-
-.brand-logo {
-  width: 86px;
-  height: 86px;
-
-  object-fit: contain;
-
-  display: block;
-
-  margin: 0 auto 10px;
-}
-
-.brand-name {
-  display: flex;
-
-  align-items: baseline;
-  justify-content: center;
-
-  gap: 8px;
-
-  color: var(--umma-gold);
-
-  line-height: 1;
-}
-
-.brand-name span {
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-.brand-name strong {
-  font-size: 25px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.brand p {
-  margin: 9px auto 0;
-
-  max-width: 340px;
-
-  font-size: 16px;
-  line-height: 1.35;
-
-  font-weight: 600;
-
-  color: var(--umma-turquoise);
-}
-
-
-/* =========================
-   ПРИВЕТСТВИЕ
-========================= */
-
-.welcome-card {
-  width: 100%;
-
-  min-height: 132px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 16px;
-
-  padding: 18px 20px;
-
-  margin-bottom: 12px;
-
-  border-radius: var(--radius-large);
-
-  background: var(--umma-turquoise);
-
-  color: white;
-
-  box-shadow: var(--shadow-soft);
-}
-
-.welcome-icon {
-  flex: 0 0 72px;
-
-  width: 72px;
-  height: 72px;
-
-  border-radius: 22px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(255, 255, 255, 0.13);
-
-  font-size: 38px;
-}
-
-.welcome-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.welcome-text h2 {
-  margin: 0 0 5px;
-
-  font-size: 21px;
-  line-height: 1.2;
-
-  font-weight: 800;
-}
-
-.welcome-text p {
-  margin: 0;
-
-  font-size: 14px;
-  line-height: 1.3;
-
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.arrow-button,
-.circle-arrow,
-.farm-arrow {
-  flex: 0 0 auto;
-
-  width: 56px;
-  height: 56px;
-
-  border-radius: 50%;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: white;
-
-  color: var(--umma-gold);
-
-  font-size: 29px;
-  font-weight: 400;
-}
-
-
-/* =========================
-   АЯТ ДНЯ
-========================= */
-
-.ayah-card {
-  width: 100%;
-
-  min-height: 128px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 16px;
-
-  padding: 17px 20px;
-
-  margin-bottom: 14px;
-
-  border-radius: var(--radius-large);
-
-  background: white;
-
-  border: 1px solid var(--umma-border);
-
-  box-shadow: 0 5px 18px rgba(15, 163, 168, 0.05);
-}
-
-.ayah-icon {
-  flex: 0 0 68px;
-
-  width: 68px;
-  height: 68px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 20px;
-
-  background: #EEF9F9;
-
-  font-size: 32px;
-}
-
-.ayah-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.small-label {
-  display: block;
-
-  margin-bottom: 5px;
-
-  color: var(--umma-gold);
-
-  font-size: 14px;
-  font-weight: 800;
-
-  text-transform: uppercase;
-}
-
-.ayah-content p {
-  margin: 0;
-
-  color: var(--umma-turquoise);
-
-  font-size: 16px;
-  line-height: 1.25;
-
-  font-weight: 700;
-}
-
-.ayah-content small {
-  display: block;
-
-  margin-top: 7px;
-
-  color: var(--umma-gold);
-
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.circle-arrow {
-  width: 52px;
-  height: 52px;
-
-  background: var(--umma-turquoise);
-
-  color: white;
-
-  font-size: 26px;
-}
-
-
-/* =========================
-   КАФЕ UMMA
-========================= */
-
 .hero-card {
   position: relative;
-
   overflow: hidden;
 
   width: 100%;
+  height: 104px;
+  min-height: 104px;
 
-  min-height: 280px;
+  margin-bottom: 15px;
 
-  margin-bottom: 16px;
-
-  border-radius: var(--radius-large);
+  border-radius: 26px;
+  border: 3px solid var(--umma-gold);
 
   background:
     linear-gradient(
@@ -454,42 +19,10 @@ button {
       #12969A 100%
     );
 
-  border: 3px solid var(--umma-gold);
-
   box-shadow:
-    0 12px 30px rgba(15, 163, 168, 0.16);
+    0 10px 26px rgba(15, 163, 168, 0.14);
 
   color: white;
-}
-
-.hero-overlay {
-  position: absolute;
-
-  right: -45px;
-  bottom: -85px;
-
-  width: 260px;
-  height: 260px;
-
-  border: 3px solid rgba(212, 167, 44, 0.45);
-
-  border-radius: 50%;
-}
-
-.hero-overlay::after {
-  content: "";
-
-  position: absolute;
-
-  left: 55px;
-  top: 55px;
-
-  width: 145px;
-  height: 145px;
-
-  border: 3px solid rgba(212, 167, 44, 0.38);
-
-  border-radius: 50%;
 }
 
 .hero-content {
@@ -498,38 +31,36 @@ button {
 
   height: 100%;
 
-  padding: 24px 24px 22px;
+  padding: 14px 18px;
 
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .hero-top {
-  display: flex;
-  justify-content: flex-end;
+  position: absolute;
+  top: 12px;
+  right: 14px;
 }
 
 .halal-badge {
-  display: inline-flex;
-  align-items: center;
+  padding: 6px 11px;
 
-  padding: 9px 15px;
-
-  border-radius: 30px;
+  border-radius: 22px;
 
   border: 1.5px solid var(--umma-gold-light);
 
   color: #FFE58A;
 
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .hero-card h1 {
-  margin: 45px 0 7px;
+  margin: 0 0 3px;
 
-  font-size: 34px;
+  font-size: 23px;
   line-height: 1;
 
   font-weight: 800;
@@ -538,10 +69,10 @@ button {
 }
 
 .hero-card p {
-  margin: 0 0 17px;
+  margin: 0 0 8px;
 
-  font-size: 17px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.25;
 
   color: rgba(255, 255, 255, 0.95);
 }
@@ -549,19 +80,18 @@ button {
 .primary-button {
   align-self: flex-start;
 
-  min-width: 220px;
+  min-width: 145px;
+  height: 34px;
 
-  height: 52px;
-
-  padding: 0 22px;
+  padding: 0 14px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 16px;
+  gap: 9px;
 
-  border-radius: 28px;
+  border-radius: 20px;
 
   background: linear-gradient(
     135deg,
@@ -571,604 +101,42 @@ button {
 
   color: #16484A;
 
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 800;
 
-  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
 }
 
 .primary-button span {
-  font-size: 26px;
+  font-size: 18px;
 }
 
+.hero-overlay {
+  position: absolute;
 
-/* =========================
-   СЕРВИСЫ
-========================= */
+  right: -45px;
+  bottom: -100px;
 
-.services-section {
-  margin-bottom: 15px;
+  width: 190px;
+  height: 190px;
+
+  border: 2px solid rgba(212, 167, 44, 0.4);
+
+  border-radius: 50%;
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.hero-overlay::after {
+  content: "";
 
-  margin-bottom: 11px;
-}
+  position: absolute;
 
-.section-header h2 {
-  margin: 0;
+  left: 42px;
+  top: 42px;
 
-  color: var(--umma-gold);
+  width: 104px;
+  height: 104px;
 
-  font-size: 25px;
-  line-height: 1;
+  border: 2px solid rgba(212, 167, 44, 0.32);
 
-  font-weight: 800;
-}
-
-.section-header button {
-  padding: 5px 0;
-
-  background: transparent;
-
-  color: var(--umma-turquoise);
-
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.services-grid {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 9px;
-}
-
-.service-card {
-  min-width: 0;
-
-  height: 68px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 8px 10px;
-
-  background: white;
-
-  border: 1px solid var(--umma-border);
-
-  border-radius: 20px;
-
-  box-shadow: 0 4px 12px rgba(15, 163, 168, 0.045);
-
-  text-align: left;
-}
-
-.service-icon {
-  flex: 0 0 45px;
-
-  width: 45px;
-  height: 45px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 15px;
-
-  background: #EEF9F9;
-
-  font-size: 24px;
-}
-
-.service-info {
-  flex: 1;
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.service-info strong {
-  overflow: hidden;
-
-  color: var(--umma-text);
-
-  font-size: 14px;
-  line-height: 1.15;
-
-  font-weight: 800;
-
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.service-info small {
-  overflow: hidden;
-
-  margin-top: 3px;
-
-  color: var(--umma-muted);
-
-  font-size: 11px;
-  line-height: 1.15;
-
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.service-arrow {
-  flex: 0 0 auto;
-
-  color: var(--umma-gold);
-
-  font-size: 25px;
-  line-height: 1;
-}
-
-
-/* =========================
-   UMMA FARM
-========================= */
-
-.farm-card {
-  width: 100%;
-
-  min-height: 104px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 12px;
-
-  padding: 14px 18px;
-
-  margin-top: 2px;
-
-  border-radius: var(--radius-large);
-
-  background: var(--umma-turquoise);
-
-  color: white;
-
-  box-shadow: var(--shadow-soft);
-}
-
-.farm-content {
-  flex: 1;
-
-  min-width: 0;
-
-  display: flex;
-  align-items: center;
-
-  gap: 13px;
-}
-
-.farm-icon {
-  flex: 0 0 58px;
-
-  width: 58px;
-  height: 58px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 19px;
-
-  background: rgba(255, 255, 255, 0.13);
-
-  font-size: 30px;
-}
-
-.farm-content h2 {
-  margin: 0 0 4px;
-
-  color: var(--umma-gold-light);
-
-  font-size: 22px;
-  line-height: 1;
-
-  font-weight: 800;
-}
-
-.farm-content p {
-  margin: 0;
-
-  color: rgba(255, 255, 255, 0.95);
-
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.farm-arrow {
-  width: 52px;
-  height: 52px;
-
-  font-size: 26px;
-}
-
-
-/* =========================
-   НИЖНЯЯ НАВИГАЦИЯ
-========================= */
-
-.bottom-nav {
-  position: fixed;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  z-index: 50;
-
-  height: calc(68px + env(safe-area-inset-bottom));
-
-  padding:
-    5px 8px
-    env(safe-area-inset-bottom);
-
-  display: grid;
-
-  grid-template-columns: repeat(6, 1fr);
-
-  background: rgba(255, 255, 255, 0.97);
-
-  border-top: 1px solid var(--umma-border);
-
-  box-shadow:
-    0 -5px 20px rgba(15, 163, 168, 0.07);
-
-  backdrop-filter: blur(12px);
-}
-
-.nav-item {
-  min-width: 0;
-
-  background: transparent;
-
-  color: var(--umma-muted);
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  gap: 3px;
-}
-
-.nav-item span {
-  height: 28px;
-
-  display: flex;
-  align-items: center;
-
-  font-size: 23px;
-}
-
-.nav-item small {
-  font-size: 10px;
-  line-height: 1;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-}
-
-.nav-item.active {
-  color: var(--umma-gold);
-}
-
-
-/* =========================
-   TOAST
-========================= */
-
-.toast {
-  position: fixed;
-
-  left: 50%;
-  bottom: 82px;
-
-  z-index: 100;
-
-  transform: translateX(-50%) translateY(20px);
-
-  padding: 11px 17px;
-
-  border-radius: 18px;
-
-  background: rgba(23, 56, 58, 0.92);
-
-  color: white;
-
-  font-size: 13px;
-
-  opacity: 0;
-  pointer-events: none;
-
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-.toast.show {
-  opacity: 1;
-
-  transform:
-    translateX(-50%)
-    translateY(0);
-}
-
-
-/* =========================
-   СРЕДНИЕ ЭКРАНЫ
-========================= */
-
-@media (max-width: 500px) {
-
-  .app {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .brand {
-    padding-top: 18px;
-    padding-bottom: 13px;
-  }
-
-  .brand-logo {
-    width: 78px;
-    height: 78px;
-  }
-
-  .brand-name span {
-    font-size: 30px;
-  }
-
-  .brand-name strong {
-    font-size: 22px;
-  }
-
-  .brand p {
-    font-size: 15px;
-  }
-
-  .welcome-card {
-    min-height: 124px;
-    padding: 16px;
-  }
-
-  .welcome-icon {
-    width: 62px;
-    height: 62px;
-    flex-basis: 62px;
-
-    font-size: 32px;
-  }
-
-  .welcome-text h2 {
-    font-size: 19px;
-  }
-
-  .ayah-card {
-    min-height: 118px;
-    padding: 15px;
-  }
-
-  .ayah-icon {
-    width: 60px;
-    height: 60px;
-    flex-basis: 60px;
-
-    font-size: 28px;
-  }
-
-  .hero-card {
-    min-height: 265px;
-  }
-
-  .hero-card h1 {
-    font-size: 31px;
-    margin-top: 38px;
-  }
-
-  .services-grid {
-    gap: 8px;
-  }
-
-  .service-card {
-    height: 65px;
-    padding: 7px 8px;
-  }
-
-  .service-icon {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
-
-    font-size: 22px;
-  }
-
-  .service-info strong {
-    font-size: 13px;
-  }
-
-  .service-info small {
-    font-size: 10px;
-  }
-
-  .farm-card {
-    min-height: 98px;
-  }
-}
-
-
-/* =========================
-   МАЛЕНЬКИЕ ТЕЛЕФОНЫ
-========================= */
-
-@media (max-width: 380px) {
-
-  .topbar {
-    height: 68px;
-  }
-
-  .icon-button,
-  .language-button,
-  .profile-button {
-    height: 49px;
-  }
-
-  .icon-button,
-  .profile-button {
-    width: 49px;
-  }
-
-  .language-button {
-    min-width: 112px;
-  }
-
-  .brand-logo {
-    width: 70px;
-    height: 70px;
-  }
-
-  .brand-name span {
-    font-size: 27px;
-  }
-
-  .brand-name strong {
-    font-size: 19px;
-  }
-
-  .brand p {
-    font-size: 14px;
-  }
-
-  .welcome-card {
-    min-height: 112px;
-    gap: 10px;
-  }
-
-  .welcome-icon {
-    width: 54px;
-    height: 54px;
-    flex-basis: 54px;
-    font-size: 27px;
-  }
-
-  .welcome-text h2 {
-    font-size: 17px;
-  }
-
-  .welcome-text p {
-    font-size: 12px;
-  }
-
-  .arrow-button {
-    width: 47px;
-    height: 47px;
-  }
-
-  .ayah-card {
-    min-height: 106px;
-    gap: 10px;
-  }
-
-  .ayah-icon {
-    width: 52px;
-    height: 52px;
-    flex-basis: 52px;
-    font-size: 24px;
-  }
-
-  .ayah-content p {
-    font-size: 13px;
-  }
-
-  .hero-card {
-    min-height: 235px;
-  }
-
-  .hero-content {
-    padding: 18px;
-  }
-
-  .hero-card h1 {
-    font-size: 27px;
-    margin-top: 28px;
-  }
-
-  .hero-card p {
-    font-size: 14px;
-  }
-
-  .primary-button {
-    min-width: 190px;
-    height: 47px;
-    font-size: 14px;
-  }
-
-  .section-header h2 {
-    font-size: 22px;
-  }
-
-  .service-card {
-    height: 59px;
-  }
-
-  .service-icon {
-    width: 37px;
-    height: 37px;
-    flex-basis: 37px;
-    border-radius: 13px;
-    font-size: 19px;
-  }
-
-  .service-info strong {
-    font-size: 11px;
-  }
-
-  .service-info small {
-    font-size: 9px;
-  }
-
-  .service-arrow {
-    font-size: 20px;
-  }
-
-  .farm-card {
-    min-height: 88px;
-    padding: 11px 13px;
-  }
-
-  .farm-icon {
-    width: 49px;
-    height: 49px;
-    flex-basis: 49px;
-    font-size: 25px;
-  }
-
-  .farm-content h2 {
-    font-size: 19px;
-  }
-
-  .farm-content p {
-    font-size: 11px;
-  }
-
-  .farm-arrow {
-    width: 46px;
-    height: 46px;
-  }
+  border-radius: 50%;
 }
