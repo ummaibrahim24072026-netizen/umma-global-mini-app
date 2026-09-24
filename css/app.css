@@ -1,28 +1,499 @@
-.hero-card {
-  position: relative;
+/* =========================================================
+   UMMA GLOBAL
+   MAIN SCREEN — FINAL CLEAN VERSION
+   ========================================================= */
+
+:root {
+  --umma-turquoise: #0FA3A8;
+  --umma-gold: #D4A72C;
+  --umma-white: #FFFFFF;
+
+  --umma-bg: #FFFFFF;
+  --umma-border: rgba(15, 163, 168, 0.16);
+
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+
+  --nav-height: 64px;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+}
+
+body {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  background: var(--umma-bg);
+  color: var(--umma-turquoise);
+
+  overflow: hidden;
+}
+
+button {
+  border: 0;
+  outline: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+.app {
+  position: relative;
 
   width: 100%;
-  height: 104px;
-  min-height: 104px;
+  height: 100dvh;
 
-  margin-bottom: 15px;
+  min-height: 0;
 
-  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+
+  background: var(--umma-bg);
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.topbar {
+  flex: 0 0 54px;
+
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding: 7px 14px;
+
+  gap: 10px;
+
+  border-bottom: 1px solid var(--umma-border);
+
+  background: rgba(255, 255, 255, 0.98);
+
+  position: relative;
+  z-index: 20;
+}
+
+.icon-button,
+.language-button,
+.profile-button {
+  height: 40px;
+
+  border: 1px solid var(--umma-border);
+
+  background: var(--umma-white);
+
+  border-radius: 14px;
+
+  color: var(--umma-gold);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button {
+  width: 44px;
+  font-size: 23px;
+}
+
+.language-button {
+  min-width: 118px;
+
+  padding: 0 14px;
+
+  gap: 7px;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.language-button strong {
+  color: var(--umma-gold);
+}
+
+.chevron {
+  font-size: 18px;
+}
+
+.topbar-spacer {
+  flex: 1;
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+
+  top: -6px;
+  right: -4px;
+
+  width: 23px;
+  height: 23px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--umma-gold);
+  color: var(--umma-white);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.profile-button {
+  width: 44px;
+
+  color: var(--umma-turquoise);
+
+  font-size: 21px;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+.app::after {
+  content: "";
+  display: none;
+}
+
+.brand,
+.welcome-card,
+.ayah-card,
+.hero-card,
+.services-section,
+.farm-card {
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.brand {
+  height: 108px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 5px 20px 3px;
+}
+
+.brand-logo {
+  width: 58px;
+  height: 58px;
+
+  object-fit: contain;
+
+  display: block;
+
+  margin-bottom: 3px;
+}
+
+.brand-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+
+  gap: 7px;
+
+  line-height: 1;
+}
+
+.brand-name span {
+  color: var(--umma-gold);
+
+  font-size: 30px;
+  font-weight: 900;
+
+  letter-spacing: 0.5px;
+}
+
+.brand-name strong {
+  color: var(--umma-gold);
+
+  font-size: 21px;
+  font-weight: 800;
+
+  letter-spacing: 0.3px;
+}
+
+.brand p {
+  margin-top: 5px;
+
+  color: var(--umma-turquoise);
+
+  font-size: 13px;
+  line-height: 1.25;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   WELCOME CARD
+   ========================================================= */
+
+.welcome-card {
+  height: 88px;
+
+  margin: 0 16px 7px;
+
+  padding: 10px 14px;
+
+  display: flex;
+  align-items: center;
+
+  border-radius: var(--radius-xl);
+
+  background: var(--umma-turquoise);
+
+  color: var(--umma-white);
+}
+
+.welcome-icon {
+  flex: 0 0 54px;
+
+  width: 54px;
+  height: 54px;
+
+  border-radius: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  font-size: 28px;
+}
+
+.welcome-text {
+  min-width: 0;
+  flex: 1;
+
+  padding: 0 10px;
+}
+
+.welcome-text h2 {
+  color: var(--umma-white);
+
+  font-size: 18px;
+  line-height: 1.15;
+
+  font-weight: 800;
+
+  margin-bottom: 4px;
+}
+
+.welcome-text p {
+  color: var(--umma-white);
+
+  font-size: 12px;
+  line-height: 1.2;
+
+  opacity: 0.95;
+}
+
+.arrow-button {
+  flex: 0 0 48px;
+
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+
+  background: var(--umma-white);
+
+  color: var(--umma-gold);
+
+  font-size: 28px;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   AYAH CARD
+   ========================================================= */
+
+.ayah-card {
+  height: 94px;
+
+  margin: 0 16px 7px;
+
+  padding: 10px 13px;
+
+  display: flex;
+  align-items: center;
+
+  border: 1px solid var(--umma-border);
+
+  border-radius: var(--radius-xl);
+
+  background: var(--umma-white);
+}
+
+.ayah-icon {
+  flex: 0 0 54px;
+
+  width: 54px;
+  height: 54px;
+
+  border-radius: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 163, 168, 0.08);
+
+  font-size: 27px;
+}
+
+.ayah-content {
+  min-width: 0;
+  flex: 1;
+
+  padding: 0 10px;
+}
+
+.small-label {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: var(--umma-gold);
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+.ayah-content p {
+  color: var(--umma-turquoise);
+
+  font-size: 13px;
+  line-height: 1.25;
+
+  font-weight: 700;
+}
+
+.ayah-content small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--umma-gold);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.circle-arrow {
+  flex: 0 0 46px;
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 50%;
+
+  background: var(--umma-turquoise);
+
+  color: var(--umma-white);
+
+  font-size: 25px;
+}
+
+
+/* =========================================================
+   CAFE HERO
+   ========================================================= */
+
+.hero-card {
+  position: relative;
+
+  height: 132px;
+
+  margin: 0 0 7px;
+
+  overflow: hidden;
+
+  border-radius: 22px;
+
   border: 3px solid var(--umma-gold);
 
+  background: var(--umma-turquoise);
+
+  color: var(--umma-white);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
   background:
-    linear-gradient(
-      135deg,
-      #10AEB3 0%,
-      #0FA3A8 58%,
-      #12969A 100%
+    radial-gradient(
+      circle at 88% 110%,
+      rgba(212, 167, 44, 0.20) 0,
+      rgba(212, 167, 44, 0.08) 23%,
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 88% 110%,
+      transparent 0,
+      transparent 30%,
+      rgba(212, 167, 44, 0.22) 30%,
+      rgba(212, 167, 44, 0.22) 31%,
+      transparent 31%
     );
-
-  box-shadow:
-    0 10px 26px rgba(15, 163, 168, 0.14);
-
-  color: white;
 }
 
 .hero-content {
@@ -31,7 +502,7 @@
 
   height: 100%;
 
-  padding: 14px 18px;
+  padding: 13px 18px;
 
   display: flex;
   flex-direction: column;
@@ -40,103 +511,614 @@
 
 .hero-top {
   position: absolute;
-  top: 12px;
-  right: 14px;
+
+  top: 10px;
+  right: 13px;
 }
 
 .halal-badge {
-  padding: 6px 11px;
+  display: inline-flex;
+  align-items: center;
 
-  border-radius: 22px;
+  padding: 5px 10px;
 
-  border: 1.5px solid var(--umma-gold-light);
+  border: 1px solid var(--umma-gold);
 
-  color: #FFE58A;
+  border-radius: 30px;
+
+  color: var(--umma-gold);
 
   font-size: 11px;
   font-weight: 800;
 }
 
-.hero-card h1 {
-  margin: 0 0 3px;
+.hero-content h1 {
+  color: var(--umma-white);
 
-  font-size: 23px;
+  font-size: 24px;
   line-height: 1;
 
-  font-weight: 800;
+  font-weight: 900;
 
-  color: white;
+  margin-bottom: 5px;
 }
 
-.hero-card p {
-  margin: 0 0 8px;
+.hero-content p {
+  color: var(--umma-white);
 
   font-size: 12px;
   line-height: 1.25;
 
-  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 9px;
 }
 
 .primary-button {
-  align-self: flex-start;
-
-  min-width: 145px;
-  height: 34px;
-
-  padding: 0 14px;
+  width: 145px;
+  height: 36px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 9px;
+  gap: 10px;
 
-  border-radius: 20px;
+  border-radius: 22px;
 
-  background: linear-gradient(
-    135deg,
-    #FFE47D,
-    var(--umma-gold-light)
-  );
+  background: var(--umma-gold);
 
-  color: #16484A;
+  color: var(--umma-turquoise);
 
-  font-size: 12px;
-  font-weight: 800;
-
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .primary-button span {
+  font-size: 21px;
+  line-height: 1;
+}
+
+
+/* =========================================================
+   SERVICES
+   ========================================================= */
+
+.services-section {
+  padding: 0 16px;
+
+  height: 176px;
+}
+
+.section-header {
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 5px;
+}
+
+.section-header h2 {
+  color: var(--umma-gold);
+
+  font-size: 20px;
+  line-height: 1;
+
+  font-weight: 900;
+}
+
+.section-header button {
+  color: var(--umma-turquoise);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.services-grid {
+  width: 100%;
+  height: 142px;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  grid-template-rows: repeat(4, 1fr);
+
+  gap: 5px 8px;
+}
+
+.service-card {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  padding: 4px 7px;
+
+  border: 1px solid var(--umma-border);
+
+  border-radius: 15px;
+
+  background: var(--umma-white);
+
+  text-align: left;
+}
+
+.service-icon {
+  flex: 0 0 35px;
+
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(15, 163, 168, 0.07);
+
+  font-size: 20px;
+}
+
+.service-info {
+  min-width: 0;
+  flex: 1;
+
+  padding-left: 7px;
+}
+
+.service-info strong {
+  display: block;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  color: var(--umma-turquoise);
+
+  font-size: 11px;
+  line-height: 1.1;
+
+  font-weight: 900;
+}
+
+.service-info small {
+  display: block;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  margin-top: 2px;
+
+  color: var(--umma-turquoise);
+
+  opacity: 0.65;
+
+  font-size: 8px;
+  line-height: 1.1;
+}
+
+.service-arrow {
+  flex: 0 0 auto;
+
+  margin-left: 4px;
+
+  color: var(--umma-gold);
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   UMMA FARM
+   ========================================================= */
+
+.farm-card {
+  height: 76px;
+
+  margin: 0 16px;
+
+  padding: 8px 12px;
+
+  display: flex;
+  align-items: center;
+
+  border-radius: var(--radius-xl);
+
+  background: var(--umma-turquoise);
+
+  color: var(--umma-white);
+}
+
+.farm-content {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+}
+
+.farm-icon {
+  flex: 0 0 50px;
+
+  width: 50px;
+  height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  font-size: 25px;
+}
+
+.farm-content > div {
+  min-width: 0;
+
+  padding-left: 10px;
+}
+
+.farm-card h2 {
+  color: var(--umma-gold);
+
   font-size: 18px;
+  line-height: 1;
+
+  font-weight: 900;
+
+  margin-bottom: 4px;
 }
 
-.hero-overlay {
-  position: absolute;
+.farm-card p {
+  color: var(--umma-white);
 
-  right: -45px;
-  bottom: -100px;
-
-  width: 190px;
-  height: 190px;
-
-  border: 2px solid rgba(212, 167, 44, 0.4);
-
-  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1.2;
 }
 
-.hero-overlay::after {
-  content: "";
+.farm-arrow {
+  flex: 0 0 46px;
 
-  position: absolute;
-
-  left: 42px;
-  top: 42px;
-
-  width: 104px;
-  height: 104px;
-
-  border: 2px solid rgba(212, 167, 44, 0.32);
+  width: 46px;
+  height: 46px;
 
   border-radius: 50%;
+
+  background: var(--umma-white);
+
+  color: var(--umma-gold);
+
+  font-size: 25px;
+}
+
+
+/* =========================================================
+   BOTTOM NAVIGATION
+   ========================================================= */
+
+.bottom-nav {
+  flex: 0 0 var(--nav-height);
+
+  height: var(--nav-height);
+
+  width: 100%;
+
+  margin-top: auto;
+
+  display: grid;
+
+  grid-template-columns: repeat(6, 1fr);
+
+  align-items: center;
+
+  border-top: 1px solid var(--umma-border);
+
+  background: rgba(255, 255, 255, 0.98);
+
+  position: relative;
+  z-index: 30;
+}
+
+.nav-item {
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 2px;
+
+  color: var(--umma-turquoise);
+
+  opacity: 0.65;
+}
+
+.nav-item span {
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+}
+
+.nav-item small {
+  font-size: 9px;
+  line-height: 1;
+
+  font-weight: 700;
+}
+
+.nav-item.active {
+  color: var(--umma-gold);
+
+  opacity: 1;
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+.toast {
+  position: fixed;
+
+  left: 50%;
+
+  bottom: calc(var(--nav-height) + 12px);
+
+  transform: translateX(-50%) translateY(20px);
+
+  width: max-content;
+  max-width: calc(100% - 30px);
+
+  padding: 10px 16px;
+
+  border-radius: 14px;
+
+  background: var(--umma-turquoise);
+
+  color: var(--umma-white);
+
+  font-size: 12px;
+  font-weight: 700;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-height: 720px) {
+
+  .topbar {
+    flex-basis: 48px;
+    height: 48px;
+  }
+
+  .icon-button,
+  .language-button,
+  .profile-button {
+    height: 36px;
+  }
+
+  .icon-button,
+  .profile-button {
+    width: 40px;
+  }
+
+  .language-button {
+    min-width: 105px;
+  }
+
+  .brand {
+    height: 92px;
+  }
+
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .brand-name span {
+    font-size: 25px;
+  }
+
+  .brand-name strong {
+    font-size: 18px;
+  }
+
+  .brand p {
+    font-size: 11px;
+  }
+
+  .welcome-card {
+    height: 76px;
+  }
+
+  .welcome-icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+
+  .welcome-text h2 {
+    font-size: 16px;
+  }
+
+  .ayah-card {
+    height: 82px;
+  }
+
+  .ayah-icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+
+  .hero-card {
+    height: 116px;
+  }
+
+  .hero-content h1 {
+    font-size: 21px;
+  }
+
+  .services-section {
+    height: 157px;
+  }
+
+  .services-grid {
+    height: 126px;
+  }
+
+  .service-card {
+    border-radius: 13px;
+  }
+
+  .service-icon {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+    font-size: 17px;
+  }
+
+  .service-info strong {
+    font-size: 10px;
+  }
+
+  .service-info small {
+    font-size: 7px;
+  }
+
+  .farm-card {
+    height: 66px;
+  }
+
+  .farm-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .farm-card h2 {
+    font-size: 16px;
+  }
+
+  .farm-card p {
+    font-size: 8px;
+  }
+
+  :root {
+    --nav-height: 58px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL HEIGHT
+   ========================================================= */
+
+@media (max-height: 650px) {
+
+  .brand {
+    height: 82px;
+  }
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .welcome-card {
+    height: 66px;
+  }
+
+  .ayah-card {
+    height: 70px;
+  }
+
+  .hero-card {
+    height: 98px;
+  }
+
+  .services-section {
+    height: 140px;
+  }
+
+  .services-grid {
+    height: 112px;
+  }
+
+  .farm-card {
+    height: 58px;
+  }
+
+  .farm-icon {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .farm-card h2 {
+    font-size: 14px;
+  }
+
+  .farm-card p {
+    font-size: 7px;
+  }
+}
+
+
+/* =========================================================
+   REMOVE ANY LEGACY SCROLL
+   ========================================================= */
+
+html,
+body,
+.app {
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+.app > * {
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   TELEGRAM WEB APP SAFE AREA
+   ========================================================= */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(
+      var(--nav-height) + env(safe-area-inset-bottom)
+    );
+  }
 }
