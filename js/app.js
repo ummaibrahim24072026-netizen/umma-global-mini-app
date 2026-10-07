@@ -11,7 +11,7 @@ const tg = window.Telegram?.WebApp;
    ===================================================== */
 
 const TELEGRAM_AUTH_URL =
-  "https://zwzojugspIdexyyljwpr.supabase.co/functions/v1/telegram-auth";
+  "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/telegram-auth";
 
 
 /* =====================================================
