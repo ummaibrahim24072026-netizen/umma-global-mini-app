@@ -7,6 +7,16 @@ const tg = window.Telegram?.WebApp;
 
 
 /* =====================================================
+   TELEGRAM AUTH
+   ===================================================== */
+
+// ВАЖНО:
+// Сюда позже вставим URL функции telegram-auth из Supabase.
+const TELEGRAM_AUTH_URL =
+  "ВСТАВЬ_СЮДА_URL_ФУНКЦИИ_TELEGRAM_AUTH";
+
+
+/* =====================================================
    TELEGRAM
    ===================================================== */
 
@@ -51,6 +61,8 @@ const allServicesBtn =
    ===================================================== */
 
 function showToast(message) {
+
+  if (!toast) return;
 
   toast.textContent = message;
 
@@ -225,18 +237,12 @@ allServicesBtn?.addEventListener("click", () => {
 
 
 /* =====================================================
-   TELEGRAM USER
+   TELEGRAM USER — UI
    ===================================================== */
 
-function updateTelegramUser() {
+function updateTelegramUserInterface(user) {
 
-  if (!tg?.initDataUnsafe?.user) {
-    return;
-  }
-
-
-  const user =
-    tg.initDataUnsafe.user;
+  if (!user) return;
 
 
   const firstName =
@@ -250,14 +256,134 @@ function updateTelegramUser() {
   if (welcomeTitle && firstName) {
 
     welcomeTitle.textContent =
-      `Ас-саляму алейкум, ${firstName}!`;
+      `Ассаляму алейкум ва рахматуллахи ва баракатух, ${firstName}!`;
 
   }
 
 }
 
 
-updateTelegramUser();
+/* =====================================================
+   TELEGRAM AUTHENTICATION
+   ===================================================== */
+
+async function authenticateTelegramUser() {
+
+  if (!tg) {
+
+    console.log(
+      "Telegram WebApp не обнаружен."
+    );
+
+    return;
+  }
+
+
+  const initData =
+    tg.initData;
+
+
+  if (!initData) {
+
+    console.log(
+      "Telegram initData отсутствует. Открой приложение через Telegram."
+    );
+
+    return;
+  }
+
+
+  // Используем данные только для мгновенного отображения.
+  // Для авторизации доверяем только данным,
+  // которые вернул сервер после проверки initData.
+
+  if (tg.initDataUnsafe?.user) {
+
+    updateTelegramUserInterface(
+      tg.initDataUnsafe.user
+    );
+
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        TELEGRAM_AUTH_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            initData: initData
+          })
+        }
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      console.error(
+        "Telegram authentication error:",
+        result
+      );
+
+      showToast(
+        "Не удалось выполнить вход"
+      );
+
+      return;
+    }
+
+
+    if (result.ok && result.user) {
+
+      window.ummaUser =
+        result.user;
+
+
+      updateTelegramUserInterface(
+        result.user
+      );
+
+
+      console.log(
+        "UMMA: пользователь авторизован",
+        result.user
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Telegram authentication request failed:",
+      error
+    );
+
+    showToast(
+      "Ошибка соединения с сервером"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   START TELEGRAM AUTH
+   ===================================================== */
+
+authenticateTelegramUser();
 
 
 /* =====================================================
@@ -272,7 +398,9 @@ document
 
       try {
 
-        tg?.HapticFeedback?.impactOccurred("light");
+        tg?.HapticFeedback?.impactOccurred(
+          "light"
+        );
 
       } catch (error) {}
 
