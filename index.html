@@ -34,13 +34,21 @@
 
     <div class="top-space"></div>
 
-    <button class="top-button notification-button" id="notificationBtn">
+    <button
+      class="top-button notification-button"
+      id="notificationBtn"
+      aria-label="Уведомления"
+    >
       <span>♧</span>
       <span class="bell">🔔</span>
       <b>3</b>
     </button>
 
-    <button class="top-button profile-button" id="profileBtn">
+    <button
+      class="top-button profile-button"
+      id="profileBtn"
+      aria-label="Профиль"
+    >
       <span>♙</span>
     </button>
 
@@ -86,8 +94,7 @@
 
       <h2>
         Ассаляму алейкум<br>
-        ва рахматуллахи ва баракатух,<br>
-        <strong>Ibrahim!</strong>
+        ва рахматуллахи ва баракатух!
       </h2>
 
       <p>
@@ -96,7 +103,7 @@
 
     </div>
 
-    <button class="gold-circle">
+    <button class="gold-circle" aria-label="Открыть приветствие">
       →
     </button>
 
@@ -123,7 +130,7 @@
 
     </div>
 
-    <button class="turquoise-circle">
+    <button class="turquoise-circle" aria-label="Открыть аят">
       →
     </button>
 
@@ -176,7 +183,6 @@
 
 
     <div class="services-grid">
-
 
       <button class="service" data-page="market">
 
@@ -322,32 +328,50 @@
   <!-- BOTTOM NAVIGATION -->
   <nav class="bottom-nav">
 
-    <button class="nav-item active" data-page="home">
+    <button
+      class="nav-item active"
+      data-page="home"
+    >
       <span>⌂</span>
       <small>Главная</small>
     </button>
 
-    <button class="nav-item" data-page="cafe">
+    <button
+      class="nav-item"
+      data-page="cafe"
+    >
       <span>🍴</span>
       <small>Кафе</small>
     </button>
 
-    <button class="nav-item" data-page="market">
+    <button
+      class="nav-item"
+      data-page="market"
+    >
       <span>🛒</span>
       <small>Рынок</small>
     </button>
 
-    <button class="nav-item" data-page="services">
+    <button
+      class="nav-item"
+      data-page="services"
+    >
       <span>✈</span>
       <small>Услуги</small>
     </button>
 
-    <button class="nav-item" data-page="community">
+    <button
+      class="nav-item"
+      data-page="community"
+    >
       <span>👥</span>
       <small>Сообщество</small>
     </button>
 
-    <button class="nav-item" data-page="more">
+    <button
+      class="nav-item"
+      data-page="more"
+    >
       <span>•••</span>
       <small>Ещё</small>
     </button>
@@ -357,11 +381,16 @@
 </div>
 
 
-<div class="toast" id="toast">
+<!-- TOAST -->
+<div
+  class="toast"
+  id="toast"
+>
   Скоро здесь появится этот раздел
 </div>
 
 
+<!-- APP JAVASCRIPT -->
 <script src="js/app.js"></script>
 
 </body>
