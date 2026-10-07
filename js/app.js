@@ -10,10 +10,9 @@ const tg = window.Telegram?.WebApp;
    TELEGRAM AUTH
    ===================================================== */
 
-// ВАЖНО:
-// Сюда позже вставим URL функции telegram-auth из Supabase.
+// URL серверной функции Supabase для авторизации Telegram
 const TELEGRAM_AUTH_URL =
-  "ВСТАВЬ_СЮДА_URL_ФУНКЦИИ_TELEGRAM_AUTH";
+  "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/telegram-auth";
 
 
 /* =====================================================
@@ -73,6 +72,7 @@ function showToast(message) {
     toast.classList.remove("show");
 
   }, 2200);
+
 }
 
 
@@ -121,6 +121,7 @@ function openPage(page) {
     setActiveNav("home");
 
     return;
+
   }
 
 
@@ -276,6 +277,7 @@ async function authenticateTelegramUser() {
     );
 
     return;
+
   }
 
 
@@ -290,12 +292,17 @@ async function authenticateTelegramUser() {
     );
 
     return;
+
   }
 
 
-  // Используем данные только для мгновенного отображения.
-  // Для авторизации доверяем только данным,
-  // которые вернул сервер после проверки initData.
+  /*
+   * initDataUnsafe используется только
+   * для мгновенного отображения имени.
+   *
+   * Для авторизации доверяем только
+   * данным, которые проверил сервер.
+   */
 
   if (tg.initDataUnsafe?.user) {
 
@@ -322,6 +329,7 @@ async function authenticateTelegramUser() {
           body: JSON.stringify({
             initData: initData
           })
+
         }
       );
 
@@ -342,10 +350,16 @@ async function authenticateTelegramUser() {
       );
 
       return;
+
     }
 
 
     if (result.ok && result.user) {
+
+      /*
+       * Сервер проверил Telegram initData
+       * и вернул подтвержденного пользователя.
+       */
 
       window.ummaUser =
         result.user;
