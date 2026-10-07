@@ -11,7 +11,7 @@ const tg = window.Telegram?.WebApp;
    ===================================================== */
 
 const TELEGRAM_AUTH_URL =
-  "https://zwzojugspIdexyyljwpr.supabase.co/functions/v1/telegram-auth";
+  "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/telegram-auth";
 
 
 /* =====================================================
@@ -269,15 +269,6 @@ function updateTelegramUserInterface(user) {
     String(user.first_name || "").trim();
 
 
-  /*
-   * ВАЖНО:
-   * В index.html используется:
-   *
-   * .welcome-content h2
-   *
-   * а не .welcome-text h2.
-   */
-
   const welcomeTitle =
     document.querySelector(
       ".welcome-content h2"
@@ -392,13 +383,6 @@ function applyUserRole(user, permissions = null) {
   }
 
 
-  /*
-   * Сохраняем роль в <body>.
-   * В дальнейшем интерфейс сможет
-   * показывать разные функции
-   * для разных ролей.
-   */
-
   if (document.body) {
 
     document.body.dataset.ummaRole =
@@ -478,13 +462,6 @@ async function authenticateTelegramUser() {
     "UMMA: Telegram initData получен"
   );
 
-
-  /*
-   * Мгновенно показываем имя из Telegram.
-   *
-   * Это только визуальное отображение.
-   * Для авторизации доверяем только серверу.
-   */
 
   if (tg.initDataUnsafe?.user) {
 
@@ -586,11 +563,6 @@ async function authenticateTelegramUser() {
       result.ok &&
       result.user
     ) {
-
-      /*
-       * Сервер проверил Telegram initData
-       * и вернул пользователя и его роль.
-       */
 
       applyUserRole(
         result.user,
