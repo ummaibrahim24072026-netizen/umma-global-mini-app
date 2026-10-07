@@ -11,7 +11,7 @@ const tg = window.Telegram?.WebApp;
    ===================================================== */
 
 const TELEGRAM_AUTH_URL =
-  "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/telegram-auth";
+  "https://zwzojugspIdexyyljwpr.supabase.co/functions/v1/telegram-auth";
 
 
 /* =====================================================
@@ -37,9 +37,11 @@ if (tg) {
    ELEMENTS
    ===================================================== */
 
-const toast = document.getElementById("toast");
+const toast =
+  document.getElementById("toast");
 
-const menuBtn = document.getElementById("menuBtn");
+const menuBtn =
+  document.getElementById("menuBtn");
 
 const languageBtn =
   document.getElementById("languageBtn");
@@ -52,6 +54,17 @@ const profileBtn =
 
 const allServicesBtn =
   document.getElementById("allServicesBtn");
+
+
+/* =====================================================
+   USER STATE
+   ===================================================== */
+
+window.ummaUser = null;
+
+window.ummaRole = "user";
+
+window.ummaIsSuperAdmin = false;
 
 
 /* =====================================================
@@ -264,6 +277,58 @@ function updateTelegramUserInterface(user) {
 
 
 /* =====================================================
+   APPLY USER ROLE
+   ===================================================== */
+
+function applyUserRole(user) {
+
+  if (!user) return;
+
+
+  const role =
+    user.role || "user";
+
+
+  window.ummaUser =
+    user;
+
+  window.ummaRole =
+    role;
+
+  window.ummaIsSuperAdmin =
+    role === "super_admin";
+
+
+  /*
+   * Сохраняем роль также в <body>.
+   * Это позволит следующим модулям
+   * интерфейса показывать нужные функции
+   * в зависимости от роли.
+   */
+
+  if (document.body) {
+
+    document.body.dataset.ummaRole =
+      role;
+
+  }
+
+
+  console.log(
+    "UMMA: роль пользователя:",
+    role
+  );
+
+
+  console.log(
+    "UMMA: super_admin:",
+    window.ummaIsSuperAdmin
+  );
+
+}
+
+
+/* =====================================================
    TELEGRAM AUTHENTICATION
    ===================================================== */
 
@@ -296,11 +361,11 @@ async function authenticateTelegramUser() {
 
 
   /*
-   * Данные initDataUnsafe используются
-   * только для отображения имени.
+   * initDataUnsafe используется
+   * только для мгновенного отображения имени.
    *
-   * Авторизация выполняется сервером
-   * после проверки Telegram initData.
+   * Роль и авторизация берутся
+   * только из ответа сервера.
    */
 
   if (tg.initDataUnsafe?.user) {
@@ -355,8 +420,15 @@ async function authenticateTelegramUser() {
 
     if (result.ok && result.user) {
 
-      window.ummaUser =
-        result.user;
+      /*
+       * Сервер уже проверил Telegram
+       * и вернул данные пользователя
+       * вместе с ролью.
+       */
+
+      applyUserRole(
+        result.user
+      );
 
 
       updateTelegramUserInterface(
@@ -367,6 +439,12 @@ async function authenticateTelegramUser() {
       console.log(
         "UMMA: пользователь авторизован",
         result.user
+      );
+
+
+      console.log(
+        "UMMA: роль:",
+        result.user.role
       );
 
     }
