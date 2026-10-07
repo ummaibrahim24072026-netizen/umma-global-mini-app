@@ -64,6 +64,13 @@ window.ummaUser = null;
 
 window.ummaRole = "user";
 
+window.ummaPermissions = {
+  isSuperAdmin: false,
+  isAdmin: false,
+  isEntrepreneur: false,
+  isEmployee: false
+};
+
 window.ummaIsSuperAdmin = false;
 
 
@@ -259,19 +266,65 @@ function updateTelegramUserInterface(user) {
 
 
   const firstName =
-    user.first_name || "";
+    String(user.first_name || "").trim();
 
+
+  /*
+   * ВАЖНО:
+   * В index.html используется:
+   *
+   * .welcome-content h2
+   *
+   * а не .welcome-text h2.
+   */
 
   const welcomeTitle =
-    document.querySelector(".welcome-text h2");
+    document.querySelector(
+      ".welcome-content h2"
+    );
 
 
-  if (welcomeTitle && firstName) {
+  if (!welcomeTitle) {
 
-    welcomeTitle.textContent =
-      `Ассаляму алейкум ва рахматуллахи ва баракатух, ${firstName}!`;
+    console.warn(
+      "UMMA: блок приветствия не найден"
+    );
+
+    return;
 
   }
+
+
+  if (firstName) {
+
+    welcomeTitle.innerHTML =
+      `Ассаляму алейкум<br>
+       ва рахматуллахи ва баракатух,<br>
+       <strong>${escapeHtml(firstName)}!</strong>`;
+
+  } else {
+
+    welcomeTitle.innerHTML =
+      `Ассаляму алейкум<br>
+       ва рахматуллахи ва баракатух!`;
+
+  }
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+   ===================================================== */
+
+function escapeHtml(value) {
+
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
@@ -280,7 +333,7 @@ function updateTelegramUserInterface(user) {
    APPLY USER ROLE
    ===================================================== */
 
-function applyUserRole(user) {
+function applyUserRole(user, permissions = null) {
 
   if (!user) return;
 
@@ -292,18 +345,58 @@ function applyUserRole(user) {
   window.ummaUser =
     user;
 
+
   window.ummaRole =
     role;
+
 
   window.ummaIsSuperAdmin =
     role === "super_admin";
 
 
+  if (permissions) {
+
+    window.ummaPermissions = {
+      isSuperAdmin:
+        permissions.isSuperAdmin === true,
+
+      isAdmin:
+        permissions.isAdmin === true,
+
+      isEntrepreneur:
+        permissions.isEntrepreneur === true,
+
+      isEmployee:
+        permissions.isEmployee === true
+    };
+
+  } else {
+
+    window.ummaPermissions = {
+
+      isSuperAdmin:
+        role === "super_admin",
+
+      isAdmin:
+        role === "admin" ||
+        role === "super_admin",
+
+      isEntrepreneur:
+        role === "entrepreneur",
+
+      isEmployee:
+        role === "employee"
+
+    };
+
+  }
+
+
   /*
-   * Сохраняем роль также в <body>.
-   * Это позволит следующим модулям
-   * интерфейса показывать нужные функции
-   * в зависимости от роли.
+   * Сохраняем роль в <body>.
+   * В дальнейшем интерфейс сможет
+   * показывать разные функции
+   * для разных ролей.
    */
 
   if (document.body) {
@@ -315,8 +408,20 @@ function applyUserRole(user) {
 
 
   console.log(
-    "UMMA: роль пользователя:",
+    "UMMA: пользователь:",
+    user
+  );
+
+
+  console.log(
+    "UMMA: роль:",
     role
+  );
+
+
+  console.log(
+    "UMMA: permissions:",
+    window.ummaPermissions
   );
 
 
@@ -334,10 +439,15 @@ function applyUserRole(user) {
 
 async function authenticateTelegramUser() {
 
+  console.log(
+    "UMMA: начинаем Telegram авторизацию..."
+  );
+
+
   if (!tg) {
 
-    console.log(
-      "Telegram WebApp не обнаружен."
+    console.error(
+      "UMMA: Telegram WebApp не обнаружен."
     );
 
     return;
@@ -351,8 +461,12 @@ async function authenticateTelegramUser() {
 
   if (!initData) {
 
-    console.log(
-      "Telegram initData отсутствует. Открой приложение через Telegram."
+    console.error(
+      "UMMA: Telegram initData отсутствует."
+    );
+
+    showToast(
+      "Откройте приложение через Telegram"
     );
 
     return;
@@ -360,12 +474,16 @@ async function authenticateTelegramUser() {
   }
 
 
+  console.log(
+    "UMMA: Telegram initData получен"
+  );
+
+
   /*
-   * initDataUnsafe используется
-   * только для мгновенного отображения имени.
+   * Мгновенно показываем имя из Telegram.
    *
-   * Роль и авторизация берутся
-   * только из ответа сервера.
+   * Это только визуальное отображение.
+   * Для авторизации доверяем только серверу.
    */
 
   if (tg.initDataUnsafe?.user) {
@@ -379,6 +497,12 @@ async function authenticateTelegramUser() {
 
   try {
 
+    console.log(
+      "UMMA: отправляем запрос:",
+      TELEGRAM_AUTH_URL
+    );
+
+
     const response =
       await fetch(
         TELEGRAM_AUTH_URL,
@@ -391,25 +515,65 @@ async function authenticateTelegramUser() {
           },
 
           body: JSON.stringify({
-            initData: initData
+            initData:
+              initData
           })
-
         }
       );
 
 
-    const result =
-      await response.json();
+    console.log(
+      "UMMA: ответ сервера:",
+      response.status
+    );
+
+
+    const contentType =
+      response.headers.get(
+        "content-type"
+      ) || "";
+
+
+    let result;
+
+
+    if (
+      contentType.includes(
+        "application/json"
+      )
+    ) {
+
+      result =
+        await response.json();
+
+    } else {
+
+      const text =
+        await response.text();
+
+      console.error(
+        "UMMA: сервер вернул не JSON:",
+        text
+      );
+
+      showToast(
+        "Ошибка ответа сервера"
+      );
+
+      return;
+
+    }
 
 
     if (!response.ok) {
 
       console.error(
-        "Telegram authentication error:",
+        "UMMA: ошибка авторизации:",
         result
       );
 
       showToast(
+        result?.error ||
         "Не удалось выполнить вход"
       );
 
@@ -418,16 +582,19 @@ async function authenticateTelegramUser() {
     }
 
 
-    if (result.ok && result.user) {
+    if (
+      result.ok &&
+      result.user
+    ) {
 
       /*
-       * Сервер уже проверил Telegram
-       * и вернул данные пользователя
-       * вместе с ролью.
+       * Сервер проверил Telegram initData
+       * и вернул пользователя и его роль.
        */
 
       applyUserRole(
-        result.user
+        result.user,
+        result.permissions
       );
 
 
@@ -447,14 +614,35 @@ async function authenticateTelegramUser() {
         result.user.role
       );
 
+
+      console.log(
+        "UMMA: права:",
+        result.permissions
+      );
+
+
+      return;
+
     }
+
+
+    console.error(
+      "UMMA: сервер не вернул пользователя:",
+      result
+    );
+
+
+    showToast(
+      "Не удалось получить данные пользователя"
+    );
 
   } catch (error) {
 
     console.error(
-      "Telegram authentication request failed:",
+      "UMMA: ошибка соединения:",
       error
     );
+
 
     showToast(
       "Ошибка соединения с сервером"
