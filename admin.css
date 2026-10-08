@@ -1,0 +1,204 @@
+    /* =====================================================
+       SUPER ADMIN
+       ===================================================== */
+
+    .admin-entry {
+      margin: 0 16px 10px;
+    }
+
+    .admin-entry-button {
+      width: 100%;
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--umma-gold, #d7a51f);
+      border-radius: 18px;
+      background: #fffdf5;
+      color: var(--umma-turquoise, #0fa3a8);
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .admin-entry-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 13px;
+      background: var(--umma-turquoise, #0fa3a8);
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .admin-entry-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .admin-entry-copy strong,
+    .admin-entry-copy small {
+      display: block;
+    }
+
+    .admin-entry-copy strong {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .admin-entry-copy small {
+      margin-top: 3px;
+      font-size: 11px;
+      opacity: .7;
+    }
+
+    .admin-entry-arrow {
+      font-size: 24px;
+      color: var(--umma-gold, #d7a51f);
+    }
+
+    .admin-page {
+      min-height: 100vh;
+      padding: 18px 16px 34px;
+      background: var(--umma-background, #edfafa);
+    }
+
+    .admin-page-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .admin-back {
+      border: 0;
+      background: transparent;
+      color: var(--umma-turquoise, #0fa3a8);
+      font: inherit;
+      font-weight: 800;
+      padding: 8px 0 18px;
+      cursor: pointer;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .admin-header-icon {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: var(--umma-turquoise, #0fa3a8);
+      color: #fff;
+      font-size: 27px;
+    }
+
+    .admin-eyebrow {
+      color: var(--umma-gold, #d7a51f);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .admin-header h1 {
+      margin: 2px 0 3px;
+      color: var(--umma-turquoise, #0fa3a8);
+      font-size: 24px;
+    }
+
+    .admin-header p {
+      margin: 0;
+      color: #68737d;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .admin-card {
+      min-height: 120px;
+      padding: 15px;
+      border: 1px solid rgba(15, 163, 168, .18);
+      border-radius: 18px;
+      background: #fff;
+      text-align: left;
+      font: inherit;
+      color: var(--umma-turquoise, #0fa3a8);
+      cursor: pointer;
+    }
+
+    .admin-card > span {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 25px;
+    }
+
+    .admin-card strong,
+    .admin-card small {
+      display: block;
+    }
+
+    .admin-card strong {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .admin-card small {
+      margin-top: 4px;
+      color: #68737d;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .admin-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 16px;
+      background: rgba(15, 163, 168, .08);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+
+    .admin-status strong,
+    .admin-status small {
+      display: block;
+    }
+
+    .admin-status strong {
+      color: var(--umma-turquoise, #0fa3a8);
+      font-size: 12px;
+    }
+
+    .admin-status small {
+      margin-top: 2px;
+      color: #68737d;
+      font-size: 10px;
+    }
+
+    @media (max-width: 360px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
