@@ -434,7 +434,11 @@
 
       <div class="admin-grid">
 
-        <button type="button" class="admin-card">
+        <button
+          type="button"
+          class="admin-card"
+          id="adminUsersButton"
+        >
           <span>👥</span>
           <strong>Пользователи</strong>
           <small>Роли, статусы и доступ</small>
@@ -483,6 +487,34 @@
     </div>
   </section>
 
+  <!-- USERS PAGE -->
+  <section id="adminUsersPage" class="admin-page" hidden>
+    <div class="admin-page-inner">
+
+      <button id="adminUsersBack" type="button" class="admin-back">
+        ← Назад
+      </button>
+
+      <div class="admin-header">
+        <div class="admin-header-icon">👥</div>
+        <div>
+          <div class="admin-eyebrow">SUPER ADMIN</div>
+          <h1>Пользователи</h1>
+          <p>Пользователи Umma Global, роли, статусы и доступ.</p>
+        </div>
+      </div>
+
+      <div class="admin-status">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Раздел открыт</strong>
+          <small>Следующим шагом подключим данные из telegram_users.</small>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-page="home">
@@ -519,6 +551,28 @@
 </div>
 
 <div class="toast" id="toast">Скоро здесь появится этот раздел</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const usersButton = document.getElementById("adminUsersButton");
+    const adminPage = document.getElementById("adminPage");
+    const usersPage = document.getElementById("adminUsersPage");
+    const usersBack = document.getElementById("adminUsersBack");
+
+    usersButton?.addEventListener("click", () => {
+      if (!window.ummaIsSuperAdmin) return;
+      adminPage.hidden = true;
+      usersPage.hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    usersBack?.addEventListener("click", () => {
+      usersPage.hidden = true;
+      adminPage.hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+</script>
 
 <script src="js/app.js?v=3"></script>
 </body>
