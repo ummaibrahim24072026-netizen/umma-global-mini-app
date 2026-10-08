@@ -321,10 +321,183 @@ function escapeHtml(value) {
 
 
 /* =====================================================
+   SUPER ADMIN UI
+   ===================================================== */
+
+function updateAdminUI(role) {
+
+  const adminEntry =
+    document.getElementById("adminEntry");
+
+  if (!adminEntry) return;
+
+  const isSuperAdmin =
+    role === "super_admin";
+
+  adminEntry.hidden = !isSuperAdmin;
+
+  if (!isSuperAdmin) {
+
+    adminEntry.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  } else {
+
+    adminEntry.removeAttribute(
+      "aria-hidden"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   OPEN ADMIN PANEL
+   ===================================================== */
+
+function openAdminPanel() {
+
+  if (window.ummaRole !== "super_admin") {
+
+    showToast("Доступ запрещён");
+
+    return;
+
+  }
+
+
+  const home =
+    document.querySelector(".home");
+
+  const adminPage =
+    document.getElementById("adminPage");
+
+  const bottomNav =
+    document.querySelector(".bottom-nav");
+
+
+  if (!adminPage) return;
+
+
+  if (home) {
+
+    home.style.display = "none";
+
+  }
+
+
+  adminPage.hidden = false;
+
+
+  if (bottomNav) {
+
+    bottomNav.style.display = "none";
+
+  }
+
+
+  window.scrollTo({
+
+    top: 0,
+
+    behavior: "smooth"
+
+  });
+
+}
+
+
+/* =====================================================
+   CLOSE ADMIN PANEL
+   ===================================================== */
+
+function closeAdminPanel() {
+
+  const home =
+    document.querySelector(".home");
+
+  const adminPage =
+    document.getElementById("adminPage");
+
+  const bottomNav =
+    document.querySelector(".bottom-nav");
+
+
+  if (adminPage) {
+
+    adminPage.hidden = true;
+
+  }
+
+
+  if (home) {
+
+    home.style.display = "";
+
+  }
+
+
+  if (bottomNav) {
+
+    bottomNav.style.display = "";
+
+  }
+
+
+  window.scrollTo({
+
+    top: 0,
+
+    behavior: "smooth"
+
+  });
+
+}
+
+
+/* =====================================================
+   ADMIN BUTTON
+   ===================================================== */
+
+document.addEventListener("click", event => {
+
+  const adminEntry =
+    event.target.closest("#adminEntry");
+
+
+  if (adminEntry) {
+
+    openAdminPanel();
+
+    return;
+
+  }
+
+
+  const adminBack =
+    event.target.closest("#adminBack");
+
+
+  if (adminBack) {
+
+    closeAdminPanel();
+
+  }
+
+});
+
+
+/* =====================================================
    APPLY USER ROLE
    ===================================================== */
 
-function applyUserRole(user, permissions = null) {
+function applyUserRole(
+  user,
+  permissions = null
+) {
 
   if (!user) return;
 
@@ -348,6 +521,7 @@ function applyUserRole(user, permissions = null) {
   if (permissions) {
 
     window.ummaPermissions = {
+
       isSuperAdmin:
         permissions.isSuperAdmin === true,
 
@@ -359,6 +533,7 @@ function applyUserRole(user, permissions = null) {
 
       isEmployee:
         permissions.isEmployee === true
+
     };
 
   } else {
@@ -389,6 +564,9 @@ function applyUserRole(user, permissions = null) {
       role;
 
   }
+
+
+  updateAdminUI(role);
 
 
   console.log(
@@ -482,20 +660,29 @@ async function authenticateTelegramUser() {
 
     const response =
       await fetch(
+
         TELEGRAM_AUTH_URL,
+
         {
+
           method: "POST",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
           body: JSON.stringify({
+
             initData:
               initData
+
           })
+
         }
+
       );
 
 
@@ -528,14 +715,17 @@ async function authenticateTelegramUser() {
       const text =
         await response.text();
 
+
       console.error(
         "UMMA: сервер вернул не JSON:",
         text
       );
 
+
       showToast(
         "Ошибка ответа сервера"
       );
+
 
       return;
 
@@ -549,10 +739,14 @@ async function authenticateTelegramUser() {
         result
       );
 
+
       showToast(
+
         result?.error ||
         "Не удалось выполнить вход"
+
       );
+
 
       return;
 
@@ -565,31 +759,54 @@ async function authenticateTelegramUser() {
     ) {
 
       applyUserRole(
+
         result.user,
+
         result.permissions
+
       );
 
 
       updateTelegramUserInterface(
+
         result.user
+
       );
 
 
       console.log(
+
         "UMMA: пользователь авторизован",
+
         result.user
+
       );
 
 
       console.log(
+
         "UMMA: роль:",
+
         result.user.role
+
       );
 
 
       console.log(
+
         "UMMA: права:",
+
         result.permissions
+
+      );
+
+
+      console.log(
+
+        "UMMA: SUPER ADMIN UI:",
+
+        result.user.role === "super_admin"
+
       );
 
 
@@ -599,30 +816,49 @@ async function authenticateTelegramUser() {
 
 
     console.error(
+
       "UMMA: сервер не вернул пользователя:",
+
       result
+
     );
 
 
     showToast(
+
       "Не удалось получить данные пользователя"
+
     );
 
   } catch (error) {
 
     console.error(
+
       "UMMA: ошибка соединения:",
+
       error
+
     );
 
 
     showToast(
+
       "Ошибка соединения с сервером"
+
     );
 
   }
 
 }
+
+
+/* =====================================================
+   INITIAL ADMIN UI STATE
+   ===================================================== */
+
+updateAdminUI(
+  window.ummaRole
+);
 
 
 /* =====================================================
@@ -640,16 +876,19 @@ document
   .querySelectorAll("button")
   .forEach(button => {
 
-    button.addEventListener("click", () => {
+    button.addEventListener(
+      "click",
+      () => {
 
-      try {
+        try {
 
-        tg?.HapticFeedback?.impactOccurred(
-          "light"
-        );
+          tg?.HapticFeedback?.impactOccurred(
+            "light"
+          );
 
-      } catch (error) {}
+        } catch (error) {}
 
-    });
+      }
+    );
 
   });
