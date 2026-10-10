@@ -1396,3 +1396,6 @@ button:active {
 @media (max-height: 680px) {
   .app > main {
     height: calc(100svh - 55px) !important;
+  }
+}
+
