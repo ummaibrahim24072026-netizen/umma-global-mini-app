@@ -402,6 +402,16 @@
         <button
           type="button"
           class="admin-card"
+          id="adminKitchenButton"
+        >
+          <span>🍳</span>
+          <strong>Заказы кафе</strong>
+          <small>Кухня и статусы заказов</small>
+        </button>
+
+        <button
+          type="button"
+          class="admin-card"
         >
           <span>🏢</span>
           <strong>Организации</strong>
@@ -539,6 +549,24 @@
 
   </section>
 
+
+  <!-- CAFE KITCHEN -->
+  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Администрирование</button>
+        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Заказы кафе</h1>
+        <p>HALAL UMMA · Нячанг</p>
+      </div>
+      <div class="cafe-kitchen-filters">
+        <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
+        <button type="button" data-kitchen-filter="all">Все</button>
+      </div>
+      <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
+      <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+    </div>
+  </section>
 
   <!-- CAFE ORDERING -->
   <section id="cafePage" class="cafe-page" hidden>
@@ -685,6 +713,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=1"></script>
+<script src="js/cafe/kitchen.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
