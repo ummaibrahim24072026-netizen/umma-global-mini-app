@@ -263,6 +263,9 @@ button:active {
   display: block;
 
   margin-bottom: 3px;
+
+  position: relative;
+  top: 8px;
 }
 
 .brand-title {
