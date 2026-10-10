@@ -51,7 +51,7 @@
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
       const deliveryAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && deliveryNext[order.delivery_status]
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
-      const canManagePayment = ["manager","cashier","waiter"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
+      const canManagePayment = ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
       const paymentAction = canManagePayment && order.payment_status !== "paid"
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
         : (canManagePayment && order.payment_status === "paid" ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-payment-status="pending">Вернуть в ожидание оплаты</button>' : "");
@@ -125,6 +125,7 @@
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
     loadOrders();
+    loadCash();
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
@@ -143,7 +144,7 @@
     if (typeof setActiveNav === "function") setActiveNav("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
-  byId("cafeKitchenRefresh")?.addEventListener("click", loadOrders);
+  byId("cafeKitchenRefresh")?.addEventListener("click", () => { loadOrders(); loadCash(); });
   document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
     filter = button.getAttribute("data-kitchen-filter") || "active";
     document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
@@ -183,6 +184,79 @@
   });
 
  
+  // Cash collection and end-of-shift handover panel.
+  let cashData = null;
+  let cashLocationId = "";
+  function ensureCashPanel() {
+    const page = byId("cafeKitchenPage");
+    if (!page || byId("cafeCashPanel")) return;
+    const section = document.createElement("section");
+    section.id = "cafeCashPanel";
+    section.style.cssText = "margin:16px 0;padding:16px;border:1px solid #d7e3e3;border-radius:16px;background:#fff;color:#172b2b";
+    section.innerHTML = '<h2 style="margin:0 0 8px">Касса и сдача смены</h2><p style="margin:0 0 12px;color:#617070">Оплата заказа и передача наличных учитываются отдельно.</p><label style="display:block;margin-bottom:12px">Кафе<select id="cashLocationSelect" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><div id="cashSummary" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px"></div><form id="cashHandoverForm" style="display:grid;gap:10px;padding:12px;background:#f4f8f8;border-radius:12px"><h3 style="margin:0">Передать наличные</h3><label>Получатель<select id="cashReceiver" required style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><label>Сумма (VND)<input id="cashAmount" type="number" min="1" step="1000" required placeholder="Например, 500000" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><label>Комментарий (необязательно)<input id="cashNote" maxlength="500" placeholder="Например, сдача вечерней смены" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Передать на подтверждение</button></form><p id="cashMessage" hidden style="padding:10px;background:#edf7f7;border-radius:8px"></p><h3 style="margin:18px 0 8px">Передачи денег</h3><div id="cashHandovers"></div><h3 style="margin:18px 0 8px">Принятые оплаты за последние 24 часа</h3><div id="cashReceipts"></div>';
+    const header = page.querySelector(".cafe-kitchen-header");
+    if (header) header.insertAdjacentElement("afterend", section); else page.prepend(section);
+    byId("cashLocationSelect")?.addEventListener("change", () => { cashLocationId = byId("cashLocationSelect").value; loadCash(); });
+    byId("cashHandoverForm")?.addEventListener("submit", createCashHandover);
+    section.addEventListener("click", event => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const action = target.closest("[data-handover-action]");
+      if (action) respondCashHandover(action.getAttribute("data-handover-id"), action.getAttribute("data-handover-action") === "accept");
+    });
+  }
+  function cashMessage(message) { const el=byId("cashMessage"); if(el){el.textContent=message;el.hidden=!message;} }
+  async function loadCash() {
+    ensureCashPanel();
+    const root=byId("cashHandovers"); if(!root) return;
+    root.textContent="Загружаем кассовые данные…";
+    try {
+      const result=await api({action:"cashList",locationId:cashLocationId||undefined});
+      cashData=result; cashLocationId=result.locationId||cashLocationId;
+      const loc=byId("cashLocationSelect");
+      if(loc){
+        const options=(result.locations||[]).map(x=>'<option value="'+esc(x.id)+'" '+(x.id===cashLocationId?'selected':'')+'>'+esc(x.name)+'</option>').join("");
+        loc.innerHTML=options; loc.value=cashLocationId; loc.hidden=(result.locations||[]).length<2;
+      }
+      const staff=result.staff||[];
+      const roleNames={manager:"Администратор",cashier:"Кассир",waiter:"Официант",kitchen:"Кухня",courier:"Курьер"};
+      const receivers=staff.filter(x=>Number(x.telegram_id)!==Number(result.actorTelegramId)&&["manager","cashier"].includes(x.staff_role));
+      const select=byId("cashReceiver");
+      if(select) select.innerHTML='<option value="">Выберите получателя</option>'+receivers.map(x=>'<option value="'+esc(x.telegram_id)+'">'+esc(roleNames[x.staff_role]||x.staff_role)+' · ID '+esc(x.telegram_id)+'</option>').join("");
+      const activeReceipts=(result.receipts||[]).filter(x=>x.receipt_status==="confirmed");
+      const total=activeReceipts.reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
+      const cashTotal=activeReceipts.filter(x=>x.payment_method==="cash").reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
+      const pending=(result.handovers||[]).filter(x=>x.handover_status==="pending");
+      const summary=byId("cashSummary");
+      if(summary) summary.innerHTML=[
+        ["Оплаты за 24 ч.",money(total)],["Наличные за 24 ч.",money(cashTotal)],["Ожидают подтверждения",String(pending.length)],["Кафе",esc(result.cafeName||"")]
+      ].map(x=>'<div style="padding:10px;background:#f4f8f8;border-radius:10px"><small style="display:block;color:#617070">'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join("");
+      const handovers=result.handovers||[];
+      root.innerHTML=handovers.length?handovers.map(h=>{
+        const outgoing=Number(h.from_telegram_id)===Number(result.actorTelegramId);
+        const incoming=Number(h.to_telegram_id)===Number(result.actorTelegramId);
+        const status={pending:"Ожидает подтверждения",accepted:"Принято",rejected:"Отклонено",cancelled:"Отменено"}[h.handover_status]||h.handover_status;
+        const controls=h.handover_status==="pending"&&incoming?'<div style="display:flex;gap:8px;margin-top:8px"><button type="button" data-handover-id="'+esc(h.id)+'" data-handover-action="accept" style="padding:9px;border:0;border-radius:8px;background:#0f8f93;color:#fff">Подтвердить приём</button><button type="button" data-handover-id="'+esc(h.id)+'" data-handover-action="reject" style="padding:9px;border:0;border-radius:8px">Отклонить</button></div>':"";
+        return '<article style="padding:12px;border:1px solid #d7e3e3;border-radius:10px;margin-bottom:8px"><strong>'+money(h.amount_vnd)+'</strong><div style="font-size:13px;margin-top:4px">'+(outgoing?'Вы передаёте получателю':'Отправитель → получатель')+' · '+esc(formatDate(h.created_at))+'</div><small>'+esc(status)+(h.note?' · '+esc(h.note):"")+'</small>'+controls+'</article>';
+      }).join(""):"<p>Передач денег пока нет.</p>";
+      const receiptsRoot=byId("cashReceipts");
+      if(receiptsRoot) receiptsRoot.innerHTML=activeReceipts.length?activeReceipts.slice(0,30).map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #e6eeee"><span>Заказ · '+esc(x.payment_method)+'<small style="display:block;color:#617070">'+esc(formatDate(x.collected_at))+' · сотрудник ID '+esc(x.collected_by_telegram_id)+'</small></span><strong>'+money(x.amount_vnd)+'</strong></div>').join(""):"<p>Оплат за последние 24 часа пока нет.</p>";
+    } catch(e) { root.textContent=e instanceof Error?e.message:"Не удалось загрузить кассовые данные"; }
+  }
+  async function createCashHandover(event) {
+    event.preventDefault();
+    const receiver=byId("cashReceiver")?.value, amount=Number(byId("cashAmount")?.value);
+    if(!receiver||!Number.isSafeInteger(amount)||amount<=0){cashMessage("Выберите получателя и укажите корректную сумму.");return;}
+    try {
+      await api({action:"createHandover",locationId:cashLocationId,toTelegramId:Number(receiver),amountVnd:amount,note:byId("cashNote")?.value.trim()||""});
+      byId("cashAmount").value=""; byId("cashNote").value=""; cashMessage("Передача создана. Получатель должен подтвердить фактический приём."); await loadCash();
+    } catch(e) { cashMessage(e instanceof Error?e.message:"Не удалось создать передачу"); }
+  }
+  async function respondCashHandover(id,accept) {
+    try { await api({action:"respondHandover",handoverId:id,accept}); cashMessage(accept?"Приём денег подтверждён.":"Передача отклонена."); await loadCash(); }
+    catch(e) { cashMessage(e instanceof Error?e.message:"Не удалось обработать передачу"); }
+  }
+
   const STAFF_MENU_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
   const STAFF_ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
   const staffMoney = value => new Intl.NumberFormat("vi-VN", {style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(value)||0);
