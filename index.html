@@ -2,50 +2,84 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0,
+    maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  >
+
   <meta name="theme-color" content="#0FA3A8">
+
   <title>Umma Global</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="css/app.css">
-
   <link rel="stylesheet" href="css/admin.css">
-
 </head>
 
 <body>
+
 <div class="app">
 
   <!-- TOP BAR -->
   <header class="topbar">
-    <button class="top-control menu-control" id="menuBtn" aria-label="Меню">☰</button>
 
-    <button class="language-control" id="languageBtn" aria-label="Язык">
-      <span class="language-globe">🌐</span>
+    <button
+      class="top-button hamburger"
+      id="menuBtn"
+      aria-label="Меню"
+    >
+      ☰
+    </button>
+
+    <button
+      class="language-button"
+      id="languageBtn"
+      aria-label="Язык"
+    >
+      <span class="globe">🌐</span>
       <strong>RU</strong>
-      <span class="language-chevron">⌄</span>
+      <span class="down">⌄</span>
     </button>
 
-    <div class="topbar-spacer"></div>
+    <div class="top-space"></div>
 
-    <button class="top-control notification-control" id="notificationBtn" aria-label="Уведомления">
-      <span>♧</span>
+    <button
+      class="top-button notification-button"
+      id="notificationBtn"
+      aria-label="Уведомления"
+    >
       <span class="bell">🔔</span>
-      <b class="notification-badge">3</b>
+      <b>3</b>
     </button>
 
-    <button class="top-control profile-control" id="profileBtn" aria-label="Профиль">♙</button>
+    <button
+      class="top-button profile-button"
+      id="profileBtn"
+      aria-label="Профиль"
+    >
+      ♙
+    </button>
+
   </header>
 
-  <main class="home">
+
+  <!-- HOME -->
+  <main>
 
     <!-- BRAND -->
-    <section class="brand-block">
+    <section class="brand">
+
       <img
         class="brand-logo"
         src="logo/assets/logo.png"
@@ -58,27 +92,48 @@
         <strong>GLOBAL</strong>
       </div>
 
-      <p class="brand-subtitle">
+      <div class="brand-line"></div>
+
+      <p>
         Единая экосистема для жизни,<br>
         бизнеса и общества.
       </p>
+
+      <small>UMMA GLOBAL</small>
+
     </section>
+
 
     <!-- WELCOME -->
     <section class="welcome-card">
-      <div class="welcome-icon">🕌</div>
 
-      <div class="welcome-copy">
-        <h1>
-          Ассаляму алейкум<br>
-          ва рахматуллахи ва баракатух,<br>
-          <span>УММА!</span>
-        </h1>
-        <p>Добро пожаловать в Umma Global.</p>
+      <div class="welcome-image">
+        🕌
       </div>
 
-      <button class="round-arrow" aria-label="Открыть">→</button>
+      <div class="welcome-content">
+
+        <h2>
+          Ассаляму алейкум<br>
+          ва рахматуллахи ва баракатух,<br>
+          <strong>УММА!</strong>
+        </h2>
+
+        <p>
+          Добро пожаловать в Umma Global.
+        </p>
+
+      </div>
+
+      <button
+        class="gold-circle"
+        aria-label="Открыть"
+      >
+        →
+      </button>
+
     </section>
+
 
     <!-- SUPER ADMIN -->
     <section
@@ -87,127 +142,320 @@
       hidden
       aria-hidden="true"
     >
-      <button type="button" class="admin-entry-button">
-        <span class="admin-entry-icon">⚙️</span>
-        <span class="admin-entry-copy">
-          <strong>Администрирование</strong>
-          <small>Управление Umma Global</small>
+
+      <button
+        type="button"
+        class="admin-entry-button"
+      >
+
+        <span class="admin-entry-icon">
+          ⚙️
         </span>
-        <span class="admin-entry-arrow">→</span>
+
+        <span class="admin-entry-copy">
+
+          <strong>
+            Администрирование
+          </strong>
+
+          <small>
+            Управление Umma Global
+          </small>
+
+        </span>
+
+        <span class="admin-entry-arrow">
+          →
+        </span>
+
       </button>
+
     </section>
+
 
     <!-- AYAH -->
     <section class="ayah-card">
-      <div class="ayah-icon">📖</div>
 
-      <div class="ayah-copy">
-        <span class="eyebrow">АЯТ ДНЯ</span>
-        <p>«И помогайте друг другу<br>в благочестии и богобоязненности...»</p>
-        <small>Коран, 5:2</small>
+      <div class="ayah-book">
+        📖
       </div>
 
-      <button class="round-arrow small-arrow" aria-label="Аят дня">→</button>
+      <div class="ayah-content">
+
+        <span>
+          АЯТ ДНЯ
+        </span>
+
+        <p>
+          «И помогайте друг другу<br>
+          в благочестии и богобоязненности...»
+        </p>
+
+        <small>
+          Коран, 5:2
+        </small>
+
+      </div>
+
+      <button
+        class="turquoise-circle"
+        aria-label="Аят дня"
+      >
+        →
+      </button>
+
     </section>
+
 
     <!-- CAFE -->
     <section class="cafe-card">
-      <div class="cafe-decoration cafe-decoration-one"></div>
-      <div class="cafe-decoration cafe-decoration-two"></div>
 
-      <div class="halal-badge">☪ ХАЛЯЛЬ</div>
+      <div class="cafe-background"></div>
 
-      <div class="cafe-copy">
-        <h2>Кафе Umma</h2>
-        <p>Халяльная еда<br>для вас и вашей семьи</p>
-
-        <button class="primary-button" data-page="cafe">
-          <span>Открыть кафе</span>
-          <b>→</b>
-        </button>
+      <div class="halal">
+        ☪ ХАЛЯЛЬ
       </div>
+
+      <div class="cafe-content">
+
+        <h1>
+          Кафе Umma
+        </h1>
+
+        <p>
+          Халяльная еда<br>
+          для вас и вашей семьи
+        </p>
+
+        <button
+          class="cafe-button"
+          data-page="cafe"
+        >
+          <span>
+            Открыть кафе
+          </span>
+
+          <b>
+            →
+          </b>
+        </button>
+
+      </div>
+
     </section>
 
+
     <!-- SERVICES -->
-    <section class="services-section">
-      <div class="section-heading">
-        <h2>Сервисы Umma</h2>
-        <button id="allServicesBtn">Все сервисы <span>→</span></button>
+    <section class="services">
+
+      <div class="services-heading">
+
+        <h2>
+          Сервисы Umma
+        </h2>
+
+        <button id="allServicesBtn">
+          Все сервисы →
+        </button>
+
       </div>
+
 
       <div class="services-grid">
 
-        <button class="service-card" data-page="market">
-          <span class="service-icon">🛒</span>
-          <strong>Рынок Umma</strong>
-          <small>Продукты и товары</small>
+        <button
+          class="service"
+          data-page="market"
+        >
+          <span class="service-icon">
+            🛒
+          </span>
+
+          <strong>
+            Рынок Umma
+          </strong>
+
+          <small>
+            Продукты и товары
+          </small>
         </button>
 
-        <button class="service-card" data-page="travel">
-          <span class="service-icon">✈️</span>
-          <strong>Путешествия</strong>
-          <small>Туры, билеты, отели</small>
+
+        <button
+          class="service"
+          data-page="travel"
+        >
+          <span class="service-icon">
+            ✈️
+          </span>
+
+          <strong>
+            Путешествия
+          </strong>
+
+          <small>
+            Туры, билеты, отели
+          </small>
         </button>
 
-        <button class="service-card" data-page="hotels">
-          <span class="service-icon">🏨</span>
-          <strong>Отели Umma</strong>
-          <small>Проживание по миру</small>
+
+        <button
+          class="service"
+          data-page="hotels"
+        >
+          <span class="service-icon">
+            🏨
+          </span>
+
+          <strong>
+            Отели Umma
+          </strong>
+
+          <small>
+            Проживание по миру
+          </small>
         </button>
 
-        <button class="service-card" data-page="realestate">
-          <span class="service-icon">🏠</span>
-          <strong>Недвижимость</strong>
-          <small>Жильё, аренда, инвестиции</small>
+
+        <button
+          class="service"
+          data-page="realestate"
+        >
+          <span class="service-icon">
+            🏠
+          </span>
+
+          <strong>
+            Недвижимость
+          </strong>
+
+          <small>
+            Жильё, аренда, инвестиции
+          </small>
         </button>
 
-        <button class="service-card" data-page="community">
-          <span class="service-icon">👥</span>
-          <strong>Сообщество</strong>
-          <small>Люди, помощь и связи</small>
+
+        <button
+          class="service"
+          data-page="community"
+        >
+          <span class="service-icon">
+            👥
+          </span>
+
+          <strong>
+            Сообщество
+          </strong>
+
+          <small>
+            Люди, помощь и связи
+          </small>
         </button>
 
-        <button class="service-card" data-page="business">
-          <span class="service-icon">💼</span>
-          <strong>Бизнес</strong>
-          <small>Возможности и партнёрства</small>
+
+        <button
+          class="service"
+          data-page="business"
+        >
+          <span class="service-icon">
+            💼
+          </span>
+
+          <strong>
+            Бизнес
+          </strong>
+
+          <small>
+            Возможности и партнёрства
+          </small>
         </button>
 
-        <button class="service-card" data-page="education">
-          <span class="service-icon">🎓</span>
-          <strong>Образование</strong>
-          <small>Школа, медресе, университет</small>
+
+        <button
+          class="service"
+          data-page="education"
+        >
+          <span class="service-icon">
+            🎓
+          </span>
+
+          <strong>
+            Образование
+          </strong>
+
+          <small>
+            Школа, медресе, университет
+          </small>
         </button>
 
-        <button class="service-card" data-page="health">
-          <span class="service-icon">♥</span>
-          <strong>Здоровье</strong>
-          <small>Спорт и здоровый образ жизни</small>
+
+        <button
+          class="service"
+          data-page="health"
+        >
+          <span class="service-icon">
+            ♥
+          </span>
+
+          <strong>
+            Здоровье
+          </strong>
+
+          <small>
+            Спорт и здоровый образ жизни
+          </small>
         </button>
 
       </div>
+
     </section>
+
 
     <!-- FARM -->
     <section class="farm-card">
-      <div class="farm-icon">🌿</div>
 
-      <div class="farm-copy">
-        <h2>Umma Farm</h2>
-        <p>Халяльное производство<br>и натуральные продукты</p>
+      <div class="farm-icon">
+        🌿
       </div>
 
-      <button class="farm-button" aria-label="Umma Farm">
-        <span>Подробнее</span>
-        <b>→</b>
+      <div class="farm-content">
+
+        <h2>
+          Umma Farm
+        </h2>
+
+        <p>
+          Халяльное производство<br>
+          и натуральные продукты
+        </p>
+
+      </div>
+
+      <button
+        class="farm-button"
+        aria-label="Umma Farm"
+      >
+        <span>
+          Подробнее
+        </span>
+
+        <b>
+          →
+        </b>
       </button>
+
     </section>
 
   </main>
 
 
   <!-- ADMIN PAGE -->
-  <section id="adminPage" class="admin-page" hidden>
+  <section
+    id="adminPage"
+    class="admin-page"
+    hidden
+  >
+
     <div class="admin-page-inner">
 
       <button
@@ -218,14 +466,31 @@
         ← Назад
       </button>
 
+
       <div class="admin-header">
-        <div class="admin-header-icon">⚙️</div>
-        <div>
-          <div class="admin-eyebrow">SUPER ADMIN</div>
-          <h1>Администрирование</h1>
-          <p>Центральное управление экосистемой Umma Global.</p>
+
+        <div class="admin-header-icon">
+          ⚙️
         </div>
+
+        <div>
+
+          <div class="admin-eyebrow">
+            SUPER ADMIN
+          </div>
+
+          <h1>
+            Администрирование
+          </h1>
+
+          <p>
+            Центральное управление экосистемой Umma Global.
+          </p>
+
+        </div>
+
       </div>
+
 
       <div class="admin-grid">
 
@@ -239,31 +504,51 @@
           <small>Роли, статусы и доступ</small>
         </button>
 
-        <button type="button" class="admin-card">
+
+        <button
+          type="button"
+          class="admin-card"
+        >
           <span>🏢</span>
           <strong>Организации</strong>
           <small>Кафе, магазины и проекты</small>
         </button>
 
-        <button type="button" class="admin-card">
+
+        <button
+          type="button"
+          class="admin-card"
+        >
           <span>💼</span>
           <strong>Предприниматели</strong>
           <small>Бизнесы и владельцы</small>
         </button>
 
-        <button type="button" class="admin-card">
+
+        <button
+          type="button"
+          class="admin-card"
+        >
           <span>🧑‍💼</span>
           <strong>Сотрудники</strong>
           <small>Рабочие доступы</small>
         </button>
 
-        <button type="button" class="admin-card">
+
+        <button
+          type="button"
+          class="admin-card"
+        >
           <span>📦</span>
           <strong>Товары и инвентарь</strong>
           <small>Каталог и остатки</small>
         </button>
 
-        <button type="button" class="admin-card">
+
+        <button
+          type="button"
+          class="admin-card"
+        >
           <span>🧾</span>
           <strong>Заказы</strong>
           <small>Заказы и статусы</small>
@@ -271,90 +556,179 @@
 
       </div>
 
+
       <div class="admin-status">
+
         <span class="status-dot"></span>
+
         <div>
-          <strong>Доступ подтверждён</strong>
-          <small>Роль: super_admin</small>
+
+          <strong>
+            Доступ подтверждён
+          </strong>
+
+          <small>
+            Роль: super_admin
+          </small>
+
         </div>
+
       </div>
 
     </div>
+
   </section>
 
+
   <!-- USERS PAGE -->
-  <section id="adminUsersPage" class="admin-page" hidden>
+  <section
+    id="adminUsersPage"
+    class="admin-page"
+    hidden
+  >
+
     <div class="admin-page-inner">
 
-      <button id="adminUsersBack" type="button" class="admin-back">
+      <button
+        id="adminUsersBack"
+        type="button"
+        class="admin-back"
+      >
         ← Назад
       </button>
 
+
       <div class="admin-header">
-        <div class="admin-header-icon">👥</div>
-        <div>
-          <div class="admin-eyebrow">SUPER ADMIN</div>
-          <h1>Пользователи</h1>
-          <p>Пользователи Umma Global, роли, статусы и доступ.</p>
+
+        <div class="admin-header-icon">
+          👥
         </div>
+
+        <div>
+
+          <div class="admin-eyebrow">
+            SUPER ADMIN
+          </div>
+
+          <h1>
+            Пользователи
+          </h1>
+
+          <p>
+            Пользователи Umma Global, роли, статусы и доступ.
+          </p>
+
+        </div>
+
       </div>
 
+
       <div class="admin-status">
+
         <span class="status-dot"></span>
+
         <div>
-          <strong>Раздел открыт</strong>
-          <small>Следующим шагом подключим данные из telegram_users.</small>
+
+          <strong>
+            Раздел открыт
+          </strong>
+
+          <small>
+            Следующим шагом подключим данные из telegram_users.
+          </small>
+
         </div>
+
       </div>
 
     </div>
+
   </section>
+
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <button class="nav-item active" data-page="home">
+
+    <button
+      class="nav-item active"
+      data-page="home"
+    >
       <span>⌂</span>
       <small>Главная</small>
     </button>
 
-    <button class="nav-item" data-page="cafe">
+
+    <button
+      class="nav-item"
+      data-page="cafe"
+    >
       <span>🍽</span>
       <small>Кафе</small>
     </button>
 
-    <button class="nav-item" data-page="market">
+
+    <button
+      class="nav-item"
+      data-page="market"
+    >
       <span>🛒</span>
       <small>Рынок</small>
     </button>
 
-    <button class="nav-item" data-page="services">
+
+    <button
+      class="nav-item"
+      data-page="services"
+    >
       <span>✈</span>
       <small>Услуги</small>
     </button>
 
-    <button class="nav-item" data-page="community">
+
+    <button
+      class="nav-item"
+      data-page="community"
+    >
       <span>👥</span>
       <small>Сообщество</small>
     </button>
 
-    <button class="nav-item" data-page="more">
+
+    <button
+      class="nav-item"
+      data-page="more"
+    >
       <span>•••</span>
       <small>Ещё</small>
     </button>
+
   </nav>
 
 </div>
 
-<div class="toast" id="toast">Скоро здесь появится этот раздел</div>
 
+<div
+  class="toast"
+  id="toast"
+>
+  Скоро здесь появится этот раздел
+</div>
+
+
+<!-- CORE -->
 <script src="js/core/app.js?v=1"></script>
+
+<!-- AUTH -->
 <script src="js/auth/auth.js?v=1"></script>
 
+<!-- ADMIN -->
 <script src="js/admin/panel.js?v=1"></script>
 <script src="js/admin/users-api.js?v=1"></script>
 <script src="js/admin/users-ui.js?v=1"></script>
 <script src="js/admin/users-events.js?v=1"></script>
 
+<!-- START -->
 <script src="js/core/start.js?v=1"></script>
+
 </body>
 </html>
