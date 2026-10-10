@@ -3,6 +3,7 @@
   "use strict";
   const MENU_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
   const ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
+  const MY_ORDERS_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders";
   const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
@@ -128,9 +129,71 @@
     }
   });
 
+  const statusNames = {
+    pending: "Ожидает подтверждения",
+    confirmed: "Принят кафе",
+    preparing: "Готовится",
+    ready: "Готов к выдаче",
+    completed: "Выдан",
+    cancelled: "Отменён"
+  };
+  let myOrdersLoaded = false;
+  let myOrdersLoading = false;
+
+  async function loadMyOrders() {
+    if (myOrdersLoading) return;
+    const initData = window.Telegram?.WebApp?.initData;
+    const message = byId("cafeMyOrdersMessage");
+    const root = byId("cafeMyOrdersList");
+    if (!initData) {
+      if (message) { message.textContent = "Откройте приложение через Telegram."; message.hidden = false; }
+      return;
+    }
+    myOrdersLoading = true;
+    if (message) { message.textContent = "Загружаем ваши заказы…"; message.hidden = false; }
+    if (root) root.innerHTML = "";
+    try {
+      const response = await fetch(MY_ORDERS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить заказы");
+      const orders = Array.isArray(result.orders) ? result.orders : [];
+      myOrdersLoaded = true;
+      if (!orders.length) {
+        if (message) { message.textContent = "У вас пока нет заказов."; message.hidden = false; }
+        return;
+      }
+      if (message) message.hidden = true;
+      if (root) root.innerHTML = orders.map(order => {
+        const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
+        const events = Array.isArray(order.cafe_order_events) ? order.cafe_order_events : [];
+        const itemsHtml = items.map(item => "<li><span>" + esc(item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
+        const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
+        const orderTypeName = { pickup:"Самовывоз", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+      }).join("");
+    } catch (error) {
+      if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }
+    } finally { myOrdersLoading = false; }
+  }
+
+  byId("cafeMyOrdersToggle")?.addEventListener("click", async () => {
+    const section = byId("cafeMyOrdersSection");
+    const refresh = byId("cafeMyOrdersRefresh");
+    if (!section) return;
+    section.hidden = !section.hidden;
+    if (refresh) refresh.hidden = section.hidden;
+    if (!section.hidden) await loadMyOrders();
+  });
+  byId("cafeMyOrdersRefresh")?.addEventListener("click", loadMyOrders);
+
   byId("cafeBack")?.addEventListener("click", () => { if (typeof openPage === "function") openPage("home"); });
   window.ummaCafe = {
     refreshMenu: loadMenu,
+    refreshMyOrders: loadMyOrders,
     open: () => { if (typeof openPage === "function") openPage("cafe"); if (!products.length) loadMenu(); }
   };
   renderCart();
