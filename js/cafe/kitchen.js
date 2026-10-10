@@ -175,14 +175,14 @@
     const recalc=()=>{const val=input.value.trim()===""?NaN:Number(input.value), valid=Number.isSafeInteger(val)&&val>=due;change.textContent=Number.isSafeInteger(val)&&val>=0?money(Math.max(0,val-due)):"—";hint.textContent=!Number.isSafeInteger(val)||val<0?"Введите корректную сумму.":val<due?"Не хватает: "+money(due-val):"Передайте клиенту указанную сдачу.";confirm.disabled=!valid;};
     input.oninput=recalc; recalc(); input.focus();
     byId("cashPayCancel").onclick=()=>{modal.style.display="none";};
-    confirm.onclick=async()=>{if(confirm.disabled)return;confirm.disabled=true;modal.style.display="none";await updatePayment(order.id,"paid");};
+    confirm.onclick=async()=>{if(confirm.disabled)return;const tendered=Number(input.value);const changeAmount=tendered-due;confirm.disabled=true;modal.style.display="none";await updatePayment(order.id,"paid",tendered,changeAmount,"cash");};
   }
-  async function updatePayment(orderId, paymentStatus) {
+  async function updatePayment(orderId, paymentStatus, tenderedAmountVnd=null, changeGivenVnd=null, paymentMethod="") {
     if (busy) return;
     busy = true;
     showMessage("Обновляем оплату…");
     try {
-      await api({ action:"updatePayment", orderId, paymentStatus });
+      await api({ action:"updatePayment", orderId, paymentStatus, tenderedAmountVnd, changeGivenVnd, paymentMethod });
       await refreshAfterUpdate();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось обновить оплату");
