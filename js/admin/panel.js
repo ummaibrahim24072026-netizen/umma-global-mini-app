@@ -20,6 +20,7 @@ function updateAdminUI(role) {
   const adminUsersPage = document.getElementById("adminUsersPage");
   const staffEntry = document.getElementById("staffEntry");
   const staffAdminPage = document.getElementById("cafeStaffAdminPage");
+  const kitchenPage = document.getElementById("cafeKitchenPage");
   const canUseStaffWorkspace = role === "admin" || role === "employee";
   const isSuperAdmin =
     role === "super_admin" &&
@@ -44,6 +45,7 @@ function updateAdminUI(role) {
     if (adminPage) adminPage.hidden = true;
     if (adminUsersPage) adminUsersPage.hidden = true;
     if (staffAdminPage) staffAdminPage.hidden = true;
+    if (!canUseStaffWorkspace && kitchenPage) kitchenPage.hidden = true;
 
     document.getElementById("ummaAdminUsersModal")?.remove();
     document.getElementById("ummaAdminRoleModal")?.remove();
