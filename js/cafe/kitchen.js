@@ -35,13 +35,14 @@
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
-      const allowedForRole = staffRole === "manager" ||
-        (staffRole === "cashier" && order.status === "pending") ||
-        (staffRole === "waiter" && ["pending", "ready"].includes(order.status)) ||
-        (staffRole === "kitchen" && ["confirmed", "preparing"].includes(order.status));
+      const orderStaffRole = order.staffRole || staffRole;
+      const allowedForRole = orderStaffRole === "manager" ||
+        (orderStaffRole === "cashier" && order.status === "pending") ||
+        (orderStaffRole === "waiter" && ["pending", "ready"].includes(order.status)) ||
+        (orderStaffRole === "kitchen" && ["confirmed", "preparing"].includes(order.status));
       const action = next && allowedForRole ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
       const canCancel = !["completed","cancelled"].includes(order.status) &&
-        (staffRole === "manager" || (["cashier","waiter"].includes(staffRole) && order.status === "pending"));
+        (orderStaffRole === "manager" || (["cashier","waiter"].includes(orderStaffRole) && order.status === "pending"));
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"Самовывоз", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
       const details = [
@@ -115,6 +116,7 @@
   }
 
   byId("adminKitchenButton")?.addEventListener("click", open);
+  byId("staffEntryButton")?.addEventListener("click", open);
   byId("cafeKitchenBack")?.addEventListener("click", () => {
     if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = true;
     if (window.ummaRole === "super_admin" && typeof openAdminPanel === "function") {
