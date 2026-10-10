@@ -524,3 +524,36 @@ button:active { transform: scale(.98); }
 .cafe-my-order-history ul { margin-top:7px; }
 .cafe-my-order-history li { color:var(--muted); }
 .cafe-my-order-history li small { white-space:nowrap; }
+
+
+/* CAFE STAFF MANAGEMENT */
+.cafe-staff-admin-page {
+  position:absolute; inset:0; z-index:70; overflow-y:auto; overscroll-behavior:contain;
+  padding-bottom:24px; background:#F4FBF9;
+}
+.cafe-staff-admin-inner { max-width:680px; margin:0 auto; padding:0 14px 24px; }
+.cafe-staff-assign-form {
+  display:grid; gap:12px; margin:14px 0 20px; padding:14px;
+  border:1px solid var(--gold); border-radius:16px; background:#fffdf7;
+}
+.cafe-staff-assign-form h2, .cafe-staff-list-heading h2 {
+  margin:0; color:var(--gold-dark); font:700 19px/1.15 Georgia,serif;
+}
+.cafe-staff-assign-form label { display:grid; gap:5px; color:var(--ink); font-size:11px; font-weight:800; }
+.cafe-staff-assign-form input, .cafe-staff-assign-form select {
+  width:100%; min-height:42px; padding:10px 11px; border:1px solid #CFE3E0;
+  border-radius:11px; color:var(--ink); background:#fff; font:500 13px Inter,sans-serif;
+}
+.cafe-staff-form-hint { margin:-5px 0 0; color:var(--muted); font-size:10px; line-height:1.4; }
+.cafe-staff-list-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 10px; }
+.cafe-staff-assignments { display:grid; gap:10px; }
+.cafe-staff-card { padding:12px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.cafe-staff-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-staff-card-head strong { display:block; color:var(--ink); font-size:13px; }
+.cafe-staff-card-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-staff-role { flex:0 0 auto; padding:5px 8px; border-radius:9px; color:var(--turquoise-deep); background:var(--turquoise-pale); font-size:10px; font-weight:900; }
+.cafe-staff-card p { margin:10px 0; color:var(--muted); font-size:11px; }
+.cafe-staff-card-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:8px; border-top:1px solid #EEF3F2; font-size:10px; }
+.cafe-staff-active { color:#176B43; font-weight:900; }
+.cafe-staff-inactive { color:#9C3434; font-weight:800; }
+.cafe-staff-deactivate { padding:7px 9px; border:1px solid #E8B8B8; border-radius:9px; color:#A33E3E; background:#FFF8F8; font-size:10px; font-weight:900; }
