@@ -1786,3 +1786,131 @@ button:active {
   .farm-content h2 { font-size: 17px; }
   .farm-content p { font-size: 8px; }
 }
+
+
+/* =========================================================
+   PREMIUM DESKTOP / NARROW TELEGRAM WEBVIEW FIX
+   ========================================================= */
+
+.cafe-card::after {
+  content: "";
+  right: -8px;
+  bottom: 8px;
+  width: 42%;
+  height: 78%;
+  border: 2px solid rgba(248,223,120,.55);
+  border-radius: 95px 95px 18px 18px;
+  color: transparent;
+  font-size: 0;
+  padding: 0;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(248,223,120,.20) 0 32px, transparent 33px),
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08));
+  box-shadow:
+    inset 0 0 0 7px rgba(210,165,43,.07),
+    0 0 0 1px rgba(255,255,255,.05);
+}
+
+.cafe-content {
+  width: 58%;
+  padding-left: 18px;
+  z-index: 4;
+}
+
+.cafe-content h1 {
+  white-space: nowrap;
+  font-size: clamp(25px, 7vw, 34px);
+}
+
+.cafe-content p {
+  max-width: 170px;
+}
+
+.halal {
+  z-index: 5;
+}
+
+.cafe-button {
+  position: relative;
+  z-index: 5;
+}
+
+/* Give the hero a more luxurious architectural feel without
+   competing with the brand logo or text. */
+.brand::before {
+  box-shadow:
+    170px 22px 0 -65px rgba(255,255,255,.12),
+    225px 42px 0 -78px rgba(255,255,255,.10);
+}
+
+.brand::after {
+  box-shadow:
+    -170px 22px 0 -65px rgba(255,255,255,.12),
+    -225px 42px 0 -78px rgba(255,255,255,.10);
+}
+
+/* Narrow Telegram desktop/mobile webview */
+@media (max-width: 450px) {
+  .brand {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .brand-title span {
+    font-size: 34px;
+  }
+
+  .brand-title strong {
+    font-size: 19px;
+  }
+
+  .welcome-card,
+  .ayah-card,
+  .cafe-card,
+  .farm-card {
+    width: calc(100% - 20px);
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .welcome-card {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .welcome-image {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+  }
+
+  .welcome-content h2 {
+    font-size: 15px;
+  }
+
+  .welcome-content h2 strong {
+    font-size: 18px;
+  }
+
+  .cafe-content {
+    width: 65%;
+    padding-left: 14px;
+  }
+
+  .cafe-content h1 {
+    font-size: 27px;
+  }
+
+  .cafe-card::after {
+    width: 38%;
+  }
+
+  .services {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .service {
+    border-radius: 17px;
+  }
+}
