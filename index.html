@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=9">
+  <link rel="stylesheet" href="css/app.css?v=10">
   <link rel="stylesheet" href="css/admin.css?v=3">
 
 </head>
@@ -540,6 +540,67 @@
   </section>
 
 
+  <!-- CAFE ORDERING -->
+  <section id="cafePage" class="cafe-page" hidden>
+    <div class="cafe-page-inner">
+      <div class="cafe-page-header">
+        <button type="button" id="cafeBack" class="cafe-back">← Главная</button>
+        <span class="cafe-halal-pill">☪ ХАЛЯЛЬ</span>
+        <h1>Кафе Umma</h1>
+        <p>Свежая халяльная еда в Нячанге</p>
+      </div>
+
+      <div id="cafeLoading" class="cafe-message">Загружаем меню…</div>
+      <div id="cafeError" class="cafe-message" hidden></div>
+      <div id="cafeProducts" class="cafe-products" aria-live="polite"></div>
+
+      <section class="cafe-cart">
+        <div class="cafe-cart-heading">
+          <h2>Ваш заказ</h2>
+          <span id="cafeCartCount">0 позиций</span>
+        </div>
+        <div id="cafeCartItems" class="cafe-cart-items">
+          <p class="cafe-empty-cart">Добавьте блюда из меню.</p>
+        </div>
+        <div class="cafe-cart-total">
+          <span>Итого</span>
+          <strong id="cafeCartTotal">0 ₫</strong>
+        </div>
+
+        <form id="cafeOrderForm" class="cafe-order-form">
+          <label>Как получить заказ
+            <select id="cafeOrderType" name="orderType" required>
+              <option value="pickup">Самовывоз</option>
+              <option value="dine_in">В кафе</option>
+              <option value="delivery">Доставка</option>
+            </select>
+          </label>
+          <label>Имя
+            <input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя">
+          </label>
+          <label>Телефон
+            <input id="cafeCustomerPhone" name="customerPhone" maxlength="40" autocomplete="tel" placeholder="+84…">
+          </label>
+          <label id="cafeAddressLabel" hidden>Адрес доставки
+            <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="500" rows="2" placeholder="Улица, дом, квартира"></textarea>
+          </label>
+          <label>Комментарий к заказу
+            <textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Пожелания к заказу (необязательно)"></textarea>
+          </label>
+          <label>Оплата
+            <select id="cafePaymentMethod" name="paymentMethod">
+              <option value="cash">Наличными</option>
+              <option value="qr">QR-платёж (подтверждение отдельно)</option>
+            </select>
+          </label>
+          <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
+          <p class="cafe-order-hint">Стоимость рассчитывается по актуальным ценам меню. Оплата пока не списывается автоматически.</p>
+        </form>
+        <div id="cafeOrderResult" class="cafe-order-result" hidden></div>
+      </section>
+    </div>
+  </section>
+
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
 
@@ -621,6 +682,9 @@
 <script src="js/admin/users-api.js?v=2"></script>
 <script src="js/admin/users-ui.js?v=2"></script>
 <script src="js/admin/users-events.js?v=2"></script>
+
+<!-- CAFE -->
+<script src="js/cafe/cafe.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
