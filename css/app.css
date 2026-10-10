@@ -427,5 +427,5 @@ button:active { transform: scale(.98); }
   .cafe-product-price { font-size: 12px; }
 }
 @media (max-height: 760px) {
-  .cafe-page { inset-bottom: calc(56px + env(safe-area-inset-bottom)); }
+  .cafe-page { bottom: calc(56px + env(safe-area-inset-bottom)); }
 }
