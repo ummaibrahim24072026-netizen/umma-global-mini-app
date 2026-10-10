@@ -557,3 +557,22 @@ button:active { transform: scale(.98); }
 .cafe-staff-active { color:#176B43; font-weight:900; }
 .cafe-staff-inactive { color:#9C3434; font-weight:800; }
 .cafe-staff-deactivate { padding:7px 9px; border:1px solid #E8B8B8; border-radius:9px; color:#A33E3E; background:#FFF8F8; font-size:10px; font-weight:900; }
+
+/* Staff order builder: make selected menu items obvious */
+.staff-order-builder .cafe-product.staff-product-selected {
+  border: 2px solid #0FA3A8;
+  background: #E7F8F5;
+  box-shadow: 0 0 0 3px rgba(15,163,168,.14);
+}
+.staff-order-builder .staff-product-quantity:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  margin: 5px 0 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #D1F3E5;
+  color: #08764D;
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-order-builder .cafe-add { min-width: 92px; padding: 9px 11px; }
