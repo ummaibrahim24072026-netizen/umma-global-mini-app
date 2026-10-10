@@ -47,6 +47,10 @@
       const type = { pickup:"Самовывоз", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
       const paymentMethod = { cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
       const paymentStatus = order.payment_status === "paid" ? "Оплачено" : "Ожидает оплаты";
+      const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
+      const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
+      const deliveryAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && deliveryNext[order.delivery_status]
+        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
       const canManagePayment = ["manager","cashier","waiter"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
       const paymentAction = canManagePayment && order.payment_status !== "paid"
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
@@ -56,6 +60,7 @@
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
         '<span>📦 ' + esc(type) + '</span>',
         '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
+        order.order_type === "delivery" ? '<span>🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
         order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
@@ -144,6 +149,17 @@
     document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
     render();
   }));
+  async function updateDelivery(orderId, deliveryStatus) {
+    if (busy) return;
+    busy = true;
+    showMessage("Обновляем доставку…");
+    try {
+      await api({ action:"updateDelivery", orderId, deliveryStatus });
+      await refreshAfterUpdate();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Не удалось обновить доставку");
+    } finally { busy = false; render(); }
+  }
   async function updatePayment(orderId, paymentStatus) {
     if (busy) return;
     busy = true;
@@ -160,6 +176,8 @@
     if (!(target instanceof Element)) return;
     const paymentButton = target.closest("[data-order-id][data-payment-status]");
     if (paymentButton) { updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status")); return; }
+    const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
+    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status")); return; }
     const button = target.closest("[data-order-id][data-new-status]");
     if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
   });
