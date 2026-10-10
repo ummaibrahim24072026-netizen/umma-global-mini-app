@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
   const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
   const nextStep = { pending:{status:"confirmed",label:"Принять заказ"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
-  let orders = [], filter = "active", busy = false, staffRole = "";
+  let orders = [], filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map();
 
   function isAllowed() {
     return ["super_admin", "admin", "employee"].includes(window.ummaRole);
@@ -142,6 +142,78 @@
     const button = target.closest("[data-order-id][data-new-status]");
     if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
   });
+
+ 
+  const STAFF_MENU_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
+  const STAFF_ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
+  const staffMoney = value => new Intl.NumberFormat("vi-VN", {style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(value)||0);
+  const staffName = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
+  function renderStaffCart() {
+    const root=byId("staffOrderCart"), total=byId("staffOrderTotal"), submit=byId("staffOrderSubmit");
+    if(!root||!total) return;
+    const items=[...staffCart.values()];
+    root.innerHTML=items.length ? items.map(x=>'<div class="cafe-cart-row"><div><strong>'+esc(staffName(x.product))+'</strong><small>'+staffMoney(x.product.price_vnd)+' × '+x.quantity+'</small></div><div class="cafe-cart-controls"><button type="button" data-staff-change="-1" data-product-id="'+esc(x.product.id)+'">−</button><strong>'+x.quantity+'</strong><button type="button" data-staff-change="1" data-product-id="'+esc(x.product.id)+'">+</button></div></div>').join("") : '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
+    total.textContent=staffMoney(items.reduce((sum,x)=>sum+Number(x.product.price_vnd)*x.quantity,0));
+    if(submit) submit.disabled=!items.length || busy;
+  }
+  async function loadStaffMenu() {
+    const root=byId("staffOrderMenu"); if(!root) return;
+    root.innerHTML='<div class="cafe-message">Загружаем меню…</div>';
+    try {
+      const response=await fetch(STAFF_MENU_URL), result=await response.json();
+      if(!response.ok||!result.ok) throw new Error(result.error||"Не удалось загрузить меню");
+      staffMenu=Array.isArray(result.products)?result.products:[];
+      root.innerHTML=staffMenu.map(p=>'<article class="cafe-product"><h3>'+esc(staffName(p))+'</h3><div class="cafe-product-bottom"><span class="cafe-product-price">'+staffMoney(p.price_vnd)+'</span><button type="button" class="cafe-add" data-staff-add="'+esc(p.id)+'">+</button></div></article>').join("");
+    } catch(e) { root.textContent=e instanceof Error?e.message:"Ошибка загрузки меню"; }
+  }
+  byId("staffOrderToggle")?.addEventListener("click", async()=>{
+    const wrap=byId("staffOrderFormWrap"); if(!wrap) return;
+    wrap.hidden=!wrap.hidden;
+    if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
+  });
+  document.addEventListener("click",event=>{
+    const target=event.target; if(!(target instanceof Element)) return;
+    const add=target.closest("[data-staff-add]");
+    const change=target.closest("[data-staff-change]");
+    if(add) {
+      const product=staffMenu.find(p=>String(p.id)===add.getAttribute("data-staff-add")); if(!product)return;
+      const current=staffCart.get(product.id); staffCart.set(product.id,{product,quantity:Math.min(99,(current?.quantity||0)+1)}); renderStaffCart();
+    } else if(change) {
+      const id=change.getAttribute("data-product-id"), current=staffCart.get(id); if(!current)return;
+      const quantity=current.quantity+Number(change.getAttribute("data-staff-change"));
+      if(quantity<=0)staffCart.delete(id);else staffCart.set(id,{...current,quantity});
+      renderStaffCart();
+    }
+  });
+  byId("staffOrderType")?.addEventListener("change",()=>{const delivery=byId("staffOrderType").value==="delivery";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=!delivery;});
+  byId("staffOrderForm")?.addEventListener("submit",async event=>{
+    event.preventDefault();
+    const message=byId("staffOrderMessage");
+    if(!staffCart.size){if(message){message.textContent="Добавьте хотя бы одно блюдо.";message.hidden=false;}return;}
+    if(!staffLocationIds.length){if(message){message.textContent="Не удалось определить кафе сотрудника. Обновите заказы.";message.hidden=false;}return;}
+    const initData=window.Telegram?.WebApp?.initData;
+    if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
+    const type=byId("staffOrderType").value;
+    const address=byId("staffOrderAddress")?.value.trim()||"";
+    if(type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
+    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent="Оформляем…";}
+    if(message)message.hidden=true;
+    try{
+      const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        initData,staffOrder:true,locationId:staffLocationIds[0],
+        items:[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity})),
+        orderType:type,paymentMethod:byId("staffOrderPayment").value,
+        customerName:byId("staffOrderCustomerName").value.trim(),
+        customerPhone:byId("staffOrderCustomerPhone").value.trim(),
+        deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+      })});
+      const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
+      if(message){message.textContent="Заказ №"+result.order.orderNumber+" отправлен на кухню. Сумма: "+staffMoney(result.order.totalVnd);message.hidden=false;}
+      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;renderStaffCart();await loadOrders();
+    }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
+    finally{if(submit){submit.textContent="Отправить заказ на кухню";submit.disabled=!staffCart.size;}}
+  });
+  renderStaffCart();
 
   window.ummaKitchen = { open, refresh:loadOrders };
 })();
