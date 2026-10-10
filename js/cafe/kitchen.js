@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
   const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
   const nextStep = { pending:{status:"confirmed",label:"Принять заказ"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
-  let orders = [], filter = "active", busy = false;
+  let orders = [], filter = "active", busy = false, staffRole = "";
 
   function isAllowed() {
     return ["super_admin", "admin", "employee"].includes(window.ummaRole);
@@ -35,8 +35,14 @@
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
-      const action = next ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
-      const cancel = !["completed","cancelled"].includes(order.status) ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
+      const allowedForRole = staffRole === "manager" ||
+        (staffRole === "cashier" && order.status === "pending") ||
+        (staffRole === "waiter" && ["pending", "ready"].includes(order.status)) ||
+        (staffRole === "kitchen" && ["confirmed", "preparing"].includes(order.status));
+      const action = next && allowedForRole ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
+      const canCancel = !["completed","cancelled"].includes(order.status) &&
+        (staffRole === "manager" || (["cashier","waiter"].includes(staffRole) && order.status === "pending"));
+      const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"Самовывоз", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
@@ -68,6 +74,7 @@
     try {
       const result = await api({ action:"list" });
       orders = Array.isArray(result.orders) ? result.orders : [];
+      staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       render();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
