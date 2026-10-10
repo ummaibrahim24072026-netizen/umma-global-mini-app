@@ -100,56 +100,52 @@ function showToast(message) {
    ===================================================== */
 
 function openPage(page) {
-
-  const names = {
-
-    home: "Главная",
-
-    cafe: "Кафе Umma",
-
-    market: "Рынок Umma",
-
-    travel: "Путешествия",
-
-    hotels: "Отели Umma",
-
-    realestate: "Недвижимость",
-
-    community: "Сообщество",
-
-    business: "Бизнес",
-
-    education: "Образование",
-
-    health: "Здоровье",
-
-    services: "Услуги",
-
-    more: "Дополнительные сервисы"
-
-  };
-
+  const home = document.querySelector(".app > main");
+  const cafePage = document.getElementById("cafePage");
+  const adminPage = document.getElementById("adminPage");
+  const adminUsersPage = document.getElementById("adminUsersPage");
+  const bottomNav = document.querySelector(".bottom-nav");
 
   if (page === "home") {
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
+    if (home) home.style.display = "";
+    if (cafePage) cafePage.hidden = true;
+    if (adminPage) adminPage.hidden = true;
+    if (adminUsersPage) adminUsersPage.hidden = true;
+    if (bottomNav) bottomNav.style.display = "";
     setActiveNav("home");
-
+    window.scrollTo({ top: 0, behavior: "smooth" });
     return;
-
   }
 
+  if (page === "cafe") {
+    if (home) home.style.display = "none";
+    if (adminPage) adminPage.hidden = true;
+    if (adminUsersPage) adminUsersPage.hidden = true;
+    if (cafePage) cafePage.hidden = false;
+    if (bottomNav) bottomNav.style.display = "";
+    setActiveNav("cafe");
+    if (window.ummaCafe && typeof window.ummaCafe.refreshMenu === "function") {
+      window.ummaCafe.refreshMenu();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
 
-  showToast(
-    `${names[page] || "Раздел"} — скоро будет доступен`
-  );
+  const names = {
+    market: "Рынок Umma",
+    travel: "Путешествия",
+    hotels: "Отели Umma",
+    realestate: "Недвижимость",
+    community: "Сообщество",
+    business: "Бизнес",
+    education: "Образование",
+    health: "Здоровье",
+    services: "Услуги",
+    more: "Дополнительные сервисы"
+  };
 
+  showToast(`${names[page] || "Раздел"} — скоро будет доступен`);
 }
-
 
 /* =====================================================
    SERVICE BUTTONS
