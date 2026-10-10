@@ -64,7 +64,7 @@
         order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + '</div></article>';
     }).join("");
   }
 
@@ -161,6 +161,22 @@
       showMessage(error instanceof Error ? error.message : "Не удалось обновить доставку");
     } finally { busy = false; render(); }
   }
+  function openCashPayment(order) {
+    let modal=byId("cashPaymentModal");
+    if(!modal){
+      modal=document.createElement("div"); modal.id="cashPaymentModal";
+      modal.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+      modal.innerHTML='<section style="width:min(100%,420px);background:#fff;color:#173333;border-radius:18px;padding:20px"><h2 style="margin:0 0 8px">Приём наличных</h2><p id="cashPayDue" style="margin:0 0 14px"></p><label style="display:block;font-weight:600">Сколько денег дал клиент? (VND)<input id="cashPayTendered" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:20px;border:1px solid #cbd5d5;border-radius:10px;margin-top:6px"></label><div style="margin:14px 0;padding:14px;background:#edf7f7;border-radius:12px"><small>Сдача клиенту</small><div id="cashPayChange" style="font-size:26px;font-weight:800">—</div><small id="cashPayHint"></small></div><div style="display:flex;gap:8px"><button id="cashPayCancel" type="button" style="flex:1;padding:12px;border:1px solid #cbd5d5;border-radius:10px;background:#fff">Отмена</button><button id="cashPayConfirm" type="button" disabled style="flex:1;padding:12px;border:0;border-radius:10px;background:#0f8f93;color:#fff;font-weight:700">Подтвердить оплату</button></div></section>';
+      document.body.appendChild(modal);
+    }
+    const due=Number(order.total_vnd)||0, input=byId("cashPayTendered"), change=byId("cashPayChange"), hint=byId("cashPayHint"), confirm=byId("cashPayConfirm");
+    byId("cashPayDue").textContent="Заказ №"+order.order_number+" · к оплате "+money(due);
+    input.value=""; change.textContent="—"; hint.textContent="Введите сумму, которую фактически передал клиент."; confirm.disabled=true; modal.style.display="flex";
+    const recalc=()=>{const val=input.value.trim()===""?NaN:Number(input.value), valid=Number.isSafeInteger(val)&&val>=due;change.textContent=Number.isSafeInteger(val)&&val>=0?money(Math.max(0,val-due)):"—";hint.textContent=!Number.isSafeInteger(val)||val<0?"Введите корректную сумму.":val<due?"Не хватает: "+money(due-val):"Передайте клиенту указанную сдачу.";confirm.disabled=!valid;};
+    input.oninput=recalc; recalc(); input.focus();
+    byId("cashPayCancel").onclick=()=>{modal.style.display="none";};
+    confirm.onclick=async()=>{if(confirm.disabled)return;confirm.disabled=true;modal.style.display="none";await updatePayment(order.id,"paid");};
+  }
   async function updatePayment(orderId, paymentStatus) {
     if (busy) return;
     busy = true;
@@ -176,7 +192,12 @@
     const target = event.target;
     if (!(target instanceof Element)) return;
     const paymentButton = target.closest("[data-order-id][data-payment-status]");
-    if (paymentButton) { updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status")); return; }
+    if (paymentButton) {
+      const order=orders.find(o=>String(o.id)===paymentButton.getAttribute("data-order-id"));
+      if(paymentButton.getAttribute("data-payment-status")==="paid" && order && order.payment_method==="cash"){openCashPayment(order);}
+      else updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
+      return;
+    }
     const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
     if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status")); return; }
     const button = target.closest("[data-order-id][data-new-status]");
