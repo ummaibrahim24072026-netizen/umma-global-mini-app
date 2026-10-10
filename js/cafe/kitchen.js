@@ -10,7 +10,7 @@
   let orders = [], filter = "active", busy = false;
 
   function isAllowed() {
-    return typeof isUmmaSuperAdmin === "function" ? isUmmaSuperAdmin() : window.ummaRole === "super_admin";
+    return ["super_admin", "admin", "employee"].includes(window.ummaRole);
   }
   function showMessage(text, visible = true) {
     const el = byId("cafeKitchenMessage");
@@ -94,12 +94,13 @@
   function open() {
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
-    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage");
+    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), staffAdmin = byId("cafeStaffAdminPage");
     const nav = document.querySelector(".bottom-nav");
     if (home) home.style.display = "none";
     if (admin) admin.hidden = true;
     if (users) users.hidden = true;
     if (cafe) cafe.hidden = true;
+    if (staffAdmin) staffAdmin.hidden = true;
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
     loadOrders();
@@ -109,7 +110,16 @@
   byId("adminKitchenButton")?.addEventListener("click", open);
   byId("cafeKitchenBack")?.addEventListener("click", () => {
     if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = true;
-    if (typeof openAdminPanel === "function") openAdminPanel();
+    if (window.ummaRole === "super_admin" && typeof openAdminPanel === "function") {
+      openAdminPanel();
+      return;
+    }
+    const home = document.querySelector(".app > main");
+    const nav = document.querySelector(".bottom-nav");
+    if (home) home.style.display = "";
+    if (nav) nav.style.display = "";
+    if (typeof setActiveNav === "function") setActiveNav("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
   byId("cafeKitchenRefresh")?.addEventListener("click", loadOrders);
   document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
