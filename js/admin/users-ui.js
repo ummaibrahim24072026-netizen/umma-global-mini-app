@@ -1,5 +1,10 @@
 function openAdminRoleModal(user) {
 
+  if (!isUmmaSuperAdmin()) {
+    showToast("Доступ запрещён");
+    return;
+  }
+
   const existing =
     document.getElementById(
       "ummaAdminRoleModal"
@@ -188,6 +193,11 @@ function openAdminRoleModal(user) {
 
 
 function renderAdminUsers(users) {
+
+  if (!isUmmaSuperAdmin()) {
+    showToast("Доступ запрещён");
+    return;
+  }
 
   const existing =
     document.getElementById(
