@@ -610,6 +610,29 @@
         <h1>Заказы кафе</h1>
         <p>HALAL UMMA · Нячанг</p>
       </div>
+      <section class="staff-order-builder">
+        <button type="button" id="staffOrderToggle" class="cafe-submit">＋ Заказ от официанта</button>
+        <div id="staffOrderFormWrap" hidden>
+          <h2>Оформить заказ гостя</h2>
+          <p>Если у гостя нет телефона, официант оформляет заказ здесь.</p>
+          <div id="staffOrderMenu" class="cafe-products"></div>
+          <div class="cafe-cart">
+            <h3>Состав заказа</h3>
+            <div id="staffOrderCart"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
+            <div class="cafe-cart-total"><span>Итого</span><strong id="staffOrderTotal">0 ₫</strong></div>
+            <form id="staffOrderForm" class="cafe-order-form">
+              <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">Самовывоз</option><option value="delivery">Доставка</option></select></label>
+              <label>Имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Гость"></label>
+              <label>Телефон (необязательно)<input id="staffOrderCustomerPhone" maxlength="40" placeholder="+84…"></label>
+              <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
+              <label>Оплата<select id="staffOrderPayment"><option value="cash">Наличными</option><option value="qr">QR-платёж</option></select></label>
+              <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
+              <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
+            </form>
+          </div>
+        </div>
+      </section>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
@@ -772,7 +795,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=3"></script>
-<script src="js/cafe/kitchen.js?v=3"></script>
+<script src="js/cafe/kitchen.js?v=4"></script>
 <script src="js/cafe/staff-admin.js?v=2"></script>
 
 <!-- START -->
