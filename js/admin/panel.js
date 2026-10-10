@@ -14,17 +14,17 @@ function updateAdminUI(role) {
 
   adminEntry.hidden = !isSuperAdmin;
 
-  if (!isSuperAdmin) {
+  if (isSuperAdmin) {
 
-    adminEntry.setAttribute(
-      "aria-hidden",
-      "true"
+    adminEntry.removeAttribute(
+      "aria-hidden"
     );
 
   } else {
 
-    adminEntry.removeAttribute(
-      "aria-hidden"
+    adminEntry.setAttribute(
+      "aria-hidden",
+      "true"
     );
 
   }
@@ -48,17 +48,40 @@ function openAdminPanel() {
 
 
   const home =
-    document.querySelector(".home");
+    document.querySelector(".app > main");
 
   const adminPage =
     document.getElementById("adminPage");
+
+  const adminUsersPage =
+    document.getElementById("adminUsersPage");
 
   const bottomNav =
     document.querySelector(".bottom-nav");
 
 
-  if (!adminPage) return;
+  if (!adminPage) {
 
+    console.warn(
+      "UMMA: adminPage не найден"
+    );
+
+    return;
+
+  }
+
+
+  /* Закрываем страницу пользователей,
+     если она была открыта */
+
+  if (adminUsersPage) {
+
+    adminUsersPage.hidden = true;
+
+  }
+
+
+  /* Скрываем главную */
 
   if (home) {
 
@@ -67,8 +90,12 @@ function openAdminPanel() {
   }
 
 
+  /* Показываем админ-панель */
+
   adminPage.hidden = false;
 
+
+  /* Скрываем нижнюю навигацию */
 
   if (bottomNav) {
 
@@ -78,11 +105,8 @@ function openAdminPanel() {
 
 
   window.scrollTo({
-
     top: 0,
-
     behavior: "smooth"
-
   });
 
 }
@@ -95,14 +119,28 @@ function openAdminPanel() {
 function closeAdminPanel() {
 
   const home =
-    document.querySelector(".home");
+    document.querySelector(".app > main");
 
   const adminPage =
     document.getElementById("adminPage");
 
+  const adminUsersPage =
+    document.getElementById("adminUsersPage");
+
   const bottomNav =
     document.querySelector(".bottom-nav");
 
+
+  /* Закрываем страницу пользователей */
+
+  if (adminUsersPage) {
+
+    adminUsersPage.hidden = true;
+
+  }
+
+
+  /* Закрываем админ-панель */
 
   if (adminPage) {
 
@@ -111,12 +149,16 @@ function closeAdminPanel() {
   }
 
 
+  /* Возвращаем главную */
+
   if (home) {
 
     home.style.display = "";
 
   }
 
+
+  /* Возвращаем нижнюю навигацию */
 
   if (bottomNav) {
 
@@ -126,24 +168,25 @@ function closeAdminPanel() {
 
 
   window.scrollTo({
-
     top: 0,
-
     behavior: "smooth"
-
   });
 
 }
 
 
 /* =====================================================
-   ADMIN BUTTON
+   ADMIN BUTTONS
    ===================================================== */
 
 document.addEventListener("click", event => {
 
+  /* Кнопка / карточка администрирования */
+
   const adminEntry =
-    event.target.closest("#adminEntry");
+    event.target.closest(
+      "#adminEntry"
+    );
 
 
   if (adminEntry) {
@@ -155,8 +198,12 @@ document.addEventListener("click", event => {
   }
 
 
+  /* Кнопка Назад */
+
   const adminBack =
-    event.target.closest("#adminBack");
+    event.target.closest(
+      "#adminBack"
+    );
 
 
   if (adminBack) {
@@ -166,5 +213,3 @@ document.addEventListener("click", event => {
   }
 
 });
-
-
