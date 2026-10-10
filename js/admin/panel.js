@@ -129,6 +129,43 @@ document.addEventListener("click", event => {
     return;
   }
 
+  if (target.closest("#adminStaffButton")) {
+    if (!isUmmaSuperAdmin()) {
+      showToast("Доступ запрещён");
+      return;
+    }
+
+    if (window.ummaCafeStaffAdmin && typeof window.ummaCafeStaffAdmin.open === "function") {
+      window.ummaCafeStaffAdmin.open();
+      return;
+    }
+
+    // Fail visibly if a cached or failed script prevented the staff module from loading.
+    const home = document.querySelector(".app > main");
+    const adminPage = document.getElementById("adminPage");
+    const usersPage = document.getElementById("adminUsersPage");
+    const staffPage = document.getElementById("cafeStaffAdminPage");
+    const kitchenPage = document.getElementById("cafeKitchenPage");
+    const cafePage = document.getElementById("cafePage");
+    const bottomNav = document.querySelector(".bottom-nav");
+
+    if (home) home.style.display = "none";
+    if (adminPage) adminPage.hidden = true;
+    if (usersPage) usersPage.hidden = true;
+    if (kitchenPage) kitchenPage.hidden = true;
+    if (cafePage) cafePage.hidden = true;
+    if (staffPage) staffPage.hidden = false;
+    if (bottomNav) bottomNav.style.display = "none";
+
+    const message = document.getElementById("cafeStaffAdminMessage");
+    if (message) {
+      message.textContent = "Модуль сотрудников не загрузился. Обновите приложение и попробуйте ещё раз.";
+      message.hidden = false;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
   if (target.closest("#adminBack")) {
     closeAdminPanel();
   }
