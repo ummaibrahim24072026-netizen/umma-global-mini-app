@@ -74,6 +74,7 @@
     showMessage("Загружаем заказы…");
     try {
       const result = await api({ action:"list" });
+      staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       orders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       render();
