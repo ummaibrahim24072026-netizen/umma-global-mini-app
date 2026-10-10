@@ -1373,3 +1373,26 @@ button:active {
     font-size: 8px;
   }
 }
+
+/* =========================================================
+   UMMA GLOBAL — FINAL OVERRIDES
+   Верхняя панель убрана, основному экрану возвращена высота
+   ========================================================= */
+
+.topbar {
+  display: none !important;
+}
+
+.app > main {
+  height: calc(100svh - 60px) !important;
+}
+
+@media (max-height: 760px) {
+  .app > main {
+    height: calc(100svh - 55px) !important;
+  }
+}
+
+@media (max-height: 680px) {
+  .app > main {
+    height: calc(100svh - 55px) !important;
