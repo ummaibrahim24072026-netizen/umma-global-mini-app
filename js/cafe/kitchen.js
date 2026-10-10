@@ -54,7 +54,7 @@
       const canManagePayment = ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
       const paymentAction = canManagePayment && order.payment_status !== "paid"
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
-        : (canManagePayment && order.payment_status === "paid" ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-payment-status="pending">Вернуть в ожидание оплаты</button>' : "");
+        : "";
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
