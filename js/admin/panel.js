@@ -18,6 +18,9 @@ function updateAdminUI(role) {
   const adminEntry = document.getElementById("adminEntry");
   const adminPage = document.getElementById("adminPage");
   const adminUsersPage = document.getElementById("adminUsersPage");
+  const staffEntry = document.getElementById("staffEntry");
+  const staffAdminPage = document.getElementById("cafeStaffAdminPage");
+  const canUseStaffWorkspace = role === "admin" || role === "employee";
   const isSuperAdmin =
     role === "super_admin" &&
     window.ummaPermissions?.isSuperAdmin === true;
@@ -27,13 +30,20 @@ function updateAdminUI(role) {
     adminEntry.setAttribute("aria-hidden", String(!isSuperAdmin));
   }
 
+  if (staffEntry) {
+    staffEntry.hidden = !canUseStaffWorkspace;
+    staffEntry.setAttribute("aria-hidden", String(!canUseStaffWorkspace));
+  }
+
   /*
+
    * Keep protected views closed until the server-confirmed role
    * has been applied. Also close them if access is lost.
    */
   if (!isSuperAdmin) {
     if (adminPage) adminPage.hidden = true;
     if (adminUsersPage) adminUsersPage.hidden = true;
+    if (staffAdminPage) staffAdminPage.hidden = true;
 
     document.getElementById("ummaAdminUsersModal")?.remove();
     document.getElementById("ummaAdminRoleModal")?.remove();
