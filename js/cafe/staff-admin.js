@@ -86,7 +86,6 @@
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
-  byId("adminStaffButton")?.addEventListener("click", open);
   byId("cafeStaffAdminBack")?.addEventListener("click", () => {
     if (byId("cafeStaffAdminPage")) byId("cafeStaffAdminPage").hidden = true;
     if (typeof openAdminPanel === "function") openAdminPanel();
