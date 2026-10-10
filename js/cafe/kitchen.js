@@ -45,10 +45,17 @@
         (orderStaffRole === "manager" || (["cashier","waiter"].includes(orderStaffRole) && order.status === "pending"));
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"Самовывоз", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+      const paymentMethod = { cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
+      const paymentStatus = order.payment_status === "paid" ? "Оплачено" : "Ожидает оплаты";
+      const canManagePayment = ["manager","cashier","waiter"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
+      const paymentAction = canManagePayment && order.payment_status !== "paid"
+        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
+        : (canManagePayment && order.payment_status === "paid" ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-payment-status="pending">Вернуть в ожидание оплаты</button>' : "");
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
         '<span>📦 ' + esc(type) + '</span>',
+        '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
         order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
@@ -137,9 +144,22 @@
     document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
     render();
   }));
+  async function updatePayment(orderId, paymentStatus) {
+    if (busy) return;
+    busy = true;
+    showMessage("Обновляем оплату…");
+    try {
+      await api({ action:"updatePayment", orderId, paymentStatus });
+      await refreshAfterUpdate();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Не удалось обновить оплату");
+    } finally { busy = false; render(); }
+  }
   byId("cafeKitchenOrders")?.addEventListener("click", event => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+    const paymentButton = target.closest("[data-order-id][data-payment-status]");
+    if (paymentButton) { updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status")); return; }
     const button = target.closest("[data-order-id][data-new-status]");
     if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
   });
