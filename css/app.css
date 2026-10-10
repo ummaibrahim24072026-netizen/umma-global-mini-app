@@ -54,7 +54,7 @@ button:active { transform: scale(.98); }
 .profile-button { font-size: 22px; }
 
 .app > main {
-  height: calc(100% - 108px);
+  height: calc(100% - 60px);
   overflow: hidden;
   padding: 0 0 5px;
   display: flex; flex-direction: column;
@@ -257,12 +257,12 @@ button:active { transform: scale(.98); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* Admin entry remains available to its controller but is not part of the approved home mockup. */
-#adminEntry { display: none !important; }
+/* Super-admin entry visibility is controlled by updateAdminUI(role). */
 
 /* Keep the same layout proportions on short phones and Telegram webviews. */
 @media (max-height: 760px) {
   .topbar { height: 44px; }
-  .app > main { height: calc(100% - 100px); gap: 5px; }
+  .app > main { height: calc(100% - 56px); gap: 5px; }
   .brand { height: 124px; flex-basis: 124px; padding-top: 3px; }
   .brand-logo { width: 45px; height: 45px; flex-basis: 45px; }
   .brand-title span { font-size: 28px; }
