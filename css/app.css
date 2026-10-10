@@ -1402,3 +1402,387 @@ button:active {
   }
 }
 
+
+
+/* =========================================================
+   UMMA GLOBAL — PREMIUM TURQUOISE & GOLD HOME
+   Visual direction based on the approved reference
+   ========================================================= */
+
+:root {
+  --turquoise: #0b9fa5;
+  --turquoise-dark: #087b80;
+  --turquoise-light: #dff5f3;
+  --gold: #d2a52b;
+  --gold-light: #f8df78;
+  --gold-dark: #9b7011;
+  --cream: #fffaf0;
+  --background: #f5f0df;
+  --text: #4b3820;
+  --muted: #7e725d;
+  --border: #e0c66b;
+  --radius: 24px;
+  --shadow: 0 7px 22px rgba(83, 61, 22, .13);
+}
+
+.app {
+  max-width: 520px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,.9), transparent 28%),
+    linear-gradient(180deg, #f9f4e7 0%, #f4efdf 100%);
+}
+
+.app > main {
+  background: transparent;
+  padding-bottom: 18px;
+}
+
+/* HERO */
+.brand {
+  height: 245px;
+  position: relative;
+  justify-content: flex-start;
+  padding: 14px 18px 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 82%, rgba(255,255,255,.20) 0 38px, transparent 39px),
+    radial-gradient(circle at 88% 82%, rgba(255,255,255,.16) 0 44px, transparent 45px),
+    linear-gradient(180deg, #079ba3 0%, #087e84 100%);
+  border-bottom: 3px solid var(--gold);
+  box-shadow: 0 6px 18px rgba(8,126,132,.18);
+}
+
+.brand::before,
+.brand::after {
+  content: "";
+  position: absolute;
+  bottom: -42px;
+  width: 150px;
+  height: 150px;
+  border: 2px solid rgba(248,223,120,.25);
+  border-radius: 50%;
+}
+.brand::before { left: -48px; }
+.brand::after { right: -48px; }
+
+.brand-logo {
+  width: 92px;
+  height: 92px;
+  margin: 2px 0 3px;
+  top: 0;
+  z-index: 2;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,.18));
+}
+
+.brand-title {
+  gap: 8px;
+  z-index: 2;
+  line-height: .95;
+}
+.brand-title span {
+  color: #fff7dc;
+  font-family: Georgia, serif;
+  font-size: 43px;
+  font-weight: 900;
+  text-shadow: 0 2px 2px rgba(80,50,0,.25);
+}
+.brand-title strong {
+  color: var(--gold-light);
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.brand-line {
+  width: 128px;
+  height: 2px;
+  margin: 7px auto 7px;
+  background: var(--gold-light);
+  z-index: 2;
+}
+.brand p {
+  color: #fffdf2;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 600;
+  z-index: 2;
+}
+.brand small {
+  color: var(--gold-light);
+  font-size: 11px;
+  margin-top: 4px;
+  z-index: 2;
+}
+
+/* WELCOME */
+.welcome-card {
+  width: calc(100% - 28px);
+  min-height: 128px;
+  height: auto;
+  margin: -1px 14px 9px;
+  padding: 14px 14px;
+  background: linear-gradient(135deg, #fffdf7, #fff8e9);
+  border: 2px solid var(--gold);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  gap: 13px;
+}
+.welcome-image {
+  width: 72px;
+  height: 72px;
+  flex-basis: 72px;
+  background: linear-gradient(145deg, #11aeb1, #087d82);
+  border: 2px solid var(--gold);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.08);
+  font-size: 34px;
+}
+.welcome-content h2 {
+  color: #87600c;
+  font-size: 18px;
+  line-height: 1.08;
+}
+.welcome-content h2 strong { font-size: 21px; }
+.welcome-content p { font-size: 11px; color: #5d574d; }
+.gold-circle,
+.turquoise-circle {
+  width: 43px;
+  height: 43px;
+  flex-basis: 43px;
+  font-size: 25px;
+}
+.gold-circle { background: var(--turquoise); border-color: var(--gold-light); }
+
+/* ADMIN */
+.admin-entry {
+  width: calc(100% - 28px);
+  margin: 0 14px 9px;
+}
+
+/* AYAH */
+.ayah-card {
+  width: calc(100% - 28px);
+  min-height: 105px;
+  height: auto;
+  margin: 0 14px 9px;
+  padding: 11px 14px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(210,165,43,.10), transparent 28%),
+    #fffdf7;
+  border: 2px solid #ead9a1;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+.ayah-book {
+  width: 68px;
+  height: 68px;
+  flex-basis: 68px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f7f0d7, #fffdf7);
+  border: 1px solid #e4ce83;
+  box-shadow: inset 0 0 0 6px rgba(210,165,43,.08);
+  font-size: 34px;
+}
+.ayah-content span { font-size: 11px; color: var(--gold-dark); }
+.ayah-content p { font-size: 14px; line-height: 1.2; color: var(--turquoise-dark); }
+.ayah-content small { font-size: 10px; }
+.turquoise-circle { background: var(--turquoise); border-color: var(--gold-light); }
+
+/* CAFE HERO CARD */
+.cafe-card {
+  height: 218px;
+  margin: 0 14px 11px;
+  width: calc(100% - 28px);
+  border-radius: 26px;
+  border: 3px solid var(--gold);
+  background:
+    radial-gradient(circle at 85% 110%, rgba(248,223,120,.35) 0 62px, transparent 63px),
+    radial-gradient(circle at 93% 90%, rgba(248,223,120,.22) 0 100px, transparent 101px),
+    linear-gradient(135deg, #079ea3, #087d82 72%);
+  box-shadow: 0 9px 25px rgba(8,126,132,.2);
+}
+.cafe-card::after {
+  content: "UMMA\A CAFE";
+  white-space: pre;
+  position: absolute;
+  right: 12px;
+  bottom: 15px;
+  width: 42%;
+  height: 73%;
+  border: 2px solid rgba(248,223,120,.7);
+  border-radius: 90px 90px 14px 14px;
+  color: rgba(248,223,120,.92);
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  padding-top: 42px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.08));
+  box-shadow: inset 0 0 0 7px rgba(210,165,43,.08);
+}
+.cafe-background {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 77% 80%, rgba(255,255,255,.13) 0 45px, transparent 46px),
+    radial-gradient(circle at 77% 80%, transparent 0 63px, rgba(248,223,120,.20) 64px 66px, transparent 67px);
+}
+.halal {
+  top: 13px;
+  left: 16px;
+  right: auto;
+  padding: 6px 12px;
+  border-color: var(--gold-light);
+  color: var(--gold-light);
+  font-size: 12px;
+}
+.cafe-content {
+  padding: 45px 18px 14px;
+  width: 62%;
+}
+.cafe-content h1 { font-size: 34px; color: #fff8df; text-shadow: 0 2px 2px rgba(0,0,0,.18); }
+.cafe-content p { font-size: 13px; line-height: 1.25; margin-bottom: 12px; }
+.cafe-button {
+  height: 40px;
+  padding: 0 17px;
+  font-size: 12px;
+  border: 1px solid rgba(155,112,17,.35);
+}
+.cafe-button span { font-size: 14px; }
+
+/* SERVICES */
+.services {
+  margin: 0 14px 10px;
+}
+.services-heading {
+  height: 40px;
+}
+.services-heading h2 {
+  font-size: 28px;
+  color: var(--gold-dark);
+}
+.services-heading button {
+  font-size: 12px;
+  color: var(--turquoise-dark);
+}
+.services-grid {
+  gap: 7px;
+}
+.service {
+  height: 108px;
+  padding: 8px 4px;
+  background: linear-gradient(180deg, #fffef9, #fffaf0);
+  border: 1px solid #e3d39c;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(83,61,22,.08);
+}
+.service-icon {
+  width: 46px;
+  height: 46px;
+  flex-basis: 46px;
+  margin-bottom: 5px;
+  background: linear-gradient(145deg, #0da6aa, #087c81);
+  border: 2px solid var(--gold);
+  color: var(--gold-light);
+  font-size: 21px;
+  box-shadow: 0 3px 7px rgba(8,126,132,.18);
+}
+.service strong {
+  font-size: 12px;
+  color: #8d6511;
+  line-height: 1.05;
+}
+.service small {
+  font-size: 9px;
+  line-height: 1.1;
+  color: #5e655e;
+}
+
+/* FARM */
+.farm-card {
+  width: calc(100% - 28px);
+  height: 115px;
+  margin: 0 14px 8px;
+  padding: 10px 14px;
+  border-radius: 25px;
+  border: 2px solid var(--gold);
+  background:
+    radial-gradient(circle at 82% 20%, rgba(255,255,255,.18), transparent 24%),
+    linear-gradient(100deg, #0a7d73, #159d91 58%, #1d705e);
+  box-shadow: var(--shadow);
+}
+.farm-icon {
+  width: 70px;
+  height: 70px;
+  flex-basis: 70px;
+  border-radius: 50%;
+  background: #fff8e8;
+  border: 1px solid var(--gold);
+  font-size: 35px;
+}
+.farm-content { padding-left: 12px; }
+.farm-content h2 { font-size: 25px; color: var(--gold-light); }
+.farm-content p { font-size: 11px; line-height: 1.2; }
+.farm-button { padding: 9px 12px; font-size: 11px; border: 1px solid var(--gold-dark); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  height: 68px;
+  padding: 5px 8px max(5px, env(safe-area-inset-bottom));
+  background: rgba(255,252,244,.98);
+  border-top: 2px solid #e2cd82;
+  box-shadow: 0 -5px 16px rgba(83,61,22,.08);
+}
+.nav-item { color: #87600c; }
+.nav-item span { font-size: 24px; color: #87600c; }
+.nav-item small { font-size: 10px; color: #87600c; }
+.nav-item.active span,
+.nav-item.active small { color: var(--turquoise); }
+
+/* SMALL HEIGHT OVERRIDES */
+@media (max-height: 760px) {
+  .brand { height: 205px; }
+  .brand-logo { width: 78px; height: 78px; }
+  .brand-title span { font-size: 36px; }
+  .brand-title strong { font-size: 21px; }
+  .welcome-card { min-height: 108px; }
+  .ayah-card { min-height: 88px; }
+  .ayah-book { width: 58px; height: 58px; flex-basis: 58px; }
+  .cafe-card { height: 180px; }
+  .cafe-content { padding-top: 38px; }
+  .cafe-content h1 { font-size: 29px; }
+  .service { height: 90px; }
+  .farm-card { height: 92px; }
+  .farm-icon { width: 56px; height: 56px; flex-basis: 56px; }
+  .farm-content h2 { font-size: 21px; }
+  .bottom-nav { height: 60px; }
+  .app > main { height: calc(100svh - 60px) !important; }
+}
+
+@media (max-height: 680px) {
+  .brand { height: 175px; }
+  .brand-logo { width: 64px; height: 64px; }
+  .brand-title span { font-size: 31px; }
+  .brand-title strong { font-size: 18px; }
+  .brand p { font-size: 11px; }
+  .welcome-card { min-height: 92px; }
+  .welcome-image { width: 52px; height: 52px; flex-basis: 52px; }
+  .welcome-content h2 { font-size: 14px; }
+  .ayah-card { min-height: 75px; }
+  .ayah-book { width: 48px; height: 48px; flex-basis: 48px; }
+  .ayah-content p { font-size: 10px; }
+  .cafe-card { height: 145px; }
+  .cafe-content { padding-top: 31px; }
+  .cafe-content h1 { font-size: 24px; }
+  .cafe-content p { font-size: 9px; }
+  .cafe-button { height: 31px; }
+  .services-heading { height: 32px; }
+  .services-heading h2 { font-size: 22px; }
+  .service { height: 72px; }
+  .service-icon { width: 32px; height: 32px; flex-basis: 32px; font-size: 15px; }
+  .service strong { font-size: 9px; }
+  .service small { font-size: 7px; }
+  .farm-card { height: 70px; }
+  .farm-icon { width: 46px; height: 46px; flex-basis: 46px; }
+  .farm-content h2 { font-size: 17px; }
+  .farm-content p { font-size: 8px; }
+}
