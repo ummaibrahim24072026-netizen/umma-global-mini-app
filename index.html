@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=11">
+  <link rel="stylesheet" href="css/app.css?v=12">
   <link rel="stylesheet" href="css/admin.css?v=3">
 
 </head>
@@ -578,6 +578,14 @@
         <p>Свежая халяльная еда в Нячанге</p>
       </div>
 
+      <div class="cafe-my-orders-toolbar">
+        <button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button>
+        <button type="button" id="cafeMyOrdersRefresh" class="cafe-my-orders-refresh" hidden>↻ Обновить</button>
+      </div>
+      <section id="cafeMyOrdersSection" class="cafe-my-orders-section" hidden>
+        <div id="cafeMyOrdersMessage" class="cafe-message">Загружаем ваши заказы…</div>
+        <div id="cafeMyOrdersList" class="cafe-my-orders-list"></div>
+      </section>
       <div id="cafeLoading" class="cafe-message">Загружаем меню…</div>
       <div id="cafeError" class="cafe-message" hidden></div>
       <div id="cafeProducts" class="cafe-products" aria-live="polite"></div>
@@ -712,7 +720,7 @@
 <script src="js/admin/users-events.js?v=3"></script>
 
 <!-- CAFE -->
-<script src="js/cafe/cafe.js?v=1"></script>
+<script src="js/cafe/cafe.js?v=2"></script>
 <script src="js/cafe/kitchen.js?v=1"></script>
 
 <!-- START -->
