@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=12">
+  <link rel="stylesheet" href="css/app.css?v=13">
   <link rel="stylesheet" href="css/admin.css?v=3">
 
 </head>
@@ -130,6 +130,18 @@
 
     </section>
 
+
+    <!-- CAFE STAFF ENTRY -->
+    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true">
+      <button type="button" class="admin-entry-button" id="staffEntryButton">
+        <span class="admin-entry-icon">🍽️</span>
+        <span class="admin-entry-copy">
+          <strong>Рабочая панель</strong>
+          <small>Заказы и работа кафе</small>
+        </span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+    </section>
 
     <!-- AYAH -->
     <section class="ayah-card">
@@ -550,6 +562,44 @@
   </section>
 
 
+  <!-- CAFE STAFF MANAGEMENT -->
+  <section id="cafeStaffAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeStaffAdminBack" class="cafe-back">← Администрирование</button>
+        <h1>Сотрудники кафе</h1>
+        <p>Назначение ролей и доступов по филиалам Umma</p>
+      </div>
+      <form id="cafeStaffAssignForm" class="cafe-staff-assign-form">
+        <h2>Назначить сотрудника</h2>
+        <label>Telegram ID пользователя
+          <input id="cafeStaffTelegramId" name="telegramId" inputmode="numeric" pattern="[0-9]+" required placeholder="Например, 123456789">
+        </label>
+        <p class="cafe-staff-form-hint">Пользователь должен хотя бы один раз открыть Umma Global.</p>
+        <label>Кафе / филиал
+          <select id="cafeStaffLocation" name="locationId" required>
+            <option value="">Загружаем список кафе…</option>
+          </select>
+        </label>
+        <label>Должность
+          <select id="cafeStaffRole" name="staffRole" required>
+            <option value="manager">Менеджер — все статусы заказов</option>
+            <option value="cashier">Кассир — приём и отмена новых заказов</option>
+            <option value="waiter">Официант — приём и выдача заказа</option>
+            <option value="kitchen">Кухня — готовка и отметка «Готов»</option>
+          </select>
+        </label>
+        <button id="cafeStaffAssignSubmit" type="submit" class="cafe-submit">Сохранить назначение</button>
+        <div id="cafeStaffAdminMessage" class="cafe-order-result" hidden></div>
+      </form>
+      <div class="cafe-staff-list-heading">
+        <h2>Назначенные сотрудники</h2>
+        <button type="button" id="cafeStaffAdminRefresh" class="cafe-my-orders-refresh">↻ Обновить</button>
+      </div>
+      <div id="cafeStaffAssignments" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
   <!-- CAFE KITCHEN -->
   <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
     <div class="cafe-kitchen-inner">
@@ -721,7 +771,8 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=2"></script>
-<script src="js/cafe/kitchen.js?v=1"></script>
+<script src="js/cafe/kitchen.js?v=2"></script>
+<script src="js/cafe/staff-admin.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
