@@ -483,3 +483,44 @@ button:active { transform: scale(.98); }
 @media (min-width: 560px) {
   .cafe-kitchen-orders { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
+
+
+/* CUSTOMER ORDER HISTORY */
+.cafe-my-orders-toolbar { display:flex; gap:8px; margin:0 0 10px; }
+.cafe-my-orders-toggle, .cafe-my-orders-refresh {
+  min-height:40px; padding:10px 13px; border:1px solid var(--gold);
+  border-radius:12px; color:var(--gold-dark); background:#fffdf7;
+  font-size:12px; font-weight:900;
+}
+.cafe-my-orders-toggle { flex:1; }
+.cafe-my-orders-refresh { color:var(--turquoise-deep); border-color:var(--line); }
+.cafe-my-orders-section { margin-bottom:14px; }
+.cafe-my-orders-list { display:grid; gap:10px; }
+.cafe-my-order-card {
+  padding:12px; border:1px solid var(--line); border-radius:14px;
+  background:#fff; box-shadow:0 2px 8px rgba(8,105,108,.05);
+}
+.cafe-my-order-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-my-order-head strong { display:block; color:var(--gold-dark); font-size:15px; }
+.cafe-my-order-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-my-order-status {
+  max-width:56%; padding:6px 8px; border-radius:9px; background:var(--turquoise-pale);
+  color:var(--turquoise-deep); font-size:10px; font-weight:900; text-align:center;
+}
+.cafe-my-order-status.status-pending { color:#805D12; background:#FFF3CC; }
+.cafe-my-order-status.status-ready { color:#176B43; background:#E3F7EC; }
+.cafe-my-order-status.status-cancelled { color:#9C3434; background:#FFF0F0; }
+.cafe-my-order-type { margin:8px 0; color:var(--muted); font-size:11px; }
+.cafe-my-order-items, .cafe-my-order-history ul { list-style:none; margin:0; padding:0; }
+.cafe-my-order-items li, .cafe-my-order-history li {
+  display:flex; justify-content:space-between; gap:8px; padding:7px 0;
+  border-top:1px solid #EEF3F2; font-size:11px;
+}
+.cafe-my-order-items li strong { white-space:nowrap; }
+.cafe-my-order-total { display:flex; justify-content:space-between; padding-top:10px; font-size:12px; }
+.cafe-my-order-total strong { color:var(--turquoise-deep); font-size:15px; }
+.cafe-my-order-history { margin-top:10px; border-top:1px solid var(--line); padding-top:9px; }
+.cafe-my-order-history summary { color:var(--turquoise-deep); font-size:11px; font-weight:800; cursor:pointer; }
+.cafe-my-order-history ul { margin-top:7px; }
+.cafe-my-order-history li { color:var(--muted); }
+.cafe-my-order-history li small { white-space:nowrap; }
