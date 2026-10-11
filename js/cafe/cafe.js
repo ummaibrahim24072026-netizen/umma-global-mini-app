@@ -214,7 +214,11 @@
       const order = result.order;
       cart.clear(); renderCart();
       if (resultEl) {
-        resultEl.innerHTML = "Заказ №" + esc(order.orderNumber) + " принят.<br>Статус: ожидает подтверждения кафе.<br>Сумма: " + money(order.totalVnd);
+        const selectedCafe = locations.find(location => String(location.id) === String(locationId));
+        const notificationLine = Number(result.staffNotified) > 0
+          ? "<br>Уведомления сотрудникам кафе: " + Number(result.staffNotified)
+          : "<br>Внимание: уведомление сотрудникам не подтверждено. Свяжитесь с кафе, если заказ срочный.";
+        resultEl.innerHTML = "Заказ №" + esc(order.orderNumber) + " принят.<br>Кафе: " + esc(selectedCafe?.name || "Umma Cafe") + "<br>Статус: ожидает подтверждения кафе.<br>Сумма: " + money(order.totalVnd) + notificationLine;
         resultEl.hidden = false;
       }
       byId("cafeOrderForm")?.reset();
