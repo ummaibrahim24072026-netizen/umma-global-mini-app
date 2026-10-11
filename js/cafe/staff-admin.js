@@ -47,10 +47,14 @@
       const location = locationById.get(String(assignment.location_id));
       const name = user ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || String(user.telegram_id) : String(assignment.telegram_id);
       const status = assignment.is_active ? "Активен" : "Отключён";
+      const paymentPermission = assignment.can_accept_payments !== false;
+      const paymentAction = assignment.is_active
+        ? '<button type="button" class="cafe-staff-payment-permission" data-payment-assignment="' + esc(assignment.id) + '" data-can-accept-payments="' + (!paymentPermission) + '">' + (paymentPermission ? "Запретить принимать оплату" : "Разрешить принимать оплату") + '</button>'
+        : '';
       const action = assignment.is_active
         ? '<button type="button" class="cafe-staff-deactivate" data-deactivate-assignment="' + esc(assignment.id) + '">Отключить</button>'
         : '<span class="cafe-staff-inactive">Отключён</span>';
-      return '<article class="cafe-staff-card"><div class="cafe-staff-card-head"><div><strong>' + esc(name) + '</strong><small>Telegram ID: ' + esc(assignment.telegram_id) + '</small></div><span class="cafe-staff-role">' + esc(roleNames[assignment.staff_role] || assignment.staff_role) + '</span></div><p>' + esc(location?.name || "Кафе не найдено") + (location?.city ? " · " + esc(location.city) : "") + '</p><div class="cafe-staff-card-foot"><span class="' + (assignment.is_active ? "cafe-staff-active" : "cafe-staff-inactive") + '">' + status + '</span>' + action + '</div></article>';
+      return '<article class="cafe-staff-card"><div class="cafe-staff-card-head"><div><strong>' + esc(name) + '</strong><small>Telegram ID: ' + esc(assignment.telegram_id) + '</small></div><span class="cafe-staff-role">' + esc(roleNames[assignment.staff_role] || assignment.staff_role) + '</span></div><p>' + esc(location?.name || "Кафе не найдено") + (location?.city ? " · " + esc(location.city) : "") + '</p><div style="font-size:13px;margin:8px 0;color:' + (paymentPermission ? '#16704a' : '#9b3028') + '">Приём оплаты: <strong>' + (paymentPermission ? "разрешён" : "запрещён") + '</strong></div><div class="cafe-staff-card-foot"><span class="' + (assignment.is_active ? "cafe-staff-active" : "cafe-staff-inactive") + '">' + status + '</span>' + paymentAction + action + '</div></article>';
     }).join("");
   }
   async function loadStaff() {
@@ -123,6 +127,23 @@
   byId("cafeStaffAssignments")?.addEventListener("click", async event => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+    const permissionButton = target.closest("[data-payment-assignment]");
+    if (permissionButton && !busy && isSuperAdmin()) {
+      const assignmentId = permissionButton.getAttribute("data-payment-assignment");
+      const canAcceptPayments = permissionButton.getAttribute("data-can-accept-payments") === "true";
+      if (!assignmentId) return;
+      busy = true;
+      showMessage("Изменяем право на приём оплаты…");
+      try {
+        const result = await api({ action:"setPaymentPermission", assignmentId, canAcceptPayments });
+        staff = staff.map(item => item.id === assignmentId ? { ...item, can_accept_payments: result.assignment.can_accept_payments } : item);
+        renderStaff();
+        showMessage(canAcceptPayments ? "Право принимать оплату включено." : "Право принимать оплату отключено.");
+      } catch (error) {
+        showMessage(error instanceof Error ? error.message : "Не удалось изменить право на приём оплаты");
+      } finally { busy = false; }
+      return;
+    }
     const button = target.closest("[data-deactivate-assignment]");
     if (!button || busy || !isSuperAdmin()) return;
     const assignmentId = button.getAttribute("data-deactivate-assignment");
