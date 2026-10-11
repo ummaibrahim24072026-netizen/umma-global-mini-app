@@ -76,14 +76,28 @@
       '<h3>Последние закупки</h3>'+renderPurchaseList(5)+'<h3>Последние расходы</h3>'+renderExpenseList(5);
   }
   function renderStock() {
-    const balanceRows=data.stockBalances.map(b=>'<tr><td>'+esc(b.stock_items?.name_ru||"—")+'</td><td>'+esc(locationName(b.location_id))+'</td><td>'+qty(b.quantity_on_hand)+' '+esc(unitNames[b.stock_items?.base_unit]||b.stock_items?.base_unit||"")+'</td><td>'+money(b.average_unit_cost_vnd)+'</td><td>'+money(Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0))+'</td></tr>').join("");
+    const balanceByItem=new Map(data.stockBalances.filter(b=>locationId==="all"||b.location_id===locationId).map(b=>[b.stock_item_id,b]));
+    let rows;
+    if(locationId==="all") {
+      rows=data.stockBalances;
+    } else {
+      rows=data.stockItems.filter(s=>s.is_active).map(s=>balanceByItem.get(s.id)||{
+        stock_item_id:s.id,location_id:locationId,quantity_on_hand:0,quantity_reserved:0,average_unit_cost_vnd:0,stock_items:s
+      });
+    }
+    const balanceRows=rows.map(b=>{
+      const item=b.stock_items||data.stockItems.find(s=>s.id===b.stock_item_id)||{};
+      const action=locationId==="all"?'Выберите конкретный филиал для изменения остатка':'<button type="button" data-set-balance="'+esc(b.stock_item_id)+'" data-location-id="'+esc(b.location_id)+'" data-current-qty="'+esc(b.quantity_on_hand||0)+'" data-current-cost="'+esc(b.average_unit_cost_vnd||0)+'">Установить остаток</button>';
+      return '<tr><td>'+esc(item.name_ru||"—")+'<small>'+esc(itemNames[item.item_type]||item.item_type||"")+'</small></td><td>'+esc(locationName(b.location_id))+'</td><td>'+qty(b.quantity_on_hand)+' '+esc(unitNames[item.base_unit]||item.base_unit||"")+'<small>Резерв: '+qty(b.quantity_reserved||0)+'</small></td><td>'+money(b.average_unit_cost_vnd)+'</td><td>'+money(Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0))+'</td><td>'+action+'</td></tr>';
+    }).join("");
     return '<div class="accounting-form"><h3>Добавить складскую позицию</h3><form id="accountingStockForm" class="accounting-fields">'+
       '<label>Название (русский)<input name="nameRu" required maxlength="180"></label><label>English<input name="nameEn" maxlength="180"></label><label>Tiếng Việt<input name="nameVi" maxlength="180"></label>'+
       '<label>Тип<select name="itemType"><option value="raw_material">Сырьё</option><option value="finished_good">Готовая продукция</option><option value="packaging">Упаковка</option><option value="other">Прочее</option></select></label>'+
       '<label>Единица<select name="baseUnit"><option value="kg">кг</option><option value="g">г</option><option value="l">л</option><option value="ml">мл</option><option value="pcs">шт.</option><option value="portion">порция</option></select></label>'+
       '<label>Артикул / SKU<input name="sku" maxlength="80"></label><label>Связать с блюдом меню<select name="linkedProductId">'+productOptions()+'</select></label>'+
       '<label class="accounting-check"><input type="checkbox" name="isHalal" checked> Халяль подтверждён</label><button class="accounting-primary" type="submit">Сохранить позицию</button></form></div>'+
-      '<h3>Остатки по филиалам</h3><div class="accounting-table-wrap"><table class="accounting-table"><thead><tr><th>Позиция</th><th>Филиал</th><th>Остаток</th><th>Средняя цена</th><th>Стоимость</th></tr></thead><tbody>'+(balanceRows||'<tr><td colspan="5">Пока нет проведённых закупок или производства.</td></tr>')+'</tbody></table></div>'+
+      '<h3>Остатки по филиалам</h3><p class="accounting-note">Чтобы исправить начальный остаток или результат инвентаризации, нажмите «Установить остаток». Система запишет разницу в журнал движений. При выбранной «Вся сеть» изменение недоступно — сначала выберите филиал.</p>'+
+      '<div class="accounting-table-wrap"><table class="accounting-table"><thead><tr><th>Позиция</th><th>Филиал</th><th>Остаток</th><th>Средняя цена</th><th>Стоимость</th><th>Действие</th></tr></thead><tbody>'+(balanceRows||'<tr><td colspan="6">Пока нет складских позиций.</td></tr>')+'</tbody></table></div>'+
       '<h3>Каталог складских позиций</h3><div class="accounting-list">'+data.stockItems.map(s=>'<article><strong>'+esc(s.name_ru)+'</strong><small>'+esc(itemNames[s.item_type]||s.item_type)+' · '+esc(unitNames[s.base_unit]||s.base_unit)+(s.sku?' · '+esc(s.sku):"")+'</small><span>'+(s.is_active?'Активна':'Отключена')+'</span></article>').join("")+'</div>';
   }
   function renderPurchaseList(limit=100) {
@@ -201,6 +215,27 @@
     if(target.closest("#accountingAddPurchaseLine")){$("accountingPurchaseLines")?.insertAdjacentHTML("beforeend",purchaseRow());return;}
     if(target.closest("#accountingAddProductionInput")){$("accountingProductionInputs")?.insertAdjacentHTML("beforeend",productionRow("input",["raw_material","packaging","other"]));return;}
     const remove=target.closest("[data-remove-line]");if(remove){remove.closest(".accounting-line")?.remove();return;}
+    const setBalance=target.closest("[data-set-balance]");
+    if(setBalance){
+      if(locationId==="all"){message("Выберите конкретный филиал.",true,true);return;}
+      const stockItemId=setBalance.dataset.setBalance;
+      const location= setBalance.dataset.locationId;
+      const currentQty=Number(setBalance.dataset.currentQty||0);
+      const currentCost=Number(setBalance.dataset.currentCost||0);
+      const countText=prompt("Фактический остаток на складе",String(currentQty));
+      if(countText===null)return;
+      const countedQuantity=Number(countText);
+      if(!Number.isFinite(countedQuantity)||countedQuantity<0||countedQuantity>999999999){message("Укажите корректный остаток.",true,true);return;}
+      const costText=prompt("Средняя себестоимость за единицу в VND (оставьте пустым, чтобы сохранить текущую)",String(currentCost));
+      if(costText===null)return;
+      const unitCostVnd=costText.trim()===""?null:Number(costText);
+      if(unitCostVnd!==null&&(!Number.isFinite(unitCostVnd)||unitCostVnd<0)){message("Укажите корректную среднюю себестоимость.",true,true);return;}
+      const note=prompt("Причина изменения (инвентаризация, начальный остаток и т. п.)","Инвентаризация");
+      if(note===null)return;
+      try{message("Сохраняем остаток…");await api({action:"setStockBalance",locationId:location,stockItemId,countedQuantity,unitCostVnd,note});await reload();message("Остаток обновлён, движение записано в журнал.",true,false);}
+      catch(e){message(e.message||"Не удалось обновить остаток",true,true);}
+      return;
+    }
     const payPurchase=target.closest("[data-record-purchase-payment]");
     const payExpense=target.closest("[data-record-expense-payment]");
     if(payPurchase||payExpense){
