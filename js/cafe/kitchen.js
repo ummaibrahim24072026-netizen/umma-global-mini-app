@@ -359,10 +359,17 @@
     if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
   });
   byId("waiterOrderToggle")?.addEventListener("click", async()=>{
-    const wrap=byId("staffOrderFormWrap"); if(!wrap) return;
-    wrap.hidden=!wrap.hidden;
-    if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
-    byId("waiterOrderToggle").textContent=wrap.hidden?"＋ Оформить заказ":"− Скрыть форму заказа";
+    const wrap=byId("staffOrderFormWrap"); if(!wrap) { showMessage("Не найдена форма заказа"); return; }
+    const shouldOpen=wrap.hidden || getComputedStyle(wrap).display==="none";
+    wrap.hidden=!shouldOpen;
+    wrap.style.display=shouldOpen?"block":"none";
+    byId("waiterOrderToggle").textContent=shouldOpen?"− Скрыть форму заказа":"＋ Оформить заказ";
+    if(shouldOpen) {
+      const root=byId("staffOrderMenu");
+      if(root && !staffMenu.length) await loadStaffMenu();
+      if(root && !staffMenu.length && !root.textContent.trim()) root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
+      wrap.scrollIntoView({behavior:"smooth",block:"start"});
+    }
   });
   document.addEventListener("click",event=>{
     const target=event.target; if(!(target instanceof Element)) return;
