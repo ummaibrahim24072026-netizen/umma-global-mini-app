@@ -298,7 +298,10 @@
           byId("cashOpenShiftForm")?.addEventListener("submit",openCashShift);
         }
       }
-      const activeReceipts=(result.receipts||[]).filter(x=>x.receipt_status==="confirmed");
+      const allReceipts=(result.receipts||[]);
+      const last24h=Date.now()-24*60*60*1000;
+      const activeReceipts=allReceipts.filter(x=>x.receipt_status==="confirmed"&&new Date(x.collected_at).getTime()>=last24h);
+      const ledgerReceipts=allReceipts.filter(x=>x.receipt_status==="confirmed");
       const total=activeReceipts.reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
       const cashTotal=activeReceipts.filter(x=>x.payment_method==="cash").reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
       const pending=(result.handovers||[]).filter(x=>x.handover_status==="pending");
@@ -315,7 +318,7 @@
         return '<article style="padding:12px;border:1px solid #d7e3e3;border-radius:10px;margin-bottom:8px"><strong>'+money(h.amount_vnd)+'</strong><div style="font-size:13px;margin-top:4px">'+(outgoing?'Вы передаёте получателю':'Отправитель → получатель')+' · '+esc(formatDate(h.created_at))+'</div><small>'+esc(status)+(h.note?' · '+esc(h.note):"")+'</small>'+controls+'</article>';
       }).join(""):"<p>Передач денег пока нет.</p>";
       const receiptsRoot=byId("cashReceipts");
-      if(receiptsRoot) receiptsRoot.innerHTML=activeReceipts.length?activeReceipts.slice(0,30).map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #e6eeee"><span>Заказ · '+esc(x.payment_method)+'<small style="display:block;color:#617070">'+esc(formatDate(x.collected_at))+' · сотрудник ID '+esc(x.collected_by_telegram_id)+'</small>'+(x.payment_method==="cash"&&x.tendered_amount_vnd!=null?'<small style="display:block;color:#617070">Получено: '+money(x.tendered_amount_vnd)+' · Сдача: '+money(x.change_given_vnd||0)+'</small>':"")+'</span><strong>'+money(x.amount_vnd)+'</strong></div>').join(""):"<p>Оплат за последние 24 часа пока нет.</p>";
+      if(receiptsRoot) receiptsRoot.innerHTML=ledgerReceipts.length?'<p style="font-size:12px;color:#617070">Последние подтверждённые оплаты (до 100 записей). Сводка выше учитывает последние 24 часа.</p>'+ledgerReceipts.slice(0,100).map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #e6eeee"><span><strong>'+(x.order_number?'Заказ №'+esc(x.order_number):'Оплата заказа')+'</strong> · '+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[x.payment_method]||x.payment_method))+'<small style="display:block;color:#617070">'+esc(formatDate(x.collected_at))+' · Принял: '+esc(x.collector||('Сотрудник ID '+x.collected_by_telegram_id))+'</small>'+(x.payment_method==="cash"&&x.tendered_amount_vnd!=null?'<small style="display:block;color:#617070">Получено: '+money(x.tendered_amount_vnd)+' · Сдача: '+money(x.change_given_vnd||0)+'</small>':'')+'</span><strong>'+money(x.amount_vnd)+'</strong></div>').join(""):"<p>Подтверждённых оплат пока нет.</p>";
     } catch(e) { root.textContent=e instanceof Error?e.message:"Не удалось загрузить кассовые данные"; }
   }
   async function openCashShift(event) {
