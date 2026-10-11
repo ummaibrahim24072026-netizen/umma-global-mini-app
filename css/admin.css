@@ -286,3 +286,31 @@
 .accounting-toolbar-meta { display:flex; align-items:center; gap:9px; justify-content:flex-end; }
 .accounting-toolbar-meta small { color:#718183; font-size:10px; white-space:nowrap; }
 @media(max-width:520px) { .accounting-toolbar-meta { justify-content:space-between; } }
+
+
+/* Accounting mini-app viewport: keep the whole long workspace scrollable */
+#cafeAccountingPage {
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+#cafeAccountingPage .accounting-page-inner {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+}
+#cafeAccountingPage .accounting-content {
+  min-width: 0;
+  padding-bottom: 24px;
+}
+#cafeAccountingPage .accounting-tabs {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
