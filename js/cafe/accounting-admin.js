@@ -9,7 +9,7 @@
   const unitNames = {kg:"кг",g:"г",l:"л",ml:"мл",pcs:"шт.",portion:"порц."};
   const itemNames = {raw_material:"Сырьё",finished_good:"Готовая продукция",packaging:"Упаковка",other:"Прочее"};
   const categoryNames = {rent:"Аренда",utilities:"Коммунальные услуги",payroll:"Зарплата",delivery:"Доставка",maintenance:"Ремонт",marketing:"Реклама",supplies:"Расходные материалы",taxes:"Налоги",bank_fees:"Комиссии",other:"Прочее"};
-  let locations=[], locationId="all", role="", tab="dashboard", busy=false, refreshTimer=null;
+  let locations=[], locationId="all", role="", tab="dashboard", busy=false, refreshTimer=null, returnView="home";
   let data={summary:{},suppliers:[],stockItems:[],products:[],stockBalances:[],purchases:[],expenses:[],production:[],recipes:[]};
 
   async function api(payload) {
@@ -184,6 +184,7 @@
   }
   function open() {
     if(!(window.ummaRole==="super_admin"||window.ummaRole==="admin"||window.ummaRole==="employee")){showToast("Доступ запрещён");return;}
+    returnView=window.ummaRole==="super_admin"&&$("adminPage")&&!$("adminPage").hidden?"admin":$("cafeKitchenPage")&&!$("cafeKitchenPage").hidden?"kitchen":"home";
     ["adminPage","adminUsersPage","cafeStaffAdminPage","cafeKitchenPage","cafeProductsAdminPage","cafeInventoryPage","cafePage"].forEach(id=>{if($(id))$(id).hidden=true;});
     const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
     if(home)home.style.display="none";if(nav)nav.style.display="none";
@@ -197,14 +198,19 @@
     $("cafeAccountingPage").hidden=true;
     if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}
     const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
-    if(window.ummaRole==="super_admin") {
+    if(returnView==="admin") {
       if(home)home.style.display="none";
       if(nav)nav.style.display="none";
       if($("adminPage"))$("adminPage").hidden=false;
-    } else {
+    } else if(returnView==="kitchen") {
       if(home)home.style.display="none";
       if(nav)nav.style.display="none";
       if($("cafeKitchenPage"))$("cafeKitchenPage").hidden=false;
+    } else {
+      if($("adminPage"))$("adminPage").hidden=true;
+      if($("cafeKitchenPage"))$("cafeKitchenPage").hidden=true;
+      if(home)home.style.display="";
+      if(nav)nav.style.display="";
     }
     window.scrollTo({top:0,behavior:"smooth"});
   }
