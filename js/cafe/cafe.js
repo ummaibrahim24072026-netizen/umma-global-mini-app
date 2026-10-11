@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
-  let products = [], locationId = null, loading = false;
+  let products = [], locations = [], locationId = null, loading = false, locationMode = "nearest";
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -50,12 +50,111 @@
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить меню");
       products = Array.isArray(result.products) ? result.products : [];
-      locationId = result.location?.id || null;
+      locations = Array.isArray(result.locations) ? result.locations : (result.location ? [result.location] : []);
+      locationId = result.location?.id || locations[0]?.id || null;
       renderProducts();
+      renderLocationOptions();
+      if (byId("cafeLocationMode")?.value !== "manual") requestNearestLocation();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Ошибка загрузки меню");
     } finally { if (loadingEl) loadingEl.hidden = true; }
   }
+
+  function renderLocationOptions() {
+    const select = byId("cafeLocationSelect");
+    if (!select) return;
+    select.innerHTML = locations.map(location => {
+      const label = [location.name, location.address, location.city].filter(Boolean).join(" — ");
+      return '<option value="' + esc(location.id) + '">' + esc(label) + '</option>';
+    }).join("");
+    if (locationId) select.value = locationId;
+    const manual = byId("cafeLocationSelectLabel");
+    if (manual) manual.hidden = byId("cafeLocationMode")?.value !== "manual";
+    updateLocationMessage();
+  }
+
+  function updateLocationMessage(text) {
+    const el = byId("cafeLocationMessage");
+    if (!el) return;
+    if (text) { el.textContent = text; return; }
+    const selected = locations.find(location => String(location.id) === String(locationId));
+    el.textContent = selected ? "Заказ будет отправлен в кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
+  }
+
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    const rad = value => value * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function requestNearestLocation() {
+    locationMode = "nearest";
+    const mode = byId("cafeLocationMode"), manual = byId("cafeLocationSelectLabel");
+    if (mode) mode.value = "nearest";
+    if (manual) manual.hidden = true;
+    const allHaveCoordinates = locations.length > 0 && locations.every(location =>
+      Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude)) &&
+      location.latitude !== null && location.longitude !== null && location.latitude !== "" && location.longitude !== ""
+    );
+    if (!allHaveCoordinates) {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      updateLocationMessage("Автовыбор пока недоступен: у каждого кафе должны быть указаны координаты. Выберите кафе вручную.");
+      return;
+    }
+    if (!navigator.geolocation) {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      updateLocationMessage("Геолокация недоступна на этом устройстве. Выберите кафе вручную.");
+      return;
+    }
+    updateLocationMessage("Определяем ваше местоположение…");
+    navigator.geolocation.getCurrentPosition(position => {
+      const userLat = position.coords.latitude, userLon = position.coords.longitude;
+      const nearest = locations.map(location => ({
+        location,
+        distance: haversineKm(userLat, userLon, Number(location.latitude), Number(location.longitude))
+      })).sort((a,b) => a.distance - b.distance)[0];
+      if (!nearest) {
+        if (mode) mode.value = "manual";
+        locationMode = "manual";
+        if (manual) manual.hidden = false;
+        updateLocationMessage("Не удалось выбрать кафе. Выберите его вручную.");
+        return;
+      }
+      locationId = nearest.location.id;
+      const select = byId("cafeLocationSelect");
+      if (select) select.value = locationId;
+      updateLocationMessage("Ближайшее кафе: " + nearest.location.name + " · примерно " + nearest.distance.toFixed(1) + " км по прямой.");
+    }, error => {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      const message = error.code === 1
+        ? "Доступ к геолокации не разрешён. Выберите кафе вручную."
+        : "Не удалось определить геолокацию. Выберите кафе вручную.";
+      updateLocationMessage(message);
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  }
+
+  byId("cafeLocationMode")?.addEventListener("change", event => {
+    const mode = event.target.value;
+    locationMode = mode;
+    const manual = byId("cafeLocationSelectLabel");
+    if (mode === "manual") {
+      if (manual) manual.hidden = false;
+      updateLocationMessage();
+    } else {
+      requestNearestLocation();
+    }
+  });
+  byId("cafeLocationSelect")?.addEventListener("change", event => {
+    locationId = event.target.value || null;
+    updateLocationMessage();
+  });
 
   function changeProduct(productId, delta) {
     const product = products.find(p => String(p.id) === String(productId));
