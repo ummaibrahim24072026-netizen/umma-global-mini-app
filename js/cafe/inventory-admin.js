@@ -35,7 +35,7 @@
     $("cafeInventoryPage").hidden=false;load();window.scrollTo({top:0,behavior:"smooth"});
   }
   $("cafeInventoryOpen")?.addEventListener("click",open);
-  $("cafeInventoryBack")?.addEventListener("click",()=>{if($("cafeInventoryPage"))$("cafeInventoryPage").hidden=true;if(typeof openCafeKitchen==="function")openCafeKitchen();else if($("cafeKitchenPage")){$("cafeKitchenPage").hidden=false;}});
+  $("cafeInventoryBack")?.addEventListener("click",()=>{if($("cafeInventoryPage"))$("cafeInventoryPage").hidden=true;if(typeof openCafeKitchen==="function")openCafeKitchen();else if($("cafeKitchenPage")){$("cafeKitchenPage").hidden=false;$("cafeKitchenRefresh")?.click();}});
   $("cafeInventoryRefresh")?.addEventListener("click",load);
   $("cafeInventoryLocation")?.addEventListener("change",e=>{locationId=e.target.value;loadProducts();});
   $("cafeInventoryCreateProduct")?.addEventListener("submit",async e=>{
