@@ -601,17 +601,19 @@
     </div>
   </section>
 
-  <!-- CAFE KITCHEN -->
-  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+  <!-- WAITER ORDER ENTRY — SEPARATE FROM CASH/KITCHEN -->
+  <section id="cafeWaiterPage" class="cafe-kitchen-page" hidden>
     <div class="cafe-kitchen-inner">
       <div class="cafe-kitchen-header">
-        <button type="button" id="cafeKitchenBack" class="cafe-back">← Администрирование</button>
-        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
-        <h1>Заказы кафе</h1>
-        <p>HALAL UMMA · Нячанг</p>
+        <button type="button" id="cafeWaiterBack" class="cafe-back">← Назад</button>
+        <button type="button" id="cafeWaiterRefresh" class="cafe-kitchen-refresh">↻ Обновить меню</button>
+        <h1>Заказ гостя</h1>
+        <p>Рабочее место официанта · HALAL UMMA</p>
       </div>
-      <button type="button" id="staffOrderToggle" style="display:block!important;visibility:visible!important;position:relative;float:none!important;width:100%;margin:12px 0;padding:14px;background:#0FA3A8;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">＋ Заказ от официанта</button>
-      <section class="staff-order-builder">
+      <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
+        Здесь официант оформляет заказы гостей. Передача наличных, кассовые отчёты и сверка смены находятся в отдельном интерфейсе.
+      </div>
+<section class="staff-order-builder">
 
         <div id="staffOrderFormWrap" hidden>
           <h2>Оформить заказ гостя</h2>
@@ -634,6 +636,19 @@
           </div>
         </div>
       </section>
+    </div>
+  </section>
+
+  <!-- CAFE KITCHEN -->
+  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Администрирование</button>
+        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Заказы кафе</h1>
+        <p>HALAL UMMA · Нячанг</p>
+      </div>
+      <button type="button" id="staffOrderToggle" style="display:block!important;visibility:visible!important;position:relative;float:none!important;width:100%;margin:12px 0;padding:14px;background:#0FA3A8;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">＋ Заказ от официанта</button>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
