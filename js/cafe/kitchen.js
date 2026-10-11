@@ -101,6 +101,7 @@
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       couriers = Array.isArray(result.couriers) ? result.couriers : [];
       locations = Array.isArray(result.locations) ? result.locations : [];
+      window.ummaLocationPins = locations;
       actorTelegramId = result.actorTelegramId ?? null;
       orders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
@@ -127,6 +128,7 @@
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
     locations = Array.isArray(result.locations) ? result.locations : [];
+    window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
   }
 
