@@ -70,7 +70,7 @@
   }
   function resetForm(){
     selectedId=null;$("locationForm").reset();$("locationId").value="";$("locationActive").checked=true;$("locationCountry").value="Vietnam";
-    $("locationFormTitle").textContent="Добавить новую локацию";$("locationSave").textContent="Сохранить локацию";fillManagerSelect("");
+    $("locationFormTitle").textContent="Добавить новую локацию";$("locationSave").textContent="Сохранить локацию";$("locationManagerWrap").hidden=false;fillManagerSelect("");
     if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationLatitude").value="";$("locationLongitude").value="";
   }
@@ -86,8 +86,8 @@
     $("locationAdminPage").scrollIntoView({behavior:"smooth",block:"start"});
     message("Локация загружена. Нажмите на карту, чтобы изменить точку.");
   }
-  async function load(){
-    if(busy)return;busy=true;message("Загружаем карту и список локаций…");
+  async function load(force=false){
+    if(busy&&!force)return;busy=true;message("Загружаем карту и список локаций…");
     try{
       const d=await api({action:"list"});locations=d.locations||[];users=d.users||[];managers=d.managers||[];
       fillManagerSelect("");renderMap();renderList();message("Карта загружена. На ней отображаются все локации, для которых указаны координаты.");
@@ -126,10 +126,9 @@
     busy=true;$("locationSave").disabled=true;message("Сохраняем локацию и назначение администратора…");
     try{
       const d=await api({action:"save",id:selectedId,name:$("locationName").value.trim(),location_type:type,address:$("locationAddress").value.trim(),city:$("locationCity").value.trim(),country:$("locationCountry").value.trim(),phone:$("locationPhone").value.trim(),latitude:$("locationLatitude").value,longitude:$("locationLongitude").value,is_active:$("locationActive").checked,manager_telegram_id:isCafe?manager:null});
-      const saved=d.location||d;selectedId=saved.id;await load();editLocation(selectedId);message("Локация сохранена. Главный администратор привязан к этому кафе.");
+      const saved=d.location||d;selectedId=saved.id;await load(true);editLocation(selectedId);message("Локация сохранена. Главный администратор привязан к этому кафе.");
     }catch(err){message(err.message||"Не удалось сохранить локацию");}
     finally{busy=false;$("locationSave").disabled=false;}
   });
-  $("locationAdminList")?.addEventListener("click",e=>{const el=e.target instanceof Element?e.target.closest("[data-edit-location]"):null;if(el)editLocation(el.getAttribute("data-edit-location"));});
   window.ummaLocationAdmin={open,refresh:load};
 })();
