@@ -40,7 +40,8 @@
         (orderStaffRole === "cashier" && order.status === "pending") ||
         (orderStaffRole === "waiter" && ["pending", "ready"].includes(order.status)) ||
         (orderStaffRole === "kitchen" && ["confirmed", "preparing"].includes(order.status));
-      const action = next && allowedForRole ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
+      const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
+      const action = next && allowedForRole && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
       const canCancel = !["completed","cancelled"].includes(order.status) &&
         (orderStaffRole === "manager" || (["cashier","waiter"].includes(orderStaffRole) && order.status === "pending"));
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
