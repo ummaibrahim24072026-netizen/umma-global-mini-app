@@ -358,6 +358,12 @@
     wrap.hidden=!wrap.hidden;
     if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
   });
+  byId("waiterOrderToggle")?.addEventListener("click", async()=>{
+    const wrap=byId("staffOrderFormWrap"); if(!wrap) return;
+    wrap.hidden=!wrap.hidden;
+    if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
+    byId("waiterOrderToggle").textContent=wrap.hidden?"＋ Оформить заказ":"− Скрыть форму заказа";
+  });
   document.addEventListener("click",event=>{
     const target=event.target; if(!(target instanceof Element)) return;
     const add=target.closest("[data-staff-add]");
