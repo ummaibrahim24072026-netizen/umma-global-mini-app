@@ -17,6 +17,8 @@ for (const status of ["waiting_courier", "courier_assigned", "picked_up", "deliv
   assert.ok(kitchen.includes(status), `delivery status missing in kitchen.js: ${status}`);
 }
 console.log("PASS delivery request and supported statuses");
+assert.match(kitchen, /orderStaffRole === "courier" && \["courier_assigned","picked_up"\]\.includes\(order\.delivery_status\)/, "courier delivery actions must be restricted to pickup and delivered transitions");
+console.log("PASS courier delivery actions are limited to assigned/picked-up orders");
 
 assert.ok(kitchen.includes('action:"updatePayment"'), "payment request action missing");
 assert.match(kitchen, /can_accept_payments|canAcceptPayments/, "payment permission check missing");
