@@ -96,7 +96,6 @@
   }
 
   byId("cafeStaffAdminOpen")?.addEventListener("click", open);
-  if (byId("cafeStaffAdminOpen") && !canOpenStaffAdmin()) byId("cafeStaffAdminOpen").hidden = true;
   byId("cafeStaffAdminBack")?.addEventListener("click", () => {
     if (byId("cafeStaffAdminPage")) byId("cafeStaffAdminPage").hidden = true;
     if (isSuperAdmin() && typeof openAdminPanel === "function") openAdminPanel();
