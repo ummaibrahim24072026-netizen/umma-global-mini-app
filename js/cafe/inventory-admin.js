@@ -11,6 +11,7 @@
   function renderLocations(){const s=$("cafeInventoryLocation");if(!s)return;s.innerHTML=locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+(l.city?' — '+esc(l.city):'')+'</option>').join("");if(locationId)s.value=locationId;}
   function renderProducts(){
     const root=$("cafeInventoryProducts");if(!root)return;
+    const createWrap=$("cafeInventoryCreateWrap");if(createWrap)createWrap.hidden=!canManage;
     if(!products.length){root.innerHTML='<div class="cafe-message">Каталог пуст. Добавьте первый товар.</div>';return;}
     root.innerHTML=products.map(p=>{
       const inv=p.inventory||{},qty=inv.quantity??0,price=inv.price_vnd??p.price_vnd,reserved=Number(inv.reserved_quantity||0),available=inv.is_available!==false;
