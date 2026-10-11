@@ -93,6 +93,13 @@
     const mode = byId("cafeLocationMode"), manual = byId("cafeLocationSelectLabel");
     if (mode) mode.value = "nearest";
     if (manual) manual.hidden = true;
+    if (locations.length === 1) {
+      locationId = locations[0].id;
+      const select = byId("cafeLocationSelect");
+      if (select) select.value = locationId;
+      updateLocationMessage("Ближайшее доступное кафе: " + locations[0].name + ". Сейчас в системе одно кафе, принимающее заказы.");
+      return;
+    }
     const allHaveCoordinates = locations.length > 0 && locations.every(location =>
       Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude)) &&
       location.latitude !== null && location.longitude !== null && location.latitude !== "" && location.longitude !== ""
