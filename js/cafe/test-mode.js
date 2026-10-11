@@ -75,7 +75,7 @@
   }
   function orderActions(o){
     let buttons="";
-    if((role==="cashier"||role==="manager")&&o.payment_status!=="paid") buttons+='<button data-sandbox-action="pay" data-id="'+esc(o.id)+'">Подтвердить тестовую оплату</button>';
+    if(o.payment_status!=="paid") buttons+='<button data-sandbox-action="pay" data-id="'+esc(o.id)+'">Принять оплату</button>';
     if(role==="cashier"||role==="manager"){
       if(o.status==="new")buttons+='<button data-sandbox-status="confirmed" data-id="'+esc(o.id)+'">Принять</button>';
       if(o.status!=="cancelled"&&o.status!=="completed")buttons+='<button data-sandbox-status="cancelled" data-id="'+esc(o.id)+'">Отменить</button>';
