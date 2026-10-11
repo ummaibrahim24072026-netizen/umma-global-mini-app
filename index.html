@@ -684,6 +684,7 @@
         <h1>Заказы кафе</h1>
         <p>HALAL UMMA · Нячанг</p>
       </div>
+      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
       <button type="button" id="staffOrderToggle" style="display:block!important;visibility:visible!important;position:relative;float:none!important;width:100%;margin:12px 0;padding:14px;background:#0FA3A8;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">＋ Заказ от официанта</button>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
@@ -691,6 +692,42 @@
       </div>
       <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
       <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+    </div>
+  </section>
+
+  <!-- CAFE BRANCH INVENTORY -->
+  <section id="cafeInventoryPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeInventoryBack" class="cafe-back">← К заказам</button>
+        <button type="button" id="cafeInventoryRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Товары и остатки</h1>
+        <p>Цены и наличие отдельно для каждого кафе HALAL UMMA.</p>
+      </div>
+      <label style="display:block;margin:12px 0;font-weight:700">Кафе
+        <select id="cafeInventoryLocation" style="display:block;width:100%;padding:12px;margin-top:6px;border:1px solid #d4dfdf;border-radius:10px"></select>
+      </label>
+      <div id="cafeInventoryMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
+      <details style="background:#fff;border:1px solid #dce7e7;border-radius:14px;padding:14px;margin:12px 0">
+        <summary style="font-weight:800;cursor:pointer">＋ Добавить товар в каталог</summary>
+        <form id="cafeInventoryCreateProduct" class="cafe-staff-assign-form" style="margin-top:12px">
+          <label>Название на русском<input id="cafeInvNameRu" maxlength="160" required></label>
+          <label>Tên tiếng Việt<input id="cafeInvNameVi" maxlength="160" required></label>
+          <label>Name in English<input id="cafeInvNameEn" maxlength="160" required></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Цена, VND<input id="cafeInvNewPrice" type="number" min="0" max="100000000" step="1000" required></label>
+            <label>Количество<input id="cafeInvNewQty" type="number" min="0" max="100000" step="1" value="0" required></label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Вес/объём<input id="cafeInvWeight" type="number" min="0.1" step="0.1" placeholder="450"></label>
+            <label>Единица<select id="cafeInvWeightUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select></label>
+          </div>
+          <label>Артикул (необязательно)<input id="cafeInvSku" maxlength="100"></label>
+          <button type="submit" id="cafeInventoryCreateSubmit" class="cafe-submit">Добавить товар</button>
+        </form>
+      </details>
+      <h2>Наличие и цены по выбранному кафе</h2>
+      <div id="cafeInventoryProducts" class="cafe-staff-assignments"></div>
     </div>
   </section>
 
@@ -861,6 +898,7 @@
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=4"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>
+<script src="js/cafe/inventory-admin.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
