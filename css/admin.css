@@ -279,3 +279,6 @@
   .accounting-line { grid-template-columns:minmax(0,1.5fr) minmax(62px,.7fr) minmax(75px,1fr) 30px; gap:5px; }
   .accounting-production-line { grid-template-columns:minmax(0,1.5fr) minmax(70px,.8fr) 30px; }
 }
+
+.accounting-table td button { border:1px solid #cfe3e3; border-radius:8px; padding:7px 9px; background:#fff; color:#0a7479; font:inherit; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
+.accounting-table td small { display:block; margin-top:4px; color:#708083; font-size:10px; }
