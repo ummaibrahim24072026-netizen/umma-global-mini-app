@@ -24,7 +24,8 @@
   async function open(button){
     if(!window.L){status("Библиотека карты не загрузилась.");return;}
     const address=button.getAttribute("data-route-address")||"";
-    const originLat=Number(button.getAttribute("data-route-origin-lat")),originLng=Number(button.getAttribute("data-route-origin-lng"));
+    const rawOriginLat=button.getAttribute("data-route-origin-lat"),rawOriginLng=button.getAttribute("data-route-origin-lng");
+    const originLat=rawOriginLat===""?NaN:Number(rawOriginLat),originLng=rawOriginLng===""?NaN:Number(rawOriginLng);
     const originName=button.getAttribute("data-route-origin-name")||"Кафе";
     const orderNo=button.getAttribute("data-route-order-number")||"";
     const modal=$("courierMapModal");if(!modal)return;
