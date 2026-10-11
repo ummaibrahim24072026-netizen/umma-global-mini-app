@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
-  let products = [], locations = [], locationId = null, loading = false, locationMode = "nearest";
+  let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest";
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -23,8 +23,13 @@
   function renderProducts() {
     const root = byId("cafeProducts");
     if (!root) return;
-    if (!products.length) { root.innerHTML = '<div class="cafe-message">Меню пока не опубликовано. Попробуйте позже.</div>'; return; }
-    root.innerHTML = products.map(p => {
+    const visibleProducts = products.map(p => {
+      const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
+      return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
+        stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
+    }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
+    if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
+    root.innerHTML = visibleProducts.map(p => {
       const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
       return '<article class="cafe-product"><div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div><h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p><div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span><button type="button" class="cafe-add" data-add-product="' + esc(p.id) + '" aria-label="Добавить ' + esc(name(p)) + '">+</button></div></article>';
     }).join("");
@@ -50,6 +55,7 @@
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить меню");
       products = Array.isArray(result.products) ? result.products : [];
+      inventoryRows = Array.isArray(result.inventory) ? result.inventory : [];
       locations = Array.isArray(result.locations) ? result.locations : (result.location ? [result.location] : []);
       locationId = result.location?.id || locations[0]?.id || null;
       renderProducts();
@@ -94,9 +100,7 @@
     if (mode) mode.value = "nearest";
     if (manual) manual.hidden = true;
     if (locations.length === 1) {
-      locationId = locations[0].id;
-      const select = byId("cafeLocationSelect");
-      if (select) select.value = locationId;
+      setSelectedLocation(locations[0].id);
       updateLocationMessage("Ближайшее доступное кафе: " + locations[0].name + ". Сейчас в системе одно кафе, принимающее заказы.");
       return;
     }
@@ -132,9 +136,7 @@
         updateLocationMessage("Не удалось выбрать кафе. Выберите его вручную.");
         return;
       }
-      locationId = nearest.location.id;
-      const select = byId("cafeLocationSelect");
-      if (select) select.value = locationId;
+      setSelectedLocation(nearest.location.id);
       updateLocationMessage("Ближайшее кафе: " + nearest.location.name + " · примерно " + nearest.distance.toFixed(1) + " км по прямой.");
     }, error => {
       if (mode) mode.value = "manual";
@@ -158,18 +160,27 @@
       requestNearestLocation();
     }
   });
-  byId("cafeLocationSelect")?.addEventListener("change", event => {
-    locationId = event.target.value || null;
+  function setSelectedLocation(nextId) {
+    if (String(nextId || "") !== String(locationId || "")) { cart.clear(); renderCart(); }
+    locationId = nextId || null;
+    const select = byId("cafeLocationSelect");
+    if (select) select.value = locationId || "";
+    renderProducts();
     updateLocationMessage();
-  });
+  }
+  byId("cafeLocationSelect")?.addEventListener("change", event => setSelectedLocation(event.target.value));
 
   function changeProduct(productId, delta) {
-    const product = products.find(p => String(p.id) === String(productId));
-    if (!product) return;
+    const baseProduct = products.find(p => String(p.id) === String(productId));
+    const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
+    if (!baseProduct || !stock || stock.is_available === false) return;
+    const product = { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
+      stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) };
     const current = cart.get(product.id);
     const quantity = (current?.quantity || 0) + delta;
     if (quantity <= 0) cart.delete(product.id);
-    else if (quantity <= 99) cart.set(product.id, { product, quantity, price_vnd: Number(product.price_vnd) });
+    else if (quantity <= 99 && quantity <= Number(product.stockAvailable)) cart.set(product.id, { product, quantity, price_vnd: Number(product.price_vnd) });
+    else if (quantity > Number(product.stockAvailable) && typeof showToast === "function") showToast("Доступный остаток: " + Math.max(0, Number(product.stockAvailable)));
     else if (typeof showToast === "function") showToast("Максимум 99 единиц одного блюда");
     renderCart();
   }
