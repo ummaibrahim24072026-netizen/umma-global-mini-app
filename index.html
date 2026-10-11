@@ -25,6 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=17">
   <link rel="stylesheet" href="css/admin.css?v=3">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
 
@@ -424,10 +425,11 @@
         <button
           type="button"
           class="admin-card"
+          id="locationOpenMapButton"
         >
-          <span>🏢</span>
-          <strong>Организации</strong>
-          <small>Кафе, магазины и проекты</small>
+          <span>🗺️</span>
+          <strong>Локации и карта</strong>
+          <small>Кафе, склады, адреса и администраторы</small>
         </button>
 
 
@@ -564,6 +566,52 @@
   </section>
 
 
+  <!-- LOCATION DIRECTORY AND MAP — SUPER ADMIN ONLY -->
+  <section id="locationAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="locationAdminBack" class="cafe-back">← Администрирование</button>
+        <button type="button" id="locationRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Локации и карта</h1>
+        <p>Добавляйте кафе, склады и другие точки. Положение на карте будет использоваться для выбора филиала и построения маршрутов доставки.</p>
+      </div>
+      <div id="locationAdminMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
+      <div id="locationAdminMap" style="height:420px;min-height:320px;border:1px solid #dce7e7;border-radius:16px;overflow:hidden;margin:12px 0"></div>
+      <div style="font-size:12px;color:#607171;margin:6px 0 16px">Карта OpenStreetMap. Нажмите на карту, чтобы поставить точку, или перетащите маркер. Поиск адреса помогает найти приблизительное место — всегда проверяйте положение.</div>
+      <div class="cafe-staff-list-heading"><h2>Все локации</h2><button id="locationNew" type="button" class="cafe-submit">＋ Новая локация</button></div>
+      <div id="locationAdminList" class="cafe-staff-assignments" style="margin-bottom:20px"></div>
+      <form id="locationForm" class="cafe-staff-assign-form">
+        <h2 id="locationFormTitle">Добавить новую локацию</h2>
+        <input id="locationId" type="hidden">
+        <label>Название кафе / места<input id="locationName" maxlength="160" required placeholder="Например, HALAL UMMA — Phu Quoc"></label>
+        <label>Тип локации
+          <select id="locationType" required>
+            <option value="cafe">Кафе</option><option value="restaurant">Ресторан</option><option value="warehouse">Склад</option><option value="market">Магазин</option><option value="other">Другое</option>
+          </select>
+        </label>
+        <label>Адрес<input id="locationAddress" maxlength="500" required placeholder="Улица, дом, район"></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Город / остров<input id="locationCity" maxlength="120" required placeholder="Phu Quoc"></label>
+          <label>Страна<input id="locationCountry" maxlength="120" value="Vietnam" required></label>
+        </div>
+        <label>Телефон места (необязательно)<input id="locationPhone" maxlength="50" placeholder="+84…"></label>
+        <button type="button" id="locationFindAddress" class="cafe-my-orders-refresh" style="width:100%;margin:4px 0 10px">⌕ Найти адрес на карте</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Широта<input id="locationLatitude" type="number" step="any" readonly required placeholder="Выберите точку"></label>
+          <label>Долгота<input id="locationLongitude" type="number" step="any" readonly required placeholder="Выберите точку"></label>
+        </div>
+        <div id="locationManagerWrap">
+          <label>Главный администратор кафе
+            <select id="locationManager"><option value="">Загружаем список пользователей…</option></select>
+          </label>
+          <p class="cafe-staff-form-hint">У каждого кафе один главный администратор. Один администратор может управлять несколькими кафе. Только суперадминистратор назначает главного администратора.</p>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px"><input id="locationActive" type="checkbox" checked> Локация активна</label>
+        <button type="submit" id="locationSave" class="cafe-submit">Сохранить локацию</button>
+      </form>
+    </div>
+  </section>
+
   <!-- CAFE PRODUCT CATALOG ADMIN -->
   <section id="cafeProductsAdminPage" class="cafe-staff-admin-page" hidden>
     <div class="cafe-staff-admin-inner">
@@ -685,6 +733,7 @@
         <p>HALAL UMMA · Нячанг</p>
       </div>
       <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
+      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
       <button type="button" id="staffOrderToggle" style="display:block!important;visibility:visible!important;position:relative;float:none!important;width:100%;margin:12px 0;padding:14px;background:#0FA3A8;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">＋ Заказ от официанта</button>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
@@ -881,6 +930,7 @@
 
 
 <!-- CORE -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/core/app.js?v=3"></script>
 
 <!-- AUTH -->
@@ -896,7 +946,8 @@
 <script src="js/cafe/cafe.js?v=6"></script>
 <script src="js/cafe/kitchen.js?v=22"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
-<script src="js/cafe/staff-admin.js?v=4"></script>
+<script src="js/cafe/staff-admin.js?v=5"></script>
+<script src="js/admin/location-admin.js?v=1"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>
 <script src="js/cafe/inventory-admin.js?v=2"></script>
 
