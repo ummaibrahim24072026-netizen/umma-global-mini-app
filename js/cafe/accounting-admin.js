@@ -1,0 +1,240 @@
+/* UMMA CAFE — ACCOUNTING WORKSPACE */
+(() => {
+  "use strict";
+  const API = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-accounting-admin";
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  const money = v => new Intl.NumberFormat("vi-VN", {style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(v)||0);
+  const qty = v => new Intl.NumberFormat("ru-RU",{maximumFractionDigits:3}).format(Number(v)||0);
+  const unitNames = {kg:"кг",g:"г",l:"л",ml:"мл",pcs:"шт.",portion:"порц."};
+  const itemNames = {raw_material:"Сырьё",finished_good:"Готовая продукция",packaging:"Упаковка",other:"Прочее"};
+  const categoryNames = {rent:"Аренда",utilities:"Коммунальные услуги",payroll:"Зарплата",delivery:"Доставка",maintenance:"Ремонт",marketing:"Реклама",supplies:"Расходные материалы",taxes:"Налоги",bank_fees:"Комиссии",other:"Прочее"};
+  let locations=[], locationId="all", role="", tab="dashboard", busy=false;
+  let data={suppliers:[],stockItems:[],products:[],stockBalances:[],purchases:[],expenses:[],production:[],orders:[],recipes:[]};
+
+  async function api(payload) {
+    const initData = window.Telegram?.WebApp?.initData;
+    if (!initData) throw new Error("Откройте приложение через Telegram");
+    const r = await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...payload,initData})});
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || "Ошибка запроса");
+    return d;
+  }
+  function message(text, show=true, error=false) {
+    const el=$("accountingMessage"); if(!el)return;
+    el.textContent=text; el.hidden=!show; el.classList.toggle("is-error",!!error);
+  }
+  function locationOptions() {
+    const all = role==="super_admin" ? '<option value="all">Вся сеть Umma</option>' : "";
+    return all + locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+(l.city?' — '+esc(l.city):"")+'</option>').join("");
+  }
+  function scopedPayload(resource) {
+    const p={action:"list",resource};
+    if(locationId!=="all")p.locationId=locationId;
+    return p;
+  }
+  async function refreshData() {
+    message("Загружаем учётные данные…");
+    const resources=[
+      ["suppliers",{action:"list",resource:"suppliers"}],
+      ["stockItems",{action:"list",resource:"stockItems"}],
+      ["products",{action:"list",resource:"products"}],
+      ["stockBalances",scopedPayload("stockBalances")],
+      ["purchases",scopedPayload("purchases")],
+      ["expenses",scopedPayload("expenses")],
+      ["production",scopedPayload("production")],
+      ["orders",scopedPayload("orders")],
+      ["recipes",scopedPayload("recipes")]
+    ];
+    const result=await Promise.all(resources.map(async ([key,p])=>[key,(await api(p)).rows||[]]));
+    result.forEach(([key,rows])=>data[key]=rows);
+    message("Данные обновлены.",true,false);
+    render();
+  }
+  function selectOptions(items, valueKey, labelFn, placeholder) {
+    return (placeholder?'<option value="">'+esc(placeholder)+'</option>':"")+items.map(x=>'<option value="'+esc(x[valueKey])+'">'+esc(labelFn(x))+'</option>').join("");
+  }
+  function stockItemLabel(s){return s.name_ru+" ("+(unitNames[s.base_unit]||s.base_unit)+")";}
+  function supplierOptions(){return selectOptions(data.suppliers.filter(s=>s.is_active),"id",s=>s.name,"Без поставщика");}
+  function stockOptions(filter) {
+    const items=data.stockItems.filter(s=>s.is_active && (!filter || filter.includes(s.item_type)));
+    return selectOptions(items,"id",stockItemLabel,"Выберите складскую позицию");
+  }
+  function productOptions(){return selectOptions(data.products,"id",p=>p.name_ru+" — "+money(p.price_vnd),"Не привязывать к меню");}
+  function locationName(id){return locations.find(x=>x.id===id)?.name||"—";}
+  function renderDashboard() {
+    const revenue=data.orders.reduce((s,o)=>s+Number(o.total_vnd||0),0);
+    const expenses=data.expenses.filter(e=>e.payment_status==="paid").reduce((s,e)=>s+Number(e.amount_vnd||0),0);
+    const purchases=data.purchases.filter(p=>p.status==="posted").reduce((s,p)=>s+Number(p.subtotal_vnd||0),0);
+    const stockValue=data.stockBalances.reduce((s,b)=>s+Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0),0);
+    return '<div class="accounting-metrics">'+
+      '<article><small>Оплаченная выручка</small><strong>'+money(revenue)+'</strong><span>'+data.orders.length+' оплаченных заказов в выборке</span></article>'+
+      '<article><small>Оплаченные операционные расходы</small><strong>'+money(expenses)+'</strong><span>Без стоимости закупленного сырья</span></article>'+
+      '<article><small>Проведённые закупки</small><strong>'+money(purchases)+'</strong><span>Это закупки запасов, не расходы периода целиком</span></article>'+
+      '<article><small>Учётная стоимость остатков</small><strong>'+money(stockValue)+'</strong><span>По средней стоимости на складе</span></article>'+
+      '</div><div class="accounting-note"><strong>Важно:</strong> прибыль пока не показываем как готовый показатель. Для точной прибыли нужно связать списание себестоимости каждого проданного блюда с рецептурой и оплатой заказа. Закупки и расходы уже разделены, чтобы не считать одну сумму дважды.</div>'+
+      '<h3>Последние закупки</h3>'+renderPurchaseList(5)+'<h3>Последние расходы</h3>'+renderExpenseList(5);
+  }
+  function renderStock() {
+    const balanceRows=data.stockBalances.map(b=>'<tr><td>'+esc(b.stock_items?.name_ru||"—")+'</td><td>'+esc(locationName(b.location_id))+'</td><td>'+qty(b.quantity_on_hand)+' '+esc(unitNames[b.stock_items?.base_unit]||b.stock_items?.base_unit||"")+'</td><td>'+money(b.average_unit_cost_vnd)+'</td><td>'+money(Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0))+'</td></tr>').join("");
+    return '<div class="accounting-form"><h3>Добавить складскую позицию</h3><form id="accountingStockForm" class="accounting-fields">'+
+      '<label>Название (русский)<input name="nameRu" required maxlength="180"></label><label>English<input name="nameEn" maxlength="180"></label><label>Tiếng Việt<input name="nameVi" maxlength="180"></label>'+
+      '<label>Тип<select name="itemType"><option value="raw_material">Сырьё</option><option value="finished_good">Готовая продукция</option><option value="packaging">Упаковка</option><option value="other">Прочее</option></select></label>'+
+      '<label>Единица<select name="baseUnit"><option value="kg">кг</option><option value="g">г</option><option value="l">л</option><option value="ml">мл</option><option value="pcs">шт.</option><option value="portion">порция</option></select></label>'+
+      '<label>Артикул / SKU<input name="sku" maxlength="80"></label><label>Связать с блюдом меню<select name="linkedProductId">'+productOptions()+'</select></label>'+
+      '<label class="accounting-check"><input type="checkbox" name="isHalal" checked> Халяль подтверждён</label><button class="accounting-primary" type="submit">Сохранить позицию</button></form></div>'+
+      '<h3>Остатки по филиалам</h3><div class="accounting-table-wrap"><table class="accounting-table"><thead><tr><th>Позиция</th><th>Филиал</th><th>Остаток</th><th>Средняя цена</th><th>Стоимость</th></tr></thead><tbody>'+(balanceRows||'<tr><td colspan="5">Пока нет проведённых закупок или производства.</td></tr>')+'</tbody></table></div>'+
+      '<h3>Каталог складских позиций</h3><div class="accounting-list">'+data.stockItems.map(s=>'<article><strong>'+esc(s.name_ru)+'</strong><small>'+esc(itemNames[s.item_type]||s.item_type)+' · '+esc(unitNames[s.base_unit]||s.base_unit)+(s.sku?' · '+esc(s.sku):"")+'</small><span>'+(s.is_active?'Активна':'Отключена')+'</span></article>').join("")+'</div>';
+  }
+  function renderPurchaseList(limit=100) {
+    const rows=data.purchases.slice(0,limit);
+    if(!rows.length)return '<div class="accounting-empty">Закупок пока нет.</div>';
+    return '<div class="accounting-list">'+rows.map(p=>'<article><div><strong>'+esc(p.document_number||("Закупка "+p.id.slice(0,8)))+'</strong><small>'+esc(p.purchase_date)+' · '+esc(p.suppliers?.name||"Поставщик не указан")+' · '+esc(locationName(p.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(p.subtotal_vnd)+'</strong><span class="accounting-status '+esc(p.status)+'">'+(p.status==="posted"?"Проведена":p.status==="cancelled"?"Отменена":"Черновик")+'</span>'+(p.status==="draft"?'<button type="button" data-post-purchase="'+esc(p.id)+'">Принять на склад</button>':"")+'</div><small>'+((p.purchase_items||[]).map(i=>esc(i.stock_items?.name_ru||"позиция")+" × "+qty(i.quantity)).join(" · "))+'</small></article>').join("")+'</div>';
+  }
+  function purchaseRow() {
+    return '<div class="accounting-line accounting-purchase-line"><select data-purchase-item required>'+stockOptions()+'</select><input data-purchase-qty type="number" min="0.001" step="0.001" placeholder="Кол-во" required><input data-purchase-cost type="number" min="0" step="1" placeholder="Цена за ед. VND" required><button type="button" data-remove-line aria-label="Удалить">×</button></div>';
+  }
+  function renderPurchases() {
+    return '<div class="accounting-form"><h3>Новая закупка</h3><form id="accountingPurchaseForm">'+
+      '<div class="accounting-fields"><label>Поставщик<select name="supplierId">'+supplierOptions()+'</select></label><label>Дата<input type="date" name="purchaseDate" value="'+new Date().toISOString().slice(0,10)+'" required></label><label>Номер накладной<input name="documentNumber" maxlength="100"></label></div>'+
+      '<div id="accountingPurchaseLines">'+purchaseRow()+'</div><button type="button" class="accounting-secondary" id="accountingAddPurchaseLine">+ Добавить позицию</button><label>Комментарий<input name="notes" maxlength="1000"></label><button type="submit" class="accounting-primary">Создать черновик закупки</button></form></div>'+
+      '<h3>Закупки и накладные</h3>'+renderPurchaseList();
+  }
+  function renderExpenseList(limit=100) {
+    const rows=data.expenses.slice(0,limit);
+    if(!rows.length)return '<div class="accounting-empty">Расходов пока нет.</div>';
+    return '<div class="accounting-list">'+rows.map(e=>'<article><div><strong>'+esc(e.description)+'</strong><small>'+esc(e.expense_date)+' · '+esc(categoryNames[e.category]||e.category)+' · '+esc(locationName(e.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(e.amount_vnd)+'</strong><span class="accounting-status '+esc(e.payment_status)+'">'+(e.payment_status==="paid"?"Оплачен":e.payment_status==="partially_paid"?"Частично":"Не оплачен")+'</span></div></article>').join("")+'</div>';
+  }
+  function renderExpenses() {
+    return '<div class="accounting-form"><h3>Записать расход</h3><form id="accountingExpenseForm" class="accounting-fields">'+
+      '<label>Описание<input name="description" required maxlength="500" placeholder="Например, аренда за месяц"></label><label>Категория<select name="category">'+Object.entries(categoryNames).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join("")+'</select></label>'+
+      '<label>Сумма, VND<input name="amountVnd" type="number" min="1" step="1" required></label><label>Дата<input name="expenseDate" type="date" value="'+new Date().toISOString().slice(0,10)+'" required></label><label>Чек / ссылка<input name="receiptReference" maxlength="160"></label><label>Комментарий<input name="notes" maxlength="1000"></label><button class="accounting-primary" type="submit">Сохранить расход</button></form></div><h3>Операционные расходы</h3>'+renderExpenseList();
+  }
+  function renderSuppliers() {
+    return '<div class="accounting-form"><h3>Добавить поставщика</h3><form id="accountingSupplierForm" class="accounting-fields">'+
+      '<label>Название компании / поставщика<input name="name" required maxlength="180"></label><label>Контактное лицо<input name="contactName" maxlength="120"></label><label>Телефон<input name="phone" maxlength="60"></label><label>Email<input name="email" type="email" maxlength="180"></label><label>Адрес<input name="address" maxlength="500"></label><label class="accounting-check"><input type="checkbox" name="isHalalVerified"> Халяль поставщика проверен</label><button class="accounting-primary" type="submit">Сохранить поставщика</button></form></div>'+
+      '<h3>Поставщики</h3><div class="accounting-list">'+(data.suppliers.map(s=>'<article><strong>'+esc(s.name)+'</strong><small>'+esc(s.phone||"Телефон не указан")+(s.address?' · '+esc(s.address):"")+'</small><span>'+(s.is_halal_verified?'Халяль проверен':'Проверка халяль не отмечена')+'</span></article>').join("")||'<div class="accounting-empty">Поставщиков пока нет.</div>')+'</div>';
+  }
+  function productionRow(direction, filter) {
+    return '<div class="accounting-line accounting-production-line" data-direction="'+direction+'"><select data-production-item required>'+stockOptions(filter)+'</select><input data-production-qty type="number" min="0.001" step="0.001" placeholder="Кол-во" required>'+(direction==="input"?'<button type="button" data-remove-line aria-label="Удалить">×</button>':'')+'</div>';
+  }
+  function renderProductionList() {
+    if(!data.production.length)return '<div class="accounting-empty">Производственных партий пока нет.</div>';
+    return '<div class="accounting-list">'+data.production.map(b=>'<article><div><strong>'+esc(b.batch_number||("Партия "+b.id.slice(0,8)))+'</strong><small>'+esc(b.production_date)+' · '+esc(locationName(b.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(b.total_cost_vnd)+'</strong><span class="accounting-status '+esc(b.status)+'">'+(b.status==="posted"?"Проведена":b.status==="cancelled"?"Отменена":"Черновик")+'</span>'+(b.status==="draft"?'<button type="button" data-post-production="'+esc(b.id)+'">Провести производство</button>':"")+'</div><small>'+((b.production_batch_items||[]).map(i=>esc(i.stock_items?.name_ru||"позиция")+" · "+(i.movement_direction==="output"?"выпуск":"расход")+" "+qty(i.quantity)).join(" · "))+'</small></article>').join("")+'</div>';
+  }
+  function renderProduction() {
+    const raw=data.stockItems.filter(s=>s.is_active&&s.item_type!=="finished_good");
+    const finished=data.stockItems.filter(s=>s.is_active&&s.item_type==="finished_good");
+    if(!raw.length||!finished.length)return '<div class="accounting-note">Для производства сначала добавьте в разделе «Склад» хотя бы одну позицию сырья и одну позицию типа «Готовая продукция».</div>'+renderProductionList();
+    return '<div class="accounting-form"><h3>Новая производственная партия</h3><form id="accountingProductionForm">'+
+      '<div class="accounting-fields"><label>Дата<input type="date" name="productionDate" value="'+new Date().toISOString().slice(0,10)+'" required></label><label>Номер партии<input name="batchNumber" maxlength="100"></label><label>План выпуска<input name="plannedQuantity" type="number" min="0.001" step="0.001" required></label></div>'+
+      '<h4>Сырьё</h4><div id="accountingProductionInputs">'+productionRow("input",["raw_material","packaging","other"])+'</div><button type="button" class="accounting-secondary" id="accountingAddProductionInput">+ Добавить ингредиент</button>'+
+      '<h4>Готовая продукция</h4><div id="accountingProductionOutput">'+productionRow("output",["finished_good"])+'</div><label>Комментарий<input name="notes" maxlength="1000"></label><button class="accounting-primary" type="submit">Создать черновик производства</button></form></div>'+
+      '<h3>Производственные партии</h3>'+renderProductionList();
+  }
+  function renderRecipes() {
+    return '<div class="accounting-note">Рецептуры хранятся версиями в базе. Следующий шаг — форма рецептуры и автоматическое списание ингредиентов по выбранному блюду. Пока производство можно фиксировать вручную через раздел «Производство».</div>'+
+      '<h3>Рецептуры</h3><div class="accounting-list">'+(data.recipes.map(r=>'<article><strong>'+esc(r.products?.name_ru||"Блюдо")+' · версия '+esc(r.version)+'</strong><small>'+((r.recipe_items||[]).map(i=>esc(i.stock_items?.name_ru||"ингредиент")+" × "+qty(i.quantity)+" "+esc(unitNames[i.stock_items?.base_unit]||"")).join(" · "))+'</small><span>'+(r.is_active?"Активна":"Неактивна")+'</span></article>').join("")||'<div class="accounting-empty">Рецептуры пока не созданы.</div>')+'</div>';
+  }
+  function render() {
+    const root=$("accountingContent"); if(!root)return;
+    const views={dashboard:renderDashboard,stock:renderStock,purchases:renderPurchases,production:renderProduction,expenses:renderExpenses,suppliers:renderSuppliers,recipes:renderRecipes};
+    root.innerHTML=(views[tab]||renderDashboard)();
+    document.querySelectorAll("[data-accounting-tab]").forEach(b=>b.classList.toggle("active",b.dataset.accountingTab===tab));
+  }
+  function open() {
+    if(!(window.ummaRole==="super_admin"||window.ummaRole==="admin"||window.ummaRole==="employee")){showToast("Доступ запрещён");return;}
+    ["adminPage","adminUsersPage","cafeStaffAdminPage","cafeKitchenPage","cafeProductsAdminPage","cafeInventoryPage","cafePage"].forEach(id=>{if($(id))$(id).hidden=true;});
+    const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
+    if(home)home.style.display="none";if(nav)nav.style.display="none";
+    $("cafeAccountingPage").hidden=false;
+    window.scrollTo({top:0,behavior:"smooth"});
+    init();
+  }
+  function close() {
+    $("cafeAccountingPage").hidden=true;
+    const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
+    if(window.ummaRole==="super_admin") {
+      if(home)home.style.display="none";
+      if(nav)nav.style.display="none";
+      if($("adminPage"))$("adminPage").hidden=false;
+    } else {
+      if(home)home.style.display="none";
+      if(nav)nav.style.display="none";
+      if($("cafeKitchenPage"))$("cafeKitchenPage").hidden=false;
+    }
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  async function init() {
+    if(busy)return;busy=true;
+    try {
+      const d=await api({action:"bootstrap"});
+      locations=d.locations||[];role=d.role||window.ummaRole||"";
+      if(!locations.length){message("Для вашей учётной записи не назначено доступных филиалов.",true,true);busy=false;return;}
+      if(role!=="super_admin")locationId=locations[0].id;
+      else if(!locations.some(l=>l.id===locationId)&&locationId!=="all")locationId="all";
+      const select=$("accountingLocation");select.innerHTML=locationOptions();select.value=locationId;
+      await refreshData();
+    } catch(e) {message(e.message||"Не удалось открыть учёт",true,true);}
+    finally {busy=false;}
+  }
+  async function reload() {
+    if(busy)return;busy=true;
+    try{await refreshData();}catch(e){message(e.message||"Не удалось обновить данные",true,true);}
+    finally{busy=false;}
+  }
+  document.addEventListener("click",async event=>{
+    const target=event.target instanceof Element?event.target:null;if(!target)return;
+    const tabButton=target.closest("[data-accounting-tab]");
+    if(tabButton){tab=tabButton.dataset.accountingTab;render();return;}
+    if(target.closest("#accountingEntryButton")||target.closest("#adminAccountingButton")){open();return;}
+    if(target.closest("#accountingBack")){close();return;}
+    if(target.closest("#accountingRefresh")){await reload();return;}
+    if(target.closest("#accountingAddPurchaseLine")){$("accountingPurchaseLines")?.insertAdjacentHTML("beforeend",purchaseRow());return;}
+    if(target.closest("#accountingAddProductionInput")){$("accountingProductionInputs")?.insertAdjacentHTML("beforeend",productionRow("input",["raw_material","packaging","other"]));return;}
+    const remove=target.closest("[data-remove-line]");if(remove){remove.closest(".accounting-line")?.remove();return;}
+    const postPurchase=target.closest("[data-post-purchase]");
+    if(postPurchase){if(!confirm("Провести закупку и увеличить складские остатки?"))return;try{message("Проводим закупку…");await api({action:"postPurchase",documentId:postPurchase.dataset.postPurchase});await reload();}catch(e){message(e.message,true,true);}return;}
+    const postProduction=target.closest("[data-post-production]");
+    if(postProduction){if(!confirm("Провести производство, списать сырьё и принять готовую продукцию?"))return;try{message("Проводим производство…");await api({action:"postProduction",batchId:postProduction.dataset.postProduction});await reload();}catch(e){message(e.message,true,true);}return;}
+  });
+  document.addEventListener("change",async event=>{
+    if(event.target?.id==="accountingLocation"){locationId=event.target.value;await reload();}
+    if(event.target?.name==="itemType"){
+      const link=$("accountingStockForm")?.elements.namedItem("linkedProductId");
+      if(link)link.disabled=event.target.value!=="finished_good";
+    }
+  });
+  document.addEventListener("submit",async event=>{
+    const form=event.target;if(!(form instanceof HTMLFormElement))return;
+    try{
+      if(form.id==="accountingStockForm"){
+        event.preventDefault();const f=new FormData(form);
+        const itemType=String(f.get("itemType"));
+        await api({action:"saveStockItem",nameRu:f.get("nameRu"),nameEn:f.get("nameEn"),nameVi:f.get("nameVi"),itemType,baseUnit:f.get("baseUnit"),sku:f.get("sku"),linkedProductId:itemType==="finished_good"?(f.get("linkedProductId")||null):null,isHalal:f.get("isHalal")==="on"});
+        form.reset();await reload();message("Складская позиция добавлена.",true,false);
+      } else if(form.id==="accountingSupplierForm"){
+        event.preventDefault();const f=new FormData(form);
+        await api({action:"saveSupplier",name:f.get("name"),contactName:f.get("contactName"),phone:f.get("phone"),email:f.get("email"),address:f.get("address"),isHalalVerified:f.get("isHalalVerified")==="on"});
+        form.reset();await reload();message("Поставщик сохранён.",true,false);
+      } else if(form.id==="accountingPurchaseForm"){
+        event.preventDefault();const f=new FormData(form);
+        const items=Array.from(form.querySelectorAll(".accounting-purchase-line")).map(row=>({stockItemId:row.querySelector("[data-purchase-item]").value,quantity:Number(row.querySelector("[data-purchase-qty]").value),unitCostVnd:Number(row.querySelector("[data-purchase-cost]").value)}));
+        if(items.some(i=>!i.stockItemId||!i.quantity||!Number.isFinite(i.unitCostVnd))){message("Заполните все строки закупки.",true,true);return;}
+        await api({action:"createPurchase",locationId:locationId==="all"?(locations[0]?.id):locationId,supplierId:f.get("supplierId")||null,purchaseDate:f.get("purchaseDate"),documentNumber:f.get("documentNumber"),notes:f.get("notes"),items});
+        await reload();message("Черновик закупки создан. Проверьте позиции и нажмите «Принять на склад».",true,false);
+      } else if(form.id==="accountingExpenseForm"){
+        event.preventDefault();const f=new FormData(form);
+        await api({action:"createExpense",locationId:locationId==="all"?(locations[0]?.id):locationId,description:f.get("description"),category:f.get("category"),amountVnd:Number(f.get("amountVnd")),expenseDate:f.get("expenseDate"),receiptReference:f.get("receiptReference"),notes:f.get("notes")});
+        form.reset();await reload();message("Расход записан как неоплаченный. Отметку оплаты и кассовую запись подключим следующим этапом.",true,false);
+      } else if(form.id==="accountingProductionForm"){
+        event.preventDefault();const f=new FormData(form);
+        const items=Array.from(form.querySelectorAll(".accounting-production-line")).map(row=>({direction:row.dataset.direction,stockItemId:row.querySelector("[data-production-item]").value,quantity:Number(row.querySelector("[data-production-qty]").value)}));
+        if(items.some(i=>!i.stockItemId||!i.quantity)){message("Заполните сырьё и готовую продукцию.",true,true);return;}
+        await api({action:"createProduction",locationId:locationId==="all"?(locations[0]?.id):locationId,productionDate:f.get("productionDate"),batchNumber:f.get("batchNumber"),plannedQuantity:Number(f.get("plannedQuantity")),notes:f.get("notes"),items});
+        await reload();message("Черновик производства создан. Проведение спишет сырьё и оприходует готовую продукцию.",true,false);
+      }
+    } catch(e){message(e.message||"Операция не выполнена",true,true);}
+  });
+  window.ummaCafeAccounting={open,close};
+})();
