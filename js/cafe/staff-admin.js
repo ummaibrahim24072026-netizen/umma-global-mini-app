@@ -4,11 +4,14 @@
   const API = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-staff-admin";
   const byId = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" })[c]);
-  const roleNames = { manager:"Менеджер", cashier:"Кассир", waiter:"Официант", kitchen:"Кухня", courier:"Курьер" };
+  const roleNames = { manager:"Главный администратор кафе", cashier:"Кассир", waiter:"Официант", kitchen:"Кухня", courier:"Курьер" };
   let staff = [], users = [], locations = [], busy = false;
 
   function isSuperAdmin() {
     return typeof isUmmaSuperAdmin === "function" && isUmmaSuperAdmin();
+  }
+  function canOpenStaffAdmin() {
+    return isSuperAdmin() || window.ummaRole === "admin";
   }
   function showMessage(text, visible = true) {
     const el = byId("cafeStaffAdminMessage");
@@ -48,18 +51,20 @@
       const name = user ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || String(user.telegram_id) : String(assignment.telegram_id);
       const status = assignment.is_active ? "Активен" : "Отключён";
       const paymentPermission = assignment.can_accept_payments !== false;
-      const paymentAction = assignment.is_active
+      const paymentAction = assignment.is_active && assignment.staff_role !== "manager"
         ? '<button type="button" class="cafe-staff-payment-permission" data-payment-assignment="' + esc(assignment.id) + '" data-can-accept-payments="' + (!paymentPermission) + '">' + (paymentPermission ? "Запретить принимать оплату" : "Разрешить принимать оплату") + '</button>'
         : '';
-      const action = assignment.is_active
-        ? '<button type="button" class="cafe-staff-deactivate" data-deactivate-assignment="' + esc(assignment.id) + '">Отключить</button>'
-        : '<span class="cafe-staff-inactive">Отключён</span>';
+      const action = assignment.staff_role === "manager"
+        ? '<span class="cafe-staff-active">Главный администратор</span>'
+        : assignment.is_active
+          ? '<button type="button" class="cafe-staff-deactivate" data-deactivate-assignment="' + esc(assignment.id) + '">Отключить</button>'
+          : '<span class="cafe-staff-inactive">Отключён</span>';
       return '<article class="cafe-staff-card"><div class="cafe-staff-card-head"><div><strong>' + esc(name) + '</strong><small>Telegram ID: ' + esc(assignment.telegram_id) + '</small></div><span class="cafe-staff-role">' + esc(roleNames[assignment.staff_role] || assignment.staff_role) + '</span></div><p>' + esc(location?.name || "Кафе не найдено") + (location?.city ? " · " + esc(location.city) : "") + '</p><div style="font-size:13px;margin:8px 0;color:' + (paymentPermission ? '#16704a' : '#9b3028') + '">Приём оплаты: <strong>' + (paymentPermission ? "разрешён" : "запрещён") + '</strong></div><div class="cafe-staff-card-foot"><span class="' + (assignment.is_active ? "cafe-staff-active" : "cafe-staff-inactive") + '">' + status + '</span>' + paymentAction + action + '</div></article>';
     }).join("");
   }
   async function loadStaff() {
     if (busy) return;
-    if (!isSuperAdmin()) { showMessage("Доступ только для суперадминистратора"); return; }
+    if (!canOpenStaffAdmin()) { showMessage("Доступ только для администратора кафе"); return; }
     busy = true;
     showMessage("Загружаем список сотрудников…");
     try {
@@ -75,7 +80,7 @@
     } finally { busy = false; }
   }
   function open() {
-    if (!isSuperAdmin()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
+    if (!canOpenStaffAdmin()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), usersPage = byId("adminUsersPage"), staffPage = byId("cafeStaffAdminPage"), kitchen = byId("cafeKitchenPage"), cafe = byId("cafePage");
     const nav = document.querySelector(".bottom-nav");
@@ -92,13 +97,15 @@
 
   byId("cafeStaffAdminBack")?.addEventListener("click", () => {
     if (byId("cafeStaffAdminPage")) byId("cafeStaffAdminPage").hidden = true;
-    if (typeof openAdminPanel === "function") openAdminPanel();
+    if (isSuperAdmin() && typeof openAdminPanel === "function") openAdminPanel();
+    else if (typeof openCafeKitchen === "function") openCafeKitchen();
+    else if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = false;
   });
   byId("cafeStaffAdminRefresh")?.addEventListener("click", loadStaff);
   byId("cafeStaffAssignForm")?.addEventListener("submit", async event => {
     event.preventDefault();
     if (busy) return;
-    if (!isSuperAdmin()) { showMessage("Доступ запрещён"); return; }
+    if (!canOpenStaffAdmin()) { showMessage("Доступ запрещён"); return; }
     const telegramId = byId("cafeStaffTelegramId")?.value.trim();
     const locationId = byId("cafeStaffLocation")?.value;
     const staffRole = byId("cafeStaffRole")?.value;
@@ -128,7 +135,7 @@
     const target = event.target;
     if (!(target instanceof Element)) return;
     const permissionButton = target.closest("[data-payment-assignment]");
-    if (permissionButton && !busy && isSuperAdmin()) {
+    if (permissionButton && !busy && canOpenStaffAdmin()) {
       const assignmentId = permissionButton.getAttribute("data-payment-assignment");
       const canAcceptPayments = permissionButton.getAttribute("data-can-accept-payments") === "true";
       if (!assignmentId) return;
@@ -145,7 +152,7 @@
       return;
     }
     const button = target.closest("[data-deactivate-assignment]");
-    if (!button || busy || !isSuperAdmin()) return;
+    if (!button || busy || !canOpenStaffAdmin()) return;
     const assignmentId = button.getAttribute("data-deactivate-assignment");
     if (!assignmentId) return;
     busy = true;
