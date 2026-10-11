@@ -70,6 +70,7 @@
         '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
         order.order_type === "delivery" ? '<span>🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
         order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
+        order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
       return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + courierAssignAction + '</div></article>';
