@@ -41,6 +41,7 @@ assert.ok(inventoryAdmin.includes('action:"createProduct"'), "branch product cre
 assert.match(html, /js\\/cafe\\/inventory-admin\\.js\\?v=\\d+/, "inventory admin script reference missing");
 console.log("PASS per-cafe stock filtering, product creation, prices and inventory editor");
 console.log("PASS customer nearest/manual cafe selection");
+assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
 assert.ok(kitchen.includes('action:"assignCourier"'), "courier assignment request missing");
 assert.ok(kitchen.includes("data-courier-select"), "courier selector missing");
 console.log("PASS courier assignment UI and request");
