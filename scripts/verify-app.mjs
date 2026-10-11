@@ -38,7 +38,7 @@ assert.ok(cafe.includes("locationId"), "selected cafe must be sent with the orde
 assert.ok(cafe.includes("stockAvailable"), "customer menu must filter and cap quantities by available stock");
 assert.ok(inventoryAdmin.includes('action:"save"'), "branch stock save action missing");
 assert.ok(inventoryAdmin.includes('action:"createProduct"'), "branch product creation action missing");
-assert.match(html, /js\\/cafe\\/inventory-admin\\.js\\?v=\\d+/, "inventory admin script reference missing");
+assert.ok(html.includes("js/cafe/inventory-admin.js?v=1"), "inventory admin script reference missing");
 console.log("PASS per-cafe stock filtering, product creation, prices and inventory editor");
 console.log("PASS customer nearest/manual cafe selection");
 assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
