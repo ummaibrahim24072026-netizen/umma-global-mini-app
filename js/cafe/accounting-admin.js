@@ -64,7 +64,7 @@
   function locationName(id){return locations.find(x=>x.id===id)?.name||"—";}
   function renderDashboard() {
     const revenue=data.orders.reduce((s,o)=>s+Number(o.total_vnd||0),0);
-    const expenses=data.expenses.filter(e=>e.payment_status==="paid").reduce((s,e)=>s+Number(e.amount_vnd||0),0);
+    const expenses=data.expenses.reduce((s,e)=>s+Number(e.paid_amount_vnd||0),0);
     const purchases=data.purchases.filter(p=>p.status==="posted").reduce((s,p)=>s+Number(p.subtotal_vnd||0),0);
     const stockValue=data.stockBalances.reduce((s,b)=>s+Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0),0);
     return '<div class="accounting-metrics">'+
@@ -89,7 +89,11 @@
   function renderPurchaseList(limit=100) {
     const rows=data.purchases.slice(0,limit);
     if(!rows.length)return '<div class="accounting-empty">Закупок пока нет.</div>';
-    return '<div class="accounting-list">'+rows.map(p=>'<article><div><strong>'+esc(p.document_number||("Закупка "+p.id.slice(0,8)))+'</strong><small>'+esc(p.purchase_date)+' · '+esc(p.suppliers?.name||"Поставщик не указан")+' · '+esc(locationName(p.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(p.subtotal_vnd)+'</strong><span class="accounting-status '+esc(p.status)+'">'+(p.status==="posted"?"Проведена":p.status==="cancelled"?"Отменена":"Черновик")+'</span>'+(p.status==="draft"?'<button type="button" data-post-purchase="'+esc(p.id)+'">Принять на склад</button>':"")+'</div><small>'+((p.purchase_items||[]).map(i=>esc(i.stock_items?.name_ru||"позиция")+" × "+qty(i.quantity)).join(" · "))+'</small></article>').join("")+'</div>';
+    return '<div class="accounting-list">'+rows.map(p=>{
+      const remaining=Math.max(0,Number(p.subtotal_vnd||0)-Number(p.paid_amount_vnd||0));
+      const payButton=p.status==="posted"&&remaining>0?'<button type="button" data-record-purchase-payment="'+esc(p.id)+'" data-remaining="'+remaining+'">Оплатить</button>':"";
+      return '<article><div><strong>'+esc(p.document_number||("Закупка "+p.id.slice(0,8)))+'</strong><small>'+esc(p.purchase_date)+' · '+esc(p.suppliers?.name||"Поставщик не указан")+' · '+esc(locationName(p.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(p.subtotal_vnd)+'</strong><span class="accounting-status '+esc(p.status)+'">'+(p.status==="posted"?"Проведена":p.status==="cancelled"?"Отменена":"Черновик")+'</span><small>Оплачено '+money(p.paid_amount_vnd||0)+' · Остаток '+money(remaining)+'</small>'+(p.status==="draft"?'<button type="button" data-post-purchase="'+esc(p.id)+'">Принять на склад</button>':"")+payButton+'</div><small>'+((p.purchase_items||[]).map(i=>esc(i.stock_items?.name_ru||"позиция")+" × "+qty(i.quantity)).join(" · "))+'</small></article>';
+    }).join("")+'</div>';
   }
   function purchaseRow() {
     return '<div class="accounting-line accounting-purchase-line"><select data-purchase-item required>'+stockOptions()+'</select><input data-purchase-qty type="number" min="0.001" step="0.001" placeholder="Кол-во" required><input data-purchase-cost type="number" min="0" step="1" placeholder="Цена за ед. VND" required><button type="button" data-remove-line aria-label="Удалить">×</button></div>';
@@ -103,7 +107,11 @@
   function renderExpenseList(limit=100) {
     const rows=data.expenses.slice(0,limit);
     if(!rows.length)return '<div class="accounting-empty">Расходов пока нет.</div>';
-    return '<div class="accounting-list">'+rows.map(e=>'<article><div><strong>'+esc(e.description)+'</strong><small>'+esc(e.expense_date)+' · '+esc(categoryNames[e.category]||e.category)+' · '+esc(locationName(e.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(e.amount_vnd)+'</strong><span class="accounting-status '+esc(e.payment_status)+'">'+(e.payment_status==="paid"?"Оплачен":e.payment_status==="partially_paid"?"Частично":"Не оплачен")+'</span></div></article>').join("")+'</div>';
+    return '<div class="accounting-list">'+rows.map(e=>{
+      const remaining=Math.max(0,Number(e.amount_vnd||0)-Number(e.paid_amount_vnd||0));
+      const payButton=remaining>0?'<button type="button" data-record-expense-payment="'+esc(e.id)+'" data-remaining="'+remaining+'">Оплатить</button>':"";
+      return '<article><div><strong>'+esc(e.description)+'</strong><small>'+esc(e.expense_date)+' · '+esc(categoryNames[e.category]||e.category)+' · '+esc(locationName(e.location_id))+'</small></div><div class="accounting-list-end"><strong>'+money(e.amount_vnd)+'</strong><span class="accounting-status '+esc(e.payment_status)+'">'+(e.payment_status==="paid"?"Оплачен":e.payment_status==="partially_paid"?"Частично":"Не оплачен")+'</span><small>Оплачено '+money(e.paid_amount_vnd||0)+' · Остаток '+money(remaining)+'</small>'+payButton+'</div></article>';
+    }).join("")+'</div>';
   }
   function renderExpenses() {
     return '<div class="accounting-form"><h3>Записать расход</h3><form id="accountingExpenseForm" class="accounting-fields">'+
@@ -193,6 +201,25 @@
     if(target.closest("#accountingAddPurchaseLine")){$("accountingPurchaseLines")?.insertAdjacentHTML("beforeend",purchaseRow());return;}
     if(target.closest("#accountingAddProductionInput")){$("accountingProductionInputs")?.insertAdjacentHTML("beforeend",productionRow("input",["raw_material","packaging","other"]));return;}
     const remove=target.closest("[data-remove-line]");if(remove){remove.closest(".accounting-line")?.remove();return;}
+    const payPurchase=target.closest("[data-record-purchase-payment]");
+    const payExpense=target.closest("[data-record-expense-payment]");
+    if(payPurchase||payExpense){
+      const purchase=!!payPurchase, id=(payPurchase||payExpense).dataset[purchase?"recordPurchasePayment":"recordExpensePayment"];
+      const remaining=Number((payPurchase||payExpense).dataset.remaining||0);
+      const amountText=prompt("Сумма оплаты в VND (остаток "+remaining+")",String(remaining));
+      if(amountText===null)return;
+      const amountVnd=Number(amountText);
+      if(!Number.isSafeInteger(amountVnd)||amountVnd<=0||amountVnd>remaining){message("Сумма должна быть целым числом в пределах остатка.",true,true);return;}
+      const paymentMethod=(prompt("Способ оплаты: cash, qr, bank_transfer, card или other","cash")||"").trim();
+      if(!["cash","qr","bank_transfer","card","other"].includes(paymentMethod)){message("Неизвестный способ оплаты.",true,true);return;}
+      const idempotencyKey="umma-"+(purchase?"purchase":"expense")+"-"+id+"-"+(window.crypto?.randomUUID?.()||String(Date.now())+"-"+String(Math.floor(Math.random()*1000000)));
+      try{
+        message("Записываем оплату…");
+        await api(purchase?{action:"recordPurchasePayment",documentId:id,amountVnd,paymentMethod,idempotencyKey}:{action:"recordExpensePayment",expenseId:id,amountVnd,paymentMethod,idempotencyKey});
+        await reload();message("Оплата записана в финансовый журнал.",true,false);
+      }catch(e){message(e.message||"Не удалось записать оплату",true,true);}
+      return;
+    }
     const postPurchase=target.closest("[data-post-purchase]");
     if(postPurchase){if(!confirm("Провести закупку и увеличить складские остатки?"))return;try{message("Проводим закупку…");await api({action:"postPurchase",documentId:postPurchase.dataset.postPurchase});await reload();}catch(e){message(e.message,true,true);}return;}
     const postProduction=target.closest("[data-post-production]");
@@ -228,7 +255,7 @@
         event.preventDefault();const f=new FormData(form);
         if(locationId==="all")throw new Error("Перед записью расхода выберите конкретный филиал.");
         await api({action:"createExpense",locationId:locationId,description:f.get("description"),category:f.get("category"),amountVnd:Number(f.get("amountVnd")),expenseDate:f.get("expenseDate"),receiptReference:f.get("receiptReference"),notes:f.get("notes")});
-        form.reset();await reload();message("Расход записан как неоплаченный. Отметку оплаты и кассовую запись подключим следующим этапом.",true,false);
+        form.reset();await reload();message("Расход записан как неоплаченный. Нажмите «Оплатить» в списке, когда деньги будут переданы.",true,false);
       } else if(form.id==="accountingProductionForm"){
         event.preventDefault();const f=new FormData(form);
         const items=Array.from(form.querySelectorAll(".accounting-production-line")).map(row=>({direction:row.dataset.direction,stockItemId:row.querySelector("[data-production-item]").value,quantity:Number(row.querySelector("[data-production-qty]").value)}));
