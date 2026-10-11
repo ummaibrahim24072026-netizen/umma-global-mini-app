@@ -209,6 +209,7 @@
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
     if (orderType?.value === "delivery" && !addressInput?.value.trim()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
 
+    const submittedItems = Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity }));
     loading = true; renderCart();
     if (resultEl) resultEl.hidden = true;
     if (submit) submit.textContent = "Оформляем заказ…";
@@ -230,7 +231,11 @@
       const result = await response.json();
       if (!response.ok || !result.ok || !result.order) throw new Error(result.error || "Не удалось оформить заказ");
       const order = result.order;
-      cart.clear(); renderCart();
+      for (const item of submittedItems) {
+        const stock = inventoryRows.find(i => String(i.product_id) === String(item.productId) && String(i.location_id) === String(locationId));
+        if (stock) stock.reserved_quantity = Number(stock.reserved_quantity || 0) + Number(item.quantity);
+      }
+      cart.clear(); renderCart(); renderProducts();
       if (resultEl) {
         const selectedCafe = locations.find(location => String(location.id) === String(locationId));
         const notificationLine = Number(result.staffNotified) > 0
