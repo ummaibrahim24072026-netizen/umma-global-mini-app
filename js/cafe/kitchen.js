@@ -256,7 +256,7 @@
     const section = document.createElement("section");
     section.id = "cafeCashPanel";
     section.style.cssText = "margin:16px 0;padding:16px;border:1px solid #d7e3e3;border-radius:16px;background:#fff;color:#172b2b";
-    section.innerHTML = '<h2 style="margin:0 0 8px">Касса и сдача смены</h2><p style="margin:0 0 12px;color:#617070">Оплата заказа и передача наличных учитываются отдельно.</p><label style="display:block;margin-bottom:12px">Кафе<select id="cashLocationSelect" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><div id="cashSummary" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px"></div><form id="cashHandoverForm" style="display:grid;gap:10px;padding:12px;background:#f4f8f8;border-radius:12px"><h3 style="margin:0">Передать наличные</h3><label>Получатель<select id="cashReceiver" required style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><label>Сумма (VND)<input id="cashAmount" type="number" min="1" step="1000" required placeholder="Например, 500000" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><label>Комментарий (необязательно)<input id="cashNote" maxlength="500" placeholder="Например, сдача вечерней смены" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Передать на подтверждение</button></form><p id="cashMessage" hidden style="padding:10px;background:#edf7f7;border-radius:8px"></p><h3 style="margin:18px 0 8px">Передачи денег</h3><div id="cashHandovers"></div><h3 style="margin:18px 0 8px">Принятые оплаты за последние 24 часа</h3><div id="cashReceipts"></div>';
+    section.innerHTML = '<h2 style="margin:0 0 8px">Касса и сдача смены</h2><p style="margin:0 0 12px;color:#617070">Оплата заказа и передача наличных учитываются отдельно.</p><label style="display:block;margin-bottom:12px">Кафе<select id="cashLocationSelect" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><div id="cashSummary" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px"></div><div id="cashShiftControls"></div><form id="cashHandoverForm" style="display:grid;gap:10px;padding:12px;background:#f4f8f8;border-radius:12px"><h3 style="margin:0">Передать наличные</h3><label>Получатель<select id="cashReceiver" required style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><label>Сумма (VND)<input id="cashAmount" type="number" min="1" step="1000" required placeholder="Например, 500000" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><label>Комментарий (необязательно)<input id="cashNote" maxlength="500" placeholder="Например, сдача вечерней смены" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Передать на подтверждение</button></form><p id="cashMessage" hidden style="padding:10px;background:#edf7f7;border-radius:8px"></p><h3 style="margin:18px 0 8px">Передачи денег</h3><div id="cashHandovers"></div><h3 style="margin:18px 0 8px">Принятые оплаты за последние 24 часа</h3><div id="cashReceipts"></div>';
     const header = page.querySelector(".cafe-kitchen-header");
     if (header) header.insertAdjacentElement("afterend", section); else page.prepend(section);
     byId("cashLocationSelect")?.addEventListener("change", () => { cashLocationId = byId("cashLocationSelect").value; loadCash(); });
@@ -286,6 +286,18 @@
       const receivers=staff.filter(x=>Number(x.telegram_id)!==Number(result.actorTelegramId)&&["manager","cashier"].includes(x.staff_role));
       const select=byId("cashReceiver");
       if(select) select.innerHTML='<option value="">Выберите получателя</option>'+receivers.map(x=>'<option value="'+esc(x.telegram_id)+'">'+esc(roleNames[x.staff_role]||x.staff_role)+' · ID '+esc(x.telegram_id)+'</option>').join("");
+      const shifts=result.shifts||[];
+      const myShift=shifts.find(x=>Number(x.staff_telegram_id)===Number(result.actorTelegramId));
+      const shiftRoot=byId("cashShiftControls");
+      if(shiftRoot){
+        if(myShift){
+          shiftRoot.innerHTML='<div style="padding:12px;border:1px solid #b7dddd;border-radius:12px;background:#f0fbfb;margin-bottom:14px"><strong>Смена открыта</strong><div style="margin:6px 0">Начальная касса: '+money(myShift.opening_cash_vnd)+'</div><small>Открыта: '+esc(formatDate(myShift.opened_at))+'</small><form id="cashCloseShiftForm" style="display:grid;gap:8px;margin-top:10px"><label>Фактическая сумма в кассе (VND)<input id="cashCountedAmount" type="number" min="0" step="1000" required style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><label>Комментарий к расхождению<input id="cashCloseNote" maxlength="1000" placeholder="Необязательно" style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#a94736;color:white;font-weight:700">Закрыть смену и сверить кассу</button></form></div>';
+          byId("cashCloseShiftForm")?.addEventListener("submit",closeCashShift);
+        }else{
+          shiftRoot.innerHTML='<form id="cashOpenShiftForm" style="display:grid;gap:8px;padding:12px;background:#f0fbfb;border:1px solid #b7dddd;border-radius:12px;margin-bottom:14px"><h3 style="margin:0">Открытие смены</h3><label>Наличные в кассе на начало (VND)<input id="cashOpeningAmount" type="number" min="0" step="1000" value="0" required style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Открыть смену</button></form>';
+          byId("cashOpenShiftForm")?.addEventListener("submit",openCashShift);
+        }
+      }
       const activeReceipts=(result.receipts||[]).filter(x=>x.receipt_status==="confirmed");
       const total=activeReceipts.reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
       const cashTotal=activeReceipts.filter(x=>x.payment_method==="cash").reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
@@ -306,6 +318,26 @@
       if(receiptsRoot) receiptsRoot.innerHTML=activeReceipts.length?activeReceipts.slice(0,30).map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #e6eeee"><span>Заказ · '+esc(x.payment_method)+'<small style="display:block;color:#617070">'+esc(formatDate(x.collected_at))+' · сотрудник ID '+esc(x.collected_by_telegram_id)+'</small>'+(x.payment_method==="cash"&&x.tendered_amount_vnd!=null?'<small style="display:block;color:#617070">Получено: '+money(x.tendered_amount_vnd)+' · Сдача: '+money(x.change_given_vnd||0)+'</small>':"")+'</span><strong>'+money(x.amount_vnd)+'</strong></div>').join(""):"<p>Оплат за последние 24 часа пока нет.</p>";
     } catch(e) { root.textContent=e instanceof Error?e.message:"Не удалось загрузить кассовые данные"; }
   }
+  async function openCashShift(event) {
+    event.preventDefault();
+    const amount=Number(byId("cashOpeningAmount")?.value);
+    if(!Number.isSafeInteger(amount)||amount<0){cashMessage("Укажите корректную начальную сумму.");return;}
+    try { await api({action:"openShift",locationId:cashLocationId,openingCashVnd:amount}); cashMessage("Смена открыта."); await loadCash(); }
+    catch(e){cashMessage(e instanceof Error?e.message:"Не удалось открыть смену");}
+  }
+  async function closeCashShift(event) {
+    event.preventDefault();
+    const amount=Number(byId("cashCountedAmount")?.value);
+    const shift=(cashData?.shifts||[]).find(x=>Number(x.staff_telegram_id)===Number(cashData?.actorTelegramId));
+    if(!shift||!Number.isSafeInteger(amount)||amount<0){cashMessage("Укажите фактическую сумму в кассе.");return;}
+    try {
+      const result=await api({action:"closeShift",shiftId:shift.id,countedCashVnd:amount,note:byId("cashCloseNote")?.value||""});
+      const closed=result.shift||{};
+      cashMessage("Смена закрыта. Расчётная касса: "+money(closed.expected_cash_vnd)+"; фактически: "+money(closed.counted_cash_vnd)+"; расхождение: "+money(closed.variance_vnd)+".");
+      await loadCash();
+    } catch(e){cashMessage(e instanceof Error?e.message:"Не удалось закрыть смену");}
+  }
+
   async function createCashHandover(event) {
     event.preventDefault();
     const receiver=byId("cashReceiver")?.value, amount=Number(byId("cashAmount")?.value);
