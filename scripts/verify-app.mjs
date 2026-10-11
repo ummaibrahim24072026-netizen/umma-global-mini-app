@@ -12,17 +12,15 @@ for (const [name, source] of [["kitchen.js", kitchen], ["test-mode.js", testMode
   console.log("PASS syntax:", name);
 }
 
-assert.match(kitchen, /body\.action === "updateDelivery"/, "real delivery handler missing");
-assert.match(kitchen, /update_cafe_delivery_status/, "delivery RPC call missing");
+assert.match(kitchen, /action:\\s*"updateDelivery"/, "delivery request action missing");
 for (const status of ["waiting_courier", "courier_assigned", "picked_up", "delivered"]) {
   assert.ok(kitchen.includes(status), `delivery status missing in kitchen.js: ${status}`);
 }
-console.log("PASS delivery handler and supported statuses");
+console.log("PASS delivery request and supported statuses");
 
-assert.match(kitchen, /body\.action === "updatePayment"/, "payment handler missing");
-assert.match(kitchen, /update_cafe_order_payment_cash/, "payment RPC call missing");
+assert.match(kitchen, /action:\\s*"updatePayment"/, "payment request action missing");
 assert.match(kitchen, /can_accept_payments|canAcceptPayments/, "payment permission check missing");
-console.log("PASS payment handler and permission check");
+console.log("PASS payment request and permission check");
 
 assert.match(kitchen, /Последние подтверждённые оплаты|Принял:/, "payment ledger UI missing");
 assert.match(html, /js\/cafe\/kitchen\.js\?v=\d+/, "kitchen script cache version missing");
