@@ -723,6 +723,20 @@
     </div>
   </section>
 
+  <!-- COURIER MAP AND ROUTE -->
+  <section id="courierMapModal" hidden style="position:fixed;inset:0;z-index:11000;background:#fff;overflow:auto;padding:14px;box-sizing:border-box">
+    <div style="max-width:900px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
+        <button id="courierMapClose" type="button" class="cafe-back">Закрыть ✕</button>
+      </div>
+      <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
+      <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
+      <small style="color:#68737d">Маршрут строится по OpenStreetMap/OSRM. Проверяйте дорожные условия и точность адреса перед выездом.</small>
+    </div>
+  </section>
+
   <!-- CAFE KITCHEN -->
   <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
     <div class="cafe-kitchen-inner">
@@ -944,7 +958,8 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=6"></script>
-<script src="js/cafe/kitchen.js?v=22"></script>
+<script src="js/cafe/kitchen.js?v=23"></script>
+<script src="js/maps/courier-route.js?v=1"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=5"></script>
 <script src="js/admin/location-admin.js?v=1"></script>
