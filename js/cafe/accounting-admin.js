@@ -10,7 +10,7 @@
   const itemNames = {raw_material:"Сырьё",finished_good:"Готовая продукция",packaging:"Упаковка",other:"Прочее"};
   const categoryNames = {rent:"Аренда",utilities:"Коммунальные услуги",payroll:"Зарплата",delivery:"Доставка",maintenance:"Ремонт",marketing:"Реклама",supplies:"Расходные материалы",taxes:"Налоги",bank_fees:"Комиссии",other:"Прочее"};
   let locations=[], locationId="all", role="", tab="dashboard", busy=false, refreshTimer=null;
-  let data={suppliers:[],stockItems:[],products:[],stockBalances:[],purchases:[],expenses:[],production:[],orders:[],cogs:[],cashHandovers:[],recipes:[]};
+  let data={summary:{},suppliers:[],stockItems:[],products:[],stockBalances:[],purchases:[],expenses:[],production:[],recipes:[]};
 
   async function api(payload) {
     const initData = window.Telegram?.WebApp?.initData;
@@ -43,13 +43,14 @@
       ["purchases",scopedPayload("purchases")],
       ["expenses",scopedPayload("expenses")],
       ["production",scopedPayload("production")],
-      ["orders",scopedPayload("orders")],
-      ["cogs",scopedPayload("cogs")],
-      ["cashHandovers",scopedPayload("cashHandovers")],
+      ["summary",{action:"summary",...(locationId==="all"?{}:{locationId})}],
       ["recipes",scopedPayload("recipes")]
     ];
-    const result=await Promise.all(resources.map(async ([key,p])=>[key,(await api(p)).rows||[]]));
-    result.forEach(([key,rows])=>data[key]=rows);
+    const result=await Promise.all(resources.map(async ([key,p])=>{
+      const responseData=await api(p);
+      return [key,key==="summary"?(responseData.summary||{}):(responseData.rows||[])];
+    }));
+    result.forEach(([key,value])=>data[key]=value);
     message("Данные обновлены.",true,false);
     render();
   }
@@ -65,22 +66,24 @@
   function productOptions(){return selectOptions(data.products,"id",p=>p.name_ru+" — "+money(p.price_vnd),"Не привязывать к меню");}
   function locationName(id){return locations.find(x=>x.id===id)?.name||"—";}
   function renderDashboard() {
-    const revenue=data.orders.reduce((s,o)=>s+Number(o.total_vnd||0),0);
-    const expenses=data.expenses.reduce((s,e)=>s+Number(e.amount_vnd||0),0);
-    const paidExpenses=data.expenses.reduce((s,e)=>s+Number(e.paid_amount_vnd||0),0);
-    const purchases=data.purchases.filter(p=>p.status==="posted").reduce((s,p)=>s+Number(p.subtotal_vnd||0),0);
-    const stockValue=data.stockBalances.reduce((s,b)=>s+Number(b.quantity_on_hand||0)*Number(b.average_unit_cost_vnd||0),0);
-    const cogs=data.cogs.reduce((s,m)=>s+Math.abs(Number(m.quantity_delta||0))*Number(m.unit_cost_vnd||0),0);
-    const pendingCash=data.cashHandovers.filter(h=>h.handover_status==="pending").reduce((s,h)=>s+Number(h.amount_vnd||0),0);
+    const summary=data.summary||{};
+    const revenue=Number(summary.revenueVnd||0);
+    const expenses=Number(summary.operatingExpensesVnd||0);
+    const paidExpenses=Number(summary.paidExpensesVnd||0);
+    const purchases=Number(summary.postedPurchasesVnd||0);
+    const stockValue=Number(summary.stockValueVnd||0);
+    const cogs=Number(summary.cogsVnd||0);
+    const pendingCash=Number(summary.pendingCashHandoverVnd||0);
+    const pendingCount=Number(summary.pendingCashHandovers||0);
     const profit=revenue-cogs-expenses;
     return '<div class="accounting-metrics">'+
-      '<article><small>Выручка по выданным оплаченным заказам</small><strong>'+money(revenue)+'</strong><span>'+data.orders.length+' завершённых заказов в выборке</span></article>'+
+      '<article><small>Выручка по выданным оплаченным заказам</small><strong>'+money(revenue)+'</strong><span>'+Number(summary.completedPaidOrders||0)+' завершённых заказов</span></article>'+
       '<article><small>Себестоимость проданного</small><strong>'+money(cogs)+'</strong><span>По складским движениям готовой продукции</span></article>'+
       '<article><small>Операционные расходы</small><strong>'+money(expenses)+'</strong><span>Оплачено: '+money(paidExpenses)+'</span></article>'+
       '<article><small>Расчётный результат</small><strong>'+money(profit)+'</strong><span>Выручка − себестоимость − расходы</span></article>'+
       '<article><small>Учётная стоимость остатков</small><strong>'+money(stockValue)+'</strong><span>По средней стоимости на складе</span></article>'+
       '<article><small>Проведённые закупки</small><strong>'+money(purchases)+'</strong><span>Закупки увеличивают запасы и не списываются целиком в прибыль</span></article>'+
-      '<article><small>Наличные к передаче администратору</small><strong>'+money(pendingCash)+'</strong><span>'+data.cashHandovers.filter(h=>h.handover_status==="pending").length+' передач ожидают подтверждения</span></article>'+
+      '<article><small>Наличные к передаче администратору</small><strong>'+money(pendingCash)+'</strong><span>'+pendingCount+' передач ожидают подтверждения</span></article>'+
       '</div><div class="accounting-note"><strong>Точность прибыли:</strong> показатель предварительный. Себестоимость отражается для блюд, привязанных к складским позициям, и заказов, проведённых после включения учётного склада. Проверьте начальные остатки и привязки меню перед использованием показателя как бухгалтерской отчётности.</div>'+
       '<h3>Последние закупки</h3>'+renderPurchaseList(5)+'<h3>Последние расходы</h3>'+renderExpenseList(5);
   }
