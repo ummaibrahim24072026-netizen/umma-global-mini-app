@@ -221,17 +221,20 @@
         event.preventDefault();const f=new FormData(form);
         const items=Array.from(form.querySelectorAll(".accounting-purchase-line")).map(row=>({stockItemId:row.querySelector("[data-purchase-item]").value,quantity:Number(row.querySelector("[data-purchase-qty]").value),unitCostVnd:Number(row.querySelector("[data-purchase-cost]").value)}));
         if(items.some(i=>!i.stockItemId||!i.quantity||!Number.isFinite(i.unitCostVnd))){message("Заполните все строки закупки.",true,true);return;}
-        await api({action:"createPurchase",locationId:locationId==="all"?(locations[0]?.id):locationId,supplierId:f.get("supplierId")||null,purchaseDate:f.get("purchaseDate"),documentNumber:f.get("documentNumber"),notes:f.get("notes"),items});
+        if(locationId==="all")throw new Error("Перед созданием закупки выберите конкретный филиал.");
+        await api({action:"createPurchase",locationId:locationId,supplierId:f.get("supplierId")||null,purchaseDate:f.get("purchaseDate"),documentNumber:f.get("documentNumber"),notes:f.get("notes"),items});
         await reload();message("Черновик закупки создан. Проверьте позиции и нажмите «Принять на склад».",true,false);
       } else if(form.id==="accountingExpenseForm"){
         event.preventDefault();const f=new FormData(form);
-        await api({action:"createExpense",locationId:locationId==="all"?(locations[0]?.id):locationId,description:f.get("description"),category:f.get("category"),amountVnd:Number(f.get("amountVnd")),expenseDate:f.get("expenseDate"),receiptReference:f.get("receiptReference"),notes:f.get("notes")});
+        if(locationId==="all")throw new Error("Перед записью расхода выберите конкретный филиал.");
+        await api({action:"createExpense",locationId:locationId,description:f.get("description"),category:f.get("category"),amountVnd:Number(f.get("amountVnd")),expenseDate:f.get("expenseDate"),receiptReference:f.get("receiptReference"),notes:f.get("notes")});
         form.reset();await reload();message("Расход записан как неоплаченный. Отметку оплаты и кассовую запись подключим следующим этапом.",true,false);
       } else if(form.id==="accountingProductionForm"){
         event.preventDefault();const f=new FormData(form);
         const items=Array.from(form.querySelectorAll(".accounting-production-line")).map(row=>({direction:row.dataset.direction,stockItemId:row.querySelector("[data-production-item]").value,quantity:Number(row.querySelector("[data-production-qty]").value)}));
         if(items.some(i=>!i.stockItemId||!i.quantity)){message("Заполните сырьё и готовую продукцию.",true,true);return;}
-        await api({action:"createProduction",locationId:locationId==="all"?(locations[0]?.id):locationId,productionDate:f.get("productionDate"),batchNumber:f.get("batchNumber"),plannedQuantity:Number(f.get("plannedQuantity")),notes:f.get("notes"),items});
+        if(locationId==="all")throw new Error("Перед созданием производства выберите конкретный филиал.");
+        await api({action:"createProduction",locationId:locationId,productionDate:f.get("productionDate"),batchNumber:f.get("batchNumber"),plannedQuantity:Number(f.get("plannedQuantity")),notes:f.get("notes"),items});
         await reload();message("Черновик производства создан. Проведение спишет сырьё и оприходует готовую продукцию.",true,false);
       }
     } catch(e){message(e.message||"Операция не выполнена",true,true);}
