@@ -730,6 +730,16 @@
         </div>
 
         <form id="cafeOrderForm" class="cafe-order-form">
+          <label>Как выбрать кафе
+            <select id="cafeLocationMode" name="locationMode">
+              <option value="nearest">Ближайшее кафе по геолокации</option>
+              <option value="manual">Выбрать кафе вручную</option>
+            </select>
+          </label>
+          <div id="cafeLocationMessage" class="cafe-order-hint" aria-live="polite">Определяем ближайшее кафе…</div>
+          <label id="cafeLocationSelectLabel" hidden>Кафе для заказа
+            <select id="cafeLocationSelect" name="locationId" required></select>
+          </label>
           <label>Как получить заказ
             <select id="cafeOrderType" name="orderType" required>
               <option value="pickup">Самовывоз</option>
@@ -846,7 +856,7 @@
 <script src="js/admin/users-events.js?v=3"></script>
 
 <!-- CAFE -->
-<script src="js/cafe/cafe.js?v=3"></script>
+<script src="js/cafe/cafe.js?v=4"></script>
 <script src="js/cafe/kitchen.js?v=22"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=4"></script>
