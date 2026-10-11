@@ -142,6 +142,11 @@
         </span>
         <span class="admin-entry-arrow">→</span>
       </button>
+      <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">📊</span>
+        <span class="admin-entry-copy"><strong>Учёт кафе</strong><small>Склад, закупки, производство и расходы</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
     </section>
 
     <!-- AYAH -->
@@ -464,6 +469,12 @@
           <small>Каталог и остатки</small>
         </button>
 
+
+        <button type="button" class="admin-card" id="adminAccountingButton">
+          <span>📊</span>
+          <strong>Учёт кафе</strong>
+          <small>Закупки, склад, производство, расходы</small>
+        </button>
 
         <button
           type="button"
@@ -873,6 +884,34 @@
     </div>
   </section>
 
+  <!-- CAFE ACCOUNTING -->
+  <section id="cafeAccountingPage" class="admin-page" hidden>
+    <div class="admin-page-inner accounting-page-inner">
+      <button id="accountingBack" type="button" class="admin-back">← Назад</button>
+      <div class="admin-header">
+        <div class="admin-header-icon">📊</div>
+        <div><div class="admin-eyebrow">UMMA CAFE</div><h1>Учёт кафе</h1><p>Закупки, склад, производство и расходы по филиалам.</p></div>
+      </div>
+      <div class="accounting-toolbar">
+        <label>Филиал
+          <select id="accountingLocation"></select>
+        </label>
+        <button type="button" id="accountingRefresh" class="accounting-secondary">↻ Обновить</button>
+      </div>
+      <div id="accountingMessage" class="accounting-message" hidden></div>
+      <nav class="accounting-tabs" aria-label="Разделы учёта">
+        <button type="button" data-accounting-tab="dashboard" class="active">Обзор</button>
+        <button type="button" data-accounting-tab="stock">Склад</button>
+        <button type="button" data-accounting-tab="purchases">Закупки</button>
+        <button type="button" data-accounting-tab="production">Производство</button>
+        <button type="button" data-accounting-tab="expenses">Расходы</button>
+        <button type="button" data-accounting-tab="suppliers">Поставщики</button>
+        <button type="button" data-accounting-tab="recipes">Рецептуры</button>
+      </nav>
+      <div id="accountingContent" class="accounting-content"></div>
+    </div>
+  </section>
+
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
 
@@ -965,6 +1004,7 @@
 <script src="js/admin/location-admin.js?v=4"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>
 <script src="js/cafe/inventory-admin.js?v=2"></script>
+<script src="js/cafe/accounting-admin.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
