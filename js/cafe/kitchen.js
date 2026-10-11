@@ -115,13 +115,14 @@
   function open() {
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
-    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), staffAdmin = byId("cafeStaffAdminPage");
+    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");
     const nav = document.querySelector(".bottom-nav");
     if (home) home.style.display = "none";
     if (admin) admin.hidden = true;
     if (users) users.hidden = true;
     if (cafe) cafe.hidden = true;
     if (staffAdmin) staffAdmin.hidden = true;
+    if (waiter) waiter.hidden = true;
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
     loadOrders();
@@ -129,8 +130,48 @@
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
+  async function openWaiterPage() {
+    if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
+    const home = document.querySelector(".app > main");
+    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");
+    const nav = document.querySelector(".bottom-nav");
+    if (home) home.style.display = "none";
+    if (admin) admin.hidden = true;
+    if (users) users.hidden = true;
+    if (cafe) cafe.hidden = true;
+    if (kitchen) kitchen.hidden = true;
+    if (staffAdmin) staffAdmin.hidden = true;
+    if (waiter) waiter.hidden = false;
+    if (nav) nav.style.display = "none";
+    showMessage("Загружаем рабочее место официанта…");
+    try {
+      const result = await api({action:"list"});
+      staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
+      staffRole = result.staffRole || "";
+      if (staffRole !== "waiter" && window.ummaRole !== "super_admin") {
+        if (waiter) waiter.hidden = true;
+        open();
+        return;
+      }
+      orders = Array.isArray(result.orders) ? result.orders : [];
+      if (!staffMenu.length) await loadStaffMenu();
+      showMessage("", false);
+    } catch (e) {
+      showMessage(e instanceof Error ? e.message : "Не удалось открыть рабочее место");
+    }
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
   byId("adminKitchenButton")?.addEventListener("click", open);
-  byId("staffEntryButton")?.addEventListener("click", open);
+  byId("staffEntryButton")?.addEventListener("click", openWaiterPage);
+  byId("cafeWaiterBack")?.addEventListener("click", () => {
+    const waiter=byId("cafeWaiterPage"), home=document.querySelector(".app > main"), nav=document.querySelector(".bottom-nav");
+    if(waiter) waiter.hidden=true;
+    if(home) home.style.display="";
+    if(nav) nav.style.display="";
+    if(typeof setActiveNav==="function") setActiveNav("home");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+  byId("cafeWaiterRefresh")?.addEventListener("click", loadStaffMenu);
   byId("cafeKitchenBack")?.addEventListener("click", () => {
     if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = true;
     if (window.ummaRole === "super_admin" && typeof openAdminPanel === "function") {
