@@ -149,7 +149,7 @@
       const result = await api({action:"list"});
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       staffRole = result.staffRole || "";
-      if (staffRole !== "waiter" && window.ummaRole !== "super_admin") {
+      if (staffRole !== "waiter") {
         if (waiter) waiter.hidden = true;
         open();
         return;
