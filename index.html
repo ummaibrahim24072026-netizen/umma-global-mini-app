@@ -25,6 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=17">
   <link rel="stylesheet" href="css/admin.css?v=4">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
 
@@ -576,7 +577,7 @@
       </div>
       <div id="locationAdminMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
       <div id="locationAdminMap" style="height:420px;min-height:320px;border:1px solid #dce7e7;border-radius:16px;overflow:hidden;margin:12px 0"></div>
-      <div style="font-size:12px;color:#607171;margin:6px 0 16px">Google Maps. Нажмите на карту, чтобы выбрать точку, или перетащите маркер. Поиск адреса выполняется только по запросу.</div>
+      <div style="font-size:12px;color:#607171;margin:6px 0 16px">Карта OpenStreetMap. Нажмите на карту, чтобы поставить точку, или перетащите маркер. Поиск адреса помогает найти приблизительное место — всегда проверяйте положение.</div>
       <div class="cafe-staff-list-heading"><h2>Все локации</h2><button id="locationNew" type="button" class="cafe-submit">＋ Новая локация</button></div>
       <div id="locationAdminList" class="cafe-staff-assignments" style="margin-bottom:20px"></div>
       <form id="locationForm" class="cafe-staff-assign-form">
@@ -732,7 +733,7 @@
       <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
       <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
       <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
-      <small id="courierMapNote" style="display:block;color:#68737d">Навигация Google Maps. Проверяйте точность адреса перед выездом.</small>
+      <small style="color:#68737d">Маршрут строится по OpenStreetMap/OSRM. Проверяйте дорожные условия и точность адреса перед выездом.</small>
     </div>
   </section>
 
@@ -943,6 +944,7 @@
 
 
 <!-- CORE -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/core/app.js?v=3"></script>
 
 <!-- AUTH -->
@@ -957,12 +959,10 @@
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=6"></script>
 <script src="js/cafe/kitchen.js?v=24"></script>
-<script src="js/maps/google-maps-config.js?v=1"></script>
-<script src="js/maps/google-maps-loader.js?v=1"></script>
-<script src="js/maps/courier-route.js?v=2"></script>
+<script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
-<script src="js/admin/location-admin.js?v=3"></script>
+<script src="js/admin/location-admin.js?v=4"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>
 <script src="js/cafe/inventory-admin.js?v=2"></script>
 
