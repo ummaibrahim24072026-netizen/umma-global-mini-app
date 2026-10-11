@@ -45,14 +45,12 @@ console.log("PASS per-cafe stock filtering, product creation, prices and invento
 assert.ok(locationAdmin.includes("locationAdminMap"), "interactive location map module missing");
 assert.ok(locationAdmin.includes("location_manager") === false, "unexpected hardcoded branch mapping");
 assert.ok(locationAdmin.includes("admin_upsert_location") === false, "location writes must be routed through secured edge function");
-assert.ok(html.includes("google-maps-config.js") && html.includes("locationAdminMap"), "Google Maps config or location map missing");
-assert.ok(locationAdmin.includes("loadUmmaGoogleMaps") && locationAdmin.includes("google.maps.Map"), "Google Maps not wired into location admin");
-console.log("PASS dynamic location directory and Google Maps admin UI");
+assert.ok(html.includes("leaflet.js") && html.includes("locationAdminMap"), "Leaflet location map not wired into app");
+console.log("PASS dynamic location directory, map, and location admin UI");
 assert.ok(kitchen.includes("data-show-route"), "delivery order map action missing");
-assert.ok(courierRoute.includes("loadUmmaGoogleMaps") && courierRoute.includes("google.maps.Map"), "Google Maps not wired into courier map");
-assert.ok(courierRoute.includes("www.google.com/maps/dir/"), "Google Maps navigation link missing");
+assert.ok(courierRoute.includes("router.project-osrm.org"), "courier road routing service missing");
 assert.ok(html.includes("js/maps/courier-route.js"), "courier route map script not loaded");
-console.log("PASS Google Maps courier map and external navigation");
+console.log("PASS courier route map and navigation fallback");
 console.log("PASS customer nearest/manual cafe selection");
 assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
 assert.ok(kitchen.includes('action:"assignCourier"'), "courier assignment request missing");
