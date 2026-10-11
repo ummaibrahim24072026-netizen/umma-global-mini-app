@@ -12,13 +12,13 @@ for (const [name, source] of [["kitchen.js", kitchen], ["test-mode.js", testMode
   console.log("PASS syntax:", name);
 }
 
-assert.match(kitchen, /action:\\s*"updateDelivery"/, "delivery request action missing");
+assert.ok(kitchen.includes('action:"updateDelivery"'), "delivery request action missing");
 for (const status of ["waiting_courier", "courier_assigned", "picked_up", "delivered"]) {
   assert.ok(kitchen.includes(status), `delivery status missing in kitchen.js: ${status}`);
 }
 console.log("PASS delivery request and supported statuses");
 
-assert.match(kitchen, /action:\\s*"updatePayment"/, "payment request action missing");
+assert.ok(kitchen.includes('action:"updatePayment"'), "payment request action missing");
 assert.match(kitchen, /can_accept_payments|canAcceptPayments/, "payment permission check missing");
 console.log("PASS payment request and permission check");
 
