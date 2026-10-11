@@ -95,10 +95,12 @@
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
+  byId("cafeStaffAdminOpen")?.addEventListener("click", open);
+  if (byId("cafeStaffAdminOpen") && !canOpenStaffAdmin()) byId("cafeStaffAdminOpen").hidden = true;
   byId("cafeStaffAdminBack")?.addEventListener("click", () => {
     if (byId("cafeStaffAdminPage")) byId("cafeStaffAdminPage").hidden = true;
     if (isSuperAdmin() && typeof openAdminPanel === "function") openAdminPanel();
-    else if (typeof openCafeKitchen === "function") openCafeKitchen();
+    else if (window.ummaKitchen && typeof window.ummaKitchen.open === "function") window.ummaKitchen.open();
     else if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = false;
   });
   byId("cafeStaffAdminRefresh")?.addEventListener("click", loadStaff);
