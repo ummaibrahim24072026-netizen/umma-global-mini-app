@@ -202,3 +202,17 @@
         grid-template-columns: 1fr;
       }
     }
+
+
+/* UMMA LOCATION MAP */
+#locationAdminMap { z-index: 1; background: #eaf1f2; }
+.umma-map-marker-wrap { background: transparent; border: 0; }
+.umma-map-marker { display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid #176b55;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#fff;box-shadow:0 2px 8px #0002;font-size:15px; }
+.umma-map-marker.is-cafe { background:#0fa3a8;color:#fff;border-color:#08777b; }
+.leaflet-popup-content { line-height:1.55; }
+.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:#0fa3a8;color:#fff;padding:7px 10px;font-weight:700;cursor:pointer; }
+#locationForm label { display:block; margin:10px 0; }
+#locationForm input:not([type="checkbox"]),#locationForm select { display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:5px;border:1px solid #d4dfdf;border-radius:10px;background:#fff;font:inherit; }
+#locationForm input[readonly] { background:#f3f7f7;color:#5b6c6c; }
+#locationForm input[type="checkbox"] { width:18px;height:18px; }
+#locationForm .cafe-submit:disabled { opacity:.6; }
