@@ -1,10 +1,10 @@
-/* UMMA GLOBAL — GOOGLE MAPS LOCATION DIRECTORY */
+/* UMMA GLOBAL — LOCATION DIRECTORY AND MAP */
 (() => {
   "use strict";
   const API="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-location-admin";
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  let map=null,markers=[],pin=null,locations=[],users=[],managers=[],selectedId=null,busy=false,geocoder=null;
+  let map=null,markers=[],pin=null,locations=[],users=[],managers=[],selectedId=null,busy=false;
   const typeNames={cafe:"Кафе",restaurant:"Ресторан",warehouse:"Склад",market:"Магазин",other:"Другое"};
   async function api(payload){
     const initData=window.Telegram?.WebApp?.initData;
@@ -21,45 +21,43 @@
     s.innerHTML='<option value="">Выберите администратора кафе</option>'+users.filter(u=>u.is_active&&u.role!=="super_admin").map(u=>'<option value="'+esc(u.telegram_id)+'">'+esc(displayName(u))+' · '+esc(u.role)+' · ID '+esc(u.telegram_id)+'</option>').join("");
     if(currentId)s.value=String(currentId);
   }
-  function setCoordinates(lat,lng){
-    $("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);
-  }
   function setPin(lat,lng,pan=true){
-    lat=Number(lat);lng=Number(lng);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-    setCoordinates(lat,lng);
+    if(!Number.isFinite(Number(lat))||!Number.isFinite(Number(lng)))return;
+    $("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);
     if(map){
-      if(!pin)pin=new google.maps.Marker({map,position:{lat,lng},draggable:true,title:"Точка локации"});
-      else {pin.setPosition({lat,lng});pin.setMap(map);}
-      google.maps.event.clearListeners(pin,"dragend");
-      pin.addListener("dragend",()=>{const p=pin.getPosition();setCoordinates(p.lat(),p.lng());});
-      if(pan){map.setCenter({lat,lng});map.setZoom(Math.max(map.getZoom()||6,15));}
+      if(!pin)pin=L.marker([Number(lat),Number(lng)],{draggable:true}).addTo(map);
+      else pin.setLatLng([Number(lat),Number(lng)]);
+      pin.off("dragend").on("dragend",()=>{const p=pin.getLatLng();setCoordinates(p.lat,p.lng);});
+      if(pan)map.setView([Number(lat),Number(lng)],Math.max(map.getZoom(),14));
     }
   }
+  function setCoordinates(lat,lng){$("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);}
   function initMap(){
-    if(map)return true;
-    const el=$("locationAdminMap");if(!el||!window.google?.maps)return false;
-    map=new google.maps.Map(el,{center:{lat:12.2388,lng:109.1967},zoom:6,mapTypeControl:true,streetViewControl:false,fullscreenControl:true,gestureHandling:"greedy"});
-    geocoder=new google.maps.Geocoder();
-    map.addListener("click",e=>{
-      if(!e.latLng)return;setPin(e.latLng.lat(),e.latLng.lng(),false);
+    if(map||!window.L)return;
+    map=L.map("locationAdminMap",{scrollWheelZoom:true}).setView([12.2388,109.1967],6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
+    map.on("click",async e=>{
+      setPin(e.latlng.lat,e.latlng.lng,false);
+      const addr=$("locationAddress").value.trim();
+      if(!addr){try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+e.latlng.lat+"&lon="+e.latlng.lng+"&zoom=18&addressdetails=1&accept-language=ru,en");if(r.ok){const d=await r.json();if(d.display_name)$("locationAddress").value=d.display_name;const a=d.address||{};if(!$("locationCity").value)$("locationCity").value=a.city||a.town||a.village||a.county||"";}}catch{}}
       message("Точка выбрана. Можно перетащить маркер для точного положения.");
     });
-    return true;
   }
   function renderMap(){
     if(!map)return;
-    markers.forEach(m=>m.setMap(null));markers=[];
-    const bounds=new google.maps.LatLngBounds();let count=0;
+    markers.forEach(m=>map.removeLayer(m));markers=[];
+    const bounds=[];
     locations.forEach(l=>{
       if(l.latitude==null||l.longitude==null)return;
       const lat=Number(l.latitude),lng=Number(l.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-      const marker=new google.maps.Marker({map,position:{lat,lng},title:l.name,label:{text:l.location_type==="warehouse"?"W":(l.location_type==="market"?"M":"U"),color:"#ffffff"}});
-      const info=new google.maps.InfoWindow({content:'<div style="max-width:240px"><strong>'+esc(l.name)+'</strong><br>'+esc(typeNames[l.location_type]||l.location_type)+'<br>'+esc(l.address||"Адрес не указан")+'<br><button type="button" data-edit-location="'+esc(l.id)+'">Редактировать</button></div>'});
-      marker.addListener("click",()=>info.open({map,anchor:marker}));
-      markers.push(marker);bounds.extend({lat,lng});count++;
+      const icon=L.divIcon({className:"umma-map-marker-wrap",html:'<span class="umma-map-marker '+(l.location_type==="cafe"||l.location_type==="restaurant"?"is-cafe":"")+'">'+(l.location_type==="warehouse"?"📦":l.location_type==="market"?"🛍️":"☪")+'</span>',iconSize:[34,34],iconAnchor:[17,17]});
+      const marker=L.marker([lat,lng],{icon}).addTo(map);
+      marker.bindPopup('<strong>'+esc(l.name)+'</strong><br>'+esc(typeNames[l.location_type]||l.location_type)+'<br>'+esc(l.address||"Адрес не указан")+'<br><button type="button" class="location-popup-edit" data-edit-location="'+esc(l.id)+'">Редактировать</button>');
+      marker.on("click",()=>{});
+      markers.push(marker);bounds.push([lat,lng]);
     });
-    if(count>1)map.fitBounds(bounds,{padding:35});
-    else if(count===1){const p=bounds.getCenter();map.setCenter(p);map.setZoom(13);}
+    if(bounds.length>1)map.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+    else if(bounds.length===1)map.setView(bounds[0],13);
   }
   function renderList(){
     const root=$("locationAdminList");if(!root)return;
@@ -73,7 +71,7 @@
   function resetForm(){
     selectedId=null;$("locationForm").reset();$("locationId").value="";$("locationActive").checked=true;$("locationCountry").value="Vietnam";
     $("locationFormTitle").textContent="Добавить новую локацию";$("locationSave").textContent="Сохранить локацию";$("locationManagerWrap").hidden=false;fillManagerSelect("");
-    if(pin){pin.setMap(null);pin=null;}
+    if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationLatitude").value="";$("locationLongitude").value="";
   }
   function editLocation(id){
@@ -84,37 +82,33 @@
     const m=managerFor(l.id);fillManagerSelect(m?.telegram_id||"");
     $("locationFormTitle").textContent="Изменить локацию";$("locationSave").textContent="Сохранить изменения";
     if(l.latitude!=null&&l.longitude!=null)setPin(Number(l.latitude),Number(l.longitude),true);
-    else if(pin){pin.setMap(null);pin=null;}
+    else if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationAdminPage").scrollIntoView({behavior:"smooth",block:"start"});
     message("Локация загружена. Нажмите на карту, чтобы изменить точку.");
   }
   async function load(force=false){
-    if(busy&&!force)return;busy=true;message("Загружаем список локаций…");
+    if(busy&&!force)return;busy=true;message("Загружаем карту и список локаций…");
     try{
       const d=await api({action:"list"});locations=d.locations||[];users=d.users||[];managers=d.managers||[];
-      fillManagerSelect("");renderMap();renderList();message("Список загружен. На карте отображаются локации с координатами.");
+      fillManagerSelect("");renderMap();renderList();message("Карта загружена. На ней отображаются все локации, для которых указаны координаты.");
     }catch(e){message(e.message||"Не удалось загрузить локации");}
     finally{busy=false;}
   }
-  async function open(){
+  function open(){
     if(!isSuper()){if(typeof showToast==="function")showToast("Доступ только для суперадминистратора");return;}
     ["adminPage","adminUsersPage","cafeStaffAdminPage","cafeKitchenPage","cafeInventoryPage","cafeProductsAdminPage","cafePage"].forEach(id=>{if($(id))$(id).hidden=true;});
     const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");if(home)home.style.display="none";if(nav)nav.style.display="none";
-    $("locationAdminPage").hidden=false;window.scrollTo({top:0,behavior:"smooth"});message("Подключаем Google Maps…");
-    try{await window.loadUmmaGoogleMaps();if(!initMap())throw new Error("Не удалось инициализировать Google Maps");map.setCenter({lat:12.2388,lng:109.1967});setTimeout(()=>{google.maps.event.trigger(map,"resize");load();},100);}
-    catch(e){message(e.message||"Google Maps пока не настроена");}
+    $("locationAdminPage").hidden=false;initMap();setTimeout(()=>{map?.invalidateSize();load();},100);window.scrollTo({top:0,behavior:"smooth"});
   }
   async function geocode(){
     const q=[$("locationAddress").value.trim(),$("locationCity").value.trim(),$("locationCountry").value.trim()].filter(Boolean).join(", ");
     if(!q){message("Сначала введите адрес, город и страну.");return;}
-    if(!geocoder){message("Карта ещё не готова.");return;}
-    message("Ищем адрес в Google Maps…");
+    message("Ищем адрес на карте…");
     try{
-      const response=await geocoder.geocode({address:q});
-      if(!response.results?.length)throw new Error("Адрес не найден. Нажмите на карту и установите точку вручную.");
-      const result=response.results[0],p=result.geometry.location;setPin(p.lat(),p.lng(),true);
-      if(!$("locationAddress").value.trim())$("locationAddress").value=result.formatted_address;
-      message("Адрес найден. Проверьте положение маркера и при необходимости передвиньте его.");
+      const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(q)+"&accept-language=ru,en");
+      if(!r.ok)throw new Error("Сервис поиска адреса временно недоступен");
+      const a=await r.json();if(!a.length)throw new Error("Адрес не найден. Нажмите на карту и установите точку вручную.");
+      setPin(Number(a[0].lat),Number(a[0].lon),true);message("Адрес найден. Проверьте точку на карте и при необходимости передвиньте маркер.");
     }catch(e){message(e.message||"Не удалось найти адрес");}
   }
   $("locationOpenMapButton")?.addEventListener("click",open);
