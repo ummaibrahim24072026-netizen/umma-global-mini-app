@@ -10,9 +10,10 @@ const productsAdmin = read("js/cafe/products-admin.js");
 const staffAdmin = read("js/cafe/staff-admin.js");
 const inventoryAdmin = read("js/cafe/inventory-admin.js");
 const locationAdmin = read("js/admin/location-admin.js");
+const courierRoute = read("js/maps/courier-route.js");
 const html = read("index.html");
 
-for (const [name, source] of [["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin], ["location-admin.js", locationAdmin]]) {
+for (const [name, source] of [["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin], ["location-admin.js", locationAdmin], ["courier-route.js", courierRoute]]) {
   new vm.Script(source, { filename: name });
   console.log("PASS syntax:", name);
 }
@@ -46,6 +47,10 @@ assert.ok(locationAdmin.includes("location_manager") === false, "unexpected hard
 assert.ok(locationAdmin.includes("admin_upsert_location") === false, "location writes must be routed through secured edge function");
 assert.ok(html.includes("leaflet.js") && html.includes("locationAdminMap"), "Leaflet location map not wired into app");
 console.log("PASS dynamic location directory, map, and location admin UI");
+assert.ok(kitchen.includes("data-show-route"), "delivery order map action missing");
+assert.ok(courierRoute.includes("router.project-osrm.org"), "courier road routing service missing");
+assert.ok(html.includes("js/maps/courier-route.js"), "courier route map script not loaded");
+console.log("PASS courier route map and navigation fallback");
 console.log("PASS customer nearest/manual cafe selection");
 assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
 assert.ok(kitchen.includes('action:"assignCourier"'), "courier assignment request missing");
