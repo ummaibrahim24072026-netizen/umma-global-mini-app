@@ -9,9 +9,10 @@ const testMode = read("js/cafe/test-mode.js");
 const productsAdmin = read("js/cafe/products-admin.js");
 const staffAdmin = read("js/cafe/staff-admin.js");
 const inventoryAdmin = read("js/cafe/inventory-admin.js");
+const locationAdmin = read("js/admin/location-admin.js");
 const html = read("index.html");
 
-for (const [name, source] of [["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin]]) {
+for (const [name, source] of [["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin], ["location-admin.js", locationAdmin]]) {
   new vm.Script(source, { filename: name });
   console.log("PASS syntax:", name);
 }
@@ -40,6 +41,11 @@ assert.ok(inventoryAdmin.includes('action:"save"'), "branch stock save action mi
 assert.ok(inventoryAdmin.includes('action:"createProduct"'), "branch product creation action missing");
 assert.ok(html.includes("js/cafe/inventory-admin.js?v=2"), "inventory admin script reference missing");
 console.log("PASS per-cafe stock filtering, product creation, prices and inventory editor");
+assert.ok(locationAdmin.includes("locationAdminMap"), "interactive location map module missing");
+assert.ok(locationAdmin.includes("location_manager") === false, "unexpected hardcoded branch mapping");
+assert.ok(locationAdmin.includes("admin_upsert_location") === false, "location writes must be routed through secured edge function");
+assert.ok(html.includes("leaflet.js") && html.includes("locationAdminMap"), "Leaflet location map not wired into app");
+console.log("PASS dynamic location directory, map, and location admin UI");
 console.log("PASS customer nearest/manual cafe selection");
 assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
 assert.ok(kitchen.includes('action:"assignCourier"'), "courier assignment request missing");
