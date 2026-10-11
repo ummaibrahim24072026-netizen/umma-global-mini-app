@@ -4,7 +4,7 @@
   const API = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-staff-admin";
   const byId = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" })[c]);
-  const roleNames = { manager:"Менеджер", cashier:"Кассир", waiter:"Официант", kitchen:"Кухня" };
+  const roleNames = { manager:"Менеджер", cashier:"Кассир", waiter:"Официант", kitchen:"Кухня", courier:"Курьер" };
   let staff = [], users = [], locations = [], busy = false;
 
   function isSuperAdmin() {
