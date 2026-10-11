@@ -241,7 +241,7 @@
       $("accountingProductionInputs").innerHTML=inputs.map(()=>productionRow("input",["raw_material","packaging","other"])).join("");
       Array.from($("accountingProductionInputs").querySelectorAll(".accounting-production-line")).forEach((row,i)=>{
         row.querySelector("[data-production-item]").value=inputs[i].stock_item_id;
-        row.querySelector("[data-production-qty]").value=(Number(inputs[i].quantity)*planned/Number(recipe.yield_quantity||1)).toFixed(3).replace(/\\.?0+$/,"");
+        row.querySelector("[data-production-qty]").value=(Number(inputs[i].quantity)*planned/Number(recipe.yield_quantity||1)).toFixed(3);
       });
       $("accountingProductionOutput").innerHTML=productionRow("output",["finished_good"]);
       const outputRow=$("accountingProductionOutput").querySelector(".accounting-production-line");
