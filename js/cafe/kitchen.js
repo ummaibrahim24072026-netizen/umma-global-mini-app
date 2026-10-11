@@ -50,7 +50,9 @@
       const paymentStatus = order.payment_status === "paid" ? "Оплачено" : "Ожидает оплаты";
       const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
-      const deliveryAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && deliveryNext[order.delivery_status]
+      const canManageDelivery = ["manager","cashier","waiter"].includes(orderStaffRole) ||
+        (orderStaffRole === "courier" && ["courier_assigned","picked_up"].includes(order.delivery_status));
+      const deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status]
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
       const paymentAction = canManagePayment && order.payment_status !== "paid"
