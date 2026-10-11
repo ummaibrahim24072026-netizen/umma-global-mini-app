@@ -1,13 +1,14 @@
 (function(){
   "use strict";
   const API="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen";
+  const MENU_API="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
   const $=id=>document.getElementById(id);
   const roleNames={waiter:"Официант",cashier:"Кассир",kitchen:"Кухня",manager:"Менеджер",courier:"Курьер"};
   const statusNames={new:"Новый",confirmed:"Принят",preparing:"Готовится",ready:"Готов",completed:"Завершён",cancelled:"Отменён"};
   const deliveryNames={not_required:"Не требуется",waiting_courier:"Ожидает курьера",courier_assigned:"Курьер назначен",picked_up:"В пути",delivered:"Доставлен"};
   const money=v=>new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(v)||0);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  let locations=[], locationId="", role="waiter", orders=[], shifts=[];
+  let locations=[], locationId="", role="waiter", orders=[], shifts=[], products=[];
   async function call(action,extra={}){
     const initData=window.Telegram?.WebApp?.initData;
     if(!initData) throw new Error("Откройте приложение через Telegram.");
@@ -35,7 +36,7 @@
     const root=$("ummaSandboxActions");if(!root)return;
     let html="";
     if(role==="waiter"||role==="manager"){
-      html+='<form id="ummaSandboxCreate" style="display:grid;gap:8px;padding:12px;border:1px solid #e3e8e8;border-radius:12px"><strong>Создать тестовый заказ</strong><label>Сумма, VND<input id="ummaSandboxAmount" type="number" min="1000" step="1000" value="120000" required style="display:block;width:100%;padding:10px;margin-top:4px"></label><label>Тип<select id="ummaSandboxType" style="display:block;width:100%;padding:10px;margin-top:4px"><option value="dine_in">В кафе</option><option value="pickup">Самовывоз</option><option value="delivery">Доставка</option></select></label><label>Оплата<select id="ummaSandboxPaymentMethod" style="display:block;width:100%;padding:10px;margin-top:4px"><option value="cash">Наличные</option><option value="qr">QR</option></select></label><button class="cafe-submit" type="submit">＋ Создать тестовый заказ</button></form>';
+      html+='<form id="ummaSandboxCreate" style="display:grid;gap:10px;padding:12px;border:1px solid #e3e8e8;border-radius:12px"><strong>Новый тестовый заказ</strong><p style="margin:0;font-size:13px">Выбери блюда и количество. Сумма рассчитывается автоматически по цене из меню.</p><div id="ummaSandboxMenu">'+(products.length?products.map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #e3e8e8"><div><strong>'+esc(p.name_ru||p.name_en||p.name_vi||"Блюдо")+'</strong><div style="font-size:13px;color:#667">'+money(p.price_vnd)+(p.weight_value?' · '+esc(p.weight_value)+(p.weight_unit==="ml"?" мл":" г"):"")+'</div></div><input aria-label="Количество '+esc(p.name_ru||p.name_en||p.name_vi||"Блюдо")+'" type="number" min="0" max="99" step="1" value="0" data-test-product="'+esc(p.id)+'" style="width:76px;padding:9px;border:1px solid #ccd5d5;border-radius:8px"></div>').join(""):'<p>Меню загружается или недоступно.</p>')+'</div><div style="padding:10px;background:#f2f7f6;border-radius:8px"><span>Итого:</span> <strong id="ummaSandboxTotal">0 ₫</strong></div><label>Тип заказа<select id="ummaSandboxType" style="display:block;width:100%;padding:10px;margin-top:4px"><option value="dine_in">В кафе</option><option value="pickup">Самовывоз</option><option value="delivery">Доставка</option></select></label><label>Способ оплаты<select id="ummaSandboxPaymentMethod" style="display:block;width:100%;padding:10px;margin-top:4px"><option value="cash">Наличные</option><option value="qr">QR</option></select></label><button class="cafe-submit" type="submit" '+(products.length?'':'disabled')+'>Проверить и подтвердить тестовый заказ</button></form>';
     }
     if(role==="cashier"||role==="manager"){
       html+='<form id="ummaSandboxOpenShift" style="display:grid;gap:8px;padding:12px;border:1px solid #e3e8e8;border-radius:12px"><strong>Тестовая кассовая смена</strong><label>Начальная касса, VND<input id="ummaSandboxOpening" type="number" min="0" step="1000" value="0" required style="display:block;width:100%;padding:10px;margin-top:4px"></label><button class="cafe-submit" type="submit">Открыть тестовую смену</button></form>';
@@ -43,7 +44,11 @@
     if(role==="manager") html+='<button id="ummaSandboxReset" type="button" style="padding:10px;border:1px solid #b94b40;background:#fff;color:#9b3028;border-radius:9px">Очистить тестовые данные этого кафе</button>';
     html+='<button id="ummaSandboxRefresh" type="button" style="padding:10px;border:1px solid #ccd5d5;background:#fff;border-radius:9px">↻ Обновить тестовые данные</button>';
     root.innerHTML=html;
-    $("ummaSandboxCreate")?.addEventListener("submit",async e=>{e.preventDefault();try{await call("sandboxCreateOrder",{totalVnd:Number($("ummaSandboxAmount").value),orderType:$("ummaSandboxType").value,paymentMethod:$("ummaSandboxPaymentMethod").value,customerName:"Тестовый гость",note:"Создано в изолированном тестовом режиме"});message("Тестовый заказ создан. Реальные заказы не затронуты.");await refresh();}catch(err){message(err.message);}});
+    const orderForm=$("ummaSandboxCreate");
+    const calculateTotal=()=>{let total=0;orderForm?.querySelectorAll("[data-test-product]").forEach(input=>{const p=products.find(x=>String(x.id)===input.dataset.testProduct);const q=Math.max(0,Math.min(99,Math.floor(Number(input.value)||0)));if(p)total+=Number(p.price_vnd)*q;});const out=$("ummaSandboxTotal");if(out)out.textContent=money(total);return total;};
+    orderForm?.querySelectorAll("[data-test-product]").forEach(input=>input.addEventListener("input",calculateTotal));
+    calculateTotal();
+    orderForm?.addEventListener("submit",async e=>{e.preventDefault();try{const items=[];orderForm.querySelectorAll("[data-test-product]").forEach(input=>{const quantity=Math.max(0,Math.min(99,Math.floor(Number(input.value)||0)));if(quantity>0)items.push({productId:input.dataset.testProduct,quantity});});if(!items.length)throw new Error("Добавь хотя бы одно блюдо в заказ.");const expected=calculateTotal();if(!confirm("Проверь заказ: "+items.length+" видов блюд, сумма "+money(expected)+". Подтвердить тестовый заказ?"))return;await call("sandboxCreateOrder",{items,orderType:$("ummaSandboxType").value,paymentMethod:$("ummaSandboxPaymentMethod").value,customerName:"Тестовый гость",note:"Создано в изолированном тестовом режиме"});message("Тестовый заказ создан. Сумма рассчитана автоматически по меню; реальные заказы не затронуты.");await refresh();}catch(err){message(err.message);}});
     $("ummaSandboxOpenShift")?.addEventListener("submit",async e=>{e.preventDefault();try{await call("sandboxOpenShift",{openingCashVnd:Number($("ummaSandboxOpening").value)});message("Тестовая смена открыта.");await refresh();}catch(err){message(err.message);}});
     $("ummaSandboxReset")?.addEventListener("click",async()=>{if(!confirm("Удалить все тестовые заказы, события и тестовые смены выбранного кафе? Реальные данные не затрагиваются."))return;try{await call("sandboxReset");message("Тестовые данные очищены.");await refresh();}catch(err){message(err.message);}});
     $("ummaSandboxRefresh")?.addEventListener("click",refresh);
@@ -56,11 +61,15 @@
       const data=await bootResponse.json();
       if(!bootResponse.ok||!data.ok) throw new Error(data.error||"Тестовый режим недоступен");
       locations=data.locations||[];
+      const menuResponse=await fetch(MENU_API);
+      const menuData=await menuResponse.json();
+      if(!menuResponse.ok||!menuData.ok) throw new Error(menuData.error||"Не удалось загрузить меню кафе");
+      products=Array.isArray(menuData.products)?menuData.products:[];
       const select=$("ummaSandboxLocation");
       select.innerHTML=locations.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
       locationId=locations[0]?.id||"";
       if(!locationId){message("Не найдено активное кафе для тестирования.");return;}
-      select.value=locationId;await refresh();
+      select.value=locationId;renderActions();await refresh();
     }catch(e){message(e.message);}
   }
   function orderActions(o){
