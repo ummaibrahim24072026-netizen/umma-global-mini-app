@@ -48,7 +48,7 @@
     e.preventDefault();if(busy)return;if(!allowed()){message("Доступ запрещён");return;}busy=true;$("cafeProductSave").disabled=true;message("Сохраняем товар…");
     try{
       const product={id:$("cafeProductId").value||undefined,name_ru:$("cafeProductRu").value.trim(),name_vi:$("cafeProductVi").value.trim(),name_en:$("cafeProductEn").value.trim(),category_id:$("cafeProductCategory").value||null,price_vnd:Number($("cafeProductPrice").value),weight_value:$("cafeProductWeight").value===""?null:Number($("cafeProductWeight").value),weight_unit:$("cafeProductWeightUnit").value,description_ru:$("cafeProductDescRu").value,description_vi:$("cafeProductDescVi").value,description_en:$("cafeProductDescEn").value,image_url:$("cafeProductImage").value,sku:$("cafeProductSku").value};
-      await api({action:"save",product});resetForm();await load();message("Товар сохранён. Активные товары доступны в меню кафе.");
+      await api({action:"save",product});resetForm();busy=false;await load();message("Товар сохранён. Активные товары доступны в меню кафе.");
     }catch(err){message(err.message||"Не удалось сохранить товар");}finally{busy=false;$("cafeProductSave").disabled=false;}
   });
   $("cafeProductsAdminList")?.addEventListener("click",async e=>{
@@ -57,7 +57,7 @@
     const b=t.closest("[data-toggle]");if(!b)return;const p=products.find(x=>x.id===b.getAttribute("data-toggle"));if(!p)return;
     const active=b.getAttribute("data-active")==="true";if(!confirm(active?"Вернуть товар в меню кафе?":"Скрыть товар из меню? История старых заказов сохранится."))return;
     busy=true;message("Обновляем товар…");
-    try{await api({action:"setActive",id:p.id,is_active:active});await load();message(active?"Товар снова опубликован.":"Товар скрыт из меню; история заказов сохранена.");}
+    try{await api({action:"setActive",id:p.id,is_active:active});busy=false;await load();message(active?"Товар снова опубликован.":"Товар скрыт из меню; история заказов сохранена.");}
     catch(err){message(err.message||"Не удалось обновить товар");}finally{busy=false;}
   });
 })();
