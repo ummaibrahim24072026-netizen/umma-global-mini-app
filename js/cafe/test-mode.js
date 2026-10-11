@@ -26,7 +26,7 @@
       '<label>Тестовая должность<select id="ummaSandboxRole" style="display:block;width:100%;padding:10px;margin-top:4px;border:1px solid #ccd5d5;border-radius:8px"><option value="waiter">Официант</option><option value="cashier">Кассир</option><option value="kitchen">Кухня</option><option value="manager">Менеджер</option><option value="courier">Курьер</option></select></label></div>'+
       '<div id="ummaSandboxMessage" hidden style="padding:10px;margin:8px 0;background:#fbe9e6;border-radius:8px;color:#8a2f24"></div>'+
       '<div id="ummaSandboxActions" style="display:grid;gap:10px"></div><div id="ummaSandboxOrders" style="margin-top:14px"></div><div id="ummaSandboxEvents" style="margin-top:14px"></div>';
-    const header=page.querySelector(".cafe-kitchen-header");header?.after(panel);
+    const header=page.querySelector(".cafe-kitchen-header");if(header)header.after(panel);else page.prepend(panel);
     $("ummaSandboxLocation").addEventListener("change",async e=>{locationId=e.target.value;await refresh();});
     $("ummaSandboxRole").addEventListener("change",async e=>{role=e.target.value;renderActions();await refresh();});
     renderActions(); init();
