@@ -155,14 +155,20 @@
     const finished=data.stockItems.filter(s=>s.is_active&&s.item_type==="finished_good");
     if(!raw.length||!finished.length)return '<div class="accounting-note">Для производства сначала добавьте в разделе «Склад» хотя бы одну позицию сырья и одну позицию типа «Готовая продукция».</div>'+renderProductionList();
     return '<div class="accounting-form"><h3>Новая производственная партия</h3><form id="accountingProductionForm">'+
-      '<div class="accounting-fields"><label>Дата<input type="date" name="productionDate" value="'+new Date().toISOString().slice(0,10)+'" required></label><label>Номер партии<input name="batchNumber" maxlength="100"></label><label>План выпуска<input name="plannedQuantity" type="number" min="0.001" step="0.001" required></label></div>'+
+      '<div class="accounting-fields"><label>Дата<input type="date" name="productionDate" value="'+new Date().toISOString().slice(0,10)+'" required></label><label>Номер партии<input name="batchNumber" maxlength="100"></label><label>План выпуска<input name="plannedQuantity" type="number" min="0.001" step="0.001" required></label><label>Рецептура<select name="recipeId" id="accountingProductionRecipe">'+selectOptions(data.recipes.filter(r=>r.is_active),"id",r=>(r.products?.name_ru||"Блюдо")+" · v"+r.version,"Вручную без рецептуры")+'</select></label></div><button type="button" class="accounting-secondary" id="accountingApplyRecipe">Заполнить состав по рецептуре</button>'+
       '<h4>Сырьё</h4><div id="accountingProductionInputs">'+productionRow("input",["raw_material","packaging","other"])+'</div><button type="button" class="accounting-secondary" id="accountingAddProductionInput">+ Добавить ингредиент</button>'+
       '<h4>Готовая продукция</h4><div id="accountingProductionOutput">'+productionRow("output",["finished_good"])+'</div><label>Комментарий<input name="notes" maxlength="1000"></label><button class="accounting-primary" type="submit">Создать черновик производства</button></form></div>'+
       '<h3>Производственные партии</h3>'+renderProductionList();
   }
+  function recipeRow() {
+    return '<div class="accounting-line accounting-production-line accounting-recipe-line"><select data-recipe-item required>'+stockOptions(["raw_material","packaging","other"])+'</select><input data-recipe-qty type="number" min="0.001" step="0.001" placeholder="Кол-во" required><button type="button" data-remove-line aria-label="Удалить">×</button></div>';
+  }
   function renderRecipes() {
-    return '<div class="accounting-note">Рецептуры хранятся версиями в базе. Следующий шаг — форма рецептуры и автоматическое списание ингредиентов по выбранному блюду. Пока производство можно фиксировать вручную через раздел «Производство».</div>'+
-      '<h3>Рецептуры</h3><div class="accounting-list">'+(data.recipes.map(r=>'<article><strong>'+esc(r.products?.name_ru||"Блюдо")+' · версия '+esc(r.version)+'</strong><small>'+((r.recipe_items||[]).map(i=>esc(i.stock_items?.name_ru||"ингредиент")+" × "+qty(i.quantity)+" "+esc(unitNames[i.stock_items?.base_unit]||"")).join(" · "))+'</small><span>'+(r.is_active?"Активна":"Неактивна")+'</span></article>').join("")||'<div class="accounting-empty">Рецептуры пока не созданы.</div>')+'</div>';
+    return '<div class="accounting-form"><h3>Создать рецептуру блюда</h3><form id="accountingRecipeForm">'+
+      '<div class="accounting-fields"><label>Блюдо меню<select name="productId" required>'+selectOptions(data.products,"id",p=>p.name_ru,"Выберите блюдо меню")+'</select></label><label>Выход рецептуры<input name="yieldQuantity" type="number" min="0.001" step="0.001" value="1" required></label><label>Единица выхода<input name="yieldUnit" maxlength="30" value="portion" required></label><label>Комментарий<input name="notes" maxlength="1000"></label></div>'+
+      '<h4>Ингредиенты на указанный выход</h4><div id="accountingRecipeLines">'+recipeRow()+'</div><button type="button" class="accounting-secondary" id="accountingAddRecipeItem">+ Добавить ингредиент</button><button class="accounting-primary" type="submit">Сохранить рецептуру</button></form></div>'+
+      '<div class="accounting-note">Для автоматического выпуска готового блюда создайте складскую позицию типа «Готовая продукция» и привяжите её к блюду меню. Рецептура задаёт расход сырья на указанное количество выхода.</div>'+
+      '<h3>Сохранённые рецептуры</h3><div class="accounting-list">'+(data.recipes.map(r=>'<article><strong>'+esc(r.products?.name_ru||"Блюдо")+' · версия '+esc(r.version)+'</strong><small>Выход: '+qty(r.yield_quantity)+' '+esc(r.yield_unit)+' · '+((r.recipe_items||[]).map(i=>esc(i.stock_items?.name_ru||"ингредиент")+" × "+qty(i.quantity)+" "+esc(unitNames[i.stock_items?.base_unit]||"")).join(" · "))+'</small><span>'+(r.is_active?"Активна":"Неактивна")+'</span></article>').join("")||'<div class="accounting-empty">Рецептуры пока не созданы.</div>')+'</div>';
   }
   function render() {
     const root=$("accountingContent"); if(!root)return;
@@ -220,6 +226,31 @@
     if(target.closest("#accountingRefresh")){await reload();return;}
     if(target.closest("#accountingAddPurchaseLine")){$("accountingPurchaseLines")?.insertAdjacentHTML("beforeend",purchaseRow());return;}
     if(target.closest("#accountingAddProductionInput")){$("accountingProductionInputs")?.insertAdjacentHTML("beforeend",productionRow("input",["raw_material","packaging","other"]));return;}
+    if(target.closest("#accountingAddRecipeItem")){$("accountingRecipeLines")?.insertAdjacentHTML("beforeend",recipeRow());return;}
+    if(target.closest("#accountingApplyRecipe")){
+      const form=$("accountingProductionForm");
+      const recipeId=$("accountingProductionRecipe")?.value;
+      const recipe=data.recipes.find(r=>r.id===recipeId);
+      if(!recipe){message("Сначала выберите сохранённую рецептуру.",true,true);return;}
+      const planned=Number(form?.elements.namedItem("plannedQuantity")?.value||0);
+      if(!Number.isFinite(planned)||planned<=0){message("Сначала укажите план выпуска.",true,true);return;}
+      const outputItem=data.stockItems.find(s=>s.linked_product_id===recipe.product_id&&s.is_active&&s.item_type==="finished_good");
+      if(!outputItem){message("Для блюда из рецептуры создайте складскую позицию «Готовая продукция» и привяжите её к этому блюду меню.",true,true);return;}
+      const inputs=recipe.recipe_items||[];
+      if(!inputs.length){message("В выбранной рецептуре нет ингредиентов.",true,true);return;}
+      $("accountingProductionInputs").innerHTML=inputs.map(()=>productionRow("input",["raw_material","packaging","other"])).join("");
+      Array.from($("accountingProductionInputs").querySelectorAll(".accounting-production-line")).forEach((row,i)=>{
+        row.querySelector("[data-production-item]").value=inputs[i].stock_item_id;
+        row.querySelector("[data-production-qty]").value=(Number(inputs[i].quantity)*planned/Number(recipe.yield_quantity||1)).toFixed(3).replace(/\\.?0+$/,"");
+      });
+      $("accountingProductionOutput").innerHTML=productionRow("output",["finished_good"]);
+      const outputRow=$("accountingProductionOutput").querySelector(".accounting-production-line");
+      outputRow.querySelector("[data-production-item]").value=outputItem.id;
+      outputRow.querySelector("[data-production-qty]").value=String(planned);
+      message("Состав заполнен по рецептуре. Проверьте количества перед сохранением.",true,false);
+      return;
+    }
+
     const remove=target.closest("[data-remove-line]");if(remove){remove.closest(".accounting-line")?.remove();return;}
     const setBalance=target.closest("[data-set-balance]");
     if(setBalance){
@@ -297,12 +328,18 @@
         if(locationId==="all")throw new Error("Перед записью расхода выберите конкретный филиал.");
         await api({action:"createExpense",locationId:locationId,description:f.get("description"),category:f.get("category"),amountVnd:Number(f.get("amountVnd")),expenseDate:f.get("expenseDate"),receiptReference:f.get("receiptReference"),notes:f.get("notes")});
         form.reset();await reload();message("Расход записан как неоплаченный. Нажмите «Оплатить» в списке, когда деньги будут переданы.",true,false);
+      } else if(form.id==="accountingRecipeForm"){
+        event.preventDefault();const f=new FormData(form);
+        const items=Array.from(form.querySelectorAll(".accounting-recipe-line")).map(row=>({stockItemId:row.querySelector("[data-recipe-item]").value,quantity:Number(row.querySelector("[data-recipe-qty]").value)}));
+        if(items.some(i=>!i.stockItemId||!i.quantity)){message("Заполните все ингредиенты рецептуры.",true,true);return;}
+        await api({action:"createRecipe",productId:f.get("productId"),yieldQuantity:Number(f.get("yieldQuantity")),yieldUnit:f.get("yieldUnit"),notes:f.get("notes"),items});
+        await reload();message("Рецептура сохранена новой версией.",true,false);
       } else if(form.id==="accountingProductionForm"){
         event.preventDefault();const f=new FormData(form);
         const items=Array.from(form.querySelectorAll(".accounting-production-line")).map(row=>({direction:row.dataset.direction,stockItemId:row.querySelector("[data-production-item]").value,quantity:Number(row.querySelector("[data-production-qty]").value)}));
         if(items.some(i=>!i.stockItemId||!i.quantity)){message("Заполните сырьё и готовую продукцию.",true,true);return;}
         if(locationId==="all")throw new Error("Перед созданием производства выберите конкретный филиал.");
-        await api({action:"createProduction",locationId:locationId,productionDate:f.get("productionDate"),batchNumber:f.get("batchNumber"),plannedQuantity:Number(f.get("plannedQuantity")),notes:f.get("notes"),items});
+        await api({action:"createProduction",locationId:locationId,recipeId:f.get("recipeId")||null,productionDate:f.get("productionDate"),batchNumber:f.get("batchNumber"),plannedQuantity:Number(f.get("plannedQuantity")),notes:f.get("notes"),items});
         await reload();message("Черновик производства создан. Проведение спишет сырьё и оприходует готовую продукцию.",true,false);
       }
     } catch(e){message(e.message||"Операция не выполнена",true,true);}
