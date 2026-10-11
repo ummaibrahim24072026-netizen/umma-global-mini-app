@@ -50,7 +50,11 @@
   }
   async function init(){
     try{
-      const data=await call("cashList");
+      const initData=window.Telegram?.WebApp?.initData;
+      if(!initData) throw new Error("Откройте приложение через Telegram.");
+      const bootResponse=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData,action:"sandboxBootstrap"})});
+      const data=await bootResponse.json();
+      if(!bootResponse.ok||!data.ok) throw new Error(data.error||"Тестовый режим недоступен");
       locations=data.locations||[];
       const select=$("ummaSandboxLocation");
       select.innerHTML=locations.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
