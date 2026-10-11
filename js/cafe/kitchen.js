@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
   const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
   const nextStep = { pending:{status:"confirmed",label:"Принять заказ"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
-  let orders = [], couriers = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map();
+  let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map();
 
   function isAllowed() {
     return ["super_admin", "admin", "employee"].includes(window.ummaRole);
@@ -57,6 +57,9 @@
         && !(orderStaffRole === "courier" && Number(order.courier_telegram_id) !== Number(actorTelegramId))
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
+      const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
+      const routeAction = order.order_type === "delivery" && order.delivery_address
+        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(order.delivery_address) + '" data-route-origin-lat="' + esc(routeLocation?.latitude ?? "") + '" data-route-origin-lng="' + esc(routeLocation?.longitude ?? "") + '" data-route-origin-name="' + esc(routeLocation?.name ?? "") + '" data-route-order-number="' + esc(order.order_number) + '">🗺️ Маршрут</button>' : "";
       const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && ["waiting_courier","courier_assigned"].includes(order.delivery_status)
         ? '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" style="max-width:210px;padding:9px;border:1px solid #ccd5d5;border-radius:9px"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Назначить курьера</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status);
@@ -73,7 +76,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + courierAssignAction + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + '</div></article>';
     }).join("");
   }
 
@@ -97,6 +100,7 @@
       const result = await api({ action:"list" });
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       couriers = Array.isArray(result.couriers) ? result.couriers : [];
+      locations = Array.isArray(result.locations) ? result.locations : [];
       actorTelegramId = result.actorTelegramId ?? null;
       orders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
@@ -122,6 +126,7 @@
     const result = await api({ action:"list" });
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
+    locations = Array.isArray(result.locations) ? result.locations : [];
     actorTelegramId = result.actorTelegramId ?? null;
   }
 
