@@ -455,6 +455,7 @@
         <button
           type="button"
           class="admin-card"
+          id="adminProductsButton"
         >
           <span>📦</span>
           <strong>Товары и инвентарь</strong>
@@ -562,6 +563,39 @@
 
   </section>
 
+
+  <!-- CAFE PRODUCT CATALOG ADMIN -->
+  <section id="cafeProductsAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeProductsAdminBack" class="cafe-back">← Администрирование</button>
+        <h1>Товары кафе</h1>
+        <p>Добавляйте и редактируйте блюда. Скрытие не удаляет историю заказов.</p>
+      </div>
+      <form id="cafeProductForm" class="cafe-staff-assign-form">
+        <h2 id="cafeProductFormTitle">Добавить товар</h2>
+        <input id="cafeProductId" type="hidden">
+        <label>Название на русском<input id="cafeProductRu" maxlength="160" required></label>
+        <label>Tên tiếng Việt<input id="cafeProductVi" maxlength="160" required></label>
+        <label>Name in English<input id="cafeProductEn" maxlength="160" required></label>
+        <label>Категория<select id="cafeProductCategory"><option value="">Без категории</option></select></label>
+        <label>Цена, VND<input id="cafeProductPrice" type="number" min="0" max="100000000" step="1000" required></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Вес / объём<input id="cafeProductWeight" type="number" min="0.1" step="0.1" placeholder="450"></label>
+          <label>Единица<select id="cafeProductWeightUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select></label>
+        </div>
+        <label>Описание на русском<textarea id="cafeProductDescRu" rows="2"></textarea></label>
+        <label>Описание на вьетнамском<textarea id="cafeProductDescVi" rows="2"></textarea></label>
+        <label>Описание на английском<textarea id="cafeProductDescEn" rows="2"></textarea></label>
+        <label>URL фото (необязательно)<input id="cafeProductImage" type="url" placeholder="https://…"></label>
+        <label>Артикул (необязательно)<input id="cafeProductSku" maxlength="100"></label>
+        <div style="display:flex;gap:8px"><button id="cafeProductSave" type="submit" class="cafe-submit">Сохранить товар</button><button id="cafeProductCancelEdit" type="button" class="cafe-my-orders-refresh">Очистить</button></div>
+        <div id="cafeProductsAdminMessage" class="cafe-order-result" hidden></div>
+      </form>
+      <div class="cafe-staff-list-heading"><h2>Каталог</h2><button id="cafeProductsAdminRefresh" type="button" class="cafe-my-orders-refresh">↻ Обновить</button></div>
+      <div id="cafeProductsAdminList" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
 
   <!-- CAFE STAFF MANAGEMENT -->
   <section id="cafeStaffAdminPage" class="cafe-staff-admin-page" hidden>
