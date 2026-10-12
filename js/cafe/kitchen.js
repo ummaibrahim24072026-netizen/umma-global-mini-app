@@ -418,10 +418,14 @@
   function updateStaffMenuSelection() {
     const root=byId("staffOrderMenu"); if(!root) return;
     root.querySelectorAll("[data-staff-product]").forEach(card=>{
-      const id=card.getAttribute("data-staff-product"), item=staffCart.get(id), qty=card.querySelector("[data-staff-quantity]"), button=card.querySelector("[data-staff-add]");
+      const id=card.getAttribute("data-staff-product"), item=staffCart.get(id);
+      const qty=card.querySelector("[data-staff-quantity]");
+      const minus=card.querySelector("[data-staff-minus]");
+      const button=card.querySelector("[data-staff-add]");
       card.classList.toggle("staff-product-selected",!!item);
-      if(qty){qty.textContent=item?"✓ Выбрано: "+item.quantity:"";qty.hidden=!item;}
-      if(button){button.setAttribute("aria-label",item?"Добавить ещё "+staffName(item.product):"Добавить "+(card.querySelector("h3")?.textContent||"товар"));button.textContent=item?"+ "+item.quantity:"+ Добавить";}
+      if(qty){qty.textContent=item?String(item.quantity):"";qty.hidden=!item;}
+      if(minus){minus.hidden=!item;minus.setAttribute("aria-label","Уменьшить количество "+(card.querySelector("h3")?.textContent||"товара"));}
+      if(button){button.setAttribute("aria-label",item?"Добавить ещё "+staffName(item.product):"Добавить "+(card.querySelector("h3")?.textContent||"товар"));button.textContent="+";}
     });
   }
   async function loadStaffMenu() {
@@ -431,7 +435,7 @@
       const response=await fetch(STAFF_MENU_URL), result=await response.json();
       if(!response.ok||!result.ok) throw new Error(result.error||"Не удалось загрузить меню");
       staffMenu=Array.isArray(result.products)?result.products:[];
-      root.innerHTML=staffMenu.map(p=>'<article class="cafe-product" data-staff-product="'+esc(p.id)+'"><h3>'+esc(staffName(p))+'</h3><span class="staff-product-quantity" data-staff-quantity hidden></span><div class="cafe-product-bottom"><span class="cafe-product-price">'+staffMoney(p.price_vnd)+'</span><button type="button" class="cafe-add" data-staff-add="'+esc(p.id)+'">+ Добавить</button></div></article>').join("");
+      root.innerHTML=staffMenu.map(p=>'<article class="cafe-product" data-staff-product="'+esc(p.id)+'"><h3>'+esc(staffName(p))+'</h3><div class="cafe-product-bottom"><span class="cafe-product-price">'+staffMoney(p.price_vnd)+'</span><div class="staff-product-qty-controls"><button type="button" class="staff-product-minus" data-staff-minus data-staff-change="-1" data-product-id="'+esc(p.id)+'" aria-label="Уменьшить количество" hidden>−</button><span class="staff-product-quantity" data-staff-quantity hidden></span><button type="button" class="cafe-add staff-product-plus" data-staff-add="'+esc(p.id)+'" aria-label="Добавить '+esc(staffName(p))+'">+</button></div></div></article>').join("");
       updateStaffMenuSelection();
     } catch(e) { root.textContent=e instanceof Error?e.message:"Ошибка загрузки меню"; }
   }
