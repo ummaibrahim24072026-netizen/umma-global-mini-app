@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=40/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=41/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=27/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -94,3 +94,8 @@ assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledg
 assert.match(kitchenLive,/\},3000\);/,"kitchen must poll every 3 seconds");
 assert.match(html,/id="kitchenTabletToggle"/,"kitchen tablet mode missing");
 console.log("PASS kitchen add-on detection, tablet mode, polling and acknowledgement");
+
+assert.match(html,/id="cafeCashToggle"/,"cash controls must have separate entry");
+assert.match(kitchen,/section.hidden = true/,"cash must start collapsed");
+assert.match(kitchen,/ordersRoot.insertAdjacentElement\("afterend", section\)/,"cash must follow kitchen orders");
+console.log("PASS kitchen first and cash collapsed");
