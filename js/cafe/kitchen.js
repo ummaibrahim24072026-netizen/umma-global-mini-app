@@ -462,7 +462,13 @@
     const add=target.closest("[data-staff-add]");
     const change=target.closest("[data-staff-change]");
     const addToBill=target.closest("[data-add-to-bill]");
-    if(addToBill) {
+    const settleBill=target.closest("[data-settle-bill]");
+    if(settleBill) {
+      const order=orders.find(o=>String(o.id)===String(settleBill.getAttribute("data-settle-bill")));
+      if(!order)return;
+      if(order.payment_method==="cash") openCashPayment(order);
+      else updatePayment(order.id,"paid",Number(order.total_vnd)||0,0,order.payment_method||"qr");
+    } else if(addToBill) {
       const wrap=byId("staffOrderFormWrap"); if(wrap){wrap.hidden=false;wrap.style.display="block";}
       setStaffOrderMode(addToBill.getAttribute("data-add-to-bill"));
       byId("waiterOrderToggle").textContent="− Скрыть форму заказа";
@@ -481,7 +487,7 @@
   function renderOpenBills() {
     const root=byId("staffOpenBills"); if(!root) return;
     const open=orders.filter(o=>o.order_type==="dine_in" && o.payment_status!=="paid" && !["completed","cancelled"].includes(o.status));
-    root.innerHTML=open.length?open.map(o=>'<article class="staff-open-bill"><div><strong>Счёт №'+esc(o.order_number)+'</strong><small>'+esc(o.customer_name||"Гость")+' · '+esc(formatDate(o.created_at))+'</small><strong>'+money(o.total_vnd)+'</strong></div><button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button></article>').join(""):'<p class="cafe-empty-cart">Открытых счетов с оплатой позже нет.</p>';
+    root.innerHTML=open.length?open.map(o=>'<article class="staff-open-bill"><div><strong>Счёт №'+esc(o.order_number)+'</strong><small>'+esc(o.customer_name||"Гость")+' · '+esc(formatDate(o.created_at))+'</small><strong>'+money(o.total_vnd)+'</strong></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button><button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button></div></article>').join(""):'<p class="cafe-empty-cart">Открытых счетов с оплатой позже нет.</p>';
   }
   function setStaffOrderMode(billId=null) {
     editingBillId=billId;
