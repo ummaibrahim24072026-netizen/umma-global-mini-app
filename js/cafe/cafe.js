@@ -32,7 +32,18 @@
     if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
     root.innerHTML = visibleProducts.map(p => {
       const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
-      return '<article class="cafe-product"><div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div><h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p><div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span><button type="button" class="cafe-add" data-add-product="' + esc(p.id) + '" aria-label="Добавить ' + esc(name(p)) + '">+</button></div></article>';
+      const selected = cart.get(p.id);
+      const quantity = selected?.quantity || 0;
+      const productId = esc(p.id);
+      return '<article class="cafe-product' + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
+        '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
+        '<h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p>' +
+        '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
+        '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
+        (quantity
+          ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + productId + '" aria-label="Уменьшить ' + esc(name(p)) + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + productId + '" aria-label="Добавить ещё ' + esc(name(p)) + '">+</button></div>'
+          : '<button type="button" class="cafe-add" data-add-product="' + productId + '" aria-label="Добавить ' + esc(name(p)) + '">+</button>') +
+        '</div></article>';
     }).join("");
   }
 
@@ -45,6 +56,41 @@
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length;
+    const sticky = byId("cafeStickyOrder");
+    const stickyCount = byId("cafeStickyCount");
+    const stickyTotal = byId("cafeStickyTotal");
+    if (stickyCount) stickyCount.textContent = count() + (count() === 1 ? " блюдо" : " блюд");
+    if (stickyTotal) stickyTotal.textContent = money(total());
+    if (sticky) sticky.hidden = entries.length === 0;
+    renderProductSelection();
+  }
+
+  function renderProductSelection() {
+    const root = byId("cafeProducts");
+    if (!root) return;
+    root.querySelectorAll("[data-product-card]").forEach(card => {
+      const id = card.getAttribute("data-product-card");
+      const item = cart.get(id);
+      const quantity = item?.quantity || 0;
+      card.classList.toggle("cafe-product-selected", quantity > 0);
+      const badge = card.querySelector(".cafe-product-selection");
+      if (badge) {
+        badge.hidden = quantity === 0;
+        badge.classList.toggle("is-visible", quantity > 0);
+        const value = badge.querySelector(".cafe-product-quantity");
+        if (value) value.textContent = String(quantity);
+      }
+      const bottom = card.querySelector(".cafe-product-bottom");
+      if (!bottom) return;
+      const price = bottom.querySelector(".cafe-product-price");
+      const priceHtml = price ? price.outerHTML : "";
+      const productName = card.querySelector("h3")?.textContent || "блюдо";
+      const safeName = esc(productName);
+      const safeId = esc(id);
+      bottom.innerHTML = priceHtml + (quantity
+        ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + safeId + '" aria-label="Уменьшить ' + safeName + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + safeId + '" aria-label="Добавить ещё ' + safeName + '">+</button></div>'
+        : '<button type="button" class="cafe-add" data-add-product="' + safeId + '" aria-label="Добавить ' + safeName + '">+</button>');
+    });
   }
 
   async function loadMenu() {
