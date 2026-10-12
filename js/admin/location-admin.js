@@ -35,9 +35,12 @@
   }
   function setCoordinates(lat,lng){$("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);}
   function initMap(){
-    if(map||!window.maplibregl)return;
+    if(map)return;
+    if(!window.maplibregl){message("Карта не загрузилась: библиотека MapLibre заблокирована или недоступна. Проверьте подключение к unpkg.com.");return;}
     map=new maplibregl.Map({container:"locationAdminMap",style:"https://tiles.openfreemap.org/styles/positron",center:[109.2020884,12.2814294],zoom:13,attributionControl:true});
     map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-left");
+    map.on("load",()=>{map.resize();});
+    map.on("error",e=>{const err=e?.error?.message||e?.error?.statusText||"неизвестная ошибка";message("Ошибка загрузки карты: "+err);});
     map.on("click",async e=>{
       setPin(e.lngLat.lat,e.lngLat.lng,false);
       const addr=$("locationAddress").value.trim();
