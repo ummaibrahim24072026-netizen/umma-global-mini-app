@@ -64,3 +64,17 @@ assert.match(html, /js\/cafe\/products-admin\.js\?v=\d+/, "product admin script 
 console.log("PASS product catalog create/edit/deactivate UI and courier role");
 console.log("PASS payment ledger and cache-busted script references");
 console.log("NOTE: these are repository/static checks, not a live Telegram payment or delivery transaction.");
+
+// Regression checks: complete staff checkout must appear together after the first item.
+const appCss = read("css/app.css");
+assert.match(html, /<div id="staffOrderSummary" class="cafe-cart" hidden>/, "empty order summary must start hidden");
+assert.match(html, /<div id="staffOrderSummary"[\s\S]*?<form id="staffOrderForm"[\s\S]*?<\/form>\s*<\/div>/, "full checkout form must be inside the order summary");
+for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrderCustomerName","staffOrderNote","staffPaymentTiming","staffOrderPayment","staffCashReceived","staffCashDue","staffCashChange","staffOrderSubmit"]) {
+  assert.match(html, new RegExp('id="' + id + '"'), "checkout field missing: " + id);
+}
+assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
+assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
+assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=38/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=25/, "Telegram must load updated checkout CSS");
+console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
