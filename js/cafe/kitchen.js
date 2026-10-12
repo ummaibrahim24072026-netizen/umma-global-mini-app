@@ -415,8 +415,8 @@
     total.textContent=staffMoney(items.reduce((sum,x)=>sum+Number(x.product.price_vnd)*x.quantity,0));
     updateStaffMenuSelection();
     refreshStaffCashFields();
-    const guestLabel=byId("staffOrderGuestLabel");
-    if(guestLabel)guestLabel.hidden=!items.length;
+    const summary=byId("staffOrderSummary");
+    if(summary)summary.hidden=!items.length;
     if(submit) submit.disabled=!items.length || busy;
   }
   function updateStaffMenuSelection() {
