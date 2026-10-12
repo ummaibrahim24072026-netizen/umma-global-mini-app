@@ -708,13 +708,16 @@
       <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
         Здесь официант оформляет заказы гостей. Передача наличных, кассовые отчёты и сверка смены находятся в отдельном интерфейсе.
       </div>
-<button type="button" id="waiterOrderToggle" class="cafe-submit" style="display:block;width:100%;margin:12px 0">＋ Оформить заказ</button>
+<div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
+        <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
+        <button type="button" id="staffActiveOrdersToggle" class="staff-workspace-tab" aria-selected="false">📋 Активные заказы</button>
+      </div>
       <section class="staff-order-builder">
 
-        <div id="staffOrderFormWrap" hidden>
+        <div id="staffOrderFormWrap">
           <h2>Оформить заказ гостя</h2><label id="staffOrderLocationLabel" hidden>Кафе / филиал<select id="staffOrderLocation" required><option value="">Выберите кафе</option></select></label>
           <p>Если у гостя нет телефона, официант оформляет заказ здесь.</p>
-          <h3>Открытые счета (оплата позже)</h3><div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем открытые счета…</p></div><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
+          <p>Создай заказ для гостя здесь. Для контроля уже оформленных заказов открой вкладку «Активные заказы».</p><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
           <div class="cafe-cart">
             <h3>Состав заказа</h3>
             <div id="staffOrderCart"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
@@ -731,6 +734,12 @@
             </form>
           </div>
         </div>
+        <div id="staffActiveOrdersWrap" hidden>
+          <h2>Активные заказы</h2>
+          <p>Все незавершённые заказы кафе: оплата, сумма и текущий этап выполнения.</p>
+          <div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем заказы…</p></div>
+          <div id="staffActiveOrders" class="staff-active-orders"></div>
+        </div>div>
       </section>
     </div>
   </section>
