@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=19">
+  <link rel="stylesheet" href="css/app.css?v=20">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -714,7 +714,7 @@
         <div id="staffOrderFormWrap" hidden>
           <h2>Оформить заказ гостя</h2>
           <p>Если у гостя нет телефона, официант оформляет заказ здесь.</p>
-          <div id="staffOrderMenu" class="cafe-products"></div>
+          <h3>Открытые счета (оплата позже)</h3><div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем открытые счета…</p></div><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
           <div class="cafe-cart">
             <h3>Состав заказа</h3>
             <div id="staffOrderCart"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
@@ -725,7 +725,7 @@
               <label>Телефон (необязательно)<input id="staffOrderCustomerPhone" maxlength="40" placeholder="+84…"></label>
               <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
-              <label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div><p class="cafe-order-hint">После подтверждения оплаты заказ будет передан на кухню.</p>
+              <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Оплата сразу</option><option value="later">Оплата позже — общий счёт после трапезы</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
               <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
             </form>
@@ -1003,7 +1003,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=8"></script>
-<script src="js/cafe/kitchen.js?v=26"></script>
+<script src="js/cafe/kitchen.js?v=27"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
