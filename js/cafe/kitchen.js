@@ -32,7 +32,7 @@
       return;
     }
     showMessage("", false);
-    root.innerHTML = shown.map(order => {
+    root.innerHTML = shown.map(order => {\n      const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
@@ -74,7 +74,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + '</div></article>';
     }).join("");
   }
 
@@ -103,6 +103,7 @@
       actorTelegramId = result.actorTelegramId ?? null;
       orders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
+      window.ummaKitchenLive?.update(orders);
       render();
       renderOpenBills();
       renderStaffActiveOrders();
@@ -131,6 +132,8 @@
     locations = Array.isArray(result.locations) ? result.locations : [];
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
+    window.ummaKitchenLive?.update(orders);
+    render();
     renderOpenBills();
     renderStaffActiveOrders();
     renderStaffClosedOrders();
@@ -150,6 +153,7 @@
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
     loadOrders();
+    window.ummaKitchenLive?.start();
     loadCash();
     window.scrollTo({ top:0, behavior:"smooth" });
   }
@@ -678,5 +682,5 @@
   renderStaffCart();
   setStaffOrderMode(null);
 
-  window.ummaKitchen = { open, refresh:loadOrders };
+  window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();
