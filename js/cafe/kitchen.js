@@ -229,6 +229,7 @@
     if(typeof setActiveNav==="function") setActiveNav("home");
     window.scrollTo({top:0,behavior:"smooth"});
   });
+  byId("cafeWaiterKitchen")?.addEventListener("click", open);
   byId("cafeWaiterRefresh")?.addEventListener("click", loadStaffMenu);
   byId("cafeKitchenBack")?.addEventListener("click", () => {
     if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = true;
