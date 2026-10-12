@@ -36,14 +36,11 @@
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
       const orderStaffRole = order.staffRole || staffRole;
-      const allowedForRole = orderStaffRole === "manager" ||
-        (orderStaffRole === "cashier" && order.status === "pending") ||
-        (orderStaffRole === "waiter" && ["pending", "ready"].includes(order.status)) ||
-        (orderStaffRole === "kitchen" && ["confirmed", "preparing"].includes(order.status));
+      const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
       const action = next && allowedForRole && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
       const canCancel = !["completed","cancelled"].includes(order.status) &&
-        (orderStaffRole === "manager" || (["cashier","waiter"].includes(orderStaffRole) && order.status === "pending"));
+        ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
       const paymentMethod = { cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
@@ -505,12 +502,12 @@
       const payment=o.payment_status==="paid"?"Оплачено":"Ожидает оплаты";
       const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type;
       const next=nextStep[o.status],role=o.staffRole||staffRole;
-      const canAdvance=next&&(role==="manager"||(role==="waiter"&&["pending","ready"].includes(o.status))||(role==="cashier"&&o.status==="pending")||(role==="kitchen"&&["confirmed","preparing"].includes(o.status)))&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
+      const canAdvance=next&&["manager","waiter","cashier","kitchen"].includes(role)&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
       const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
       const pay=o.payment_status!=="paid"&&o.canAcceptPayments===true?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">Принять оплату</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+pay+add+settle+step+'</div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+(o.lastStatusEvent?'<div class="staff-active-order-audit">Статус изменил: <strong>'+esc(o.lastStatusEvent.actor_name)+'</strong> · '+esc(statusNames[o.lastStatusEvent.to_status]||o.lastStatusEvent.to_status)+' · '+esc(formatDate(o.lastStatusEvent.created_at))+'</div>':(o.accepted_by_telegram_id?'<div class="staff-active-order-audit">Заказ принял сотрудник ID '+esc(o.accepted_by_telegram_id)+(o.accepted_at?' · '+esc(formatDate(o.accepted_at)):'')+'</div>':''))+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+pay+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function setStaffOrderMode(billId=null) {
