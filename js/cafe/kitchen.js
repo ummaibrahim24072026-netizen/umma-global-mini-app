@@ -32,7 +32,8 @@
       return;
     }
     showMessage("", false);
-    root.innerHTML = shown.map(order => {\n      const notice=window.ummaKitchenLive?.notice(order)||"";
+    root.innerHTML = shown.map(order => {
+      const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
