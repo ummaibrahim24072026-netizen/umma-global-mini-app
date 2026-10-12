@@ -415,6 +415,8 @@
     total.textContent=staffMoney(items.reduce((sum,x)=>sum+Number(x.product.price_vnd)*x.quantity,0));
     updateStaffMenuSelection();
     refreshStaffCashFields();
+    const details=byId("staffOrderForm");
+    if(details)details.hidden=!items.length;
     if(submit) submit.disabled=!items.length || busy;
   }
   function updateStaffMenuSelection() {
@@ -627,7 +629,7 @@
         const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod,
           customerName:byId("staffOrderCustomerName").value.trim(),
-          customerPhone:byId("staffOrderCustomerPhone").value.trim(),
+          customerPhone:"",
           deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
         })});
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
