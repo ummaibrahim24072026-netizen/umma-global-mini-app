@@ -794,3 +794,9 @@ button:active { transform: scale(.98); }
 
 /* Keep the entire staff order summary invisible until a dish is selected. */
 #staffOrderSummary[hidden] { display: none !important; }
+
+/* Three compact waiter tabs and isolated closed orders view. */
+.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.staff-workspace-tabs .staff-workspace-tab{min-width:0;padding:10px 5px;font-size:12px;line-height:1.25}
+#staffClosedOrdersWrap[hidden]{display:none!important}
+@media(max-width:380px){.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
