@@ -107,6 +107,7 @@
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       render();
       renderOpenBills();
+      renderStaffActiveOrders();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
     } finally { busy = false; }
@@ -131,6 +132,8 @@
     locations = Array.isArray(result.locations) ? result.locations : [];
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
+    renderOpenBills();
+    renderStaffActiveOrders();
   }
 
   function open() {
@@ -444,19 +447,23 @@
     wrap.hidden=!wrap.hidden;
     if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
   });
-  byId("waiterOrderToggle")?.addEventListener("click", async()=>{
-    const wrap=byId("staffOrderFormWrap"); if(!wrap) { showMessage("Не найдена форма заказа"); return; }
-    const shouldOpen=wrap.hidden || getComputedStyle(wrap).display==="none";
-    wrap.hidden=!shouldOpen;
-    wrap.style.display=shouldOpen?"block":"none";
-    byId("waiterOrderToggle").textContent=shouldOpen?"− Скрыть форму заказа":"＋ Оформить заказ";
-    if(shouldOpen) {
-      const root=byId("staffOrderMenu");
-      if(root && !staffMenu.length) await loadStaffMenu();
-      if(root && !staffMenu.length && !root.textContent.trim()) root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
-      wrap.scrollIntoView({behavior:"smooth",block:"start"});
-    }
+  function showStaffWorkspace(view) {
+    const form=byId("staffOrderFormWrap"), active=byId("staffActiveOrdersWrap");
+    const orderTab=byId("waiterOrderToggle"), activeTab=byId("staffActiveOrdersToggle");
+    const showForm=view!=="active";
+    if(form)form.hidden=!showForm;
+    if(active)active.hidden=showForm;
+    if(orderTab){orderTab.classList.toggle("is-active",showForm);orderTab.setAttribute("aria-selected",String(showForm));}
+    if(activeTab){activeTab.classList.toggle("is-active",!showForm);activeTab.setAttribute("aria-selected",String(!showForm));}
+    if(!showForm){renderOpenBills();renderStaffActiveOrders();}
+  }
+  byId("waiterOrderToggle")?.addEventListener("click",async()=>{
+    showStaffWorkspace("order");
+    const root=byId("staffOrderMenu");
+    if(root&&!staffMenu.length)await loadStaffMenu();
+    if(root&&!staffMenu.length&&!root.textContent.trim())root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
   });
+  byId("staffActiveOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("active"));
   document.addEventListener("click",event=>{
     const target=event.target; if(!(target instanceof Element)) return;
     const add=target.closest("[data-staff-add]");
@@ -485,9 +492,26 @@
   });
   byId("staffOrderType")?.addEventListener("change",()=>{const delivery=byId("staffOrderType").value==="delivery";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=!delivery;});
   function renderOpenBills() {
-    const root=byId("staffOpenBills"); if(!root) return;
-    const open=orders.filter(o=>o.order_type==="dine_in" && o.payment_status!=="paid" && !["completed","cancelled"].includes(o.status));
-    root.innerHTML=open.length?open.map(o=>'<article class="staff-open-bill"><div><strong>Счёт №'+esc(o.order_number)+'</strong><small>'+esc(o.customer_name||"Гость")+' · '+esc(formatDate(o.created_at))+'</small><strong>'+money(o.total_vnd)+'</strong></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button><button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button></div></article>').join(""):'<p class="cafe-empty-cart">Открытых счетов с оплатой позже нет.</p>';
+    const root=byId("staffOpenBills"); if(!root)return;
+    const open=orders.filter(o=>o.order_type==="dine_in"&&o.payment_status!=="paid"&&![ "completed","cancelled"].includes(o.status));
+    root.innerHTML='<h3>Открытые счета · ожидают оплаты ('+open.length+')</h3>'+(open.length?open.map(o=>'<article class="staff-open-bill"><div><strong>Счёт №'+esc(o.order_number)+'</strong><small>'+esc(o.customer_name||"Гость")+' · '+esc(statusNames[o.status]||o.status)+'</small><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline"><button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button><button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button></div></article>').join(""):'<p class="cafe-empty-cart">Нет открытых неоплаченных счетов.</p>');
+  }
+  function renderStaffActiveOrders() {
+    const root=byId("staffActiveOrders");if(!root)return;
+    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    root.innerHTML=active.length?active.map(o=>{
+      const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
+      const itemList=items.map(i=>'<li>'+esc(i.product_name_ru)+' × '+Number(i.quantity)+'</li>').join("");
+      const payment=o.payment_status==="paid"?"Оплачено":"Ожидает оплаты";
+      const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type;
+      const next=nextStep[o.status],role=o.staffRole||staffRole;
+      const canAdvance=next&&(role==="manager"||(role==="waiter"&&["pending","ready"].includes(o.status))||(role==="cashier"&&o.status==="pending")||(role==="kitchen"&&["confirmed","preparing"].includes(o.status)))&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
+      const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
+      const pay=o.payment_status!=="paid"&&o.canAcceptPayments===true?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">Принять оплату</button>':"";
+      const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
+      const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+pay+add+settle+step+'</div></article>';
+    }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function setStaffOrderMode(billId=null) {
     editingBillId=billId;
