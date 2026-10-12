@@ -200,24 +200,9 @@
     }
     window.scrollTo({top:0,behavior:"smooth"});
   }
-  // Universal staff navigation: one employee may work with orders, kitchen and cash.
-  byId("cafeQuickNewOrder")?.addEventListener("click",()=>{
-    openWaiterPage().then(()=>showStaffWorkspace("order"));
-  });
-  byId("cafeQuickKitchen")?.addEventListener("click",()=>{
-    byId("cafeCashPanel")?.setAttribute("hidden","");
-    byId("cafeKitchenOrders")?.scrollIntoView({behavior:"smooth",block:"start"});
-  });
-  byId("cafeQuickOrders")?.addEventListener("click",()=>{
+  // The kitchen never creates a second order form. All order actions live in one guest workspace.
+  byId("cafeKitchenToOrders")?.addEventListener("click",()=>{
     openWaiterPage().then(()=>showStaffWorkspace("active"));
-  });
-  byId("cafeQuickCash")?.addEventListener("click",()=>{
-    ensureCashPanel();
-    const panel=byId("cafeCashPanel");
-    if(panel)panel.hidden=false;
-    const toggle=byId("cafeCashToggle");
-    if(toggle){toggle.setAttribute("aria-expanded","true");toggle.textContent="↑ Скрыть кассу и смену";}
-    panel?.scrollIntoView({behavior:"smooth",block:"start"});
   });
   byId("adminKitchenButton")?.addEventListener("click", open);
   byId("staffEntryButton")?.addEventListener("click", openWaiterPage);
