@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
-  let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest";
+  let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -25,6 +25,7 @@
     if (!root) return;
     const visibleProducts = products.map(p => {
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
+      if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
     }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
@@ -173,9 +174,12 @@
   function changeProduct(productId, delta) {
     const baseProduct = products.find(p => String(p.id) === String(productId));
     const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
-    if (!baseProduct || !stock || stock.is_available === false) return;
-    const product = { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
-      stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) };
+    if (!baseProduct) return;
+    if (inventoryControlEnabled && (!stock || stock.is_available === false)) return;
+    const product = inventoryControlEnabled
+      ? { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
+          stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) }
+      : { ...baseProduct, stockAvailable: 99 };
     const current = cart.get(product.id);
     const quantity = (current?.quantity || 0) + delta;
     if (quantity <= 0) cart.delete(product.id);
