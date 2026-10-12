@@ -457,6 +457,26 @@
     }
   });
   byId("staffOrderType")?.addEventListener("change",()=>{const delivery=byId("staffOrderType").value==="delivery";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=!delivery;});
+  function staffOrderAmount() {
+    return [...staffCart.values()].reduce((sum,item)=>sum+Number(item.product.price_vnd)*item.quantity,0);
+  }
+  function refreshStaffCashFields() {
+    const method=byId("staffOrderPayment")?.value||"cash";
+    const fields=byId("staffCashPaymentFields");
+    const input=byId("staffCashReceived");
+    const dueEl=byId("staffCashDue"), changeEl=byId("staffCashChange"), hint=byId("staffCashHint");
+    const due=staffOrderAmount();
+    if(fields) fields.hidden=method!=="cash";
+    if(dueEl) dueEl.textContent=staffMoney(due);
+    if(method!=="cash") return;
+    const raw=input?.value.trim()||"";
+    const received=raw===""?NaN:Number(raw);
+    const valid=Number.isSafeInteger(received)&&received>=due;
+    if(changeEl) changeEl.textContent=Number.isSafeInteger(received)&&received>=0?staffMoney(Math.max(0,received-due)):"—";
+    if(hint) hint.textContent=!Number.isSafeInteger(received)||received<0?"Введите сумму наличных, полученных от гостя.":received<due?"Не хватает: "+staffMoney(due-received):"Сдача рассчитана автоматически.";
+  }
+  byId("staffOrderPayment")?.addEventListener("change",refreshStaffCashFields);
+  byId("staffCashReceived")?.addEventListener("input",refreshStaffCashFields);
   byId("staffOrderForm")?.addEventListener("submit",async event=>{
     event.preventDefault();
     const message=byId("staffOrderMessage");
@@ -466,21 +486,35 @@
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
     const address=byId("staffOrderAddress")?.value.trim()||"";
+    const paymentMethod=byId("staffOrderPayment").value;
+    const orderTotal=staffOrderAmount();
+    const receivedRaw=byId("staffCashReceived")?.value.trim()||"";
+    const tendered=paymentMethod==="cash"?(receivedRaw===""?NaN:Number(receivedRaw)):orderTotal;
     if(type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
-    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent="Оформляем…";}
+    if(paymentMethod==="cash"&&(!Number.isSafeInteger(tendered)||tendered<orderTotal)){if(message){message.textContent="Укажите полученную наличную сумму не меньше "+staffMoney(orderTotal)+". Сдача рассчитается автоматически.";message.hidden=false;}byId("staffCashReceived")?.focus();return;}
+    const changeAmount=paymentMethod==="cash"?tendered-orderTotal:0;
+    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent="Оформляем и подтверждаем оплату…";}
     if(message)message.hidden=true;
     try{
       const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         initData,staffOrder:true,locationId:staffLocationIds[0],
         items:[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity})),
-        orderType:type,paymentMethod:byId("staffOrderPayment").value,
+        orderType:type,paymentMethod,
         customerName:byId("staffOrderCustomerName").value.trim(),
         customerPhone:byId("staffOrderCustomerPhone").value.trim(),
         deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
       })});
       const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
-      if(message){message.textContent="Заказ №"+result.order.orderNumber+" отправлен на кухню. Сумма: "+staffMoney(result.order.totalVnd);message.hidden=false;}
-      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;renderStaffCart();await loadOrders();
+      const order=result.order;
+      try {
+        await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
+      } catch(paymentError) {
+        if(message){message.textContent="Заказ №"+order.orderNumber+" создан, но подтверждение оплаты не прошло: "+(paymentError instanceof Error?paymentError.message:"ошибка оплаты")+". Не оформляйте повторный заказ; проверьте его в рабочей панели.";message.hidden=false;}
+        await loadOrders();
+        return;
+      }
+      if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;refreshStaffCashFields();renderStaffCart();await loadOrders();
     }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
     finally{if(submit){submit.textContent="Отправить заказ на кухню";submit.disabled=!staffCart.size;}}
   });
