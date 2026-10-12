@@ -791,3 +791,6 @@ button:active { transform: scale(.98); }
 .staff-order-actions-inline .kitchen-action{flex:1 1 140px}
 #staffActiveOrdersWrap[hidden],#staffOrderFormWrap[hidden]{display:none!important}
 @media(max-width:380px){.staff-workspace-tabs{grid-template-columns:1fr}.staff-active-order-head{flex-direction:column}.staff-active-order-head small{text-align:left}}
+
+/* Keep the entire staff order summary invisible until a dish is selected. */
+#staffOrderSummary[hidden] { display: none !important; }
