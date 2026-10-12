@@ -725,7 +725,7 @@
               <label>Телефон (необязательно)<input id="staffOrderCustomerPhone" maxlength="40" placeholder="+84…"></label>
               <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
-              <label>Оплата<select id="staffOrderPayment"><option value="cash">Наличными</option><option value="qr">QR-платёж</option></select></label>
+              <label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div><p class="cafe-order-hint">После подтверждения оплаты заказ будет передан на кухню.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
               <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
             </form>
