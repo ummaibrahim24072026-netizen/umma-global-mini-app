@@ -613,6 +613,8 @@
             await loadOrders(); return;
           }
           if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+        } else if(paymentMethod==="courier"){
+          if(message){message.textContent="Заказ №"+order.orderNumber+" оформлен. Оплата курьеру при вручении; платёж пока не подтверждён.";message.hidden=false;}
         } else {
           if(message){message.textContent="Открыт счёт №"+order.orderNumber+" на "+staffMoney(order.totalVnd)+". Оплата будет после трапезы. Все последующие блюда добавляйте в этот счёт.";message.hidden=false;}
         }
