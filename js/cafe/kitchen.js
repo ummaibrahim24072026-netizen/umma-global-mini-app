@@ -463,7 +463,7 @@
     if(root&&!staffMenu.length&&!root.textContent.trim())root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
   });
   byId("staffActiveOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("active"));
-  document.addEventListener("click",event=>{
+  document.addEventListener("click",async event=>{
     const target=event.target; if(!(target instanceof Element)) return;
     const add=target.closest("[data-staff-add]");
     const change=target.closest("[data-staff-change]");
