@@ -21,7 +21,7 @@ function updateAdminUI(role) {
   const staffEntry = document.getElementById("staffEntry");
   const staffAdminPage = document.getElementById("cafeStaffAdminPage");
   const kitchenPage = document.getElementById("cafeKitchenPage");
-  const canUseStaffWorkspace = role === "admin" || role === "employee";
+  const canUseStaffWorkspace = role === "admin" || role === "employee" || role === "super_admin";
   const isSuperAdmin =
     role === "super_admin" &&
     window.ummaPermissions?.isSuperAdmin === true;
