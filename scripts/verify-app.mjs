@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=42/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=43/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=28/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -115,3 +115,45 @@ assert.match(sandbox,/if\(!response\.ok\|\|!data\.ok\)return/,"unauthorized sand
 assert.match(sandbox,/management\.append\(developer\)/,"developer settings must live under management");
 assert.match(sandbox,/developer\.append\(panel\)/,"sandbox must be inside developer settings");
 console.log("PASS sandbox isolated in superadmin developer settings");
+
+const navigation=read("js/core/navigation.js");
+new vm.Script(navigation,{filename:"navigation.js"});
+assert.match(html,/js\/core\/navigation\.js\?v=1/,"shared navigation not loaded");
+assert.match(html,/id="cafeWaiterKitchen"/,"kitchen shortcut missing in order workspace");
+assert.match(kitchen,/byId\("cafeWaiterKitchen"\)\?\.addEventListener\("click", open\)/,"kitchen shortcut must work");
+const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage"];
+const elements=Object.fromEntries(ids.map(id=>[id,{hidden:true}]));
+elements.cafeCashPanel={hidden:true};
+elements.cafeCashToggle={setAttribute(){},textContent:""};
+elements.cafeKitchenOrders={scrollIntoView(){}};
+const management={open:false};
+const mainMock={style:{display:""}},navMock={style:{display:""}};
+let captureClick;const timers=[];
+const fakeDocument={
+  getElementById:id=>elements[id]||null,
+  querySelector:selector=>selector===".app > main"?mainMock:selector===".bottom-nav"?navMock:selector===".cafe-management-tools"?management:null,
+  addEventListener:(name,callback,capture)=>{if(name==="click"&&capture)captureClick=callback;}
+};
+const fakeWindow={scrollY:0,scrollTo(){},setTimeout:fn=>timers.push(fn)};
+vm.runInNewContext(navigation,{document:fakeDocument,window:fakeWindow});
+const click=(id,transition)=>{
+  let blocked=false;
+  captureClick({target:{closest:()=>({id})},preventDefault(){blocked=true;},stopImmediatePropagation(){}});
+  if(!blocked&&transition)transition();
+  while(timers.length)timers.shift()();
+  return blocked;
+};
+click("adminKitchenButton",()=>{elements.cafeKitchenPage.hidden=false;mainMock.style.display="none";navMock.style.display="none";});
+assert.equal(fakeWindow.ummaNavigation.current(),"cafeKitchenPage");
+click("cafeQuickNewOrder",()=>{elements.cafeKitchenPage.hidden=true;elements.cafeWaiterPage.hidden=false;});
+assert.equal(fakeWindow.ummaNavigation.current(),"cafeWaiterPage");
+assert.equal(click("cafeWaiterBack"),true);
+assert.equal(fakeWindow.ummaNavigation.current(),"cafeKitchenPage","Back from orders must return to kitchen");
+elements.cafeCashPanel.hidden=false;
+assert.equal(click("cafeKitchenBack"),true);
+assert.equal(fakeWindow.ummaNavigation.current(),"cafeKitchenPage","Back from cash must remain in kitchen");
+assert.equal(elements.cafeCashPanel.hidden,true,"Back must collapse cash");
+assert.equal(click("cafeKitchenBack"),true);
+assert.equal(fakeWindow.ummaNavigation.current(),"home","Back from kitchen must return to previous home");
+assert.equal(mainMock.style.display,"");
+console.log("PASS navigation stack: home → kitchen → orders → back → cash → back → home");
