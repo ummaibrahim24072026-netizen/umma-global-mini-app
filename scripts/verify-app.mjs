@@ -75,6 +75,12 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=38/, "Telegram must load updated checkout JS");
-assert.match(html, /css\/app\.css\?v=25/, "Telegram must load updated checkout CSS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=39/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=26/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
+
+assert.match(html, /id="staffClosedOrdersToggle"/, "closed orders tab missing");
+assert.match(html, /id="staffClosedOrdersWrap" hidden/, "closed orders panel missing");
+assert.match(kitchen, /function renderStaffClosedOrders\(\)/, "closed order rendering missing");
+assert.match(kitchen, /\["completed","cancelled"\]\.includes\(o\.status\)/, "closed order status filter missing");
+console.log("PASS closed order tab and statuses");
