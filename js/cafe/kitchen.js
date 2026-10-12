@@ -106,6 +106,7 @@
       render();
       renderOpenBills();
       renderStaffActiveOrders();
+      renderStaffClosedOrders();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
     } finally { busy = false; }
@@ -132,6 +133,7 @@
     actorTelegramId = result.actorTelegramId ?? null;
     renderOpenBills();
     renderStaffActiveOrders();
+    renderStaffClosedOrders();
   }
 
   function open() {
@@ -449,14 +451,19 @@
     if(!wrap.hidden){clearPreviousOrderFeedback();if(!staffMenu.length)await loadStaffMenu();}
   });
   function showStaffWorkspace(view) {
-    const form=byId("staffOrderFormWrap"), active=byId("staffActiveOrdersWrap");
-    const orderTab=byId("waiterOrderToggle"), activeTab=byId("staffActiveOrdersToggle");
-    const showForm=view!=="active";
-    if(form)form.hidden=!showForm;
-    if(active)active.hidden=showForm;
-    if(orderTab){orderTab.classList.toggle("is-active",showForm);orderTab.setAttribute("aria-selected",String(showForm));}
-    if(activeTab){activeTab.classList.toggle("is-active",!showForm);activeTab.setAttribute("aria-selected",String(!showForm));}
-    if(!showForm){renderOpenBills();renderStaffActiveOrders();}
+    const form=byId("staffOrderFormWrap"), active=byId("staffActiveOrdersWrap"), closed=byId("staffClosedOrdersWrap");
+    const tabs=[["waiterOrderToggle","order"],["staffActiveOrdersToggle","active"],["staffClosedOrdersToggle","closed"]];
+    if(form)form.hidden=view!=="order";
+    if(active)active.hidden=view!=="active";
+    if(closed)closed.hidden=view!=="closed";
+    tabs.forEach(([id,name])=>{
+      const tab=byId(id);if(!tab)return;
+      const selected=view===name;
+      tab.classList.toggle("is-active",selected);
+      tab.setAttribute("aria-selected",String(selected));
+    });
+    if(view==="active"){renderOpenBills();renderStaffActiveOrders();}
+    if(view==="closed")renderStaffClosedOrders();
   }
   function clearPreviousOrderFeedback() {
     const message=byId("staffOrderMessage");
@@ -473,6 +480,7 @@
     if(root&&!staffMenu.length&&!root.textContent.trim())root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
   });
   byId("staffActiveOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("active"));
+  byId("staffClosedOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("closed"));
   document.addEventListener("click",async event=>{
     const target=event.target; if(!(target instanceof Element)) return;
     const add=target.closest("[data-staff-add]");
@@ -552,6 +560,19 @@
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
       return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
+  }
+  function renderStaffClosedOrders() {
+    const root=byId("staffClosedOrders");if(!root)return;
+    const closed=orders.filter(o=>["completed","cancelled"].includes(o.status))
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    root.innerHTML=closed.length?closed.map(o=>{
+      const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
+      const itemList=items.map(i=>'<li>'+esc(i.product_name_ru)+' × '+Number(i.quantity)+'</li>').join("");
+      const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type||"";
+      const status=o.status==="completed"?"Завершён":"Отменён";
+      const payment=o.payment_status==="paid"?"Оплачено":"Не оплачено";
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+status+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div></article>';
+    }).join(""):'<p class="cafe-empty-cart">Закрытых заказов пока нет.</p>';
   }
   function syncStaffPaymentOptions(){
     const type=byId("staffOrderType")?.value||"dine_in",timing=byId("staffPaymentTiming"),method=byId("staffOrderPayment");
