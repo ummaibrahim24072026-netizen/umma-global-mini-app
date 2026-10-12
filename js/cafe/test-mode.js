@@ -18,8 +18,25 @@
     return data;
   }
   function message(s){const e=$("ummaSandboxMessage");if(e){e.textContent=s;e.hidden=!s;}}
-  function build(){
+  async function build(){
     const page=$("cafeKitchenPage");if(!page||$("ummaSandboxPanel"))return;
+    // Do not display developer settings until the server authorizes superadmin.
+    let bootstrap;
+    try {
+      const initData=window.Telegram?.WebApp?.initData;
+      if(!initData)return;
+      const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData,action:"sandboxBootstrap"})});
+      const data=await response.json();
+      if(!response.ok||!data.ok)return;
+      bootstrap=data;
+    }catch{return;}
+    const management=page.querySelector(".cafe-management-tools");
+    if(!management)return;
+    const developer=document.createElement("details");
+    developer.id="ummaSandboxDeveloper";
+    developer.className="umma-sandbox-developer";
+    developer.innerHTML='<summary>🧪 Настройки разработчика · Тестовый режим</summary>';
+    management.append(developer);
     const panel=document.createElement("section");panel.id="ummaSandboxPanel";
     panel.style.cssText="margin:16px 0;padding:16px;border:2px solid #d2a84a;border-radius:16px;background:#fffdf6;color:#243333";
     panel.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:26px">🧪</div><div><h2 style="margin:0 0 4px">Тестовый режим суперадминистратора</h2><p style="margin:0 0 10px;font-size:13px">Все тестовые заказы, оплаты и смены хранятся отдельно. Реальные заказы и касса не изменяются.</p></div></div>'+
@@ -27,10 +44,10 @@
       '<label>Тестовая должность<select id="ummaSandboxRole" style="display:block;width:100%;padding:10px;margin-top:4px;border:1px solid #ccd5d5;border-radius:8px"><option value="waiter">Официант</option><option value="cashier">Кассир</option><option value="kitchen">Кухня</option><option value="manager">Менеджер</option><option value="courier">Курьер</option></select></label></div>'+
       '<div id="ummaSandboxMessage" hidden style="padding:10px;margin:8px 0;background:#fbe9e6;border-radius:8px;color:#8a2f24"></div>'+
       '<div id="ummaSandboxActions" style="display:grid;gap:10px"></div><div id="ummaSandboxOrders" style="margin-top:14px"></div><div id="ummaSandboxEvents" style="margin-top:14px"></div>';
-    const header=page.querySelector(".cafe-kitchen-header");if(header)header.after(panel);else page.prepend(panel);
+    developer.append(panel);
     $("ummaSandboxLocation").addEventListener("change",async e=>{locationId=e.target.value;await refresh();});
     $("ummaSandboxRole").addEventListener("change",async e=>{role=e.target.value;renderActions();await refresh();});
-    renderActions(); init();
+    renderActions(); init(bootstrap);
   }
   function renderActions(){
     const root=$("ummaSandboxActions");if(!root)return;
@@ -54,13 +71,11 @@
     $("ummaSandboxReset")?.addEventListener("click",async()=>{if(!confirm("Удалить все тестовые заказы, события и тестовые смены выбранного кафе? Реальные данные не затрагиваются."))return;try{await call("sandboxReset");message("Тестовые данные очищены.");await refresh();}catch(err){message(err.message);}});
     $("ummaSandboxRefresh")?.addEventListener("click",refresh);
   }
-  async function init(){
+  async function init(bootstrap){
     try{
       const initData=window.Telegram?.WebApp?.initData;
       if(!initData) throw new Error("Откройте приложение через Telegram.");
-      const bootResponse=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData,action:"sandboxBootstrap"})});
-      const data=await bootResponse.json();
-      if(!bootResponse.ok||!data.ok) throw new Error(data.error||"Тестовый режим недоступен");
+      const data=bootstrap;
       locations=data.locations||[];
       const menuResponse=await fetch(MENU_API);
       const menuData=await menuResponse.json();
