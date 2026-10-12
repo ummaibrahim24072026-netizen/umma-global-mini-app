@@ -251,11 +251,20 @@
   });
 
   const orderType = byId("cafeOrderType"), addressLabel = byId("cafeAddressLabel"), addressInput = byId("cafeDeliveryAddress");
+  function syncCustomerPayment(){
+    const type=orderType?.value||"pickup", timing=byId("cafePaymentTiming"), method=byId("cafePaymentMethod");
+    if(timing){const later=timing.querySelector('option[value="later"]');if(later)later.disabled=type!=="dine_in";if(type!=="dine_in")timing.value="now";}
+    if(method){const cash=method.querySelector('option[value="cash"]');if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
+    const hint=byId("cafePaymentHint");if(hint)hint.textContent=type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
+  }
   orderType?.addEventListener("change", () => {
     const delivery = orderType.value === "delivery";
     if (addressLabel) addressLabel.hidden = !delivery;
     if (addressInput) addressInput.required = delivery;
+    syncCustomerPayment();
   });
+  byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
+  syncCustomerPayment();
 
   byId("cafeOrderForm")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -265,6 +274,8 @@
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
     if (orderType?.value === "delivery" && !addressInput?.value.trim()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
 
+    const paymentTiming=byId("cafePaymentTiming")?.value||"now";
+    if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
     const submittedItems = Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity }));
     loading = true; renderCart();
     if (resultEl) resultEl.hidden = true;
