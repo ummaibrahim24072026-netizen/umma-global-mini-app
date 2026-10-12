@@ -444,7 +444,7 @@
   byId("staffOrderToggle")?.addEventListener("click", async()=>{
     const wrap=byId("staffOrderFormWrap"); if(!wrap) return;
     wrap.hidden=!wrap.hidden;
-    if(!wrap.hidden && !staffMenu.length) await loadStaffMenu();
+    if(!wrap.hidden){clearPreviousOrderFeedback();if(!staffMenu.length)await loadStaffMenu();}
   });
   function showStaffWorkspace(view) {
     const form=byId("staffOrderFormWrap"), active=byId("staffActiveOrdersWrap");
@@ -456,7 +456,15 @@
     if(activeTab){activeTab.classList.toggle("is-active",!showForm);activeTab.setAttribute("aria-selected",String(!showForm));}
     if(!showForm){renderOpenBills();renderStaffActiveOrders();}
   }
+  function clearPreviousOrderFeedback() {
+    const message=byId("staffOrderMessage");
+    if(message){message.textContent="";message.hidden=true;}
+    const cash=byId("staffCashReceived");
+    if(cash)cash.value="";
+    refreshStaffCashFields();
+  }
   byId("waiterOrderToggle")?.addEventListener("click",async()=>{
+    clearPreviousOrderFeedback();
     showStaffWorkspace("order");
     const root=byId("staffOrderMenu");
     if(root&&!staffMenu.length)await loadStaffMenu();
@@ -507,6 +515,7 @@
       else if(window.confirm("Подтвердить, что оплата по счёту №"+order.order_number+" на "+money(order.total_vnd)+" действительно получена?")) updatePayment(order.id,"paid",Number(order.total_vnd)||0,0,order.payment_method||"qr");
     } else if(addToBill) {
       const wrap=byId("staffOrderFormWrap"); if(wrap){wrap.hidden=false;wrap.style.display="block";}
+      clearPreviousOrderFeedback();
       setStaffOrderMode(addToBill.getAttribute("data-add-to-bill"));
       byId("waiterOrderToggle").textContent="− Скрыть форму заказа";
       byId("staffOrderMenu")?.scrollIntoView({behavior:"smooth",block:"start"});
