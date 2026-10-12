@@ -702,11 +702,12 @@
       <div class="cafe-kitchen-header">
         <button type="button" id="cafeWaiterBack" class="cafe-back">← Назад</button>
         <button type="button" id="cafeWaiterRefresh" class="cafe-kitchen-refresh">↻ Обновить меню</button>
-        <h1>Заказ гостя</h1>
-        <p>Рабочее место официанта · HALAL UMMA</p>
+        <button type="button" id="cafeWaiterKitchen" class="cafe-kitchen-refresh">🍳 Кухня</button>
+        <h1>Заказы гостей</h1>
+        <p>Рабочее место сотрудника · HALAL UMMA</p>
       </div>
       <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
-        Здесь официант оформляет заказы гостей. Передача наличных, кассовые отчёты и сверка смены находятся в отдельном интерфейсе.
+        Здесь любой уполномоченный сотрудник оформляет заказы, принимает оплату и проверяет их статус. Для приготовления перейдите в «Кухня», для смены — в «Касса и смена».
       </div>
 <div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
         <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
@@ -767,7 +768,7 @@
   <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
     <div class="cafe-kitchen-inner">
       <div class="cafe-kitchen-header">
-        <button type="button" id="cafeKitchenBack" class="cafe-back">← Администрирование</button>
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Назад</button>
         <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
         <button type="button" id="kitchenTabletToggle" class="cafe-kitchen-refresh" aria-pressed="false">▣ Режим планшета</button>
         <button type="button" id="cafeCashToggle" class="cafe-kitchen-refresh" aria-expanded="false">💰 Касса и смена</button>
@@ -783,7 +784,7 @@
       <details class="cafe-management-tools"><summary>⚙️ Управление кафе</summary>
       <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
       <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
-      <button type="button" id="staffOrderToggle" style="display:block!important;visibility:visible!important;position:relative;float:none!important;width:100%;margin:12px 0;padding:14px;background:#0FA3A8;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">＋ Заказ от официанта</button>
+
       </details>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
@@ -1028,7 +1029,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=36"></script>
-<script src="js/cafe/kitchen.js?v=42"></script>
+<script src="js/cafe/kitchen.js?v=43"></script>
   <script src="js/cafe/kitchen-live.js?v=2"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=9"></script>
@@ -1037,6 +1038,9 @@
 <script src="js/cafe/products-admin.js?v=1"></script>
 <script src="js/cafe/inventory-admin.js?v=2"></script>
 <script src="js/cafe/accounting-admin.js?v=7"></script>
+
+<!-- CONSISTENT BACK NAVIGATION -->
+<script src="js/core/navigation.js?v=1"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=2"></script>
