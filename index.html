@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=28">
+  <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -775,17 +775,9 @@
         <h1>Кухня · Заказы</h1>
         <p>HALAL UMMA · Нячанг</p>
       </div>
-      <nav class="cafe-staff-quick-nav" aria-label="Рабочие разделы кафе">
-        <button type="button" id="cafeQuickNewOrder">＋ Новый заказ</button>
-        <button type="button" id="cafeQuickKitchen" class="is-active">🍳 Кухня</button>
-        <button type="button" id="cafeQuickOrders">📋 Заказы и оплата</button>
-        <button type="button" id="cafeQuickCash">💰 Касса и смена</button>
-      </nav>
-      <details class="cafe-management-tools"><summary>⚙️ Управление кафе</summary>
-      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
-      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
-
-      </details>
+      <div class="cafe-kitchen-shortcuts">
+        <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Заказы гостей</button>
+      </div>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
@@ -793,6 +785,11 @@
       <div id="kitchenLiveStatus" class="cafe-message" role="status">Автообновление каждые 3 секунды · Звук включается после нажатия на экран</div>
       <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
       <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+      <details class="cafe-management-tools"><summary>⚙️ Управление кафе</summary>
+      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
+      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
+
+      </details>
     </div>
   </section>
 
@@ -1029,7 +1026,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=36"></script>
-<script src="js/cafe/kitchen.js?v=43"></script>
+<script src="js/cafe/kitchen.js?v=44"></script>
   <script src="js/cafe/kitchen-live.js?v=2"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=9"></script>
