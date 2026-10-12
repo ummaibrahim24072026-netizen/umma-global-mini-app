@@ -625,7 +625,7 @@
         })});
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;
-        if(paymentTiming==="now"&&paymentMethod!=="courier"){
+        if(paymentTiming==="now"&&paymentMethod!=="courier"&&paymentMethod!=="bank_transfer"){
           try {
             await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
           } catch(paymentError) {
@@ -633,6 +633,8 @@
             await loadOrders(); return;
           }
           if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+        } else if(paymentMethod==="bank_transfer"){
+          if(message){message.textContent="Заказ №"+order.orderNumber+" создан. Перевод на карту ожидает скриншот и подтверждение поступления средств. Не отмечайте заказ оплаченным заранее.";message.hidden=false;}
         } else if(paymentMethod==="courier"){
           if(message){message.textContent="Заказ №"+order.orderNumber+" оформлен. Оплата курьеру при вручении; платёж пока не подтверждён.";message.hidden=false;}
         } else {
