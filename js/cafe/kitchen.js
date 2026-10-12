@@ -469,6 +469,24 @@
     const change=target.closest("[data-staff-change]");
     const addToBill=target.closest("[data-add-to-bill]");
     const settleBill=target.closest("[data-settle-bill]");
+    const proofButton=target.closest("[data-proof-order]");
+    if(proofButton){
+      const orderId=proofButton.getAttribute("data-proof-order");
+      const order=orders.find(o=>String(o.id)===String(orderId));
+      const initData=window.Telegram?.WebApp?.initData;
+      if(!initData){showMessage("Откройте приложение через Telegram");return;}
+      proofButton.disabled=true;
+      try{
+        const res=await fetch(PROOF_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list",initData,orderId})});
+        const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"Не удалось загрузить чек");
+        const pending=(data.proofs||[]).filter(x=>x.status==="pending");
+        if(!pending.length){window.alert("По этому заказу нет новых скриншотов перевода.");return;}
+        const latest=pending[0];
+        if(latest.url)window.open(latest.url,"_blank","noopener,noreferrer");
+        window.alert("Откройте чек и отдельно проверьте фактическое поступление денег на банковский счёт. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Принять оплату».");
+      }catch(e){showMessage(e.message||"Ошибка проверки чека");}finally{proofButton.disabled=false;}
+      return;
+    }
     const staffAction=target.closest("#staffActiveOrders [data-order-id][data-new-status], #staffActiveOrders [data-order-id][data-payment-status]");
     if(staffAction){
       const orderId=staffAction.getAttribute("data-order-id");
@@ -523,7 +541,7 @@
       const pay=o.payment_status!=="paid"&&o.canAcceptPayments===true?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">Принять оплату</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+(o.lastStatusEvent?'<div class="staff-active-order-audit">Статус изменил: <strong>'+esc(o.lastStatusEvent.actor_name)+'</strong> · '+esc(statusNames[o.lastStatusEvent.to_status]||o.lastStatusEvent.to_status)+' · '+esc(formatDate(o.lastStatusEvent.created_at))+'</div>':(o.accepted_by_telegram_id?'<div class="staff-active-order-audit">Заказ принял сотрудник ID '+esc(o.accepted_by_telegram_id)+(o.accepted_at?' · '+esc(formatDate(o.accepted_at)):'')+'</div>':''))+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+pay+add+settle+step+'</div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+(o.lastStatusEvent?'<div class="staff-active-order-audit">Статус изменил: <strong>'+esc(o.lastStatusEvent.actor_name)+'</strong> · '+esc(statusNames[o.lastStatusEvent.to_status]||o.lastStatusEvent.to_status)+' · '+esc(formatDate(o.lastStatusEvent.created_at))+'</div>':(o.accepted_by_telegram_id?'<div class="staff-active-order-audit">Заказ принял сотрудник ID '+esc(o.accepted_by_telegram_id)+(o.accepted_at?' · '+esc(formatDate(o.accepted_at)):'')+'</div>':''))+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+proof+pay+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function syncStaffPaymentOptions(){
