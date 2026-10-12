@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=20">
+  <link rel="stylesheet" href="css/app.css?v=21">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -712,7 +712,7 @@
       <section class="staff-order-builder">
 
         <div id="staffOrderFormWrap" hidden>
-          <h2>Оформить заказ гостя</h2>
+          <h2>Оформить заказ гостя</h2><label id="staffOrderLocationLabel" hidden>Кафе / филиал<select id="staffOrderLocation" required><option value="">Выберите кафе</option></select></label>
           <p>Если у гостя нет телефона, официант оформляет заказ здесь.</p>
           <h3>Открытые счета (оплата позже)</h3><div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем открытые счета…</p></div><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
           <div class="cafe-cart">
@@ -1003,7 +1003,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=8"></script>
-<script src="js/cafe/kitchen.js?v=27"></script>
+<script src="js/cafe/kitchen.js?v=28"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
