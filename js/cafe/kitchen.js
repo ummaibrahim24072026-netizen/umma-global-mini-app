@@ -467,7 +467,7 @@
       const order=orders.find(o=>String(o.id)===String(settleBill.getAttribute("data-settle-bill")));
       if(!order)return;
       if(order.payment_method==="cash") openCashPayment(order);
-      else updatePayment(order.id,"paid",Number(order.total_vnd)||0,0,order.payment_method||"qr");
+      else if(window.confirm("Подтвердить, что оплата по счёту №"+order.order_number+" на "+money(order.total_vnd)+" действительно получена?")) updatePayment(order.id,"paid",Number(order.total_vnd)||0,0,order.payment_method||"qr");
     } else if(addToBill) {
       const wrap=byId("staffOrderFormWrap"); if(wrap){wrap.hidden=false;wrap.style.display="block";}
       setStaffOrderMode(addToBill.getAttribute("data-add-to-bill"));
