@@ -810,3 +810,11 @@ button:active { transform: scale(.98); }
 .kitchen-tablet-mode .kitchen-order-items{font-size:20px;line-height:1.5}
 .kitchen-tablet-mode .kitchen-order-actions button{min-height:52px;font-size:17px}
 .kitchen-tablet-mode .kitchen-order-number{font-size:23px}
+
+/* Universal staff workspace: four task-oriented entry points. */
+.cafe-staff-quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.cafe-staff-quick-nav button{min-width:0;border:1px solid #b7d9d4;border-radius:12px;padding:14px 8px;background:#eff8f6;color:#125950;font-weight:800;font-size:14px;cursor:pointer}
+.cafe-staff-quick-nav button.is-active{background:#0b888b;color:white}
+.cafe-management-tools{margin:10px 0 16px;border:1px solid #d4e3e1;border-radius:12px;padding:10px}
+.cafe-management-tools summary{font-weight:750;cursor:pointer;padding:7px}
+#cafeCashPanel[hidden]{display:none!important}
