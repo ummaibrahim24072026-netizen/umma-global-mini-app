@@ -35,7 +35,7 @@
   function initMap(){
     if(map||!window.L)return;
     map=L.map("locationAdminMap",{scrollWheelZoom:true}).setView([12.2388,109.1967],6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:20,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'}).addTo(map);
     map.on("click",async e=>{
       setPin(e.latlng.lat,e.latlng.lng,false);
       const addr=$("locationAddress").value.trim();
