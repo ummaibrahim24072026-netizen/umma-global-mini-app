@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=26">
+  <link rel="stylesheet" href="css/app.css?v=27">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -769,6 +769,7 @@
       <div class="cafe-kitchen-header">
         <button type="button" id="cafeKitchenBack" class="cafe-back">← Администрирование</button>
         <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <button type="button" id="kitchenTabletToggle" class="cafe-kitchen-refresh" aria-pressed="false">▣ Режим планшета</button>
         <h1>Заказы кафе</h1>
         <p>HALAL UMMA · Нячанг</p>
       </div>
@@ -779,6 +780,7 @@
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
       </div>
+      <div id="kitchenLiveStatus" class="cafe-message" role="status">Автообновление каждые 10 секунд · Звук включается после нажатия на экран</div>
       <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
       <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
     </div>
@@ -1017,7 +1019,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=36"></script>
-<script src="js/cafe/kitchen.js?v=39"></script>
+<script src="js/cafe/kitchen.js?v=40"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
