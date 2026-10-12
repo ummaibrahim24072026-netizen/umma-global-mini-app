@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=25">
+  <link rel="stylesheet" href="css/app.css?v=26">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -711,6 +711,7 @@
 <div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
         <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
         <button type="button" id="staffActiveOrdersToggle" class="staff-workspace-tab" aria-selected="false">📋 Активные заказы</button>
+        <button type="button" id="staffClosedOrdersToggle" class="staff-workspace-tab" aria-selected="false">✓ Закрытые заказы</button>
       </div>
       <section class="staff-order-builder">
 
@@ -738,6 +739,11 @@
           <p>Все незавершённые заказы кафе: оплата, сумма и текущий этап выполнения.</p>
           <div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем заказы…</p></div>
           <div id="staffActiveOrders" class="staff-active-orders"></div>
+        </div>
+        <div id="staffClosedOrdersWrap" hidden>
+          <h2>Закрытые заказы</h2>
+          <p>Завершённые и отменённые заказы. Статус оплаты указан отдельно.</p>
+          <div id="staffClosedOrders" class="staff-active-orders"></div>
         </div>
       </section>
     </div>
@@ -1011,7 +1017,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=36"></script>
-<script src="js/cafe/kitchen.js?v=38"></script>
+<script src="js/cafe/kitchen.js?v=39"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
