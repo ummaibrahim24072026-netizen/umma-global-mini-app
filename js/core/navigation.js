@@ -44,6 +44,18 @@
     window.scrollTo({top:state.scrollY,behavior:"instant"});
   }
   function back(){
+    if(currentScreen()==="cafeKitchenPage"){
+      const cash=byId("cafeCashPanel");
+      if(cash&&!cash.hidden){
+        cash.hidden=true;
+        const toggle=byId("cafeCashToggle");
+        if(toggle){toggle.setAttribute("aria-expanded","false");toggle.textContent="💰 Касса и смена";}
+        byId("cafeKitchenOrders")?.scrollIntoView({block:"start"});
+        return true;
+      }
+      const management=document.querySelector(".cafe-management-tools");
+      if(management?.open){management.open=false;return true;}
+    }
     if(!stack.length)return false;
     const prior=stack.pop();
     restore(prior);
@@ -55,7 +67,11 @@
     const button=event.target.closest?.("button");
     if(!button)return;
     if(backIds.has(button.id)){
-      if(stack.length){
+      const cash=byId("cafeCashPanel");
+      const nested=currentScreen()==="cafeKitchenPage"&&(
+        (cash&&!cash.hidden)||document.querySelector(".cafe-management-tools")?.open
+      );
+      if(stack.length||nested){
         event.preventDefault();
         event.stopImmediatePropagation();
         back();
