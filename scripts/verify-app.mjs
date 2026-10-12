@@ -106,3 +106,12 @@ for(const id of ["cafeQuickNewOrder","cafeQuickKitchen","cafeQuickOrders","cafeQ
 }
 assert.match(html,/<details class="cafe-management-tools">/,"management tools must be grouped");
 console.log("PASS universal staff navigation and management grouping");
+
+const sandbox=read("js/cafe/test-mode.js");
+new vm.Script(sandbox,{filename:"test-mode.js"});
+assert.match(html,/js\/cafe\/test-mode\.js\?v=9/,"sandbox cache version missing");
+assert.match(sandbox,/action:"sandboxBootstrap"/,"sandbox must require server bootstrap");
+assert.match(sandbox,/if\(!response\.ok\|\|!data\.ok\)return/,"unauthorized sandbox must stay hidden");
+assert.match(sandbox,/management\.append\(developer\)/,"developer settings must live under management");
+assert.match(sandbox,/developer\.append\(panel\)/,"sandbox must be inside developer settings");
+console.log("PASS sandbox isolated in superadmin developer settings");
