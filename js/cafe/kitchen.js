@@ -169,13 +169,22 @@
       const result = await api({action:"list"});
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       staffRole = result.staffRole || "";
-      if (staffRole !== "waiter") {
+      const isSuperAdmin = window.ummaRole === "super_admin";
+      if (!isSuperAdmin && staffRole === "courier") {
         if (waiter) waiter.hidden = true;
         open();
         return;
       }
       orders = Array.isArray(result.orders) ? result.orders : [];
+      locations = Array.isArray(result.locations) ? result.locations : [];
+      const locationLabel=byId("staffOrderLocationLabel"), locationSelect=byId("staffOrderLocation");
+      if (locationLabel && locationSelect) {
+        locationLabel.hidden = !isSuperAdmin;
+        locationSelect.innerHTML = '<option value="">Выберите кафе</option>' + locations.filter(x=>["cafe","restaurant"].includes(x.location_type)).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+(x.city?' · '+esc(x.city):'')+'</option>').join("");
+        if (isSuperAdmin && locations.some(x=>String(x.id)===String(staffLocationIds[0]))) locationSelect.value=staffLocationIds[0];
+      }
       if (!staffMenu.length) await loadStaffMenu();
+      renderOpenBills();
       showMessage("", false);
     } catch (e) {
       showMessage(e instanceof Error ? e.message : "Не удалось открыть рабочее место");
@@ -510,7 +519,8 @@
     event.preventDefault();
     const message=byId("staffOrderMessage");
     if(!staffCart.size){if(message){message.textContent="Добавьте хотя бы одно блюдо.";message.hidden=false;}return;}
-    if(!staffLocationIds.length){if(message){message.textContent="Не удалось определить кафе сотрудника. Обновите заказы.";message.hidden=false;}return;}
+    const selectedLocation=window.ummaRole==="super_admin"?(byId("staffOrderLocation")?.value||""):staffLocationIds[0];
+    if(!selectedLocation){if(message){message.textContent=window.ummaRole==="super_admin"?"Выберите кафе / филиал.":"Не удалось определить кафе сотрудника. Обновите заказы.";message.hidden=false;}return;}
     const initData=window.Telegram?.WebApp?.initData;
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
@@ -533,7 +543,7 @@
         if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}
       } else {
         const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-          initData,staffOrder:true,locationId:staffLocationIds[0],items,orderType:type,paymentMethod,
+          initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod,
           customerName:byId("staffOrderCustomerName").value.trim(),
           customerPhone:byId("staffOrderCustomerPhone").value.trim(),
           deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
