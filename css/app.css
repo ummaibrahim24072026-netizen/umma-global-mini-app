@@ -678,3 +678,14 @@ button:active { transform: scale(.98); }
 #staffPaymentNowFields[hidden]{display:none!important}
 #staffOrderModeNotice{margin:8px 0 12px}
 @media(max-width:480px){.staff-open-bill{align-items:flex-start;flex-direction:column}.staff-open-bill>button{width:100%}}
+
+
+/* Staff menu quantity controls stay on each dish card */
+.staff-product-qty-controls{display:inline-flex;align-items:center;gap:7px;flex-shrink:0}
+.staff-product-quantity{min-width:22px;height:32px;box-sizing:border-box;align-items:center;justify-content:center;padding:0 5px;border-radius:9px;background:#edf0f0;color:#435151;font-size:14px;font-weight:800;text-align:center}
+.staff-product-quantity:not([hidden]){display:inline-flex}
+.staff-product-minus,.staff-product-plus{width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd2d2;border-radius:10px;font-size:22px;line-height:1;font-weight:800}
+.staff-product-minus{background:#e5e8e8!important;color:#536060!important}
+.staff-product-minus[hidden],.staff-product-quantity[hidden]{display:none!important}
+.staff-product-plus{background:#087f84!important;color:#fff!important}
+.cafe-product-bottom{gap:10px}
