@@ -667,3 +667,14 @@ button:active { transform: scale(.98); }
 }
 .staff-change-summary span { color: var(--muted); }
 .staff-change-summary strong { color: var(--turquoise-deep); font-size: 15px; text-align: right; }
+
+
+/* Waiter: open bills and deferred payment */
+.staff-open-bills{display:grid;gap:8px;margin:8px 0 16px}
+.staff-open-bill{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #d5e7e6;border-radius:12px;background:#f7fbfa}
+.staff-open-bill>div{display:grid;gap:4px;min-width:0}
+.staff-open-bill small{font-size:12px;color:#617070}
+.staff-open-bill>button{flex-shrink:0}
+#staffPaymentNowFields[hidden]{display:none!important}
+#staffOrderModeNotice{margin:8px 0 12px}
+@media(max-width:480px){.staff-open-bill{align-items:flex-start;flex-direction:column}.staff-open-bill>button{width:100%}}
