@@ -218,6 +218,11 @@
   }
   byId("cafeLocationSelect")?.addEventListener("change", event => setSelectedLocation(event.target.value));
 
+  byId("cafeStickyGoToOrder")?.addEventListener("click", () => {
+    const cartSection = document.querySelector("#cafePage .cafe-cart");
+    if (cartSection) cartSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
   function changeProduct(productId, delta) {
     const baseProduct = products.find(p => String(p.id) === String(productId));
     const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
