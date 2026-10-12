@@ -75,8 +75,8 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=43/, "Telegram must load updated checkout JS");
-assert.match(html, /css\/app\.css\?v=28/, "Telegram must load updated checkout CSS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=44/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=29/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
 assert.match(html, /id="staffClosedOrdersToggle"/, "closed orders tab missing");
@@ -100,12 +100,14 @@ assert.match(kitchen,/section.hidden = true/,"cash must start collapsed");
 assert.match(kitchen,/ordersRoot.insertAdjacentElement\("afterend", section\)/,"cash must follow kitchen orders");
 console.log("PASS kitchen first and cash collapsed");
 
+assert.match(html,/id="cafeKitchenToOrders"/,"kitchen shortcut to guest orders missing");
+assert.match(kitchen,/byId\("cafeKitchenToOrders"\)\?\.addEventListener/,"kitchen shortcut must open existing orders");
 for(const id of ["cafeQuickNewOrder","cafeQuickKitchen","cafeQuickOrders","cafeQuickCash"]){
-  assert.match(html,new RegExp('id="'+id+'"'),"universal staff entry missing: "+id);
-  assert.match(kitchen,new RegExp('byId\\("'+id+'"\\)'),"universal staff action missing: "+id);
+  assert.ok(!html.includes('id="'+id+'"'),"duplicate kitchen navigation must be removed: "+id);
 }
-assert.match(html,/<details class="cafe-management-tools">/,"management tools must be grouped");
-console.log("PASS universal staff navigation and management grouping");
+assert.match(html,/<details class="cafe-management-tools">/,"management tools must remain");
+assert.ok(html.indexOf('id="cafeKitchenOrders"')<html.indexOf('class="cafe-management-tools"'),"management must appear below kitchen orders");
+console.log("PASS one guest order entry, compact kitchen and preserved management");
 
 const sandbox=read("js/cafe/test-mode.js");
 new vm.Script(sandbox,{filename:"test-mode.js"});
@@ -145,7 +147,7 @@ const click=(id,transition)=>{
 };
 click("adminKitchenButton",()=>{elements.cafeKitchenPage.hidden=false;mainMock.style.display="none";navMock.style.display="none";});
 assert.equal(fakeWindow.ummaNavigation.current(),"cafeKitchenPage");
-click("cafeQuickNewOrder",()=>{elements.cafeKitchenPage.hidden=true;elements.cafeWaiterPage.hidden=false;});
+click("cafeKitchenToOrders",()=>{elements.cafeKitchenPage.hidden=true;elements.cafeWaiterPage.hidden=false;});
 assert.equal(fakeWindow.ummaNavigation.current(),"cafeWaiterPage");
 assert.equal(click("cafeWaiterBack"),true);
 assert.equal(fakeWindow.ummaNavigation.current(),"cafeKitchenPage","Back from orders must return to kitchen");
