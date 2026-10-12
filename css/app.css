@@ -689,3 +689,82 @@ button:active { transform: scale(.98); }
 .staff-product-minus[hidden],.staff-product-quantity[hidden]{display:none!important}
 .staff-product-plus{background:#087f84!important;color:#fff!important}
 .cafe-product-bottom{gap:10px}
+
+/* Compact, symmetrical staff dish cards: price and quantity controls fit on mobile */
+#staffOrderMenu .cafe-product {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 124px;
+  padding: 10px;
+  gap: 9px;
+  box-sizing: border-box;
+}
+#staffOrderMenu .cafe-product h3 {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+#staffOrderMenu .cafe-product-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: end;
+  gap: 7px;
+  width: 100%;
+  margin-top: auto;
+}
+#staffOrderMenu .cafe-product-price {
+  display: block;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#staffOrderMenu .staff-product-qty-controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+#staffOrderMenu .staff-product-minus,
+#staffOrderMenu .staff-product-plus {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0;
+  border-radius: 9px;
+  font-size: 20px;
+  flex: 0 0 30px;
+}
+#staffOrderMenu .staff-product-quantity,
+#staffOrderMenu .staff-order-builder .staff-product-quantity:not([hidden]) {
+  min-width: 24px;
+  width: 24px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: #edf0f0;
+  color: #435151;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+#staffOrderMenu .staff-product-quantity[hidden],
+#staffOrderMenu .staff-product-minus[hidden] { display: none !important; }
+@media (max-width: 360px) {
+  #staffOrderMenu .cafe-product { padding: 8px; min-height: 120px; }
+  #staffOrderMenu .cafe-product h3 { font-size: 13px; }
+  #staffOrderMenu .cafe-product-price { font-size: 11px; }
+  #staffOrderMenu .staff-product-qty-controls { gap: 5px; }
+}
