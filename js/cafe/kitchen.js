@@ -1,6 +1,7 @@
 /* UMMA CAFE — KITCHEN ORDER BOARD */
 (() => {
   "use strict";
+  const PROOF_URL="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof";
   const API = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen";
   const byId = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" })[c]);
@@ -518,6 +519,7 @@
       const next=nextStep[o.status],role=o.staffRole||staffRole;
       const canAdvance=next&&["manager","waiter","cashier","kitchen"].includes(role)&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
       const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
+      const proof=o.payment_method==="bank_transfer"?'<button type="button" class="kitchen-action" data-proof-order="'+esc(o.id)+'">Проверить чек</button>':"";
       const pay=o.payment_status!=="paid"&&o.canAcceptPayments===true?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">Принять оплату</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
