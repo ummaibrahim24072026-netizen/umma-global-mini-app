@@ -728,7 +728,7 @@
               <label>Телефон (необязательно)<input id="staffOrderCustomerPhone" maxlength="40" placeholder="+84…"></label>
               <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
-              <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Оплата сразу</option><option value="later">Оплата позже — общий счёт после трапезы</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
+              <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Оплата сразу</option><option value="later">Оплата позже — общий счёт после трапезы</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
               <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
             </form>
@@ -1011,8 +1011,8 @@
 <script src="js/admin/users-events.js?v=3"></script>
 
 <!-- CAFE -->
-<script src="js/cafe/cafe.js?v=8"></script>
-<script src="js/cafe/kitchen.js?v=34"></script>
+<script src="js/cafe/cafe.js?v=35"></script>
+<script src="js/cafe/kitchen.js?v=35"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=8"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
