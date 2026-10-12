@@ -25,44 +25,39 @@
     if(!Number.isFinite(Number(lat))||!Number.isFinite(Number(lng)))return;
     $("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);
     if(map){
-      if(!pin){
-        const el=document.createElement("div");el.className="umma-map-marker umma-map-marker-is-pin";el.textContent="☪";
-        pin=new maplibregl.Marker({element:el,draggable:true}).setLngLat([Number(lng),Number(lat)]).addTo(map);
-        pin.on("dragend",()=>{const p=pin.getLngLat();setCoordinates(p.lat,p.lng);});
-      }else pin.setLngLat([Number(lng),Number(lat)]);
-      if(pan)map.flyTo({center:[Number(lng),Number(lat)],zoom:Math.max(map.getZoom(),15)});
+      if(!pin)pin=L.marker([Number(lat),Number(lng)],{draggable:true}).addTo(map);
+      else pin.setLatLng([Number(lat),Number(lng)]);
+      pin.off("dragend").on("dragend",()=>{const p=pin.getLatLng();setCoordinates(p.lat,p.lng);});
+      if(pan)map.setView([Number(lat),Number(lng)],Math.max(map.getZoom(),14));
     }
   }
   function setCoordinates(lat,lng){$("locationLatitude").value=Number(lat).toFixed(7);$("locationLongitude").value=Number(lng).toFixed(7);}
   function initMap(){
-    if(map)return;
-    if(!window.maplibregl){message("Карта не загрузилась: библиотека MapLibre заблокирована или недоступна. Проверьте подключение к unpkg.com.");return;}
-    map=new maplibregl.Map({container:"locationAdminMap",style:"https://tiles.openfreemap.org/styles/positron",center:[109.2020884,12.2814294],zoom:13,attributionControl:true});
-    map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-left");
-    map.on("load",()=>{map.resize();});
-    map.on("error",e=>{const err=e?.error?.message||e?.error?.statusText||"неизвестная ошибка";message("Ошибка загрузки карты: "+err);});
+    if(map||!window.L)return;
+    map=L.map("locationAdminMap",{scrollWheelZoom:true}).setView([12.2388,109.1967],6);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
     map.on("click",async e=>{
-      setPin(e.lngLat.lat,e.lngLat.lng,false);
+      setPin(e.latlng.lat,e.latlng.lng,false);
       const addr=$("locationAddress").value.trim();
-      if(!addr){try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+e.lngLat.lat+"&lon="+e.lngLat.lng+"&zoom=18&addressdetails=1&accept-language=ru,en");if(r.ok){const d=await r.json();if(d.display_name)$("locationAddress").value=d.display_name;const a=d.address||{};if(!$("locationCity").value)$("locationCity").value=a.city||a.town||a.village||a.county||"";}}catch{}}
+      if(!addr){try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+e.latlng.lat+"&lon="+e.latlng.lng+"&zoom=18&addressdetails=1&accept-language=ru,en");if(r.ok){const d=await r.json();if(d.display_name)$("locationAddress").value=d.display_name;const a=d.address||{};if(!$("locationCity").value)$("locationCity").value=a.city||a.town||a.village||a.county||"";}}catch{}}
       message("Точка выбрана. Можно перетащить маркер для точного положения.");
     });
   }
   function renderMap(){
     if(!map)return;
-    markers.forEach(m=>m.remove());markers=[];
+    markers.forEach(m=>map.removeLayer(m));markers=[];
     const bounds=[];
     locations.forEach(l=>{
       if(l.latitude==null||l.longitude==null)return;
       const lat=Number(l.latitude),lng=Number(l.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-      const el=document.createElement("div");el.className="umma-map-marker "+(l.location_type==="cafe"||l.location_type==="restaurant"?"is-cafe":"");
-      el.textContent=l.location_type==="warehouse"?"📦":l.location_type==="market"?"🛍️":"☪";
-      const popup=new maplibregl.Popup({offset:24}).setHTML('<strong>'+esc(l.name)+'</strong><br>'+esc(typeNames[l.location_type]||l.location_type)+'<br>'+esc(l.address||"Адрес не указан")+'<br><button type="button" class="location-popup-edit" data-edit-location="'+esc(l.id)+'">Редактировать</button>');
-      const marker=new maplibregl.Marker({element:el}).setLngLat([lng,lat]).setPopup(popup).addTo(map);
-      markers.push(marker);bounds.push([lng,lat]);
+      const icon=L.divIcon({className:"umma-map-marker-wrap",html:'<span class="umma-map-marker '+(l.location_type==="cafe"||l.location_type==="restaurant"?"is-cafe":"")+'">'+(l.location_type==="warehouse"?"📦":l.location_type==="market"?"🛍️":"☪")+'</span>',iconSize:[34,34],iconAnchor:[17,17]});
+      const marker=L.marker([lat,lng],{icon}).addTo(map);
+      marker.bindPopup('<strong>'+esc(l.name)+'</strong><br>'+esc(typeNames[l.location_type]||l.location_type)+'<br>'+esc(l.address||"Адрес не указан")+'<br><button type="button" class="location-popup-edit" data-edit-location="'+esc(l.id)+'">Редактировать</button>');
+      marker.on("click",()=>{});
+      markers.push(marker);bounds.push([lat,lng]);
     });
-    if(bounds.length>1){const b=new maplibregl.LngLatBounds();bounds.forEach(p=>b.extend(p));map.fitBounds(b,{padding:30,maxZoom:14});}
-    else if(bounds.length===1)map.jumpTo({center:bounds[0],zoom:13});
+    if(bounds.length>1)map.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+    else if(bounds.length===1)map.setView(bounds[0],13);
   }
   function renderList(){
     const root=$("locationAdminList");if(!root)return;
@@ -76,7 +71,7 @@
   function resetForm(){
     selectedId=null;$("locationForm").reset();$("locationId").value="";$("locationActive").checked=true;$("locationCountry").value="Vietnam";
     $("locationFormTitle").textContent="Добавить новую локацию";$("locationSave").textContent="Сохранить локацию";$("locationManagerWrap").hidden=false;fillManagerSelect("");
-    if(pin&&map){pin.remove();pin=null;}
+    if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationLatitude").value="";$("locationLongitude").value="";
   }
   function editLocation(id){
@@ -87,7 +82,7 @@
     const m=managerFor(l.id);fillManagerSelect(m?.telegram_id||"");
     $("locationFormTitle").textContent="Изменить локацию";$("locationSave").textContent="Сохранить изменения";
     if(l.latitude!=null&&l.longitude!=null)setPin(Number(l.latitude),Number(l.longitude),true);
-    else if(pin&&map){pin.remove();pin=null;}
+    else if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationAdminPage").scrollIntoView({behavior:"smooth",block:"start"});
     message("Локация загружена. Нажмите на карту, чтобы изменить точку.");
   }
@@ -103,7 +98,7 @@
     if(!isSuper()){if(typeof showToast==="function")showToast("Доступ только для суперадминистратора");return;}
     ["adminPage","adminUsersPage","cafeStaffAdminPage","cafeKitchenPage","cafeInventoryPage","cafeProductsAdminPage","cafePage"].forEach(id=>{if($(id))$(id).hidden=true;});
     const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");if(home)home.style.display="none";if(nav)nav.style.display="none";
-    $("locationAdminPage").hidden=false;initMap();setTimeout(()=>{map?.resize();load();},100);window.scrollTo({top:0,behavior:"smooth"});
+    $("locationAdminPage").hidden=false;initMap();setTimeout(()=>{map?.invalidateSize();load();},100);window.scrollTo({top:0,behavior:"smooth"});
   }
   async function geocode(){
     const q=[$("locationAddress").value.trim(),$("locationCity").value.trim(),$("locationCountry").value.trim()].filter(Boolean).join(", ");
