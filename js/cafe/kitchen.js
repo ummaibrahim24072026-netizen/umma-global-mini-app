@@ -274,7 +274,7 @@
       await refreshAfterUpdate();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось обновить оплату");
-    } finally { busy = false; render(); }
+    } finally { busy = false; render(); renderOpenBills(); }
   }
   byId("cafeKitchenOrders")?.addEventListener("click", event => {
     const target = event.target;
