@@ -400,6 +400,7 @@ button:active { transform: scale(.98); }
 }
 .cafe-cart-total strong { color: var(--turquoise-deep); font-size: 19px; }
 .cafe-order-form { display: grid; gap: 11px; margin-top: 14px; }
+.cafe-order-form[hidden] { display: none; }
 .cafe-order-form label { display: grid; gap: 5px; color: var(--ink); font-size: 11px; font-weight: 800; }
 .cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea {
   width: 100%; min-width: 0; min-height: 42px; padding: 10px 11px;
