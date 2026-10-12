@@ -87,10 +87,10 @@ console.log("PASS closed order tab and statuses");
 
 const kitchenLive=read("js/cafe/kitchen-live.js");
 new vm.Script(kitchenLive,{filename:"kitchen-live.js"});
-assert.match(html,/js\/cafe\/kitchen-live\.js\?v=1/,"kitchen live module missing");
+assert.match(html,/js\/cafe\/kitchen-live\.js\?v=2/,"kitchen live module missing");
 assert.match(kitchen,/ummaKitchenLive\?\.update\(orders\)/,"kitchen list must update alerts");
 assert.match(kitchen,/ummaKitchenLive\?\.start\(\)/,"kitchen must start polling");
 assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledgement");
-assert.match(kitchenLive,/10000/,"kitchen must poll for new orders");
+assert.match(kitchenLive,/\},3000\);/,"kitchen must poll every 3 seconds");
 assert.match(html,/id="kitchenTabletToggle"/,"kitchen tablet mode missing");
 console.log("PASS kitchen add-on detection, tablet mode, polling and acknowledgement");
