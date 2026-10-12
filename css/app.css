@@ -624,3 +624,46 @@ button:active { transform: scale(.98); }
   color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A); font-size: 12px; font-weight: 900;
 }
 .cafe-page-inner { padding-bottom: 18px; }
+
+
+/* Staff POS payment collection */
+.staff-cash-payment-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 12px;
+  border: 1px solid #D5E5E2;
+  border-radius: 12px;
+  background: #F4FAF9;
+}
+.staff-cash-payment-fields[hidden] { display: none !important; }
+.staff-cash-payment-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-cash-payment-fields input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #CFE3E0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 16px Inter, sans-serif;
+}
+.staff-change-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+}
+.staff-change-summary span { color: var(--muted); }
+.staff-change-summary strong { color: var(--turquoise-deep); font-size: 15px; text-align: right; }
