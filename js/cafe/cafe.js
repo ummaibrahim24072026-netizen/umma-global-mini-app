@@ -57,6 +57,7 @@
       if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить меню");
       products = Array.isArray(result.products) ? result.products : [];
       inventoryRows = Array.isArray(result.inventory) ? result.inventory : [];
+      inventoryControlEnabled = result.inventoryControlEnabled === true;
       locations = Array.isArray(result.locations) ? result.locations : (result.location ? [result.location] : []);
       locationId = result.location?.id || locations[0]?.id || null;
       renderProducts();
