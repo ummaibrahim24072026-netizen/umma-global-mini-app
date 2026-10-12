@@ -7,7 +7,7 @@
   const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
   const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
   const nextStep = { pending:{status:"confirmed",label:"Принять заказ"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
-  let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map();
+  let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map(), editingBillId = null;
 
   function isAllowed() {
     return ["super_admin", "admin", "employee"].includes(window.ummaRole);
@@ -106,6 +106,7 @@
       orders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       render();
+      renderOpenBills();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
     } finally { busy = false; }
@@ -447,7 +448,13 @@
     const target=event.target; if(!(target instanceof Element)) return;
     const add=target.closest("[data-staff-add]");
     const change=target.closest("[data-staff-change]");
-    if(add) {
+    const addToBill=target.closest("[data-add-to-bill]");
+    if(addToBill) {
+      const wrap=byId("staffOrderFormWrap"); if(wrap){wrap.hidden=false;wrap.style.display="block";}
+      setStaffOrderMode(addToBill.getAttribute("data-add-to-bill"));
+      byId("waiterOrderToggle").textContent="− Скрыть форму заказа";
+      byId("staffOrderMenu")?.scrollIntoView({behavior:"smooth",block:"start"});
+    } else if(add) {
       const product=staffMenu.find(p=>String(p.id)===add.getAttribute("data-staff-add")); if(!product)return;
       const current=staffCart.get(product.id); staffCart.set(product.id,{product,quantity:Math.min(99,(current?.quantity||0)+1)}); renderStaffCart();
     } else if(change) {
@@ -458,6 +465,25 @@
     }
   });
   byId("staffOrderType")?.addEventListener("change",()=>{const delivery=byId("staffOrderType").value==="delivery";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=!delivery;});
+  function renderOpenBills() {
+    const root=byId("staffOpenBills"); if(!root) return;
+    const open=orders.filter(o=>o.order_type==="dine_in" && o.payment_status!=="paid" && !["completed","cancelled"].includes(o.status));
+    root.innerHTML=open.length?open.map(o=>'<article class="staff-open-bill"><div><strong>Счёт №'+esc(o.order_number)+'</strong><small>'+esc(o.customer_name||"Гость")+' · '+esc(formatDate(o.created_at))+'</small><strong>'+money(o.total_vnd)+'</strong></div><button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button></article>').join(""):'<p class="cafe-empty-cart">Открытых счетов с оплатой позже нет.</p>';
+  }
+  function setStaffOrderMode(billId=null) {
+    editingBillId=billId;
+    const notice=byId("staffOrderModeNotice");
+    const type=byId("staffOrderType"), timing=byId("staffPaymentTiming");
+    const paymentFields=byId("staffPaymentNowFields");
+    const submit=byId("staffOrderSubmit");
+    const bill=orders.find(o=>String(o.id)===String(billId));
+    if(type){type.value=bill?"dine_in":type.value;type.disabled=!!bill;}
+    if(timing){timing.value=bill?"later":(timing.value||"now");timing.disabled=!!bill;}
+    if(paymentFields)paymentFields.hidden=!!bill || timing?.value==="later";
+    if(notice){notice.hidden=!bill;notice.textContent=bill?"Добавление в счёт №"+bill.order_number+". Новый заказ не создаётся; сумма общего счёта пересчитается автоматически.":"";}
+    if(submit)submit.textContent=bill?"Добавить позиции в счёт №"+bill.order_number:(timing?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");
+    refreshStaffCashFields();
+  }
   function staffOrderAmount() {
     return [...staffCart.values()].reduce((sum,item)=>sum+Number(item.product.price_vnd)*item.quantity,0);
   }
@@ -469,6 +495,7 @@
     const due=staffOrderAmount();
     if(fields) fields.hidden=method!=="cash";
     if(dueEl) dueEl.textContent=staffMoney(due);
+    if(byId("staffPaymentTiming")?.value==="later" || editingBillId) return;
     if(method!=="cash") return;
     const raw=input?.value.trim()||"";
     const received=raw===""?NaN:Number(raw);
@@ -477,6 +504,7 @@
     if(hint) hint.textContent=!Number.isSafeInteger(received)||received<0?"Введите сумму наличных, полученных от гостя.":received<due?"Не хватает: "+staffMoney(due-received):"Сдача рассчитана автоматически.";
   }
   byId("staffOrderPayment")?.addEventListener("change",refreshStaffCashFields);
+  byId("staffPaymentTiming")?.addEventListener("change",()=>{setStaffOrderMode(editingBillId);});
   byId("staffCashReceived")?.addEventListener("input",refreshStaffCashFields);
   byId("staffOrderForm")?.addEventListener("submit",async event=>{
     event.preventDefault();
@@ -488,38 +516,48 @@
     const type=byId("staffOrderType").value;
     const address=byId("staffOrderAddress")?.value.trim()||"";
     const paymentMethod=byId("staffOrderPayment").value;
+    const paymentTiming=byId("staffPaymentTiming")?.value||"now";
     const orderTotal=staffOrderAmount();
     const receivedRaw=byId("staffCashReceived")?.value.trim()||"";
     const tendered=paymentMethod==="cash"?(receivedRaw===""?NaN:Number(receivedRaw)):orderTotal;
-    if(type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
-    if(paymentMethod==="cash"&&(!Number.isSafeInteger(tendered)||tendered<orderTotal)){if(message){message.textContent="Укажите полученную наличную сумму не меньше "+staffMoney(orderTotal)+". Сдача рассчитается автоматически.";message.hidden=false;}byId("staffCashReceived")?.focus();return;}
+    if(editingBillId && paymentTiming!=="later"){if(message){message.textContent="Для открытого счёта выберите оплату позже.";message.hidden=false;}return;}
+    if(!editingBillId && type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
+    if(!editingBillId && paymentTiming==="now" && paymentMethod==="cash"&&(!Number.isSafeInteger(tendered)||tendered<orderTotal)){if(message){message.textContent="Укажите полученную наличную сумму не меньше "+staffMoney(orderTotal)+". Сдача рассчитается автоматически.";message.hidden=false;}byId("staffCashReceived")?.focus();return;}
     const changeAmount=paymentMethod==="cash"?tendered-orderTotal:0;
-    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent="Оформляем и подтверждаем оплату…";}
+    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent=editingBillId?"Добавляем позиции…":paymentTiming==="later"?"Открываем счёт…":"Оформляем и подтверждаем оплату…";}
     if(message)message.hidden=true;
     try{
-      const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        initData,staffOrder:true,locationId:staffLocationIds[0],
-        items:[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity})),
-        orderType:type,paymentMethod,
-        customerName:byId("staffOrderCustomerName").value.trim(),
-        customerPhone:byId("staffOrderCustomerPhone").value.trim(),
-        deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
-      })});
-      const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
-      const order=result.order;
-      try {
-        await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
-      } catch(paymentError) {
-        if(message){message.textContent="Заказ №"+order.orderNumber+" создан, но подтверждение оплаты не прошло: "+(paymentError instanceof Error?paymentError.message:"ошибка оплаты")+". Не оформляйте повторный заказ; проверьте его в рабочей панели.";message.hidden=false;}
-        await loadOrders();
-        return;
+      const items=[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity}));
+      if(editingBillId){
+        const added=await api({action:"addItems",orderId:editingBillId,items});
+        if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}
+      } else {
+        const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+          initData,staffOrder:true,locationId:staffLocationIds[0],items,orderType:type,paymentMethod,
+          customerName:byId("staffOrderCustomerName").value.trim(),
+          customerPhone:byId("staffOrderCustomerPhone").value.trim(),
+          deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+        })});
+        const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
+        const order=result.order;
+        if(paymentTiming==="now"){
+          try {
+            await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
+          } catch(paymentError) {
+            if(message){message.textContent="Заказ №"+order.orderNumber+" создан, но подтверждение оплаты не прошло: "+(paymentError instanceof Error?paymentError.message:"ошибка оплаты")+". Не оформляйте повторный заказ; проверьте его в рабочей панели.";message.hidden=false;}
+            await loadOrders(); return;
+          }
+          if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+        } else {
+          if(message){message.textContent="Открыт счёт №"+order.orderNumber+" на "+staffMoney(order.totalVnd)+". Оплата будет после трапезы. Все последующие блюда добавляйте в этот счёт.";message.hidden=false;}
+        }
       }
-      if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
-      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;refreshStaffCashFields();renderStaffCart();await loadOrders();
+      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
     }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
-    finally{if(submit){submit.textContent="Отправить заказ на кухню";submit.disabled=!staffCart.size;}}
+    finally{if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
   });
   renderStaffCart();
+  setStaffOrderMode(null);
 
   window.ummaKitchen = { open, refresh:loadOrders };
 })();
