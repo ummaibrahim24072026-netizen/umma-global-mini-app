@@ -185,6 +185,7 @@
       }
       if (!staffMenu.length) await loadStaffMenu();
       renderOpenBills();
+      renderStaffActiveOrders();
       showMessage("", false);
     } catch (e) {
       showMessage(e instanceof Error ? e.message : "Не удалось открыть рабочее место");
@@ -467,6 +468,19 @@
     const change=target.closest("[data-staff-change]");
     const addToBill=target.closest("[data-add-to-bill]");
     const settleBill=target.closest("[data-settle-bill]");
+    const staffAction=target.closest("#staffActiveOrders [data-order-id][data-new-status], #staffActiveOrders [data-order-id][data-payment-status]");
+    if(staffAction){
+      const orderId=staffAction.getAttribute("data-order-id");
+      const newStatus=staffAction.getAttribute("data-new-status");
+      if(newStatus){updateStatus(orderId,newStatus);return;}
+      const paymentStatus=staffAction.getAttribute("data-payment-status");
+      if(paymentStatus){
+        const order=orders.find(o=>String(o.id)===String(orderId));
+        if(paymentStatus==="paid"&&order?.payment_method==="cash")openCashPayment(order);
+        else if(order&&window.confirm("Подтвердить получение оплаты по заказу №"+order.order_number+"?"))updatePayment(orderId,paymentStatus,Number(order.total_vnd)||0,0,order.payment_method||"qr");
+        return;
+      }
+    }
     if(settleBill) {
       const order=orders.find(o=>String(o.id)===String(settleBill.getAttribute("data-settle-bill")));
       if(!order)return;
