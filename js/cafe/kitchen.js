@@ -614,7 +614,8 @@
   }
   function selectStaffService(type,tableNumber=null){
     const select=byId("staffOrderType"),guest=byId("staffOrderCustomerName");
-    if(!select||!guest||editingBillId)return;
+    if(!select||!guest)return;
+    setStaffOrderMode(null);
     select.value=type;
     guest.value=type==="dine_in"?"Стол №"+tableNumber:"";
     const existingBill=type==="dine_in"?openBillForTable(tableNumber):null;
