@@ -106,12 +106,17 @@ for(const id of ["cafeQuickNewOrder","cafeQuickKitchen","cafeQuickOrders","cafeQ
   assert.ok(!html.includes('id="'+id+'"'),"duplicate kitchen navigation must be removed: "+id);
 }
 assert.match(html,/<details class="cafe-management-tools">/,"management tools must remain");
-assert.ok(html.indexOf('id="cafeKitchenOrders"')<html.indexOf('class="cafe-management-tools"'),"management must appear below kitchen orders");
+const adminSection=html.slice(html.indexOf('id="adminPage"'),html.indexOf('id="adminUsersPage"'));
+const kitchenSection=html.slice(html.indexOf('id="cafeKitchenPage"'),html.indexOf('id="cafeInventoryPage"'));
+assert.ok(adminSection.includes('class="cafe-management-tools"'),"management must live in administration");
+assert.ok(!kitchenSection.includes('class="cafe-management-tools"'),"kitchen must not contain management");
+assert.ok(!kitchenSection.includes('id="cafeInventoryOpen"'),"kitchen must not contain inventory controls");
+assert.ok(!kitchenSection.includes('id="cafeStaffAdminOpen"'),"kitchen must not contain staff controls");
 console.log("PASS one guest order entry, compact kitchen and preserved management");
 
 const sandbox=read("js/cafe/test-mode.js");
 new vm.Script(sandbox,{filename:"test-mode.js"});
-assert.match(html,/js\/cafe\/test-mode\.js\?v=9/,"sandbox cache version missing");
+assert.match(html,/js\/cafe\/test-mode\.js\?v=10/,"sandbox cache version missing");
 assert.match(sandbox,/action:"sandboxBootstrap"/,"sandbox must require server bootstrap");
 assert.match(sandbox,/if\(!response\.ok\|\|!data\.ok\)return/,"unauthorized sandbox must stay hidden");
 assert.match(sandbox,/management\.append\(developer\)/,"developer settings must live under management");
@@ -165,3 +170,6 @@ assert.match(kitchen,/if \(!silent\) showMessage\("Загружаем заказ
 assert.match(kitchen,/if \(changed\) \{\s*lastOrdersFingerprint = fingerprint/,"unchanged orders must not rerender");
 assert.match(html,/Автообновление каждые 5 секунд/,"displayed interval must match polling");
 console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender");
+
+assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
+console.log("PASS kitchen is management-free, superadmin controls retained in admin");
