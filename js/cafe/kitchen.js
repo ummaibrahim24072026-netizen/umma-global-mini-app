@@ -593,7 +593,7 @@
   }
   function tableNumberForOrder(order){
     const name=String(order.customer_name||"").trim();
-    const match=/^Стол\\s*№?\\s*([1-6])$/i.exec(name);
+    const match=/^Стол\s*№?\s*([1-6])$/i.exec(name);
     return match?Number(match[1]):null;
   }
   function openBillForTable(tableNumber,source=orders){
@@ -765,7 +765,7 @@
       // Refresh before creating a dine-in order: another tablet may have
       // opened this table since it was selected.
       if(!editingBillId&&type==="dine_in"){
-        const match=/^Стол\\s*№?\\s*([1-6])$/i.exec(guestName);
+        const match=/^Стол\s*№?\s*([1-6])$/i.exec(guestName);
         if(match){
           const fresh=await api({action:"list"});
           const bill=openBillForTable(Number(match[1]),Array.isArray(fresh.orders)?fresh.orders:[]);
