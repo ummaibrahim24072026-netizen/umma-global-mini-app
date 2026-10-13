@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=44/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=45/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=29/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -87,11 +87,11 @@ console.log("PASS closed order tab and statuses");
 
 const kitchenLive=read("js/cafe/kitchen-live.js");
 new vm.Script(kitchenLive,{filename:"kitchen-live.js"});
-assert.match(html,/js\/cafe\/kitchen-live\.js\?v=2/,"kitchen live module missing");
+assert.match(html,/js\/cafe\/kitchen-live\.js\?v=3/,"kitchen live module missing");
 assert.match(kitchen,/ummaKitchenLive\?\.update\(orders\)/,"kitchen list must update alerts");
 assert.match(kitchen,/ummaKitchenLive\?\.start\(\)/,"kitchen must start polling");
 assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledgement");
-assert.match(kitchenLive,/\},3000\);/,"kitchen must poll every 3 seconds");
+assert.match(kitchenLive,/\},5000\);/,"kitchen must poll every 5 seconds");
 assert.match(html,/id="kitchenTabletToggle"/,"kitchen tablet mode missing");
 console.log("PASS kitchen add-on detection, tablet mode, polling and acknowledgement");
 
@@ -159,3 +159,9 @@ assert.equal(click("cafeKitchenBack"),true);
 assert.equal(fakeWindow.ummaNavigation.current(),"home","Back from kitchen must return to previous home");
 assert.equal(mainMock.style.display,"");
 console.log("PASS navigation stack: home → kitchen → orders → back → cash → back → home");
+
+assert.match(kitchenLive,/refresh\(\{silent:true\}\)/,"background polling must be silent");
+assert.match(kitchen,/if \(!silent\) showMessage\("Загружаем заказы…"/,"silent polling must not show loading text");
+assert.match(kitchen,/if \(changed\) \{\s*lastOrdersFingerprint = fingerprint/,"unchanged orders must not rerender");
+assert.match(html,/Автообновление каждые 5 секунд/,"displayed interval must match polling");
+console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender");
