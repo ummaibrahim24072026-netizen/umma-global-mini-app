@@ -784,7 +784,7 @@
         if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}
       } else {
         const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-          initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod,
+          initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
           customerName:guestName,
           customerPhone:"",
           deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
@@ -795,6 +795,8 @@
           try {
             await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
           } catch(paymentError) {
+            // Creation has committed. Retrying this cart would create a second sale.
+            staffCart.clear();byId("staffOrderForm").reset();setStaffOrderMode(null);renderStaffCart();
             if(message){message.textContent="Заказ №"+order.orderNumber+" создан, но подтверждение оплаты не прошло: "+(paymentError instanceof Error?paymentError.message:"ошибка оплаты")+". Не оформляйте повторный заказ; проверьте его в рабочей панели.";message.hidden=false;}
             await loadOrders(); return;
           }

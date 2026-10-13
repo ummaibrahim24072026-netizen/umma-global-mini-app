@@ -19,3 +19,6 @@ jobs:
           node-version: 22
       - name: Verify app code and critical flows
         run: node scripts/verify-app.mjs
+
+      - name: Verify cafe launch regressions with isolated API doubles
+        run: node scripts/qa-cafe-launch.mjs

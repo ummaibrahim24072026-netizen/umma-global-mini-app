@@ -291,6 +291,7 @@
           initData,
           items: Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity })),
           orderType: orderType?.value || "pickup",
+          paymentTiming,
           paymentMethod: byId("cafePaymentMethod")?.value || "cash",
           locationId,
           customerName: byId("cafeCustomerName")?.value.trim() || "",
