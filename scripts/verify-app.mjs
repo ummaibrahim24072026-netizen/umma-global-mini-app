@@ -173,3 +173,32 @@ console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender
 
 assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
 console.log("PASS kitchen is management-free, superadmin controls retained in admin");
+
+assert.match(html,/js\\/cafe\\/kitchen-live\\.js\\?v=4/,"kitchen live cache version must be updated");
+assert.ok(!kitchenLive.includes('Увидел новые блюда'),"misleading acknowledgement label must be removed");
+assert.match(kitchenLive,/order\.status==="pending"/,"pending order must be treated as new order");
+assert.match(kitchenLive,/seen\[id\]=ids;\s*continue;/,"initial order items must become baseline");
+assert.match(kitchenLive,/Принять дозаказ к приготовлению/,"real add-on acknowledgement must be meaningful");
+const fakeStorage=new Map();
+const listeners={};
+const fakePage={hidden:false,classList:{toggle:()=>false}};
+const kitchenContext={
+  localStorage:{getItem:k=>fakeStorage.get(k)||null,setItem:(k,v)=>fakeStorage.set(k,v)},
+  document:{getElementById:id=>id==="cafeKitchenPage"?fakePage:null,addEventListener:(name,fn)=>listeners[name]=fn},
+  window:{setInterval:()=>1,ummaKitchen:{rerender(){}},AudioContext:null},
+  console
+};
+vm.runInNewContext(kitchenLive,kitchenContext);
+const live=kitchenContext.window.ummaKitchenLive;
+const makeOrder=(status,items)=>({id:34,order_number:34,status,cafe_order_items:items.map(id=>({id,product_name_ru:"Шурпа",quantity:1}))});
+live.update([makeOrder("pending",[101])]);
+assert.equal(live.notice(makeOrder("pending",[101])),"","new order must not display an add-on");
+live.update([makeOrder("preparing",[101])]);
+assert.equal(live.notice(makeOrder("preparing",[101])),"","accepted initial order must not display an add-on");
+live.update([makeOrder("preparing",[101,102])]);
+assert.match(live.notice(makeOrder("preparing",[101,102])),/ДОЗАКАЗ/,"new line on accepted order must display add-on");
+listeners.click({target:{closest:()=>({getAttribute:()=> "34"})}});
+assert.equal(live.notice(makeOrder("preparing",[101,102])),"","acknowledged add-on should disappear");
+live.update([makeOrder("preparing",[101,102,103])]);
+assert.match(live.notice(makeOrder("preparing",[101,102,103])),/ДОЗАКАЗ/,"later add-on must alert again");
+console.log("PASS new orders and later add-ons are distinct, acknowledgements retained");
