@@ -834,3 +834,7 @@ button:active { transform: scale(.98); }
 .staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:#078f94;color:white;border-color:#078f94;box-shadow:0 0 0 2px #a6e8df}
 .staff-table-grid button:focus-visible{outline:3px solid #e5ac2e;outline-offset:2px}
 @media(min-width:700px){.staff-table-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+.staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
+.staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
+.staff-table-grid button.has-open-bill.is-selected{background:#078f94;color:white}

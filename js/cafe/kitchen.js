@@ -166,6 +166,7 @@
     renderOpenBills();
     renderStaffActiveOrders();
     renderStaffClosedOrders();
+    updateTableAvailability();
   }
 
   function open() {
@@ -587,16 +588,43 @@
       renderStaffCart();
     }
   });
+  function selectedStaffCafeId(){
+    return String(byId("staffOrderLocation")?.value||staffLocationIds[0]||"");
+  }
+  function tableNumberForOrder(order){
+    const name=String(order.customer_name||"").trim();
+    const match=/^Стол\s*№?\s*([1-6])$/i.exec(name);
+    return match?Number(match[1]):null;
+  }
+  function openBillForTable(tableNumber,source=orders){
+    const locationId=selectedStaffCafeId();
+    return source.filter(order=>order.order_type==="dine_in"
+      &&tableNumberForOrder(order)===Number(tableNumber)
+      &&order.payment_status!=="paid"
+      &&!["completed","cancelled"].includes(order.status)
+      &&(!locationId||String(order.location_id)===locationId))
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0]||null;
+  }
+  function updateTableAvailability(){
+    document.querySelectorAll("[data-staff-table]").forEach(button=>{
+      const bill=openBillForTable(button.getAttribute("data-staff-table"));
+      button.classList.toggle("has-open-bill",!!bill);
+      button.title=bill?"Открытый счёт №"+bill.order_number+" — добавить блюда":"Свободен — новый заказ";
+    });
+  }
   function selectStaffService(type,tableNumber=null){
     const select=byId("staffOrderType"),guest=byId("staffOrderCustomerName");
-    if(!select||!guest||editingBillId)return;
+    if(!select||!guest)return;
+    setStaffOrderMode(null);
     select.value=type;
     guest.value=type==="dine_in"?"Стол №"+tableNumber:"";
+    const existingBill=type==="dine_in"?openBillForTable(tableNumber):null;
+    setStaffOrderMode(existingBill?.id||null);
     const guestLabel=byId("staffOrderGuestLabel");
     if(guestLabel)guestLabel.firstChild.textContent=type==="dine_in"?"Стол":"Имя гостя";
     guest.placeholder=type==="dine_in"?"Стол №"+tableNumber:"Например, Ахмад";
     const hint=byId("staffTableSelectionHint");
-    if(hint)hint.textContent=type==="dine_in"?"Выбран стол №"+tableNumber+". Добавляйте блюда.":type==="pickup"?"С собой: добавьте блюда и укажите имя гостя.":"Доставка: добавьте блюда, имя и адрес.";
+    if(hint)hint.textContent=type==="dine_in"?(existingBill?"Стол №"+tableNumber+" занят. Дозаказ в счёт №"+existingBill.order_number+".":"Стол №"+tableNumber+" свободен. Новый заказ."):type==="pickup"?"С собой: добавьте блюда и укажите имя гостя.":"Доставка: добавьте блюда, имя и адрес.";
     document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{
       const selected=type==="dine_in"?button.getAttribute("data-staff-table")===String(tableNumber):button.getAttribute("data-staff-service")===type;
       button.classList.toggle("is-selected",selected);
@@ -633,6 +661,7 @@
   function renderStaffActiveOrders() {
     const root=byId("staffActiveOrders");if(!root)return;
     const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    updateTableAvailability();
     root.innerHTML=active.length?active.map(o=>{
       const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
       const itemList=items.map(i=>'<li>'+esc(i.product_name_ru)+' × '+Number(i.quantity)+'</li>').join("");
@@ -733,6 +762,20 @@
     if(message)message.hidden=true;
     try{
       const items=[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity}));
+      // Refresh before creating a dine-in order: another tablet may have
+      // opened this table since it was selected.
+      if(!editingBillId&&type==="dine_in"){
+        const match=/^Стол\s*№?\s*([1-6])$/i.exec(guestName);
+        if(match){
+          const fresh=await api({action:"list"});
+          const bill=openBillForTable(Number(match[1]),Array.isArray(fresh.orders)?fresh.orders:[]);
+          if(bill){
+            orders=Array.isArray(fresh.orders)?fresh.orders:orders;
+            setStaffOrderMode(bill.id);
+            if(message){message.textContent="Стол №"+match[1]+" уже имеет неоплаченный счёт №"+bill.order_number+". Новые блюда добавляются к нему.";message.hidden=false;}
+          }
+        }
+      }
       if(editingBillId){
         const added=await api({action:"addItems",orderId:editingBillId,items});
         if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}

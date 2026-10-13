@@ -75,8 +75,8 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=48/, "Telegram must load updated checkout JS");
-assert.match(html, /css\/app\.css\?v=30/, "Telegram must load updated checkout CSS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=49/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=31/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
 assert.match(html, /id="staffClosedOrdersToggle"/, "closed orders tab missing");
@@ -219,7 +219,6 @@ assert.ok(html.includes('data-staff-service="delivery"'),"delivery shortcut miss
 assert.match(kitchen,/guest\.value=type==="dine_in"\?"Стол №"\+tableNumber:""/,"table selection must fill guest field");
 assert.match(kitchen,/if\(!editingBillId&&!guestName\)/,"new order must have table or guest identity");
 assert.match(kitchen,/customerName:guestName/,"selected table or guest must reach backend");
-assert.match(kitchen,/if\(!select\|\|!guest\|\|editingBillId\)return/,"add-on mode must not alter existing table");
 console.log("PASS six-table quick order picker, pickup guest identity and preserved add-on mode");
 
 assert.match(kitchen,/pending:\{status:"preparing",label:"Принять и готовить"\}/,"pending orders must offer a single accept-and-cook action");
@@ -228,3 +227,13 @@ assert.match(kitchen,/status:"confirmed"\s*\}\);[\s\S]*?status:"preparing"\s*\}\
 assert.match(kitchen,/Заказ принят, но начало приготовления не подтверждено/,"partial failure must be visible to staff");
 assert.match(kitchen,/confirmed:\{status:"preparing",label:"Начать готовить"\}/,"interrupted acceptance must be recoverable");
 console.log("PASS one-tap kitchen accept and cooking with safe partial-failure recovery");
+
+assert.match(kitchen,/function openBillForTable\(/,"table billing lookup required");
+assert.match(kitchen,/order\.payment_status!=="paid"/,"paid tables must not reuse the previous bill");
+assert.match(kitchen,/!\["completed","cancelled"\]\.includes\(order\.status\)/,"closed bills must not receive add-ons");
+assert.match(kitchen,/setStaffOrderMode\(existingBill\?\.id\|\|null\)/,"occupied tables must route to existing bill");
+assert.match(kitchen,/const fresh=await api\(\{action:"list"\}\)/,"recheck table before creating order");
+assert.match(kitchen,/setStaffOrderMode\(bill\.id\)/,"fresh unpaid bill must receive add-on");
+console.log("PASS occupied-table add-on routing and paid-table new order separation");
+
+assert.ok(kitchen.includes("if(!select||!guest)return;"),"table picker requires inputs");
