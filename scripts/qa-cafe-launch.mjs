@@ -92,3 +92,15 @@ assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'pending'
 assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'paid',order_type:'delivery',delivery_status:'picked_up'},'completed'),false);
 assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'paid',order_type:'dine_in'},'completed'),true);
 console.log('PASS sandbox transition guards: no reopening, skipped preparation, unpaid completion or paid cancellation');
+
+// Courier cash is collected at the door; checkout labels must not imply payment now.
+const syncSource=source.slice(source.indexOf('  function syncStaffPaymentOptions'),source.indexOf('  function setStaffOrderMode'));
+for(const methodValue of ['courier','cash']) {
+ const now={textContent:''},later={},courier={};
+ const elements={staffOrderType:{value:'delivery'},staffPaymentTiming:{value:'now',querySelector:s=>s.includes('later')?later:now},staffOrderPayment:{value:methodValue,querySelector:()=>courier},staffOrderSubmit:{textContent:''},staffPaymentNowFields:{},staffPaymentTimingHint:{}};
+ const context={byId:id=>elements[id],editingBillId:null,refreshStaffCashFields(){}};
+ vm.runInNewContext(syncSource+';syncStaffPaymentOptions();',context);
+ assert.equal(now.textContent,methodValue==='courier'?'При получении — курьеру':'Оплата сразу');
+ assert.equal(elements.staffOrderSubmit.textContent,methodValue==='courier'?'Оформить доставку — оплата при получении':'Оформить заказ и подтвердить оплату');
+}
+console.log('PASS courier checkout labels show payment at delivery and reset on cash selection');
