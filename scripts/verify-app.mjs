@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=45/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=46/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=29/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -202,3 +202,13 @@ assert.equal(live.notice(makeOrder("preparing",[101,102])),"","acknowledged add-
 live.update([makeOrder("preparing",[101,102,103])]);
 assert.match(live.notice(makeOrder("preparing",[101,102,103])),/ДОЗАКАЗ/,"later add-on must alert again");
 console.log("PASS new orders and later add-ons are distinct, acknowledgements retained");
+
+assert.ok(html.includes('id="staffKitchenEntryButton"'),"dedicated kitchen tablet entry must exist");
+assert.ok(html.includes('id="staffEntryButton"'),"dedicated order-taking entry must exist");
+assert.match(kitchen,/byId\("staffKitchenEntryButton"\)\?\.addEventListener\("click",open\)/,"kitchen entry must open kitchen");
+assert.match(kitchen,/openWaiterPage\(\)\.then\(\(\)=>showStaffWorkspace\("order"\)\)/,"order-taking must open new order directly");
+assert.match(kitchen,/showStaffWorkspace\("order"\);\s*showMessage\("", false\)/,"order-taking must initialize new order tab");
+assert.ok(html.includes('id="staffOrderSummary"'),"existing order composition must remain");
+assert.ok(html.includes('id="staffActiveOrdersWrap"'),"existing active orders and add-ons must remain");
+assert.ok(html.includes('id="staffClosedOrdersWrap"'),"existing closed orders must remain");
+console.log("PASS separate order-taking and kitchen tablet entries, shared order workflows retained");
