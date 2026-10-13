@@ -7,7 +7,7 @@
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" })[c]);
   const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
   const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
-  const nextStep = { pending:{status:"confirmed",label:"Принять заказ"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
+  const nextStep = { pending:{status:"preparing",label:"Принять и готовить"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
   let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map(), editingBillId = null;
 
   function isAllowed() {
@@ -130,7 +130,25 @@
     busy = true;
     showMessage("Обновляем статус…");
     try {
-      await api({ action:"updateStatus", orderId, status });
+      if(status==="preparing"){
+        const current=orders.find(order=>String(order.id)===String(orderId));
+        if(current?.status==="pending"){
+          // Backend enforces pending → confirmed → preparing.
+          // Complete both transitions in one staff action while retaining
+          // acceptance ownership and the existing audit trail.
+          await api({ action:"updateStatus", orderId, status:"confirmed" });
+          try {
+            await api({ action:"updateStatus", orderId, status:"preparing" });
+          } catch (startError) {
+            await refreshAfterUpdate();
+            throw new Error("Заказ принят, но начало приготовления не подтверждено. Нажмите «Начать готовить» ещё раз. "+(startError instanceof Error?startError.message:""));
+          }
+        } else {
+          await api({ action:"updateStatus", orderId, status });
+        }
+      } else {
+        await api({ action:"updateStatus", orderId, status });
+      }
       await refreshAfterUpdate();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось обновить статус");
