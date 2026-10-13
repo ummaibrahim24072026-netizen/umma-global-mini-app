@@ -42,7 +42,7 @@
     }
     alerts=nextAlerts;started=true;save();
     const label=document.getElementById("kitchenLiveStatus");
-    if(label)label.textContent=(alerts.size?"🔔 Требуют внимания: "+alerts.size+" · ":"✓ ")+"Обновление каждые 3 секунды";
+    if(label)label.textContent=(alerts.size?"🔔 Требуют внимания: "+alerts.size+" · ":"✓ ")+"Обновление каждые 5 секунд";
     if(changed&&page()&&!page().hidden)beep();
   }
   function notice(order){
@@ -59,7 +59,7 @@
     seen[id]=(order.cafe_order_items||[]).map(item=>String(item.id));
     alerts.delete(id);save();window.ummaKitchen?.rerender();
     const label=document.getElementById("kitchenLiveStatus");
-    if(label)label.textContent="✓ Дозаказ отмечен как просмотренный · Автообновление каждые 10 секунд";
+    if(label)label.textContent="✓ Дозаказ отмечен как просмотренный · Автообновление каждые 5 секунд";
   });
   document.getElementById("kitchenTabletToggle")?.addEventListener("click",event=>{
     const on=page()?.classList.toggle("kitchen-tablet-mode");
@@ -71,8 +71,8 @@
     if(timer)return;
     timer=window.setInterval(()=>{
       if(document.hidden||page()?.hidden)return;
-      window.ummaKitchen?.refresh();
-    },3000);
+      window.ummaKitchen?.refresh({silent:true});
+    },5000);
   }
   window.ummaKitchenLive={update,notice,start};
 })();

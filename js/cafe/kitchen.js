@@ -91,10 +91,12 @@
     return result;
   }
 
-  async function loadOrders() {
+  let lastOrdersFingerprint = null;
+  async function loadOrders(options = {}) {
     if (busy) return;
+    const silent = options?.silent === true;
     busy = true;
-    showMessage("Загружаем заказы…");
+    if (!silent) showMessage("Загружаем заказы…");
     try {
       const result = await api({ action:"list" });
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
@@ -102,15 +104,23 @@
       locations = Array.isArray(result.locations) ? result.locations : [];
       window.ummaLocationPins = locations;
       actorTelegramId = result.actorTelegramId ?? null;
-      orders = Array.isArray(result.orders) ? result.orders : [];
+      const incomingOrders = Array.isArray(result.orders) ? result.orders : [];
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
-      window.ummaKitchenLive?.update(orders);
-      render();
-      renderOpenBills();
-      renderStaffActiveOrders();
-      renderStaffClosedOrders();
+      const fingerprint = JSON.stringify(incomingOrders);
+      const changed = fingerprint !== lastOrdersFingerprint;
+      orders = incomingOrders;
+      if (changed) {
+        lastOrdersFingerprint = fingerprint;
+        window.ummaKitchenLive?.update(orders);
+        render();
+        renderOpenBills();
+        renderStaffActiveOrders();
+        renderStaffClosedOrders();
+      }
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
+      if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
+      else console.warn("Kitchen background refresh failed:", error);
+
     } finally { busy = false; }
   }
 
