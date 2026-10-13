@@ -50,13 +50,14 @@ DECLARE
 BEGIN
  IF p_worker='A' THEN PERFORM pg_advisory_xact_lock(hashtextextended('umma_qa:'||p_case||':A',0)); END IF;
  IF p_worker NOT IN ('A','B') OR p_hold_seconds NOT BETWEEN 0 AND 3 THEN RAISE EXCEPTION 'Invalid QA worker'; END IF;
+ IF p_worker='B' THEN PERFORM pg_sleep(1); END IF;
  BEGIN
   IF p_case='same_request' THEN
-   v_result:=${schema}.execute_cafe_order_operation(11,'44444444-4444-4444-8444-444444444444','staffOrder',
+   v_result:=${schema}.execute_cafe_order_operation(11,'44444444-4444-4444-8444-444444444445','staffOrder',
     jsonb_build_object('p_location_id',v_cafe,'p_items',v_items,'p_order_type','pickup','p_customer_name','QA replay','p_payment_method','cash'));
   ELSIF p_case='same_table' THEN
    v_result:=${schema}.execute_cafe_order_operation(v_actor,
-    CASE WHEN p_worker='A' THEN '55555555-5555-4555-8555-555555555555'::uuid ELSE '66666666-6666-4666-8666-666666666666'::uuid END,
+    CASE WHEN p_worker='A' THEN '55555555-5555-4555-8555-555555555556'::uuid ELSE '66666666-6666-4666-8666-666666666667'::uuid END,
     'staffOrder',jsonb_build_object('p_location_id',v_cafe,'p_items',v_items,'p_order_type','dine_in','p_customer_name','Стол №1','p_payment_method','cash'));
   ELSE
    SELECT id INTO STRICT v_order FROM ${schema}.cafe_orders WHERE customer_name='QA '||p_case;
