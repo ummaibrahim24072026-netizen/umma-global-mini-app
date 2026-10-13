@@ -838,3 +838,13 @@ button:active { transform: scale(.98); }
 .staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
 .staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
 .staff-table-grid button.has-open-bill.is-selected{background:#078f94;color:white}
+
+/* Delivery addresses and actions must fit narrow Telegram viewports. */
+.cafe-order-form, .cafe-order-form label, .kitchen-order-card { min-width: 0; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea { max-width: 100%; box-sizing: border-box; }
+.kitchen-order-details > span, .kitchen-order-items li > span { min-width: 0; overflow-wrap: anywhere; }
+.kitchen-order-top > div { min-width: 0; }
+.kitchen-order-actions { flex-wrap: wrap; }
+.kitchen-order-actions > button { min-width: 0; flex: 1 1 120px; overflow-wrap: anywhere; white-space: normal; }
+.kitchen-courier-assignment { display: flex; flex: 1 1 100%; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }

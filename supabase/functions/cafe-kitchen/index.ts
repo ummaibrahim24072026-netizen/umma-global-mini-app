@@ -192,9 +192,9 @@ Deno.serve(async req => {
         if(typeof orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(orderId)||!["courier_assigned","picked_up","delivered"].includes(deliveryStatus)) return response({ok:false,error:"Некорректный заказ или статус доставки"},400);
         const {data:order,error:orderError}=await supabase.from("cafe_test_orders").select("*").eq("id",orderId).eq("location_id",locationId).maybeSingle();
         if(orderError||!order||order.order_type!=="delivery") return response({ok:false,error:"Тестовый заказ доставки не найден"},404);
-        const allowed = role==="manager" || (role==="courier" && ((order.delivery_status==="waiting_courier"&&deliveryStatus==="courier_assigned")||(order.delivery_status==="courier_assigned"&&deliveryStatus==="picked_up")||(order.delivery_status==="picked_up"&&deliveryStatus==="delivered")));
+        const allowed = !["completed","cancelled"].includes(order.status) && ({waiting_courier:"courier_assigned",courier_assigned:"picked_up",picked_up:"delivered"} as Record<string,string>)[order.delivery_status]===deliveryStatus && (deliveryStatus!=="picked_up" || order.status==="ready");
         if(!allowed) return response({ok:false,error:"Недопустимый переход доставки для этой должности"},403);
-        const {data:updated,error}=await supabase.from("cafe_test_orders").update({delivery_status:deliveryStatus,updated_at:new Date().toISOString()}).eq("id",orderId).select("*").single();
+        const {data:updated,error}=await supabase.from("cafe_test_orders").update({delivery_status:deliveryStatus,updated_at:new Date().toISOString()}).eq("id",orderId).eq("delivery_status",order.delivery_status).eq("status",order.status).select("*").single();
         if(error) return response({ok:false,error:"Не удалось обновить тестовую доставку"},500);
         await writeEvent("delivery_changed",orderId,{from:order.delivery_status,to:deliveryStatus});
         return response({ok:true,order:updated,testMode:true});
@@ -324,28 +324,12 @@ Deno.serve(async req => {
     if (body.action === "assignCourier") {
       const orderId=body.orderId, targetTelegramId=Number(body.courierTelegramId);
       if(typeof orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(orderId)||!Number.isSafeInteger(targetTelegramId)||targetTelegramId<=0) return response({ok:false,error:"Выберите заказ и курьера"},400);
-      const {data:order,error:orderError}=await supabase.from("cafe_orders").select("id,order_number,location_id,order_type,status,delivery_status,delivery_address,courier_telegram_id").eq("id",orderId).maybeSingle();
-      if(orderError||!order) return response({ok:false,error:"Заказ не найден"},404);
-      if(order.order_type!=="delivery"||!["waiting_courier","courier_assigned"].includes(order.delivery_status)||["completed","cancelled"].includes(order.status)) return response({ok:false,error:"Этот заказ уже нельзя назначить курьеру"},400);
-      let managerAllowed=actor.role==="super_admin";
-      if(!managerAllowed&&["admin","employee"].includes(actor.role)){
-        const {data:assignments,error}=await supabase.from("cafe_staff").select("staff_role").eq("telegram_id",telegramId).eq("location_id",order.location_id).eq("is_active",true);
-        if(error) return response({ok:false,error:"Не удалось проверить права сотрудника"},500);
-        managerAllowed=(assignments??[]).some((x:any)=>["manager","cashier","waiter"].includes(x.staff_role));
-      }
-      if(!managerAllowed) return response({ok:false,error:"Назначать курьера может менеджер, кассир или официант"},403);
-      const {data:courier,error:courierError}=await supabase.from("cafe_staff").select("telegram_id").eq("telegram_id",targetTelegramId).eq("location_id",order.location_id).eq("staff_role","courier").eq("is_active",true).maybeSingle();
-      if(courierError||!courier) return response({ok:false,error:"Курьер не назначен в это кафе или отключён"},400);
-      const {data:courierUser,error:userError}=await supabase.from("telegram_users").select("telegram_id,is_active").eq("telegram_id",targetTelegramId).maybeSingle();
-      if(userError||!courierUser||courierUser.is_active!==true) return response({ok:false,error:"Профиль курьера отключён"},400);
-      const previous=order.delivery_status;
-      const {data:updated,error:updateError}=await supabase.from("cafe_orders").update({courier_telegram_id:targetTelegramId,delivery_status:"courier_assigned",updated_at:new Date().toISOString()}).eq("id",orderId).select("id,order_number,courier_telegram_id,delivery_status").single();
-      if(updateError) return response({ok:false,error:"Не удалось назначить курьера"},500);
-      const {error:eventError}=await supabase.from("cafe_order_events").insert({order_id:orderId,actor_telegram_id:telegramId,from_status:previous,to_status:"courier_assigned",note:"Курьер назначен"});
-      if(eventError) console.error("Courier assignment event failed",eventError.message);
+      const {data:assigned,error:assignError}=await supabase.rpc("assign_cafe_courier",{p_order_id:orderId,p_actor_telegram_id:telegramId,p_courier_telegram_id:targetTelegramId});
+      if(assignError) return response({ok:false,error:assignError.message},400);
+      const order=assigned.order, updated=assigned.order;
       try {
         const token=Deno.env.get("TELEGRAM_BOT_TOKEN");
-        if(token) await fetch("https://api.telegram.org/bot"+token+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:targetTelegramId,text:"Umma Cafe · Вам назначена доставка заказа №"+order.order_number+(order.delivery_address?"\nАдрес: "+order.delivery_address:"")})});
+        if(token&&!assigned.replayed) await fetch("https://api.telegram.org/bot"+token+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:targetTelegramId,text:"Umma Cafe · Вам назначена доставка заказа №"+order.order_number+(order.delivery_address?"\nАдрес: "+order.delivery_address:"")})});
       } catch(notificationError) { console.error("Courier notification failed",notificationError); }
       return response({ok:true,order:updated});
     }
@@ -465,7 +449,7 @@ Deno.serve(async req => {
         p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
       });
       if (error) {
-        const clientError = /Invalid delivery|Order not found|Delivery management access denied|No active staff assignment|Staff role cannot update delivery|Order is not delivery/.test(error.message);
+        const clientError = error.code === "P0001";
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить доставку" }, clientError ? 400 : 500);
       }
       return response({ ...(data ?? { ok: true }), staffRole });

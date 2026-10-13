@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import {verifyCafeDelivery} from './qa-cafe-delivery.mjs';
 import {verifyCafeEdges} from './qa-cafe-edge.mjs';
 
 // Real PostgreSQL engine in memory, synthetic rows only. No remote connection.
@@ -120,6 +121,8 @@ try {
   assert.equal(Number(zero.total24hVnd),0);
   console.log('PASS daily cash totals include more than 100 receipts and exclude other cafes');
   console.log('PASS PostgreSQL: six tables, duplicate open bills, add-ons, preparation, cash/change, payment retries, actor preservation, cancellations, terminal states, role/branch restrictions and disabled inventory');
+  await db.exec(readFileSync('supabase/proposals/cafe-delivery-hardening.sql','utf8'));
+  await verifyCafeDelivery(db,cafe,other,product);
   await verifyCafeEdges(db,cafe,product);
   console.log('LIMIT: PGlite serializes queries; this does not prove multi-connection PostgreSQL locking or real device behavior.');
 } finally { await db.close(); }

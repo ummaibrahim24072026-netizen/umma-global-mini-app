@@ -48,6 +48,9 @@ begin
     raise exception 'Staff role cannot update payment';
   end if;
 
+  if v_staff_role='courier' and (v_order.order_type<>'delivery' or v_order.courier_telegram_id is distinct from p_actor_telegram_id or v_order.delivery_status not in ('picked_up','delivered')) then
+    raise exception 'Courier can accept payment only for own collected delivery';
+  end if;
   if v_order.status in ('completed','cancelled') then
     raise exception 'Closed order cannot receive payment changes';
   end if;

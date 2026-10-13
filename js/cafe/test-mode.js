@@ -101,7 +101,7 @@
     }
     if(role==="courier"&&o.order_type==="delivery"){
       const next={waiting_courier:["courier_assigned","Назначить курьера"],courier_assigned:["picked_up","Забрал заказ"],picked_up:["delivered","Доставлено"]}[o.delivery_status];
-      if(next)buttons+='<button data-sandbox-delivery="'+next[0]+'" data-id="'+esc(o.id)+'">'+next[1]+'</button>';
+      if(next&&!["completed","cancelled"].includes(o.status)&&(next[0]!=="picked_up"||o.status==="ready"))buttons+='<button data-sandbox-delivery="'+next[0]+'" data-id="'+esc(o.id)+'">'+next[1]+'</button>';
     }
     if(role==="waiter"&&o.status==="ready"&&o.payment_status==="paid"&&o.order_type!=="delivery")buttons+='<button data-sandbox-status="completed" data-id="'+esc(o.id)+'">Выдать / завершить</button>';
     if(role==="manager"&&o.status==="ready"&&o.payment_status==="paid"&&o.order_type!=="delivery")buttons+='<button data-sandbox-status="completed" data-id="'+esc(o.id)+'">Завершить</button>';

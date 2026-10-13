@@ -68,6 +68,16 @@ export async function verifyCafeEdges(db,cafe,product){
   assert.equal((await post(create,{...body,paymentMethod:'courier'})).status,400);
   assert.equal((await post(create,{...body,paymentTiming:'later'})).status,400);
   assert.equal((await post(create,{...body,locationId:null})).status,400);
+  const courierDelivery=await post(create,{...body,requestKey:randomUUID(),orderType:'delivery',paymentMethod:'courier',deliveryAddress:'QA delivery address'});
+  assert.equal(courierDelivery.status,201);
+  const deliveryRow=(await db.query('select payment_method,payment_status,delivery_status from cafe_orders where id=$1',[courierDelivery.data.order.id])).rows[0];
+  assert.equal(deliveryRow.payment_method,'cash');assert.equal(deliveryRow.payment_status,'pending');assert.equal(deliveryRow.delivery_status,'waiting_courier');
+  const assignedDelivery=await post(kitchen,{initData:auth(11),action:'assignCourier',orderId:courierDelivery.data.order.id,courierTelegramId:20});
+  assert.equal(assignedDelivery.status,200);
+  const courierNotified=notificationCalls;
+  assert.equal((await post(kitchen,{initData:auth(11),action:'assignCourier',orderId:courierDelivery.data.order.id,courierTelegramId:20})).status,200);
+  assert.equal(notificationCalls,courierNotified);
+  assert.equal((await post(kitchen,{initData:auth(20),action:'updateDelivery',orderId:courierDelivery.data.order.id,deliveryStatus:'picked_up'})).status,400);
   const customer={...body,staffOrder:false,initData:auth(15),requestKey:randomUUID()};
   const newCustomer=await post(create,customer);assert.equal(newCustomer.status,201);
   const notified=notificationCalls;

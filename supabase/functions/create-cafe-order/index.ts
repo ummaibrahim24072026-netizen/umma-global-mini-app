@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     }
 
     const orderType = body.orderType;
-    const paymentMethod = body.paymentMethod ?? "cash";
+    const paymentMethod = body.paymentMethod === "courier" && orderType === "delivery" ? "cash" : (body.paymentMethod ?? "cash");
     const paymentTiming = body.paymentTiming ?? "now";
     if (!["now", "later"].includes(paymentTiming) || (paymentTiming === "later" && orderType !== "dine_in")) {
       return response({ ok: false, error: "Оплата позже разрешена только для заказа в кафе" }, 400);

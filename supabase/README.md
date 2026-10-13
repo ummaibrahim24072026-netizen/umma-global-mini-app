@@ -17,3 +17,5 @@ Run `npm ci --ignore-scripts && npm test` with Node 22.18+ or Node 24. Tests cre
 PGlite serializes queries. Parallel queued calls validate repeated-operation results but do **not** verify transaction interleavings across separate PostgreSQL connections. Staging must test two independent sessions against the same numbered table, overlapping payment/add-on requests, disconnections after commit, and receipt/event consistency.
 
 Never apply the offline schema fixture to an existing remote project. Production SQL changes, publication, financial data changes and inventory activation require explicit owner approval.
+
+Delivery release also requires proposals/cafe-delivery-hardening.sql before the updated cafe-kitchen handler, which calls assign_cafe_courier. QA-only application does not update public RPCs.
