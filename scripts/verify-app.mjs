@@ -235,4 +235,5 @@ assert.match(kitchen,/setStaffOrderMode\(existingBill\?\.id\|\|null\)/,"occupied
 assert.match(kitchen,/const fresh=await api\(\{action:"list"\}\)/,"recheck table before creating order");
 assert.match(kitchen,/setStaffOrderMode\(bill\.id\)/,"fresh unpaid bill must receive add-on");
 console.log("PASS occupied-table add-on routing and paid-table new order separation");
-\nassert.match(kitchen,/if\\(!select\\|\\|!guest\\)return/,"table picker requires inputs");\n
+
+assert.ok(kitchen.includes("if(!select||!guest)return;"),"table picker requires inputs");
