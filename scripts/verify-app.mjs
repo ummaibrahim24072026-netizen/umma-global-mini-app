@@ -174,7 +174,7 @@ console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender
 assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
 console.log("PASS kitchen is management-free, superadmin controls retained in admin");
 
-assert.match(html,/js\\/cafe\\/kitchen-live\\.js\\?v=4/,"kitchen live cache version must be updated");
+assert.ok(html.includes("js/cafe/kitchen-live.js?v=4"),"kitchen live cache version must be updated");
 assert.ok(!kitchenLive.includes('Увидел новые блюда'),"misleading acknowledgement label must be removed");
 assert.match(kitchenLive,/order\.status==="pending"/,"pending order must be treated as new order");
 assert.match(kitchenLive,/seen\[id\]=ids;\s*continue;/,"initial order items must become baseline");
