@@ -19,7 +19,7 @@
   }
   function message(s){const e=$("ummaSandboxMessage");if(e){e.textContent=s;e.hidden=!s;}}
   async function build(){
-    const page=$("cafeKitchenPage");if(!page||$("ummaSandboxPanel"))return;
+    const page=$("adminPage");if(!page||$("ummaSandboxPanel"))return;
     // Do not display developer settings until the server authorizes superadmin.
     let bootstrap;
     try {
