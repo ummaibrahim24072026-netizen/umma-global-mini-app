@@ -168,7 +168,7 @@ console.log("PASS navigation stack: home → kitchen → orders → back → cas
 assert.match(kitchenLive,/refresh\(\{silent:true\}\)/,"background polling must be silent");
 assert.match(kitchen,/if \(!silent\) showMessage\("Загружаем заказы…"/,"silent polling must not show loading text");
 assert.match(kitchen,/if \(changed\) \{\s*lastOrdersFingerprint = fingerprint/,"unchanged orders must not rerender");
-assert.match(html,/Автообновление каждые 5 секунд/,"displayed interval must match polling");
+assert.ok(!html.includes('id="kitchenLiveStatus"'),"kitchen refresh status block must not be visible");
 console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender");
 
 assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
