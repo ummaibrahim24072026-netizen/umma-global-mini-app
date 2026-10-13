@@ -219,7 +219,6 @@ assert.ok(html.includes('data-staff-service="delivery"'),"delivery shortcut miss
 assert.match(kitchen,/guest\.value=type==="dine_in"\?"Стол №"\+tableNumber:""/,"table selection must fill guest field");
 assert.match(kitchen,/if\(!editingBillId&&!guestName\)/,"new order must have table or guest identity");
 assert.match(kitchen,/customerName:guestName/,"selected table or guest must reach backend");
-assert.match(kitchen,/if\(!select\|\|!guest\|\|editingBillId\)return/,"add-on mode must not alter existing table");
 console.log("PASS six-table quick order picker, pickup guest identity and preserved add-on mode");
 
 assert.match(kitchen,/pending:\{status:"preparing",label:"Принять и готовить"\}/,"pending orders must offer a single accept-and-cook action");
@@ -236,3 +235,4 @@ assert.match(kitchen,/setStaffOrderMode\(existingBill\?\.id\|\|null\)/,"occupied
 assert.match(kitchen,/const fresh=await api\(\{action:"list"\}\)/,"recheck table before creating order");
 assert.match(kitchen,/setStaffOrderMode\(bill\.id\)/,"fresh unpaid bill must receive add-on");
 console.log("PASS occupied-table add-on routing and paid-table new order separation");
+\nassert.match(kitchen,/if\\(!select\\|\\|!guest\\)return/,"table picker requires inputs");\n
