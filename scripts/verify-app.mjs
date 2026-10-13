@@ -75,8 +75,8 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=46/, "Telegram must load updated checkout JS");
-assert.match(html, /css\/app\.css\?v=29/, "Telegram must load updated checkout CSS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=47/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=30/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
 assert.match(html, /id="staffClosedOrdersToggle"/, "closed orders tab missing");
@@ -212,3 +212,12 @@ assert.ok(html.includes('id="staffOrderSummary"'),"existing order composition mu
 assert.ok(html.includes('id="staffActiveOrdersWrap"'),"existing active orders and add-ons must remain");
 assert.ok(html.includes('id="staffClosedOrdersWrap"'),"existing closed orders must remain");
 console.log("PASS separate order-taking and kitchen tablet entries, shared order workflows retained");
+
+for(let n=1;n<=6;n++)assert.ok(html.includes('data-staff-table="'+n+'"'),"table "+n+" shortcut missing");
+assert.ok(html.includes('data-staff-service="pickup"'),"pickup shortcut missing");
+assert.ok(html.includes('data-staff-service="delivery"'),"delivery shortcut missing");
+assert.match(kitchen,/guest\.value=type==="dine_in"\?"Стол №"\+tableNumber:""/,"table selection must fill guest field");
+assert.match(kitchen,/if\(!editingBillId&&!guestName\)/,"new order must have table or guest identity");
+assert.match(kitchen,/customerName:guestName/,"selected table or guest must reach backend");
+assert.match(kitchen,/if\(!select\|\|!guest\|\|editingBillId\)return/,"add-on mode must not alter existing table");
+console.log("PASS six-table quick order picker, pickup guest identity and preserved add-on mode");

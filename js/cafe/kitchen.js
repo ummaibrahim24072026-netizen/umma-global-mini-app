@@ -569,7 +569,44 @@
       renderStaffCart();
     }
   });
-  byId("staffOrderType")?.addEventListener("change",()=>{const delivery=byId("staffOrderType").value==="delivery";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=!delivery;syncStaffPaymentOptions();});
+  function selectStaffService(type,tableNumber=null){
+    const select=byId("staffOrderType"),guest=byId("staffOrderCustomerName");
+    if(!select||!guest||editingBillId)return;
+    select.value=type;
+    guest.value=type==="dine_in"?"Стол №"+tableNumber:"";
+    const guestLabel=byId("staffOrderGuestLabel");
+    if(guestLabel)guestLabel.firstChild.textContent=type==="dine_in"?"Стол":"Имя гостя";
+    guest.placeholder=type==="dine_in"?"Стол №"+tableNumber:"Например, Ахмад";
+    const hint=byId("staffTableSelectionHint");
+    if(hint)hint.textContent=type==="dine_in"?"Выбран стол №"+tableNumber+". Добавляйте блюда.":type==="pickup"?"С собой: добавьте блюда и укажите имя гостя.":"Доставка: добавьте блюда, имя и адрес.";
+    document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{
+      const selected=type==="dine_in"?button.getAttribute("data-staff-table")===String(tableNumber):button.getAttribute("data-staff-service")===type;
+      button.classList.toggle("is-selected",selected);
+      button.setAttribute("aria-pressed",String(selected));
+    });
+    select.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  document.addEventListener("click",event=>{
+    const table=event.target.closest?.("[data-staff-table]");
+    if(table){selectStaffService("dine_in",table.getAttribute("data-staff-table"));return;}
+    const service=event.target.closest?.("[data-staff-service]");
+    if(service)selectStaffService(service.getAttribute("data-staff-service"));
+  });
+  byId("staffOrderType")?.addEventListener("change",()=>{
+    const type=byId("staffOrderType").value;
+    if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=type!=="delivery";
+    if(!editingBillId){
+      const guest=byId("staffOrderCustomerName");
+      if(type!=="dine_in"&&guest?.value.startsWith("Стол №"))guest.value="";
+      const label=byId("staffOrderGuestLabel");if(label)label.firstChild.textContent=type==="dine_in"?"Стол или имя гостя":"Имя гостя";
+      document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{
+        const selected=type!=="dine_in"&&button.getAttribute("data-staff-service")===type;
+        if(selected){button.classList.add("is-selected");button.setAttribute("aria-pressed","true");}
+        else if(type!=="dine_in"){button.classList.remove("is-selected");button.setAttribute("aria-pressed","false");}
+      });
+    }
+    syncStaffPaymentOptions();
+  });
   function renderOpenBills() {
     // Open bills are already represented by active order cards.
     const root=byId("staffOpenBills");
@@ -657,6 +694,11 @@
     const initData=window.Telegram?.WebApp?.initData;
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
+    const guestName=byId("staffOrderCustomerName")?.value.trim()||"";
+    if(!editingBillId&&!guestName){
+      if(message){message.textContent=type==="dine_in"?"Выберите стол 1–6.":"Укажите имя гостя для заказа с собой или доставки.";message.hidden=false;}
+      byId("staffOrderCustomerName")?.focus();return;
+    }
     const address=byId("staffOrderAddress")?.value.trim()||"";
     const paymentMethod=byId("staffOrderPayment").value;
     const paymentTiming=byId("staffPaymentTiming")?.value||"now";
@@ -679,7 +721,7 @@
       } else {
         const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod,
-          customerName:byId("staffOrderCustomerName").value.trim(),
+          customerName:guestName,
           customerPhone:"",
           deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
         })});
@@ -701,7 +743,9 @@
           if(message){message.textContent="Открыт счёт №"+order.orderNumber+" на "+staffMoney(order.totalVnd)+". Оплата будет после трапезы. Все последующие блюда добавляйте в этот счёт.";message.hidden=false;}
         }
       }
-      staffCart.clear();byId("staffOrderForm").reset();if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
+      staffCart.clear();byId("staffOrderForm").reset();
+      document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{button.classList.remove("is-selected");button.setAttribute("aria-pressed","false");});
+      const tableHint=byId("staffTableSelectionHint");if(tableHint)tableHint.textContent="Нажмите стол или «С собой», затем добавляйте блюда.";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
     }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
     finally{if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
   });

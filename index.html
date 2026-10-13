@@ -23,7 +23,7 @@
   >
 
   <!-- STYLES -->
-  <link rel="stylesheet" href="css/app.css?v=29">
+  <link rel="stylesheet" href="css/app.css?v=30">
   <link rel="stylesheet" href="css/admin.css?v=8">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
@@ -727,7 +727,23 @@
 
         <div id="staffOrderFormWrap">
           <h2>Оформить заказ гостя</h2><label id="staffOrderLocationLabel" hidden>Кафе / филиал<select id="staffOrderLocation" required><option value="">Выберите кафе</option></select></label>
-          <p>Выберите блюда из меню, затем укажите имя гостя или номер стола.</p>
+          <div class="staff-table-picker" id="staffTablePicker">
+            <strong>Где обслуживаем гостя?</strong>
+            <p>Передняя зона — столы 1–5, задняя зона — стол 6.</p>
+            <div class="staff-table-zone">Передняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Передняя зона">
+              <button type="button" data-staff-table="1">Стол 1</button>
+              <button type="button" data-staff-table="2">Стол 2</button>
+              <button type="button" data-staff-table="3">Стол 3</button>
+              <button type="button" data-staff-table="4">Стол 4</button>
+              <button type="button" data-staff-table="5">Стол 5</button>
+            </div>
+            <div class="staff-table-zone">Задняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Задняя зона"><button type="button" data-staff-table="6">Стол 6</button></div>
+            <div class="staff-table-zone">Другой способ получения</div>
+            <div class="staff-table-grid"><button type="button" data-staff-service="pickup">🥡 С собой</button><button type="button" data-staff-service="delivery">🛵 Доставка</button></div>
+            <p id="staffTableSelectionHint" class="cafe-order-hint">Нажмите стол или «С собой», затем добавляйте блюда.</p>
+          </div>
           <p>Создай заказ для гостя здесь. Для контроля уже оформленных заказов открой вкладку «Активные заказы».</p><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
           <div id="staffOrderSummary" class="cafe-cart" hidden>
             <h3>Состав заказа</h3>
@@ -735,7 +751,7 @@
             <div class="cafe-cart-total"><span>Итого</span><strong id="staffOrderTotal">0 ₫</strong></div>
             <form id="staffOrderForm" class="cafe-order-form">
               <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
-              <label id="staffOrderGuestLabel">Имя гостя или номер стола<input id="staffOrderCustomerName" maxlength="120" placeholder="Например, Ахмад или стол №5"></label>
+              <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
               <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
               <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Оплата сразу</option><option value="later">Оплата позже — общий счёт после трапезы</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
@@ -1029,7 +1045,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/cafe.js?v=36"></script>
-<script src="js/cafe/kitchen.js?v=46"></script>
+<script src="js/cafe/kitchen.js?v=47"></script>
   <script src="js/cafe/kitchen-live.js?v=4"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
 <script src="js/cafe/test-mode.js?v=10"></script>

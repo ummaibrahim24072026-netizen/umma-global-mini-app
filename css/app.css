@@ -823,3 +823,14 @@ button:active { transform: scale(.98); }
 .cafe-kitchen-shortcuts{display:flex;gap:8px;margin:10px 0}
 .cafe-kitchen-shortcuts button{flex:1;min-height:42px;border:1px solid #b7d9d4;border-radius:10px;background:#edf8f6;color:#125950;font-size:14px;font-weight:750;cursor:pointer}
 .cafe-kitchen-page .cafe-management-tools{margin-top:20px}
+
+/* Quick order entry: six fixed tables, with a separate rear table. */
+.staff-table-picker{background:#f4faf8;border:1px solid #b8dcd7;border-radius:14px;padding:14px;margin:12px 0}
+.staff-table-picker>strong{display:block;font-size:17px;color:#084b50}
+.staff-table-picker>p{font-size:13px;margin:6px 0 10px;color:#3b6364}
+.staff-table-zone{font-size:12px;font-weight:800;letter-spacing:.02em;color:#536c6d;margin:12px 0 7px}
+.staff-table-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.staff-table-grid button{min-height:52px;border-radius:12px;border:1px solid #8bcac6;background:white;color:#075b60;font:inherit;font-weight:800;cursor:pointer}
+.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:#078f94;color:white;border-color:#078f94;box-shadow:0 0 0 2px #a6e8df}
+.staff-table-grid button:focus-visible{outline:3px solid #e5ac2e;outline-offset:2px}
+@media(min-width:700px){.staff-table-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
