@@ -136,11 +136,13 @@
     <!-- CAFE STAFF ENTRY -->
     <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true">
       <button type="button" class="admin-entry-button" id="staffEntryButton">
-        <span class="admin-entry-icon">🍽️</span>
-        <span class="admin-entry-copy">
-          <strong>Рабочая панель</strong>
-          <small>Заказы и работа кафе</small>
-        </span>
+        <span class="admin-entry-icon">🧾</span>
+        <span class="admin-entry-copy"><strong>Приём заказов</strong><small>Оформить заказ, добавить блюда, принять оплату</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+      <button type="button" class="admin-entry-button" id="staffKitchenEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">🍳</span>
+        <span class="admin-entry-copy"><strong>Кухня</strong><small>Новые заказы, дозаказы и приготовление</small></span>
         <span class="admin-entry-arrow">→</span>
       </button>
       <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
@@ -710,11 +712,11 @@
         <button type="button" id="cafeWaiterBack" class="cafe-back">← Назад</button>
         <button type="button" id="cafeWaiterRefresh" class="cafe-kitchen-refresh">↻ Обновить меню</button>
         <button type="button" id="cafeWaiterKitchen" class="cafe-kitchen-refresh">🍳 Кухня</button>
-        <h1>Заказы гостей</h1>
-        <p>Рабочее место сотрудника · HALAL UMMA</p>
+        <h1>Приём заказов</h1>
+        <p>Рабочее место приёма заказов · HALAL UMMA</p>
       </div>
       <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
-        Здесь любой уполномоченный сотрудник оформляет заказы, принимает оплату и проверяет их статус. Для приготовления перейдите в «Кухня», для смены — в «Касса и смена».
+        Сотрудник принимает заказ, добавляет блюда и оформляет оплату. Заказ автоматически появляется на отдельном экране кухни.
       </div>
 <div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
         <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
@@ -783,7 +785,7 @@
         <p>HALAL UMMA · Нячанг</p>
       </div>
       <div class="cafe-kitchen-shortcuts">
-        <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Заказы гостей</button>
+        <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
       </div>
       <div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
