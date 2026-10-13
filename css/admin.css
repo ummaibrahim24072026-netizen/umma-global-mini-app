@@ -89,6 +89,15 @@
       margin-bottom: 20px;
     }
 
+    .admin-header > div:last-child {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .admin-header h1 {
+      overflow-wrap: anywhere;
+    }
+
     .admin-header-icon {
       width: 58px;
       height: 58px;

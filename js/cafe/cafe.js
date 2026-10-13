@@ -285,9 +285,7 @@
     if (resultEl) resultEl.hidden = true;
     if (submit) submit.textContent = "Оформляем заказ…";
     try {
-      const response = await fetch(ORDER_URL, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await window.ummaCafeRequests.request(ORDER_URL, {
           initData,
           items: Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity })),
           orderType: orderType?.value || "pickup",
@@ -298,7 +296,6 @@
           customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
           deliveryAddress: addressInput?.value.trim() || "",
           customerNote: byId("cafeCustomerNote")?.value.trim() || ""
-        })
       });
       const result = await response.json();
       if (!response.ok || !result.ok || !result.order) throw new Error(result.error || "Не удалось оформить заказ");
@@ -342,6 +339,13 @@
     }
   });
 
+  document.addEventListener("umma:cafe-operation-recovered",event=>{
+    if(event.detail.payload.staffOrder||event.detail.payload.action)return;
+    cart.clear();renderCart();renderProducts();
+    const result=byId("cafeOrderResult"),order=event.detail.result.order;
+    if(result){result.hidden=false;result.textContent="Восстановлен заказ №"+order.orderNumber+". Проверьте его во вкладке «Мои заказы».";}
+    loadMyOrders();
+  });
   const statusNames = {
     pending: "Ожидает подтверждения",
     confirmed: "Принят кафе",

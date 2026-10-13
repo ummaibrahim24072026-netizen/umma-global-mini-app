@@ -90,13 +90,13 @@
   }
   function orderActions(o){
     let buttons="";
-    if(o.payment_status!=="paid") buttons+='<button data-sandbox-action="pay" data-id="'+esc(o.id)+'">Принять оплату</button>';
+    if(o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status)) buttons+='<button data-sandbox-action="pay" data-id="'+esc(o.id)+'">Принять оплату</button>';
     if(role==="cashier"||role==="manager"){
       if(o.status==="new")buttons+='<button data-sandbox-status="confirmed" data-id="'+esc(o.id)+'">Принять</button>';
-      if(o.status!=="cancelled"&&o.status!=="completed")buttons+='<button data-sandbox-status="cancelled" data-id="'+esc(o.id)+'">Отменить</button>';
+      if(o.status!=="cancelled"&&o.status!=="completed"&&o.payment_status!=="paid")buttons+='<button data-sandbox-status="cancelled" data-id="'+esc(o.id)+'">Отменить</button>';
     }
     if(role==="kitchen"||role==="manager"){
-      if(o.status==="confirmed"||o.status==="new")buttons+='<button data-sandbox-status="preparing" data-id="'+esc(o.id)+'">Начать готовить</button>';
+      if(o.status==="confirmed")buttons+='<button data-sandbox-status="preparing" data-id="'+esc(o.id)+'">Начать готовить</button>';
       if(o.status==="preparing")buttons+='<button data-sandbox-status="ready" data-id="'+esc(o.id)+'">Отметить «Готов»</button>';
     }
     if(role==="courier"&&o.order_type==="delivery"){

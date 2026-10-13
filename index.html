@@ -24,7 +24,7 @@
 
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=31">
-  <link rel="stylesheet" href="css/admin.css?v=8">
+  <link rel="stylesheet" href="css/admin.css?v=9">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
 
@@ -688,9 +688,9 @@
         <label>Должность
           <select id="cafeStaffRole" name="staffRole" required>
             <option value="manager">Менеджер — все статусы заказов</option>
-            <option value="cashier">Кассир — приём и отмена новых заказов</option>
-            <option value="waiter">Официант — приём и выдача заказа</option>
-            <option value="kitchen">Кухня — готовка и отметка «Готов»</option>
+            <option value="cashier">Кассир</option>
+            <option value="waiter">Официант</option>
+            <option value="kitchen">Кухня</option>
             <option value="courier">Курьер — забор и подтверждение доставки</option>
           </select>
         </label>
@@ -1044,11 +1044,12 @@
 <script src="js/admin/users-events.js?v=3"></script>
 
 <!-- CAFE -->
-<script src="js/cafe/cafe.js?v=38"></script>
-<script src="js/cafe/kitchen.js?v=51"></script>
+<script src="js/cafe/order-requests.js?v=1"></script>
+<script src="js/cafe/cafe.js?v=39"></script>
+<script src="js/cafe/kitchen.js?v=52"></script>
   <script src="js/cafe/kitchen-live.js?v=4"></script>
 <script src="js/maps/courier-route.js?v=3"></script>
-<script src="js/cafe/test-mode.js?v=10"></script>
+<script src="js/cafe/test-mode.js?v=11"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
 <script src="js/admin/location-admin.js?v=8"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>

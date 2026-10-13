@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { loadCafeOrders } from '../supabase/functions/cafe-kitchen/order-list.ts';
+import { sandboxCanAdvance } from '../supabase/functions/cafe-kitchen/sandbox-policy.ts';
 
 // In-memory PostgREST double: no network, Telegram notifications or live writes.
 const rows = Array.from({length:335}, (_,i)=>({
@@ -51,11 +52,12 @@ async function submitScenario({method='cash',paymentFails=false,creationFails=fa
   const context={
     byId:id=>elements[id]||null,staffCart:cart,staffLocationIds:['cafe'],editingBillId:null,orders:[],
     window:{ummaRole:'super_admin',Telegram:{WebApp:{initData:'test-signature'}}},
-    document:{querySelectorAll:()=>[]}, STAFF_ORDER_URL:'mock://create',
+    document:{querySelectorAll:()=>[],addEventListener(){}}, STAFF_ORDER_URL:'mock://create',
     staffOrderAmount:()=>120000,staffMoney:String,setStaffOrderMode(){},renderStaffCart(){},loadOrders:async()=>{},
     fetch:async(url,options)=>{creations++;sent=JSON.parse(options.body);if(creationFails)throw new Error('offline');return {ok:true,json:async()=>({ok:true,order:{id:'created',orderNumber:1,totalVnd:120000}})};},
     api:async payload=>{assert.equal(payload.action,'updatePayment');payments++;if(paymentFails)throw new Error('offline after creation');return {ok:true};},
   };
+  context.window.ummaCafeRequests={request:(url,payload)=>context.fetch(url,{body:JSON.stringify(payload)})};
   vm.runInNewContext(source.slice(start,end),context);
   await submitHandler({preventDefault(){}});
   if(paymentFails){assert.equal(cart.size,0);assert.equal(elements.staffOrderSubmit.disabled,true);assert.match(elements.staffOrderMessage.textContent,/Не оформляйте повторный заказ/);await submitHandler({preventDefault(){}});assert.equal(creations,1);}
@@ -78,3 +80,15 @@ for(const table of [1,2,3,4,5,6]) {
   for(const change of [{payment_status:'paid'},{status:'completed'},{status:'cancelled'},{location_id:'other'}])assert.equal(scope.openBillForTable(table,[{...order,...change}]),null);
 }
 console.log('PASS all six tables route to unpaid active bills only, isolated by cafe');
+
+for(const role of ['manager','cashier','kitchen','waiter','courier']) {
+  for(const status of ['completed','cancelled'])assert.equal(sandboxCanAdvance(role,{status,payment_status:'pending'},'preparing'),false);
+  assert.equal(sandboxCanAdvance(role,{status:'new',payment_status:'paid'},'completed'),false);
+  assert.equal(sandboxCanAdvance(role,{status:'ready',payment_status:'paid'},'cancelled'),false);
+}
+assert.equal(sandboxCanAdvance('kitchen',{status:'confirmed',payment_status:'pending'},'preparing'),true);
+assert.equal(sandboxCanAdvance('manager',{status:'new',payment_status:'pending'},'ready'),false);
+assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'pending'},'completed'),false);
+assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'paid',order_type:'delivery',delivery_status:'picked_up'},'completed'),false);
+assert.equal(sandboxCanAdvance('waiter',{status:'ready',payment_status:'paid',order_type:'dine_in'},'completed'),true);
+console.log('PASS sandbox transition guards: no reopening, skipped preparation, unpaid completion or paid cancellation');

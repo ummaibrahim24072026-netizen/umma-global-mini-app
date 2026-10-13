@@ -1,3 +1,5 @@
+import { sandboxCanAdvance } from "./sandbox-policy.ts";
+import { submitCafeOperation } from "../_shared/order-operation.ts";
 import { loadCafeOrders } from "./order-list.ts";
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -175,11 +177,11 @@ Deno.serve(async req => {
         if(typeof orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(orderId)||!["confirmed","preparing","ready","completed","cancelled"].includes(status)) return response({ok:false,error:"Некорректный заказ или статус"},400);
         const {data:order,error:orderError}=await supabase.from("cafe_test_orders").select("*").eq("id",orderId).eq("location_id",locationId).maybeSingle();
         if(orderError||!order) return response({ok:false,error:"Тестовый заказ не найден"},404);
-        const allowed = role==="manager" || (role==="cashier"&&["confirmed","cancelled"].includes(status)) || (role==="kitchen"&&["preparing","ready"].includes(status)) || (role==="waiter"&&status==="completed");
+        const allowed = sandboxCanAdvance(role,order,status);
         if(!allowed) return response({ok:false,error:"Эта должность не может менять данный статус"},403);
         if(status==="completed"&&order.payment_status!=="paid") return response({ok:false,error:"Сначала подтвердите оплату тестового заказа"},400);
         if(status==="completed"&&order.order_type==="delivery"&&order.delivery_status!=="delivered") return response({ok:false,error:"Сначала отметьте доставку как выполненную"},400);
-        const {data:updated,error}=await supabase.from("cafe_test_orders").update({status,updated_at:new Date().toISOString()}).eq("id",orderId).select("*").single();
+        const {data:updated,error}=await supabase.from("cafe_test_orders").update({status,updated_at:new Date().toISOString()}).eq("id",orderId).eq("status",order.status).eq("payment_status",order.payment_status).select("*").single();
         if(error) return response({ok:false,error:"Не удалось обновить тестовый заказ"},500);
         await writeEvent("status_changed",orderId,{from:order.status,to:status});
         return response({ok:true,order:updated,testMode:true});
@@ -203,8 +205,9 @@ Deno.serve(async req => {
         if(typeof orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(orderId)) return response({ok:false,error:"Некорректный заказ"},400);
         const {data:order,error:orderError}=await supabase.from("cafe_test_orders").select("*").eq("id",orderId).eq("location_id",locationId).maybeSingle();
         if(orderError||!order) return response({ok:false,error:"Тестовый заказ не найден"},404);
+        if(["completed","cancelled"].includes(order.status)) return response({ok:false,error:"Закрытый тестовый заказ нельзя оплатить"},400);
         if(order.payment_status==="paid") return response({ok:false,error:"Тестовый заказ уже оплачен"},400);
-        const {data:updated,error}=await supabase.from("cafe_test_orders").update({payment_status:"paid",updated_at:new Date().toISOString()}).eq("id",orderId).select("*").single();
+        const {data:updated,error}=await supabase.from("cafe_test_orders").update({payment_status:"paid",updated_at:new Date().toISOString()}).eq("id",orderId).eq("payment_status","pending").eq("status",order.status).select("*").single();
         if(error) return response({ok:false,error:"Не удалось отметить тестовую оплату"},500);
         await writeEvent("payment_confirmed",orderId,{amount_vnd:order.total_vnd,method:order.payment_method});
         return response({ok:true,order:updated,testMode:true});
@@ -253,6 +256,8 @@ Deno.serve(async req => {
       }
       const locationId = typeof body.locationId === "string" && locations.includes(body.locationId) ? body.locationId : locations[0];
       if (!locationId) return response({ok:false,error:"Не удалось определить кафе"},403);
+      const {data:cashSummary,error:cashSummaryError}=await supabase.rpc("get_cafe_cash_summary",{p_location_id:locationId});
+      if(cashSummaryError)return response({ok:false,error:"Не удалось загрузить итог кассы"},500);
       const { data: receipts, error: receiptsError } = await supabase.from("cafe_payment_receipts")
         .select("id,order_id,location_id,collected_by_telegram_id,payment_method,amount_vnd,tendered_amount_vnd,change_given_vnd,receipt_status,collected_at,note")
         .eq("location_id",locationId).order("collected_at",{ascending:false}).limit(100);
@@ -277,7 +282,7 @@ Deno.serve(async req => {
       const { data: cafe } = await supabase.from("locations").select("id,name").eq("id",locationId).maybeSingle();
       const { data: shifts, error: shiftsError } = await supabase.from("cafe_staff_shifts").select("*").eq("location_id",locationId).eq("shift_status","open").order("opened_at",{ascending:false});
       if (shiftsError) return response({ok:false,error:"Не удалось загрузить смены"},500);
-      return response({ok:true,locationId,cafeName:cafe?.name||"Кафе",locations:cafesForResponse,receipts:receiptsWithDetails,handovers:handovers??[],staff:staff??[],shifts:shifts??[],actorTelegramId:telegramId,staffRole});
+      return response({ok:true,cashSummary,locationId,cafeName:cafe?.name||"Кафе",locations:cafesForResponse,receipts:receiptsWithDetails,handovers:handovers??[],staff:staff??[],shifts:shifts??[],actorTelegramId:telegramId,staffRole});
     }
 
     if (body.action === "openShift") {
@@ -399,13 +404,13 @@ Deno.serve(async req => {
             !/^[0-9a-f-]{36}$/i.test(item.productId) || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99)) {
         return response({ ok: false, error: "Некорректный заказ или состав" }, 400);
       }
-      const { data, error } = await supabase.rpc("add_cafe_staff_order_items", {
+      const { data, error } = await submitCafeOperation(supabase, telegramId, body.requestKey, "addItems", {
         p_staff_telegram_id: telegramId,
         p_order_id: orderId,
         p_items: items.map((item: { productId: string; quantity: number }) => ({ productId: item.productId, quantity: item.quantity })),
       });
       if (error) {
-        const clientError = /Invalid staff|Staff access denied|Order not found|Only dine-in bills|Bill is already closed|Staff cannot add items|Invalid order items|Invalid item|Invalid item quantity|Product not found or unavailable/.test(error.message);
+        const clientError = /Invalid idempotent order request|Idempotency key reused|Staff operation access denied|Order operation access denied|Invalid staff|Staff access denied|Order not found|Only dine-in bills|Bill is already closed|Staff cannot add items|Invalid order items|Invalid item|Invalid item quantity|Product not found or unavailable/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось добавить блюда в счёт" }, clientError ? 400 : 500);
       }
       return response({ ...(data ?? { ok: true }), staffRole });
@@ -440,7 +445,7 @@ Deno.serve(async req => {
         p_change_given_vnd: changeGiven,
       });
       if (error) {
-        const clientError = /Invalid payment|Payment already confirmed|Invalid cash received amount or change|Cash receipt was not recorded|Order not found|Payment management access denied|Payment acceptance permission denied|No active staff assignment|Staff role cannot update payment/.test(error.message);
+        const clientError = /Closed order cannot receive payment changes|Only manager may void payment with a reason|Invalid payment|Payment already confirmed|Invalid cash received amount or change|Cash receipt was not recorded|Order not found|Payment management access denied|Payment acceptance permission denied|No active staff assignment|Staff role cannot update payment/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить оплату" }, clientError ? 400 : 500);
       }
       if(paymentStatus==="paid")await supabase.from("cafe_transfer_proofs").update({review_status:"confirmed",reviewed_by_telegram_id:telegramId,reviewed_at:new Date().toISOString()}).eq("order_id",orderId).eq("review_status","pending");
@@ -480,7 +485,7 @@ Deno.serve(async req => {
         p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
       });
       if (error) {
-        const clientError = /Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
+        const clientError = /Paid order requires manager payment reversal before cancellation|Staff role cannot perform this order status transition|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить статус" }, clientError ? 400 : 500);
       }
       // Notify the customer and all other staff after the database commits the transition.

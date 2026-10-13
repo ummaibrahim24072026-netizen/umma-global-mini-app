@@ -41,7 +41,7 @@
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
       const action = next && allowedForRole && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
-      const canCancel = !["completed","cancelled"].includes(order.status) &&
+      const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
@@ -82,6 +82,12 @@
   async function api(payload) {
     const initData = window.Telegram?.WebApp?.initData;
     if (!initData) throw new Error("Откройте приложение через Telegram");
+    if(payload.action==="addItems"){
+      const response=await window.ummaCafeRequests.request(API,{...payload,initData});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||"Ошибка дозаказа");
+      return result;
+    }
     const response = await fetch(API, {
       method:"POST", headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ ...payload, initData })
@@ -398,15 +404,13 @@
         }
       }
       const allReceipts=(result.receipts||[]);
-      const last24h=Date.now()-24*60*60*1000;
-      const activeReceipts=allReceipts.filter(x=>x.receipt_status==="confirmed"&&new Date(x.collected_at).getTime()>=last24h);
       const ledgerReceipts=allReceipts;
-      const total=activeReceipts.reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
-      const cashTotal=activeReceipts.filter(x=>x.payment_method==="cash").reduce((sum,x)=>sum+Number(x.amount_vnd||0),0);
-      const pending=(result.handovers||[]).filter(x=>x.handover_status==="pending");
+      const total=result.cashSummary?.total24hVnd;
+      const cashTotal=result.cashSummary?.cash24hVnd;
+      const pendingCount=result.cashSummary?.pendingHandovers;
       const summary=byId("cashSummary");
       if(summary) summary.innerHTML=[
-        ["Оплаты за 24 ч.",money(total)],["Наличные за 24 ч.",money(cashTotal)],["Ожидают подтверждения",String(pending.length)],["Кафе",esc(result.cafeName||"")]
+        ["Оплаты за 24 ч.",total==null?"Недоступно":money(total)],["Наличные за 24 ч.",cashTotal==null?"Недоступно":money(cashTotal)],["Ожидают подтверждения",pendingCount==null?"Недоступно":String(pendingCount)],["Кафе",esc(result.cafeName||"")]
       ].map(x=>'<div style="padding:10px;background:#f4f8f8;border-radius:10px"><small style="display:block;color:#617070">'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join("");
       const handovers=result.handovers||[];
       root.innerHTML=handovers.length?handovers.map(h=>{
@@ -783,12 +787,12 @@
         const added=await api({action:"addItems",orderId:editingBillId,items});
         if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}
       } else {
-        const response=await fetch(STAFF_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        const response=await window.ummaCafeRequests.request(STAFF_ORDER_URL,{
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
           customerName:guestName,
           customerPhone:"",
           deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
-        })});
+        });
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;
         if(paymentTiming==="now"&&paymentMethod!=="courier"&&paymentMethod!=="bank_transfer"){
@@ -814,6 +818,13 @@
       const tableHint=byId("staffTableSelectionHint");if(tableHint)tableHint.textContent="Нажмите стол или «С собой», затем добавляйте блюда.";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
     }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
     finally{staffOrderSubmitting = false; if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
+  });
+  document.addEventListener("umma:cafe-operation-recovered",async event=>{
+    if(!event.detail.payload.staffOrder&&event.detail.payload.action!=="addItems")return;
+    staffCart.clear();byId("staffOrderForm")?.reset();setStaffOrderMode(null);renderStaffCart();
+    const message=byId("staffOrderMessage"),result=event.detail.result;
+    if(message){message.hidden=false;message.textContent="Результат прежнего запроса восстановлен. Заказ №"+(result.order?.orderNumber||result.orderNumber)+". Проверьте состав и оплату в активных заказах.";}
+    await loadOrders();
   });
   renderStaffCart();
   setStaffOrderMode(null);

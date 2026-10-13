@@ -1,0 +1,11 @@
+{
+  "name": "umma-global-mini-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.9"
+  }
+}
