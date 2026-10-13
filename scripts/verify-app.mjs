@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=49/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=50/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=31/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -237,3 +237,7 @@ assert.match(kitchen,/setStaffOrderMode\(bill\.id\)/,"fresh unpaid bill must rec
 console.log("PASS occupied-table add-on routing and paid-table new order separation");
 
 assert.ok(kitchen.includes("if(!select||!guest)return;"),"table picker requires inputs");
+
+assert.ok(kitchen.includes("if (staffOrderSubmitting) return;"), "prevent duplicate staff order submission");
+assert.ok(kitchen.includes("staffOrderSubmitting = false;"), "release staff submit guard");
+assert.ok(cafe.includes("if (loading) return;"), "prevent duplicate customer order submission");

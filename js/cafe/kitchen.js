@@ -732,8 +732,10 @@
   byId("staffOrderPayment")?.addEventListener("change",refreshStaffCashFields);
   byId("staffPaymentTiming")?.addEventListener("change",()=>{setStaffOrderMode(editingBillId);});
   byId("staffCashReceived")?.addEventListener("input",refreshStaffCashFields);
+  let staffOrderSubmitting = false;
   byId("staffOrderForm")?.addEventListener("submit",async event=>{
     event.preventDefault();
+    if (staffOrderSubmitting) return;
     const message=byId("staffOrderMessage");
     if(!staffCart.size){if(message){message.textContent="Добавьте хотя бы одно блюдо.";message.hidden=false;}return;}
     const selectedLocation=window.ummaRole==="super_admin"?(byId("staffOrderLocation")?.value||""):staffLocationIds[0];
@@ -758,6 +760,7 @@
     if(!editingBillId && type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
     if(!editingBillId && paymentTiming==="now" && paymentMethod==="cash"&&(!Number.isSafeInteger(tendered)||tendered<orderTotal)){if(message){message.textContent="Укажите полученную наличную сумму не меньше "+staffMoney(orderTotal)+". Сдача рассчитается автоматически.";message.hidden=false;}byId("staffCashReceived")?.focus();return;}
     const changeAmount=paymentMethod==="cash"?tendered-orderTotal:0;
+    staffOrderSubmitting = true;
     const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent=editingBillId?"Добавляем позиции…":paymentTiming==="later"?"Открываем счёт…":"Оформляем и подтверждаем оплату…";}
     if(message)message.hidden=true;
     try{
@@ -808,7 +811,7 @@
       document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{button.classList.remove("is-selected");button.setAttribute("aria-pressed","false");});
       const tableHint=byId("staffTableSelectionHint");if(tableHint)tableHint.textContent="Нажмите стол или «С собой», затем добавляйте блюда.";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
     }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
-    finally{if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
+    finally{staffOrderSubmitting = false; if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
   });
   renderStaffCart();
   setStaffOrderMode(null);

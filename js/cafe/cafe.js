@@ -271,6 +271,7 @@
 
   byId("cafeOrderForm")?.addEventListener("submit", async event => {
     event.preventDefault();
+    if (loading) return;
     const resultEl = byId("cafeOrderResult"), submit = byId("cafeSubmitOrder");
     if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
     const initData = window.Telegram?.WebApp?.initData;
