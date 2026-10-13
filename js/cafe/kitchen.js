@@ -182,7 +182,7 @@
     if (staffAdmin) staffAdmin.hidden = true;
     if (waiter) waiter.hidden = false;
     if (nav) nav.style.display = "none";
-    showMessage("Загружаем рабочее место официанта…");
+    showMessage("Загружаем приём заказов…");
     try {
       const result = await api({action:"list"});
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
@@ -204,6 +204,7 @@
       if (!staffMenu.length) await loadStaffMenu();
       renderOpenBills();
       renderStaffActiveOrders();
+      showStaffWorkspace("order");
       showMessage("", false);
     } catch (e) {
       showMessage(e instanceof Error ? e.message : "Не удалось открыть рабочее место");
@@ -215,7 +216,8 @@
     openWaiterPage().then(()=>showStaffWorkspace("active"));
   });
   byId("adminKitchenButton")?.addEventListener("click", open);
-  byId("staffEntryButton")?.addEventListener("click", openWaiterPage);
+  byId("staffEntryButton")?.addEventListener("click",()=>openWaiterPage().then(()=>showStaffWorkspace("order")));
+  byId("staffKitchenEntryButton")?.addEventListener("click",open);
   byId("cafeWaiterBack")?.addEventListener("click", () => {
     const waiter=byId("cafeWaiterPage"), home=document.querySelector(".app > main"), nav=document.querySelector(".bottom-nav");
     if(waiter) waiter.hidden=true;
