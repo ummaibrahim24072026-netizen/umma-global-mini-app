@@ -87,7 +87,7 @@ console.log("PASS closed order tab and statuses");
 
 const kitchenLive=read("js/cafe/kitchen-live.js");
 new vm.Script(kitchenLive,{filename:"kitchen-live.js"});
-assert.match(html,/js\/cafe\/kitchen-live\.js\?v=3/,"kitchen live module missing");
+assert.match(html,/js\/cafe\/kitchen-live\.js\?v=4/,"kitchen live module missing");
 assert.match(kitchen,/ummaKitchenLive\?\.update\(orders\)/,"kitchen list must update alerts");
 assert.match(kitchen,/ummaKitchenLive\?\.start\(\)/,"kitchen must start polling");
 assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledgement");
