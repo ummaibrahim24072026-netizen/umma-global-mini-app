@@ -5,12 +5,12 @@ const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/
 const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.local'}),w=dom.window,d=w.document;
 const sleep=()=>new Promise(r=>setTimeout(r,10));
 async function until(fn){for(let i=0;i<100;i++){if(fn())return;await sleep();}assert.fail('Notification UI did not update');}
-let feed=[],state='waiting_courier',offline=false,requests=0;const timers=[];
+let feed=[],state='waiting_courier',orderStatus='ready',offline=false,requests=0;const timers=[];
 w.AbortSignal=AbortSignal;w.Response=Response;w.setInterval=(fn,ms)=>{timers.push({fn,ms});return timers.length;};w.scrollTo=()=>{};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 w.Telegram={WebApp:{initData:'synthetic-only',initDataUnsafe:{user:{id:15}}}};
 w.openPage=()=>{d.getElementById('cafePage').hidden=false;};
-w.fetch=async(url,options)=>{requests++;if(offline)throw Error('offline');const b=JSON.parse(options.body);if(b.action==='notifications')return new Response(JSON.stringify({ok:true,notifications:feed,unreadCount:feed.filter(n=>!n.read_at).length}));if(b.action==='readNotifications'){feed=feed.map(n=>b.ids.includes(n.id)?{...n,read_at:new Date().toISOString()}:n);return new Response(JSON.stringify({ok:true,notifications:feed,unreadCount:feed.filter(n=>!n.read_at).length}));}return new Response(JSON.stringify({ok:true,orders:[{id:'44444444-4444-4444-8444-444444444444',order_number:1,status:'ready',order_type:'delivery',delivery_status:state,total_vnd:120000,cafe_order_items:[]}]}));};
+w.fetch=async(url,options)=>{requests++;if(offline)throw Error('offline');const b=JSON.parse(options.body);if(b.action==='notifications')return new Response(JSON.stringify({ok:true,notifications:feed,unreadCount:feed.filter(n=>!n.read_at).length}));if(b.action==='readNotifications'){feed=feed.map(n=>b.ids.includes(n.id)?{...n,read_at:new Date().toISOString()}:n);return new Response(JSON.stringify({ok:true,notifications:feed,unreadCount:feed.filter(n=>!n.read_at).length}));}return new Response(JSON.stringify({ok:true,orders:[{id:'44444444-4444-4444-8444-444444444444',order_number:1,status:orderStatus,order_type:'delivery',delivery_status:state,total_vnd:120000,cafe_order_items:[]}]}));};
 try{
  d.getElementById('cafePage').hidden=false;
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));w.eval(readFileSync('js/cafe/notifications.js','utf8'));
@@ -23,6 +23,7 @@ try{
  const seen=[...d.querySelectorAll('.cafe-notifications-dialog button')].find(b=>b.textContent.includes('показанные'));seen.click();await until(()=>d.getElementById('cafeNotificationCount').hidden);w.ummaNotifications.close();assert.equal(d.activeElement,d.getElementById('cafeNotificationBell'));
  offline=true;await w.ummaNotifications.refresh();assert.match(d.getElementById('cafeLiveConnection').textContent,/Связь прервана/);await w.ummaCafe.refreshMyOrders({silent:true});assert.match(d.getElementById('cafeMyOrdersList').textContent,/Курьер принял/);
  offline=false;state='picked_up';feed.unshift({id:'22222222-2222-4222-8222-222222222222',workspace:'customer',title:'Курьер в пути',created_at:new Date().toISOString(),read_at:null});w.dispatchEvent(new w.Event('online'));await until(()=>d.getElementById('cafeMyOrdersList').textContent.includes('Курьер в пути'));
+ orderStatus='cancelled';state='waiting_courier';await w.ummaCafe.refreshMyOrders();assert.match(d.getElementById('cafeMyOrdersList').textContent,/Доставка отменена/);assert.doesNotMatch(d.getElementById('cafeMyOrdersList').textContent,/Ожидает курьера/);assert.equal(d.querySelector('[data-track-delivery]'),null,'cancelled deliveries offer no tracking action');
  const count=requests;Object.defineProperty(d,'hidden',{configurable:true,value:true});await w.ummaNotifications.refresh();assert.equal(requests,count);Object.defineProperty(d,'hidden',{configurable:true,value:false});
  assert.ok(timers.some(t=>t.ms===2000));assert.ok(timers.some(t=>t.ms===5000));
  console.log('PASS client live UI: courier acceptance without reload, unread bell/read acknowledgement, text safety, stable DOM, offline retains cards, online recovery and hidden-tab pause');
