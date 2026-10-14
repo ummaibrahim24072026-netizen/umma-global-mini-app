@@ -37,3 +37,11 @@ await assert.rejects(api.request('https://untrusted.example',payload),/Недо�
 console.log('PASS lost-response recovery after reload, stable operation key, changed-draft guard, no stored Telegram credential, storage failure before network and endpoint allowlist');
 
 assert.equal((readFileSync('index.html','utf8').match(/src="js\/cafe\/order-requests.js/g)||[]).length,1,'operation helper must load once');
+
+values.clear();loseResponse=true;
+const refundPayload={initData:'secret-telegram-auth',action:'refundOrder',orderId:'qa-paid-order',reason:'QA reason',payoutConfirmed:true};
+const refundUrl='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
+const beforeRefund=created;api=runtime();await assert.rejects(api.request(refundUrl,refundPayload),/response lost/);
+const refundKey=api.pending().requestKey;api=runtime();await api.request(refundUrl,{...refundPayload,initData:'fresh-signature'});
+assert.equal(created,beforeRefund+1);assert.equal(api.pending(),null);assert.ok(server.has(refundKey));
+console.log('PASS refund response-loss recovery keeps original operation key after reload');

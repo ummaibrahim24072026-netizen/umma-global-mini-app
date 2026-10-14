@@ -43,7 +43,7 @@
   function render(){
     let operation;
     try{operation=pending();}catch{return;}
-    for(const [id,staff] of [['cafePage',false],['staffOrderFormWrap',true]]){
+    for(const [id,staff] of [['cafePage',false],['staffOrderFormWrap',true],['cafeKitchenPage',true]]){
       const root=document.getElementById(id);if(!root)continue;
       let panel=root.querySelector('[data-cafe-recovery]');
       if(!panel){
@@ -62,8 +62,11 @@
         });
         panel.append(text,button,message);root.prepend(panel);
       }
-      const isStaff=operation&&(operation.payload.staffOrder===true||operation.payload.action==='addItems');
+      const isStaff=operation&&(operation.payload.staffOrder===true||['addItems','refundOrder'].includes(operation.payload.action));
       panel.hidden=!operation||!!isStaff!==staff;
+      const isRefund=operation?.payload.action==='refundOrder';
+      panel.querySelector('p').textContent=isRefund?'Связь могла прерваться после записи возврата. Проверьте запись; повторно выдавать деньги гостю не нужно.':'Связь с кафе могла прерваться. Проверьте прежний заказ перед оформлением нового.';
+      panel.querySelector('button').textContent=isRefund?'Проверить запись возврата':'Проверить прежний заказ';
       panel.querySelector('button').disabled=inFlight;
     }
   }

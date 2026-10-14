@@ -16,4 +16,6 @@ Do not automatically retry failed workers with new keys or reset the schema. Ins
 
 ## Observed execution
 
-The management connector serialized attempted parallel calls. Different backend PIDs did not have overlapping timestamps. Remote sequential lifecycle/replay cases behaved as expected, but concurrency remains unverified. Do not report the multi-session suite as passed. The temporary dblink helper required connection credentials and was removed without changing authentication privileges. QA schemas remain closed to anon, authenticated and service_role.
+The management connector serialized attempted parallel calls. Different backend PIDs did not have overlapping timestamps. Remote sequential lifecycle/replay cases behaved as expected, but concurrency was subsequently verified in an isolated native PostgreSQL CI service (run 38511797812). Do not report the multi-session suite as passed. The temporary dblink helper required connection credentials and was removed without changing authentication privileges. QA schemas remain closed to anon, authenticated and service_role.
+
+The management-connector runs still do not establish overlap. The native CI runner opens three independent clients, probes the held advisory lock before issuing B and verifies PID/timestamp overlap for seven cases. It additionally tests delivery/refunds/actual Edge handlers and a concurrent refund with observed PostgreSQL lock wait. The CI service connects only to loopback database umma_qa, never to the live Supabase database.
