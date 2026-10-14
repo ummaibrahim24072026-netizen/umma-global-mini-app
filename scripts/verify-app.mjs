@@ -48,7 +48,7 @@ assert.ok(locationAdmin.includes("admin_upsert_location") === false, "location w
 assert.ok(html.includes("leaflet.js") && html.includes("locationAdminMap"), "Leaflet location map not wired into app");
 console.log("PASS dynamic location directory, map, and location admin UI");
 assert.ok(kitchen.includes("data-show-route"), "delivery order map action missing");
-assert.ok(courierRoute.includes("router.project-osrm.org"), "courier road routing service missing");
+assert.ok(courierRoute.includes("https://www.google.com/maps/dir/?api=1"), "Google Maps navigation missing");
 assert.ok(html.includes("js/maps/courier-route.js"), "courier route map script not loaded");
 console.log("PASS courier route map and navigation fallback");
 console.log("PASS customer nearest/manual cafe selection");
@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=60/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=61/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=36/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 

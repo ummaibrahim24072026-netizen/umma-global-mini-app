@@ -1282,6 +1282,12 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 .cafe-sticky-order{margin-left:0;margin-right:0;width:100%;max-width:100%}.cafe-cart-row{flex-wrap:wrap}.cafe-cart-row>div:first-child{min-width:0;flex:1}.cafe-cart-controls{flex-shrink:0;margin-left:auto}.cafe-cart-controls button{min-width:44px;min-height:44px}.cafe-cart-row small{font-size:12px;line-height:1.5}.native-screen h1,.native-screen h2,.native-screen h3{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);line-height:1.3}
 /* Keep small labels readable on bright kitchen and outdoor screens. */
 :root{--turquoise-deep:#076c73}.cafe-submit,.cafe-sticky-order button,.cafe-kitchen-filters button.is-active{background:var(--turquoise-deep);color:#fff}.brand,.cafe-card{background:linear-gradient(125deg,#087f84,#076c73)}
+
+/* Clear immediate feedback without shifting courier controls. */
+.kitchen-order-actions button[aria-busy="true"] { opacity:.7; cursor:progress; }
+.courier-evidence { width:100%; }
+.courier-evidence summary { min-height:44px; padding:12px; cursor:pointer; font-weight:600; }
+.delivery-tracking-map iframe { min-height:320px; }
 .app{width:320px;margin:0}.qa-toolbar{position:fixed;right:12px;top:12px;z-index:200;background:white;padding:12px;display:grid;gap:8px;max-width:220px}button{cursor:pointer}</style></head>
 
 <body>
@@ -2041,7 +2047,7 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
       <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
       <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
       <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
-      <small style="color:#68737d">Маршрут строится по OpenStreetMap/OSRM. Проверяйте дорожные условия и точность адреса перед выездом.</small>
+      <small style="color:#68737d">Карта и навигация — Google Maps. Проверьте адрес перед выездом.</small>
     </div>
   </section>
 
@@ -3090,13 +3096,13 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
  'use strict';
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
- async function api(payload){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Операция доставки не выполнена');return result;}
+ async function api(payload){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData}),signal:AbortSignal.timeout(15000)});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Операция доставки не выполнена');return result;}
  let busy=false,lastOfferSignature='';
  function message(text){const own=document.getElementById('courierWorkflowMessage');const root=own&&!document.getElementById('courierOffers')?.hidden?own:document.getElementById('cafeKitchenMessage');if(root){root.hidden=false;root.textContent=text;}}
- function renderOffers(offers,role){const root=document.getElementById('courierOffers');if(!root)return;root.hidden=role!=='courier';if(root.hidden){lastOfferSignature='';return;}const signature=JSON.stringify(offers);if(signature===lastOfferSignature)return;lastOfferSignature=signature;
+ function renderOffers(offers,role){const root=document.getElementById('courierOffers');if(!root)return;root.hidden=role!=='courier';if(root.hidden){lastOfferSignature='';return;}const signature=JSON.stringify(offers);if(signature===lastOfferSignature||busy)return;lastOfferSignature=signature;
  root.innerHTML='<h2>Предложения доставок</h2><p>Заказ получит первый подтвердивший курьер. Отказ требует причины.</p><button type="button" id="courierGeoOnce" class="kitchen-action">Обновить геопозицию для подбора на 10 минут</button><div id="courierWorkflowMessage" role="status"></div>'+offers.map(o=>'<article class="kitchen-order-card"><strong>Доставка №'+esc(o.orderNumber)+'</strong><p>'+esc(o.locationName)+' · '+esc(o.kitchenStatus==='ready'?'Готов':'Готовится')+'</p><div class="kitchen-order-actions"><button class="kitchen-action" data-courier-accept="'+esc(o.orderId)+'">Принять доставку</button><button class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться с причиной</button></div></article>').join('');
  }
- async function respond(id,accept,reason=null){if(busy)return;busy=true;try{await api({action:'respondCourierOffer',orderId:id,accept,reason});await window.ummaKitchen.refresh();}catch(e){message(e.message);}finally{busy=false;}}
+ async function respond(id,accept,reason=null,button=null){if(busy)return;busy=true;const label=button?.textContent;if(button){button.disabled=true;button.textContent=accept?'Принимаем…':'Отправляем…';button.setAttribute('aria-busy','true');}message(accept?'Принимаем доставку…':'Отправляем отказ…');try{await api({action:'respondCourierOffer',orderId:id,accept,reason});await window.ummaKitchen.refresh();}catch(e){message(e.message);}finally{busy=false;lastOfferSignature='';if(button?.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}await window.ummaKitchen.refresh();}}
  function decline(id){const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';dialog.innerHTML='<form class="cafe-order-form"><h3>Причина отказа</h3><label>Причина<textarea minlength="3" maxlength="500" required></textarea></label><div class="kitchen-order-actions"><button type="button">Назад</button><button type="submit" class="kitchen-cancel">Отправить отказ</button></div><p role="status"></p></form>';document.body.append(dialog);dialog.showModal();dialog.querySelector('[type="button"]').onclick=()=>dialog.remove();dialog.querySelector('form').onsubmit=async e=>{e.preventDefault();const reason=dialog.querySelector('textarea').value.trim();if(reason.length<3)return;dialog.remove();await respond(id,false,reason);};}
  async function jpeg(file){if(!file||!file.type.startsWith('image/'))throw Error('Выберите фотографию');if(file.size>20000000)throw Error('Исходное фото слишком большое');
   const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
@@ -3105,11 +3111,11 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
   // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
   return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
  }
- async function photo(id,kind){const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.onchange=async()=>{if(busy)return;busy=true;try{message('Сохраняем фото…');const imageBase64=await jpeg(input.files?.[0]);await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});await api({action:'updateDelivery',orderId:id,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});await window.ummaKitchen.refresh();message('Фото сохранено, этап доставки подтверждён.');}catch(e){message(e.message);}finally{busy=false;}};input.click();}
+ async function photo(id,kind,button){if(busy)return;const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.onchange=async()=>{if(busy)return;busy=true;const label=button.textContent;button.disabled=true;button.textContent='Сохраняем фото…';button.setAttribute('aria-busy','true');try{message('Сохраняем фото…');const imageBase64=await jpeg(input.files?.[0]);await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});await api({action:'updateDelivery',orderId:id,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});await window.ummaKitchen.refresh();message('Фото сохранено, этап доставки подтверждён.');}catch(e){message(e.message);}finally{busy=false;if(button.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}}};input.click();}
  document.addEventListener('click',async event=>{const target=event.target.closest?.('button');if(!target)return;
- if(target.dataset.courierAccept)await respond(target.dataset.courierAccept,true);
+ if(target.dataset.courierAccept)await respond(target.dataset.courierAccept,true,null,target);
  if(target.dataset.courierDecline)decline(target.dataset.courierDecline);
- if(target.dataset.deliveryPhoto)await photo(target.dataset.orderId,target.dataset.deliveryPhoto);
+ if(target.dataset.deliveryPhoto)await photo(target.dataset.orderId,target.dataset.deliveryPhoto,target);
  if(target.dataset.viewProof){try{const result=await api({action:'viewDeliveryProof',proofId:target.dataset.viewProof});const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';const image=document.createElement('img');image.style.width='100%';image.alt='Фото доставки';image.referrerPolicy='no-referrer';image.src=result.url;const close=document.createElement('button');close.textContent='← Назад';close.onclick=()=>dialog.remove();dialog.append(close,image);document.body.append(dialog);dialog.showModal();}catch(e){message(e.message);}}
  if(target.id==='courierGeoOnce'){if(!navigator.geolocation){message('Геопозиция недоступна. Общие предложения всё равно доступны.');return;}message('Запрашиваем геопозицию…');navigator.geolocation.getCurrentPosition(async p=>{try{await api({action:'courierPosition',latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});message('Геопозиция обновлена; используется для подбора ближайшего курьера 10 минут.');}catch(e){message(e.message);}},()=>message('Геопозиция не получена. Вы можете принимать общие предложения.'),{maximumAge:60000,timeout:10000,enableHighAccuracy:true});}
  });
@@ -3133,15 +3139,18 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
  const states={awaiting_pickup:'Курьер ещё не забрал заказ.',not_sharing:'Курьер пока не передаёт позицию.',stale:'Нет свежей позиции. GPS или связь временно недоступны.',delivered:'Заказ доставлен.',unavailable:'Отслеживание завершено или недоступно.'};
  async function poll(v){if(viewer!==v)return;try{const data=await api('cafe-my-orders',{action:'deliveryTracking',orderId:v.id});if(viewer!==v)return;if(data.state==='live'){
  v.status.textContent='Позиция обновлена '+new Date(data.updatedAt).toLocaleTimeString('ru-RU')+' · точность около '+Math.round(data.accuracy)+' м.';
- if(window.L){if(!v.map){v.map=L.map(v.canvas).setView([data.latitude,data.longitude],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(v.map);v.marker=L.marker([data.latitude,data.longitude]).addTo(v.map);v.circle=L.circle([data.latitude,data.longitude],{radius:data.accuracy}).addTo(v.map);}else{v.marker.setLatLng([data.latitude,data.longitude]);v.circle.setLatLng([data.latitude,data.longitude]).setRadius(data.accuracy);if(v.follow.checked)v.map.panTo([data.latitude,data.longitude]);}v.canvas.hidden=false;}
- else v.status.textContent+=' Карта не загрузилась; попробуйте открыть её заново.';
- }else{v.status.textContent=states[data.state]||'Позиция недоступна.';v.canvas.hidden=true;v.map?.remove();v.map=null;}
+ const point=data.latitude+','+data.longitude;
+ if(!v.frame){v.frame=document.createElement('iframe');v.frame.title='Курьер в Google Maps';v.frame.style.cssText='width:100%;height:100%;border:0';v.frame.referrerPolicy='no-referrer';v.canvas.replaceChildren(v.frame);}
+ if(!v.point||v.follow.checked){if(v.point!==point){v.frame.src='https://www.google.com/maps?q='+encodeURIComponent(point)+'&z=16&output=embed';v.point=point;}}
+ v.external.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(point);v.external.hidden=false;v.canvas.hidden=false;
+
+ }else{v.status.textContent=states[data.state]||'Позиция недоступна.';v.canvas.hidden=true;v.canvas.replaceChildren();v.frame=null;v.point=null;v.external.hidden=true;}
  if(['delivered','unavailable'].includes(data.state))return;
- }catch(e){if(viewer===v){v.status.textContent='Связь потеряна. Ожидаем обновление…';v.canvas.hidden=true;}}
+ }catch(e){if(viewer===v){v.status.textContent='Связь потеряна. Ожидаем обновление…';v.canvas.hidden=true;v.external.hidden=true;}}
  if(viewer===v)v.timer=setTimeout(()=>{if(!document.hidden)poll(v);else v.timer=setTimeout(()=>poll(v),5000);},5000);
  }
- function open(id,opener){close();const dialog=document.createElement('dialog');dialog.className='delivery-tracking-dialog';dialog.innerHTML='<div class="delivery-tracking-header"><button type="button" class="courier-route-back">← Назад к заказу</button><h3>Где мой курьер</h3></div><p role="status">Обновляем позицию…</p><label><input type="checkbox" checked> Следовать за курьером</label><div class="delivery-tracking-map" hidden></div><small>Позиция обновляется каждые 5 секунд при доступных GPS и связи.</small>';document.body.append(dialog);const v={id,dialog,opener,status:dialog.querySelector('[role="status"]'),canvas:dialog.querySelector('.delivery-tracking-map'),follow:dialog.querySelector('input'),map:null,timer:null};viewer=v;dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.showModal();dialog.querySelector('button').focus();poll(v);}
- document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(b?.dataset.shareDelivery){const id=b.dataset.shareDelivery;sharing?.id===id?stop():start(id);}if(b?.dataset.trackDelivery)open(b.dataset.trackDelivery,b);});
+ function open(id,opener){close();const dialog=document.createElement('dialog');dialog.className='delivery-tracking-dialog';dialog.innerHTML='<div class="delivery-tracking-header"><button type="button" class="courier-route-back">← Назад к заказу</button><h3>Где мой курьер</h3></div><p role="status">Обновляем позицию…</p><label><input type="checkbox" checked> Следовать за курьером</label><div class="delivery-tracking-map" hidden></div><a class="kitchen-action" target="_blank" rel="noopener" hidden>Открыть Google Maps</a><small>Позиция обновляется каждые 5 секунд при доступных GPS и связи.</small>';document.body.append(dialog);const v={id,dialog,opener,status:dialog.querySelector('[role="status"]'),canvas:dialog.querySelector('.delivery-tracking-map'),follow:dialog.querySelector('input'),external:dialog.querySelector('a'),map:null,timer:null};viewer=v;dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.showModal();dialog.querySelector('button').focus();poll(v);}
+ document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(b?.dataset.shareDelivery){const id=b.dataset.shareDelivery;if(b.disabled)return;b.disabled=true;b.setAttribute('aria-busy','true');b.textContent=sharing?.id===id?'Останавливаем GPS…':'Включаем GPS…';Promise.resolve(sharing?.id===id?stop():start(id)).finally(()=>{b.disabled=false;b.removeAttribute('aria-busy');refreshButtons();});}if(b?.dataset.trackDelivery)open(b.dataset.trackDelivery,b);});
  window.addEventListener('pagehide',localStop);
  window.ummaCourierTracking={syncOrders,close,isOpen:()=>!!viewer,isSharing:id=>sharing?.id===id};
 })();
@@ -3207,9 +3216,10 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Фото получения → забрать':'Фото вручения → доставлено')+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото':'Вручить · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
       }
-      const evidenceActions=["manager","courier"].includes(orderStaffRole)?proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join(""):"";
+      if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
+      const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
       const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
       const routeAction = order.order_type === "delivery" && order.delivery_address
@@ -3486,9 +3496,10 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
     const button=target.closest("[data-assign-courier]");
     if (button) assignCourier(button.getAttribute("data-assign-courier"));
   });
-  async function updateDelivery(orderId, deliveryStatus) {
+  async function updateDelivery(orderId, deliveryStatus, button) {
     if (busy) return;
     busy = true;
+    if(button){button.disabled=true;button.textContent="Сохраняем…";button.setAttribute("aria-busy","true");}
     showMessage("Обновляем доставку…");
     try {
       await api({ action:"updateDelivery", orderId, deliveryStatus });
@@ -3546,7 +3557,7 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
       return;
     }
     const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
-    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status")); return; }
+    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status"), deliveryButton); return; }
     const button = target.closest("[data-order-id][data-new-status]");
     if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
   });
@@ -4060,79 +4071,22 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
   document.addEventListener("umma:cafe-events",()=>{if(!document.hidden&&byId("cafeCashPanel")?.hidden===false)loadCash();});
   window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();
-</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaHome').onclick=()=>openPage('home');document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
+</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaHome').onclick=()=>openPage('home');document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Google Maps delivery view; navigation opens the native Maps app when available. */
 (() => {
-  "use strict";
-  const $=id=>document.getElementById(id);
-  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  let map=null,route=null,markers=[],opener=null,generation=0;
-  function close(){generation++;const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}opener?.focus();}
-  function status(text){if($("courierMapMessage"))$("courierMapMessage").textContent=text;}
-  function currentPosition(){
-    return new Promise(resolve=>{
-      if(!navigator.geolocation){resolve(null);return;}
-      navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),()=>resolve(null),{enableHighAccuracy:true,timeout:6500,maximumAge:60000});
-    });
-  }
-  async function findAddress(address){
-    const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(address+", Vietnam")+"&accept-language=ru,en";
-    const res=await fetch(url);if(!res.ok)throw new Error("Поиск адреса временно недоступен");
-    const data=await res.json();if(!data.length)throw new Error("Адрес не найден. Проверьте, что в заказе указан полный адрес.");
-    return {lat:Number(data[0].lat),lng:Number(data[0].lon),label:data[0].display_name};
-  }
-  function clearLayers(){
-    markers.forEach(m=>map.removeLayer(m));markers=[];
-    if(route){map.removeLayer(route);route=null;}
-  }
-  async function open(button){
-    const token=++generation;opener=button;
-    const address=button.getAttribute("data-route-address")||"";
-    const rawOriginLat=button.getAttribute("data-route-origin-lat"),rawOriginLng=button.getAttribute("data-route-origin-lng");
-    const originLat=rawOriginLat===""?NaN:Number(rawOriginLat),originLng=rawOriginLng===""?NaN:Number(rawOriginLng);
-    const originName=button.getAttribute("data-route-origin-name")||"Кафе";
-    const orderNo=button.getAttribute("data-route-order-number")||"";
-    const modal=$("courierMapModal");if(!modal)return;
-    modal.hidden=false;modal.style.display="block";
-    $("courierMapClose")?.focus();
-    if(!window.L){status("Библиотека карты не загрузилась. Можно вернуться к заказу.");return;}
-    $("courierMapTitle").textContent="Маршрут · Заказ №"+orderNo;
-    $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(address+", Vietnam");
-    if(!map){
-      map=L.map("courierRouteMap").setView([12.2388,109.1967],6);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
-    }
-    setTimeout(()=>map&&map.invalidateSize(),80);
-    clearLayers();status("Находим адрес доставки…");
-    try{
-      const dest=await findAddress(address);if(token!==generation)return;
-      markers.push(L.marker([dest.lat,dest.lng]).addTo(map).bindPopup("Доставка · заказ №"+esc(orderNo)).openPopup());
-      const all=Array.isArray(window.ummaLocationPins)?window.ummaLocationPins:[];
-      all.filter(l=>l.latitude!=null&&l.longitude!=null).forEach(l=>{
-        const marker=L.circleMarker([Number(l.latitude),Number(l.longitude)],{radius:6,color:"#176b55",fillColor:"#0fa3a8",fillOpacity:.9}).addTo(map).bindPopup(esc(l.name)+(l.address?"<br>"+esc(l.address):""));
-        markers.push(marker);
-      });
-      status("Получаем ваше местоположение для построения маршрута…");
-      let origin=await currentPosition();if(token!==generation)return;
-      if(!origin&&Number.isFinite(originLat)&&Number.isFinite(originLng)&&originLat>=-90&&originLat<=90&&originLng>=-180&&originLng<=180)origin={lat:originLat,lng:originLng};
-      if(!origin){map.setView([dest.lat,dest.lng],15);status("Адрес найден. Разрешите геолокацию, чтобы построить маршрут от вас, или откройте Google Maps.");return;}
-      markers.push(L.marker([origin.lat,origin.lng]).addTo(map).bindPopup(originName+" · отправление"));
-      status("Строим автомобильный маршрут…");
-      const res=await fetch("https://router.project-osrm.org/route/v1/driving/"+origin.lng+","+origin.lat+";"+dest.lng+","+dest.lat+"?overview=full&geometries=geojson");
-      if(!res.ok)throw new Error("Сервис маршрутов временно недоступен");
-      const data=await res.json();if(token!==generation)return;if(data.code!=="Ok"||!data.routes||!data.routes.length)throw new Error("Не удалось построить маршрут для этих точек");
-      route=L.geoJSON(data.routes[0].geometry,{style:{color:"#0fa3a8",weight:5,opacity:.9}}).addTo(map);
-      map.fitBounds(route.getBounds(),{padding:[28,28]});
-      status("Маршрут построен · "+(data.routes[0].distance/1000).toFixed(1)+" км · около "+Math.round(data.routes[0].duration/60)+" мин. Время ориентировочное.");
-    }catch(e){if(token!==generation)return;status((e instanceof Error?e.message:"Не удалось построить маршрут")+" Используйте кнопку Google Maps для навигации.");}
-  }
-  document.addEventListener("click",event=>{
-    const target=event.target instanceof Element?event.target.closest("[data-show-route='true']"):null;
-    if(target){event.preventDefault();open(target);}
-  });
-  $("courierMapClose")?.addEventListener("click",close);
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$("courierMapModal")?.hidden)close();});
-  window.UmmaCourierMap={open,close};
-})();</script><script>/* UMMA Global — consistent in-app back navigation.
+ "use strict";
+ const $=id=>document.getElementById(id);let opener=null;
+ function close(){const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}$("courierRouteMap")?.replaceChildren();opener?.focus();}
+ function open(button){opener=button;const address=button.dataset.routeAddress||"";const modal=$("courierMapModal");if(!modal)return;
+ modal.hidden=false;modal.style.display="block";$("courierMapTitle").textContent="Маршрут · Заказ №"+(button.dataset.routeOrderNumber||"");
+ $("courierMapMessage").textContent=address+" · Навигация от вашего текущего положения откроется в Google Maps.";
+ const destination=address+", Vietnam";
+ $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination="+encodeURIComponent(destination);
+ const frame=document.createElement("iframe");frame.title="Адрес доставки в Google Maps";frame.src="https://www.google.com/maps?q="+encodeURIComponent(destination)+"&output=embed";frame.style.cssText="width:100%;height:100%;border:0";frame.referrerPolicy="no-referrer";$("courierRouteMap").replaceChildren(frame);$("courierMapClose")?.focus();
+ }
+ document.addEventListener("click",event=>{const button=event.target.closest?.("[data-show-route='true']");if(button){event.preventDefault();open(button);}});
+ $("courierMapClose")?.addEventListener("click",close);document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("courierMapModal")?.hidden)close();});window.UmmaCourierMap={open,close};
+})();
+</script><script>/* UMMA Global — consistent in-app back navigation.
  * Records the previous visible screen without changing existing order, payment or API flows.
  * Back restores the actual previous screen, not a hard-coded home/admin destination.
  */

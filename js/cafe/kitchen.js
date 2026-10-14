@@ -60,9 +60,10 @@
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Фото получения → забрать':'Фото вручения → доставлено')+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото':'Вручить · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
       }
-      const evidenceActions=["manager","courier"].includes(orderStaffRole)?proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join(""):"";
+      if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
+      const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
       const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
       const routeAction = order.order_type === "delivery" && order.delivery_address
@@ -339,9 +340,10 @@
     const button=target.closest("[data-assign-courier]");
     if (button) assignCourier(button.getAttribute("data-assign-courier"));
   });
-  async function updateDelivery(orderId, deliveryStatus) {
+  async function updateDelivery(orderId, deliveryStatus, button) {
     if (busy) return;
     busy = true;
+    if(button){button.disabled=true;button.textContent="Сохраняем…";button.setAttribute("aria-busy","true");}
     showMessage("Обновляем доставку…");
     try {
       await api({ action:"updateDelivery", orderId, deliveryStatus });
@@ -399,7 +401,7 @@
       return;
     }
     const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
-    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status")); return; }
+    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status"), deliveryButton); return; }
     const button = target.closest("[data-order-id][data-new-status]");
     if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
   });

@@ -156,3 +156,11 @@ Five primary tabs open Home, Cafe, Orders, Notifications and More. More contains
 Automated verification covers fullscreen/fallback, safe-area/keyboard events, actual tab actions, modal Back, a single active screen and scroll restoration alongside the existing order/payment/courier/network tests. Physical fullscreen and keyboard behavior on the user's phone remains a device check.
 
 Visual QA checked the isolated UI at 320px, 390px and 768px. Selected-cart overflow was reproduced and corrected by keeping the sticky cart within the page width and wrapping price/quantity controls. Quantity buttons use a minimum 44px touch target. An unused MapLibre startup download was removed; existing maps still use Leaflet. The logo was re-encoded losslessly, with exact decoded RGBA pixel equality verified and PNG fallback retained.
+
+
+### Courier controls and Google Maps refresh (2026-10-14)
+- Delivery route preview and customer live position use Google Maps; native navigation uses official Maps URLs and no automatic GPS request when opening a route.
+- Offer acceptance immediately disables the tapped button and displays progress; duplicate taps dispatch one request. Polling preserves pending offer feedback.
+- Courier photo evidence is grouped under one disclosure; pickup/handover share one stage action. Payment and GPS remain separate explicit actions.
+- Automated simulated sensor, duplicate tap, delivery, payment and navigation checks pass. Physical Google Maps app handoff, camera/GPS and Telegram device tests remain pending.
+- Administrative coordinate picker remains Leaflet to preserve click/drag editing. Full Google interactive editor requires a configured Maps JavaScript API key and billing; neither was enabled. No financial records modified.
