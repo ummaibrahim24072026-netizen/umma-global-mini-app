@@ -5,25 +5,26 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
   >
 
   <meta name="theme-color" content="#0FA3A8">
 
   <title>Umma Global</title>
 
-  
 
-  
-  
 
-  
+
+
+
+
 
   <!-- STYLES -->
-  
-  
-  
-  
+
+
+
+
+
 
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'"><style>/* UMMA GLOBAL — single source of truth for the home screen */
 :root {
@@ -1208,12 +1209,78 @@ button:active { transform: scale(.98); }
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* UMMA application shell: one viewport, readable content and one scroller per screen. */
+:root{--umma-safe-top:0px;--umma-safe-bottom:env(safe-area-inset-bottom,0px);--umma-safe-left:0px;--umma-safe-right:0px;--umma-viewport-height:100dvh;--surface:#fff;--canvas:#f5f8f7;--ink:#173c3e;--muted:#607779;--line:#dce8e5;--radius:18px;--shadow:0 3px 14px #133f3c06;color-scheme:light}
+html,body{height:100%;background:var(--canvas);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none}
+.app{width:100%;max-width:none;height:var(--umma-viewport-height,100dvh);margin:0;display:flex;flex-direction:column;overflow:hidden;padding:var(--umma-safe-top) var(--umma-safe-right) 0 var(--umma-safe-left);background:var(--canvas);container:umma-shell / inline-size;isolation:isolate}
+.app>main,.app>.native-screen{position:relative;inset:auto;flex:1 1 auto;min-height:0;height:auto;max-height:none;width:100%;overflow:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-padding:16px;scrollbar-width:thin;background:var(--canvas)}
+.app>main{display:block;padding:16px 0 24px}
+.app>main>section{max-width:1120px;margin:0 auto 16px;flex:none}
+.app>main>section:not(.brand){width:calc(100% - 32px)}
+button,a,input,select,textarea{touch-action:manipulation}
+button{min-height:44px;transition:background-color .14s,color .14s,transform .12s;user-select:none}
+button:disabled{cursor:default;opacity:.55}button:active:not(:disabled){transform:scale(.98)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #0fa3a866;outline-offset:3px}
+input,select,textarea{font:inherit;font-size:16px!important;max-width:100%;min-width:0;min-height:48px;border-radius:12px;padding:12px;background:#fff;color:var(--ink)}
+input[type=checkbox],input[type=radio]{min-height:20px;width:20px;accent-color:var(--turquoise)}
+label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{overflow-wrap:anywhere}img{max-width:100%}
+.umma-icon{width:24px;height:24px;display:block;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.cafe-notification-bar{position:relative;top:auto;flex:0 0 auto;min-height:56px;padding:8px 16px;gap:10px;z-index:90;background:#fff;border-bottom:1px solid var(--line)}
+.native-app-title{flex:1;min-width:0;display:flex;align-items:center;gap:10px;font-weight:750;font-size:16px;color:var(--ink)}
+.native-app-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--turquoise-pale);color:var(--turquoise-deep)}
+.cafe-notification-bar small{font-size:11px;max-width:110px;line-height:1.3}
+.cafe-notification-bell,.native-fullscreen{width:44px;height:44px;min-height:44px;border:0;border-radius:13px;background:var(--canvas);display:grid;place-items:center;color:var(--ink);position:relative}
+.cafe-notification-bell b{position:absolute;top:0;right:0;font-size:10px;padding:2px 5px}
+.brand{height:auto;min-height:110px;padding:20px;border-radius:22px;border:0;box-shadow:none;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center;text-align:left;width:calc(100% - 32px);background:linear-gradient(125deg,#087f84,#0fa3a8)}
+.brand-logo{width:56px;height:56px;flex:none;grid-row:1/3;margin:0}.brand-title{justify-content:flex-start;grid-column:2}.brand-title span{font-size:28px}.brand-title strong{font-size:17px}.brand p{font-size:12px;line-height:1.5;max-width:440px;grid-column:2}.brand small,.brand-line{display:none}
+.welcome-card,.ayah-card{height:auto;min-height:96px;padding:18px;gap:14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);overflow:visible}
+.welcome-image,.ayah-icon{width:44px;height:44px;flex:0 0 44px;font-size:24px;background:var(--turquoise-pale);border:0;box-shadow:none;border-radius:14px}
+.welcome-content,.ayah-content{overflow:visible;min-width:0}.welcome-content h2{font:650 15px/1.5 Inter,-apple-system,sans-serif;margin:0;color:var(--ink)}.welcome-content p{font-size:13px;line-height:1.5;margin:6px 0 0;color:var(--muted)}
+.turquoise-circle{width:44px;height:44px;min-width:44px;flex:0 0 44px;background:var(--turquoise-pale);border:0;box-shadow:none;color:var(--turquoise-deep)}
+.ayah-content>span{font-size:10px;letter-spacing:.08em;color:var(--muted)}.ayah-content p{font-size:14px;line-height:1.5;margin:4px 0}.ayah-content small{font-size:12px}
+.cafe-card{height:auto;min-height:176px;padding:24px;display:flex;align-items:center;border:0;border-radius:22px;box-shadow:none;background:linear-gradient(125deg,#087f84,#0fa3a8)}
+.cafe-content h1{font:750 27px/1.2 Inter,-apple-system,sans-serif;white-space:normal;color:#fff}.cafe-content p{font-size:14px;line-height:1.5;margin:10px 0 16px}.cafe-button{min-height:46px;font-size:14px;padding:12px 18px;border-radius:14px;background:#f5d56b;box-shadow:none}
+.halal{font-size:11px;padding:6px 10px;right:16px;top:16px;border-color:#ffffff55;color:#fff}.cafe-background{opacity:.25;pointer-events:none}
+.services{display:block;min-height:0}.services-heading{height:auto;min-height:44px;margin:4px 0 12px;gap:12px}.services-heading h2{font:700 20px/1.3 Inter,sans-serif;color:var(--ink)}.services-heading button{font-size:12px;min-height:44px}
+.services-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;gap:12px;flex:none}
+.service{align-items:flex-start;text-align:left;justify-content:flex-start;min-height:142px;padding:16px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);border-radius:var(--radius);gap:6px}
+.service-icon{width:40px;height:40px;flex:0 0 40px;border:0;border-radius:12px;background:var(--turquoise-pale);color:var(--turquoise-deep);margin:0 0 4px;font-size:22px}
+.service strong{font-size:15px;line-height:1.35;font-weight:650;color:var(--ink)}.service small{font-size:12px;line-height:1.4;color:var(--muted)}
+.native-coming{font-size:10px;color:#607779;background:#f1f5f4;border-radius:6px;padding:3px 6px;margin-top:auto}
+.farm-card{height:auto;min-height:106px;padding:18px;gap:14px;border:0;border-radius:18px;background:#e8f3ed}.farm-icon{font-size:28px;width:42px;flex:0 0 42px}.farm-content h2{font:700 18px/1.3 Inter,sans-serif;color:var(--ink)}.farm-content p{font-size:12px;line-height:1.5;color:var(--muted)}.farm-button{min-height:44px;padding:10px 12px;font-size:12px;background:#fff;border:1px solid #cfe1d7;color:#245b45;white-space:nowrap}
+.admin-entry-button{min-height:72px;padding:14px 16px;gap:14px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:none}.admin-entry-copy strong{font-size:16px}.admin-entry-copy small{font-size:12px;line-height:1.5;white-space:normal}.admin-entry-icon{width:40px;height:40px;min-width:40px;font-size:22px;border-radius:12px;background:var(--turquoise-pale);color:var(--turquoise-deep)}
+.native-workspace-heading{font-size:13px;color:var(--muted);font-weight:650;margin:0 0 10px;letter-spacing:.02em}
+.bottom-nav{position:relative;inset:auto;flex:0 0 auto;height:auto;min-height:calc(64px + var(--umma-safe-bottom));padding:7px 8px calc(7px + var(--umma-safe-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border-top:1px solid var(--line);z-index:100}
+.nav-item{min-height:48px;gap:5px;position:relative;color:var(--muted);border-radius:13px;padding:4px;transition:background .15s;color:var(--muted)}.nav-item span{font-size:24px;color:inherit}.nav-item small{font-size:11px;line-height:1.2;font-weight:600;white-space:nowrap}.nav-item.active{color:var(--turquoise-deep);background:var(--turquoise-pale)}.nav-item.active span,.nav-item.active small{color:inherit}.native-nav-badge{position:absolute;top:0;right:calc(50% - 23px);padding:2px 4px;border-radius:8px;font-size:9px;background:#c13629;color:#fff}
+.native-screen>[class$="inner"],.native-screen .admin-page-inner{width:100%;max-width:1200px;min-height:0;margin:0 auto;padding:16px 16px 28px}
+.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header{margin:-16px -16px 18px;padding:16px;background:#fff;color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cafe-page-header h1,.cafe-kitchen-header h1,.cafe-staff-admin-header h1{font:750 24px/1.25 Inter,sans-serif;color:var(--ink);flex:1 1 100%;margin:8px 0 0}.cafe-page-header p,.cafe-kitchen-header p,.cafe-staff-admin-header p{font-size:13px;color:var(--muted);margin:0;flex:1 1 100%}
+.cafe-back,.admin-back,.cafe-kitchen-refresh{min-height:44px;font-size:13px;padding:10px 12px;border:1px solid var(--line);background:#f5f8f7;color:var(--ink);border-radius:12px;font-weight:650}
+.cafe-halal-pill{float:none;margin:0 0 0 auto;font-size:13px;background:var(--turquoise-pale);color:var(--turquoise-deep)}
+.cafe-product{padding:16px;border-color:var(--line);border-radius:18px;box-shadow:var(--shadow);background:#fff;gap:10px}.cafe-product h3{font:700 17px/1.35 Inter,sans-serif;color:var(--ink)}.cafe-product p{font-size:13px;line-height:1.5}.cafe-product-price{font-size:17px}.cafe-product-weight{font-size:12px}.cafe-product-icon{border:0;background:var(--turquoise-pale)}
+.cafe-add,.cafe-qty-button{min-width:44px;min-height:44px;border-radius:12px}.cafe-order-form label,.cafe-staff-assign-form label{font-size:14px;font-weight:600}.cafe-order-hint,.cafe-order-result,.cafe-message{font-size:14px;line-height:1.55}
+.cafe-submit,.cafe-my-orders-toggle,.cafe-my-orders-refresh,.kitchen-action{font-size:14px;min-height:46px;border-radius:12px;font-weight:650}.cafe-submit{background:var(--turquoise);color:#fff;box-shadow:none}.kitchen-cancel{min-height:44px;font-size:14px;border-radius:12px}
+.cafe-cart,.cafe-my-order-card,.kitchen-order-card,.cafe-staff-card{border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);background:#fff}.kitchen-order-details{font-size:13px;line-height:1.5}.kitchen-order-items,.cafe-my-order-items{font-size:14px}.kitchen-order-total strong,.cafe-my-order-total strong{font-size:20px}.kitchen-status{font-size:12px}.cafe-sticky-order{border-color:var(--line);background:#fff;padding:12px 16px;margin-left:-16px;margin-right:-16px;box-shadow:0 -5px 14px #133f3c08;padding-bottom:12px}.cafe-sticky-order button{font-size:14px;background:var(--turquoise);color:#fff}.cafe-sticky-order-info strong{font-size:21px}
+.staff-workspace-tabs button{min-height:46px;font-size:13px}.staff-service-options button,.staff-table-grid button{min-height:52px;font-size:15px}.staff-table-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.admin-card,.accounting-metric{border-radius:18px;box-shadow:var(--shadow);border-color:var(--line)}.admin-card strong{font-size:16px}.admin-card small{font-size:13px;line-height:1.45}.accounting-tabs button{min-height:44px;font-size:13px}.accounting-metrics strong{font-size:24px}.accounting-metrics span{font-size:12px}.accounting-content{padding-bottom:24px}
+#cafeAccountingPage{height:auto;padding-bottom:0}#cafeAccountingPage .accounting-page-inner{min-height:0;padding-bottom:28px}
+#selfCourierControls select{display:block;width:100%;margin:8px 0}#selfCourierControls button{margin:4px 4px 4px 0}
+.native-directory{padding:20px 16px;max-width:1120px;margin:auto}.native-directory h1{font-size:26px;margin:18px 0 8px}.native-directory>p{font-size:14px;line-height:1.6;color:var(--muted)}.native-directory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}.native-directory-card{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;text-align:left;align-items:flex-start}.native-directory-card strong{font-size:16px}.native-directory-card small{font-size:13px;color:var(--muted);line-height:1.5}.native-directory-card .umma-icon{color:var(--turquoise-deep)}
+.cafe-refund-dialog,.cafe-notifications-dialog,.delivery-tracking-dialog,.native-service-dialog{width:min(560px,calc(100vw - 24px));max-height:calc(var(--umma-viewport-height) - var(--umma-safe-top) - var(--umma-safe-bottom) - 24px);border:1px solid var(--line);border-radius:22px;padding:20px;color:var(--ink);background:#fff;box-sizing:border-box;overflow:auto}.native-service-dialog::backdrop{background:#122c2a66}.native-service-dialog h2{font-size:24px}.native-service-dialog p{font-size:15px;line-height:1.65}.native-service-dialog button{margin:8px 8px 0 0}.delivery-tracking-header{gap:10px;padding-bottom:8px}.cafe-notification-item{font-size:14px;line-height:1.5;padding:14px}.cafe-notification-item small{font-size:12px}
+#courierMapModal{padding-top:calc(16px + var(--umma-safe-top))!important;padding-bottom:calc(16px + var(--umma-safe-bottom))!important;background:var(--canvas)!important}#courierMapModal>div>div:first-child{top:calc(-16px - var(--umma-safe-top));padding-top:calc(8px + var(--umma-safe-top));background:var(--canvas)}
+.toast{bottom:calc(82px + var(--umma-safe-bottom));font-size:14px;line-height:1.45;max-width:min(560px,calc(100% - 32px));padding:14px 18px;border-radius:16px;box-shadow:0 8px 24px #133f3c22}
+.native-screen-enter{animation:umma-screen-in .16s ease-out}@keyframes umma-screen-in{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}
+.app.native-keyboard .bottom-nav{display:none!important}.app.native-keyboard .toast{bottom:16px}.app.native-keyboard .native-screen{scroll-padding-bottom:24px}
+@container umma-shell (min-width:700px){.services-grid,.native-directory-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cafe-products{grid-template-columns:repeat(3,minmax(0,1fr))}.cafe-kitchen-orders{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.staff-table-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.brand{min-height:124px}.bottom-nav{padding-left:calc((100% - min(100%,600px))/2);padding-right:calc((100% - min(100%,600px))/2)}}
+@container umma-shell (max-width:360px){.cafe-products{grid-template-columns:1fr}.cafe-card{padding:20px}.cafe-content h1{font-size:24px}.service{padding:13px}.service strong{font-size:14px}.welcome-card,.ayah-card{padding:14px;gap:10px}.native-app-title{font-size:14px}.cafe-notification-bar small{max-width:65px;font-size:10px}.cafe-kitchen-header button{flex:1 1 auto}.nav-item small{font-size:10px}}
+@media(max-width:640px){.cafe-refund-dialog,.cafe-notifications-dialog,.native-service-dialog{position:fixed;top:auto;bottom:0;margin:0 auto;width:100%;max-width:none;max-height:calc(var(--umma-viewport-height) - var(--umma-safe-top) - 16px);border:0;border-radius:24px 24px 0 0;padding-bottom:calc(20px + var(--umma-safe-bottom))}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .app{width:320px;margin:0}.qa-toolbar{position:fixed;right:12px;top:12px;z-index:200;background:white;padding:12px;display:grid;gap:8px;max-width:220px}button{cursor:pointer}</style></head>
 
 <body>
 
 <div class="app">
-<aside id="cafeNotificationBar" class="cafe-notification-bar" hidden><small id="cafeLiveConnection" role="status">Подключаемся…</small><button type="button" id="cafeNotificationBell" aria-label="Уведомления" class="cafe-notification-bell">🔔 <b id="cafeNotificationCount" hidden>0</b></button><span id="cafeNotificationAnnouncement" class="cafe-notification-announcement" role="status" aria-live="polite"></span></aside>
+<aside id="cafeNotificationBar" class="cafe-notification-bar"><div class="native-app-title"><span class="native-app-mark" data-native-icon="home"></span><span id="nativeAppTitle">UMMA Global</span></div><small id="cafeLiveConnection" role="status" hidden>Подключаемся…</small><button type="button" id="nativeFullscreen" class="native-fullscreen" aria-label="На весь экран" hidden><span data-native-icon="expand"></span></button><button type="button" id="cafeNotificationBell" aria-label="Уведомления" class="cafe-notification-bell" hidden><span data-native-icon="bell"></span><b id="cafeNotificationCount" hidden>0</b></button><span id="cafeNotificationAnnouncement" class="cafe-notification-announcement" role="status" aria-live="polite"></span></aside>
 
 <!-- HOME -->
   <main>
@@ -1268,7 +1335,7 @@ button:active { transform: scale(.98); }
 
       <button
         class="gold-circle"
-        aria-label="Открыть"
+        aria-label="Открыть меню кафе" data-page="cafe"
       >
         →
       </button>
@@ -1315,7 +1382,7 @@ button:active { transform: scale(.98); }
 
 
     <!-- CAFE STAFF ENTRY -->
-    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true">
+    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true"><h2 class="native-workspace-heading">Работа в кафе</h2>
       <button type="button" class="admin-entry-button" id="staffEntryButton">
         <span class="admin-entry-icon">🧾</span>
         <span class="admin-entry-copy"><strong>Приём заказов</strong><small>Оформить заказ, добавить блюда, принять оплату</small></span>
@@ -2141,62 +2208,14 @@ button:active { transform: scale(.98); }
     </div>
   </section>
 
+  <section id="servicesPage" class="native-screen" hidden><div class="native-directory"><button type="button" id="servicesBack" class="cafe-back">← Назад</button><h1>Направления UMMA</h1><p>Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.</p><button type="button" class="cafe-submit" data-page="cafe">Открыть UMMA Cafe</button><button type="button" id="nativeHomeShortcut" class="cafe-back" hidden>Добавить на главный экран телефона</button><div id="nativeDirectory" class="native-directory-grid"></div></div></section>
   <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-
-    <button
-      class="nav-item active"
-      data-page="home"
-    >
-      <span>⌂</span>
-      <small>Главная</small>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-page="cafe"
-    >
-      <span>🍽</span>
-      <small>Кафе</small>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-page="market"
-    >
-      <span>🛒</span>
-      <small>Рынок</small>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-page="services"
-    >
-      <span>✈</span>
-      <small>Услуги</small>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-page="community"
-    >
-      <span>👥</span>
-      <small>Сообщество</small>
-    </button>
-
-
-    <button
-      class="nav-item"
-      data-page="more"
-    >
-      <span>•••</span>
-      <small>Ещё</small>
-    </button>
-
+  <nav class="bottom-nav" aria-label="Основные разделы">
+    <button type="button" class="nav-item active" data-page="home" aria-current="page"><span data-native-icon="home"></span><small>Главная</small></button>
+    <button type="button" class="nav-item" data-page="cafe"><span data-native-icon="cafe"></span><small>Кафе</small></button>
+    <button type="button" class="nav-item" data-page="orders"><span data-native-icon="orders"></span><small>Заказы</small></button>
+    <button type="button" class="nav-item" data-page="notifications" aria-label="Уведомления"><span data-native-icon="bell"></span><b id="navNotificationCount" class="native-nav-badge" hidden>0</b><small>События</small></button>
+    <button type="button" class="nav-item" data-page="more"><span data-native-icon="more"></span><small>Ещё</small></button>
   </nav>
 
 </div>
@@ -2232,7 +2251,7 @@ button:active { transform: scale(.98); }
 
 
 
-  
+
 
 
 
@@ -2247,15 +2266,306 @@ button:active { transform: scale(.98); }
 <!-- START -->
 
 
-<aside class="qa-toolbar"><strong>QA · только фиктивные данные</strong><label>Роль<select id="qaRole"><option value="manager">Менеджер</option><option value="kitchen">Кухня</option><option value="courier">Курьер</option></select></label><label>Ширина<select id="qaWidth"><option>320</option><option>390</option><option>768</option></select></label><button id="qaOrders">Приём заказов</button><button id="qaKitchen">Кухня</button><button id="qaPaid">Тестовый оплаченный заказ</button></aside><script>window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};
-const qaLocation={id:'11111111-1111-4111-8111-111111111111',name:'QA HALAL UMMA',location_type:'cafe'};
+
+<aside class="qa-toolbar"><strong>QA · только фиктивные данные</strong><label>Роль<select id="qaRole"><option value="manager">Менеджер</option><option value="kitchen">Кухня</option><option value="courier">Курьер</option></select></label><label>Ширина<select id="qaWidth"><option>320</option><option>390</option><option>768</option></select></label><button id="qaHome">Главная</button><button id="qaOrders">Приём заказов</button><button id="qaKitchen">Кухня</button><button id="qaPaid">Тестовый оплаченный заказ</button></aside><script>/* =====================================================
+   UMMA GLOBAL
+   Telegram Mini App
+   ===================================================== */
+
+const tg = window.Telegram?.WebApp;
+
+
+/* =====================================================
+   TELEGRAM AUTH
+   ===================================================== */
+
+const TELEGRAM_AUTH_URL =
+  "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/telegram-auth";
+
+
+/* =====================================================
+   TELEGRAM
+   ===================================================== */
+
+if (tg) {
+
+  tg.ready?.();
+
+  tg.expand?.();
+
+  tg.setHeaderColor?.("#ffffff");
+
+  tg.setBackgroundColor?.("#f5f8f7");
+  tg.setBottomBarColor?.("#ffffff");
+
+  tg.enableClosingConfirmation?.();
+
+}
+
+
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
+
+const toast =
+  document.getElementById("toast");
+
+const menuBtn =
+  document.getElementById("menuBtn");
+
+const languageBtn =
+  document.getElementById("languageBtn");
+
+const notificationBtn =
+  document.getElementById("notificationBtn");
+
+const profileBtn =
+  document.getElementById("profileBtn");
+
+const allServicesBtn =
+  document.getElementById("allServicesBtn");
+
+
+/* =====================================================
+   USER STATE
+   ===================================================== */
+
+window.ummaUser = null;
+
+window.ummaRole = "user";
+
+window.ummaPermissions = {
+  isSuperAdmin: false,
+  isAdmin: false,
+  isEntrepreneur: false,
+  isEmployee: false
+};
+
+window.ummaIsSuperAdmin = false;
+
+
+/* =====================================================
+   TOAST
+   ===================================================== */
+
+function showToast(message) {
+
+  if (!toast) return;
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+
+    toast.classList.remove("show");
+
+  }, 2200);
+
+}
+
+
+/* =====================================================
+   NAVIGATION
+   ===================================================== */
+
+function openPage(page) {
+  if(page === "notifications") {
+    const bell=document.getElementById("cafeNotificationBell");
+    if(bell&&!bell.hidden)bell.click();else showToast("Откройте приложение через Telegram, чтобы видеть уведомления");
+    return;
+  }
+  if(!["home","cafe","orders"].includes(page)) {
+    window.ummaNativeShell?.openService(page);return;
+  }
+  const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=!(id==="cafePage"&&page!=="home");});
+  const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
+  if(home)home.style.display=page==="home"?"":"none";
+  if(nav)nav.style.display="";
+  setActiveNav(page);
+  if(page==="orders")window.ummaCafe?.openOrders();
+  else if(page==="cafe")window.ummaCafe?.refreshMenu();
+}
+
+/* =====================================================
+   SERVICE BUTTONS
+   ===================================================== */
+
+document
+  .querySelectorAll("[data-page]")
+  .forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      const page =
+        button.getAttribute("data-page");
+
+      openPage(page);
+
+    });
+
+  });
+
+
+/* =====================================================
+   BOTTOM NAV
+   ===================================================== */
+
+function setActiveNav(page) {
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(item => {
+
+      item.classList.remove("active");item.removeAttribute("aria-current");
+
+    });
+
+
+  const active =
+    document.querySelector(
+      `.nav-item[data-page="${page}"]`
+    );
+
+
+  if (active) {
+
+    active.classList.add("active");active.setAttribute("aria-current","page");
+
+  }
+
+}
+
+
+/* =====================================================
+   MENU
+   ===================================================== */
+
+menuBtn?.addEventListener("click", () => {
+
+  showToast("Меню Umma Global");
+
+});
+
+
+/* =====================================================
+   LANGUAGE
+   ===================================================== */
+
+languageBtn?.addEventListener("click", () => {
+
+  showToast("Выбор языка");
+
+});
+
+
+/* =====================================================
+   NOTIFICATIONS
+   ===================================================== */
+
+notificationBtn?.addEventListener("click", () => {
+
+  showToast("Новых уведомлений: 3");
+
+});
+
+
+/* =====================================================
+   PROFILE
+   ===================================================== */
+
+profileBtn?.addEventListener("click", () => {
+
+  showToast("Профиль пользователя");
+
+});
+
+
+/* =====================================================
+   ALL SERVICES
+   ===================================================== */
+
+allServicesBtn?.addEventListener("click", () => {
+
+  openPage("more");
+
+});
+
+
+/* =====================================================
+   TELEGRAM USER INTERFACE
+   ===================================================== */
+
+function updateTelegramUserInterface(user) {
+
+  if (!user) return;
+
+
+  const firstName =
+    String(user.first_name || "").trim();
+
+
+  const welcomeTitle =
+    document.querySelector(
+      ".welcome-content h2"
+    );
+
+
+  if (!welcomeTitle) {
+
+    console.warn(
+      "UMMA: блок приветствия не найден"
+    );
+
+    return;
+
+  }
+
+
+  if (firstName) {
+
+    welcomeTitle.innerHTML =
+      `Ассаляму алейкум<br>
+       ва рахматуллахи ва баракатух,<br>
+       <strong>${escapeHtml(firstName)}!</strong>`;
+
+  } else {
+
+    welcomeTitle.innerHTML =
+      `Ассаляму алейкум<br>
+       ва рахматуллахи ва баракатух!`;
+
+  }
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+   ===================================================== */
+
+function escapeHtml(value) {
+
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+</script><script>window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};
+const qaLocation={id:'11111111-1111-4111-8111-111111111111',name:'QA HALAL UMMA',location_type:'cafe',is_active:true};
 const product={id:'33333333-3333-4333-8333-333333333333',name_ru:'Тестовый плов',name_vi:'QA pilaf',name_en:'QA pilaf',price_vnd:120000};
 let qaRole='manager',qaPhotoUrls=new Map(),qaDeclined=new Set();
 let qaOrders=[{id:'44444444-4444-4444-8444-444444444444',location_id:qaLocation.id,order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,customer_name:'QA guest',delivery_address:'Длинный адрес доставки '+ 'LongAddressWithoutSpaces'.repeat(6),payment_method:'cash',payment_timing:'on_delivery',payment_status:'pending',total_vnd:120000,deliveryProofs:[{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',kind:'pickup',courier_telegram_id:20}],staffRole:'manager',canAcceptPayments:true,cafe_order_items:[{product_name_ru:'Тестовый плов',quantity:1,line_total_vnd:120000}],created_at:new Date().toISOString()}];
 const reply=data=>new Response(JSON.stringify({ok:true,...data}),{headers:{'Content-Type':'application/json'}});
 let qaSelfAvailable=false;
 window.fetch=async(url,options={})=>{const body=options.body?JSON.parse(options.body):{};
-if(!options.body)return reply({products:[product]});
+if(!options.body)return reply({products:[product],locations:[qaLocation],inventory:[],inventoryControlEnabled:false});
 if(body.action==='notifications'||body.action==='readNotifications')return reply({notifications:[],unreadCount:0});
 if(body.staffOrder){const id=crypto.randomUUID();const amount=body.items.reduce((sum,item)=>sum+item.quantity*120000,0);qaOrders.push({...qaOrders[0],id,order_number:qaOrders.length+1,status:'pending',payment_status:'pending',deliveryProofs:[],delivery_status:'waiting_courier',courier_telegram_id:null,customer_name:body.customerName,delivery_address:body.deliveryAddress,payment_method:body.paymentMethod,payment_timing:body.paymentTiming,total_vnd:amount});return reply({order:{id,orderNumber:qaOrders.length,totalVnd:amount}});}
 if(body.action==='selfCourier'){if(body.enabled!==undefined)qaSelfAvailable=body.enabled;return reply({availability:[{location_id:qaLocation.id,courier_available:qaSelfAvailable}]});}
@@ -2275,6 +2585,435 @@ if(body.action==='updateStatus'&&order)order.status=body.status;
 return reply({});};
 window.ummaCafeRequests={request:(url,payload)=>window.fetch(url,{body:JSON.stringify(payload)})};
 window.showToast=()=>{};
+Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(success,failure)=>failure?.({code:1})},configurable:true});
+</script><script>/* UMMA CAFE — LIVE MENU, CART AND ORDER CREATION */
+(() => {
+  "use strict";
+  const MENU_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
+  const ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
+  const PROOF_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof";
+  const MY_ORDERS_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders";
+  const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
+  const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
+  let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
+  const cart = new Map();
+  const byId = id => document.getElementById(id);
+  const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
+  const description = p => p.description_ru || p.description_en || "";
+  const count = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0);
+  const total = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * Number(item.price_vnd), 0);
+
+  function setError(message) {
+    const el = byId("cafeError");
+    if (el) { el.textContent = message; el.hidden = !message; }
+  }
+
+  function renderProducts() {
+    const root = byId("cafeProducts");
+    if (!root) return;
+    const visibleProducts = products.map(p => {
+      const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
+      if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
+      return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
+        stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
+    }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
+    if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
+    root.innerHTML = visibleProducts.map(p => {
+      const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
+      const selected = cart.get(p.id);
+      const quantity = selected?.quantity || 0;
+      const productId = esc(p.id);
+      return '<article class="cafe-product' + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
+        '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
+        '<h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p>' +
+        '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
+        '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
+        (quantity
+          ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + productId + '" aria-label="Уменьшить ' + esc(name(p)) + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + productId + '" aria-label="Добавить ещё ' + esc(name(p)) + '">+</button></div>'
+          : '<button type="button" class="cafe-add" data-add-product="' + productId + '" aria-label="Добавить ' + esc(name(p)) + '">+</button>') +
+        '</div></article>';
+    }).join("");
+  }
+
+  function renderCart() {
+    const root = byId("cafeCartItems"), countEl = byId("cafeCartCount"), totalEl = byId("cafeCartTotal"), submit = byId("cafeSubmitOrder");
+    if (!root || !countEl || !totalEl) return;
+    const entries = Array.from(cart.values());
+    countEl.textContent = count() + (count() === 1 ? " позиция" : " позиций");
+    totalEl.textContent = money(total());
+    if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
+    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
+    if (submit) submit.disabled = loading || !entries.length;
+    const sticky = byId("cafeStickyOrder");
+    const stickyCount = byId("cafeStickyCount");
+    const stickyTotal = byId("cafeStickyTotal");
+    if (stickyCount) stickyCount.textContent = count() + (count() === 1 ? " блюдо" : " блюд");
+    if (stickyTotal) stickyTotal.textContent = money(total());
+    if (sticky) sticky.hidden = entries.length === 0;
+    renderProductSelection();
+  }
+
+  function renderProductSelection() {
+    const root = byId("cafeProducts");
+    if (!root) return;
+    root.querySelectorAll("[data-product-card]").forEach(card => {
+      const id = card.getAttribute("data-product-card");
+      const item = cart.get(id);
+      const quantity = item?.quantity || 0;
+      card.classList.toggle("cafe-product-selected", quantity > 0);
+      const badge = card.querySelector(".cafe-product-selection");
+      if (badge) {
+        badge.hidden = quantity === 0;
+        badge.classList.toggle("is-visible", quantity > 0);
+        const value = badge.querySelector(".cafe-product-quantity");
+        if (value) value.textContent = String(quantity);
+      }
+      const bottom = card.querySelector(".cafe-product-bottom");
+      if (!bottom) return;
+      const price = bottom.querySelector(".cafe-product-price");
+      const priceHtml = price ? price.outerHTML : "";
+      const productName = card.querySelector("h3")?.textContent || "блюдо";
+      const safeName = esc(productName);
+      const safeId = esc(id);
+      bottom.innerHTML = priceHtml + (quantity
+        ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + safeId + '" aria-label="Уменьшить ' + safeName + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + safeId + '" aria-label="Добавить ещё ' + safeName + '">+</button></div>'
+        : '<button type="button" class="cafe-add" data-add-product="' + safeId + '" aria-label="Добавить ' + safeName + '">+</button>');
+    });
+  }
+
+  async function loadMenu() {
+    const loadingEl = byId("cafeLoading");
+    if (loadingEl) loadingEl.hidden = false;
+    setError("");
+    try {
+      const response = await fetch(MENU_URL);
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить меню");
+      products = Array.isArray(result.products) ? result.products : [];
+      inventoryRows = Array.isArray(result.inventory) ? result.inventory : [];
+      inventoryControlEnabled = result.inventoryControlEnabled === true;
+      locations = Array.isArray(result.locations) ? result.locations : (result.location ? [result.location] : []);
+      locationId = result.location?.id || locations[0]?.id || null;
+      renderProducts();
+      renderLocationOptions();
+      if (byId("cafeLocationMode")?.value !== "manual") requestNearestLocation();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Ошибка загрузки меню");
+    } finally { if (loadingEl) loadingEl.hidden = true; }
+  }
+
+  function renderLocationOptions() {
+    const select = byId("cafeLocationSelect");
+    if (!select) return;
+    select.innerHTML = locations.map(location => {
+      const label = [location.name, location.address, location.city].filter(Boolean).join(" — ");
+      return '<option value="' + esc(location.id) + '">' + esc(label) + '</option>';
+    }).join("");
+    if (locationId) select.value = locationId;
+    const manual = byId("cafeLocationSelectLabel");
+    if (manual) manual.hidden = byId("cafeLocationMode")?.value !== "manual";
+    updateLocationMessage();
+  }
+
+  function updateLocationMessage(text) {
+    const el = byId("cafeLocationMessage");
+    if (!el) return;
+    if (text) { el.textContent = text; return; }
+    const selected = locations.find(location => String(location.id) === String(locationId));
+    el.textContent = selected ? "Заказ будет отправлен в кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
+  }
+
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    const rad = value => value * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function requestNearestLocation() {
+    locationMode = "nearest";
+    const mode = byId("cafeLocationMode"), manual = byId("cafeLocationSelectLabel");
+    if (mode) mode.value = "nearest";
+    if (manual) manual.hidden = true;
+    if (locations.length === 1) {
+      setSelectedLocation(locations[0].id);
+      updateLocationMessage("Ближайшее доступное кафе: " + locations[0].name + ". Сейчас в системе одно кафе, принимающее заказы.");
+      return;
+    }
+    const allHaveCoordinates = locations.length > 0 && locations.every(location =>
+      Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude)) &&
+      location.latitude !== null && location.longitude !== null && location.latitude !== "" && location.longitude !== ""
+    );
+    if (!allHaveCoordinates) {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      updateLocationMessage("Автовыбор пока недоступен: у каждого кафе должны быть указаны координаты. Выберите кафе вручную.");
+      return;
+    }
+    if (!navigator.geolocation) {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      updateLocationMessage("Геолокация недоступна на этом устройстве. Выберите кафе вручную.");
+      return;
+    }
+    updateLocationMessage("Определяем ваше местоположение…");
+    navigator.geolocation.getCurrentPosition(position => {
+      const userLat = position.coords.latitude, userLon = position.coords.longitude;
+      const nearest = locations.map(location => ({
+        location,
+        distance: haversineKm(userLat, userLon, Number(location.latitude), Number(location.longitude))
+      })).sort((a,b) => a.distance - b.distance)[0];
+      if (!nearest) {
+        if (mode) mode.value = "manual";
+        locationMode = "manual";
+        if (manual) manual.hidden = false;
+        updateLocationMessage("Не удалось выбрать кафе. Выберите его вручную.");
+        return;
+      }
+      setSelectedLocation(nearest.location.id);
+      updateLocationMessage("Ближайшее кафе: " + nearest.location.name + " · примерно " + nearest.distance.toFixed(1) + " км по прямой.");
+    }, error => {
+      if (mode) mode.value = "manual";
+      locationMode = "manual";
+      if (manual) manual.hidden = false;
+      const message = error.code === 1
+        ? "Доступ к геолокации не разрешён. Выберите кафе вручную."
+        : "Не удалось определить геолокацию. Выберите кафе вручную.";
+      updateLocationMessage(message);
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  }
+
+  byId("cafeLocationMode")?.addEventListener("change", event => {
+    const mode = event.target.value;
+    locationMode = mode;
+    const manual = byId("cafeLocationSelectLabel");
+    if (mode === "manual") {
+      if (manual) manual.hidden = false;
+      updateLocationMessage();
+    } else {
+      requestNearestLocation();
+    }
+  });
+  function setSelectedLocation(nextId) {
+    if (String(nextId || "") !== String(locationId || "")) { cart.clear(); renderCart(); }
+    locationId = nextId || null;
+    const select = byId("cafeLocationSelect");
+    if (select) select.value = locationId || "";
+    renderProducts();
+    updateLocationMessage();
+  }
+  byId("cafeLocationSelect")?.addEventListener("change", event => setSelectedLocation(event.target.value));
+
+  byId("cafeStickyGoToOrder")?.addEventListener("click", () => {
+    const cartSection = document.querySelector("#cafePage .cafe-cart");
+    if (cartSection) cartSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  function changeProduct(productId, delta) {
+    const baseProduct = products.find(p => String(p.id) === String(productId));
+    const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
+    if (!baseProduct) return;
+    if (inventoryControlEnabled && (!stock || stock.is_available === false)) return;
+    const product = inventoryControlEnabled
+      ? { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
+          stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) }
+      : { ...baseProduct, stockAvailable: 99 };
+    const current = cart.get(product.id);
+    const quantity = (current?.quantity || 0) + delta;
+    if (quantity <= 0) cart.delete(product.id);
+    else if (quantity <= 99 && quantity <= Number(product.stockAvailable)) cart.set(product.id, { product, quantity, price_vnd: Number(product.price_vnd) });
+    else if (quantity > Number(product.stockAvailable) && typeof showToast === "function") showToast("Доступный остаток: " + Math.max(0, Number(product.stockAvailable)));
+    else if (typeof showToast === "function") showToast("Максимум 99 единиц одного блюда");
+    renderCart();
+  }
+
+  document.addEventListener("click", event => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const add = target.closest("[data-add-product]");
+    if (add) { changeProduct(add.getAttribute("data-add-product"), 1); return; }
+    const change = target.closest("[data-cart-change]");
+    if (change) changeProduct(change.getAttribute("data-product-id"), Number(change.getAttribute("data-cart-change")));
+  });
+
+  const orderType = byId("cafeOrderType"), addressLabel = byId("cafeAddressLabel"), addressInput = byId("cafeDeliveryAddress");
+  function syncCustomerPayment(){
+    const type=orderType?.value||"pickup", timing=byId("cafePaymentTiming"), method=byId("cafePaymentMethod");
+    if(timing){const later=timing.querySelector('option[value="later"]');if(later)later.disabled=type!=="dine_in";if(type!=="dine_in")timing.value="now";}
+    const country=byId("cafeTransferCountryLabel");if(country)country.hidden=method?.value!=="bank_transfer";
+    if(method){const cash=method.querySelector('option[value="cash"]');if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
+    const hint=byId("cafePaymentHint");if(hint)hint.textContent=type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
+  }
+  orderType?.addEventListener("change", () => {
+    const delivery = orderType.value === "delivery";
+    if (addressLabel) addressLabel.hidden = !delivery;
+    if (addressInput) addressInput.required = delivery;
+    syncCustomerPayment();
+  });
+  byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
+  byId("cafePaymentMethod")?.addEventListener("change",syncCustomerPayment);
+  syncCustomerPayment();
+
+  byId("cafeOrderForm")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (loading) return;
+    const resultEl = byId("cafeOrderResult"), submit = byId("cafeSubmitOrder");
+    if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
+    const initData = window.Telegram?.WebApp?.initData;
+    if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
+    if (orderType?.value === "delivery" && !addressInput?.value.trim()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
+
+    const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
+    if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
+    const submittedItems = Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity }));
+    loading = true; renderCart();
+    if (resultEl) resultEl.hidden = true;
+    if (submit) submit.textContent = "Оформляем заказ…";
+    try {
+      const response = await window.ummaCafeRequests.request(ORDER_URL, {
+          initData,
+          items: Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity })),
+          orderType: orderType?.value || "pickup",
+          paymentTiming,
+          paymentMethod: byId("cafePaymentMethod")?.value || "cash",
+          locationId,
+          customerName: byId("cafeCustomerName")?.value.trim() || "",
+          customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
+          deliveryAddress: addressInput?.value.trim() || "",
+          customerNote: byId("cafeCustomerNote")?.value.trim() || ""
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok || !result.order) throw new Error(result.error || "Не удалось оформить заказ");
+      const order = result.order;
+      for (const item of submittedItems) {
+        const stock = inventoryRows.find(i => String(i.product_id) === String(item.productId) && String(i.location_id) === String(locationId));
+        if (stock) stock.reserved_quantity = Number(stock.reserved_quantity || 0) + Number(item.quantity);
+      }
+      cart.clear(); renderCart(); renderProducts();
+      if (resultEl) {
+        const selectedCafe = locations.find(location => String(location.id) === String(locationId));
+        const notificationLine = Number(result.staffNotified) > 0
+          ? "<br>Уведомления сотрудникам кафе: " + Number(result.staffNotified)
+          : "<br>Внимание: уведомление сотрудникам не подтверждено. Свяжитесь с кафе, если заказ срочный.";
+        resultEl.innerHTML = "Заказ №" + esc(order.orderNumber) + " принят.<br>Кафе: " + esc(selectedCafe?.name || "Umma Cafe") + "<br>Статус: ожидает подтверждения кафе.<br>Сумма: " + money(order.totalVnd) + notificationLine;
+        if(byId("cafePaymentMethod")?.value==="bank_transfer"){
+          const country=byId("cafeTransferCountry")?.value||"RU";
+          resultEl.innerHTML += '<div><p>Переведите сумму по реквизитам, полученным от кафе. Приложите скриншот перевода. Оплату подтвердит сотрудник после проверки поступления денег.</p><label>Скриншот перевода<input id="cafeTransferFile" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="cafeTransferSend" class="cafe-submit">Отправить чек</button><p id="cafeTransferMessage"></p></div>';
+          byId("cafeTransferSend")?.addEventListener("click",async()=>{
+            const file=byId("cafeTransferFile")?.files?.[0],msg=byId("cafeTransferMessage"),btn=byId("cafeTransferSend");
+            if(!file||!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5242880){if(msg)msg.textContent="Выберите JPG, PNG или WEBP до 5 МБ.";return;}
+            if(btn)btn.disabled=true;
+            try{
+              const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=()=>reject(new Error("Не удалось прочитать файл"));reader.readAsDataURL(file);});
+              const response=await fetch(PROOF_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"submit",initData:window.Telegram?.WebApp?.initData,orderId:order.id,bankCountry:country,mimeType:file.type,base64})});
+              const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||"Ошибка отправки");
+              if(msg)msg.textContent="Чек отправлен. Ожидайте подтверждения сотрудником кафе.";if(btn)btn.hidden=true;
+            }catch(e){if(msg)msg.textContent=e.message||"Ошибка отправки";if(btn)btn.disabled=false;}
+          });
+        }
+        resultEl.hidden = false;
+      }
+      byId("cafeOrderForm")?.reset();
+      if (addressLabel) addressLabel.hidden = true;
+      if (addressInput) addressInput.required = false;
+    } catch (error) {
+      if (resultEl) { resultEl.textContent = error instanceof Error ? error.message : "Ошибка оформления заказа"; resultEl.hidden = false; }
+    } finally {
+      loading = false; renderCart();
+      if (submit) submit.textContent = "Оформить заказ";
+    }
+  });
+
+  document.addEventListener("umma:cafe-operation-recovered",event=>{
+    if(event.detail.payload.staffOrder||event.detail.payload.action)return;
+    cart.clear();renderCart();renderProducts();
+    const result=byId("cafeOrderResult"),order=event.detail.result.order;
+    if(result){result.hidden=false;result.textContent="Восстановлен заказ №"+order.orderNumber+". Проверьте его во вкладке «Мои заказы».";}
+    loadMyOrders();
+  });
+  const statusNames = {
+    pending: "Ожидает подтверждения",
+    confirmed: "Принят кафе",
+    preparing: "Готовится",
+    ready: "Готов к выдаче",
+    completed: "Выдан",
+    cancelled: "Отменён", waiting_courier:"Ожидает курьера",courier_assigned:"Курьер принял заказ",picked_up:"Курьер в пути",delivered:"Доставлено"
+  };
+  let myOrdersLoaded = false;
+  let myOrdersLoading = false,myOrdersQueued=false;
+
+  let myOrdersFingerprint=null;
+  async function loadMyOrders(options = {}) {
+    const silent=options?.silent === true;
+    if (myOrdersLoading) {myOrdersQueued=true;return;}
+    const initData = window.Telegram?.WebApp?.initData;
+    const message = byId("cafeMyOrdersMessage");
+    const root = byId("cafeMyOrdersList");
+    if (!initData) {
+      if (message) { message.textContent = "Откройте приложение через Telegram."; message.hidden = false; }
+      return;
+    }
+    myOrdersLoading = true;
+    if (!silent && message) { message.textContent = "Загружаем ваши заказы…"; message.hidden = false; }
+    try {
+      const response = await fetch(MY_ORDERS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData }),cache:"no-store",signal:window.AbortSignal?.timeout?.(12000)
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить заказы");
+      const orders = Array.isArray(result.orders) ? result.orders : [];
+      myOrdersLoaded = true;
+      const fingerprint=JSON.stringify(orders);
+      if(silent&&fingerprint===myOrdersFingerprint){if(message)message.hidden=true;return;}
+      myOrdersFingerprint=fingerprint;
+      if (!orders.length) {
+        if(root)root.innerHTML="";
+        if (message) { message.textContent = "У вас пока нет заказов."; message.hidden = false; }
+        return;
+      }
+      if (message) message.hidden = true;
+      if (root) root.innerHTML = orders.map(order => {
+        const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
+        const events = Array.isArray(order.cafe_order_events) ? order.cafe_order_events : [];
+        const itemsHtml = items.map(item => "<li><span>" + esc(item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
+        const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
+        const orderTypeName = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+      }).join("");
+    } catch (error) {
+      if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }
+    } finally { myOrdersLoading = false;if(myOrdersQueued){myOrdersQueued=false;Promise.resolve().then(()=>loadMyOrders({silent:true}));} }
+  }
+
+  byId("cafeMyOrdersToggle")?.addEventListener("click", async () => {
+    const section = byId("cafeMyOrdersSection");
+    const refresh = byId("cafeMyOrdersRefresh");
+    if (!section) return;
+    section.hidden = !section.hidden;
+    if (refresh) refresh.hidden = section.hidden;
+    if (!section.hidden) await loadMyOrders();
+  });
+  byId("cafeMyOrdersRefresh")?.addEventListener("click", loadMyOrders);
+  const refreshVisibleOrders=()=>{if(!document.hidden&&!byId("cafePage")?.hidden&&window.Telegram?.WebApp?.initData)loadMyOrders({silent:true});};
+  document.addEventListener("umma:cafe-events",refreshVisibleOrders);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshVisibleOrders();});
+  window.addEventListener("online",refreshVisibleOrders);
+  window.setInterval(refreshVisibleOrders,5000);
+
+  byId("cafeBack")?.addEventListener("click", () => { if (typeof openPage === "function") openPage("home"); });
+  window.ummaCafe = {
+    refreshMenu: loadMenu,
+    refreshMyOrders: loadMyOrders,
+    openOrders:()=>{const section=byId("cafeMyOrdersSection"),refresh=byId("cafeMyOrdersRefresh");if(section)section.hidden=false;if(refresh)refresh.hidden=false;loadMyOrders();section?.scrollIntoView?.({block:"start",behavior:"smooth"});},
+    open: () => { if (typeof openPage === "function") openPage("cafe"); if (!products.length) loadMenu(); }
+  };
+  renderCart();
+})();
 </script><script>/* Signed private inbox. No Telegram credentials or notification text in browser storage. */
 (() => {
  'use strict';
@@ -2295,6 +3034,7 @@ window.showToast=()=>{};
   if(known.size>500)known=new Set([...known].slice(-300));
   const count=Number(result.unreadCount)||0,badge=byId('cafeNotificationCount'),bell=byId('cafeNotificationBell');
   badge.textContent=count>99?'99+':String(count);badge.hidden=count===0;
+  const navBadge=byId('navNotificationCount');if(navBadge){navBadge.textContent=badge.textContent;navBadge.hidden=count===0;}
   bell.setAttribute('aria-label','Уведомления: '+count+' непрочитанных');
   if(loaded&&fresh.length){
    const status=byId('cafeNotificationAnnouncement');status.textContent=fresh[0].title;
@@ -2308,8 +3048,9 @@ window.showToast=()=>{};
   if(document.hidden||busy)return;
   const id=window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
   const root=byId('cafeNotificationBar');if(!root)return;
-  root.hidden=!id||!window.Telegram?.WebApp?.initData;
-  if(root.hidden){if(actor!==null){actor=null;known.clear();items=[];loaded=false;generation++;dialog?.close();}return;}
+  const signed=!!id&&!!window.Telegram?.WebApp?.initData;root.hidden=false;
+  byId('cafeNotificationBell').hidden=!signed;byId('cafeLiveConnection').hidden=!signed;
+  if(!signed){if(actor!==null){actor=null;known.clear();items=[];loaded=false;generation++;dialog?.close();}return;}
   if(actor!==id){actor=id;known.clear();items=[];loaded=false;generation++;byId('cafeNotificationCount').hidden=true;}
   const current=generation;busy=true;
   try{const result=await api({action:'notifications'});if(current===generation)apply(result);}
@@ -3323,7 +4064,7 @@ window.showToast=()=>{};
   document.addEventListener("umma:cafe-events",()=>{if(!document.hidden&&byId("cafeCashPanel")?.hidden===false)loadCash();});
   window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();
-</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
+</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaHome').onclick=()=>openPage('home');document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
 (() => {
   "use strict";
   const $=id=>document.getElementById(id);
@@ -3404,12 +4145,12 @@ window.showToast=()=>{};
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeAccountingPage"
+    "cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
     "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
-    "cafeInventoryBack","cafeBack","accountingBack"
+    "cafeInventoryBack","cafeBack","accountingBack","servicesBack"
   ]);
   const stack=[];
   const byId=id=>document.getElementById(id);
@@ -3427,7 +4168,7 @@ window.showToast=()=>{};
       screen:currentScreen(),
       mainDisplay:main()?.style.display??"",
       navDisplay:bottom()?.style.display??"",
-      scrollY:window.scrollY||0
+      scrollY:(currentScreen()==="home"?main():byId(currentScreen()))?.scrollTop||window.scrollY||0
     };
   }
   function restore(state){
@@ -3438,12 +4179,16 @@ window.showToast=()=>{};
     if(main())main().style.display=state.mainDisplay;
     if(bottom())bottom().style.display=state.navDisplay;
     if(state.screen==="home"&&typeof setActiveNav==="function")setActiveNav("home");
-    window.scrollTo({top:state.scrollY,behavior:"instant"});
+    const scroller=state.screen==="home"?main():byId(state.screen);
+    if(scroller?.scrollTo)scroller.scrollTo({top:state.scrollY,behavior:"instant"});else window.scrollTo({top:state.scrollY,behavior:"instant"});
+    if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":"cafe");
   }
   function back(){
+    if(window.ummaNativeShell?.isDialogOpen()){window.ummaNativeShell.closeDialog();return true;}
     if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
-    if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return;}
+    if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return true;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
+    const modal=document.querySelector("dialog[open]");if(modal){modal.close?.();modal.remove?.();return true;}
     if(currentScreen()==="cafeKitchenPage"){
       const cash=byId("cafeCashPanel");
       if(cash&&!cash.hidden){
@@ -3490,6 +4235,84 @@ window.showToast=()=>{};
   },true);
   // Expose a safe back action for a future Telegram native back button.
   window.ummaNavigation={back,depth:()=>stack.length,current:currentScreen};
+})();
+</script><script>/* Native-feeling presentation only. Does not change identities, orders or payments. */
+(() => {
+ 'use strict';
+ const sdk=window.Telegram?.WebApp,app=document.querySelector('.app'),byId=id=>document.getElementById(id);
+ if(!app)return;
+ const paths={home:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',cafe:'M4 3v7m3-7v7m-6-4v2a3 3 0 0 0 6 0V3M4 11v10M15 3v8h4V3m0 8v10',orders:'M7 3h10v3H7zM7 5H4v16h16V5h-3M8 11h8M8 15h5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',more:'M5 6h14M5 12h14M5 18h14',expand:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',market:'M3 3h2l3 12h11l2-8H6M10 20h.01M18 20h.01',travel:'m3 13 18-8-8 18-2-10z',hotels:'M4 21V3h16v18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-6h4v6',realestate:'M3 10 12 3l9 7M5 9v12h14V9m-9 12v-7h4v7',community:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 7m5 10v-2a4 4 0 0 0-3-4',business:'M8 7V3h8v4M3 7h18v14H3zM3 12h18M10 12v3h4v-3',education:'m2 9 10-5 10 5-10 5zm4 3v6l6 3 6-3v-6M22 9v7',health:'M20 4c-3-2-6 0-8 3-2-3-5-5-8-3-5 4 2 11 8 17 6-6 13-13 8-17',farm:'M5 21c0-6 3-12 12-16M4 12C1 3 11 2 21 3c-1 10-4 19-13 15'};
+ function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','umma-icon');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.more);svg.append(p);return svg;}
+ document.querySelectorAll('[data-native-icon]').forEach(el=>el.replaceChildren(icon(el.dataset.nativeIcon)));
+ const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeAccountingPage','servicesPage'];
+ scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
+ const titles={home:'UMMA Global',cafePage:'UMMA Cafe',servicesPage:'Направления UMMA',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
+ const current=()=>scenes.find(id=>byId(id)&&!byId(id).hidden)||'home';
+ let active='home',dialog=null;
+ function syncScene(records=[]){
+  const opened=records.filter(r=>r.attributeName==='hidden'&&scenes.includes(r.target.id)&&!r.target.hidden).map(r=>r.target.id);
+  const next=opened.at(-1)||current();
+  const home=document.querySelector('.app>main'),nav=document.querySelector('.bottom-nav');
+  if(home&&home.style.display!==(next==='home'?'':'none'))home.style.display=next==='home'?'':'none';
+  const navDisplay=['home','cafePage','servicesPage'].includes(next)?'':'none';if(nav&&nav.style.display!==navDisplay)nav.style.display=navDisplay;
+  if(next!=='home')scenes.forEach(id=>{if(id!==next&&byId(id)&&!byId(id).hidden)byId(id).hidden=true;});
+  if(next!==active){const el=next==='home'?document.querySelector('.app>main'):byId(next);el?.classList.add('native-screen-enter');window.setTimeout(()=>el?.classList.remove('native-screen-enter'),180);active=next;}
+  const title=byId('nativeAppTitle');if(title&&title.textContent!==(titles[next]||'UMMA Global'))title.textContent=titles[next]||'UMMA Global';
+  try{if(next==='home'&&!dialog?.open&&!document.querySelector('dialog[open]')&&byId('courierMapModal')?.hidden!==false)sdk?.BackButton?.hide();else sdk?.BackButton?.show();}catch{}
+ }
+ new MutationObserver(syncScene).observe(app,{subtree:true,attributes:true,attributeFilter:['hidden','style']});
+ new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.target.tagName==='DIALOG'||r.type==='childList'&&r.target===document.body&&[...r.addedNodes,...r.removedNodes].some(n=>n.nodeName==='DIALOG')))syncScene();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open'],childList:true});syncScene();
+ function geometry(){
+  const focused=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'');
+  const visual=window.visualViewport,stable=Number(sdk?.viewportStableHeight)||window.innerHeight;
+  const keyboard=focused&&visual&&stable-visual.height>140;
+  const height=keyboard?visual.height:(Number(sdk?.viewportStableHeight)||visual?.height||window.innerHeight);
+  const root=document.documentElement.style;
+  if(height>0)root.setProperty('--umma-viewport-height',Math.round(height)+'px');
+  const device=sdk?.safeAreaInset||{},content=sdk?.contentSafeAreaInset||{};
+  for(const side of ['top','bottom','left','right']){
+   const fallback=side==='top'&&sdk?.isFullscreen&&!Number(content.top)?48:0;
+   const inset=(Number(device[side])||0)+Math.max(Number(content[side])||0,fallback);
+   root.setProperty('--umma-safe-'+side,'max('+inset+'px, env(safe-area-inset-'+side+', 0px))');
+  }
+  app.classList.toggle('native-keyboard',!!keyboard);
+  if(keyboard)window.setTimeout(()=>document.activeElement?.scrollIntoView?.({block:'nearest',behavior:'smooth'}),160);
+  const button=byId('nativeFullscreen');if(button)button.hidden=!supportsFull()||sdk.isFullscreen===true;
+ }
+ const supportsFull=()=>sdk?.initData&&typeof sdk.requestFullscreen==='function'&&(!sdk.isVersionAtLeast||sdk.isVersionAtLeast('8.0'));
+ function fullscreen(){if(!supportsFull())return;try{sdk.requestFullscreen();}catch{sdk.expand?.();}geometry();}
+ byId('nativeFullscreen')?.addEventListener('click',fullscreen);
+ window.addEventListener('resize',geometry);window.visualViewport?.addEventListener('resize',geometry);
+ document.addEventListener('focusin',geometry);document.addEventListener('focusout',()=>window.setTimeout(geometry,80));
+ for(const event of ['viewportChanged','safeAreaChanged','contentSafeAreaChanged','fullscreenChanged','fullscreenFailed'])try{sdk?.onEvent?.(event,geometry);}catch{}
+ try{sdk?.BackButton?.onClick(()=>{if(dialog?.open){dialog.close();return;}if(!window.ummaNavigation?.back()&&current()!=='home'&&typeof openPage==='function')openPage('home');});}catch{}
+ geometry();if(supportsFull())fullscreen();
+ let lastHaptic=0;document.addEventListener('click',event=>{const button=event.target.closest?.('button');if(!button||button.disabled||Date.now()-lastHaptic<60)return;lastHaptic=Date.now();try{sdk?.HapticFeedback?.impactOccurred('light');}catch{}});
+ const catalogue={market:['Рынок Umma','Продукты и товары'],travel:['Путешествия','Туры, билеты и маршруты'],hotels:['Отели Umma','Проживание для вас и вашей семьи'],realestate:['Недвижимость','Жильё и аренда'],community:['Сообщество','Люди, помощь и связи'],business:['Бизнес','Возможности и партнёрства'],education:['Образование','Школа, медресе и университет'],health:['Здоровье','Спорт и здоровый образ жизни'],farm:['Umma Farm','Халяльное производство и натуральные продукты']};
+ function info(title,text){
+  dialog?.remove();dialog=document.createElement('dialog');dialog.className='native-service-dialog';dialog.setAttribute('aria-label',title);
+  const close=document.createElement('button');close.type='button';close.className='cafe-back';close.textContent='← Назад';close.onclick=()=>dialog.close();
+  const h=document.createElement('h2');h.textContent=title;const p=document.createElement('p');p.textContent=text;dialog.append(close,h,p);
+  dialog.onclose=()=>syncScene();document.body.append(dialog);dialog.showModal();syncScene();return dialog;
+ }
+ function openService(key){
+  if(key==='services'||key==='more'){
+   scenes.forEach(id=>{if(byId(id))byId(id).hidden=id!=='servicesPage';});document.querySelector('.app>main').style.display='none';const nav=document.querySelector('.bottom-nav');if(nav)nav.style.display='';if(typeof setActiveNav==='function')setActiveNav('more');return;
+  }
+  const item=catalogue[key];if(!item)return;
+  const sheet=info(item[0],item[1]+'. Это направление готовится к запуску. Сейчас в приложении доступен UMMA Cafe.');
+  const cafe=document.createElement('button');cafe.type='button';cafe.className='cafe-submit';cafe.textContent='Открыть UMMA Cafe';cafe.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage('cafe');};sheet.append(cafe);
+ }
+ const grid=byId('nativeDirectory');if(grid)for(const [key,item] of Object.entries(catalogue)){
+  const b=document.createElement('button');b.type='button';b.className='native-directory-card';const title=document.createElement('strong');title.textContent=item[0];const desc=document.createElement('small');desc.textContent=item[1];const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(icon(key),title,desc,status);b.onclick=()=>openService(key);grid.append(b);
+ }
+ document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
+ byId('servicesBack')?.addEventListener('click',()=>{if(!window.ummaNavigation?.back()&&typeof openPage==='function')openPage('home');});
+ document.querySelector('.farm-button')?.addEventListener('click',()=>openService('farm'));
+ document.querySelector('[aria-label="Аят дня"]')?.addEventListener('click',()=>info('Аят дня',document.querySelector('.ayah-content p')?.textContent.trim()+'\n'+document.querySelector('.ayah-content small')?.textContent.trim()));
+ byId('nativeHomeShortcut')?.addEventListener('click',()=>{try{sdk?.addToHomeScreen?.();}catch{if(typeof showToast==='function')showToast('Добавление ярлыка недоступно в этой версии Telegram');}});
+ if(byId('nativeHomeShortcut'))byId('nativeHomeShortcut').hidden=typeof sdk?.addToHomeScreen!=='function'||!sdk?.initData;
+ window.ummaNativeShell={openService,geometry,isDialogOpen:()=>dialog?.open===true,closeDialog:()=>dialog?.close()};
 })();
 </script></body>
 </html>
