@@ -49,7 +49,7 @@
    const button=document.createElement('button');button.type='button';button.className='cafe-notification-item';button.dataset.unread=String(!n.read_at);
    const title=document.createElement('span');title.textContent=n.title;
    const time=document.createElement('small');time.textContent=new Date(n.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-   button.append(title,time);button.onclick=()=>{dialog.close();if(n.workspace==='courier')window.ummaKitchen?.open(true);else if(n.workspace==='staff')window.ummaKitchen?.open();else{window.ummaCafe?.open();const section=byId('cafeMyOrdersSection');if(section)section.hidden=false;window.ummaCafe?.refreshMyOrders({silent:true});}read([n.id]);};list.append(button);
+   button.append(title,time);button.onclick=()=>{dialog.close();if(n.workspace==='courier')window.ummaKitchen?.open(true);else if(n.workspace==='staff')window.ummaKitchen?.open();else{if(typeof openPage==='function')openPage('orders');else window.ummaCafe?.openOrders?.();const section=byId('cafeMyOrdersSection');if(section)section.hidden=false;window.ummaCafe?.refreshMyOrders({silent:true});}read([n.id]);};list.append(button);
   }
  }
  async function read(ids){

@@ -103,8 +103,8 @@ function openPage(page) {
   if(!["home","cafe","orders"].includes(page)) {
     window.ummaNativeShell?.openService(page);return;
   }
-  const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"];
-  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=!(id==="cafePage"&&page!=="home");});
+  const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","servicesPage"];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=!((id==="cafePage"&&page==="cafe")||(id==="cafeOrdersPage"&&page==="orders"));});
   const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
   if(home)home.style.display=page==="home"?"":"none";
   if(nav)nav.style.display="";

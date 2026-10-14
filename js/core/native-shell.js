@@ -7,9 +7,9 @@
  function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','umma-icon');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.more);svg.append(p);return svg;}
  document.querySelectorAll('[data-native-icon]').forEach(el=>el.replaceChildren(icon(el.dataset.nativeIcon)));
  for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
- const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeAccountingPage','servicesPage'];
+ const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','servicesPage'];
  scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
- const titles={home:'UMMA Global',cafePage:'UMMA Cafe',servicesPage:'Направления UMMA',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
+ const titles={home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Направления UMMA',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
  const current=()=>scenes.find(id=>byId(id)&&!byId(id).hidden)||'home';
  let active='home',dialog=null;
  function syncScene(records=[]){
@@ -17,7 +17,7 @@
   const next=opened.at(-1)||current();
   const home=document.querySelector('.app>main'),nav=document.querySelector('.bottom-nav');
   if(home&&home.style.display!==(next==='home'?'':'none'))home.style.display=next==='home'?'':'none';
-  const navDisplay=['home','cafePage','servicesPage'].includes(next)?'':'none';if(nav&&nav.style.display!==navDisplay)nav.style.display=navDisplay;
+  const navDisplay=['home','cafePage','cafeOrdersPage','servicesPage'].includes(next)?'':'none';if(nav&&nav.style.display!==navDisplay)nav.style.display=navDisplay;
   if(next!=='home')scenes.forEach(id=>{if(id!==next&&byId(id)&&!byId(id).hidden)byId(id).hidden=true;});
   if(next!==active){const el=next==='home'?document.querySelector('.app>main'):byId(next);el?.classList.add('native-screen-enter');window.setTimeout(()=>el?.classList.remove('native-screen-enter'),180);active=next;}
   const title=byId('nativeAppTitle');if(title&&title.textContent!==(titles[next]||'UMMA Global'))title.textContent=titles[next]||'UMMA Global';

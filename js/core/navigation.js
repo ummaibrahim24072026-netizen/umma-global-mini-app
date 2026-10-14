@@ -7,12 +7,12 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"
+    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
     "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
-    "cafeInventoryBack","cafeBack","accountingBack","servicesBack"
+    "cafeInventoryBack","cafeBack","cafeOrdersBack","accountingBack","servicesBack"
   ]);
   const stack=[];
   const byId=id=>document.getElementById(id);
@@ -43,7 +43,7 @@
     if(state.screen==="home"&&typeof setActiveNav==="function")setActiveNav("home");
     const scroller=state.screen==="home"?main():byId(state.screen);
     if(scroller?.scrollTo)scroller.scrollTo({top:state.scrollY,behavior:"instant"});else window.scrollTo({top:state.scrollY,behavior:"instant"});
-    if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":"cafe");
+    if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":state.screen==="cafeOrdersPage"?"orders":"cafe");
   }
   function back(){
     if(window.ummaNativeShell?.isDialogOpen()){window.ummaNativeShell.closeDialog();return true;}

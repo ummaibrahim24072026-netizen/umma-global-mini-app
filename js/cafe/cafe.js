@@ -404,16 +404,10 @@
     } finally { myOrdersLoading = false;if(myOrdersQueued){myOrdersQueued=false;Promise.resolve().then(()=>loadMyOrders({silent:true}));} }
   }
 
-  byId("cafeMyOrdersToggle")?.addEventListener("click", async () => {
-    const section = byId("cafeMyOrdersSection");
-    const refresh = byId("cafeMyOrdersRefresh");
-    if (!section) return;
-    section.hidden = !section.hidden;
-    if (refresh) refresh.hidden = section.hidden;
-    if (!section.hidden) await loadMyOrders();
-  });
+  byId("cafeMyOrdersToggle")?.addEventListener("click",()=>{if(typeof openPage==="function")openPage("orders");});
+  byId("cafeOrdersBack")?.addEventListener("click",()=>{if(typeof openPage==="function")openPage("home");});
   byId("cafeMyOrdersRefresh")?.addEventListener("click", loadMyOrders);
-  const refreshVisibleOrders=()=>{if(!document.hidden&&!byId("cafePage")?.hidden&&window.Telegram?.WebApp?.initData)loadMyOrders({silent:true});};
+  const refreshVisibleOrders=()=>{if(!document.hidden&&(!byId("cafePage")?.hidden||byId("cafeOrdersPage")?.hidden===false)&&window.Telegram?.WebApp?.initData)loadMyOrders({silent:true});};
   document.addEventListener("umma:cafe-events",refreshVisibleOrders);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshVisibleOrders();});
   window.addEventListener("online",refreshVisibleOrders);

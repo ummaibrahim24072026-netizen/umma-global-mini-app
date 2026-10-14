@@ -17,7 +17,7 @@ try{
  const main=d.querySelector('.app>main');main.scrollTop=210;
  d.querySelector('.nav-item[data-page="cafe"]').click();await tick();assert.equal(menu,1);assert.equal(d.getElementById('cafePage').hidden,false);assert.equal(d.getElementById('nativeAppTitle').textContent,'UMMA Cafe');
  nativeBack();await tick();assert.equal(main.style.display,'');assert.equal(main.scrollTop,210);
- d.querySelector('.nav-item[data-page="orders"]').click();await tick();assert.equal(orders,1);assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'orders');
+ d.querySelector('.nav-item[data-page="orders"]').click();await tick();assert.equal(orders,1);assert.equal(d.getElementById('cafeOrdersPage').hidden,false);assert.equal(d.getElementById('cafePage').hidden,true);assert.equal(d.getElementById('nativeAppTitle').textContent,'Мои заказы');assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'orders');
  d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.getElementById('nativeDirectory').children.length,9);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
  d.querySelector('.native-directory-card').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);nativeBack();assert.equal(d.querySelector('.native-service-dialog').open,false);assert.equal(d.getElementById('servicesPage').hidden,false);
  w.openPage('home');await tick();d.getElementById('adminPage').hidden=false;await tick();d.getElementById('cafeKitchenPage').hidden=false;await tick();assert.equal(d.getElementById('adminPage').hidden,true,'opening another screen removes stale overlapping page');
