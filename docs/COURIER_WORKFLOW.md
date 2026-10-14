@@ -53,3 +53,8 @@ Security advisor: worker_control закрыта от приложения и з�
 
 ## Состояние после выпуска
 dispatch_enabled=false проверяется планировщиком, общим Edge-dispatcher и SQL lease: создание заказа/ручное предложение не обходит паузу. Основной клиент и SQL отслеживания выпущены. Рабочие данные сохранены. Реальную камеру/GPS и получение уведомления пока не считать проверенными.
+
+
+### Owner courier workspace — 2026-10-14
+
+Home → Курьер opens only the actor's assigned deliveries and offers. An active superadministrator can select a cafe and toggle their own courier availability. The verified Telegram actor is used; no entered actor ID is accepted. Existing global role, staff role and payment permission are preserved. Other users cannot self-enroll. Going offline is blocked until assigned/picked-up deliveries are finished. Enabling availability creates offers for waiting deliveries in the selected cafe; notifications remain behind the existing paused rollout gate. Photo and tracking use the same ownership, stage and evidence requirements as other couriers.

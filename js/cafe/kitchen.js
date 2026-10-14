@@ -109,6 +109,7 @@
     return result;
   }
 
+  let courierWorkspace = false;
   let lastOrdersFingerprint = null;
   async function loadOrders(options = {}) {
     if (busy) return;
@@ -116,7 +117,9 @@
     busy = true;
     if (!silent) showMessage("Загружаем заказы…");
     try {
-      const result = await api({ action:"list" });
+      const requestedWorkspace=courierWorkspace;
+      const result = await api({ action:"list",workspace:requestedWorkspace?"courier":"staff" });
+      if(requestedWorkspace!==courierWorkspace)return;
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       couriers = Array.isArray(result.couriers) ? result.couriers : [];
       locations = Array.isArray(result.locations) ? result.locations : [];
@@ -175,7 +178,7 @@
     } finally { busy = false; render(); }
   }
   async function refreshAfterUpdate() {
-    const result = await api({ action:"list" });
+    const result = await api({ action:"list",workspace:courierWorkspace?"courier":"staff" });
     window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
@@ -191,7 +194,12 @@
     updateTableAvailability();
   }
 
-  function open() {
+  function open(asCourier = false) {
+    courierWorkspace=asCourier === true;lastOrdersFingerprint=null;
+    if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
+    for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace;
+    if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
+    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":"Кухня · Заказы";
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage"), inventory = byId("cafeInventoryPage"), locations = byId("locationAdminPage");
@@ -206,11 +214,35 @@
     if (nav) nav.style.display = "none";
     loadOrders();
     window.ummaKitchenLive?.start();
-    loadCash();
+    if(!courierWorkspace)loadCash();
+    else loadSelfCourier();
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
+  async function loadSelfCourier() {
+    if(window.ummaRole!=="super_admin")return;
+    const status=byId("selfCourierStatus"),select=byId("selfCourierLocation");
+    try {
+      const [settings,list]=await Promise.all([api({action:"selfCourier"}),api({action:"list",workspace:"courier"})]);
+      const previous=select.value;
+      select.innerHTML=(list.locations||[]).filter(l=>l.location_type==="cafe"&&l.is_active).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join("");
+      if([...select.options].some(o=>o.value===previous))select.value=previous;
+      const update=()=>{const active=settings.availability.some(a=>a.location_id===select.value&&a.courier_available);status.textContent=active?"Вы доступны как курьер в этом кафе":"Вы пока недоступны как курьер в этом кафе";};
+      select.onchange=update;update();
+    }catch(error){status.textContent=error.message;}
+  }
+  async function setSelfCourier(enabled) {
+    const buttons=[byId("selfCourierEnable"),byId("selfCourierDisable")];buttons.forEach(b=>b.disabled=true);
+    try{await api({action:"selfCourier",locationId:byId("selfCourierLocation").value,enabled});await loadSelfCourier();await loadOrders();}
+    catch(error){byId("selfCourierStatus").textContent=error.message;}
+    finally{buttons.forEach(b=>b.disabled=false);}
+  }
+  byId("staffCourierEntryButton")?.addEventListener("click",()=>open(true));
+  byId("selfCourierEnable")?.addEventListener("click",()=>setSelfCourier(true));
+  byId("selfCourierDisable")?.addEventListener("click",()=>setSelfCourier(false));
+
   async function openWaiterPage() {
+    courierWorkspace=false;
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");

@@ -60,6 +60,20 @@ export async function verifyCafeEdges(db,cafe,product){
   const myOrders=handler('supabase/functions/cafe-my-orders/index.ts');
   async function post(fn,body){const response=await fn(new Request('http://local-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));return {status:response.status,data:await response.json()};}
   const beforeTrackingAuth=dbCalls;assert.equal((await post(myOrders,{action:'deliveryTracking',initData:'invalid',orderId:randomUUID()})).status,401);assert.equal(dbCalls,beforeTrackingAuth);
+  assert.equal((await post(kitchen,{initData:auth(15),action:'selfCourier',locationId:cafe,enabled:true})).status,403);
+  await db.query("insert into cafe_staff(telegram_id,location_id,staff_role,is_active,can_accept_payments) values(10,$1,'waiter',true,true) on conflict(telegram_id,location_id) do nothing",[cafe]);
+  const ownerAssignment=(await db.query("select * from cafe_staff where telegram_id=10 and location_id=$1",[cafe])).rows[0];
+  const selfOn=await post(kitchen,{initData:auth(10),action:'selfCourier',locationId:cafe,enabled:true});assert.equal(selfOn.status,200);assert.ok(selfOn.data.availability.some(a=>a.location_id===cafe&&a.courier_available));
+  assert.equal((await db.query('select cafe_active_courier(10,$1) active',[cafe])).rows[0].active,true);
+  assert.equal((await db.query('select role from telegram_users where telegram_id=10')).rows[0].role,'super_admin');
+  if(ownerAssignment){const after=(await db.query('select * from cafe_staff where telegram_id=10 and location_id=$1',[cafe])).rows[0];assert.equal(after.staff_role,ownerAssignment.staff_role);assert.equal(after.can_accept_payments,ownerAssignment.can_accept_payments);}
+  const ownerDelivery=await post(create,{initData:auth(15),requestKey:randomUUID(),locationId:cafe,items:[{productId:product,quantity:1}],orderType:'delivery',paymentMethod:'courier',deliveryAddress:'Synthetic owner delivery'});assert.equal(ownerDelivery.status,201);
+  const claimed=await post(kitchen,{initData:auth(10),action:'respondCourierOffer',orderId:ownerDelivery.data.order.id,accept:true});assert.equal(claimed.status,200);
+  const cannotLeave=await post(kitchen,{initData:auth(10),action:'selfCourier',locationId:cafe,enabled:false});assert.equal(cannotLeave.status,400);assert.match(cannotLeave.data.error,/завершите/);
+  await db.query("update cafe_orders set status='cancelled' where id=$1",[ownerDelivery.data.order.id]);
+  assert.equal((await post(kitchen,{initData:auth(10),action:'selfCourier',locationId:cafe,enabled:false})).status,200);
+  assert.equal((await db.query('select cafe_active_courier(10,$1) active',[cafe])).rows[0].active,false);
+  console.log('PASS owner self-courier opt-in/out preserves global/staff roles and payment permission, customer denied');
   const body={initData:auth(11),requestKey:randomUUID(),staffOrder:true,locationId:cafe,items:[{productId:product,quantity:1}],orderType:'pickup',paymentMethod:'cash',paymentTiming:'now',customerName:'Edge synthetic guest'};
   const count=dbCalls;
   assert.equal((await post(create,{...body,initData:'invalid'})).status,401);assert.equal(dbCalls,count);

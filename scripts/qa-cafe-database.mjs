@@ -46,6 +46,7 @@ try {
   await db.exec('create role anon; create role authenticated; create role service_role;');
   await db.exec(readFileSync('supabase/proposals/cafe-courier-workflow.sql','utf8'));
   await db.exec(readFileSync('supabase/proposals/cafe-delivery-tracking.sql','utf8'));
+  await db.exec(readFileSync('supabase/proposals/cafe-self-courier.sql','utf8'));
   await db.exec(readFileSync('supabase/proposals/cafe-order-idempotency.sql','utf8'));
   const args={p_location_id:cafe,p_items:JSON.parse(items),p_order_type:'pickup',p_customer_name:'Replay test',p_payment_method:'cash'};
   const key='44444444-4444-4444-8444-444444444444';

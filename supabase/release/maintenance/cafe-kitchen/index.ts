@@ -122,6 +122,24 @@ Deno.serve(async req => {
     }
 
 
+    if (body.action === "selfCourier") {
+      if (actor.role !== "super_admin") return response({ok:false,error:"Доступ только суперадминистратору"},403);
+      if (body.enabled !== undefined) {
+        if (typeof body.enabled !== "boolean" || typeof body.locationId !== "string") return response({ok:false,error:"Выберите кафе"},400);
+        const {error}=await supabase.rpc("set_cafe_self_courier",{p_actor:telegramId,p_location:body.locationId,p_enabled:body.enabled});
+        if(error)return response({ok:false,error:error.message.includes("active deliveries")?"Сначала завершите свои активные доставки":"Не удалось изменить доступность курьера"},400);
+      }
+      const {data:availability,error}=await supabase.from("cafe_staff").select("location_id,courier_available").eq("telegram_id",telegramId).eq("is_active",true);
+      if(error)return response({ok:false,error:"Не удалось загрузить доступность"},500);
+      return response({ok:true,availability:availability||[]});
+    }
+    const courierWorkspace = body.workspace === "courier";
+    if (courierWorkspace && actor.role === "super_admin") {
+      const {data:assignments,error}=await supabase.from("cafe_staff").select("location_id,staff_role,can_accept_payments,courier_available").eq("telegram_id",telegramId).eq("is_active",true).eq("courier_available",true);
+      if(error)return response({ok:false,error:"Не удалось загрузить доступ курьера"},500);
+      assignmentsForResponse=assignments||[];assignedLocationIds=assignmentsForResponse.map(item=>item.location_id);staffRole="courier";
+    }
+
     if(body.action==="sandboxBootstrap"){
       if(actor.role!=="super_admin") return response({ok:false,error:"Тестовый режим доступен только суперадминистратору"},403);
       const {data:locations,error}=await supabase.from("locations").select("id,name").eq("location_type","cafe").eq("is_active",true).order("name");
@@ -365,8 +383,8 @@ Deno.serve(async req => {
 
     if (body.action === "list") {
       const { data: orders, error } = await loadCafeOrders(supabase, {
-        locationIds: actor.role === "super_admin" ? null : assignedLocationIds,
-        courierId: actor.role !== "super_admin" && assignmentsForResponse.length > 0 &&
+        locationIds: actor.role === "super_admin" && !courierWorkspace ? null : assignedLocationIds,
+        courierId: courierWorkspace ? telegramId : actor.role !== "super_admin" && assignmentsForResponse.length > 0 &&
           assignmentsForResponse.every((item) => item.staff_role === "courier") ? telegramId : null,
       });
       if (error) {
@@ -380,21 +398,23 @@ Deno.serve(async req => {
       const roleByLocation = new Map(
         (assignmentsForResponse ?? []).map((item: { location_id: string; staff_role: string; can_accept_payments: boolean }) => [item.location_id, { role: item.staff_role, canAcceptPayments: item.can_accept_payments }]),
       );
-      const ordersWithRoles = actor.role === "super_admin"
+      const ordersWithRoles = courierWorkspace ? (orders??[]).map((order:any)=>({...order,staffRole:"courier",canAcceptPayments:actor.role === "super_admin" || roleByLocation.get(order.location_id)?.canAcceptPayments === true})) : actor.role === "super_admin"
         ? (orders ?? []).map((order: { location_id: string | null }) => ({ ...order, staffRole: "manager", canAcceptPayments: true }))
         : (orders ?? []).map((order: { location_id: string | null }) => {
             const assignment = order.location_id ? roleByLocation.get(order.location_id) : null;
             return { ...order, staffRole: assignment?.role ?? null, canAcceptPayments: assignment?.canAcceptPayments === true };
           });
-      const courierQuery=supabase.from("cafe_staff").select("telegram_id,location_id").eq("staff_role","courier").eq("is_active",true);
+      const courierQuery=supabase.from("cafe_staff").select("telegram_id,location_id,staff_role,courier_available").eq("is_active",true);
       if(actor.role!=="super_admin") courierQuery.in("location_id",assignedLocationIds);
       const {data:courierAssignments,error:courierError}=await courierQuery;
       if(courierError) return response({ok:false,error:"Не удалось загрузить список курьеров"},500);
-      const courierIds=Array.from(new Set((courierAssignments??[]).map((x:any)=>Number(x.telegram_id))));
+      const eligibleAssignments=[];
+      for(const assignment of (courierAssignments||[]).filter((s:any)=>s.staff_role==="courier"||s.courier_available)){const {data:active,error}=await supabase.rpc("cafe_active_courier",{p_actor:assignment.telegram_id,p_location:assignment.location_id});if(error)return response({ok:false,error:"Не удалось проверить курьера"},500);if(active)eligibleAssignments.push(assignment);}
+      const courierIds=Array.from(new Set((eligibleAssignments).map((x:any)=>Number(x.telegram_id))));
       const {data:courierUsers,error:courierUsersError}=courierIds.length?await supabase.from("telegram_users").select("telegram_id,first_name,last_name,username").in("telegram_id",courierIds).eq("is_active",true):{data:[],error:null};
       if(courierUsersError) return response({ok:false,error:"Не удалось загрузить профили курьеров"},500);
       const userById=new Map((courierUsers??[]).map((u:any)=>[Number(u.telegram_id),u]));
-      const couriers=(courierAssignments??[]).map((x:any)=>{const u=userById.get(Number(x.telegram_id));return {telegram_id:x.telegram_id,location_id:x.location_id,name:u?([u.first_name,u.last_name].filter(Boolean).join(" ")||(u.username?"@"+u.username:String(u.telegram_id))):String(x.telegram_id)}}).filter((x:any)=>userById.has(Number(x.telegram_id)));
+      const couriers=(eligibleAssignments).map((x:any)=>{const u=userById.get(Number(x.telegram_id));return {telegram_id:x.telegram_id,location_id:x.location_id,name:u?([u.first_name,u.last_name].filter(Boolean).join(" ")||(u.username?"@"+u.username:String(u.telegram_id))):String(x.telegram_id)}}).filter((x:any)=>userById.has(Number(x.telegram_id)));
       const orderIds=(ordersWithRoles??[]).map((o:any)=>o.id);
       const {data:statusEvents,error:statusEventsError}=orderIds.length?await supabase.from("cafe_order_events").select("order_id,actor_telegram_id,from_status,to_status,created_at").in("order_id",orderIds).order("created_at",{ascending:false}).limit(500):{data:[],error:null};
       if(statusEventsError) console.error("Order status history lookup failed",statusEventsError.message);

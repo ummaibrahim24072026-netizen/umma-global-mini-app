@@ -1,7 +1,7 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 const schema='umma_qa_20261013',privateSchema=schema+'_private';
 const source=readFileSync('tests/fixtures/supabase-public-schema.sql','utf8');
-const proposals=['cafe-lifecycle-hardening.sql','cafe-courier-workflow.sql','cafe-delivery-tracking.sql','cafe-order-idempotency.sql','cafe-cash-summary.sql','cafe-delivery-hardening.sql','cafe-refunds.sql'];
+const proposals=['cafe-lifecycle-hardening.sql','cafe-courier-workflow.sql','cafe-delivery-tracking.sql','cafe-self-courier.sql','cafe-order-idempotency.sql','cafe-cash-summary.sql','cafe-delivery-hardening.sql','cafe-refunds.sql'];
 const isolate=s=>s.replace(/public\./g,schema+'.').replace(/\bumma_private\b/g,privateSchema).replace(/'public'/g,"'"+schema+"'").replace(/^BEGIN;\s*$/gm,'').replace(/^COMMIT;\s*$/gm,'');
 let sql=`-- Isolated QA objects only. Requires explicit owner approval before execution.
 -- No production records, credentials or application objects are changed.

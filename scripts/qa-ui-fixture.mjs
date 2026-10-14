@@ -29,6 +29,12 @@ try{
  assert.match(d.getElementById('cafeKitchenOrders').textContent,/Курьер назначен/);
  await w.fetch('qa',{body:JSON.stringify({staffOrder:true,items:[{quantity:1}],customerName:'QA refusal UI',deliveryAddress:'QA address',paymentMethod:'cash',paymentTiming:'on_delivery'})});await w.ummaKitchen.refresh();await until(()=>d.querySelector('[data-courier-decline]'));d.querySelector('[data-courier-decline]').click();
  const refusal=d.querySelector('.cafe-refund-dialog');assert.match(refusal.textContent,/Причина отказа/);refusal.querySelector('textarea').value='QA occupied';refusal.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>!d.querySelector('[data-courier-decline]'));
+ d.getElementById('qaRole').value='manager';d.getElementById('qaRole').dispatchEvent(new w.Event('change'));await new Promise(r=>setTimeout(r,25));
+ d.getElementById('staffCourierEntryButton').click();await until(()=>d.getElementById('selfCourierLocation').options.length>0);
+ assert.equal(d.getElementById('selfCourierControls').hidden,false);assert.equal(d.getElementById('cafeCashToggle').hidden,true);
+ d.getElementById('selfCourierEnable').click();await until(()=>d.getElementById('selfCourierStatus').textContent.startsWith('Вы доступны'));
+ d.getElementById('selfCourierDisable').click();await until(()=>d.getElementById('selfCourierStatus').textContent.startsWith('Вы пока недоступны'));
+ d.getElementById('qaKitchen').click();await new Promise(r=>setTimeout(r,25));assert.equal(d.getElementById('selfCourierControls').hidden,true);assert.equal(d.getElementById('cafeCashToggle').hidden,false);
  assert.deepEqual(errors,[]);
  process.stdout.write('PASS actual generated UI: startup, width change, delivery selection, cart, courier checkout, kitchen status and refund dialog clicks; no script errors\n');
 }finally{w.close();}

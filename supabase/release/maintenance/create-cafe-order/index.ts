@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
         p_payment_timing: paymentTiming,
         p_dispatch_mode: body.dispatchMode ?? "broadcast",
       p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
-    });
+    }, body.initData);
 
     if(!error&&orderType==="delivery"&&!data?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}}
     if (error) {
@@ -188,7 +188,9 @@ Deno.serve(async (req) => {
         "Order has no items", "Товар недоступен в выбранном кафе", "Недостаточно остатка", "Cafe location not found or inactive",
       ];
       const status = clientErrors.some((message) => error.message.includes(message)) ? 400 : 500;
-      return response({ ok: false, error: status === 400 ? error.message : "Could not create order" }, status);
+      return response({ ok: false, error: error.message === "Invalid idempotent order request"
+        ? "Версия формы устарела. Полностью закройте Mini App и откройте его заново через бота. Заказ не создан."
+        : status === 400 ? error.message : "Could not create order" }, status);
     }
 
     if (data?.replayed) return response({ ok: true, ...data, staffNotified: 0, staffNotificationFailures: 0 }, 200);

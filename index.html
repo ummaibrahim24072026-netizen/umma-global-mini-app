@@ -145,6 +145,7 @@
         <span class="admin-entry-copy"><strong>Кухня</strong><small>Новые заказы, дозаказы и приготовление</small></span>
         <span class="admin-entry-arrow">→</span>
       </button>
+      <button type="button" class="admin-entry-button" id="staffCourierEntryButton" style="margin-top:8px"><span class="admin-entry-icon">🛵</span><span class="admin-entry-copy"><strong>Курьер</strong><small>Выбрать себя, принять доставку, фото и GPS</small></span><span class="admin-entry-arrow">→</span></button>
       <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
         <span class="admin-entry-icon">📊</span>
         <span class="admin-entry-copy"><strong>Учёт кафе</strong><small>Склад, закупки, производство и расходы</small></span>
@@ -803,7 +804,7 @@
       <div class="cafe-kitchen-shortcuts">
         <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
       </div>
-      <section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
+      <section id="selfCourierControls" class="cafe-message" hidden><h2>Я — курьер</h2><label>Кафе<select id="selfCourierLocation"></select></label><p id="selfCourierStatus" role="status"></p><button type="button" id="selfCourierEnable" class="kitchen-action">Я доступен как курьер</button><button type="button" id="selfCourierDisable" class="kitchen-cancel">Завершить работу курьером</button><p>Принимайте доставку ниже. Фото и GPS включаются после назначения заказа.</p></section><section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
       </div>
@@ -1048,7 +1049,7 @@
 <script src="js/cafe/cafe.js?v=41"></script>
 <script src="js/cafe/courier-workflow.js?v=1"></script>
 <script src="js/cafe/delivery-tracking.js?v=1"></script>
-<script src="js/cafe/kitchen.js?v=58"></script>
+<script src="js/cafe/kitchen.js?v=59"></script>
   <script src="js/cafe/kitchen-live.js?v=4"></script>
 <script src="js/maps/courier-route.js?v=4"></script>
 <script src="js/cafe/test-mode.js?v=12"></script>
