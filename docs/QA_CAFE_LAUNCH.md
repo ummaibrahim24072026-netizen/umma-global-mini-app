@@ -127,3 +127,12 @@ GitHub CI №229 (ef8a5a0b883f8481931a73794dff5d4ff081347e) прошёл: SQL/Ed
 
 ## Рабочий выпуск — 14.10.2026
 Владелец отдельно разрешил выпуск с выключенной рассылкой. Выполнены миграция, финальные Edge и объединение PR15 в main (2e02e9be74b5d733ae8fa282d1656199053c2bf3). CI231, CI232 и Pages deployment успешны. Рабочие файлы frontend проверены по SHA-256. Оплаты/заказы не изменились по контрольным суммам, тестовых продаж не создавалось. Рассылка и склад остаются выключенными; камера/GPS телефона и доставка уведомления требуют физической проверки. Облачная Telegram-сессия после паузы требует нового входа.
+
+
+## Corrective checkout release — 2026-10-14
+
+The production function log recorded `Order creation rejected: Invalid idempotent order request`. Current public customer JS matches the repository and supplies a UUID; a cached pre-release customer form can omit it. Compatibility is restricted to authenticated customer checkout with a missing key, after Telegram HMAC validation. A deterministic SHA-256-derived UUID binds the normalized order arguments to the signed Telegram session; neither initData nor its signature is persisted. Existing SQL ledger, permission checks and transaction boundaries remain unchanged. Invalid supplied keys and missing staff keys still fail.
+
+Actual Edge handlers against synthetic PostgreSQL verified cached delivery/courier payment maps to cash, on_delivery and pending; QR maps to now; repeats return the same order without duplicate notifications. Invalid Telegram signatures reach no database query. Full npm test passed. No production order/payment test was submitted.
+
+Compatibility limitation: identical legacy customer checkouts within the same signed session resolve to the same order. To intentionally place another identical order, reopen the Mini App to load the current form, which uses separate operation UUIDs. Courier dispatch remains paused and inventory remains disabled. Physical phone verification remains outstanding.

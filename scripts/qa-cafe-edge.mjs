@@ -89,6 +89,15 @@ export async function verifyCafeEdges(db,cafe,product){
   const newCustomer=await post(create,customer);assert.equal(newCustomer.status,201);
   const notified=notificationCalls;
   const customerRetry=await post(create,customer);assert.equal(customerRetry.status,200);assert.equal(customerRetry.data.order.id,newCustomer.data.order.id);assert.equal(notificationCalls,notified);
+  const legacy={...customer,requestKey:undefined,orderType:'delivery',paymentMethod:'courier',paymentTiming:undefined,deliveryAddress:'Synthetic legacy checkout'};
+  const legacyFirst=await post(create,legacy);assert.equal(legacyFirst.status,201);assert.equal(legacyFirst.data.order.paymentTiming,'on_delivery');
+  const legacyNotified=notificationCalls;
+  const legacyRetry=await post(create,legacy);assert.equal(legacyRetry.status,200);assert.equal(legacyRetry.data.order.id,legacyFirst.data.order.id);assert.equal(notificationCalls,legacyNotified);
+  const legacyRow=(await db.query('select payment_method,payment_status from cafe_orders where id=$1',[legacyFirst.data.order.id])).rows[0];assert.equal(legacyRow.payment_method,'cash');assert.equal(legacyRow.payment_status,'pending');
+  const legacyQr=await post(create,{...legacy,paymentMethod:'qr'});assert.equal(legacyQr.status,201);assert.notEqual(legacyQr.data.order.id,legacyFirst.data.order.id);assert.equal(legacyQr.data.order.paymentTiming,'now');
+  const badLegacy=await post(create,{...legacy,requestKey:'broken-key'});assert.equal(badLegacy.status,400);assert.match(badLegacy.data.error,/закройте Mini App/);
+  const authCalls=dbCalls;assert.equal((await post(create,{...legacy,initData:'invalid'})).status,401);assert.equal(dbCalls,authCalls);
+  console.log('PASS cached customer delivery without key: cash on delivery, QR upfront, stable authenticated replay, no duplicate notifications, malformed key rejected');
   const dine=await post(create,{...body,requestKey:randomUUID(),orderType:'dine_in',paymentTiming:'later',customerName:'Edge add-on guest'});
   const addBody={initData:auth(11),requestKey:randomUUID(),action:'addItems',orderId:dine.data.order.id,items:body.items};
   assert.equal((await post(kitchen,addBody)).data.totalVnd,240000);
