@@ -282,7 +282,9 @@ Deno.serve(async req => {
       const { data: cafe } = await supabase.from("locations").select("id,name").eq("id",locationId).maybeSingle();
       const { data: shifts, error: shiftsError } = await supabase.from("cafe_staff_shifts").select("*").eq("location_id",locationId).eq("shift_status","open").order("opened_at",{ascending:false});
       if (shiftsError) return response({ok:false,error:"Не удалось загрузить смены"},500);
-      return response({ok:true,cashSummary,locationId,cafeName:cafe?.name||"Кафе",locations:cafesForResponse,receipts:receiptsWithDetails,handovers:handovers??[],staff:staff??[],shifts:shifts??[],actorTelegramId:telegramId,staffRole});
+      const {data:refunds,error:refundsError}=await supabase.from("cafe_order_refunds").select("id,order_id,amount_vnd,payment_method,reason,refunded_at,actor_telegram_id").eq("location_id",locationId).order("refunded_at",{ascending:false}).limit(100);
+      if(refundsError)return response({ok:false,error:"Не удалось загрузить возвраты"},500);
+      return response({ok:true,refunds,cashSummary,locationId,cafeName:cafe?.name||"Кафе",locations:cafesForResponse,receipts:receiptsWithDetails,handovers:handovers??[],staff:staff??[],shifts:shifts??[],actorTelegramId:telegramId,staffRole});
     }
 
     if (body.action === "openShift") {
@@ -400,6 +402,13 @@ Deno.serve(async req => {
       return response({ ...(data ?? { ok: true }), staffRole });
     }
 
+    if (body.action === "refundOrder") {
+      if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId)||typeof body.requestKey!=="string"||!/^[0-9a-f-]{36}$/i.test(body.requestKey)||body.payoutConfirmed!==true||typeof body.reason!=="string"||body.reason.trim().length<3||body.reason.trim().length>500)return response({ok:false,error:"Укажите причину и подтвердите фактический возврат денег"},400);
+      const {data,error}=await supabase.rpc("refund_cafe_order",{p_order_id:body.orderId,p_actor_telegram_id:telegramId,p_request_key:body.requestKey,p_reason:body.reason,p_payout_confirmed:body.payoutConfirmed});
+      if(error)return response({ok:false,error:error.code==="P0001"?error.message:"Не удалось записать возврат"},error.code==="P0001"?400:500);
+      return response(data);
+    }
+
     if (body.action === "updatePayment") {
       const orderId = body.orderId;
       const paymentStatus = body.paymentStatus;
@@ -429,7 +438,7 @@ Deno.serve(async req => {
         p_change_given_vnd: changeGiven,
       });
       if (error) {
-        const clientError = /Closed order cannot receive payment changes|Only manager may void payment with a reason|Invalid payment|Payment already confirmed|Invalid cash received amount or change|Cash receipt was not recorded|Order not found|Payment management access denied|Payment acceptance permission denied|No active staff assignment|Staff role cannot update payment/.test(error.message);
+        const clientError = /Courier can accept payment only for own collected delivery|Closed order cannot receive payment changes|Use recorded refund instead of voiding payment|Invalid payment|Payment already confirmed|Invalid cash received amount or change|Cash receipt was not recorded|Order not found|Payment management access denied|Payment acceptance permission denied|No active staff assignment|Staff role cannot update payment/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить оплату" }, clientError ? 400 : 500);
       }
       if(paymentStatus==="paid")await supabase.from("cafe_transfer_proofs").update({review_status:"confirmed",reviewed_by_telegram_id:telegramId,reviewed_at:new Date().toISOString()}).eq("order_id",orderId).eq("review_status","pending");

@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+export async function verifyCafeRefunds(db,cafe,other,product){
+ const q=(s,a=[])=>db.query(s,a);
+ const create=async name=>(await q("select create_cafe_staff_order(11,$1,$2::jsonb,'pickup',$3) result",[cafe,JSON.stringify([{productId:product,quantity:1}]),name])).rows[0].result.order;
+ const pay=id=>q("select update_cafe_order_payment_cash($1,13,'paid',null,150000,30000)",[id]);
+ const refund=(id,key=randomUUID(),actor=16,reason='QA full refund',confirmed=true)=>q('select refund_cafe_order($1,$2,$3,$4,$5) result',[id,actor,key,reason,confirmed]);
+ const o=await create('Refund current shift');await pay(o.id);const key=randomUUID();
+ await assert.rejects(refund(o.id,key,13),/access denied/);
+ await assert.rejects(refund(o.id,key,17),/access denied/);
+ await assert.rejects(refund(o.id,key,16,'QA reason',false),/confirmation/);
+ await assert.rejects(refund(o.id,key),/Open your cash shift/);
+ const shift=(await q('select open_cafe_staff_shift($1,16,16,240000) result',[cafe])).rows[0].result.shift;
+ const first=(await refund(o.id,key)).rows[0].result;const replay=(await refund(o.id,key)).rows[0].result;
+ assert.equal(first.refund.id,replay.refund.id);assert.equal(replay.replayed,true);
+ await assert.rejects(refund(o.id,key,16,'Changed reason'),/key reused/);
+ await assert.rejects(refund(o.id),/no refundable/);
+ const receipt=(await q('select * from cafe_payment_receipts where order_id=$1',[o.id])).rows[0];assert.equal(receipt.receipt_status,'confirmed');assert.equal(Number(receipt.collected_by_telegram_id),13);assert.equal(receipt.tendered_amount_vnd,150000);
+ const order=(await q('select status,payment_status,paid_by_telegram_id from cafe_orders where id=$1',[o.id])).rows[0];assert.equal(order.status,'cancelled');assert.equal(order.payment_status,'refunded');assert.equal(Number(order.paid_by_telegram_id),13);
+ const close=(await q('select close_cafe_staff_shift($1,16,120000) result',[shift.id])).rows[0].result.shift;assert.equal(close.expected_cash_vnd,120000);assert.equal(close.variance_vnd,0);
+ const later=await create('Refund after original shift');await pay(later.id);
+ await assert.rejects(refund(later.id),/Open your cash shift/);
+ const poor=(await q('select open_cafe_staff_shift($1,16,16,0) result',[cafe])).rows[0].result.shift;
+ await assert.rejects(refund(later.id),/Insufficient recorded cash/);await q('select close_cafe_staff_shift($1,16,0)',[poor.id]);
+ const next=(await q('select open_cafe_staff_shift($1,16,16,120000) result',[cafe])).rows[0].result.shift;await refund(later.id);
+ assert.equal((await q('select close_cafe_staff_shift($1,16,0) result',[next.id])).rows[0].result.shift.variance_vnd,0);
+ const inconsistent=await create('QA mismatched receipt');await pay(inconsistent.id);await q('update cafe_payment_receipts set amount_vnd=amount_vnd-1 where order_id=$1',[inconsistent.id]);
+ await assert.rejects(refund(inconsistent.id),/reconciliation required/);assert.equal(Number((await q('select count(*) n from cafe_order_refunds where order_id=$1',[inconsistent.id])).rows[0].n),0);
+ await q('update cafe_payment_receipts set amount_vnd=amount_vnd+1 where order_id=$1',[inconsistent.id]);
+ const card=await create('QA non-cash refund');await q("update cafe_orders set payment_method='qr' where id=$1",[card.id]);await q("select update_cafe_order_payment($1,13,'paid')",[card.id]);await refund(card.id);
+ const totals=(await q('select get_cafe_cash_summary($1) result',[cafe])).rows[0].result;
+ const refunds=(await q('select sum(amount_vnd) n from cafe_order_refunds where location_id=$1',[cafe])).rows[0].n;
+ assert.equal(Number(totals.refund24hVnd),Number(refunds));assert.equal(Number(totals.gross24hVnd)-Number(totals.total24hVnd),Number(refunds));
+ assert.equal((await q("select has_function_privilege('anon','refund_cafe_order(uuid,bigint,uuid,text,boolean)','execute') p")).rows[0].p,false);
+ console.log('PASS full refunds: manager scope, payout acknowledgement, receipt immutability, retry/payload guard, current/later cash shift, insufficient cash, non-cash and daily net totals');
+}

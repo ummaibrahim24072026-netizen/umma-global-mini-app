@@ -61,9 +61,8 @@ begin
       'paymentStatus',v_order.payment_status,'paidAt',v_order.paid_at,
       'paidByTelegramId',v_order.paid_by_telegram_id));
   end if;
-  if p_payment_status = 'pending' and v_previous = 'paid' and
-     (v_staff_role <> 'manager' or nullif(trim(p_note),'') is null) then
-    raise exception 'Only manager may void payment with a reason';
+  if p_payment_status = 'pending' and v_previous = 'paid' then
+    raise exception 'Use recorded refund instead of voiding payment';
   end if;
 
 
@@ -73,11 +72,7 @@ begin
     values
       (v_order.id, v_order.location_id, p_actor_telegram_id, v_order.payment_method,
        v_order.total_vnd, 'confirmed', coalesce(nullif(trim(p_note),''),'Оплата заказа подтверждена'));
-  elsif p_payment_status = 'pending' and v_previous = 'paid' then
-    update public.cafe_payment_receipts
-       set receipt_status = 'voided',
-           note = concat_ws(' · ', nullif(note,''), coalesce(nullif(trim(p_note),''),'Оплата возвращена в ожидание'))
-     where order_id = v_order.id and receipt_status = 'confirmed';
+
   end if;
 
   update public.cafe_orders
@@ -250,7 +245,7 @@ BEGIN
   IF NOT v_allowed THEN RAISE EXCEPTION 'Staff role cannot perform this order status transition'; END IF;
 
   IF p_new_status='cancelled' AND v_order.payment_status='paid' THEN
-    RAISE EXCEPTION 'Paid order requires manager payment reversal before cancellation';
+    RAISE EXCEPTION 'Paid order requires recorded refund before cancellation';
   END IF;
 
   IF p_new_status='confirmed' THEN

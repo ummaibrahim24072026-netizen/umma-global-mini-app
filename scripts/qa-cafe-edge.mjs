@@ -87,5 +87,13 @@ export async function verifyCafeEdges(db,cafe,product){
   assert.equal((await post(kitchen,addBody)).data.totalVnd,240000);
   assert.equal((await post(kitchen,addBody)).data.totalVnd,240000);
   assert.equal((await post(kitchen,{...addBody,initData:auth(15)})).status,403);
+  const refundOrder=await post(create,{...body,requestKey:randomUUID(),paymentMethod:'qr',customerName:'Edge refund guest'});
+  await db.query("select update_cafe_order_payment($1,13,'paid')",[refundOrder.data.order.id]);
+  const refundBody={initData:auth(16),action:'refundOrder',orderId:refundOrder.data.order.id,requestKey:randomUUID(),reason:'QA actual Edge refund',payoutConfirmed:true};
+  const refundResult=await post(kitchen,refundBody);assert.equal(refundResult.status,200);
+  assert.equal((await post(kitchen,refundBody)).data.refund.id,refundResult.data.refund.id);
+  assert.equal((await post(kitchen,{...refundBody,reason:'Different reason'})).status,400);
+  assert.equal((await post(kitchen,{...refundBody,payoutConfirmed:false})).status,400);
+  assert.equal((await post(kitchen,{...refundBody,initData:auth(13)})).status,400);
   console.log('PASS actual Edge handlers + local PostgreSQL: Telegram HMAC rejection, staff/customer order replay, no duplicate notifications, payment validation and add-on permission/replay');
 }

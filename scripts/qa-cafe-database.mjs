@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import {verifyCafeRefunds} from './qa-cafe-refunds.mjs';
 import {verifyCafeDelivery} from './qa-cafe-delivery.mjs';
 import {verifyCafeEdges} from './qa-cafe-edge.mjs';
 
@@ -84,7 +85,7 @@ try {
     assert.equal(await receiptCount(order.id),1);
     await assert.rejects(add(order.id),/closed/);
     await assert.rejects(advance(order.id,'completed'),/cannot perform/);
-    await assert.rejects(advance(order.id,'cancelled'),/requires manager/);
+    await assert.rejects(advance(order.id,'cancelled'),/requires recorded refund/);
     await advance(order.id,'ready');await advance(order.id,'completed');
     await assert.rejects(q("select update_cafe_order_payment($1,10,'pending','test')",[order.id]),/Closed order/);
     await create(`Стол №${table}`);
@@ -93,11 +94,7 @@ try {
   await assert.rejects(create('bad user',15),/access denied/);
   await assert.rejects(create('wrong branch',11,other),/cannot create/);
   const cash=await create('void test');await pay(cash.id);
-  await assert.rejects(q("select update_cafe_order_payment($1,13,'pending','test')",[cash.id]),/Only manager/);
-  await assert.rejects(q("select update_cafe_order_payment($1,10,'pending',null)",[cash.id]),/Only manager/);
-  await q("select update_cafe_order_payment($1,16,'pending','Synthetic reversal reason')",[cash.id]);
-  await advance(cash.id,'cancelled');
-  assert.equal((await q("select receipt_status from cafe_payment_receipts where order_id=$1",[cash.id])).rows[0].receipt_status,'voided');
+  for(const actor of [13,10,16])await assert.rejects(q("select update_cafe_order_payment($1,$2,'pending','test')",[cash.id,actor]),/Use recorded refund/);
   const shift=(await q('select open_cafe_staff_shift($1,13,13,50000) result',[cafe])).rows[0].result.shift;
   await assert.rejects(q('select open_cafe_staff_shift($1,13,13,50000)',[cafe]),/уже|open|duplicate/i);
   await assert.rejects(q('select close_cafe_staff_shift($1,15,0)',[shift.id]),/Нет права/);
@@ -123,6 +120,8 @@ try {
   console.log('PASS PostgreSQL: six tables, duplicate open bills, add-ons, preparation, cash/change, payment retries, actor preservation, cancellations, terminal states, role/branch restrictions and disabled inventory');
   await db.exec(readFileSync('supabase/proposals/cafe-delivery-hardening.sql','utf8'));
   await verifyCafeDelivery(db,cafe,other,product);
+  await db.exec(readFileSync('supabase/proposals/cafe-refunds.sql','utf8'));
+  await verifyCafeRefunds(db,cafe,other,product);
   await verifyCafeEdges(db,cafe,product);
   console.log('LIMIT: PGlite serializes queries; this does not prove multi-connection PostgreSQL locking or real device behavior.');
 } finally { await db.close(); }

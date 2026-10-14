@@ -19,3 +19,5 @@ PGlite serializes queries. Parallel queued calls validate repeated-operation res
 Never apply the offline schema fixture to an existing remote project. Production SQL changes, publication, financial data changes and inventory activation require explicit owner approval.
 
 Delivery release also requires proposals/cafe-delivery-hardening.sql before the updated cafe-kitchen handler, which calls assign_cafe_courier. QA-only application does not update public RPCs.
+
+Full refunds require cafe-refunds.sql after the other proposals. Use the atomic supabase/release/cafe-launch.sql bundle and docs/CAFE_RELEASE_PLAN.md. Do not restore legacy cash summaries after any refund has been recorded. Maintenance handlers are prepared but not deployed.
