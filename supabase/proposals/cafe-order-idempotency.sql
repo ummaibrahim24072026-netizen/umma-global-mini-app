@@ -66,6 +66,11 @@ BEGIN
   IF p_action IN ('customerOrder','staffOrder') THEN
     UPDATE public.cafe_orders SET payment_timing=v_payment_timing WHERE id=(v_result->'order'->>'id')::uuid;
     v_result:=jsonb_set(v_result,'{order,paymentTiming}',to_jsonb(v_payment_timing),true);
+    IF p_arguments->>'p_order_type'='delivery' THEN
+      IF coalesce(p_arguments->>'p_dispatch_mode','broadcast') NOT IN ('broadcast','nearest') THEN RAISE EXCEPTION 'Invalid courier dispatch mode'; END IF;
+      UPDATE public.cafe_orders SET dispatch_mode=coalesce(p_arguments->>'p_dispatch_mode','broadcast') WHERE id=(v_result->'order'->>'id')::uuid;
+      PERFORM public.ensure_cafe_courier_offers((v_result->'order'->>'id')::uuid);
+    END IF;
   END IF;
   INSERT INTO umma_private.cafe_order_requests(actor_telegram_id,request_key,action,arguments,result)
     VALUES(p_actor_telegram_id,p_request_key,p_action,p_arguments,v_result);

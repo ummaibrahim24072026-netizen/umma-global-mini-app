@@ -1,3 +1,4 @@
+import { dispatchCourierQueue } from "../_shared/courier-workflow.ts";
 import { submitCafeOperation } from "../_shared/order-operation.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -121,6 +122,7 @@ Deno.serve(async (req) => {
       return response({ ok: false, error: "Invalid payment method" }, 400);
     }
 
+    if(!["broadcast","nearest"].includes(body.dispatchMode??"broadcast"))return response({ok:false,error:"Некорректный режим подбора курьера"},400);
     if(typeof body.locationId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.locationId)) {
       return response({ok:false,error:"Выберите кафе для заказа"},400);
     }
@@ -143,8 +145,10 @@ Deno.serve(async (req) => {
         p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
         p_payment_method: paymentMethod,
         p_payment_timing: paymentTiming,
+        p_dispatch_mode: body.dispatchMode ?? "broadcast",
         p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
       });
+      if(!staffError&&orderType==="delivery"&&!staffData?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch(e){console.error("Courier notification deferred");}}
       if (staffError) {
         if (staffError.code === "23505" && /cafe_one_open_bill_per_numbered_table/.test(staffError.message || "")) {
           return response({ok:false,error:"У этого стола уже есть открытый счёт. Обновите список заказов и добавьте блюда в существующий счёт."},409);
@@ -169,9 +173,11 @@ Deno.serve(async (req) => {
       p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
       p_payment_method: paymentMethod,
         p_payment_timing: paymentTiming,
+        p_dispatch_mode: body.dispatchMode ?? "broadcast",
       p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
     });
 
+    if(!error&&orderType==="delivery"&&!data?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}}
     if (error) {
       console.error("Order creation rejected:", error.message);
       const clientErrors = [
@@ -197,7 +203,7 @@ Deno.serve(async (req) => {
         const [{ data: location }, { data: orderItems, error: itemsError }, { data: assignments, error: staffError }] = await Promise.all([
           supabase.from("locations").select("name,address,phone").eq("id", body.locationId).maybeSingle(),
           supabase.from("cafe_order_items").select("product_name_ru,product_name_en,quantity,unit_price_vnd,line_total_vnd").eq("order_id", createdOrder.id),
-          supabase.from("cafe_staff").select("telegram_id,staff_role").eq("location_id", body.locationId).eq("is_active", true),
+          supabase.from("cafe_staff").select("telegram_id,staff_role").eq("location_id", body.locationId).eq("is_active", true).neq("staff_role","courier"),
         ]);
         if (itemsError || staffError) throw new Error("Unable to load staff notification data");
         const staffIds = Array.from(new Set((assignments ?? []).map((item: {telegram_id:number|string}) => Number(item.telegram_id)).filter((id:number) => Number.isSafeInteger(id) && id > 0)));

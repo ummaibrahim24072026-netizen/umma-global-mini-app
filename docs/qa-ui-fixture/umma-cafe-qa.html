@@ -877,6 +877,8 @@ button:active { transform: scale(.98); }
 .kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }
 
 .cafe-refund-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #aacaca;border-radius:14px;padding:16px}.cafe-refund-dialog::backdrop{background:#0008}.cafe-refund-confirm{grid-template-columns:24px minmax(0,1fr);align-items:start}.cafe-refund-confirm input{min-height:20px;width:20px}
+
+#courierMapModal>div>div:first-child{position:sticky;top:-14px;z-index:2;background:white;flex-wrap:wrap;padding:8px 0}#courierMapTitle{min-width:0;flex:1 1 150px;font-size:20px}.courier-route-back{flex:0 0 auto;border:1px solid #0b777a;border-radius:10px;padding:12px;color:#07595c;background:#e8f7f5;font-weight:800}#courierRouteMap{min-height:180px!important;height:55dvh!important}
     /* =====================================================
        SUPER ADMIN
        ===================================================== */
@@ -1926,7 +1928,7 @@ button:active { transform: scale(.98); }
             <form id="staffOrderForm" class="cafe-order-form">
               <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
               <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
-              <label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="broadcast">Предложить всем активным курьерам кафе</option><option value="nearest">Сначала ближайшему к кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
               <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Сейчас, до передачи заказа</option><option value="later">После трапезы — общий счёт</option><option value="on_delivery" hidden>При получении — наличными курьеру</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
@@ -1954,7 +1956,7 @@ button:active { transform: scale(.98); }
     <div style="max-width:900px;margin:0 auto">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
-        <button id="courierMapClose" type="button" class="cafe-back">Закрыть ✕</button>
+        <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
       </div>
       <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
       <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
@@ -1977,7 +1979,7 @@ button:active { transform: scale(.98); }
       <div class="cafe-kitchen-shortcuts">
         <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
       </div>
-      <div class="cafe-kitchen-filters">
+      <section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
       </div>
@@ -2221,6 +2223,7 @@ button:active { transform: scale(.98); }
 
 
 
+
   
 
 
@@ -2236,24 +2239,61 @@ button:active { transform: scale(.98); }
 <!-- START -->
 
 
-<aside class="qa-toolbar"><strong>QA · только фиктивные данные</strong><label>Ширина<select id="qaWidth"><option>320</option><option>390</option><option>768</option></select></label><button id="qaOrders">Приём заказов</button><button id="qaKitchen">Кухня</button><button id="qaPaid">Тестовый оплаченный заказ</button></aside><script>window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};
+<aside class="qa-toolbar"><strong>QA · только фиктивные данные</strong><label>Роль<select id="qaRole"><option value="manager">Менеджер</option><option value="kitchen">Кухня</option><option value="courier">Курьер</option></select></label><label>Ширина<select id="qaWidth"><option>320</option><option>390</option><option>768</option></select></label><button id="qaOrders">Приём заказов</button><button id="qaKitchen">Кухня</button><button id="qaPaid">Тестовый оплаченный заказ</button></aside><script>window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};
 const qaLocation={id:'11111111-1111-4111-8111-111111111111',name:'QA HALAL UMMA',location_type:'cafe'};
 const product={id:'33333333-3333-4333-8333-333333333333',name_ru:'Тестовый плов',name_vi:'QA pilaf',name_en:'QA pilaf',price_vnd:120000};
-let qaOrders=[{id:'44444444-4444-4444-8444-444444444444',location_id:qaLocation.id,order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,customer_name:'QA guest',delivery_address:'Длинный адрес доставки '+ 'LongAddressWithoutSpaces'.repeat(6),payment_method:'cash',payment_timing:'on_delivery',payment_status:'pending',total_vnd:120000,staffRole:'manager',canAcceptPayments:true,cafe_order_items:[{product_name_ru:'Тестовый плов',quantity:1,line_total_vnd:120000}],created_at:new Date().toISOString()}];
+let qaRole='manager',qaPhotoUrls=new Map(),qaDeclined=new Set();
+let qaOrders=[{id:'44444444-4444-4444-8444-444444444444',location_id:qaLocation.id,order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,customer_name:'QA guest',delivery_address:'Длинный адрес доставки '+ 'LongAddressWithoutSpaces'.repeat(6),payment_method:'cash',payment_timing:'on_delivery',payment_status:'pending',total_vnd:120000,deliveryProofs:[{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',kind:'pickup',courier_telegram_id:20}],staffRole:'manager',canAcceptPayments:true,cafe_order_items:[{product_name_ru:'Тестовый плов',quantity:1,line_total_vnd:120000}],created_at:new Date().toISOString()}];
 const reply=data=>new Response(JSON.stringify({ok:true,...data}),{headers:{'Content-Type':'application/json'}});
 window.fetch=async(url,options={})=>{const body=options.body?JSON.parse(options.body):{};
 if(!options.body)return reply({products:[product]});
-if(body.staffOrder){const id=crypto.randomUUID();const amount=body.items.reduce((sum,item)=>sum+item.quantity*120000,0);qaOrders.push({...qaOrders[0],id,order_number:qaOrders.length+1,status:'pending',payment_status:'pending',delivery_status:'waiting_courier',courier_telegram_id:null,customer_name:body.customerName,delivery_address:body.deliveryAddress,payment_method:body.paymentMethod,payment_timing:body.paymentTiming,total_vnd:amount});return reply({order:{id,orderNumber:qaOrders.length,totalVnd:amount}});}
-if(body.action==='list')return reply({orders:qaOrders,locationIds:[qaLocation.id],locations:[qaLocation],staffRole:'manager',actorTelegramId:10,couriers:[{telegram_id:20,location_id:qaLocation.id,name:'Очень длинное тестовое имя курьера'}]});
+if(body.staffOrder){const id=crypto.randomUUID();const amount=body.items.reduce((sum,item)=>sum+item.quantity*120000,0);qaOrders.push({...qaOrders[0],id,order_number:qaOrders.length+1,status:'pending',payment_status:'pending',deliveryProofs:[],delivery_status:'waiting_courier',courier_telegram_id:null,customer_name:body.customerName,delivery_address:body.deliveryAddress,payment_method:body.paymentMethod,payment_timing:body.paymentTiming,total_vnd:amount});return reply({order:{id,orderNumber:qaOrders.length,totalVnd:amount}});}
+if(body.action==='list')return reply({orders:qaOrders.filter(o=>qaRole!=='courier'||o.courier_telegram_id===20).map(o=>({...o,staffRole:qaRole})),courierOffers:qaRole==='courier'?qaOrders.filter(o=>o.delivery_status==='waiting_courier'&&!qaDeclined.has(o.id)&&!['completed','cancelled'].includes(o.status)).map(o=>({orderId:o.id,orderNumber:o.order_number,locationName:qaLocation.name,kitchenStatus:o.status,expiresAt:new Date(Date.now()+900000).toISOString()})):[],locationIds:[qaLocation.id],locations:[qaLocation],staffRole:qaRole,actorTelegramId:qaRole==='courier'?20:10,couriers:[{telegram_id:20,location_id:qaLocation.id,name:'Очень длинное тестовое имя курьера'}]});
 if(body.action==='cashList')return reply({locationId:qaLocation.id,cafeName:qaLocation.name,locations:[qaLocation],receipts:[],refunds:[],handovers:[],staff:[],shifts:[],actorTelegramId:10,cashSummary:{total24hVnd:0,cash24hVnd:0,refund24hVnd:0,pendingHandovers:0}});
 const order=qaOrders.find(o=>o.id===body.orderId);
+if(body.action==='uploadDeliveryProof'&&order){const proof={id:crypto.randomUUID(),kind:body.kind,courier_telegram_id:20,verified_at:new Date().toISOString()};order.deliveryProofs.push(proof);qaPhotoUrls.set(proof.id,'data:image/jpeg;base64,'+body.imageBase64);return reply({proof});}
+if(body.action==='viewDeliveryProof')return reply({url:qaPhotoUrls.get(body.proofId)||'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jS1EAAAAASUVORK5CYII='});
+if(body.action==='respondCourierOffer'&&order){if(!body.accept&&!body.reason?.trim())return reply({ok:false,error:'Укажите причину отказа'});if(body.accept){order.courier_telegram_id=20;order.delivery_status='courier_assigned';order.deliveryProofs=[];}else qaDeclined.add(order.id);return reply({order});}
+if(body.action==='courierPosition')return reply({});
+
 if(body.action==='refundOrder'&&order){order.payment_status='refunded';order.status='cancelled';return reply({refund:{id:crypto.randomUUID(),amount_vnd:order.total_vnd}});}
 if(body.action==='updatePayment'&&order)order.payment_status=body.paymentStatus;
-if(body.action==='updateDelivery'&&order)order.delivery_status=body.deliveryStatus;
+if(body.action==='updateDelivery'&&order){order.delivery_status=body.deliveryStatus;if(body.deliveryStatus==='picked_up')order.deliveryProofs.push({id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',kind:'handover',courier_telegram_id:20});}
 if(body.action==='updateStatus'&&order)order.status=body.status;
 return reply({});};
 window.ummaCafeRequests={request:(url,payload)=>window.fetch(url,{body:JSON.stringify(payload)})};
 window.showToast=()=>{};
+</script><script>/* Courier offers and private delivery evidence. No silent location tracking. */
+(() => {
+ 'use strict';
+ const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+ async function api(payload){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Операция доставки не выполнена');return result;}
+ let busy=false,lastOfferSignature='';
+ function message(text){const own=document.getElementById('courierWorkflowMessage');const root=own&&!document.getElementById('courierOffers')?.hidden?own:document.getElementById('cafeKitchenMessage');if(root){root.hidden=false;root.textContent=text;}}
+ function renderOffers(offers,role){const root=document.getElementById('courierOffers');if(!root)return;root.hidden=role!=='courier';if(root.hidden){lastOfferSignature='';return;}const signature=JSON.stringify(offers);if(signature===lastOfferSignature)return;lastOfferSignature=signature;
+ root.innerHTML='<h2>Предложения доставок</h2><p>Заказ получит первый подтвердивший курьер. Отказ требует причины.</p><button type="button" id="courierGeoOnce" class="kitchen-action">Обновить геопозицию для подбора на 10 минут</button><div id="courierWorkflowMessage" role="status"></div>'+offers.map(o=>'<article class="kitchen-order-card"><strong>Доставка №'+esc(o.orderNumber)+'</strong><p>'+esc(o.locationName)+' · '+esc(o.kitchenStatus==='ready'?'Готов':'Готовится')+'</p><div class="kitchen-order-actions"><button class="kitchen-action" data-courier-accept="'+esc(o.orderId)+'">Принять доставку</button><button class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться с причиной</button></div></article>').join('');
+ }
+ async function respond(id,accept,reason=null){if(busy)return;busy=true;try{await api({action:'respondCourierOffer',orderId:id,accept,reason});await window.ummaKitchen.refresh();}catch(e){message(e.message);}finally{busy=false;}}
+ function decline(id){const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';dialog.innerHTML='<form class="cafe-order-form"><h3>Причина отказа</h3><label>Причина<textarea minlength="3" maxlength="500" required></textarea></label><div class="kitchen-order-actions"><button type="button">Назад</button><button type="submit" class="kitchen-cancel">Отправить отказ</button></div><p role="status"></p></form>';document.body.append(dialog);dialog.showModal();dialog.querySelector('[type="button"]').onclick=()=>dialog.remove();dialog.querySelector('form').onsubmit=async e=>{e.preventDefault();const reason=dialog.querySelector('textarea').value.trim();if(reason.length<3)return;dialog.remove();await respond(id,false,reason);};}
+ async function jpeg(file){if(!file||!file.type.startsWith('image/'))throw Error('Выберите фотографию');if(file.size>20000000)throw Error('Исходное фото слишком большое');
+  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Не удалось открыть фотографию'));img.src=data;});
+  const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(image.width,image.height));canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+  // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
+  return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+ }
+ async function photo(id,kind){const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.onchange=async()=>{if(busy)return;busy=true;try{message('Сохраняем фото…');const imageBase64=await jpeg(input.files?.[0]);await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});await api({action:'updateDelivery',orderId:id,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});await window.ummaKitchen.refresh();message('Фото сохранено, этап доставки подтверждён.');}catch(e){message(e.message);}finally{busy=false;}};input.click();}
+ document.addEventListener('click',async event=>{const target=event.target.closest?.('button');if(!target)return;
+ if(target.dataset.courierAccept)await respond(target.dataset.courierAccept,true);
+ if(target.dataset.courierDecline)decline(target.dataset.courierDecline);
+ if(target.dataset.deliveryPhoto)await photo(target.dataset.orderId,target.dataset.deliveryPhoto);
+ if(target.dataset.viewProof){try{const result=await api({action:'viewDeliveryProof',proofId:target.dataset.viewProof});const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';const image=document.createElement('img');image.style.width='100%';image.alt='Фото доставки';image.referrerPolicy='no-referrer';image.src=result.url;const close=document.createElement('button');close.textContent='← Назад';close.onclick=()=>dialog.remove();dialog.append(close,image);document.body.append(dialog);dialog.showModal();}catch(e){message(e.message);}}
+ if(target.id==='courierGeoOnce'){if(!navigator.geolocation){message('Геопозиция недоступна. Общие предложения всё равно доступны.');return;}message('Запрашиваем геопозицию…');navigator.geolocation.getCurrentPosition(async p=>{try{await api({action:'courierPosition',latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});message('Геопозиция обновлена; используется для подбора ближайшего курьера 10 минут.');}catch(e){message(e.message);}},()=>message('Геопозиция не получена. Вы можете принимать общие предложения.'),{maximumAge:60000,timeout:10000,enableHighAccuracy:true});}
+ });
+ document.addEventListener('umma:cafe-operation-recovered',async event=>{if(event.detail.payload.action==='uploadDeliveryProof'){await window.ummaKitchen.refresh();message('Фото сохранено. Теперь подтвердите получение или вручение заказа; повторно загружать фото не нужно.');}});
+ window.ummaCourierWorkflow={renderOffers};
+})();
 </script><script>/* UMMA CAFE — KITCHEN ORDER BOARD */
 (() => {
   "use strict";
@@ -2307,18 +2347,24 @@ window.showToast=()=>{};
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
       const canManageDelivery = ["manager","cashier","waiter"].includes(orderStaffRole) ||
         (orderStaffRole === "courier" && ["courier_assigned","picked_up"].includes(order.delivery_status));
-      const deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
+      let deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
         !(["manager","cashier","waiter"].includes(orderStaffRole) && order.delivery_status === "waiting_courier")
         && !(orderStaffRole === "courier" && Number(order.courier_telegram_id) !== Number(actorTelegramId))
         && (order.delivery_status !== "courier_assigned" || order.status === "ready")
         && !["completed","cancelled"].includes(order.status)
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
+      const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
+      const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
+      if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Фото получения → забрать':'Фото вручения → доставлено')+'</button>':'<span>Ожидается фото от курьера</span>';
+      }
+      const evidenceActions=["manager","courier"].includes(orderStaffRole)?proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join(""):"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
       const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
       const routeAction = order.order_type === "delivery" && order.delivery_address
         ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(order.delivery_address) + '" data-route-origin-lat="' + esc(routeLocation?.latitude ?? "") + '" data-route-origin-lng="' + esc(routeLocation?.longitude ?? "") + '" data-route-origin-name="' + esc(routeLocation?.name ?? "") + '" data-route-order-number="' + esc(order.order_number) + '">🗺️ Маршрут</button>' : "";
-      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && ["waiting_courier","courier_assigned"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
-        ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Назначить курьера</button></div>' : "";
+      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
+        ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
         && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
       const paymentAction = canManagePayment && order.payment_status !== "paid"
@@ -2336,7 +2382,7 @@ window.showToast=()=>{};
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + '</div></article>';
     }).join("");
   }
 
@@ -2372,6 +2418,7 @@ window.showToast=()=>{};
       window.ummaLocationPins = locations;
       actorTelegramId = result.actorTelegramId ?? null;
       const incomingOrders = Array.isArray(result.orders) ? result.orders : [];
+      window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       const fingerprint = JSON.stringify(incomingOrders);
       const changed = fingerprint !== lastOrdersFingerprint;
@@ -2423,6 +2470,7 @@ window.showToast=()=>{};
   }
   async function refreshAfterUpdate() {
     const result = await api({ action:"list" });
+    window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
     locations = Array.isArray(result.locations) ? result.locations : [];
@@ -2540,7 +2588,7 @@ window.showToast=()=>{};
     if (!Number.isSafeInteger(courierTelegramId) || courierTelegramId <= 0) { showMessage("Сначала выберите курьера."); return; }
     if (!confirm("Назначить выбранного курьера на этот заказ?")) return;
     busy = true; showMessage("Назначаем курьера…");
-    try { await api({action:"assignCourier",orderId,courierTelegramId}); await refreshAfterUpdate(); showMessage("Курьер назначен. Уведомление отправлено в Telegram."); }
+    try { await api({action:"assignCourier",orderId,courierTelegramId}); await refreshAfterUpdate(); showMessage("Предложение отправлено курьеру. Назначение произойдёт после его подтверждения."); }
     catch(error) { showMessage(error instanceof Error ? error.message : "Не удалось назначить курьера"); }
     finally { busy = false; render(); }
   }
@@ -2920,6 +2968,7 @@ window.showToast=()=>{};
   byId("staffOrderType")?.addEventListener("change",()=>{
     const type=byId("staffOrderType").value;
     if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=type!=="delivery";
+    if(byId("staffCourierDispatchLabel"))byId("staffCourierDispatchLabel").hidden=type!=="delivery";
     if(!editingBillId){
       const guest=byId("staffOrderCustomerName");
       if(type!=="dine_in"&&guest?.value.startsWith("Стол №"))guest.value="";
@@ -3081,7 +3130,7 @@ window.showToast=()=>{};
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
           customerName:guestName,
           customerPhone:"",
-          deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+          dispatchMode:byId("staffCourierDispatch")?.value||"broadcast",deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
         });
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;
@@ -3122,5 +3171,171 @@ window.showToast=()=>{};
 
   window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();
-</script><script>document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script></body>
+</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
+(() => {
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  let map=null,route=null,markers=[],opener=null,generation=0;
+  function close(){generation++;const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}opener?.focus();}
+  function status(text){if($("courierMapMessage"))$("courierMapMessage").textContent=text;}
+  function currentPosition(){
+    return new Promise(resolve=>{
+      if(!navigator.geolocation){resolve(null);return;}
+      navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),()=>resolve(null),{enableHighAccuracy:true,timeout:6500,maximumAge:60000});
+    });
+  }
+  async function findAddress(address){
+    const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(address+", Vietnam")+"&accept-language=ru,en";
+    const res=await fetch(url);if(!res.ok)throw new Error("Поиск адреса временно недоступен");
+    const data=await res.json();if(!data.length)throw new Error("Адрес не найден. Проверьте, что в заказе указан полный адрес.");
+    return {lat:Number(data[0].lat),lng:Number(data[0].lon),label:data[0].display_name};
+  }
+  function clearLayers(){
+    markers.forEach(m=>map.removeLayer(m));markers=[];
+    if(route){map.removeLayer(route);route=null;}
+  }
+  async function open(button){
+    const token=++generation;opener=button;
+    const address=button.getAttribute("data-route-address")||"";
+    const rawOriginLat=button.getAttribute("data-route-origin-lat"),rawOriginLng=button.getAttribute("data-route-origin-lng");
+    const originLat=rawOriginLat===""?NaN:Number(rawOriginLat),originLng=rawOriginLng===""?NaN:Number(rawOriginLng);
+    const originName=button.getAttribute("data-route-origin-name")||"Кафе";
+    const orderNo=button.getAttribute("data-route-order-number")||"";
+    const modal=$("courierMapModal");if(!modal)return;
+    modal.hidden=false;modal.style.display="block";
+    $("courierMapClose")?.focus();
+    if(!window.L){status("Библиотека карты не загрузилась. Можно вернуться к заказу.");return;}
+    $("courierMapTitle").textContent="Маршрут · Заказ №"+orderNo;
+    $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(address+", Vietnam");
+    if(!map){
+      map=L.map("courierRouteMap").setView([12.2388,109.1967],6);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+    }
+    setTimeout(()=>map&&map.invalidateSize(),80);
+    clearLayers();status("Находим адрес доставки…");
+    try{
+      const dest=await findAddress(address);if(token!==generation)return;
+      markers.push(L.marker([dest.lat,dest.lng]).addTo(map).bindPopup("Доставка · заказ №"+esc(orderNo)).openPopup());
+      const all=Array.isArray(window.ummaLocationPins)?window.ummaLocationPins:[];
+      all.filter(l=>l.latitude!=null&&l.longitude!=null).forEach(l=>{
+        const marker=L.circleMarker([Number(l.latitude),Number(l.longitude)],{radius:6,color:"#176b55",fillColor:"#0fa3a8",fillOpacity:.9}).addTo(map).bindPopup(esc(l.name)+(l.address?"<br>"+esc(l.address):""));
+        markers.push(marker);
+      });
+      status("Получаем ваше местоположение для построения маршрута…");
+      let origin=await currentPosition();if(token!==generation)return;
+      if(!origin&&Number.isFinite(originLat)&&Number.isFinite(originLng)&&originLat>=-90&&originLat<=90&&originLng>=-180&&originLng<=180)origin={lat:originLat,lng:originLng};
+      if(!origin){map.setView([dest.lat,dest.lng],15);status("Адрес найден. Разрешите геолокацию, чтобы построить маршрут от вас, или откройте Google Maps.");return;}
+      markers.push(L.marker([origin.lat,origin.lng]).addTo(map).bindPopup(originName+" · отправление"));
+      status("Строим автомобильный маршрут…");
+      const res=await fetch("https://router.project-osrm.org/route/v1/driving/"+origin.lng+","+origin.lat+";"+dest.lng+","+dest.lat+"?overview=full&geometries=geojson");
+      if(!res.ok)throw new Error("Сервис маршрутов временно недоступен");
+      const data=await res.json();if(token!==generation)return;if(data.code!=="Ok"||!data.routes||!data.routes.length)throw new Error("Не удалось построить маршрут для этих точек");
+      route=L.geoJSON(data.routes[0].geometry,{style:{color:"#0fa3a8",weight:5,opacity:.9}}).addTo(map);
+      map.fitBounds(route.getBounds(),{padding:[28,28]});
+      status("Маршрут построен · "+(data.routes[0].distance/1000).toFixed(1)+" км · около "+Math.round(data.routes[0].duration/60)+" мин. Время ориентировочное.");
+    }catch(e){if(token!==generation)return;status((e instanceof Error?e.message:"Не удалось построить маршрут")+" Используйте кнопку Google Maps для навигации.");}
+  }
+  document.addEventListener("click",event=>{
+    const target=event.target instanceof Element?event.target.closest("[data-show-route='true']"):null;
+    if(target){event.preventDefault();open(target);}
+  });
+  $("courierMapClose")?.addEventListener("click",close);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$("courierMapModal")?.hidden)close();});
+  window.UmmaCourierMap={open,close};
+})();</script><script>/* UMMA Global — consistent in-app back navigation.
+ * Records the previous visible screen without changing existing order, payment or API flows.
+ * Back restores the actual previous screen, not a hard-coded home/admin destination.
+ */
+(() => {
+  "use strict";
+  const screenIds = [
+    "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
+    "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
+    "cafeInventoryPage","cafePage","cafeAccountingPage"
+  ];
+  const backIds = new Set([
+    "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
+    "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
+    "cafeInventoryBack","cafeBack","accountingBack"
+  ]);
+  const stack=[];
+  const byId=id=>document.getElementById(id);
+  const main=()=>document.querySelector(".app > main");
+  const bottom=()=>document.querySelector(".bottom-nav");
+  function currentScreen(){
+    for(const id of screenIds){
+      const el=byId(id);
+      if(el&&!el.hidden)return id;
+    }
+    return "home";
+  }
+  function snapshot(){
+    return {
+      screen:currentScreen(),
+      mainDisplay:main()?.style.display??"",
+      navDisplay:bottom()?.style.display??"",
+      scrollY:window.scrollY||0
+    };
+  }
+  function restore(state){
+    for(const id of screenIds){
+      const el=byId(id);
+      if(el)el.hidden=id!==state.screen;
+    }
+    if(main())main().style.display=state.mainDisplay;
+    if(bottom())bottom().style.display=state.navDisplay;
+    if(state.screen==="home"&&typeof setActiveNav==="function")setActiveNav("home");
+    window.scrollTo({top:state.scrollY,behavior:"instant"});
+  }
+  function back(){
+    const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
+    if(currentScreen()==="cafeKitchenPage"){
+      const cash=byId("cafeCashPanel");
+      if(cash&&!cash.hidden){
+        cash.hidden=true;
+        const toggle=byId("cafeCashToggle");
+        if(toggle){toggle.setAttribute("aria-expanded","false");toggle.textContent="💰 Касса и смена";}
+        byId("cafeKitchenOrders")?.scrollIntoView({block:"start"});
+        return true;
+      }
+      const management=document.querySelector(".cafe-management-tools");
+      if(management?.open){management.open=false;return true;}
+    }
+    if(!stack.length)return false;
+    const prior=stack.pop();
+    restore(prior);
+    return true;
+  }
+  // Capture runs before legacy click handlers. For navigation only, observe
+  // the resulting screen after their synchronous DOM updates.
+  document.addEventListener("click",event=>{
+    const button=event.target.closest?.("button");
+    if(!button)return;
+    if(backIds.has(button.id)){
+      const cash=byId("cafeCashPanel");
+      const nested=currentScreen()==="cafeKitchenPage"&&(
+        (cash&&!cash.hidden)||document.querySelector(".cafe-management-tools")?.open
+      );
+      if(stack.length||nested){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        back();
+      }
+      return;
+    }
+    const before=snapshot();
+    window.setTimeout(()=>{
+      const after=currentScreen();
+      if(after!==before.screen){
+        const last=stack[stack.length-1];
+        if(!last||last.screen!==before.screen)stack.push(before);
+        if(stack.length>25)stack.shift();
+      }
+    },0);
+  },true);
+  // Expose a safe back action for a future Telegram native back button.
+  window.ummaNavigation={back,depth:()=>stack.length,current:currentScreen};
+})();
+</script></body>
 </html>

@@ -850,3 +850,5 @@ button:active { transform: scale(.98); }
 .kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }
 
 .cafe-refund-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #aacaca;border-radius:14px;padding:16px}.cafe-refund-dialog::backdrop{background:#0008}.cafe-refund-confirm{grid-template-columns:24px minmax(0,1fr);align-items:start}.cafe-refund-confirm input{min-height:20px;width:20px}
+
+#courierMapModal>div>div:first-child{position:sticky;top:-14px;z-index:2;background:white;flex-wrap:wrap;padding:8px 0}#courierMapTitle{min-width:0;flex:1 1 150px;font-size:20px}.courier-route-back{flex:0 0 auto;border:1px solid #0b777a;border-radius:10px;padding:12px;color:#07595c;background:#e8f7f5;font-weight:800}#courierRouteMap{min-height:180px!important;height:55dvh!important}

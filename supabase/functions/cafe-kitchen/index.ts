@@ -1,3 +1,4 @@
+import {dispatchCourierQueue,uploadDeliveryProof} from "../_shared/courier-workflow.ts";
 import { sandboxCanAdvance } from "./sandbox-policy.ts";
 import { submitCafeOperation } from "../_shared/order-operation.ts";
 import { loadCafeOrders } from "./order-list.ts";
@@ -326,14 +327,31 @@ Deno.serve(async req => {
     if (body.action === "assignCourier") {
       const orderId=body.orderId, targetTelegramId=Number(body.courierTelegramId);
       if(typeof orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(orderId)||!Number.isSafeInteger(targetTelegramId)||targetTelegramId<=0) return response({ok:false,error:"Выберите заказ и курьера"},400);
-      const {data:assigned,error:assignError}=await supabase.rpc("assign_cafe_courier",{p_order_id:orderId,p_actor_telegram_id:telegramId,p_courier_telegram_id:targetTelegramId});
+      const {data:assigned,error:assignError}=await supabase.rpc("offer_cafe_courier",{p_order_id:orderId,p_actor_telegram_id:telegramId,p_courier_telegram_id:targetTelegramId});
       if(assignError) return response({ok:false,error:assignError.message},400);
       const order=assigned.order, updated=assigned.order;
-      try {
-        const token=Deno.env.get("TELEGRAM_BOT_TOKEN");
-        if(token&&!assigned.replayed) await fetch("https://api.telegram.org/bot"+token+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:targetTelegramId,text:"Umma Cafe · Вам назначена доставка заказа №"+order.order_number+(order.delivery_address?"\nАдрес: "+order.delivery_address:"")})});
-      } catch(notificationError) { console.error("Courier notification failed",notificationError); }
+      try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}
       return response({ok:true,order:updated});
+    }
+
+    if(body.action==="courierOffers"){
+      const {data,error}=await supabase.rpc("list_cafe_courier_offers",{p_actor:telegramId});return response(error?{ok:false,error:error.message}:{ok:true,offers:data},error?400:200);
+    }
+    if(body.action==="respondCourierOffer"){
+      if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId)||typeof body.accept!=="boolean")return response({ok:false,error:"Некорректное предложение"},400);
+      const {data,error}=await supabase.rpc("respond_cafe_courier_offer",{p_order_id:body.orderId,p_actor_telegram_id:telegramId,p_accept:body.accept,p_reason:typeof body.reason==="string"?body.reason:null});
+      if(error)return response({ok:false,error:error.code==="P0001"?error.message:"Не удалось ответить на предложение"},error.code==="P0001"?400:500);
+      try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}return response(data);
+    }
+    if(body.action==="courierPosition"){
+      const {data,error}=await supabase.rpc("update_cafe_courier_position",{p_actor:telegramId,p_lat:body.latitude,p_lng:body.longitude,p_accuracy:body.accuracy});return response(error?{ok:false,error:error.message}:data,error?400:200);
+    }
+    if(body.action==="uploadDeliveryProof"){
+      try{return response(await uploadDeliveryProof(supabase,telegramId,body));}catch(e){return response({ok:false,error:e instanceof Error?e.message:"Фото не сохранено"},/access denied|not allowed|Invalid delivery photo|Use JPEG|key reused|new photo/.test(String(e))?400:500);}
+    }
+    if(body.action==="viewDeliveryProof"){
+      const {data,error}=await supabase.rpc("authorize_cafe_delivery_proof_view",{p_proof:body.proofId,p_actor:telegramId});if(error)return response({ok:false,error:error.message},400);
+      const signed=await supabase.storage.from("cafe-delivery-evidence").createSignedUrl(data.path,60);if(signed.error)return response({ok:false,error:"Не удалось открыть фото"},500);return response({ok:true,url:signed.data.signedUrl});
     }
 
     if (body.action === "list") {
@@ -378,7 +396,13 @@ Deno.serve(async req => {
       const latestEventByOrder=new Map<string,any>();
       for(const event of statusEvents??[]){if(!latestEventByOrder.has(event.order_id))latestEventByOrder.set(event.order_id,{...event,actor_name:statusActorById.get(Number(event.actor_telegram_id))||("Сотрудник ID "+event.actor_telegram_id)});}
       const ordersWithAudit=ordersWithRoles.map((o:any)=>({...o,lastStatusEvent:latestEventByOrder.get(o.id)||null}));
-      return response({ ok: true, orders: ordersWithAudit, staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
+      const [{data:offers,error:offersError},{data:proofs,error:proofsError}]=await Promise.all([
+        supabase.rpc("list_cafe_courier_offers",{p_actor:telegramId}),
+        orderIds.length?supabase.from("cafe_delivery_proofs").select("id,order_id,courier_telegram_id,kind,verified_at").in("order_id",orderIds).not("verified_at","is",null):Promise.resolve({data:[],error:null})
+      ]);
+      if(offersError||proofsError)return response({ok:false,error:"Не удалось загрузить предложения или фото доставки"},500);
+      const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
+      return response({ ok: true, orders: enrichedOrders, courierOffers:offers||[], staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
     }
 
     if (body.action === "addItems") {
@@ -478,7 +502,7 @@ Deno.serve(async req => {
         p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
       });
       if (error) {
-        const clientError = /Paid order requires manager payment reversal before cancellation|Staff role cannot perform this order status transition|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
+        const clientError = /Paid order requires recorded refund before cancellation|Staff role cannot perform this order status transition|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить статус" }, clientError ? 400 : 500);
       }
       // Notify the customer and all other staff after the database commits the transition.

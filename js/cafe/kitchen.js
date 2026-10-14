@@ -51,18 +51,24 @@
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
       const canManageDelivery = ["manager","cashier","waiter"].includes(orderStaffRole) ||
         (orderStaffRole === "courier" && ["courier_assigned","picked_up"].includes(order.delivery_status));
-      const deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
+      let deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
         !(["manager","cashier","waiter"].includes(orderStaffRole) && order.delivery_status === "waiting_courier")
         && !(orderStaffRole === "courier" && Number(order.courier_telegram_id) !== Number(actorTelegramId))
         && (order.delivery_status !== "courier_assigned" || order.status === "ready")
         && !["completed","cancelled"].includes(order.status)
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
+      const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
+      const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
+      if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Фото получения → забрать':'Фото вручения → доставлено')+'</button>':'<span>Ожидается фото от курьера</span>';
+      }
+      const evidenceActions=["manager","courier"].includes(orderStaffRole)?proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join(""):"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
       const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
       const routeAction = order.order_type === "delivery" && order.delivery_address
         ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(order.delivery_address) + '" data-route-origin-lat="' + esc(routeLocation?.latitude ?? "") + '" data-route-origin-lng="' + esc(routeLocation?.longitude ?? "") + '" data-route-origin-name="' + esc(routeLocation?.name ?? "") + '" data-route-order-number="' + esc(order.order_number) + '">🗺️ Маршрут</button>' : "";
-      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter"].includes(orderStaffRole) && ["waiting_courier","courier_assigned"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
-        ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Назначить курьера</button></div>' : "";
+      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
+        ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
         && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
       const paymentAction = canManagePayment && order.payment_status !== "paid"
@@ -80,7 +86,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + '</div></article>';
     }).join("");
   }
 
@@ -116,6 +122,7 @@
       window.ummaLocationPins = locations;
       actorTelegramId = result.actorTelegramId ?? null;
       const incomingOrders = Array.isArray(result.orders) ? result.orders : [];
+      window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       const fingerprint = JSON.stringify(incomingOrders);
       const changed = fingerprint !== lastOrdersFingerprint;
@@ -167,6 +174,7 @@
   }
   async function refreshAfterUpdate() {
     const result = await api({ action:"list" });
+    window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
     locations = Array.isArray(result.locations) ? result.locations : [];
@@ -284,7 +292,7 @@
     if (!Number.isSafeInteger(courierTelegramId) || courierTelegramId <= 0) { showMessage("Сначала выберите курьера."); return; }
     if (!confirm("Назначить выбранного курьера на этот заказ?")) return;
     busy = true; showMessage("Назначаем курьера…");
-    try { await api({action:"assignCourier",orderId,courierTelegramId}); await refreshAfterUpdate(); showMessage("Курьер назначен. Уведомление отправлено в Telegram."); }
+    try { await api({action:"assignCourier",orderId,courierTelegramId}); await refreshAfterUpdate(); showMessage("Предложение отправлено курьеру. Назначение произойдёт после его подтверждения."); }
     catch(error) { showMessage(error instanceof Error ? error.message : "Не удалось назначить курьера"); }
     finally { busy = false; render(); }
   }
@@ -664,6 +672,7 @@
   byId("staffOrderType")?.addEventListener("change",()=>{
     const type=byId("staffOrderType").value;
     if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=type!=="delivery";
+    if(byId("staffCourierDispatchLabel"))byId("staffCourierDispatchLabel").hidden=type!=="delivery";
     if(!editingBillId){
       const guest=byId("staffOrderCustomerName");
       if(type!=="dine_in"&&guest?.value.startsWith("Стол №"))guest.value="";
@@ -825,7 +834,7 @@
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
           customerName:guestName,
           customerPhone:"",
-          deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+          dispatchMode:byId("staffCourierDispatch")?.value||"broadcast",deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
         });
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;

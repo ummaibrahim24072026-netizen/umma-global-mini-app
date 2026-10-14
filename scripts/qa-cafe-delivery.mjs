@@ -6,6 +6,7 @@ export async function verifyCafeDelivery(db,cafe,other,product){
  const assign=(id,courier=20,actor=11)=>q('select assign_cafe_courier($1,$2,$3) result',[id,actor,courier]);
  const delivery=(id,status,actor=20)=>q('select update_cafe_delivery_status($1,$2,$3) result',[id,actor,status]);
  const step=(id,status)=>q('select update_cafe_order_status($1,12,$2)',[id,status]);
+ const proof=async(id,kind)=>{const key=crypto.randomUUID();const r=(await q('select begin_cafe_delivery_proof($1,20,$2,$3,$4,$5,1024) result',[id,key,kind,(kind==='pickup'?'a':'b').repeat(64),'image/jpeg'])).rows[0].result;await q('select confirm_cafe_delivery_proof($1,20)',[r.proof.id]);};
  const o=await create('QA delivery cash');
  await assert.rejects(delivery(o.id,'courier_assigned',11),/Assign a courier/);
  await assert.rejects(assign(o.id,22),/another cafe/);
@@ -20,9 +21,11 @@ export async function verifyCafeDelivery(db,cafe,other,product){
  await assert.rejects(delivery(o.id,'picked_up'),/must be ready/);
  for(const s of ['confirmed','preparing','ready'])await step(o.id,s);
  await assert.rejects(step(o.id,'completed'),/Delivery must be confirmed|payment|paid/i);
+ await assert.rejects(delivery(o.id,'picked_up'),/Verified delivery photo/);await proof(o.id,'pickup');
  await delivery(o.id,'picked_up');await delivery(o.id,'picked_up');
  await assert.rejects(assign(o.id,21),/cannot be assigned/);
  await assert.rejects(delivery(o.id,'waiting_courier',11),/transition/);
+ await assert.rejects(delivery(o.id,'delivered'),/Verified delivery photo/);await proof(o.id,'handover');
  await delivery(o.id,'delivered');await delivery(o.id,'delivered');
  await assert.rejects(step(o.id,'completed'),/paid|payment/i);
  await q("select update_cafe_order_payment_cash($1,20,'paid',null,150000,30000)",[o.id]);
@@ -35,7 +38,7 @@ export async function verifyCafeDelivery(db,cafe,other,product){
  for(const status of ['confirmed','preparing','ready'])await step(prepaid.id,status);
  await q("select update_cafe_order_payment_cash($1,13,'paid',null,150000,30000)",[prepaid.id]);
  await assert.rejects(step(prepaid.id,'completed'),/Delivery must be confirmed/);
- await delivery(prepaid.id,'picked_up');await delivery(prepaid.id,'delivered');await step(prepaid.id,'completed');
+ await proof(prepaid.id,'pickup');await delivery(prepaid.id,'picked_up');await proof(prepaid.id,'handover');await delivery(prepaid.id,'delivered');await step(prepaid.id,'completed');
  const cancelled=await create('QA cancelled delivery');await assign(cancelled.id);await step(cancelled.id,'cancelled');await assert.rejects(delivery(cancelled.id,'picked_up'),/Closed order/);await assert.rejects(assign(cancelled.id),/cannot be assigned/);
  const reset=await create('QA reset delivery');await assign(reset.id);await delivery(reset.id,'waiting_courier',11);assert.equal((await q('select courier_telegram_id from cafe_orders where id=$1',[reset.id])).rows[0].courier_telegram_id,null);
  console.log('PASS delivery: atomic assignment/replay, role/cafe scope, ready before pickup, forward transitions/replay, courier cash receipt/change, paid+delivered closure and terminal guards');

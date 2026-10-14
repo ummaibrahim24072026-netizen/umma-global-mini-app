@@ -62,11 +62,13 @@
         });
         panel.append(text,button,message);root.prepend(panel);
       }
-      const isStaff=operation&&(operation.payload.staffOrder===true||['addItems','refundOrder'].includes(operation.payload.action));
+      const isStaff=operation&&(operation.payload.staffOrder===true||['addItems','refundOrder','uploadDeliveryProof'].includes(operation.payload.action));
       panel.hidden=!operation||!!isStaff!==staff;
+      const isPhoto=operation?.payload.action==='uploadDeliveryProof';
       const isRefund=operation?.payload.action==='refundOrder';
       panel.querySelector('p').textContent=isRefund?'Связь могла прерваться после записи возврата. Проверьте запись; повторно выдавать деньги гостю не нужно.':'Связь с кафе могла прерваться. Проверьте прежний заказ перед оформлением нового.';
       panel.querySelector('button').textContent=isRefund?'Проверить запись возврата':'Проверить прежний заказ';
+      if(isPhoto){panel.querySelector('p').textContent='Фото могло сохраниться до обрыва связи. Проверьте запись перед повторной загрузкой.';panel.querySelector('button').textContent='Проверить сохранение фото';}
       panel.querySelector('button').disabled=inFlight;
     }
   }

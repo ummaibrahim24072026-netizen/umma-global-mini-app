@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import { createHmac, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
+import {dispatchCourierQueue,uploadDeliveryProof} from '../supabase/functions/_shared/courier-workflow.ts';
 import { submitCafeOperation } from '../supabase/functions/_shared/order-operation.ts';
 import { loadCafeOrders } from '../supabase/functions/cafe-kitchen/order-list.ts';
 import { sandboxCanAdvance } from '../supabase/functions/cafe-kitchen/sandbox-policy.ts';
@@ -49,7 +50,7 @@ export async function verifyCafeEdges(db,cafe,product){
     const source=stripTypeScriptTypes(readFileSync(path,'utf8')).replace(/^import .*;\n/gm,'');
     vm.runInNewContext(source,{
       Deno:{env:{get:key=>({TELEGRAM_BOT_TOKEN:token,SUPABASE_URL:'http://local-test',SUPABASE_SERVICE_ROLE_KEY:'fake-test-key'})[key]},serve:fn=>serve=fn},
-      createClient:()=>client,submitCafeOperation,loadCafeOrders,sandboxCanAdvance,
+      createClient:()=>client,submitCafeOperation,loadCafeOrders,sandboxCanAdvance,uploadDeliveryProof,dispatchCourierQueue:(c,t)=>dispatchCourierQueue(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');}),
       crypto,Response,Request,URLSearchParams,TextEncoder,console,
       fetch:async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');},
     });return serve;

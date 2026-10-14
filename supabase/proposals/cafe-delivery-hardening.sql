@@ -33,6 +33,7 @@ begin
  if v_order.status in ('completed','cancelled') then raise exception 'Closed order delivery cannot be changed'; end if;
  if p_delivery_status in ('courier_assigned','picked_up','delivered') and v_order.courier_telegram_id is null then raise exception 'Assign a courier first'; end if;
  if p_delivery_status='picked_up' and v_order.status<>'ready' then raise exception 'Order must be ready before pickup'; end if;
+
  v_previous:=v_order.delivery_status;
  if v_previous=p_delivery_status then
    return jsonb_build_object('ok',true,'replayed',true,'order',jsonb_build_object('id',v_order.id,'orderNumber',v_order.order_number,'deliveryStatus',v_previous));
@@ -46,6 +47,7 @@ begin
    when v_staff_role<>'courier' and p_delivery_status='waiting_courier' and v_previous='courier_assigned' then true
    else false end;
  if not v_allowed then raise exception 'Invalid delivery status transition'; end if;
+ if p_delivery_status in ('picked_up','delivered') and v_order.delivery_status<>p_delivery_status and not exists(select 1 from public.cafe_delivery_proofs where order_id=v_order.id and courier_telegram_id=v_order.courier_telegram_id and kind=case when p_delivery_status='picked_up' then 'pickup' else 'handover' end and verified_at is not null) then raise exception 'Verified delivery photo required'; end if;
  update public.cafe_orders set delivery_status=p_delivery_status,courier_telegram_id=case when p_delivery_status='waiting_courier' then null else courier_telegram_id end,updated_at=now() where id=p_order_id returning * into v_order;
  insert into public.cafe_order_events(order_id,actor_telegram_id,from_status,to_status,note)
  values(v_order.id,p_actor_telegram_id,v_previous,p_delivery_status,coalesce(nullif(trim(p_note),''),'Статус доставки обновлён'));

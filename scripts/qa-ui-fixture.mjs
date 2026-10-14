@@ -21,8 +21,14 @@ try{
  await until(()=>d.getElementById('staffOrderMessage').textContent.includes('Оплата курьеру'));
  d.getElementById('qaKitchen').click();await new Promise(resolve=>setTimeout(resolve,20));await until(()=>d.querySelector('[data-delivery-status="picked_up"]'));
  d.querySelector('[data-delivery-status="picked_up"]').click();await until(()=>d.querySelector('[data-delivery-status="delivered"]'));
+ const route=d.querySelector('[data-show-route="true"]');route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.match(d.getElementById('courierMapClose').textContent,/Назад/);d.getElementById('courierMapClose').click();assert.equal(d.getElementById('courierMapModal').hidden,true);assert.equal(d.activeElement,route);
+ route.click();w.ummaNavigation.back();assert.equal(d.getElementById('courierMapModal').hidden,true);
  d.getElementById('qaPaid').click();await until(()=>d.querySelector('[data-refund-order]'));d.querySelector('[data-refund-order]').click();
  assert.ok(d.querySelector('.cafe-refund-dialog').open);d.querySelector('[data-close-refund]').click();assert.equal(d.querySelector('.cafe-refund-dialog'),null);
+ d.getElementById('qaRole').value='courier';d.getElementById('qaRole').dispatchEvent(new w.Event('change'));await until(()=>d.querySelector('[data-courier-accept]'));d.querySelector('[data-courier-accept]').click();await until(()=>!d.querySelector('[data-courier-accept]'));
+ assert.match(d.getElementById('cafeKitchenOrders').textContent,/Курьер назначен/);
+ await w.fetch('qa',{body:JSON.stringify({staffOrder:true,items:[{quantity:1}],customerName:'QA refusal UI',deliveryAddress:'QA address',paymentMethod:'cash',paymentTiming:'on_delivery'})});await w.ummaKitchen.refresh();await until(()=>d.querySelector('[data-courier-decline]'));d.querySelector('[data-courier-decline]').click();
+ const refusal=d.querySelector('.cafe-refund-dialog');assert.match(refusal.textContent,/Причина отказа/);refusal.querySelector('textarea').value='QA occupied';refusal.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>!d.querySelector('[data-courier-decline]'));
  assert.deepEqual(errors,[]);
  process.stdout.write('PASS actual generated UI: startup, width change, delivery selection, cart, courier checkout, kitchen status and refund dialog clicks; no script errors\n');
 }finally{w.close();}

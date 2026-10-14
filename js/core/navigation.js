@@ -44,6 +44,7 @@
     window.scrollTo({top:state.scrollY,behavior:"instant"});
   }
   function back(){
+    const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
     if(currentScreen()==="cafeKitchenPage"){
       const cash=byId("cafeCashPanel");
       if(cash&&!cash.hidden){

@@ -1,6 +1,7 @@
 import pg from 'pg';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import assert from 'node:assert/strict';
+import {verifyCafeCouriers} from '../qa-cafe-couriers.mjs';
 import {verifyCafeDelivery} from '../qa-cafe-delivery.mjs';
 import {verifyCafeEdges} from '../qa-cafe-edge.mjs';
 import {verifyCafeRefunds} from '../qa-cafe-refunds.mjs';
@@ -29,6 +30,7 @@ try {
  await observer.query('SET search_path=umma_qa_20261013,pg_catalog');
  await verifyCafeDelivery({query:(...args)=>observer.query(...args),exec:s=>observer.query(s)},'11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333');
  await verifyCafeRefunds({query:(...args)=>observer.query(...args)},'11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333');
+ await verifyCafeCouriers({query:(...args)=>observer.query(...args)},'11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333');
  await verifyCafeEdges({query:(...args)=>observer.query(...args)},'11111111-1111-4111-8111-111111111111','33333333-3333-4333-8333-333333333333');
  // Two independent sessions attempt the same refund while the first holds its row lock.
  const location='11111111-1111-4111-8111-111111111111';
@@ -44,5 +46,15 @@ try {
  await pause;await a.query('COMMIT');assert.equal((await secondRefund).rows[0].result.replayed,true);
  assert.equal(Number((await observer.query('select count(*) n from umma_qa_20261013.cafe_order_refunds where order_id=$1',[order.id])).rows[0].n),1);
  console.log('PASS native concurrent refund: lock wait verified, one payout record');
+ const courierOrder=(await observer.query("select umma_qa_20261013.create_cafe_staff_order(11,$1,'[{\"productId\":\"33333333-3333-4333-8333-333333333333\",\"quantity\":1}]','delivery','QA concurrent claim',null,'QA address') result",[location])).rows[0].result.order;
+ await observer.query('select umma_qa_20261013.ensure_cafe_courier_offers($1)',[courierOrder.id]);
+ await a.query('BEGIN');await a.query('select umma_qa_20261013.respond_cafe_courier_offer($1,20,true)',[courierOrder.id]);
+ const competitor=b.query('select umma_qa_20261013.respond_cafe_courier_offer($1,21,true)',[courierOrder.id]);
+ let competingWait=false;const hold=a.query('select pg_sleep(1)');
+ for(let n=0;n<15;n++){if(Number((await observer.query("select count(*) n from pg_stat_activity where datname='umma_qa' and wait_event_type='Lock' and query like '%respond_cafe_courier_offer%'")).rows[0].n)>0){competingWait=true;break;}await new Promise(resolve=>setTimeout(resolve,50));}
+ assert.ok(competingWait,'Second claimant must wait for the first order lock');await hold;await a.query('COMMIT');await assert.rejects(competitor,/no longer available/);
+ assert.equal(Number((await observer.query("select count(*) n from umma_qa_20261013.cafe_courier_offers where order_id=$1 and status='accepted'",[courierOrder.id])).rows[0].n),1);
+ console.log('PASS native concurrent courier acceptance: observed lock wait and exactly one winner');
+
 
 }finally {await Promise.all(clients.map(c=>c.end()));}

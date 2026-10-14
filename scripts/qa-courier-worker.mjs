@@ -1,0 +1,13 @@
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+let handler,invocations=0;
+const secret='isolated-worker-test-only-'+ 'x'.repeat(40);
+const source=stripTypeScriptTypes(readFileSync('supabase/functions/courier-dispatch-worker/index.ts','utf8')).replace(/^import .*;\n/gm,'');
+vm.runInNewContext(source,{Deno:{env:{get:key=>({COURIER_WORKER_SECRET:secret,TELEGRAM_BOT_TOKEN:'synthetic-token',SUPABASE_URL:'synthetic-url',SUPABASE_SERVICE_ROLE_KEY:'synthetic-key'})[key]},serve:fn=>handler=fn},crypto,TextEncoder,Response,createClient:()=>({}),dispatchCourierQueue:async()=>{invocations++;return {ok:true,processed:0};}});
+assert.equal((await handler(new Request('http://local-qa',{method:'POST'}))).status,401);
+assert.equal((await handler(new Request('http://local-qa',{method:'POST',headers:{Authorization:'Bearer incorrect'}}))).status,401);
+assert.equal(invocations,0);
+assert.equal((await handler(new Request('http://local-qa',{method:'POST',headers:{Authorization:'Bearer '+secret}}))).status,200);assert.equal(invocations,1);
+console.log('PASS courier scheduled worker: invalid credentials never reach privileged queue');
