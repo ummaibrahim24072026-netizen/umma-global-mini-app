@@ -10,7 +10,7 @@
   const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000),body:JSON.stringify({...payload,initData})});
   const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Нет связи с кафе');return result;
  }
- function online(value){const el=byId('cafeLiveConnection');if(el){el.textContent=value?'Онлайн · автообновление':'Связь прервана · повторяем';el.dataset.online=String(value);}}
+ function online(value){const el=byId('cafeLiveConnection');if(el){el.textContent=value?'Онлайн':'Связь прервана';el.setAttribute('aria-label',value?'Онлайн: автоматическое обновление включено':'Связь прервана: повторяем подключение');el.dataset.online=String(value);}}
  function apply(result){
   const incoming=result.notifications||[];
   const fresh=incoming.filter(n=>!known.has(n.id));
@@ -18,6 +18,7 @@
   if(known.size>500)known=new Set([...known].slice(-300));
   const count=Number(result.unreadCount)||0,badge=byId('cafeNotificationCount'),bell=byId('cafeNotificationBell');
   badge.textContent=count>99?'99+':String(count);badge.hidden=count===0;
+  const navBadge=byId('navNotificationCount');if(navBadge){navBadge.textContent=badge.textContent;navBadge.hidden=count===0;}
   bell.setAttribute('aria-label','Уведомления: '+count+' непрочитанных');
   if(loaded&&fresh.length){
    const status=byId('cafeNotificationAnnouncement');status.textContent=fresh[0].title;
@@ -31,8 +32,9 @@
   if(document.hidden||busy)return;
   const id=window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
   const root=byId('cafeNotificationBar');if(!root)return;
-  root.hidden=!id||!window.Telegram?.WebApp?.initData;
-  if(root.hidden){if(actor!==null){actor=null;known.clear();items=[];loaded=false;generation++;dialog?.close();}return;}
+  const signed=!!id&&!!window.Telegram?.WebApp?.initData;root.hidden=false;
+  byId('cafeNotificationBell').hidden=!signed;byId('cafeLiveConnection').hidden=!signed;
+  if(!signed){if(actor!==null){actor=null;known.clear();items=[];loaded=false;generation++;dialog?.close();}return;}
   if(actor!==id){actor=id;known.clear();items=[];loaded=false;generation++;byId('cafeNotificationCount').hidden=true;}
   const current=generation;busy=true;
   try{const result=await api({action:'notifications'});if(current===generation)apply(result);}

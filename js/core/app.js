@@ -20,13 +20,14 @@ const TELEGRAM_AUTH_URL =
 
 if (tg) {
 
-  tg.ready();
+  tg.ready?.();
 
-  tg.expand();
+  tg.expand?.();
 
-  tg.setHeaderColor("#ffffff");
+  tg.setHeaderColor?.("#ffffff");
 
-  tg.setBackgroundColor("#edfafa");
+  tg.setBackgroundColor?.("#f5f8f7");
+  tg.setBottomBarColor?.("#ffffff");
 
   tg.enableClosingConfirmation?.();
 
@@ -78,20 +79,14 @@ window.ummaIsSuperAdmin = false;
    TOAST
    ===================================================== */
 
+let toastTimer;
 function showToast(message) {
-
   if (!toast) return;
-
-  toast.textContent = message;
-
+  clearTimeout(toastTimer);
+  toast.textContent = String(message);
+  toast.setAttribute("aria-hidden","false");
   toast.classList.add("show");
-
-  setTimeout(() => {
-
-    toast.classList.remove("show");
-
-  }, 2200);
-
+  toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},2600);
 }
 
 
@@ -100,51 +95,22 @@ function showToast(message) {
    ===================================================== */
 
 function openPage(page) {
-  const home = document.querySelector(".app > main");
-  const cafePage = document.getElementById("cafePage");
-  const adminPage = document.getElementById("adminPage");
-  const adminUsersPage = document.getElementById("adminUsersPage");
-  const bottomNav = document.querySelector(".bottom-nav");
-
-  if (page === "home") {
-    if (home) home.style.display = "";
-    if (cafePage) cafePage.hidden = true;
-    if (adminPage) adminPage.hidden = true;
-    if (adminUsersPage) adminUsersPage.hidden = true;
-    if (bottomNav) bottomNav.style.display = "";
-    setActiveNav("home");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  if(page === "notifications") {
+    const bell=document.getElementById("cafeNotificationBell");
+    if(bell&&!bell.hidden)bell.click();else showToast("Откройте приложение через Telegram, чтобы видеть уведомления");
     return;
   }
-
-  if (page === "cafe") {
-    if (home) home.style.display = "none";
-    if (adminPage) adminPage.hidden = true;
-    if (adminUsersPage) adminUsersPage.hidden = true;
-    if (cafePage) cafePage.hidden = false;
-    if (bottomNav) bottomNav.style.display = "";
-    setActiveNav("cafe");
-    if (window.ummaCafe && typeof window.ummaCafe.refreshMenu === "function") {
-      window.ummaCafe.refreshMenu();
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
+  if(!["home","cafe","orders"].includes(page)) {
+    window.ummaNativeShell?.openService(page);return;
   }
-
-  const names = {
-    market: "Рынок Umma",
-    travel: "Путешествия",
-    hotels: "Отели Umma",
-    realestate: "Недвижимость",
-    community: "Сообщество",
-    business: "Бизнес",
-    education: "Образование",
-    health: "Здоровье",
-    services: "Услуги",
-    more: "Дополнительные сервисы"
-  };
-
-  showToast(`${names[page] || "Раздел"} — скоро будет доступен`);
+  const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=!(id==="cafePage"&&page!=="home");});
+  const home=document.querySelector(".app > main"),nav=document.querySelector(".bottom-nav");
+  if(home)home.style.display=page==="home"?"":"none";
+  if(nav)nav.style.display="";
+  setActiveNav(page);
+  if(page==="orders")window.ummaCafe?.openOrders();
+  else if(page==="cafe")window.ummaCafe?.refreshMenu();
 }
 
 /* =====================================================
@@ -177,7 +143,7 @@ function setActiveNav(page) {
     .querySelectorAll(".nav-item")
     .forEach(item => {
 
-      item.classList.remove("active");
+      item.classList.remove("active");item.removeAttribute("aria-current");
 
     });
 
@@ -190,7 +156,7 @@ function setActiveNav(page) {
 
   if (active) {
 
-    active.classList.add("active");
+    active.classList.add("active");active.setAttribute("aria-current","page");
 
   }
 
@@ -247,7 +213,7 @@ profileBtn?.addEventListener("click", () => {
 
 allServicesBtn?.addEventListener("click", () => {
 
-  showToast("Все сервисы Umma");
+  openPage("more");
 
 });
 

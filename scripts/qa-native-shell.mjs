@@ -1,0 +1,29 @@
+import {JSDOM} from 'jsdom';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+let fullscreen=0,expanded=0,nativeBack,menu=0,orders=0;
+const events={};
+const sdk={initData:'synthetic-ui-only',viewportStableHeight:844,viewportHeight:844,isFullscreen:false,platform:'android',safeAreaInset:{top:24,bottom:20},contentSafeAreaInset:{top:16,bottom:0},isVersionAtLeast:()=>true,ready(){},expand(){expanded++;},setHeaderColor(){},setBackgroundColor(){},setBottomBarColor(){},enableClosingConfirmation(){},onEvent:(name,fn)=>events[name]=fn,requestFullscreen(){fullscreen++;sdk.isFullscreen=true;events.fullscreenChanged?.();},BackButton:{show(){},hide(){},onClick:fn=>nativeBack=fn}};
+w.Telegram={WebApp:sdk};w.visualViewport={height:844,addEventListener(){}};
+w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=function({top}){this.scrollTop=top;};w.HTMLElement.prototype.scrollIntoView=()=>{};
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+const tick=()=>new Promise(r=>setTimeout(r,20));
+try{
+ w.eval(readFileSync('js/core/app.js','utf8'));w.ummaCafe={refreshMenu:()=>menu++,openOrders:()=>orders++};
+ w.eval(readFileSync('js/core/navigation.js','utf8'));w.eval(readFileSync('js/core/native-shell.js','utf8'));
+ assert.equal(fullscreen,1);assert.equal(expanded,1);assert.equal(d.documentElement.style.getPropertyValue('--umma-viewport-height'),'844px');assert.equal(d.documentElement.style.getPropertyValue('--umma-safe-top'),'max(40px, env(safe-area-inset-top, 0px))');
+ const main=d.querySelector('.app>main');main.scrollTop=210;
+ d.querySelector('.nav-item[data-page="cafe"]').click();await tick();assert.equal(menu,1);assert.equal(d.getElementById('cafePage').hidden,false);assert.equal(d.getElementById('nativeAppTitle').textContent,'UMMA Cafe');
+ nativeBack();await tick();assert.equal(main.style.display,'');assert.equal(main.scrollTop,210);
+ d.querySelector('.nav-item[data-page="orders"]').click();await tick();assert.equal(orders,1);assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'orders');
+ d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.getElementById('nativeDirectory').children.length,9);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
+ d.querySelector('.native-directory-card').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);nativeBack();assert.equal(d.querySelector('.native-service-dialog').open,false);assert.equal(d.getElementById('servicesPage').hidden,false);
+ w.openPage('home');await tick();d.getElementById('adminPage').hidden=false;await tick();d.getElementById('cafeKitchenPage').hidden=false;await tick();assert.equal(d.getElementById('adminPage').hidden,true,'opening another screen removes stale overlapping page');
+ w.openPage('cafe');await tick();d.getElementById('cafeOrderForm').hidden=false;const input=d.getElementById('cafeCustomerName');input.focus();assert.equal(d.activeElement,input);w.visualViewport.height=420;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),true);assert.equal(d.documentElement.style.getPropertyValue('--umma-viewport-height'),'420px');sdk.viewportStableHeight=420;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),true);sdk.viewportStableHeight=844;input.blur();w.visualViewport.height=844;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),false);
+ sdk.requestFullscreen=()=>{throw Error('unsupported client');};sdk.isFullscreen=false;d.getElementById('nativeFullscreen').click();assert.equal(expanded,2,'unsupported fullscreen falls back to expanded layout');
+ delete sdk.requestFullscreen;w.ummaNativeShell.geometry();assert.equal(d.getElementById('nativeFullscreen').hidden,true);
+ assert.equal(d.querySelectorAll('.bottom-nav>.nav-item').length,5);assert.ok(d.querySelectorAll('.umma-icon').length>10);
+ console.log('PASS native shell: supported fullscreen/fallback, Telegram safe areas, keyboard viewport, actual tabs, planned-service disclosure, modal back, single active screen and preserved internal scroll');
+}finally{w.close();}

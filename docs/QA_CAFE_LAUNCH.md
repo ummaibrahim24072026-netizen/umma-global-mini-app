@@ -145,3 +145,14 @@ Published commit `a33018ea1bd113a5aa4c730b917d6c89dd01daba`: client bot messages
 Full local npm test and GitHub checks run `38558371889` passed. Native PostgreSQL verifies first courier winner and disjoint concurrent notification leases. Remote isolated Supabase transaction verified client acceptance event and replay deduplication, then rolled back. Production Edge sources matched: cafe-kitchen v32, cafe-my-orders v3, courier-dispatch-worker v4. Actual scheduled worker returned HTTP 200 with zero customer jobs; no historical notifications were backfilled. Invalid-auth live API calls returned 401. Inbox/read RPC access is denied to anon/authenticated. Security advisors introduced no new warning/error classes. Existing order count and receipt hash matched the frozen pre-release baseline. No production test sale/payment was created. Courier bot offers remain paused and inventory remains disabled.
 
 Physical receipt of bot messages and mobile behavior still require user device verification. Telegram timeout after message acceptance can cause a repeated bot message on retry; concurrent queue leases prevent duplicate simultaneous workers, but sendMessage has no idempotency key.
+
+
+## Native presentation refresh — 2026-10-14
+
+The application shell fills the available Telegram viewport and removes the former 520px-wide frame. One active page scrolls inside the shell; navigation and the app bar remain separate. Internal scroll is retained on Back. Supported Telegram clients request fullscreen, respect device/content safe areas, and fall back to expanded mode when unsupported. Keyboard resizing keeps the focused form usable; reduced-motion preferences disable transitions.
+
+Five primary tabs open Home, Cafe, Orders, Notifications and More. More contains real informational screens for planned services with clear availability labels. Cafe/staff/order/payment identities and server actions remain unchanged. Shared forms use readable text, 44–48px touch targets, consistent cards and responsive kitchen/menu columns. Native Back closes dialogs before leaving a screen; a supported Telegram client can add a home-screen shortcut through the explicit button.
+
+Automated verification covers fullscreen/fallback, safe-area/keyboard events, actual tab actions, modal Back, a single active screen and scroll restoration alongside the existing order/payment/courier/network tests. Physical fullscreen and keyboard behavior on the user's phone remains a device check.
+
+Visual QA checked the isolated UI at 320px, 390px and 768px. Selected-cart overflow was reproduced and corrected by keeping the sticky cart within the page width and wrapping price/quantity controls. Quantity buttons use a minimum 44px touch target. An unused MapLibre startup download was removed; existing maps still use Leaflet. The logo was re-encoded losslessly, with exact decoded RGBA pixel equality verified and PNG fallback retained.

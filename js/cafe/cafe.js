@@ -57,6 +57,7 @@
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length;
+    if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
     const stickyTotal = byId("cafeStickyTotal");
@@ -150,7 +151,8 @@
     if (manual) manual.hidden = true;
     if (locations.length === 1) {
       setSelectedLocation(locations[0].id);
-      updateLocationMessage("Ближайшее доступное кафе: " + locations[0].name + ". Сейчас в системе одно кафе, принимающее заказы.");
+      if(mode?.closest("label"))mode.closest("label").hidden=true;
+      updateLocationMessage("Кафе: " + locations[0].name);
       return;
     }
     const allHaveCoordinates = locations.length > 0 && locations.every(location =>
@@ -421,6 +423,7 @@
   window.ummaCafe = {
     refreshMenu: loadMenu,
     refreshMyOrders: loadMyOrders,
+    openOrders:()=>{const section=byId("cafeMyOrdersSection"),refresh=byId("cafeMyOrdersRefresh");if(section)section.hidden=false;if(refresh)refresh.hidden=false;loadMyOrders();section?.scrollIntoView?.({block:"start",behavior:"smooth"});},
     open: () => { if (typeof openPage === "function") openPage("cafe"); if (!products.length) loadMenu(); }
   };
   renderCart();

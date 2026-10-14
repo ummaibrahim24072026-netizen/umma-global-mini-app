@@ -25,8 +25,7 @@
 
 
 
-
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'"><style>/* UMMA GLOBAL — single source of truth for the home screen */
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: 'self'; connect-src 'none'"><style>/* UMMA GLOBAL — single source of truth for the home screen */
 :root {
   --turquoise: #0FA3A8;
   --turquoise-deep: #087F84;
@@ -1270,11 +1269,17 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 #courierMapModal{padding-top:calc(16px + var(--umma-safe-top))!important;padding-bottom:calc(16px + var(--umma-safe-bottom))!important;background:var(--canvas)!important}#courierMapModal>div>div:first-child{top:calc(-16px - var(--umma-safe-top));padding-top:calc(8px + var(--umma-safe-top));background:var(--canvas)}
 .toast{bottom:calc(82px + var(--umma-safe-bottom));font-size:14px;line-height:1.45;max-width:min(560px,calc(100% - 32px));padding:14px 18px;border-radius:16px;box-shadow:0 8px 24px #133f3c22}
 .native-screen-enter{animation:umma-screen-in .16s ease-out}@keyframes umma-screen-in{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}
-.app.native-keyboard .bottom-nav{display:none!important}.app.native-keyboard .toast{bottom:16px}.app.native-keyboard .native-screen{scroll-padding-bottom:24px}
+.app.native-keyboard .bottom-nav{display:none!important}.app.native-keyboard~.toast{bottom:calc(16px + var(--umma-keyboard-offset,0px))}.app.native-keyboard .native-screen{scroll-padding-bottom:24px}
 @container umma-shell (min-width:700px){.services-grid,.native-directory-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cafe-products{grid-template-columns:repeat(3,minmax(0,1fr))}.cafe-kitchen-orders{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.staff-table-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.brand{min-height:124px}.bottom-nav{padding-left:calc((100% - min(100%,600px))/2);padding-right:calc((100% - min(100%,600px))/2)}}
-@container umma-shell (max-width:360px){.cafe-products{grid-template-columns:1fr}.cafe-card{padding:20px}.cafe-content h1{font-size:24px}.service{padding:13px}.service strong{font-size:14px}.welcome-card,.ayah-card{padding:14px;gap:10px}.native-app-title{font-size:14px}.cafe-notification-bar small{max-width:65px;font-size:10px}.cafe-kitchen-header button{flex:1 1 auto}.nav-item small{font-size:10px}}
-@media(max-width:640px){.cafe-refund-dialog,.cafe-notifications-dialog,.native-service-dialog{position:fixed;top:auto;bottom:0;margin:0 auto;width:100%;max-width:none;max-height:calc(var(--umma-viewport-height) - var(--umma-safe-top) - 16px);border:0;border-radius:24px 24px 0 0;padding-bottom:calc(20px + var(--umma-safe-bottom))}}
+@container umma-shell (max-width:380px){.cafe-products{grid-template-columns:1fr}.cafe-card{padding:20px}.cafe-content h1{font-size:24px}.service{padding:13px}.service strong{font-size:14px}.welcome-card,.ayah-card{padding:14px;gap:10px}.native-app-title{font-size:14px}.cafe-notification-bar small{max-width:65px;font-size:10px}.cafe-kitchen-header button{flex:1 1 auto}.nav-item small{font-size:10px}}
+@media(max-width:640px){.cafe-refund-dialog,.cafe-notifications-dialog,.native-service-dialog{position:fixed;top:auto;bottom:var(--umma-keyboard-offset,0px);margin:0 auto;width:100%;max-width:none;max-height:calc(var(--umma-viewport-height) - var(--umma-safe-top) - 16px);border:0;border-radius:24px 24px 0 0;padding-bottom:calc(20px + var(--umma-safe-bottom))}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Price and quantity never compete for the same narrow mobile row. */
+.cafe-product-bottom{flex-wrap:wrap;gap:10px}.cafe-product-bottom>.cafe-product-price{flex:1 1 100%}.cafe-card-quantity{max-width:100%;gap:8px}.cafe-qty-btn,.cafe-add-button,.staff-product-minus,.staff-product-plus{min-width:44px;min-height:44px}.cafe-card-quantity strong{min-width:22px;text-align:center}
+
+.gold-circle{width:44px;height:44px;min-width:44px;flex:0 0 44px;border:0;box-shadow:none;background:var(--turquoise-pale);color:var(--turquoise-deep)}.welcome-content h2 br{display:none}#cafeLiveConnection::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#0f8f93;margin-right:5px}#cafeLiveConnection[data-online="false"]::before{background:#b05b25}
+
+.cafe-sticky-order{margin-left:0;margin-right:0;width:100%;max-width:100%}.cafe-cart-row{flex-wrap:wrap}.cafe-cart-row>div:first-child{min-width:0;flex:1}.cafe-cart-controls{flex-shrink:0;margin-left:auto}.cafe-cart-controls button{min-width:44px;min-height:44px}.cafe-cart-row small{font-size:12px;line-height:1.5}.native-screen h1,.native-screen h2,.native-screen h3{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);line-height:1.3}
 .app{width:320px;margin:0}.qa-toolbar{position:fixed;right:12px;top:12px;z-index:200;background:white;padding:12px;display:grid;gap:8px;max-width:220px}button{cursor:pointer}</style></head>
 
 <body>
@@ -1290,8 +1295,8 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 
       <img
         class="brand-logo"
-        src="https://raw.githubusercontent.com/ummaibrahim24072026-netizen/umma-global-mini-app/main/logo/assets/umma-logo.png?v=2"
-        onerror="this.style.display='none';"
+        src="../../logo/assets/umma-logo.webp?v=1"
+        onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='../../logo/assets/umma-logo.png';}else{this.style.display='none';}"
         alt="Umma Global"
       >
 
@@ -2224,14 +2229,12 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 <!-- TOAST -->
 <div
   class="toast"
-  id="toast"
+  id="toast" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"
 >
-  Скоро здесь появится этот раздел
 </div>
 
 
 <!-- CORE -->
-
 
 
 
@@ -2348,20 +2351,14 @@ window.ummaIsSuperAdmin = false;
    TOAST
    ===================================================== */
 
+let toastTimer;
 function showToast(message) {
-
   if (!toast) return;
-
-  toast.textContent = message;
-
+  clearTimeout(toastTimer);
+  toast.textContent = String(message);
+  toast.setAttribute("aria-hidden","false");
   toast.classList.add("show");
-
-  setTimeout(() => {
-
-    toast.classList.remove("show");
-
-  }, 2200);
-
+  toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},2600);
 }
 
 
@@ -2645,6 +2642,7 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length;
+    if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
     const stickyTotal = byId("cafeStickyTotal");
@@ -2738,7 +2736,8 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
     if (manual) manual.hidden = true;
     if (locations.length === 1) {
       setSelectedLocation(locations[0].id);
-      updateLocationMessage("Ближайшее доступное кафе: " + locations[0].name + ". Сейчас в системе одно кафе, принимающее заказы.");
+      if(mode?.closest("label"))mode.closest("label").hidden=true;
+      updateLocationMessage("Кафе: " + locations[0].name);
       return;
     }
     const allHaveCoordinates = locations.length > 0 && locations.every(location =>
@@ -3026,7 +3025,7 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
   const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000),body:JSON.stringify({...payload,initData})});
   const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Нет связи с кафе');return result;
  }
- function online(value){const el=byId('cafeLiveConnection');if(el){el.textContent=value?'Онлайн · автообновление':'Связь прервана · повторяем';el.dataset.online=String(value);}}
+ function online(value){const el=byId('cafeLiveConnection');if(el){el.textContent=value?'Онлайн':'Связь прервана';el.setAttribute('aria-label',value?'Онлайн: автоматическое обновление включено':'Связь прервана: повторяем подключение');el.dataset.online=String(value);}}
  function apply(result){
   const incoming=result.notifications||[];
   const fresh=incoming.filter(n=>!known.has(n.id));
@@ -4241,9 +4240,10 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
  'use strict';
  const sdk=window.Telegram?.WebApp,app=document.querySelector('.app'),byId=id=>document.getElementById(id);
  if(!app)return;
- const paths={home:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',cafe:'M4 3v7m3-7v7m-6-4v2a3 3 0 0 0 6 0V3M4 11v10M15 3v8h4V3m0 8v10',orders:'M7 3h10v3H7zM7 5H4v16h16V5h-3M8 11h8M8 15h5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',more:'M5 6h14M5 12h14M5 18h14',expand:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',market:'M3 3h2l3 12h11l2-8H6M10 20h.01M18 20h.01',travel:'m3 13 18-8-8 18-2-10z',hotels:'M4 21V3h16v18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-6h4v6',realestate:'M3 10 12 3l9 7M5 9v12h14V9m-9 12v-7h4v7',community:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 7m5 10v-2a4 4 0 0 0-3-4',business:'M8 7V3h8v4M3 7h18v14H3zM3 12h18M10 12v3h4v-3',education:'m2 9 10-5 10 5-10 5zm4 3v6l6 3 6-3v-6M22 9v7',health:'M20 4c-3-2-6 0-8 3-2-3-5-5-8-3-5 4 2 11 8 17 6-6 13-13 8-17',farm:'M5 21c0-6 3-12 12-16M4 12C1 3 11 2 21 3c-1 10-4 19-13 15'};
+ const paths={kitchen:'M4 10h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3zm-2 0h20M8 3v3m4-4v4m4-3v3',courier:'M3 7h11v11H3zm11 4h4l3 4v3h-7M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4m10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4',accounting:'M4 21h16M6 17V9h3v8m3 0V3h3v14m3 0v-5h3v5',home:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',cafe:'M4 3v7m3-7v7m-6-4v2a3 3 0 0 0 6 0V3M4 11v10M15 3v8h4V3m0 8v10',orders:'M7 3h10v3H7zM7 5H4v16h16V5h-3M8 11h8M8 15h5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',more:'M5 6h14M5 12h14M5 18h14',expand:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',market:'M3 3h2l3 12h11l2-8H6M10 20h.01M18 20h.01',travel:'m3 13 18-8-8 18-2-10z',hotels:'M4 21V3h16v18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-6h4v6',realestate:'M3 10 12 3l9 7M5 9v12h14V9m-9 12v-7h4v7',community:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 7m5 10v-2a4 4 0 0 0-3-4',business:'M8 7V3h8v4M3 7h18v14H3zM3 12h18M10 12v3h4v-3',education:'m2 9 10-5 10 5-10 5zm4 3v6l6 3 6-3v-6M22 9v7',health:'M20 4c-3-2-6 0-8 3-2-3-5-5-8-3-5 4 2 11 8 17 6-6 13-13 8-17',farm:'M5 21c0-6 3-12 12-16M4 12C1 3 11 2 21 3c-1 10-4 19-13 15'};
  function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','umma-icon');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.more);svg.append(p);return svg;}
  document.querySelectorAll('[data-native-icon]').forEach(el=>el.replaceChildren(icon(el.dataset.nativeIcon)));
+ for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
  const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeAccountingPage','servicesPage'];
  scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
  const titles={home:'UMMA Global',cafePage:'UMMA Cafe',servicesPage:'Направления UMMA',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
@@ -4262,13 +4262,16 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(succes
  }
  new MutationObserver(syncScene).observe(app,{subtree:true,attributes:true,attributeFilter:['hidden','style']});
  new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.target.tagName==='DIALOG'||r.type==='childList'&&r.target===document.body&&[...r.addedNodes,...r.removedNodes].some(n=>n.nodeName==='DIALOG')))syncScene();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open'],childList:true});syncScene();
+ let restingHeight=Number(sdk?.viewportStableHeight)||window.innerHeight;
  function geometry(){
   const focused=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'');
   const visual=window.visualViewport,stable=Number(sdk?.viewportStableHeight)||window.innerHeight;
-  const keyboard=focused&&visual&&stable-visual.height>140;
+  if(!focused)restingHeight=stable;
+  const keyboard=focused&&visual&&Math.max(stable,restingHeight)-visual.height>140;
   const height=keyboard?visual.height:(Number(sdk?.viewportStableHeight)||visual?.height||window.innerHeight);
   const root=document.documentElement.style;
   if(height>0)root.setProperty('--umma-viewport-height',Math.round(height)+'px');
+  root.setProperty('--umma-keyboard-offset',Math.max(0,keyboard?window.innerHeight-visual.height-(visual.offsetTop||0):0)+'px');
   const device=sdk?.safeAreaInset||{},content=sdk?.contentSafeAreaInset||{};
   for(const side of ['top','bottom','left','right']){
    const fallback=side==='top'&&sdk?.isFullscreen&&!Number(content.top)?48:0;

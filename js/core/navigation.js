@@ -7,12 +7,12 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeAccountingPage"
+    "cafeInventoryPage","cafePage","cafeAccountingPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
     "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
-    "cafeInventoryBack","cafeBack","accountingBack"
+    "cafeInventoryBack","cafeBack","accountingBack","servicesBack"
   ]);
   const stack=[];
   const byId=id=>document.getElementById(id);
@@ -30,7 +30,7 @@
       screen:currentScreen(),
       mainDisplay:main()?.style.display??"",
       navDisplay:bottom()?.style.display??"",
-      scrollY:window.scrollY||0
+      scrollY:(currentScreen()==="home"?main():byId(currentScreen()))?.scrollTop||window.scrollY||0
     };
   }
   function restore(state){
@@ -41,12 +41,16 @@
     if(main())main().style.display=state.mainDisplay;
     if(bottom())bottom().style.display=state.navDisplay;
     if(state.screen==="home"&&typeof setActiveNav==="function")setActiveNav("home");
-    window.scrollTo({top:state.scrollY,behavior:"instant"});
+    const scroller=state.screen==="home"?main():byId(state.screen);
+    if(scroller?.scrollTo)scroller.scrollTo({top:state.scrollY,behavior:"instant"});else window.scrollTo({top:state.scrollY,behavior:"instant"});
+    if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":"cafe");
   }
   function back(){
+    if(window.ummaNativeShell?.isDialogOpen()){window.ummaNativeShell.closeDialog();return true;}
     if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
-    if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return;}
+    if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return true;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
+    const modal=document.querySelector("dialog[open]");if(modal){modal.close?.();modal.remove?.();return true;}
     if(currentScreen()==="cafeKitchenPage"){
       const cash=byId("cafeCashPanel");
       if(cash&&!cash.hidden){

@@ -14,27 +14,4 @@ updateAdminUI(
 authenticateTelegramUser();
 
 
-/* =====================================================
-   HAPTIC FEEDBACK
-   ===================================================== */
-
-document
-  .querySelectorAll("button")
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        try {
-
-          tg?.HapticFeedback?.impactOccurred(
-            "light"
-          );
-
-        } catch (error) {}
-
-      }
-    );
-
-  });
+/* Haptics for static and dynamic buttons are delegated by native-shell.js. */

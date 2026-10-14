@@ -125,7 +125,7 @@ console.log("PASS sandbox isolated in superadmin developer settings");
 
 const navigation=read("js/core/navigation.js");
 new vm.Script(navigation,{filename:"navigation.js"});
-assert.match(html,/js\/core\/navigation\.js\?v=4/,"shared navigation not loaded");
+assert.match(html,/js\/core\/navigation\.js\?v=5/,"shared navigation not loaded");
 assert.match(html,/id="cafeWaiterKitchen"/,"kitchen shortcut missing in order workspace");
 assert.match(kitchen,/byId\("cafeWaiterKitchen"\)\?\.addEventListener\("click", open\)/,"kitchen shortcut must work");
 const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage"];
