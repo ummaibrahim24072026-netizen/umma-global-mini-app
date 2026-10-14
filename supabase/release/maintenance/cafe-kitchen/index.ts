@@ -1,3 +1,4 @@
+import {dispatchCustomerNotifications} from "../_shared/customer-notifications.ts";
 import {dispatchCourierQueue,uploadDeliveryProof} from "../_shared/courier-workflow.ts";
 import { sandboxCanAdvance } from "./sandbox-policy.ts";
 import { submitCafeOperation } from "../_shared/order-operation.ts";
@@ -360,6 +361,7 @@ Deno.serve(async req => {
       if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId)||typeof body.accept!=="boolean")return response({ok:false,error:"Некорректное предложение"},400);
       const {data,error}=await supabase.rpc("respond_cafe_courier_offer",{p_order_id:body.orderId,p_actor_telegram_id:telegramId,p_accept:body.accept,p_reason:typeof body.reason==="string"?body.reason:null});
       if(error)return response({ok:false,error:error.code==="P0001"?error.message:"Не удалось ответить на предложение"},error.code==="P0001"?400:500);
+      try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}return response(data);
     }
     if(body.action==="courierPosition"){
@@ -452,6 +454,7 @@ Deno.serve(async req => {
         const clientError = /Invalid idempotent order request|Idempotency key reused|Staff operation access denied|Order operation access denied|Invalid staff|Staff access denied|Order not found|Only dine-in bills|Bill is already closed|Staff cannot add items|Invalid order items|Invalid item|Invalid item quantity|Product not found or unavailable/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось добавить блюда в счёт" }, clientError ? 400 : 500);
       }
+      try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       return response({ ...(data ?? { ok: true }), staffRole });
     }
 
@@ -495,6 +498,7 @@ Deno.serve(async req => {
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить оплату" }, clientError ? 400 : 500);
       }
       if(paymentStatus==="paid")await supabase.from("cafe_transfer_proofs").update({review_status:"confirmed",reviewed_by_telegram_id:telegramId,reviewed_at:new Date().toISOString()}).eq("order_id",orderId).eq("review_status","pending");
+      try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       return response({ ...(data ?? { ok: true }), staffRole });
     }
 
@@ -514,6 +518,7 @@ Deno.serve(async req => {
         const clientError = error.code === "P0001";
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить доставку" }, clientError ? 400 : 500);
       }
+      try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       return response({ ...(data ?? { ok: true }), staffRole });
     }
 
@@ -545,22 +550,6 @@ Deno.serve(async req => {
         if (notifyLookupError) {
           console.error("Order notification lookup failed", notifyLookupError.message);
         } else if (updatedOrder) {
-          const statusMessages: Record<string, string> = {
-            confirmed: "кафе приняло ваш заказ",
-            preparing: "ваш заказ начали готовить",
-            ready: "ваш заказ готов",
-            completed: "ваш заказ выдан. Спасибо, что выбрали Umma!",
-            cancelled: "ваш заказ отменён",
-          };
-          const statusMessage = statusMessages[updatedOrder.status];
-          if (statusMessage && updatedOrder.customer_telegram_id) {
-            const customerResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: updatedOrder.customer_telegram_id,
-                text: `Umma Cafe · Заказ №${updatedOrder.order_number}\n\nСтатус обновлён: ${statusMessage}` }),
-            });
-            if (!customerResponse.ok) console.error("Telegram customer notification failed", customerResponse.status);
-          }
           if (status === "confirmed" && updatedOrder.location_id) {
             const [{ data: location }, { data: assignments, error: assignmentsError }] = await Promise.all([
               supabase.from("locations").select("name").eq("id", updatedOrder.location_id).maybeSingle(),
@@ -586,6 +575,7 @@ Deno.serve(async req => {
         console.error("Telegram notification error", notificationError);
       }
 
+      try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       return response({ ...(data ?? { ok: true }), staffRole });
     }
 

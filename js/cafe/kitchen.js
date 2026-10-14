@@ -101,7 +101,7 @@
       return result;
     }
     const response = await fetch(API, {
-      method:"POST", headers:{"Content-Type":"application/json"},
+      method:"POST", headers:{"Content-Type":"application/json"},cache:"no-store",signal:window.AbortSignal?.timeout?.(12000),
       body:JSON.stringify({ ...payload, initData })
     });
     const result = await response.json();
@@ -110,9 +110,10 @@
   }
 
   let courierWorkspace = false;
+  let refreshQueued=false;
   let lastOrdersFingerprint = null;
   async function loadOrders(options = {}) {
-    if (busy) return;
+    if (busy) {refreshQueued=true;return;}
     const silent = options?.silent === true;
     busy = true;
     if (!silent) showMessage("Загружаем заказы…");
@@ -144,7 +145,7 @@
       if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
       else console.warn("Kitchen background refresh failed:", error);
 
-    } finally { busy = false; }
+    } finally { busy = false;if(refreshQueued){refreshQueued=false;Promise.resolve().then(()=>loadOrders({silent:true}));} }
   }
 
   async function updateStatus(orderId, status) {
@@ -212,6 +213,7 @@
     if (waiter) waiter.hidden = true;
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
+    orders=[];render();window.ummaCourierWorkflow?.renderOffers([],courierWorkspace?"courier":"manager");
     loadOrders();
     window.ummaKitchenLive?.start();
     if(!courierWorkspace)loadCash();
@@ -242,7 +244,7 @@
   byId("selfCourierDisable")?.addEventListener("click",()=>setSelfCourier(false));
 
   async function openWaiterPage() {
-    courierWorkspace=false;
+    courierWorkspace=false;window.ummaKitchenLive?.start();
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");
@@ -908,5 +910,6 @@
   renderStaffCart();
   setStaffOrderMode(null);
 
+  document.addEventListener("umma:cafe-events",()=>{if(!document.hidden&&byId("cafeCashPanel")?.hidden===false)loadCash();});
   window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();

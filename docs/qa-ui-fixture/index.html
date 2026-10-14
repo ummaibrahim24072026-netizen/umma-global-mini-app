@@ -881,6 +881,8 @@ button:active { transform: scale(.98); }
 #courierMapModal>div>div:first-child{position:sticky;top:-14px;z-index:2;background:white;flex-wrap:wrap;padding:8px 0}#courierMapTitle{min-width:0;flex:1 1 150px;font-size:20px}.courier-route-back{flex:0 0 auto;border:1px solid #0b777a;border-radius:10px;padding:12px;color:#07595c;background:#e8f7f5;font-weight:800}#courierRouteMap{min-height:180px!important;height:55dvh!important}
 
 .delivery-tracking-dialog{width:min(94vw,680px);max-width:680px;max-height:90dvh;overflow:auto;box-sizing:border-box;border:0;border-radius:14px;padding:16px}.delivery-tracking-dialog::backdrop{background:#0008}.delivery-tracking-header{position:sticky;top:0;background:white;z-index:1000;display:flex;flex-wrap:wrap;gap:12px;align-items:center}.delivery-tracking-map{height:min(52dvh,420px);min-height:180px;margin:12px 0}.delivery-tracking-dialog p{overflow-wrap:anywhere}.delivery-tracking-dialog small{display:block}
+
+.cafe-notification-bar{position:sticky;top:0;z-index:9000;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:6px 12px;background:#fffdf5;border-bottom:1px solid #e5dfc7;box-sizing:border-box}.cafe-notification-bar[hidden]{display:none}.cafe-notification-bar small{font-size:12px;color:#16704a}.cafe-notification-bar small[data-online="false"]{color:#994c22}.cafe-notification-bell{position:relative;min-width:46px;min-height:40px;border:1px solid #d8ccb0;border-radius:12px;background:white;font-size:22px}.cafe-notification-bell b{font-size:12px;background:#c13629;color:white;border-radius:12px;padding:2px 5px}.cafe-notification-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.cafe-notifications-dialog{width:min(440px,calc(100vw - 24px));max-height:80dvh;overflow:auto;box-sizing:border-box;border:1px solid #b8d4d4;border-radius:16px;padding:16px}.cafe-notifications-dialog::backdrop{background:#0007}.cafe-notification-item{display:block;width:100%;text-align:left;white-space:pre-line;overflow-wrap:anywhere;border:1px solid #dbe8e8;border-radius:12px;background:white;padding:12px;margin:8px 0}.cafe-notification-item[data-unread="true"]{background:#e8f7f5;border-left:4px solid #0f8f93}.cafe-notification-item small{display:block;margin-top:6px;color:#637777}
     /* =====================================================
        SUPER ADMIN
        ===================================================== */
@@ -1211,6 +1213,7 @@ button:active { transform: scale(.98); }
 <body>
 
 <div class="app">
+<aside id="cafeNotificationBar" class="cafe-notification-bar" hidden><small id="cafeLiveConnection" role="status">Подключаемся…</small><button type="button" id="cafeNotificationBell" aria-label="Уведомления" class="cafe-notification-bell">🔔 <b id="cafeNotificationCount" hidden>0</b></button><span id="cafeNotificationAnnouncement" class="cafe-notification-announcement" role="status" aria-live="polite"></span></aside>
 
 <!-- HOME -->
   <main>
@@ -2228,6 +2231,7 @@ button:active { transform: scale(.98); }
 
 
 
+
   
 
 
@@ -2252,6 +2256,7 @@ const reply=data=>new Response(JSON.stringify({ok:true,...data}),{headers:{'Cont
 let qaSelfAvailable=false;
 window.fetch=async(url,options={})=>{const body=options.body?JSON.parse(options.body):{};
 if(!options.body)return reply({products:[product]});
+if(body.action==='notifications'||body.action==='readNotifications')return reply({notifications:[],unreadCount:0});
 if(body.staffOrder){const id=crypto.randomUUID();const amount=body.items.reduce((sum,item)=>sum+item.quantity*120000,0);qaOrders.push({...qaOrders[0],id,order_number:qaOrders.length+1,status:'pending',payment_status:'pending',deliveryProofs:[],delivery_status:'waiting_courier',courier_telegram_id:null,customer_name:body.customerName,delivery_address:body.deliveryAddress,payment_method:body.paymentMethod,payment_timing:body.paymentTiming,total_vnd:amount});return reply({order:{id,orderNumber:qaOrders.length,totalVnd:amount}});}
 if(body.action==='selfCourier'){if(body.enabled!==undefined)qaSelfAvailable=body.enabled;return reply({availability:[{location_id:qaLocation.id,courier_available:qaSelfAvailable}]});}
 if(body.action==='list'&&body.workspace==='courier'&&qaRole==='manager')return reply({orders:[],courierOffers:[],locations:[{...qaLocation,location_type:'cafe',is_active:true}],locationIds:qaSelfAvailable?[qaLocation.id]:[],staffRole:'courier',actorTelegramId:10,couriers:[]});
@@ -2270,6 +2275,79 @@ if(body.action==='updateStatus'&&order)order.status=body.status;
 return reply({});};
 window.ummaCafeRequests={request:(url,payload)=>window.fetch(url,{body:JSON.stringify(payload)})};
 window.showToast=()=>{};
+</script><script>/* Signed private inbox. No Telegram credentials or notification text in browser storage. */
+(() => {
+ 'use strict';
+ const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders';
+ const byId=id=>document.getElementById(id);
+ let busy=false,readBusy=false,actor=null,known=new Set(),items=[],generation=0,loaded=false,dialog=null;
+ async function api(payload){
+  const initData=window.Telegram?.WebApp?.initData;
+  if(!initData)throw Error('Откройте приложение через Telegram');
+  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000),body:JSON.stringify({...payload,initData})});
+  const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Нет связи с кафе');return result;
+ }
+ function online(value){const el=byId('cafeLiveConnection');if(el){el.textContent=value?'Онлайн · автообновление':'Связь прервана · повторяем';el.dataset.online=String(value);}}
+ function apply(result){
+  const incoming=result.notifications||[];
+  const fresh=incoming.filter(n=>!known.has(n.id));
+  items=incoming;incoming.forEach(n=>known.add(n.id));
+  if(known.size>500)known=new Set([...known].slice(-300));
+  const count=Number(result.unreadCount)||0,badge=byId('cafeNotificationCount'),bell=byId('cafeNotificationBell');
+  badge.textContent=count>99?'99+':String(count);badge.hidden=count===0;
+  bell.setAttribute('aria-label','Уведомления: '+count+' непрочитанных');
+  if(loaded&&fresh.length){
+   const status=byId('cafeNotificationAnnouncement');status.textContent=fresh[0].title;
+   document.dispatchEvent(new CustomEvent('umma:cafe-events',{detail:{events:fresh}}));
+   if(typeof showToast==='function')showToast(fresh[0].title);
+   try{window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');}catch{}
+  }
+  loaded=true;online(true);render();
+ }
+ async function refresh(){
+  if(document.hidden||busy)return;
+  const id=window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  const root=byId('cafeNotificationBar');if(!root)return;
+  root.hidden=!id||!window.Telegram?.WebApp?.initData;
+  if(root.hidden){if(actor!==null){actor=null;known.clear();items=[];loaded=false;generation++;dialog?.close();}return;}
+  if(actor!==id){actor=id;known.clear();items=[];loaded=false;generation++;byId('cafeNotificationCount').hidden=true;}
+  const current=generation;busy=true;
+  try{const result=await api({action:'notifications'});if(current===generation)apply(result);}
+  catch{if(current===generation)online(false);}
+  finally{busy=false;}
+ }
+ function render(){
+  if(!dialog?.open)return;
+  const list=dialog.querySelector('[data-notification-list]');list.replaceChildren();
+  if(!items.length){const p=document.createElement('p');p.textContent='Новых событий пока нет';list.append(p);}
+  for(const n of items){
+   const button=document.createElement('button');button.type='button';button.className='cafe-notification-item';button.dataset.unread=String(!n.read_at);
+   const title=document.createElement('span');title.textContent=n.title;
+   const time=document.createElement('small');time.textContent=new Date(n.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+   button.append(title,time);button.onclick=()=>{dialog.close();if(n.workspace==='courier')window.ummaKitchen?.open(true);else if(n.workspace==='staff')window.ummaKitchen?.open();else{window.ummaCafe?.open();const section=byId('cafeMyOrdersSection');if(section)section.hidden=false;window.ummaCafe?.refreshMyOrders({silent:true});}read([n.id]);};list.append(button);
+  }
+ }
+ async function read(ids){
+  if(readBusy||!ids.length)return;readBusy=true;const current=++generation;
+  try{const result=await api({action:'readNotifications',ids});if(current===generation)apply(result);}
+  catch{online(false);}
+  finally{readBusy=false;}
+ }
+ byId('cafeNotificationBell')?.addEventListener('click',()=>{
+  if(!dialog){dialog=document.createElement('dialog');dialog.className='cafe-notifications-dialog';dialog.setAttribute('aria-label','Уведомления UMMA Cafe');
+   const close=document.createElement('button');close.type='button';close.className='cafe-back';close.textContent='← Назад';close.onclick=()=>dialog.close();
+   const title=document.createElement('h2');title.textContent='Уведомления';
+   const list=document.createElement('div');list.dataset.notificationList='';
+   const seen=document.createElement('button');seen.type='button';seen.className='kitchen-action';seen.textContent='Отметить показанные как прочитанные';seen.onclick=()=>read(items.filter(n=>!n.read_at).map(n=>n.id));
+   dialog.append(close,title,list,seen);document.body.append(dialog);
+  }
+  dialog.onclose=()=>byId("cafeNotificationBell")?.focus();dialog.showModal();render();refresh();
+ });
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+ window.addEventListener('online',refresh);
+ window.setInterval(refresh,2000);
+ window.ummaNotifications={refresh,isOpen:()=>dialog?.open===true,close:()=>dialog?.close()};refresh();
+})();
 </script><script>/* Courier offers and private delivery evidence. No silent location tracking. */
 (() => {
  'use strict';
@@ -2433,7 +2511,7 @@ window.showToast=()=>{};
       return result;
     }
     const response = await fetch(API, {
-      method:"POST", headers:{"Content-Type":"application/json"},
+      method:"POST", headers:{"Content-Type":"application/json"},cache:"no-store",signal:window.AbortSignal?.timeout?.(12000),
       body:JSON.stringify({ ...payload, initData })
     });
     const result = await response.json();
@@ -2442,9 +2520,10 @@ window.showToast=()=>{};
   }
 
   let courierWorkspace = false;
+  let refreshQueued=false;
   let lastOrdersFingerprint = null;
   async function loadOrders(options = {}) {
-    if (busy) return;
+    if (busy) {refreshQueued=true;return;}
     const silent = options?.silent === true;
     busy = true;
     if (!silent) showMessage("Загружаем заказы…");
@@ -2476,7 +2555,7 @@ window.showToast=()=>{};
       if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
       else console.warn("Kitchen background refresh failed:", error);
 
-    } finally { busy = false; }
+    } finally { busy = false;if(refreshQueued){refreshQueued=false;Promise.resolve().then(()=>loadOrders({silent:true}));} }
   }
 
   async function updateStatus(orderId, status) {
@@ -2544,6 +2623,7 @@ window.showToast=()=>{};
     if (waiter) waiter.hidden = true;
     if (kitchen) kitchen.hidden = false;
     if (nav) nav.style.display = "none";
+    orders=[];render();window.ummaCourierWorkflow?.renderOffers([],courierWorkspace?"courier":"manager");
     loadOrders();
     window.ummaKitchenLive?.start();
     if(!courierWorkspace)loadCash();
@@ -2574,7 +2654,7 @@ window.showToast=()=>{};
   byId("selfCourierDisable")?.addEventListener("click",()=>setSelfCourier(false));
 
   async function openWaiterPage() {
-    courierWorkspace=false;
+    courierWorkspace=false;window.ummaKitchenLive?.start();
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");
@@ -3240,6 +3320,7 @@ window.showToast=()=>{};
   renderStaffCart();
   setStaffOrderMode(null);
 
+  document.addEventListener("umma:cafe-events",()=>{if(!document.hidden&&byId("cafeCashPanel")?.hidden===false)loadCash();});
   window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
 })();
 </script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
@@ -3360,6 +3441,7 @@ window.showToast=()=>{};
     window.scrollTo({top:state.scrollY,behavior:"instant"});
   }
   function back(){
+    if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
     if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
     if(currentScreen()==="cafeKitchenPage"){

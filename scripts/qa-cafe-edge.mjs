@@ -4,6 +4,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { createHmac, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import {dispatchCourierQueue,uploadDeliveryProof} from '../supabase/functions/_shared/courier-workflow.ts';
+import {dispatchCustomerNotifications} from '../supabase/functions/_shared/customer-notifications.ts';
 import { submitCafeOperation } from '../supabase/functions/_shared/order-operation.ts';
 import { loadCafeOrders } from '../supabase/functions/cafe-kitchen/order-list.ts';
 import { sandboxCanAdvance } from '../supabase/functions/cafe-kitchen/sandbox-policy.ts';
@@ -50,7 +51,7 @@ export async function verifyCafeEdges(db,cafe,product){
     const source=stripTypeScriptTypes(readFileSync(path,'utf8')).replace(/^import .*;\n/gm,'');
     vm.runInNewContext(source,{
       Deno:{env:{get:key=>({TELEGRAM_BOT_TOKEN:token,SUPABASE_URL:'http://local-test',SUPABASE_SERVICE_ROLE_KEY:'fake-test-key'})[key]},serve:fn=>serve=fn},
-      createClient:()=>client,submitCafeOperation,loadCafeOrders,sandboxCanAdvance,uploadDeliveryProof,dispatchCourierQueue:(c,t)=>dispatchCourierQueue(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');}),
+      createClient:()=>client,dispatchCustomerNotifications:(c,t)=>dispatchCustomerNotifications(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true,"result":{"message_id":123}}');}),submitCafeOperation,loadCafeOrders,sandboxCanAdvance,uploadDeliveryProof,dispatchCourierQueue:(c,t)=>dispatchCourierQueue(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');}),
       crypto,Response,Request,URLSearchParams,TextEncoder,console,
       fetch:async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');},
     });return serve;
@@ -69,6 +70,9 @@ export async function verifyCafeEdges(db,cafe,product){
   if(ownerAssignment){const after=(await db.query('select * from cafe_staff where telegram_id=10 and location_id=$1',[cafe])).rows[0];assert.equal(after.staff_role,ownerAssignment.staff_role);assert.equal(after.can_accept_payments,ownerAssignment.can_accept_payments);}
   const ownerDelivery=await post(create,{initData:auth(15),requestKey:randomUUID(),locationId:cafe,items:[{productId:product,quantity:1}],orderType:'delivery',paymentMethod:'courier',deliveryAddress:'Synthetic owner delivery'});assert.equal(ownerDelivery.status,201);
   const claimed=await post(kitchen,{initData:auth(10),action:'respondCourierOffer',orderId:ownerDelivery.data.order.id,accept:true});assert.equal(claimed.status,200);
+  const ownerInbox=await post(myOrders,{initData:auth(15),action:'notifications',telegramId:17});assert.equal(ownerInbox.status,200);assert.ok(ownerInbox.data.notifications.some(n=>n.order_id===ownerDelivery.data.order.id&&n.kind==='delivery'));
+  const outsiderInbox=await post(myOrders,{initData:auth(17),action:'notifications',telegramId:15});assert.ok(!outsiderInbox.data.notifications.some(n=>n.order_id===ownerDelivery.data.order.id));
+  assert.equal((await post(myOrders,{initData:auth(15),action:'readNotifications',ids:['bad']})).status,400);
   const cannotLeave=await post(kitchen,{initData:auth(10),action:'selfCourier',locationId:cafe,enabled:false});assert.equal(cannotLeave.status,400);assert.match(cannotLeave.data.error,/завершите/);
   await db.query("update cafe_orders set status='cancelled' where id=$1",[ownerDelivery.data.order.id]);
   assert.equal((await post(kitchen,{initData:auth(10),action:'selfCourier',locationId:cafe,enabled:false})).status,200);

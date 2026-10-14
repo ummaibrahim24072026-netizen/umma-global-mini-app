@@ -73,6 +73,12 @@ Deno.serve(async req => {
     }
     if (!user || user.is_active !== true) return response({ ok:false, error:"Профиль не найден или отключён" }, 403);
 
+    if(body.action==="notifications"||body.action==="readNotifications"){
+      if(body.action==="readNotifications"&&(!Array.isArray(body.ids)||body.ids.length>50||body.ids.some((id:any)=>typeof id!=="string"||!/^[0-9a-f-]{36}$/i.test(id))))return response({ok:false,error:"Некорректные уведомления"},400);
+      const {data,error}=await supabase.rpc(body.action==="notifications"?"get_cafe_notifications":"read_cafe_notifications",body.action==="notifications"?{p_actor:telegramId}:{p_actor:telegramId,p_ids:body.ids});
+      if(error)return response({ok:false,error:"Не удалось загрузить уведомления"},500);
+      return response(data);
+    }
     if(body.action==="deliveryTracking"){
       if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId))return response({ok:false,error:"Некорректный заказ"},400);
       const {data,error}=await supabase.rpc("get_cafe_delivery_tracking",{p_order:body.orderId,p_actor:telegramId});

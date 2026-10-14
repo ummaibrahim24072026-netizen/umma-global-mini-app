@@ -44,6 +44,7 @@
     window.scrollTo({top:state.scrollY,behavior:"instant"});
   }
   function back(){
+    if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
     if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
     if(currentScreen()==="cafeKitchenPage"){

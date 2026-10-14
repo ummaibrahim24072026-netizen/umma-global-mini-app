@@ -56,5 +56,12 @@ try {
  assert.equal(Number((await observer.query("select count(*) n from umma_qa_20261013.cafe_courier_offers where order_id=$1 and status='accepted'",[courierOrder.id])).rows[0].n),1);
  console.log('PASS native concurrent courier acceptance: observed lock wait and exactly one winner');
 
+ // Two workers must lease disjoint rows while the first transaction remains open.
+ await observer.query("insert into umma_qa_20261013_private.cafe_notifications(order_id,recipient,kind,title,send_to_bot) select $1,15,'qa','Synthetic concurrent queue',true from generate_series(1,20)",[courierOrder.id]);
+ await a.query('BEGIN');const firstJobs=(await a.query('select umma_qa_20261013.lease_cafe_customer_notifications() result')).rows[0].result;
+ const secondJobs=(await b.query('select umma_qa_20261013.lease_cafe_customer_notifications() result')).rows[0].result;
+ assert.equal(firstJobs.length,10);assert.equal(secondJobs.length,10);const firstIds=new Set(firstJobs.map(j=>j.id));assert.ok(secondJobs.every(j=>!firstIds.has(j.id)));await a.query('COMMIT');
+ console.log('PASS native concurrent notification workers: SKIP LOCKED leases remain disjoint before commit');
+
 
 }finally {await Promise.all(clients.map(c=>c.end()));}

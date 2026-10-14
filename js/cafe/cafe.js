@@ -352,13 +352,15 @@
     preparing: "Готовится",
     ready: "Готов к выдаче",
     completed: "Выдан",
-    cancelled: "Отменён"
+    cancelled: "Отменён", waiting_courier:"Ожидает курьера",courier_assigned:"Курьер принял заказ",picked_up:"Курьер в пути",delivered:"Доставлено"
   };
   let myOrdersLoaded = false;
-  let myOrdersLoading = false;
+  let myOrdersLoading = false,myOrdersQueued=false;
 
-  async function loadMyOrders() {
-    if (myOrdersLoading) return;
+  let myOrdersFingerprint=null;
+  async function loadMyOrders(options = {}) {
+    const silent=options?.silent === true;
+    if (myOrdersLoading) {myOrdersQueued=true;return;}
     const initData = window.Telegram?.WebApp?.initData;
     const message = byId("cafeMyOrdersMessage");
     const root = byId("cafeMyOrdersList");
@@ -367,19 +369,22 @@
       return;
     }
     myOrdersLoading = true;
-    if (message) { message.textContent = "Загружаем ваши заказы…"; message.hidden = false; }
-    if (root) root.innerHTML = "";
+    if (!silent && message) { message.textContent = "Загружаем ваши заказы…"; message.hidden = false; }
     try {
       const response = await fetch(MY_ORDERS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData })
+        body: JSON.stringify({ initData }),cache:"no-store",signal:window.AbortSignal?.timeout?.(12000)
       });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить заказы");
       const orders = Array.isArray(result.orders) ? result.orders : [];
       myOrdersLoaded = true;
+      const fingerprint=JSON.stringify(orders);
+      if(silent&&fingerprint===myOrdersFingerprint){if(message)message.hidden=true;return;}
+      myOrdersFingerprint=fingerprint;
       if (!orders.length) {
+        if(root)root.innerHTML="";
         if (message) { message.textContent = "У вас пока нет заказов."; message.hidden = false; }
         return;
       }
@@ -390,11 +395,11 @@
         const itemsHtml = items.map(item => "<li><span>" + esc(item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
         const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
         const orderTypeName = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
-        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
       }).join("");
     } catch (error) {
       if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }
-    } finally { myOrdersLoading = false; }
+    } finally { myOrdersLoading = false;if(myOrdersQueued){myOrdersQueued=false;Promise.resolve().then(()=>loadMyOrders({silent:true}));} }
   }
 
   byId("cafeMyOrdersToggle")?.addEventListener("click", async () => {
@@ -406,6 +411,11 @@
     if (!section.hidden) await loadMyOrders();
   });
   byId("cafeMyOrdersRefresh")?.addEventListener("click", loadMyOrders);
+  const refreshVisibleOrders=()=>{if(!document.hidden&&!byId("cafePage")?.hidden&&window.Telegram?.WebApp?.initData)loadMyOrders({silent:true});};
+  document.addEventListener("umma:cafe-events",refreshVisibleOrders);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshVisibleOrders();});
+  window.addEventListener("online",refreshVisibleOrders);
+  window.setInterval(refreshVisibleOrders,5000);
 
   byId("cafeBack")?.addEventListener("click", () => { if (typeof openPage === "function") openPage("home"); });
   window.ummaCafe = {

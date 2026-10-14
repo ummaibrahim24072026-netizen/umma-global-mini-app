@@ -1,3 +1,4 @@
+import {dispatchCustomerNotifications} from "../_shared/customer-notifications.ts";
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 import {dispatchCourierQueue} from '../_shared/courier-workflow.ts';
 Deno.serve(async(req:Request)=>{
@@ -24,7 +25,8 @@ Deno.serve(async(req:Request)=>{
   if(publicRead.ok)throw Error('Evidence publicly accessible');
   return Response.json({ok:true,storage:{uploaded:true,integrity:true,signedRead:true,publicReadDenied:true,bytes:bytes.length},dispatchEnabled:authorization.data.enabled===true});
  }
- if(authorization.data.enabled!==true)return Response.json({ok:true,paused:true,reason:'Awaiting application release; no notifications sent'});
+ const customers=await dispatchCustomerNotifications(client,Deno.env.get("TELEGRAM_BOT_TOKEN")!);
+ if(authorization.data.enabled!==true)return Response.json({ok:true,paused:true,customerNotificationsProcessed:customers.processed,reason:'Courier offers paused; customer notifications remain enabled'});
  return Response.json(await dispatchCourierQueue(client,Deno.env.get('TELEGRAM_BOT_TOKEN')!));
  }catch{return Response.json({ok:false,error:'Courier worker failed'},{status:500});}
 });

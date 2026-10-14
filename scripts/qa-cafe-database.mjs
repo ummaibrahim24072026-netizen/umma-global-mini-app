@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {verifyCafeCouriers} from './qa-cafe-couriers.mjs';
 import {verifyCafeRefunds} from './qa-cafe-refunds.mjs';
 import {verifyCafeDelivery} from './qa-cafe-delivery.mjs';
+import {verifyCafeNotifications} from './qa-cafe-notifications.mjs';
 import {verifyCafeEdges} from './qa-cafe-edge.mjs';
 
 // Real PostgreSQL engine in memory, synthetic rows only. No remote connection.
@@ -47,6 +48,7 @@ try {
   await db.exec(readFileSync('supabase/proposals/cafe-courier-workflow.sql','utf8'));
   await db.exec(readFileSync('supabase/proposals/cafe-delivery-tracking.sql','utf8'));
   await db.exec(readFileSync('supabase/proposals/cafe-self-courier.sql','utf8'));
+  await db.exec(readFileSync('supabase/proposals/cafe-notifications.sql','utf8'));
   await db.exec(readFileSync('supabase/proposals/cafe-order-idempotency.sql','utf8'));
   const args={p_location_id:cafe,p_items:JSON.parse(items),p_order_type:'pickup',p_customer_name:'Replay test',p_payment_method:'cash'};
   const key='44444444-4444-4444-8444-444444444444';
@@ -131,5 +133,6 @@ try {
   await verifyCafeRefunds(db,cafe,other,product);
   await verifyCafeCouriers(db,cafe,other,product);
   await verifyCafeEdges(db,cafe,product);
+  await verifyCafeNotifications(db,cafe,product);
   console.log('LIMIT: PGlite serializes queries; this does not prove multi-connection PostgreSQL locking or real device behavior.');
 } finally { await db.close(); }

@@ -6,6 +6,7 @@
   try { seen=JSON.parse(localStorage.getItem(key)||"{}")||{}; } catch { seen={}; }
   let orders=[],alerts=new Map(),started=false,timer=null,audio=null;
   const page=()=>document.getElementById("cafeKitchenPage");
+  const visible=()=>!page()?.hidden||document.getElementById("cafeWaiterPage")?.hidden===false;
   const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const save=()=>{try{localStorage.setItem(key,JSON.stringify(seen));}catch{}};
   function beep(){
@@ -78,9 +79,11 @@
   function start(){
     if(timer)return;
     timer=window.setInterval(()=>{
-      if(document.hidden||page()?.hidden)return;
+      if(document.hidden||!visible())return;
       window.ummaKitchen?.refresh({silent:true});
-    },5000);
+    },2000);
   }
+  const refreshVisible=()=>{if(!document.hidden&&visible())window.ummaKitchen?.refresh({silent:true});};
+  document.addEventListener("umma:cafe-events",refreshVisible);document.addEventListener("visibilitychange",refreshVisible);window.addEventListener("online",refreshVisible);
   window.ummaKitchenLive={update,notice,start};
 })();

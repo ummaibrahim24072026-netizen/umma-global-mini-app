@@ -58,3 +58,14 @@ dispatch_enabled=false проверяется планировщиком, общ
 ### Owner courier workspace — 2026-10-14
 
 Home → Курьер opens only the actor's assigned deliveries and offers. An active superadministrator can select a cafe and toggle their own courier availability. The verified Telegram actor is used; no entered actor ID is accepted. Existing global role, staff role and payment permission are preserved. Other users cannot self-enroll. Going offline is blocked until assigned/picked-up deliveries are finished. Enabling availability creates offers for waiting deliveries in the selected cafe; notifications remain behind the existing paused rollout gate. Photo and tracking use the same ownership, stage and evidence requirements as other couriers.
+
+
+### Live notifications — 2026-10-14
+
+A private durable inbox records order creation, acceptance/preparation/ready, courier acceptance/pickup/handover, payment/refund and meaningful amount changes. Courier offers also create private in-app events. The bell displays the server's unread count; reading marks only the displayed IDs belonging to the signed actor. Notification titles use plain text.
+
+Foreground Mini App inbox polling and kitchen/waiter polling run every two seconds. Visible customer orders also poll every five seconds as a fallback and refresh immediately when a new inbox event arrives. Network failures retain previous cards and display connection status; reconnect/visibility return triggers refresh. Unchanged customer data retains its DOM. This is polling, not a zero-latency push guarantee; network latency is additional.
+
+Customer bot messages are queued in the same transaction as the event. Committed courier/status actions try immediate dispatch; the authenticated cron retries after one minute, up to six attempts. Customer messages are independent of the paused courier-offer bot gate. Existing orders are not backfilled. Failed sends never roll back an order. Database leases prevent two workers sending the same job concurrently; a Telegram timeout after acceptance can still result in a repeated message because Telegram sendMessage has no idempotency key. Permanent blocked-chat failures remain visible in the in-app inbox.
+
+Synthetic tests cover signed-actor isolation, read ownership, event rollback, idempotent/no-op deduplication, stale lease acknowledgements, retries, acceptance messages and customer notification updates without reopening the app. Real phone Telegram receipt/camera/GPS remain physical checks. No real sale or payment is created by these tests.
