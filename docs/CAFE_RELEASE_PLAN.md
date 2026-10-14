@@ -1,7 +1,7 @@
 # UMMA Cafe — выпуск и безопасный откат
 
 Дата: 2026-10-14. PR: https://github.com/ummaibrahim24072026-netizen/umma-global-mini-app/pull/15
-Этот документ и файлы supabase/release — подготовленный план. Рабочий выпуск не выполнялся.
+Рабочий выпуск выполнен 14.10.2026 по отдельному разрешению владельца. Рассылка курьерам остаётся выключенной до физической проверки телефона. Ниже сохранён порядок выпуска и отката.
 
 ## Перед выпуском
 
@@ -38,7 +38,14 @@
 
 ## Дополнительные шаги курьерского выпуска
 
-В единый SQL включён cafe-courier-workflow.sql перед idempotency. Требуются новые shared/courier-workflow.ts у create-cafe-order, cafe-kitchen и courier-dispatch-worker. Отдельно, после согласия владельца: courier-evidence-storage.sql (private bucket/restrictive policy), настройка COURIER_WORKER_SECRET в Edge Secrets и идентичного секрета umma_courier_worker_secret в Vault, pg_cron/pg_net и courier-dispatch-schedule.sql. Не запускать расписание раньше backend и проверенного bucket. В откате сначала приостановить cron; фотографии и журналы сохранять. После выпуска проверить приватность реальной тестовой фотографии, приём/отказ двух тестовых курьеров и геопозицию устройства в изолированной среде.
+В единый SQL включён cafe-courier-workflow.sql перед idempotency. Требуются новые shared/courier-workflow.ts у create-cafe-order, cafe-kitchen и courier-dispatch-worker. Отдельно, после согласия владельца: courier-evidence-storage.sql (private bucket/restrictive policy), секрет umma_courier_worker_secret в Vault и одноразовая HMAC-авторизация, pg_cron/pg_net и courier-dispatch-schedule.sql. Не запускать расписание раньше backend и проверенного bucket. В откате сначала приостановить cron; фотографии и журналы сохранять. После выпуска проверить приватность реальной тестовой фотографии, приём/отказ двух тестовых курьеров и геопозицию устройства в изолированной среде.
 
 ## Текущий статус инфраструктуры — 14.10.2026
 Bucket, restrictive policy, worker auth через Vault и одноразовые HMAC-команды (courier-worker-auth-hardening.sql), pg_cron/pg_net и расписание уже настроены по прямому поручению. Повторно эти миграции не применять. Worker отвечает paused, dispatch_enabled=false. Дополнительно включить в приложение cafe-my-orders и delivery-tracking.js; SQL отслеживания включён в атомарный bundle. После изолированной проверки на телефоне и отдельного разрешения выпуска выполнить courier-dispatch-activate.sql. До включения проверить ожидающие старые доставки: фоновая очередь может предложить их активным курьерам. Для остановки UPDATE umma_courier_internal.worker_control SET dispatch_enabled=false WHERE id; затем остановить cron. Фото и журнал не удалять.
+
+## Выполненный выпуск
+Merge main: 2e02e9be74b5d733ae8fa282d1656199053c2bf3. PR15 объединён после CI231; CI232 основной ветки и Pages deployment прошли. Миграция cafe_launch_delivery_tracking_release_20261014 применена атомарно. Версии Edge: create-cafe-order 8, cafe-kitchen 30, cafe-my-orders 2, courier-dispatch-worker 3. Резервные копии прежних SQL/Edge сохранены отдельно с ограниченным доступом; не публиковать их в репозиторий.
+
+Существующие заказы и квитанции сверены контрольными суммами до/после: изменений нет. Новых реальных продаж или возвратов QA не создавала. inventory_control_enabled=false, dispatch_enabled=false, lease_cafe_courier_notifications() возвращает пустой список. Общий paused-флаг проверяют также прямые Edge-вызовы; обычные уведомления кухни не отправляются сотрудникам роли courier.
+
+Рабочий frontend отдаёт app.css?v=35, kitchen.js?v=58, navigation.js?v=3 и delivery-tracking.js?v=1. SHA-256 kitchen.js и delivery-tracking.js совпадает с проверенными файлами. Сессия облачного Telegram после паузы сбросилась; повторный вход и физические камера/GPS/получение уведомления не подтверждены. Это не окончательный GO для автоматической доставки.
