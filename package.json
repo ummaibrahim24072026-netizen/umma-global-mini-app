@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs"
+    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs && node scripts/qa-delivery-tracking-ui.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",

@@ -75,8 +75,8 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=57/, "Telegram must load updated checkout JS");
-assert.match(html, /css\/app\.css\?v=34/, "Telegram must load updated checkout CSS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=58/, "Telegram must load updated checkout JS");
+assert.match(html, /css\/app\.css\?v=35/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
 assert.match(html, /id="staffClosedOrdersToggle"/, "closed orders tab missing");
@@ -125,7 +125,7 @@ console.log("PASS sandbox isolated in superadmin developer settings");
 
 const navigation=read("js/core/navigation.js");
 new vm.Script(navigation,{filename:"navigation.js"});
-assert.match(html,/js\/core\/navigation\.js\?v=2/,"shared navigation not loaded");
+assert.match(html,/js\/core\/navigation\.js\?v=3/,"shared navigation not loaded");
 assert.match(html,/id="cafeWaiterKitchen"/,"kitchen shortcut missing in order workspace");
 assert.match(kitchen,/byId\("cafeWaiterKitchen"\)\?\.addEventListener\("click", open\)/,"kitchen shortcut must work");
 const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage"];

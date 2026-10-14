@@ -57,7 +57,9 @@ export async function verifyCafeEdges(db,cafe,product){
   }
   const create=handler('supabase/functions/create-cafe-order/index.ts');
   const kitchen=handler('supabase/functions/cafe-kitchen/index.ts');
+  const myOrders=handler('supabase/functions/cafe-my-orders/index.ts');
   async function post(fn,body){const response=await fn(new Request('http://local-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));return {status:response.status,data:await response.json()};}
+  const beforeTrackingAuth=dbCalls;assert.equal((await post(myOrders,{action:'deliveryTracking',initData:'invalid',orderId:randomUUID()})).status,401);assert.equal(dbCalls,beforeTrackingAuth);
   const body={initData:auth(11),requestKey:randomUUID(),staffOrder:true,locationId:cafe,items:[{productId:product,quantity:1}],orderType:'pickup',paymentMethod:'cash',paymentTiming:'now',customerName:'Edge synthetic guest'};
   const count=dbCalls;
   assert.equal((await post(create,{...body,initData:'invalid'})).status,401);assert.equal(dbCalls,count);
@@ -100,5 +102,7 @@ export async function verifyCafeEdges(db,cafe,product){
   assert.equal((await post(kitchen,{...refundBody,reason:'Different reason'})).status,400);
   assert.equal((await post(kitchen,{...refundBody,payoutConfirmed:false})).status,400);
   assert.equal((await post(kitchen,{...refundBody,initData:auth(13)})).status,400);
+  const trackingOrder=(await db.query("select id from cafe_orders where customer_telegram_id=15 and delivery_status='delivered' order by created_at desc limit 1")).rows[0];
+  if(trackingOrder){assert.equal((await post(myOrders,{initData:auth(15),action:'deliveryTracking',orderId:trackingOrder.id})).data.state,'delivered');assert.equal((await post(myOrders,{initData:auth(11),action:'deliveryTracking',orderId:trackingOrder.id})).status,403);}
   console.log('PASS actual Edge handlers + local PostgreSQL: Telegram HMAC rejection, staff/customer order replay, no duplicate notifications, payment validation and add-on permission/replay');
 }

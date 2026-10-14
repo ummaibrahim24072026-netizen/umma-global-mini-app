@@ -67,6 +67,7 @@
       const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
       const routeAction = order.order_type === "delivery" && order.delivery_address
         ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(order.delivery_address) + '" data-route-origin-lat="' + esc(routeLocation?.latitude ?? "") + '" data-route-origin-lng="' + esc(routeLocation?.longitude ?? "") + '" data-route-origin-name="' + esc(routeLocation?.name ?? "") + '" data-route-order-number="' + esc(order.order_number) + '">🗺️ Маршрут</button>' : "";
+      const trackingAction=orderStaffRole==="courier"&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.delivery_status==="picked_up"&&!['completed','cancelled'].includes(order.status)?'<button type="button" class="kitchen-action" data-share-delivery="'+esc(order.id)+'">'+(window.ummaCourierTracking?.isSharing(String(order.id))?'Остановить передачу позиции':'Передавать позицию клиенту')+'</button><small data-tracking-status="'+esc(order.id)+'">Передача GPS работает пока приложение открыто.</small>':"";
       const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
@@ -86,7 +87,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + '</div></article>';
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + trackingAction + '</div></article>';
     }).join("");
   }
 
@@ -130,6 +131,7 @@
       if (changed) {
         lastOrdersFingerprint = fingerprint;
         window.ummaKitchenLive?.update(orders);
+    window.ummaCourierTracking?.syncOrders(orders);
         render();
         renderOpenBills();
         renderStaffActiveOrders();
@@ -181,6 +183,7 @@
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
     window.ummaKitchenLive?.update(orders);
+    window.ummaCourierTracking?.syncOrders(orders);
     render();
     renderOpenBills();
     renderStaffActiveOrders();

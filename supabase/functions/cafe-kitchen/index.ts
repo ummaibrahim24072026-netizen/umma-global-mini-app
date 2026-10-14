@@ -346,6 +346,14 @@ Deno.serve(async req => {
     if(body.action==="courierPosition"){
       const {data,error}=await supabase.rpc("update_cafe_courier_position",{p_actor:telegramId,p_lat:body.latitude,p_lng:body.longitude,p_accuracy:body.accuracy});return response(error?{ok:false,error:error.message}:data,error?400:200);
     }
+    if(body.action==="setDeliveryTracking"||body.action==="deliveryPosition"){
+      if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId))return response({ok:false,error:"Некорректный заказ"},400);
+      const setting=body.action==="setDeliveryTracking";
+      if(setting&&typeof body.enabled!=="boolean")return response({ok:false,error:"Некорректный режим"},400);
+      const args=setting?{p_order:body.orderId,p_actor:telegramId,p_enabled:body.enabled}:{p_order:body.orderId,p_actor:telegramId,p_session:body.sessionId,p_sequence:body.sequence,p_lat:body.latitude,p_lng:body.longitude,p_accuracy:body.accuracy};
+      const {data,error}=await supabase.rpc(setting?"set_cafe_delivery_tracking":"update_cafe_delivery_tracking",args);
+      return response(error?{ok:false,error:error.message}:data,error?400:200);
+    }
     if(body.action==="uploadDeliveryProof"){
       try{return response(await uploadDeliveryProof(supabase,telegramId,body));}catch(e){return response({ok:false,error:e instanceof Error?e.message:"Фото не сохранено"},/access denied|not allowed|Invalid delivery photo|Use JPEG|key reused|new photo/.test(String(e))?400:500);}
     }
