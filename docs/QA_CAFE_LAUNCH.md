@@ -136,3 +136,12 @@ The production function log recorded `Order creation rejected: Invalid idempoten
 Actual Edge handlers against synthetic PostgreSQL verified cached delivery/courier payment maps to cash, on_delivery and pending; QR maps to now; repeats return the same order without duplicate notifications. Invalid Telegram signatures reach no database query. Full npm test passed. No production order/payment test was submitted.
 
 Compatibility limitation: identical legacy customer checkouts within the same signed session resolve to the same order. To intentionally place another identical order, reopen the Mini App to load the current form, which uses separate operation UUIDs. Courier dispatch remains paused and inventory remains disabled. Physical phone verification remains outstanding.
+
+
+## Live notifications release — 2026-10-14
+
+Published commit `a33018ea1bd113a5aa4c730b917d6c89dd01daba`: client bot messages on courier acceptance/pickup/handover and order/payment updates; private unread inbox/bell; foreground notification and kitchen/waiter polling every two seconds; client-order fallback every five seconds; reconnect/visibility refresh, stable unchanged DOM and network-failure card retention. This is near-real-time polling, with network latency additional. The software update must be loaded once; normal order changes then require no app restart.
+
+Full local npm test and GitHub checks run `38558371889` passed. Native PostgreSQL verifies first courier winner and disjoint concurrent notification leases. Remote isolated Supabase transaction verified client acceptance event and replay deduplication, then rolled back. Production Edge sources matched: cafe-kitchen v32, cafe-my-orders v3, courier-dispatch-worker v4. Actual scheduled worker returned HTTP 200 with zero customer jobs; no historical notifications were backfilled. Invalid-auth live API calls returned 401. Inbox/read RPC access is denied to anon/authenticated. Security advisors introduced no new warning/error classes. Existing order count and receipt hash matched the frozen pre-release baseline. No production test sale/payment was created. Courier bot offers remain paused and inventory remains disabled.
+
+Physical receipt of bot messages and mobile behavior still require user device verification. Telegram timeout after message acceptance can cause a repeated bot message on retry; concurrent queue leases prevent duplicate simultaneous workers, but sendMessage has no idempotency key.
