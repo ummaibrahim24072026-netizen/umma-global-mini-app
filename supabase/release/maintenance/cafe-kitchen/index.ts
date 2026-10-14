@@ -544,7 +544,7 @@ Deno.serve(async req => {
           if (status === "confirmed" && updatedOrder.location_id) {
             const [{ data: location }, { data: assignments, error: assignmentsError }] = await Promise.all([
               supabase.from("locations").select("name").eq("id", updatedOrder.location_id).maybeSingle(),
-              supabase.from("cafe_staff").select("telegram_id").eq("location_id", updatedOrder.location_id).eq("is_active", true).neq("telegram_id", telegramId),
+              supabase.from("cafe_staff").select("telegram_id").eq("location_id", updatedOrder.location_id).eq("is_active", true).neq("staff_role","courier").neq("telegram_id", telegramId),
             ]);
             if (assignmentsError) console.error("Staff acceptance notification lookup failed", assignmentsError.message);
             else {

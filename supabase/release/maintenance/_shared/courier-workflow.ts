@@ -1,4 +1,5 @@
 export async function dispatchCourierQueue(client: any, botToken: string, send: typeof fetch = fetch) {
+  const gate=await client.rpc('is_cafe_courier_dispatch_enabled',{});if(gate.error)throw new Error('Courier dispatch state unavailable');if(gate.data!==true)return {ok:true,paused:true,processed:0};
   const advanced=await client.rpc('advance_cafe_courier_queue',{});if(advanced.error)throw new Error(advanced.error.message);
   const leased=await client.rpc('lease_cafe_courier_notifications',{});if(leased.error)throw new Error(leased.error.message);
   await Promise.all((leased.data||[]).map(async(job:any)=>{

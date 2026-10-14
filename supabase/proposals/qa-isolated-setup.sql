@@ -2777,6 +2777,13 @@ ALTER TABLE umma_qa_20261013.cafe_courier_notifications ENABLE ROW LEVEL SECURIT
 REVOKE ALL ON umma_qa_20261013.cafe_courier_positions,umma_qa_20261013.cafe_courier_offers,umma_qa_20261013.cafe_delivery_proofs,umma_qa_20261013.cafe_courier_notifications FROM PUBLIC,anon,authenticated;
 GRANT SELECT ON umma_qa_20261013.cafe_courier_positions,umma_qa_20261013.cafe_courier_offers,umma_qa_20261013.cafe_delivery_proofs TO service_role;
 
+CREATE OR REPLACE FUNCTION umma_qa_20261013.is_cafe_courier_dispatch_enabled() RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE enabled boolean;
+BEGIN
+ IF to_regclass('umma_courier_internal.worker_control') IS NULL THEN RETURN false; END IF;
+ EXECUTE 'SELECT dispatch_enabled FROM umma_courier_internal.worker_control WHERE id' INTO enabled;
+ RETURN coalesce(enabled,false);
+END $$;
 CREATE OR REPLACE FUNCTION umma_qa_20261013.cafe_active_courier(p_actor bigint,p_location uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public,pg_temp AS $$
  SELECT EXISTS(SELECT 1 FROM umma_qa_20261013.cafe_staff s JOIN umma_qa_20261013.telegram_users u USING(telegram_id) WHERE s.telegram_id=p_actor AND s.location_id=p_location AND s.staff_role='courier' AND s.is_active AND u.is_active AND u.role IN ('employee','admin'));
 $$;
@@ -2895,6 +2902,7 @@ END $$;
 CREATE OR REPLACE FUNCTION umma_qa_20261013.lease_cafe_courier_notifications() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 DECLARE outbox jsonb;
 BEGIN
+ IF NOT umma_qa_20261013.is_cafe_courier_dispatch_enabled() THEN RETURN '[]'::jsonb; END IF;
  WITH selected AS (SELECT n.offer_id FROM umma_qa_20261013.cafe_courier_notifications n JOIN umma_qa_20261013.cafe_courier_offers f ON f.id=n.offer_id JOIN umma_qa_20261013.cafe_orders o ON o.id=f.order_id WHERE n.sent_at IS NULL AND n.next_attempt_at<=clock_timestamp() AND coalesce(n.leased_until,'-infinity')<clock_timestamp() AND f.status='offered' AND f.expires_at>clock_timestamp() AND o.delivery_status='waiting_courier' AND o.status NOT IN ('completed','cancelled') AND umma_qa_20261013.cafe_active_courier(f.courier_telegram_id,o.location_id) ORDER BY n.next_attempt_at LIMIT 50 FOR UPDATE OF n SKIP LOCKED), leased AS (UPDATE umma_qa_20261013.cafe_courier_notifications n SET leased_until=clock_timestamp()+interval '1 minute',attempts=attempts+1 FROM selected WHERE n.offer_id=selected.offer_id RETURNING n.offer_id)
  SELECT coalesce(jsonb_agg(jsonb_build_object('offerId',f.id,'courierId',f.courier_telegram_id,'orderNumber',o.order_number,'locationName',l.name,'ready',o.status='ready')),'[]'::jsonb) INTO outbox FROM leased JOIN umma_qa_20261013.cafe_courier_offers f ON f.id=leased.offer_id JOIN umma_qa_20261013.cafe_orders o ON o.id=f.order_id JOIN umma_qa_20261013.locations l ON l.id=o.location_id;
  RETURN outbox;
@@ -2921,7 +2929,7 @@ BEGIN
  RETURN jsonb_build_object('ok',true,'path',f.object_path);
 END $$;
 DO $$ DECLARE f record; BEGIN
- FOR f IN SELECT p.oid::regprocedure signature FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='umma_qa_20261013' AND p.proname IN ('cafe_active_courier','ensure_cafe_courier_offers','offer_cafe_courier','respond_cafe_courier_offer','update_cafe_courier_position','list_cafe_courier_offers','begin_cafe_delivery_proof','confirm_cafe_delivery_proof','lease_cafe_courier_notifications','finish_cafe_courier_notification','advance_cafe_courier_queue','authorize_cafe_delivery_proof_view') LOOP
+ FOR f IN SELECT p.oid::regprocedure signature FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='umma_qa_20261013' AND p.proname IN ('is_cafe_courier_dispatch_enabled','cafe_active_courier','ensure_cafe_courier_offers','offer_cafe_courier','respond_cafe_courier_offer','update_cafe_courier_position','list_cafe_courier_offers','begin_cafe_delivery_proof','confirm_cafe_delivery_proof','lease_cafe_courier_notifications','finish_cafe_courier_notification','advance_cafe_courier_queue','authorize_cafe_delivery_proof_view') LOOP
  EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f.signature);
  EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f.signature);
  END LOOP;
