@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
 
     const orderType = body.orderType;
     const paymentMethod = body.paymentMethod === "courier" && orderType === "delivery" ? "cash" : (body.paymentMethod ?? "cash");
-    const paymentTiming = body.paymentTiming ?? "now";
-    if (!["now", "later"].includes(paymentTiming) || (paymentTiming === "later" && orderType !== "dine_in")) {
-      return response({ ok: false, error: "Оплата позже разрешена только для заказа в кафе" }, 400);
+    const paymentTiming = body.paymentMethod === "courier" && orderType === "delivery" ? "on_delivery" : (body.paymentTiming ?? "now");
+    if (!["now", "later", "on_delivery"].includes(paymentTiming) || (paymentTiming === "later" && orderType !== "dine_in") || (paymentTiming === "on_delivery" && (orderType !== "delivery" || paymentMethod !== "cash"))) {
+      return response({ ok: false, error: "Оплата после трапезы доступна в кафе; оплата при получении — только наличными за доставку" }, 400);
     }
     if (!["pickup", "delivery", "dine_in"].includes(orderType)) {
       return response({ ok: false, error: "Invalid order type" }, 400);
@@ -142,6 +142,7 @@ Deno.serve(async (req) => {
         p_customer_phone: typeof body.customerPhone === "string" ? body.customerPhone.slice(0, 40) : null,
         p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
         p_payment_method: paymentMethod,
+        p_payment_timing: paymentTiming,
         p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
       });
       if (staffError) {
@@ -167,6 +168,7 @@ Deno.serve(async (req) => {
       p_customer_phone: typeof body.customerPhone === "string" ? body.customerPhone.slice(0, 40) : null,
       p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
       p_payment_method: paymentMethod,
+        p_payment_timing: paymentTiming,
       p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
     });
 

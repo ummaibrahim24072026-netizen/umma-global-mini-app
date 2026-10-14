@@ -523,6 +523,7 @@ $function$;
 -- cafe-order-idempotency.sql
 -- Proposed schema/API hardening. Never apply to production without owner approval.
 
+ALTER TABLE public.cafe_orders ADD COLUMN IF NOT EXISTS payment_timing text CHECK(payment_timing IN ('now','later','on_delivery'));
 CREATE SCHEMA IF NOT EXISTS umma_private;
 CREATE TABLE IF NOT EXISTS umma_private.cafe_order_requests (
   actor_telegram_id bigint NOT NULL REFERENCES public.telegram_users(telegram_id),
@@ -546,6 +547,7 @@ DECLARE
   v_user public.telegram_users%rowtype;
   v_location uuid;
   v_staff_role text;
+  v_payment_timing text;
 BEGIN
   IF p_request_key IS NULL OR p_arguments IS NULL OR p_action IS NULL OR p_action NOT IN ('customerOrder','staffOrder','addItems') OR jsonb_typeof(p_arguments)<>'object' THEN
     RAISE EXCEPTION 'Invalid idempotent order request';
@@ -569,6 +571,10 @@ BEGIN
     IF v_cached.action<>p_action OR v_cached.arguments IS DISTINCT FROM p_arguments THEN RAISE EXCEPTION 'Idempotency key reused with different order'; END IF;
     RETURN v_cached.result || jsonb_build_object('replayed',true);
   END IF;
+  IF p_action IN ('customerOrder','staffOrder') THEN
+    v_payment_timing:=coalesce(p_arguments->>'p_payment_timing','now');
+    IF v_payment_timing NOT IN ('now','later','on_delivery') OR (v_payment_timing='later' AND p_arguments->>'p_order_type'<>'dine_in') OR (v_payment_timing='on_delivery' AND (p_arguments->>'p_order_type'<>'delivery' OR p_arguments->>'p_payment_method'<>'cash')) THEN RAISE EXCEPTION 'Invalid payment timing for order'; END IF;
+  END IF;
   IF p_action='customerOrder' THEN
     v_result:=public.create_cafe_order(p_actor_telegram_id,p_arguments->'p_items',p_arguments->>'p_order_type',
       (p_arguments->>'p_location_id')::uuid,p_arguments->>'p_customer_name',p_arguments->>'p_customer_phone',
@@ -579,6 +585,10 @@ BEGIN
       p_arguments->>'p_delivery_address',p_arguments->>'p_payment_method',p_arguments->>'p_customer_note');
   ELSE
     v_result:=public.add_cafe_staff_order_items(p_actor_telegram_id,(p_arguments->>'p_order_id')::uuid,p_arguments->'p_items');
+  END IF;
+  IF p_action IN ('customerOrder','staffOrder') THEN
+    UPDATE public.cafe_orders SET payment_timing=v_payment_timing WHERE id=(v_result->'order'->>'id')::uuid;
+    v_result:=jsonb_set(v_result,'{order,paymentTiming}',to_jsonb(v_payment_timing),true);
   END IF;
   INSERT INTO umma_private.cafe_order_requests(actor_telegram_id,request_key,action,arguments,result)
     VALUES(p_actor_telegram_id,p_request_key,p_action,p_arguments,v_result);

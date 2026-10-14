@@ -14,6 +14,9 @@ try{
  d.getElementById('staffOrderCustomerName').value='QA clickable guest';d.getElementById('staffOrderAddress').value='QA long address';
  d.getElementById('staffOrderPayment').value='courier';d.getElementById('staffOrderPayment').dispatchEvent(new w.Event('change'));
  assert.match(d.getElementById('staffOrderSubmit').textContent,/при получении/);
+ assert.equal(d.getElementById('staffPaymentTiming').value,'on_delivery');
+ d.getElementById('staffPaymentTiming').value='now';d.getElementById('staffPaymentTiming').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('staffOrderPayment').value,'cash');assert.equal(d.getElementById('staffCashPaymentFields').hidden,false);
+ d.getElementById('staffPaymentTiming').value='on_delivery';d.getElementById('staffPaymentTiming').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('staffOrderPayment').value,'courier');assert.equal(d.getElementById('staffCashPaymentFields').hidden,true);
  d.getElementById('staffOrderForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
  await until(()=>d.getElementById('staffOrderMessage').textContent.includes('Оплата курьеру'));
  d.getElementById('qaKitchen').click();await new Promise(resolve=>setTimeout(resolve,20));await until(()=>d.querySelector('[data-delivery-status="picked_up"]'));

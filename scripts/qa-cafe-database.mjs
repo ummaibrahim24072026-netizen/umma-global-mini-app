@@ -61,6 +61,9 @@ try {
   await q('update cafe_staff set is_active=true where telegram_id=11');
   const privilege=(await q("select has_function_privilege('anon','public.execute_cafe_order_operation(bigint,uuid,text,jsonb)','execute') a, has_function_privilege('authenticated','public.execute_cafe_order_operation(bigint,uuid,text,jsonb)','execute') b")).rows[0];
   assert.equal(privilege.a,false);assert.equal(privilege.b,false);
+  await assert.rejects(op('12345678-1234-4234-8234-123456789012','staffOrder',{...args,p_payment_timing:'on_delivery'}),/Invalid payment timing/);
+  const atDoor=(await op('12345678-1234-4234-8234-123456789013','staffOrder',{...args,p_order_type:'delivery',p_delivery_address:'QA address',p_payment_timing:'on_delivery'})).rows[0].result;
+  assert.equal((await state(atDoor.order.id)).payment_timing,'on_delivery');assert.equal((await state(atDoor.order.id)).payment_status,'pending');
   const failedKey='66666666-6666-4666-8666-666666666666';
   await assert.rejects(op(failedKey,'staffOrder',{...args,p_items:[{productId:product,quantity:0}]}),/quantity/);
   assert.equal(Number((await q('select count(*) n from umma_private.cafe_order_requests where request_key=$1',[failedKey])).rows[0].n),0);

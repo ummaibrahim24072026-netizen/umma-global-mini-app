@@ -62,7 +62,7 @@ async function submitScenario({method='cash',paymentFails=false,creationFails=fa
   await submitHandler({preventDefault(){}});
   if(paymentFails){assert.equal(cart.size,0);assert.equal(elements.staffOrderSubmit.disabled,true);assert.match(elements.staffOrderMessage.textContent,/Не оформляйте повторный заказ/);await submitHandler({preventDefault(){}});assert.equal(creations,1);}
   if(creationFails){assert.equal(cart.size,1);assert.equal(payments,0);}
-  if(!creationFails){assert.equal(sent.paymentTiming,'now');assert.equal(sent.paymentMethod,method==='courier'?'cash':method);}
+  if(!creationFails){assert.equal(sent.paymentTiming,method==='courier'?'on_delivery':'now');assert.equal(sent.paymentMethod,method==='courier'?'cash':method);}
   return {creations,payments};
 }
 await submitScenario({paymentFails:true});
@@ -100,7 +100,8 @@ for(const methodValue of ['courier','cash']) {
  const elements={staffOrderType:{value:'delivery'},staffPaymentTiming:{value:'now',querySelector:s=>s.includes('later')?later:now},staffOrderPayment:{value:methodValue,querySelector:()=>courier},staffOrderSubmit:{textContent:''},staffPaymentNowFields:{},staffPaymentTimingHint:{}};
  const context={byId:id=>elements[id],editingBillId:null,refreshStaffCashFields(){}};
  vm.runInNewContext(syncSource+';syncStaffPaymentOptions();',context);
- assert.equal(now.textContent,methodValue==='courier'?'При получении — курьеру':'Оплата сразу');
- assert.equal(elements.staffOrderSubmit.textContent,methodValue==='courier'?'Оформить доставку — оплата при получении':'Оформить заказ и подтвердить оплату');
+ assert.equal(now.textContent,'Сейчас, до передачи заказа');
+ assert.equal(elements.staffPaymentTiming.value,methodValue==='courier'?'on_delivery':'now');
+ assert.equal(elements.staffOrderSubmit.textContent,methodValue==='courier'?'Оформить доставку — оплата при получении':'Оформить заказ и подтвердить полученную оплату');
 }
 console.log('PASS courier checkout labels show payment at delivery and reset on cash selection');
