@@ -838,3 +838,19 @@ button:active { transform: scale(.98); }
 .staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
 .staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
 .staff-table-grid button.has-open-bill.is-selected{background:#078f94;color:white}
+
+/* Delivery addresses and actions must fit narrow Telegram viewports. */
+.cafe-order-form, .cafe-order-form label, .kitchen-order-card { min-width: 0; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea { max-width: 100%; box-sizing: border-box; }
+.kitchen-order-details > span, .kitchen-order-items li > span { min-width: 0; overflow-wrap: anywhere; }
+.kitchen-order-top > div { min-width: 0; }
+.kitchen-order-actions { flex-wrap: wrap; }
+.kitchen-order-actions > button { min-width: 0; flex: 1 1 120px; overflow-wrap: anywhere; white-space: normal; }
+.kitchen-courier-assignment { display: flex; flex: 1 1 100%; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }
+
+.cafe-refund-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #aacaca;border-radius:14px;padding:16px}.cafe-refund-dialog::backdrop{background:#0008}.cafe-refund-confirm{grid-template-columns:24px minmax(0,1fr);align-items:start}.cafe-refund-confirm input{min-height:20px;width:20px}
+
+#courierMapModal>div>div:first-child{position:sticky;top:-14px;z-index:2;background:white;flex-wrap:wrap;padding:8px 0}#courierMapTitle{min-width:0;flex:1 1 150px;font-size:20px}.courier-route-back{flex:0 0 auto;border:1px solid #0b777a;border-radius:10px;padding:12px;color:#07595c;background:#e8f7f5;font-weight:800}#courierRouteMap{min-height:180px!important;height:55dvh!important}
+
+.delivery-tracking-dialog{width:min(94vw,680px);max-width:680px;max-height:90dvh;overflow:auto;box-sizing:border-box;border:0;border-radius:14px;padding:16px}.delivery-tracking-dialog::backdrop{background:#0008}.delivery-tracking-header{position:sticky;top:0;background:white;z-index:1000;display:flex;flex-wrap:wrap;gap:12px;align-items:center}.delivery-tracking-map{height:min(52dvh,420px);min-height:180px;margin:12px 0}.delivery-tracking-dialog p{overflow-wrap:anywhere}.delivery-tracking-dialog small{display:block}

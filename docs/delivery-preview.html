@@ -1,0 +1,853 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QA доставки — 320 и 390 px</title><style>/* UMMA GLOBAL — single source of truth for the home screen */
+:root {
+  --turquoise: #0FA3A8;
+  --turquoise-deep: #087F84;
+  --turquoise-pale: #E8F7F6;
+  --gold: #D4A72C;
+  --gold-light: #F5D56B;
+  --gold-dark: #8D6818;
+  --white: #FFFFFF;
+  --cream: #FFFCF3;
+  --ink: #173C3E;
+  --muted: #718889;
+  --line: #D7EAE8;
+  --radius: 20px;
+  --shadow: 0 4px 14px rgba(8, 105, 108, .09);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%; margin: 0; padding: 0;
+  overflow: hidden; background: var(--cream); color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+button { font: inherit; border: 0; cursor: pointer; background: none; }
+button:active { transform: scale(.98); }
+[hidden] { display: none !important; }
+
+.app {
+  width: 100%; max-width: 520px; height: 100vh; height: 100dvh;
+  margin: 0 auto; position: relative; overflow: hidden; background: var(--cream);
+}
+.topbar {
+  height: 48px; padding: max(4px, env(safe-area-inset-top)) 14px 4px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream); border-bottom: 1px solid var(--line);
+  position: relative; z-index: 20;
+}
+.top-button, .language-button {
+  height: 36px; border: 1px solid var(--line); border-radius: 13px;
+  background: var(--white); color: var(--gold-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.top-button { width: 40px; flex: 0 0 40px; position: relative; font-size: 21px; }
+.hamburger { font-size: 23px; }
+.language-button { min-width: 88px; padding: 0 10px; gap: 6px; font-size: 15px; }
+.language-button .globe { font-size: 17px; }
+.language-button .down { font-size: 17px; }
+.top-space { flex: 1; }
+.notification-button b {
+  position: absolute; top: -5px; right: -4px; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--gold); color: var(--white);
+  display: grid; place-items: center; font-size: 11px;
+}
+.notification-button .bell { font-size: 18px; }
+.profile-button { font-size: 22px; }
+
+.app > main {
+  height: calc(100% - 60px);
+  overflow: hidden;
+  padding: 0 0 5px;
+  display: flex; flex-direction: column;
+  gap: 7px;
+  background: linear-gradient(180deg, #FFFCF3 0%, #F7F4E9 100%);
+}
+
+/* Brand: compact, approved turquoise + gold lockup */
+.brand {
+  height: 142px; flex: 0 0 142px; min-height: 0;
+  position: relative; overflow: hidden;
+  padding: 6px 14px 7px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background:
+    radial-gradient(circle at 8% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
+    radial-gradient(circle at 92% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
+    linear-gradient(145deg, var(--turquoise) 0%, #078C91 68%, var(--turquoise-deep) 100%);
+  border-bottom: 2px solid var(--gold);
+}
+.brand::before, .brand::after {
+  content: ""; position: absolute; width: 130px; height: 130px; bottom: -75px;
+  border: 1px solid rgba(245,213,107,.35); border-radius: 50%; pointer-events: none;
+}
+.brand::before { left: -38px; }
+.brand::after { right: -38px; }
+.brand > * { position: relative; z-index: 1; }
+.brand-logo {
+  display: block; width: 54px; height: 54px; flex: 0 0 54px;
+  object-fit: contain; margin: 0 0 2px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.22));
+}
+.brand-title { display: flex; align-items: baseline; justify-content: center; gap: 6px; line-height: .95; white-space: nowrap; }
+.brand-title span {
+  color: var(--gold-light); font-family: Georgia, serif; font-size: 31px;
+  font-weight: 900; letter-spacing: .5px; text-shadow: 0 1px 0 var(--gold-dark);
+}
+.brand-title strong {
+  color: var(--gold-light); font-family: Georgia, serif; font-size: 17px;
+  font-weight: 800; letter-spacing: 1px;
+}
+.brand-line { width: 86px; height: 2px; flex: 0 0 2px; margin: 4px auto; background: var(--gold-light); }
+.brand p {
+  margin: 0; max-width: 300px; color: var(--white); font-size: 11px;
+  line-height: 1.2; font-weight: 700;
+}
+.brand small { margin-top: 2px; color: var(--gold-light); font-size: 9px; font-weight: 800; }
+
+/* Welcome */
+.welcome-card {
+  height: 82px; flex: 0 0 82px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 8px 10px; display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  background: linear-gradient(135deg, #FFFDF7, #F9F0D9); box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.welcome-image {
+  width: 52px; height: 52px; flex: 0 0 52px; border: 2px solid var(--gold);
+  border-radius: 50%; background: var(--turquoise); display: grid; place-items: center; font-size: 25px;
+}
+.welcome-content { flex: 1; min-width: 0; overflow: hidden; }
+.welcome-content h2 {
+  margin: 0; color: var(--gold-dark); font: 700 12px/1.13 Georgia, serif;
+}
+.welcome-content h2 strong { font-size: 13px; }
+.welcome-content p { margin: 3px 0 0; color: #5D5A50; font-size: 10px; line-height: 1.15; }
+.gold-circle, .turquoise-circle {
+  width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 24px; line-height: 1;
+}
+.gold-circle { color: var(--gold); background: var(--turquoise); border: 2px solid var(--gold-light); }
+
+/* Ayah */
+.ayah-card {
+  height: 76px; flex: 0 0 76px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 7px 10px; display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: #FFFDF6; box-shadow: var(--shadow); overflow: hidden;
+}
+.ayah-book {
+  width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%;
+  background: var(--turquoise-pale); border: 1px solid rgba(212,167,44,.45);
+  display: grid; place-items: center; font-size: 24px;
+}
+.ayah-content { flex: 1; min-width: 0; overflow: hidden; }
+.ayah-content > span { display: block; color: var(--gold-dark); font-size: 10px; font-weight: 900; }
+.ayah-content p {
+  margin: 2px 0; color: var(--turquoise-deep); font-size: 10px;
+  font-weight: 800; line-height: 1.18;
+}
+.ayah-content small { display: block; color: var(--gold-dark); font-size: 9px; font-weight: 700; }
+.turquoise-circle { color: var(--white); background: var(--turquoise); border: 2px solid var(--gold-light); }
+
+/* Cafe — compact card, similar footprint to Farm */
+.cafe-card {
+  height: 112px; flex: 0 0 112px; width: calc(100% - 28px); margin: 0 14px;
+  position: relative; overflow: hidden; border: 2px solid var(--gold);
+  border-radius: 21px; color: var(--white);
+  background: linear-gradient(112deg, #087C80 0%, var(--turquoise) 57%, #087B78 100%);
+  box-shadow: var(--shadow);
+}
+.cafe-background {
+  position: absolute; right: 5%; top: 9%; height: 82%; width: 31%;
+  border: 2px solid rgba(245,213,107,.58); border-radius: 90px 90px 12px 12px;
+  box-shadow: inset 0 0 0 6px rgba(245,213,107,.08);
+  background: radial-gradient(circle at 50% 75%, rgba(245,213,107,.14), transparent 56%);
+}
+.cafe-background::after {
+  content: "UMMA\A CAFE"; white-space: pre; position: absolute; top: 23%; left: 0; right: 0;
+  text-align: center; color: var(--gold-light); font: 700 13px/1.2 Georgia, serif;
+}
+.halal {
+  position: absolute; z-index: 2; top: 8px; right: 10px;
+  padding: 4px 8px; border: 1px solid var(--gold-light); border-radius: 18px;
+  color: var(--gold-light); font-size: 9px; font-weight: 900;
+}
+.cafe-content { position: relative; z-index: 3; width: 68%; padding: 9px 0 8px 14px; }
+.cafe-content h1 {
+  margin: 0; color: var(--gold-light); font: 700 23px/1.02 Georgia, serif;
+  white-space: nowrap; text-shadow: 0 1px 0 var(--gold-dark);
+}
+.cafe-content p { margin: 4px 0 6px; color: var(--white); font-size: 10px; line-height: 1.2; }
+.cafe-button {
+  min-height: 27px; padding: 5px 11px; border-radius: 18px;
+  background: linear-gradient(180deg, #FFE98E, #F2C24A); color: var(--ink);
+  display: inline-flex; align-items: center; gap: 10px; font-size: 10px; font-weight: 900;
+}
+.cafe-button b { font-size: 15px; }
+
+/* Services: 4 columns x 2 rows, matching approved reference */
+.services { margin: 0 14px; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+.services-heading {
+  height: 23px; flex: 0 0 23px; display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.services-heading h2 { margin: 0; color: var(--gold-dark); font: 700 17px/1 Georgia, serif; }
+.services-heading button { color: var(--turquoise-deep); font-size: 9px; font-weight: 800; white-space: nowrap; }
+.services-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 5px; flex: 1; min-height: 0;
+}
+.service {
+  min-width: 0; min-height: 0; padding: 4px 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; overflow: hidden; border: 1px solid #E8D79B; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFEFA, #FAF2DF); box-shadow: 0 2px 6px rgba(91,67,17,.06);
+}
+.service-icon {
+  width: 29px; height: 29px; flex: 0 0 29px; margin-bottom: 3px; border-radius: 50%;
+  border: 1px solid var(--gold); background: var(--turquoise); color: var(--gold-light);
+  display: grid; place-items: center; font-size: 15px;
+}
+.service strong {
+  display: block; max-width: 100%; color: var(--gold-dark); font-size: 8px;
+  line-height: 1.1; font-weight: 800; overflow-wrap: anywhere;
+}
+.service small {
+  display: block; margin-top: 2px; max-width: 100%; color: var(--ink);
+  font-size: 6.5px; line-height: 1.1; overflow-wrap: anywhere;
+}
+
+/* Farm */
+.farm-card {
+  height: 64px; flex: 0 0 64px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 6px 9px; border: 1px solid var(--gold); border-radius: 17px;
+  display: flex; align-items: center; gap: 8px; overflow: hidden; position: relative;
+  background: linear-gradient(100deg, #08766E, #0B9189 58%, #075D58);
+}
+.farm-icon {
+  width: 42px; height: 42px; flex: 0 0 42px; border-radius: 13px;
+  background: rgba(255,255,255,.13); display: grid; place-items: center; font-size: 23px;
+}
+.farm-content { flex: 1; min-width: 0; }
+.farm-content h2 { margin: 0; color: var(--gold-light); font: 700 15px/1 Georgia, serif; }
+.farm-content p { margin: 3px 0 0; color: var(--white); font-size: 8px; line-height: 1.12; }
+.farm-button {
+  flex: 0 0 auto; padding: 7px 9px; border-radius: 18px;
+  background: linear-gradient(180deg, #FFE98E, #F2C24A); color: var(--ink);
+  font-size: 8px; font-weight: 900; white-space: nowrap;
+}
+.farm-button b { font-size: 12px; }
+
+/* Bottom navigation */
+.bottom-nav {
+  position: absolute; z-index: 50; left: 0; right: 0; bottom: 0;
+  height: calc(60px + env(safe-area-inset-bottom)); padding: 4px 6px max(4px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #FFFEFA, #F5EBD4); border-top: 1px solid #E4D18C;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.nav-item { min-width: 0; color: var(--gold-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.nav-item span { font-size: 19px; line-height: 1; color: var(--gold-dark); }
+.nav-item small { font-size: 8px; line-height: 1.1; font-weight: 800; white-space: nowrap; }
+.nav-item.active span, .nav-item.active small { color: var(--turquoise); }
+
+.toast {
+  position: fixed; z-index: 1000; left: 50%; bottom: 72px; transform: translate(-50%, 12px);
+  max-width: calc(100% - 28px); padding: 9px 14px; border-radius: 18px;
+  background: rgba(23,60,62,.95); color: white; font-size: 12px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Admin entry remains available to its controller but is not part of the approved home mockup. */
+/* Super-admin entry visibility is controlled by updateAdminUI(role). */
+
+/* Keep the same layout proportions on short phones and Telegram webviews. */
+@media (max-height: 760px) {
+  .topbar { height: 44px; }
+  .app > main { height: calc(100% - 56px); gap: 5px; }
+  .brand { height: 124px; flex-basis: 124px; padding-top: 3px; }
+  .brand-logo { width: 45px; height: 45px; flex-basis: 45px; }
+  .brand-title span { font-size: 28px; }
+  .brand-title strong { font-size: 15px; }
+  .brand p { font-size: 10px; }
+  .welcome-card { height: 72px; flex-basis: 72px; }
+  .welcome-image { width: 44px; height: 44px; flex-basis: 44px; font-size: 21px; }
+  .welcome-content h2 { font-size: 10px; }
+  .welcome-content h2 strong { font-size: 11px; }
+  .welcome-content p { font-size: 8px; }
+  .ayah-card { height: 67px; flex-basis: 67px; }
+  .ayah-book { width: 39px; height: 39px; flex-basis: 39px; font-size: 20px; }
+  .ayah-content p { font-size: 8px; }
+  .ayah-content > span, .ayah-content small { font-size: 8px; }
+  .cafe-card { height: 96px; flex-basis: 96px; }
+  .cafe-content { padding-top: 8px; padding-left: 11px; }
+  .cafe-content h1 { font-size: 20px; }
+  .cafe-content p { font-size: 9px; margin: 3px 0 4px; }
+  .cafe-button { min-height: 23px; padding: 4px 8px; font-size: 8px; }
+  .services-heading { height: 20px; flex-basis: 20px; margin-bottom: 3px; }
+  .services-heading h2 { font-size: 15px; }
+  .service-icon { width: 24px; height: 24px; flex-basis: 24px; font-size: 12px; }
+  .service strong { font-size: 7px; }
+  .service small { font-size: 5.5px; }
+  .farm-card { height: 56px; flex-basis: 56px; }
+  .farm-icon { width: 36px; height: 36px; flex-basis: 36px; font-size: 20px; }
+  .farm-content h2 { font-size: 13px; }
+  .farm-content p { font-size: 7px; }
+  .farm-button { padding: 6px 7px; font-size: 7px; }
+  .bottom-nav { height: calc(56px + env(safe-area-inset-bottom)); }
+}
+@media (max-height: 650px) {
+  .brand { height: 108px; flex-basis: 108px; }
+  .brand-logo { width: 36px; height: 36px; flex-basis: 36px; }
+  .brand-title span { font-size: 24px; }
+  .brand-title strong { font-size: 13px; }
+  .brand-line { margin: 2px auto; }
+  .brand small { display: none; }
+  .welcome-card { height: 62px; flex-basis: 62px; }
+  .welcome-image { width: 38px; height: 38px; flex-basis: 38px; }
+  .ayah-card { height: 58px; flex-basis: 58px; }
+  .ayah-book { width: 33px; height: 33px; flex-basis: 33px; }
+  .cafe-card { height: 82px; flex-basis: 82px; }
+  .cafe-content h1 { font-size: 18px; }
+  .cafe-content p { font-size: 8px; }
+  .services-heading { height: 18px; flex-basis: 18px; }
+  .farm-card { height: 49px; flex-basis: 49px; }
+  .farm-icon { width: 32px; height: 32px; flex-basis: 32px; }
+}
+@media (max-width: 360px) {
+  .topbar { padding-left: 9px; padding-right: 9px; gap: 6px; }
+  .welcome-card, .ayah-card, .cafe-card, .farm-card { width: calc(100% - 20px); margin-left: 10px; margin-right: 10px; }
+  .brand-title span { font-size: 27px; }
+  .brand-title strong { font-size: 14px; }
+  .services { margin-left: 10px; margin-right: 10px; }
+  .service strong { font-size: 7px; }
+  .service small { font-size: 5.5px; }
+  .farm-button { padding-left: 6px; padding-right: 6px; }
+}
+
+
+/* =====================================================
+   UMMA CAFE — MENU, CART AND ORDER FORM
+   ===================================================== */
+.cafe-page {
+  position: absolute; inset: 0 0 calc(60px + env(safe-area-inset-bottom));
+  z-index: 30; overflow-y: auto; overscroll-behavior: contain;
+  background: linear-gradient(180deg, #F4FBF9, #FFFCF3);
+  padding: 0 0 20px;
+}
+.cafe-page-inner { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 14px 20px; }
+.cafe-page-header {
+  position: relative; margin: 0 -14px 14px; padding: 18px 14px 17px;
+  color: #fff; background: linear-gradient(135deg, #087F84, #0FA3A8);
+  border-bottom: 2px solid var(--gold);
+}
+.cafe-back {
+  display: inline-flex; align-items: center; min-height: 34px; padding: 6px 10px;
+  color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 12px;
+  background: rgba(255,255,255,.09); font-size: 12px; font-weight: 700;
+}
+.cafe-halal-pill {
+  float: right; margin-top: 4px; padding: 6px 9px; border-radius: 20px;
+  color: var(--gold-light); border: 1px solid var(--gold-light); font-size: 10px; font-weight: 900;
+}
+.cafe-page-header h1 { margin: 14px 0 3px; color: var(--gold-light); font: 800 27px/1.1 Georgia, serif; }
+.cafe-page-header p { margin: 0; font-size: 12px; opacity: .95; }
+.cafe-message {
+  margin: 12px 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: #fff; color: var(--ink); font-size: 13px; text-align: center;
+}
+.cafe-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cafe-product {
+  min-width: 0; padding: 12px; border: 1px solid #E8D79B; border-radius: 16px;
+  background: #fff; box-shadow: 0 3px 10px rgba(8,105,108,.06);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.cafe-product-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.cafe-product-icon {
+  width: 36px; height: 36px; flex: 0 0 36px; border-radius: 12px;
+  display: grid; place-items: center; background: var(--turquoise-pale); font-size: 22px;
+}
+.cafe-product-weight { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.cafe-product h3 { margin: 0; color: var(--gold-dark); font: 700 16px/1.15 Georgia, serif; }
+.cafe-product p { margin: 0; min-height: 28px; color: var(--muted); font-size: 11px; line-height: 1.3; }
+.cafe-product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+.cafe-product-price { color: var(--turquoise-deep); font-size: 14px; font-weight: 900; }
+.cafe-add {
+  width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%;
+  color: #fff; background: var(--turquoise); font-size: 22px; font-weight: 700;
+}
+.cafe-cart {
+  margin-top: 16px; padding: 14px; border: 1px solid var(--gold);
+  border-radius: 18px; background: #fffdf7; box-shadow: var(--shadow);
+}
+.cafe-cart-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cafe-cart-heading h2 { margin: 0; color: var(--gold-dark); font: 700 20px/1.1 Georgia, serif; }
+.cafe-cart-heading span { color: var(--muted); font-size: 11px; }
+.cafe-cart-items { margin-top: 10px; }
+.cafe-empty-cart { margin: 0; padding: 10px 0; color: var(--muted); font-size: 12px; }
+.cafe-cart-row {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px;
+  align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line);
+}
+.cafe-cart-row strong { display: block; font-size: 12px; }
+.cafe-cart-row small { color: var(--muted); font-size: 10px; }
+.cafe-cart-controls { display: flex; align-items: center; gap: 8px; }
+.cafe-cart-controls button {
+  width: 27px; height: 27px; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--turquoise-deep); background: #fff; font-size: 17px; font-weight: 800;
+}
+.cafe-cart-total {
+  display: flex; justify-content: space-between; gap: 10px; padding: 13px 0;
+  color: var(--ink); font-size: 14px; border-bottom: 1px solid var(--line);
+}
+.cafe-cart-total strong { color: var(--turquoise-deep); font-size: 19px; }
+.cafe-order-form { display: grid; gap: 11px; margin-top: 14px; }
+.cafe-order-form[hidden], .cafe-order-form label[hidden] { display: none; }
+.cafe-order-form label { display: grid; gap: 5px; color: var(--ink); font-size: 11px; font-weight: 800; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea {
+  width: 100%; min-width: 0; min-height: 42px; padding: 10px 11px;
+  color: var(--ink); background: #fff; border: 1px solid #CFE3E0; border-radius: 11px;
+  font: 500 13px Inter, sans-serif; outline-color: var(--turquoise);
+}
+.cafe-order-form textarea { resize: vertical; }
+.cafe-submit {
+  min-height: 46px; padding: 12px 14px; border-radius: 13px;
+  color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A);
+  font-size: 14px; font-weight: 900;
+}
+.cafe-submit:disabled { opacity: .6; cursor: wait; }
+.cafe-order-hint { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.cafe-order-result {
+  margin-top: 12px; padding: 13px; border: 1px solid var(--turquoise);
+  border-radius: 12px; color: var(--turquoise-deep); background: var(--turquoise-pale);
+  font-size: 13px; font-weight: 700; line-height: 1.45;
+}
+@media (max-width: 360px) {
+  .cafe-page-inner { padding-left: 10px; padding-right: 10px; }
+  .cafe-products { gap: 7px; }
+  .cafe-product { padding: 9px; }
+  .cafe-product h3 { font-size: 14px; }
+  .cafe-product-price { font-size: 12px; }
+}
+@media (max-height: 760px) {
+  .cafe-page { bottom: calc(56px + env(safe-area-inset-bottom)); }
+}
+
+
+/* =====================================================
+   UMMA CAFE — KITCHEN ORDER BOARD
+   ===================================================== */
+.cafe-kitchen-page {
+  position: absolute; inset: 0; z-index: 60; overflow-y: auto;
+  overscroll-behavior: contain; background: #F4FBF9; padding-bottom: 20px;
+}
+.cafe-kitchen-inner { max-width: 680px; margin: 0 auto; padding: 0 14px 24px; }
+.cafe-kitchen-header {
+  position: relative; margin: 0 -14px 12px; padding: 16px 14px 18px;
+  color: #fff; background: linear-gradient(135deg, #087F84, #0FA3A8);
+  border-bottom: 2px solid var(--gold);
+}
+.cafe-kitchen-header h1 { margin: 15px 0 3px; color: var(--gold-light); font: 800 25px/1.1 Georgia, serif; }
+.cafe-kitchen-header p { margin: 0; font-size: 12px; }
+.cafe-kitchen-refresh {
+  float: right; margin-top: 3px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.5);
+  border-radius: 10px; color: #fff; background: rgba(255,255,255,.08); font-size: 11px; font-weight: 800;
+}
+.cafe-kitchen-filters { display: flex; gap: 8px; margin: 12px 0; }
+.cafe-kitchen-filters button {
+  flex: 1; padding: 10px; border: 1px solid #CFE3E0; border-radius: 12px;
+  color: var(--turquoise-deep); background: #fff; font-size: 12px; font-weight: 800;
+}
+.cafe-kitchen-filters button.is-active { border-color: var(--turquoise); color: #fff; background: var(--turquoise); }
+.cafe-kitchen-orders { display: grid; gap: 12px; }
+.kitchen-order-card {
+  padding: 14px; border: 1px solid #D7E7E4; border-left: 5px solid var(--turquoise);
+  border-radius: 15px; background: #fff; box-shadow: 0 3px 10px rgba(8,105,108,.06);
+}
+.kitchen-order-card.status-pending { border-left-color: #D9A62B; }
+.kitchen-order-card.status-ready { border-left-color: #279B64; }
+.kitchen-order-card.status-cancelled { border-left-color: #B84949; opacity: .78; }
+.kitchen-order-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.kitchen-order-number { display: block; color: var(--gold-dark); font-size: 17px; font-weight: 900; }
+.kitchen-order-top small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.kitchen-status { max-width: 50%; padding: 6px 8px; border-radius: 9px; color: var(--turquoise-deep); background: var(--turquoise-pale); font-size: 10px; font-weight: 800; text-align: center; }
+.kitchen-order-details { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 11px 0; color: var(--muted); font-size: 11px; }
+.kitchen-order-items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.kitchen-order-items li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #EEF3F2; font-size: 12px; }
+.kitchen-order-items li strong { white-space: nowrap; }
+.kitchen-order-total { display: flex; justify-content: space-between; padding: 11px 0; font-size: 13px; }
+.kitchen-order-total strong { color: var(--turquoise-deep); font-size: 16px; }
+.kitchen-order-actions { display: flex; gap: 8px; }
+.kitchen-action, .kitchen-cancel {
+  flex: 1; min-height: 40px; padding: 10px; border-radius: 11px; font-size: 12px; font-weight: 900;
+}
+.kitchen-action { color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A); }
+.kitchen-cancel { flex: 0 0 auto; color: #A33E3E; border: 1px solid #E8B8B8; background: #FFF8F8; }
+@media (min-width: 560px) {
+  .cafe-kitchen-orders { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+
+/* CUSTOMER ORDER HISTORY */
+.cafe-my-orders-toolbar { display:flex; gap:8px; margin:0 0 10px; }
+.cafe-my-orders-toggle, .cafe-my-orders-refresh {
+  min-height:40px; padding:10px 13px; border:1px solid var(--gold);
+  border-radius:12px; color:var(--gold-dark); background:#fffdf7;
+  font-size:12px; font-weight:900;
+}
+.cafe-my-orders-toggle { flex:1; }
+.cafe-my-orders-refresh { color:var(--turquoise-deep); border-color:var(--line); }
+.cafe-my-orders-section { margin-bottom:14px; }
+.cafe-my-orders-list { display:grid; gap:10px; }
+.cafe-my-order-card {
+  padding:12px; border:1px solid var(--line); border-radius:14px;
+  background:#fff; box-shadow:0 2px 8px rgba(8,105,108,.05);
+}
+.cafe-my-order-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-my-order-head strong { display:block; color:var(--gold-dark); font-size:15px; }
+.cafe-my-order-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-my-order-status {
+  max-width:56%; padding:6px 8px; border-radius:9px; background:var(--turquoise-pale);
+  color:var(--turquoise-deep); font-size:10px; font-weight:900; text-align:center;
+}
+.cafe-my-order-status.status-pending { color:#805D12; background:#FFF3CC; }
+.cafe-my-order-status.status-ready { color:#176B43; background:#E3F7EC; }
+.cafe-my-order-status.status-cancelled { color:#9C3434; background:#FFF0F0; }
+.cafe-my-order-type { margin:8px 0; color:var(--muted); font-size:11px; }
+.cafe-my-order-items, .cafe-my-order-history ul { list-style:none; margin:0; padding:0; }
+.cafe-my-order-items li, .cafe-my-order-history li {
+  display:flex; justify-content:space-between; gap:8px; padding:7px 0;
+  border-top:1px solid #EEF3F2; font-size:11px;
+}
+.cafe-my-order-items li strong { white-space:nowrap; }
+.cafe-my-order-total { display:flex; justify-content:space-between; padding-top:10px; font-size:12px; }
+.cafe-my-order-total strong { color:var(--turquoise-deep); font-size:15px; }
+.cafe-my-order-history { margin-top:10px; border-top:1px solid var(--line); padding-top:9px; }
+.cafe-my-order-history summary { color:var(--turquoise-deep); font-size:11px; font-weight:800; cursor:pointer; }
+.cafe-my-order-history ul { margin-top:7px; }
+.cafe-my-order-history li { color:var(--muted); }
+.cafe-my-order-history li small { white-space:nowrap; }
+
+
+/* CAFE STAFF MANAGEMENT */
+.cafe-staff-admin-page {
+  position:absolute; inset:0; z-index:70; overflow-y:auto; overscroll-behavior:contain;
+  padding-bottom:24px; background:#F4FBF9;
+}
+.cafe-staff-admin-inner { max-width:680px; margin:0 auto; padding:0 14px 24px; }
+.cafe-staff-assign-form {
+  display:grid; gap:12px; margin:14px 0 20px; padding:14px;
+  border:1px solid var(--gold); border-radius:16px; background:#fffdf7;
+}
+.cafe-staff-assign-form h2, .cafe-staff-list-heading h2 {
+  margin:0; color:var(--gold-dark); font:700 19px/1.15 Georgia,serif;
+}
+.cafe-staff-assign-form label { display:grid; gap:5px; color:var(--ink); font-size:11px; font-weight:800; }
+.cafe-staff-assign-form input, .cafe-staff-assign-form select {
+  width:100%; min-height:42px; padding:10px 11px; border:1px solid #CFE3E0;
+  border-radius:11px; color:var(--ink); background:#fff; font:500 13px Inter,sans-serif;
+}
+.cafe-staff-form-hint { margin:-5px 0 0; color:var(--muted); font-size:10px; line-height:1.4; }
+.cafe-staff-list-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 10px; }
+.cafe-staff-assignments { display:grid; gap:10px; }
+.cafe-staff-card { padding:12px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.cafe-staff-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-staff-card-head strong { display:block; color:var(--ink); font-size:13px; }
+.cafe-staff-card-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-staff-role { flex:0 0 auto; padding:5px 8px; border-radius:9px; color:var(--turquoise-deep); background:var(--turquoise-pale); font-size:10px; font-weight:900; }
+.cafe-staff-card p { margin:10px 0; color:var(--muted); font-size:11px; }
+.cafe-staff-card-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:8px; border-top:1px solid #EEF3F2; font-size:10px; }
+.cafe-staff-active { color:#176B43; font-weight:900; }
+.cafe-staff-inactive { color:#9C3434; font-weight:800; }
+.cafe-staff-deactivate { padding:7px 9px; border:1px solid #E8B8B8; border-radius:9px; color:#A33E3E; background:#FFF8F8; font-size:10px; font-weight:900; }
+
+/* Staff order builder: make selected menu items obvious */
+.staff-order-builder .cafe-product.staff-product-selected {
+  border: 2px solid #0FA3A8;
+  background: #E7F8F5;
+  box-shadow: 0 0 0 3px rgba(15,163,168,.14);
+}
+.staff-order-builder .staff-product-quantity:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  margin: 5px 0 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #D1F3E5;
+  color: #08764D;
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-order-builder .cafe-add { min-width: 92px; padding: 9px 11px; }
+
+
+/* Clear visual confirmation and quick quantity controls on selected menu cards */
+.cafe-product {
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+}
+.cafe-product.cafe-product-selected {
+  border-color: #9AA9A8;
+  background: rgba(224, 231, 230, .72);
+  box-shadow: 0 2px 9px rgba(37, 61, 60, .10);
+}
+.cafe-product-selected .cafe-product-icon { background: rgba(255,255,255,.72); }
+.cafe-product-selection {
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 9px;
+  background: rgba(190, 202, 200, .55);
+  color: #344847;
+  font-size: 10px;
+  font-weight: 800;
+}
+.cafe-product-selection[hidden] { display: none !important; }
+.cafe-product-selection.is-visible { display: inline-flex; }
+.cafe-product-quantity { font-size: 13px; }
+.cafe-card-quantity { display: inline-flex; align-items: center; gap: 7px; }
+.cafe-card-quantity strong { min-width: 14px; text-align: center; color: #263F3E; font-size: 14px; }
+.cafe-qty-btn {
+  width: 32px; height: 32px; border: 1px solid #A9B9B7; border-radius: 10px;
+  color: #244746; background: rgba(255,255,255,.82); font-size: 21px; line-height: 1; font-weight: 800;
+}
+.cafe-sticky-order {
+  position: sticky; z-index: 35; bottom: 0; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; margin: 12px 0 0; padding: 10px 14px;
+  border-top: 1px solid #D8C477; background: rgba(255, 253, 245, .97);
+  box-shadow: 0 -5px 18px rgba(20, 61, 61, .10);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.cafe-sticky-order[hidden] { display: none !important; }
+.cafe-sticky-order-info { min-width: 0; display: grid; gap: 2px; }
+.cafe-sticky-order-info span { color: #607171; font-size: 11px; }
+.cafe-sticky-order-info strong { color: #087F84; font-size: 17px; font-weight: 900; }
+.cafe-sticky-order button {
+  flex: 0 0 auto; min-height: 42px; padding: 9px 13px; border-radius: 12px;
+  color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A); font-size: 12px; font-weight: 900;
+}
+.cafe-page-inner { padding-bottom: 18px; }
+
+
+/* Staff POS payment collection */
+.staff-cash-payment-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 12px;
+  border: 1px solid #D5E5E2;
+  border-radius: 12px;
+  background: #F4FAF9;
+}
+.staff-cash-payment-fields[hidden] { display: none !important; }
+.staff-cash-payment-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-cash-payment-fields input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #CFE3E0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 16px Inter, sans-serif;
+}
+.staff-change-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+}
+.staff-change-summary span { color: var(--muted); }
+.staff-change-summary strong { color: var(--turquoise-deep); font-size: 15px; text-align: right; }
+
+
+/* Waiter: open bills and deferred payment */
+.staff-open-bills{display:grid;gap:8px;margin:8px 0 16px}
+.staff-open-bill{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #d5e7e6;border-radius:12px;background:#f7fbfa}
+.staff-open-bill>div{display:grid;gap:4px;min-width:0}
+.staff-open-bill small{font-size:12px;color:#617070}
+.staff-open-bill>button{flex-shrink:0}
+#staffPaymentNowFields[hidden]{display:none!important}
+#staffOrderModeNotice{margin:8px 0 12px}
+@media(max-width:480px){.staff-open-bill{align-items:flex-start;flex-direction:column}.staff-open-bill>button{width:100%}}
+
+
+/* Staff menu quantity controls stay on each dish card */
+.staff-product-qty-controls{display:inline-flex;align-items:center;gap:7px;flex-shrink:0}
+.staff-product-quantity{min-width:22px;height:32px;box-sizing:border-box;align-items:center;justify-content:center;padding:0 5px;border-radius:9px;background:#edf0f0;color:#435151;font-size:14px;font-weight:800;text-align:center}
+.staff-product-quantity:not([hidden]){display:inline-flex}
+.staff-product-minus,.staff-product-plus{width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd2d2;border-radius:10px;font-size:22px;line-height:1;font-weight:800}
+.staff-product-minus{background:#e5e8e8!important;color:#536060!important}
+.staff-product-minus[hidden],.staff-product-quantity[hidden]{display:none!important}
+.staff-product-plus{background:#087f84!important;color:#fff!important}
+.cafe-product-bottom{gap:10px}
+
+/* Compact, symmetrical staff dish cards: price and quantity controls fit on mobile */
+#staffOrderMenu .cafe-product {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 124px;
+  padding: 10px;
+  gap: 9px;
+  box-sizing: border-box;
+}
+#staffOrderMenu .cafe-product h3 {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+#staffOrderMenu .cafe-product-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: end;
+  gap: 7px;
+  width: 100%;
+  margin-top: auto;
+}
+#staffOrderMenu .cafe-product-price {
+  display: block;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#staffOrderMenu .staff-product-qty-controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+#staffOrderMenu .staff-product-minus,
+#staffOrderMenu .staff-product-plus {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0;
+  border-radius: 9px;
+  font-size: 20px;
+  flex: 0 0 30px;
+}
+#staffOrderMenu .staff-product-quantity,
+#staffOrderMenu .staff-order-builder .staff-product-quantity:not([hidden]) {
+  min-width: 24px;
+  width: 24px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: #edf0f0;
+  color: #435151;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+#staffOrderMenu .staff-product-quantity[hidden],
+#staffOrderMenu .staff-product-minus[hidden] { display: none !important; }
+@media (max-width: 360px) {
+  #staffOrderMenu .cafe-product { padding: 8px; min-height: 120px; }
+  #staffOrderMenu .cafe-product h3 { font-size: 13px; }
+  #staffOrderMenu .cafe-product-price { font-size: 11px; }
+  #staffOrderMenu .staff-product-qty-controls { gap: 5px; }
+}
+
+
+/* Staff workspace: separate order creation from active-order control */
+.staff-workspace-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 16px}
+.staff-workspace-tab{min-height:46px;padding:10px 12px;border:1px solid #d4e2e1;border-radius:12px;background:#f5f8f8;color:#334747;font-weight:750;font-size:14px}
+.staff-workspace-tab.is-active{background:#087f84;color:#fff;border-color:#087f84}
+.staff-active-orders{display:grid;gap:10px;margin:12px 0}
+.staff-active-order{border:1px solid #d9e4e3;border-radius:14px;padding:13px;background:#fff;display:grid;gap:10px}
+.staff-active-order-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.staff-active-order-head strong{font-size:16px}
+.staff-active-order-head small{color:#647474;text-align:right}
+.staff-active-order-meta{display:flex;flex-wrap:wrap;gap:7px}
+.staff-status-pill,.staff-payment-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:750;background:#eef2f2;color:#455555}
+.staff-payment-pill.is-paid{background:#e2f5e8;color:#17663a}
+.staff-payment-pill.is-unpaid{background:#fff1d8;color:#895600}
+.staff-active-order-items{margin:0;padding-left:20px;display:grid;gap:4px;color:#465858;font-size:14px}
+.staff-active-order-total{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #edf0f0}
+.staff-active-order-total strong{font-size:18px}
+.staff-order-actions-inline{display:flex;gap:7px;flex-wrap:wrap}
+.staff-order-actions-inline .kitchen-action{flex:1 1 140px}
+#staffActiveOrdersWrap[hidden],#staffOrderFormWrap[hidden]{display:none!important}
+@media(max-width:380px){.staff-workspace-tabs{grid-template-columns:1fr}.staff-active-order-head{flex-direction:column}.staff-active-order-head small{text-align:left}}
+
+/* Keep the entire staff order summary invisible until a dish is selected. */
+#staffOrderSummary[hidden] { display: none !important; }
+
+/* Three compact waiter tabs and isolated closed orders view. */
+.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.staff-workspace-tabs .staff-workspace-tab{min-width:0;padding:10px 5px;font-size:12px;line-height:1.25}
+#staffClosedOrdersWrap[hidden]{display:none!important}
+@media(max-width:380px){.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Kitchen tablet: large readable orders and unmistakable add-on notifications. */
+.kitchen-extra-alert{background:#fff0bd;border:2px solid #e4a722;border-radius:13px;padding:12px;margin-bottom:12px;color:#573b00;display:grid;gap:8px;font-size:15px}
+.kitchen-extra-alert strong{font-size:20px}
+.kitchen-extra-alert button{background:#116c61;color:#fff;border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
+.kitchen-tablet-mode .cafe-kitchen-orders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.kitchen-tablet-mode .kitchen-order-card{font-size:18px;padding:18px}
+.kitchen-tablet-mode .kitchen-order-items{font-size:20px;line-height:1.5}
+.kitchen-tablet-mode .kitchen-order-actions button{min-height:52px;font-size:17px}
+.kitchen-tablet-mode .kitchen-order-number{font-size:23px}
+
+/* Universal staff workspace: four task-oriented entry points. */
+.cafe-staff-quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.cafe-staff-quick-nav button{min-width:0;border:1px solid #b7d9d4;border-radius:12px;padding:14px 8px;background:#eff8f6;color:#125950;font-weight:800;font-size:14px;cursor:pointer}
+.cafe-staff-quick-nav button.is-active{background:#0b888b;color:white}
+.cafe-management-tools{margin:10px 0 16px;border:1px solid #d4e3e1;border-radius:12px;padding:10px}
+.cafe-management-tools summary{font-weight:750;cursor:pointer;padding:7px}
+#cafeCashPanel[hidden]{display:none!important}
+
+/* Kitchen is task-first; shared guest orders remain the sole order-entry screen. */
+.cafe-kitchen-shortcuts{display:flex;gap:8px;margin:10px 0}
+.cafe-kitchen-shortcuts button{flex:1;min-height:42px;border:1px solid #b7d9d4;border-radius:10px;background:#edf8f6;color:#125950;font-size:14px;font-weight:750;cursor:pointer}
+.cafe-kitchen-page .cafe-management-tools{margin-top:20px}
+
+/* Quick order entry: six fixed tables, with a separate rear table. */
+.staff-table-picker{background:#f4faf8;border:1px solid #b8dcd7;border-radius:14px;padding:14px;margin:12px 0}
+.staff-table-picker>strong{display:block;font-size:17px;color:#084b50}
+.staff-table-picker>p{font-size:13px;margin:6px 0 10px;color:#3b6364}
+.staff-table-zone{font-size:12px;font-weight:800;letter-spacing:.02em;color:#536c6d;margin:12px 0 7px}
+.staff-table-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.staff-table-grid button{min-height:52px;border-radius:12px;border:1px solid #8bcac6;background:white;color:#075b60;font:inherit;font-weight:800;cursor:pointer}
+.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:#078f94;color:white;border-color:#078f94;box-shadow:0 0 0 2px #a6e8df}
+.staff-table-grid button:focus-visible{outline:3px solid #e5ac2e;outline-offset:2px}
+@media(min-width:700px){.staff-table-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+.staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
+.staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
+.staff-table-grid button.has-open-bill.is-selected{background:#078f94;color:white}
+
+/* Delivery addresses and actions must fit narrow Telegram viewports. */
+.cafe-order-form, .cafe-order-form label, .kitchen-order-card { min-width: 0; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea { max-width: 100%; box-sizing: border-box; }
+.kitchen-order-details > span, .kitchen-order-items li > span { min-width: 0; overflow-wrap: anywhere; }
+.kitchen-order-top > div { min-width: 0; }
+.kitchen-order-actions { flex-wrap: wrap; }
+.kitchen-order-actions > button { min-width: 0; flex: 1 1 120px; overflow-wrap: anywhere; white-space: normal; }
+.kitchen-courier-assignment { display: flex; flex: 1 1 100%; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }
+
+.cafe-refund-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #aacaca;border-radius:14px;padding:16px}.cafe-refund-dialog::backdrop{background:#0008}.cafe-refund-confirm{grid-template-columns:24px minmax(0,1fr);align-items:start}.cafe-refund-confirm input{min-height:20px;width:20px}
+html,body{height:auto;overflow:auto}body{padding:12px;background:#eef3f3}.qa-width{margin-bottom:20px;padding:14px;box-sizing:border-box;border:1px solid #aaa}.qa-width h2{font-size:14px}</style><section class="qa-width" style="width:320px" data-width="320"><h2>Тестовая ширина 320 px</h2><article class="kitchen-order-card status-ready"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №1</span><small>13.10, 18:00</small></div><span class="kitchen-status">Готов</span></div><div class="kitchen-order-details"><span>📦 Доставка</span><span>💳 Наличные · Ожидает оплаты</span><span>🛵 Курьер назначен</span><span>📍 Очень длинный адрес доставки: HALAL UMMA, Нячанг, тестовая улица, дом 123, корпус 456 — LongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpaces</span></div><ul class="kitchen-order-items"><li><span>Тестовое блюдо × 1</span><strong>120.000 ₫</strong></li></ul><div class="kitchen-order-total"><span>Итого</span><strong>120.000 ₫</strong></div><div class="kitchen-order-actions"><button type="button" class="kitchen-cancel" data-order-id="qa" data-new-status="cancelled">Отменить</button><button type="button" class="kitchen-action" data-order-id="qa" data-payment-status="paid">Подтвердить оплату</button><button type="button" class="kitchen-action" data-order-id="qa" data-delivery-status="picked_up">Курьер забрал</button><button type="button" class="kitchen-action" data-show-route="true" data-route-address="Очень длинный адрес доставки: HALAL UMMA, Нячанг, тестовая улица, дом 123, корпус 456 — LongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpaces" data-route-origin-lat="" data-route-origin-lng="" data-route-origin-name="" data-route-order-number="1">🗺️ Маршрут</button><div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="qa" class="kitchen-courier-select"><option value="">Выберите курьера</option><option value="20" selected>Курьер с очень длинным именем для проверки экрана</option></select><button type="button" class="kitchen-action" data-assign-courier="qa">Назначить курьера</button></div></div></article><form class="cafe-order-form"><label>Тип заказа<select><option>Доставка</option></select></label><label>Адрес доставки<textarea>Тестовый длинный адрес доставки</textarea></label><label>Способ оплаты<select><option>Оплата курьеру при доставке</option></select></label><button class="cafe-submit" type="button">Оформить заказ</button></form></section><section class="qa-width" style="width:390px" data-width="390"><h2>Тестовая ширина 390 px</h2><article class="kitchen-order-card status-ready"><div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №1</span><small>13.10, 18:00</small></div><span class="kitchen-status">Готов</span></div><div class="kitchen-order-details"><span>📦 Доставка</span><span>💳 Наличные · Ожидает оплаты</span><span>🛵 Курьер назначен</span><span>📍 Очень длинный адрес доставки: HALAL UMMA, Нячанг, тестовая улица, дом 123, корпус 456 — LongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpaces</span></div><ul class="kitchen-order-items"><li><span>Тестовое блюдо × 1</span><strong>120.000 ₫</strong></li></ul><div class="kitchen-order-total"><span>Итого</span><strong>120.000 ₫</strong></div><div class="kitchen-order-actions"><button type="button" class="kitchen-cancel" data-order-id="qa" data-new-status="cancelled">Отменить</button><button type="button" class="kitchen-action" data-order-id="qa" data-payment-status="paid">Подтвердить оплату</button><button type="button" class="kitchen-action" data-order-id="qa" data-delivery-status="picked_up">Курьер забрал</button><button type="button" class="kitchen-action" data-show-route="true" data-route-address="Очень длинный адрес доставки: HALAL UMMA, Нячанг, тестовая улица, дом 123, корпус 456 — LongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpacesLongAddressWithoutSpaces" data-route-origin-lat="" data-route-origin-lng="" data-route-origin-name="" data-route-order-number="1">🗺️ Маршрут</button><div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="qa" class="kitchen-courier-select"><option value="">Выберите курьера</option><option value="20" selected>Курьер с очень длинным именем для проверки экрана</option></select><button type="button" class="kitchen-action" data-assign-courier="qa">Назначить курьера</button></div></div></article><form class="cafe-order-form"><label>Тип заказа<select><option>Доставка</option></select></label><label>Адрес доставки<textarea>Тестовый длинный адрес доставки</textarea></label><label>Способ оплаты<select><option>Оплата курьеру при доставке</option></select></label><button class="cafe-submit" type="button">Оформить заказ</button></form></section></html>

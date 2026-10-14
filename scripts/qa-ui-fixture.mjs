@@ -1,0 +1,34 @@
+import {JSDOM,VirtualConsole} from 'jsdom';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const errors=[];const console=new VirtualConsole();console.on('jsdomError',error=>errors.push(error.message));
+const dom=new JSDOM(readFileSync('docs/qa-ui-fixture/index.html','utf8'),{runScripts:'dangerously',virtualConsole:console,beforeParse(window){window.Response=Response;window.scrollTo=()=>{};window.alert=()=>{};window.confirm=()=>true;window.HTMLDialogElement.prototype.showModal=function(){this.open=true;};window.HTMLDialogElement.prototype.close=function(){this.open=false;};}});
+const w=dom.window,d=w.document;
+async function until(check){for(let n=0;n<100;n++){if(check())return;await new Promise(resolve=>setTimeout(resolve,10));}assert.fail('UI did not reach expected state');}
+try{
+ await until(()=>d.querySelector('[data-staff-add]'));
+ assert.equal(d.getElementById('cafeWaiterPage').hidden,false);
+ d.getElementById('qaWidth').value='390';d.getElementById('qaWidth').dispatchEvent(new w.Event('change'));assert.equal(d.querySelector('.app').style.width,'390px');
+ d.querySelector('[data-staff-service="delivery"]').click();
+ d.querySelector('[data-staff-add]').click();assert.equal(d.getElementById('staffOrderSummary').hidden,false);
+ d.getElementById('staffOrderCustomerName').value='QA clickable guest';d.getElementById('staffOrderAddress').value='QA long address';
+ d.getElementById('staffOrderPayment').value='courier';d.getElementById('staffOrderPayment').dispatchEvent(new w.Event('change'));
+ assert.match(d.getElementById('staffOrderSubmit').textContent,/при получении/);
+ assert.equal(d.getElementById('staffPaymentTiming').value,'on_delivery');
+ d.getElementById('staffPaymentTiming').value='now';d.getElementById('staffPaymentTiming').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('staffOrderPayment').value,'cash');assert.equal(d.getElementById('staffCashPaymentFields').hidden,false);
+ d.getElementById('staffPaymentTiming').value='on_delivery';d.getElementById('staffPaymentTiming').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('staffOrderPayment').value,'courier');assert.equal(d.getElementById('staffCashPaymentFields').hidden,true);
+ d.getElementById('staffOrderForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+ await until(()=>d.getElementById('staffOrderMessage').textContent.includes('Оплата курьеру'));
+ d.getElementById('qaKitchen').click();await new Promise(resolve=>setTimeout(resolve,20));await until(()=>d.querySelector('[data-delivery-status="picked_up"]'));
+ d.querySelector('[data-delivery-status="picked_up"]').click();await until(()=>d.querySelector('[data-delivery-status="delivered"]'));
+ const route=d.querySelector('[data-show-route="true"]');route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.match(d.getElementById('courierMapClose').textContent,/Назад/);d.getElementById('courierMapClose').click();assert.equal(d.getElementById('courierMapModal').hidden,true);assert.equal(d.activeElement,route);
+ route.click();w.ummaNavigation.back();assert.equal(d.getElementById('courierMapModal').hidden,true);
+ d.getElementById('qaPaid').click();await until(()=>d.querySelector('[data-refund-order]'));d.querySelector('[data-refund-order]').click();
+ assert.ok(d.querySelector('.cafe-refund-dialog').open);d.querySelector('[data-close-refund]').click();assert.equal(d.querySelector('.cafe-refund-dialog'),null);
+ d.getElementById('qaRole').value='courier';d.getElementById('qaRole').dispatchEvent(new w.Event('change'));await until(()=>d.querySelector('[data-courier-accept]'));d.querySelector('[data-courier-accept]').click();await until(()=>!d.querySelector('[data-courier-accept]'));
+ assert.match(d.getElementById('cafeKitchenOrders').textContent,/Курьер назначен/);
+ await w.fetch('qa',{body:JSON.stringify({staffOrder:true,items:[{quantity:1}],customerName:'QA refusal UI',deliveryAddress:'QA address',paymentMethod:'cash',paymentTiming:'on_delivery'})});await w.ummaKitchen.refresh();await until(()=>d.querySelector('[data-courier-decline]'));d.querySelector('[data-courier-decline]').click();
+ const refusal=d.querySelector('.cafe-refund-dialog');assert.match(refusal.textContent,/Причина отказа/);refusal.querySelector('textarea').value='QA occupied';refusal.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>!d.querySelector('[data-courier-decline]'));
+ assert.deepEqual(errors,[]);
+ process.stdout.write('PASS actual generated UI: startup, width change, delivery selection, cart, courier checkout, kitchen status and refund dialog clicks; no script errors\n');
+}finally{w.close();}

@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+let handler,invocations=0,authCalls=0,enabled=false;
+const secret='1234567890.11111111-1111-4111-8111-111111111111.'+'a'.repeat(64);
+const source=stripTypeScriptTypes(readFileSync('supabase/functions/courier-dispatch-worker/index.ts','utf8')).replace(/^import .*;\n/gm,'');
+vm.runInNewContext(source,{Deno:{env:{get:key=>({TELEGRAM_BOT_TOKEN:'synthetic-token',SUPABASE_URL:'synthetic-url',SUPABASE_SERVICE_ROLE_KEY:'synthetic-key'})[key]},serve:fn=>handler=fn},crypto,TextEncoder,Uint8Array,Array,Response,atob,createClient:()=>({rpc:async(name,args)=>{assert.equal(name,'authorize_cafe_courier_worker_token');authCalls++;return {data:{authorized:args.p_token===secret,enabled},error:null};}}),dispatchCourierQueue:async()=>{invocations++;return {ok:true,processed:0};}});
+const call=token=>handler(new Request('http://local-qa',{method:'POST',headers:token?{Authorization:'Bearer '+token}:{},body:'{}'}));
+assert.equal((await call()).status,401);assert.equal(authCalls,0);
+assert.equal((await call('y'.repeat(96))).status,401);assert.equal((await call(secret.replace(/a/g,'b'))).status,401);assert.equal(invocations,0);
+assert.equal((await (await call(secret)).json()).paused,true);assert.equal(invocations,0);
+enabled=true;assert.equal((await call(secret)).status,200);assert.equal(invocations,1);
+console.log('PASS courier worker: malformed/wrong credentials rejected, paused rollout sends nothing, authorized enabled queue only');

@@ -3,7 +3,8 @@
   "use strict";
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  let map=null,route=null,markers=[];
+  let map=null,route=null,markers=[],opener=null,generation=0;
+  function close(){generation++;const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}opener?.focus();}
   function status(text){if($("courierMapMessage"))$("courierMapMessage").textContent=text;}
   function currentPosition(){
     return new Promise(resolve=>{
@@ -22,7 +23,7 @@
     if(route){map.removeLayer(route);route=null;}
   }
   async function open(button){
-    if(!window.L){status("Библиотека карты не загрузилась.");return;}
+    const token=++generation;opener=button;
     const address=button.getAttribute("data-route-address")||"";
     const rawOriginLat=button.getAttribute("data-route-origin-lat"),rawOriginLng=button.getAttribute("data-route-origin-lng");
     const originLat=rawOriginLat===""?NaN:Number(rawOriginLat),originLng=rawOriginLng===""?NaN:Number(rawOriginLng);
@@ -30,6 +31,8 @@
     const orderNo=button.getAttribute("data-route-order-number")||"";
     const modal=$("courierMapModal");if(!modal)return;
     modal.hidden=false;modal.style.display="block";
+    $("courierMapClose")?.focus();
+    if(!window.L){status("Библиотека карты не загрузилась. Можно вернуться к заказу.");return;}
     $("courierMapTitle").textContent="Маршрут · Заказ №"+orderNo;
     $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(address+", Vietnam");
     if(!map){
@@ -39,7 +42,7 @@
     setTimeout(()=>map&&map.invalidateSize(),80);
     clearLayers();status("Находим адрес доставки…");
     try{
-      const dest=await findAddress(address);
+      const dest=await findAddress(address);if(token!==generation)return;
       markers.push(L.marker([dest.lat,dest.lng]).addTo(map).bindPopup("Доставка · заказ №"+esc(orderNo)).openPopup());
       const all=Array.isArray(window.ummaLocationPins)?window.ummaLocationPins:[];
       all.filter(l=>l.latitude!=null&&l.longitude!=null).forEach(l=>{
@@ -47,23 +50,24 @@
         markers.push(marker);
       });
       status("Получаем ваше местоположение для построения маршрута…");
-      let origin=await currentPosition();
+      let origin=await currentPosition();if(token!==generation)return;
       if(!origin&&Number.isFinite(originLat)&&Number.isFinite(originLng)&&originLat>=-90&&originLat<=90&&originLng>=-180&&originLng<=180)origin={lat:originLat,lng:originLng};
       if(!origin){map.setView([dest.lat,dest.lng],15);status("Адрес найден. Разрешите геолокацию, чтобы построить маршрут от вас, или откройте Google Maps.");return;}
       markers.push(L.marker([origin.lat,origin.lng]).addTo(map).bindPopup(originName+" · отправление"));
       status("Строим автомобильный маршрут…");
       const res=await fetch("https://router.project-osrm.org/route/v1/driving/"+origin.lng+","+origin.lat+";"+dest.lng+","+dest.lat+"?overview=full&geometries=geojson");
       if(!res.ok)throw new Error("Сервис маршрутов временно недоступен");
-      const data=await res.json();if(data.code!=="Ok"||!data.routes||!data.routes.length)throw new Error("Не удалось построить маршрут для этих точек");
+      const data=await res.json();if(token!==generation)return;if(data.code!=="Ok"||!data.routes||!data.routes.length)throw new Error("Не удалось построить маршрут для этих точек");
       route=L.geoJSON(data.routes[0].geometry,{style:{color:"#0fa3a8",weight:5,opacity:.9}}).addTo(map);
       map.fitBounds(route.getBounds(),{padding:[28,28]});
       status("Маршрут построен · "+(data.routes[0].distance/1000).toFixed(1)+" км · около "+Math.round(data.routes[0].duration/60)+" мин. Время ориентировочное.");
-    }catch(e){status((e instanceof Error?e.message:"Не удалось построить маршрут")+" Используйте кнопку Google Maps для навигации.");}
+    }catch(e){if(token!==generation)return;status((e instanceof Error?e.message:"Не удалось построить маршрут")+" Используйте кнопку Google Maps для навигации.");}
   }
   document.addEventListener("click",event=>{
     const target=event.target instanceof Element?event.target.closest("[data-show-route='true']"):null;
     if(target){event.preventDefault();open(target);}
   });
-  $("courierMapClose")?.addEventListener("click",()=>{const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}});
-  window.UmmaCourierMap={open};
+  $("courierMapClose")?.addEventListener("click",close);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$("courierMapModal")?.hidden)close();});
+  window.UmmaCourierMap={open,close};
 })();

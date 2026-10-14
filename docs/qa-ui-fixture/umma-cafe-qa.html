@@ -1,0 +1,3377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#0FA3A8">
+
+  <title>Umma Global</title>
+
+  
+
+  
+  
+
+  
+
+  <!-- STYLES -->
+  
+  
+  
+  
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'"><style>/* UMMA GLOBAL — single source of truth for the home screen */
+:root {
+  --turquoise: #0FA3A8;
+  --turquoise-deep: #087F84;
+  --turquoise-pale: #E8F7F6;
+  --gold: #D4A72C;
+  --gold-light: #F5D56B;
+  --gold-dark: #8D6818;
+  --white: #FFFFFF;
+  --cream: #FFFCF3;
+  --ink: #173C3E;
+  --muted: #718889;
+  --line: #D7EAE8;
+  --radius: 20px;
+  --shadow: 0 4px 14px rgba(8, 105, 108, .09);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%; margin: 0; padding: 0;
+  overflow: hidden; background: var(--cream); color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+button { font: inherit; border: 0; cursor: pointer; background: none; }
+button:active { transform: scale(.98); }
+[hidden] { display: none !important; }
+
+.app {
+  width: 100%; max-width: 520px; height: 100vh; height: 100dvh;
+  margin: 0 auto; position: relative; overflow: hidden; background: var(--cream);
+}
+.topbar {
+  height: 48px; padding: max(4px, env(safe-area-inset-top)) 14px 4px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream); border-bottom: 1px solid var(--line);
+  position: relative; z-index: 20;
+}
+.top-button, .language-button {
+  height: 36px; border: 1px solid var(--line); border-radius: 13px;
+  background: var(--white); color: var(--gold-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.top-button { width: 40px; flex: 0 0 40px; position: relative; font-size: 21px; }
+.hamburger { font-size: 23px; }
+.language-button { min-width: 88px; padding: 0 10px; gap: 6px; font-size: 15px; }
+.language-button .globe { font-size: 17px; }
+.language-button .down { font-size: 17px; }
+.top-space { flex: 1; }
+.notification-button b {
+  position: absolute; top: -5px; right: -4px; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--gold); color: var(--white);
+  display: grid; place-items: center; font-size: 11px;
+}
+.notification-button .bell { font-size: 18px; }
+.profile-button { font-size: 22px; }
+
+.app > main {
+  height: calc(100% - 60px);
+  overflow: hidden;
+  padding: 0 0 5px;
+  display: flex; flex-direction: column;
+  gap: 7px;
+  background: linear-gradient(180deg, #FFFCF3 0%, #F7F4E9 100%);
+}
+
+/* Brand: compact, approved turquoise + gold lockup */
+.brand {
+  height: 142px; flex: 0 0 142px; min-height: 0;
+  position: relative; overflow: hidden;
+  padding: 6px 14px 7px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background:
+    radial-gradient(circle at 8% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
+    radial-gradient(circle at 92% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
+    linear-gradient(145deg, var(--turquoise) 0%, #078C91 68%, var(--turquoise-deep) 100%);
+  border-bottom: 2px solid var(--gold);
+}
+.brand::before, .brand::after {
+  content: ""; position: absolute; width: 130px; height: 130px; bottom: -75px;
+  border: 1px solid rgba(245,213,107,.35); border-radius: 50%; pointer-events: none;
+}
+.brand::before { left: -38px; }
+.brand::after { right: -38px; }
+.brand > * { position: relative; z-index: 1; }
+.brand-logo {
+  display: block; width: 54px; height: 54px; flex: 0 0 54px;
+  object-fit: contain; margin: 0 0 2px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.22));
+}
+.brand-title { display: flex; align-items: baseline; justify-content: center; gap: 6px; line-height: .95; white-space: nowrap; }
+.brand-title span {
+  color: var(--gold-light); font-family: Georgia, serif; font-size: 31px;
+  font-weight: 900; letter-spacing: .5px; text-shadow: 0 1px 0 var(--gold-dark);
+}
+.brand-title strong {
+  color: var(--gold-light); font-family: Georgia, serif; font-size: 17px;
+  font-weight: 800; letter-spacing: 1px;
+}
+.brand-line { width: 86px; height: 2px; flex: 0 0 2px; margin: 4px auto; background: var(--gold-light); }
+.brand p {
+  margin: 0; max-width: 300px; color: var(--white); font-size: 11px;
+  line-height: 1.2; font-weight: 700;
+}
+.brand small { margin-top: 2px; color: var(--gold-light); font-size: 9px; font-weight: 800; }
+
+/* Welcome */
+.welcome-card {
+  height: 82px; flex: 0 0 82px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 8px 10px; display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  background: linear-gradient(135deg, #FFFDF7, #F9F0D9); box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.welcome-image {
+  width: 52px; height: 52px; flex: 0 0 52px; border: 2px solid var(--gold);
+  border-radius: 50%; background: var(--turquoise); display: grid; place-items: center; font-size: 25px;
+}
+.welcome-content { flex: 1; min-width: 0; overflow: hidden; }
+.welcome-content h2 {
+  margin: 0; color: var(--gold-dark); font: 700 12px/1.13 Georgia, serif;
+}
+.welcome-content h2 strong { font-size: 13px; }
+.welcome-content p { margin: 3px 0 0; color: #5D5A50; font-size: 10px; line-height: 1.15; }
+.gold-circle, .turquoise-circle {
+  width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 24px; line-height: 1;
+}
+.gold-circle { color: var(--gold); background: var(--turquoise); border: 2px solid var(--gold-light); }
+
+/* Ayah */
+.ayah-card {
+  height: 76px; flex: 0 0 76px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 7px 10px; display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: #FFFDF6; box-shadow: var(--shadow); overflow: hidden;
+}
+.ayah-book {
+  width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%;
+  background: var(--turquoise-pale); border: 1px solid rgba(212,167,44,.45);
+  display: grid; place-items: center; font-size: 24px;
+}
+.ayah-content { flex: 1; min-width: 0; overflow: hidden; }
+.ayah-content > span { display: block; color: var(--gold-dark); font-size: 10px; font-weight: 900; }
+.ayah-content p {
+  margin: 2px 0; color: var(--turquoise-deep); font-size: 10px;
+  font-weight: 800; line-height: 1.18;
+}
+.ayah-content small { display: block; color: var(--gold-dark); font-size: 9px; font-weight: 700; }
+.turquoise-circle { color: var(--white); background: var(--turquoise); border: 2px solid var(--gold-light); }
+
+/* Cafe — compact card, similar footprint to Farm */
+.cafe-card {
+  height: 112px; flex: 0 0 112px; width: calc(100% - 28px); margin: 0 14px;
+  position: relative; overflow: hidden; border: 2px solid var(--gold);
+  border-radius: 21px; color: var(--white);
+  background: linear-gradient(112deg, #087C80 0%, var(--turquoise) 57%, #087B78 100%);
+  box-shadow: var(--shadow);
+}
+.cafe-background {
+  position: absolute; right: 5%; top: 9%; height: 82%; width: 31%;
+  border: 2px solid rgba(245,213,107,.58); border-radius: 90px 90px 12px 12px;
+  box-shadow: inset 0 0 0 6px rgba(245,213,107,.08);
+  background: radial-gradient(circle at 50% 75%, rgba(245,213,107,.14), transparent 56%);
+}
+.cafe-background::after {
+  content: "UMMA\A CAFE"; white-space: pre; position: absolute; top: 23%; left: 0; right: 0;
+  text-align: center; color: var(--gold-light); font: 700 13px/1.2 Georgia, serif;
+}
+.halal {
+  position: absolute; z-index: 2; top: 8px; right: 10px;
+  padding: 4px 8px; border: 1px solid var(--gold-light); border-radius: 18px;
+  color: var(--gold-light); font-size: 9px; font-weight: 900;
+}
+.cafe-content { position: relative; z-index: 3; width: 68%; padding: 9px 0 8px 14px; }
+.cafe-content h1 {
+  margin: 0; color: var(--gold-light); font: 700 23px/1.02 Georgia, serif;
+  white-space: nowrap; text-shadow: 0 1px 0 var(--gold-dark);
+}
+.cafe-content p { margin: 4px 0 6px; color: var(--white); font-size: 10px; line-height: 1.2; }
+.cafe-button {
+  min-height: 27px; padding: 5px 11px; border-radius: 18px;
+  background: linear-gradient(180deg, #FFE98E, #F2C24A); color: var(--ink);
+  display: inline-flex; align-items: center; gap: 10px; font-size: 10px; font-weight: 900;
+}
+.cafe-button b { font-size: 15px; }
+
+/* Services: 4 columns x 2 rows, matching approved reference */
+.services { margin: 0 14px; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+.services-heading {
+  height: 23px; flex: 0 0 23px; display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.services-heading h2 { margin: 0; color: var(--gold-dark); font: 700 17px/1 Georgia, serif; }
+.services-heading button { color: var(--turquoise-deep); font-size: 9px; font-weight: 800; white-space: nowrap; }
+.services-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 5px; flex: 1; min-height: 0;
+}
+.service {
+  min-width: 0; min-height: 0; padding: 4px 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; overflow: hidden; border: 1px solid #E8D79B; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFEFA, #FAF2DF); box-shadow: 0 2px 6px rgba(91,67,17,.06);
+}
+.service-icon {
+  width: 29px; height: 29px; flex: 0 0 29px; margin-bottom: 3px; border-radius: 50%;
+  border: 1px solid var(--gold); background: var(--turquoise); color: var(--gold-light);
+  display: grid; place-items: center; font-size: 15px;
+}
+.service strong {
+  display: block; max-width: 100%; color: var(--gold-dark); font-size: 8px;
+  line-height: 1.1; font-weight: 800; overflow-wrap: anywhere;
+}
+.service small {
+  display: block; margin-top: 2px; max-width: 100%; color: var(--ink);
+  font-size: 6.5px; line-height: 1.1; overflow-wrap: anywhere;
+}
+
+/* Farm */
+.farm-card {
+  height: 64px; flex: 0 0 64px; width: calc(100% - 28px); margin: 0 14px;
+  padding: 6px 9px; border: 1px solid var(--gold); border-radius: 17px;
+  display: flex; align-items: center; gap: 8px; overflow: hidden; position: relative;
+  background: linear-gradient(100deg, #08766E, #0B9189 58%, #075D58);
+}
+.farm-icon {
+  width: 42px; height: 42px; flex: 0 0 42px; border-radius: 13px;
+  background: rgba(255,255,255,.13); display: grid; place-items: center; font-size: 23px;
+}
+.farm-content { flex: 1; min-width: 0; }
+.farm-content h2 { margin: 0; color: var(--gold-light); font: 700 15px/1 Georgia, serif; }
+.farm-content p { margin: 3px 0 0; color: var(--white); font-size: 8px; line-height: 1.12; }
+.farm-button {
+  flex: 0 0 auto; padding: 7px 9px; border-radius: 18px;
+  background: linear-gradient(180deg, #FFE98E, #F2C24A); color: var(--ink);
+  font-size: 8px; font-weight: 900; white-space: nowrap;
+}
+.farm-button b { font-size: 12px; }
+
+/* Bottom navigation */
+.bottom-nav {
+  position: absolute; z-index: 50; left: 0; right: 0; bottom: 0;
+  height: calc(60px + env(safe-area-inset-bottom)); padding: 4px 6px max(4px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #FFFEFA, #F5EBD4); border-top: 1px solid #E4D18C;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.nav-item { min-width: 0; color: var(--gold-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.nav-item span { font-size: 19px; line-height: 1; color: var(--gold-dark); }
+.nav-item small { font-size: 8px; line-height: 1.1; font-weight: 800; white-space: nowrap; }
+.nav-item.active span, .nav-item.active small { color: var(--turquoise); }
+
+.toast {
+  position: fixed; z-index: 1000; left: 50%; bottom: 72px; transform: translate(-50%, 12px);
+  max-width: calc(100% - 28px); padding: 9px 14px; border-radius: 18px;
+  background: rgba(23,60,62,.95); color: white; font-size: 12px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Admin entry remains available to its controller but is not part of the approved home mockup. */
+/* Super-admin entry visibility is controlled by updateAdminUI(role). */
+
+/* Keep the same layout proportions on short phones and Telegram webviews. */
+@media (max-height: 760px) {
+  .topbar { height: 44px; }
+  .app > main { height: calc(100% - 56px); gap: 5px; }
+  .brand { height: 124px; flex-basis: 124px; padding-top: 3px; }
+  .brand-logo { width: 45px; height: 45px; flex-basis: 45px; }
+  .brand-title span { font-size: 28px; }
+  .brand-title strong { font-size: 15px; }
+  .brand p { font-size: 10px; }
+  .welcome-card { height: 72px; flex-basis: 72px; }
+  .welcome-image { width: 44px; height: 44px; flex-basis: 44px; font-size: 21px; }
+  .welcome-content h2 { font-size: 10px; }
+  .welcome-content h2 strong { font-size: 11px; }
+  .welcome-content p { font-size: 8px; }
+  .ayah-card { height: 67px; flex-basis: 67px; }
+  .ayah-book { width: 39px; height: 39px; flex-basis: 39px; font-size: 20px; }
+  .ayah-content p { font-size: 8px; }
+  .ayah-content > span, .ayah-content small { font-size: 8px; }
+  .cafe-card { height: 96px; flex-basis: 96px; }
+  .cafe-content { padding-top: 8px; padding-left: 11px; }
+  .cafe-content h1 { font-size: 20px; }
+  .cafe-content p { font-size: 9px; margin: 3px 0 4px; }
+  .cafe-button { min-height: 23px; padding: 4px 8px; font-size: 8px; }
+  .services-heading { height: 20px; flex-basis: 20px; margin-bottom: 3px; }
+  .services-heading h2 { font-size: 15px; }
+  .service-icon { width: 24px; height: 24px; flex-basis: 24px; font-size: 12px; }
+  .service strong { font-size: 7px; }
+  .service small { font-size: 5.5px; }
+  .farm-card { height: 56px; flex-basis: 56px; }
+  .farm-icon { width: 36px; height: 36px; flex-basis: 36px; font-size: 20px; }
+  .farm-content h2 { font-size: 13px; }
+  .farm-content p { font-size: 7px; }
+  .farm-button { padding: 6px 7px; font-size: 7px; }
+  .bottom-nav { height: calc(56px + env(safe-area-inset-bottom)); }
+}
+@media (max-height: 650px) {
+  .brand { height: 108px; flex-basis: 108px; }
+  .brand-logo { width: 36px; height: 36px; flex-basis: 36px; }
+  .brand-title span { font-size: 24px; }
+  .brand-title strong { font-size: 13px; }
+  .brand-line { margin: 2px auto; }
+  .brand small { display: none; }
+  .welcome-card { height: 62px; flex-basis: 62px; }
+  .welcome-image { width: 38px; height: 38px; flex-basis: 38px; }
+  .ayah-card { height: 58px; flex-basis: 58px; }
+  .ayah-book { width: 33px; height: 33px; flex-basis: 33px; }
+  .cafe-card { height: 82px; flex-basis: 82px; }
+  .cafe-content h1 { font-size: 18px; }
+  .cafe-content p { font-size: 8px; }
+  .services-heading { height: 18px; flex-basis: 18px; }
+  .farm-card { height: 49px; flex-basis: 49px; }
+  .farm-icon { width: 32px; height: 32px; flex-basis: 32px; }
+}
+@media (max-width: 360px) {
+  .topbar { padding-left: 9px; padding-right: 9px; gap: 6px; }
+  .welcome-card, .ayah-card, .cafe-card, .farm-card { width: calc(100% - 20px); margin-left: 10px; margin-right: 10px; }
+  .brand-title span { font-size: 27px; }
+  .brand-title strong { font-size: 14px; }
+  .services { margin-left: 10px; margin-right: 10px; }
+  .service strong { font-size: 7px; }
+  .service small { font-size: 5.5px; }
+  .farm-button { padding-left: 6px; padding-right: 6px; }
+}
+
+
+/* =====================================================
+   UMMA CAFE — MENU, CART AND ORDER FORM
+   ===================================================== */
+.cafe-page {
+  position: absolute; inset: 0 0 calc(60px + env(safe-area-inset-bottom));
+  z-index: 30; overflow-y: auto; overscroll-behavior: contain;
+  background: linear-gradient(180deg, #F4FBF9, #FFFCF3);
+  padding: 0 0 20px;
+}
+.cafe-page-inner { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 14px 20px; }
+.cafe-page-header {
+  position: relative; margin: 0 -14px 14px; padding: 18px 14px 17px;
+  color: #fff; background: linear-gradient(135deg, #087F84, #0FA3A8);
+  border-bottom: 2px solid var(--gold);
+}
+.cafe-back {
+  display: inline-flex; align-items: center; min-height: 34px; padding: 6px 10px;
+  color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 12px;
+  background: rgba(255,255,255,.09); font-size: 12px; font-weight: 700;
+}
+.cafe-halal-pill {
+  float: right; margin-top: 4px; padding: 6px 9px; border-radius: 20px;
+  color: var(--gold-light); border: 1px solid var(--gold-light); font-size: 10px; font-weight: 900;
+}
+.cafe-page-header h1 { margin: 14px 0 3px; color: var(--gold-light); font: 800 27px/1.1 Georgia, serif; }
+.cafe-page-header p { margin: 0; font-size: 12px; opacity: .95; }
+.cafe-message {
+  margin: 12px 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: #fff; color: var(--ink); font-size: 13px; text-align: center;
+}
+.cafe-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cafe-product {
+  min-width: 0; padding: 12px; border: 1px solid #E8D79B; border-radius: 16px;
+  background: #fff; box-shadow: 0 3px 10px rgba(8,105,108,.06);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.cafe-product-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.cafe-product-icon {
+  width: 36px; height: 36px; flex: 0 0 36px; border-radius: 12px;
+  display: grid; place-items: center; background: var(--turquoise-pale); font-size: 22px;
+}
+.cafe-product-weight { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.cafe-product h3 { margin: 0; color: var(--gold-dark); font: 700 16px/1.15 Georgia, serif; }
+.cafe-product p { margin: 0; min-height: 28px; color: var(--muted); font-size: 11px; line-height: 1.3; }
+.cafe-product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+.cafe-product-price { color: var(--turquoise-deep); font-size: 14px; font-weight: 900; }
+.cafe-add {
+  width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%;
+  color: #fff; background: var(--turquoise); font-size: 22px; font-weight: 700;
+}
+.cafe-cart {
+  margin-top: 16px; padding: 14px; border: 1px solid var(--gold);
+  border-radius: 18px; background: #fffdf7; box-shadow: var(--shadow);
+}
+.cafe-cart-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cafe-cart-heading h2 { margin: 0; color: var(--gold-dark); font: 700 20px/1.1 Georgia, serif; }
+.cafe-cart-heading span { color: var(--muted); font-size: 11px; }
+.cafe-cart-items { margin-top: 10px; }
+.cafe-empty-cart { margin: 0; padding: 10px 0; color: var(--muted); font-size: 12px; }
+.cafe-cart-row {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px;
+  align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line);
+}
+.cafe-cart-row strong { display: block; font-size: 12px; }
+.cafe-cart-row small { color: var(--muted); font-size: 10px; }
+.cafe-cart-controls { display: flex; align-items: center; gap: 8px; }
+.cafe-cart-controls button {
+  width: 27px; height: 27px; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--turquoise-deep); background: #fff; font-size: 17px; font-weight: 800;
+}
+.cafe-cart-total {
+  display: flex; justify-content: space-between; gap: 10px; padding: 13px 0;
+  color: var(--ink); font-size: 14px; border-bottom: 1px solid var(--line);
+}
+.cafe-cart-total strong { color: var(--turquoise-deep); font-size: 19px; }
+.cafe-order-form { display: grid; gap: 11px; margin-top: 14px; }
+.cafe-order-form[hidden], .cafe-order-form label[hidden] { display: none; }
+.cafe-order-form label { display: grid; gap: 5px; color: var(--ink); font-size: 11px; font-weight: 800; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea {
+  width: 100%; min-width: 0; min-height: 42px; padding: 10px 11px;
+  color: var(--ink); background: #fff; border: 1px solid #CFE3E0; border-radius: 11px;
+  font: 500 13px Inter, sans-serif; outline-color: var(--turquoise);
+}
+.cafe-order-form textarea { resize: vertical; }
+.cafe-submit {
+  min-height: 46px; padding: 12px 14px; border-radius: 13px;
+  color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A);
+  font-size: 14px; font-weight: 900;
+}
+.cafe-submit:disabled { opacity: .6; cursor: wait; }
+.cafe-order-hint { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.cafe-order-result {
+  margin-top: 12px; padding: 13px; border: 1px solid var(--turquoise);
+  border-radius: 12px; color: var(--turquoise-deep); background: var(--turquoise-pale);
+  font-size: 13px; font-weight: 700; line-height: 1.45;
+}
+@media (max-width: 360px) {
+  .cafe-page-inner { padding-left: 10px; padding-right: 10px; }
+  .cafe-products { gap: 7px; }
+  .cafe-product { padding: 9px; }
+  .cafe-product h3 { font-size: 14px; }
+  .cafe-product-price { font-size: 12px; }
+}
+@media (max-height: 760px) {
+  .cafe-page { bottom: calc(56px + env(safe-area-inset-bottom)); }
+}
+
+
+/* =====================================================
+   UMMA CAFE — KITCHEN ORDER BOARD
+   ===================================================== */
+.cafe-kitchen-page {
+  position: absolute; inset: 0; z-index: 60; overflow-y: auto;
+  overscroll-behavior: contain; background: #F4FBF9; padding-bottom: 20px;
+}
+.cafe-kitchen-inner { max-width: 680px; margin: 0 auto; padding: 0 14px 24px; }
+.cafe-kitchen-header {
+  position: relative; margin: 0 -14px 12px; padding: 16px 14px 18px;
+  color: #fff; background: linear-gradient(135deg, #087F84, #0FA3A8);
+  border-bottom: 2px solid var(--gold);
+}
+.cafe-kitchen-header h1 { margin: 15px 0 3px; color: var(--gold-light); font: 800 25px/1.1 Georgia, serif; }
+.cafe-kitchen-header p { margin: 0; font-size: 12px; }
+.cafe-kitchen-refresh {
+  float: right; margin-top: 3px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.5);
+  border-radius: 10px; color: #fff; background: rgba(255,255,255,.08); font-size: 11px; font-weight: 800;
+}
+.cafe-kitchen-filters { display: flex; gap: 8px; margin: 12px 0; }
+.cafe-kitchen-filters button {
+  flex: 1; padding: 10px; border: 1px solid #CFE3E0; border-radius: 12px;
+  color: var(--turquoise-deep); background: #fff; font-size: 12px; font-weight: 800;
+}
+.cafe-kitchen-filters button.is-active { border-color: var(--turquoise); color: #fff; background: var(--turquoise); }
+.cafe-kitchen-orders { display: grid; gap: 12px; }
+.kitchen-order-card {
+  padding: 14px; border: 1px solid #D7E7E4; border-left: 5px solid var(--turquoise);
+  border-radius: 15px; background: #fff; box-shadow: 0 3px 10px rgba(8,105,108,.06);
+}
+.kitchen-order-card.status-pending { border-left-color: #D9A62B; }
+.kitchen-order-card.status-ready { border-left-color: #279B64; }
+.kitchen-order-card.status-cancelled { border-left-color: #B84949; opacity: .78; }
+.kitchen-order-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.kitchen-order-number { display: block; color: var(--gold-dark); font-size: 17px; font-weight: 900; }
+.kitchen-order-top small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.kitchen-status { max-width: 50%; padding: 6px 8px; border-radius: 9px; color: var(--turquoise-deep); background: var(--turquoise-pale); font-size: 10px; font-weight: 800; text-align: center; }
+.kitchen-order-details { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 11px 0; color: var(--muted); font-size: 11px; }
+.kitchen-order-items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.kitchen-order-items li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #EEF3F2; font-size: 12px; }
+.kitchen-order-items li strong { white-space: nowrap; }
+.kitchen-order-total { display: flex; justify-content: space-between; padding: 11px 0; font-size: 13px; }
+.kitchen-order-total strong { color: var(--turquoise-deep); font-size: 16px; }
+.kitchen-order-actions { display: flex; gap: 8px; }
+.kitchen-action, .kitchen-cancel {
+  flex: 1; min-height: 40px; padding: 10px; border-radius: 11px; font-size: 12px; font-weight: 900;
+}
+.kitchen-action { color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A); }
+.kitchen-cancel { flex: 0 0 auto; color: #A33E3E; border: 1px solid #E8B8B8; background: #FFF8F8; }
+@media (min-width: 560px) {
+  .cafe-kitchen-orders { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+
+/* CUSTOMER ORDER HISTORY */
+.cafe-my-orders-toolbar { display:flex; gap:8px; margin:0 0 10px; }
+.cafe-my-orders-toggle, .cafe-my-orders-refresh {
+  min-height:40px; padding:10px 13px; border:1px solid var(--gold);
+  border-radius:12px; color:var(--gold-dark); background:#fffdf7;
+  font-size:12px; font-weight:900;
+}
+.cafe-my-orders-toggle { flex:1; }
+.cafe-my-orders-refresh { color:var(--turquoise-deep); border-color:var(--line); }
+.cafe-my-orders-section { margin-bottom:14px; }
+.cafe-my-orders-list { display:grid; gap:10px; }
+.cafe-my-order-card {
+  padding:12px; border:1px solid var(--line); border-radius:14px;
+  background:#fff; box-shadow:0 2px 8px rgba(8,105,108,.05);
+}
+.cafe-my-order-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-my-order-head strong { display:block; color:var(--gold-dark); font-size:15px; }
+.cafe-my-order-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-my-order-status {
+  max-width:56%; padding:6px 8px; border-radius:9px; background:var(--turquoise-pale);
+  color:var(--turquoise-deep); font-size:10px; font-weight:900; text-align:center;
+}
+.cafe-my-order-status.status-pending { color:#805D12; background:#FFF3CC; }
+.cafe-my-order-status.status-ready { color:#176B43; background:#E3F7EC; }
+.cafe-my-order-status.status-cancelled { color:#9C3434; background:#FFF0F0; }
+.cafe-my-order-type { margin:8px 0; color:var(--muted); font-size:11px; }
+.cafe-my-order-items, .cafe-my-order-history ul { list-style:none; margin:0; padding:0; }
+.cafe-my-order-items li, .cafe-my-order-history li {
+  display:flex; justify-content:space-between; gap:8px; padding:7px 0;
+  border-top:1px solid #EEF3F2; font-size:11px;
+}
+.cafe-my-order-items li strong { white-space:nowrap; }
+.cafe-my-order-total { display:flex; justify-content:space-between; padding-top:10px; font-size:12px; }
+.cafe-my-order-total strong { color:var(--turquoise-deep); font-size:15px; }
+.cafe-my-order-history { margin-top:10px; border-top:1px solid var(--line); padding-top:9px; }
+.cafe-my-order-history summary { color:var(--turquoise-deep); font-size:11px; font-weight:800; cursor:pointer; }
+.cafe-my-order-history ul { margin-top:7px; }
+.cafe-my-order-history li { color:var(--muted); }
+.cafe-my-order-history li small { white-space:nowrap; }
+
+
+/* CAFE STAFF MANAGEMENT */
+.cafe-staff-admin-page {
+  position:absolute; inset:0; z-index:70; overflow-y:auto; overscroll-behavior:contain;
+  padding-bottom:24px; background:#F4FBF9;
+}
+.cafe-staff-admin-inner { max-width:680px; margin:0 auto; padding:0 14px 24px; }
+.cafe-staff-assign-form {
+  display:grid; gap:12px; margin:14px 0 20px; padding:14px;
+  border:1px solid var(--gold); border-radius:16px; background:#fffdf7;
+}
+.cafe-staff-assign-form h2, .cafe-staff-list-heading h2 {
+  margin:0; color:var(--gold-dark); font:700 19px/1.15 Georgia,serif;
+}
+.cafe-staff-assign-form label { display:grid; gap:5px; color:var(--ink); font-size:11px; font-weight:800; }
+.cafe-staff-assign-form input, .cafe-staff-assign-form select {
+  width:100%; min-height:42px; padding:10px 11px; border:1px solid #CFE3E0;
+  border-radius:11px; color:var(--ink); background:#fff; font:500 13px Inter,sans-serif;
+}
+.cafe-staff-form-hint { margin:-5px 0 0; color:var(--muted); font-size:10px; line-height:1.4; }
+.cafe-staff-list-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 10px; }
+.cafe-staff-assignments { display:grid; gap:10px; }
+.cafe-staff-card { padding:12px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.cafe-staff-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.cafe-staff-card-head strong { display:block; color:var(--ink); font-size:13px; }
+.cafe-staff-card-head small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.cafe-staff-role { flex:0 0 auto; padding:5px 8px; border-radius:9px; color:var(--turquoise-deep); background:var(--turquoise-pale); font-size:10px; font-weight:900; }
+.cafe-staff-card p { margin:10px 0; color:var(--muted); font-size:11px; }
+.cafe-staff-card-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:8px; border-top:1px solid #EEF3F2; font-size:10px; }
+.cafe-staff-active { color:#176B43; font-weight:900; }
+.cafe-staff-inactive { color:#9C3434; font-weight:800; }
+.cafe-staff-deactivate { padding:7px 9px; border:1px solid #E8B8B8; border-radius:9px; color:#A33E3E; background:#FFF8F8; font-size:10px; font-weight:900; }
+
+/* Staff order builder: make selected menu items obvious */
+.staff-order-builder .cafe-product.staff-product-selected {
+  border: 2px solid #0FA3A8;
+  background: #E7F8F5;
+  box-shadow: 0 0 0 3px rgba(15,163,168,.14);
+}
+.staff-order-builder .staff-product-quantity:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  margin: 5px 0 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #D1F3E5;
+  color: #08764D;
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-order-builder .cafe-add { min-width: 92px; padding: 9px 11px; }
+
+
+/* Clear visual confirmation and quick quantity controls on selected menu cards */
+.cafe-product {
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+}
+.cafe-product.cafe-product-selected {
+  border-color: #9AA9A8;
+  background: rgba(224, 231, 230, .72);
+  box-shadow: 0 2px 9px rgba(37, 61, 60, .10);
+}
+.cafe-product-selected .cafe-product-icon { background: rgba(255,255,255,.72); }
+.cafe-product-selection {
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 9px;
+  background: rgba(190, 202, 200, .55);
+  color: #344847;
+  font-size: 10px;
+  font-weight: 800;
+}
+.cafe-product-selection[hidden] { display: none !important; }
+.cafe-product-selection.is-visible { display: inline-flex; }
+.cafe-product-quantity { font-size: 13px; }
+.cafe-card-quantity { display: inline-flex; align-items: center; gap: 7px; }
+.cafe-card-quantity strong { min-width: 14px; text-align: center; color: #263F3E; font-size: 14px; }
+.cafe-qty-btn {
+  width: 32px; height: 32px; border: 1px solid #A9B9B7; border-radius: 10px;
+  color: #244746; background: rgba(255,255,255,.82); font-size: 21px; line-height: 1; font-weight: 800;
+}
+.cafe-sticky-order {
+  position: sticky; z-index: 35; bottom: 0; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; margin: 12px 0 0; padding: 10px 14px;
+  border-top: 1px solid #D8C477; background: rgba(255, 253, 245, .97);
+  box-shadow: 0 -5px 18px rgba(20, 61, 61, .10);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.cafe-sticky-order[hidden] { display: none !important; }
+.cafe-sticky-order-info { min-width: 0; display: grid; gap: 2px; }
+.cafe-sticky-order-info span { color: #607171; font-size: 11px; }
+.cafe-sticky-order-info strong { color: #087F84; font-size: 17px; font-weight: 900; }
+.cafe-sticky-order button {
+  flex: 0 0 auto; min-height: 42px; padding: 9px 13px; border-radius: 12px;
+  color: #173C3E; background: linear-gradient(180deg, #FFE98E, #F2C24A); font-size: 12px; font-weight: 900;
+}
+.cafe-page-inner { padding-bottom: 18px; }
+
+
+/* Staff POS payment collection */
+.staff-cash-payment-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 12px;
+  border: 1px solid #D5E5E2;
+  border-radius: 12px;
+  background: #F4FAF9;
+}
+.staff-cash-payment-fields[hidden] { display: none !important; }
+.staff-cash-payment-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+.staff-cash-payment-fields input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #CFE3E0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 16px Inter, sans-serif;
+}
+.staff-change-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+}
+.staff-change-summary span { color: var(--muted); }
+.staff-change-summary strong { color: var(--turquoise-deep); font-size: 15px; text-align: right; }
+
+
+/* Waiter: open bills and deferred payment */
+.staff-open-bills{display:grid;gap:8px;margin:8px 0 16px}
+.staff-open-bill{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #d5e7e6;border-radius:12px;background:#f7fbfa}
+.staff-open-bill>div{display:grid;gap:4px;min-width:0}
+.staff-open-bill small{font-size:12px;color:#617070}
+.staff-open-bill>button{flex-shrink:0}
+#staffPaymentNowFields[hidden]{display:none!important}
+#staffOrderModeNotice{margin:8px 0 12px}
+@media(max-width:480px){.staff-open-bill{align-items:flex-start;flex-direction:column}.staff-open-bill>button{width:100%}}
+
+
+/* Staff menu quantity controls stay on each dish card */
+.staff-product-qty-controls{display:inline-flex;align-items:center;gap:7px;flex-shrink:0}
+.staff-product-quantity{min-width:22px;height:32px;box-sizing:border-box;align-items:center;justify-content:center;padding:0 5px;border-radius:9px;background:#edf0f0;color:#435151;font-size:14px;font-weight:800;text-align:center}
+.staff-product-quantity:not([hidden]){display:inline-flex}
+.staff-product-minus,.staff-product-plus{width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd2d2;border-radius:10px;font-size:22px;line-height:1;font-weight:800}
+.staff-product-minus{background:#e5e8e8!important;color:#536060!important}
+.staff-product-minus[hidden],.staff-product-quantity[hidden]{display:none!important}
+.staff-product-plus{background:#087f84!important;color:#fff!important}
+.cafe-product-bottom{gap:10px}
+
+/* Compact, symmetrical staff dish cards: price and quantity controls fit on mobile */
+#staffOrderMenu .cafe-product {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 124px;
+  padding: 10px;
+  gap: 9px;
+  box-sizing: border-box;
+}
+#staffOrderMenu .cafe-product h3 {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+#staffOrderMenu .cafe-product-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: end;
+  gap: 7px;
+  width: 100%;
+  margin-top: auto;
+}
+#staffOrderMenu .cafe-product-price {
+  display: block;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#staffOrderMenu .staff-product-qty-controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+#staffOrderMenu .staff-product-minus,
+#staffOrderMenu .staff-product-plus {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0;
+  border-radius: 9px;
+  font-size: 20px;
+  flex: 0 0 30px;
+}
+#staffOrderMenu .staff-product-quantity,
+#staffOrderMenu .staff-order-builder .staff-product-quantity:not([hidden]) {
+  min-width: 24px;
+  width: 24px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: #edf0f0;
+  color: #435151;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+#staffOrderMenu .staff-product-quantity[hidden],
+#staffOrderMenu .staff-product-minus[hidden] { display: none !important; }
+@media (max-width: 360px) {
+  #staffOrderMenu .cafe-product { padding: 8px; min-height: 120px; }
+  #staffOrderMenu .cafe-product h3 { font-size: 13px; }
+  #staffOrderMenu .cafe-product-price { font-size: 11px; }
+  #staffOrderMenu .staff-product-qty-controls { gap: 5px; }
+}
+
+
+/* Staff workspace: separate order creation from active-order control */
+.staff-workspace-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 16px}
+.staff-workspace-tab{min-height:46px;padding:10px 12px;border:1px solid #d4e2e1;border-radius:12px;background:#f5f8f8;color:#334747;font-weight:750;font-size:14px}
+.staff-workspace-tab.is-active{background:#087f84;color:#fff;border-color:#087f84}
+.staff-active-orders{display:grid;gap:10px;margin:12px 0}
+.staff-active-order{border:1px solid #d9e4e3;border-radius:14px;padding:13px;background:#fff;display:grid;gap:10px}
+.staff-active-order-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.staff-active-order-head strong{font-size:16px}
+.staff-active-order-head small{color:#647474;text-align:right}
+.staff-active-order-meta{display:flex;flex-wrap:wrap;gap:7px}
+.staff-status-pill,.staff-payment-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:750;background:#eef2f2;color:#455555}
+.staff-payment-pill.is-paid{background:#e2f5e8;color:#17663a}
+.staff-payment-pill.is-unpaid{background:#fff1d8;color:#895600}
+.staff-active-order-items{margin:0;padding-left:20px;display:grid;gap:4px;color:#465858;font-size:14px}
+.staff-active-order-total{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #edf0f0}
+.staff-active-order-total strong{font-size:18px}
+.staff-order-actions-inline{display:flex;gap:7px;flex-wrap:wrap}
+.staff-order-actions-inline .kitchen-action{flex:1 1 140px}
+#staffActiveOrdersWrap[hidden],#staffOrderFormWrap[hidden]{display:none!important}
+@media(max-width:380px){.staff-workspace-tabs{grid-template-columns:1fr}.staff-active-order-head{flex-direction:column}.staff-active-order-head small{text-align:left}}
+
+/* Keep the entire staff order summary invisible until a dish is selected. */
+#staffOrderSummary[hidden] { display: none !important; }
+
+/* Three compact waiter tabs and isolated closed orders view. */
+.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.staff-workspace-tabs .staff-workspace-tab{min-width:0;padding:10px 5px;font-size:12px;line-height:1.25}
+#staffClosedOrdersWrap[hidden]{display:none!important}
+@media(max-width:380px){.staff-workspace-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Kitchen tablet: large readable orders and unmistakable add-on notifications. */
+.kitchen-extra-alert{background:#fff0bd;border:2px solid #e4a722;border-radius:13px;padding:12px;margin-bottom:12px;color:#573b00;display:grid;gap:8px;font-size:15px}
+.kitchen-extra-alert strong{font-size:20px}
+.kitchen-extra-alert button{background:#116c61;color:#fff;border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
+.kitchen-tablet-mode .cafe-kitchen-orders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.kitchen-tablet-mode .kitchen-order-card{font-size:18px;padding:18px}
+.kitchen-tablet-mode .kitchen-order-items{font-size:20px;line-height:1.5}
+.kitchen-tablet-mode .kitchen-order-actions button{min-height:52px;font-size:17px}
+.kitchen-tablet-mode .kitchen-order-number{font-size:23px}
+
+/* Universal staff workspace: four task-oriented entry points. */
+.cafe-staff-quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.cafe-staff-quick-nav button{min-width:0;border:1px solid #b7d9d4;border-radius:12px;padding:14px 8px;background:#eff8f6;color:#125950;font-weight:800;font-size:14px;cursor:pointer}
+.cafe-staff-quick-nav button.is-active{background:#0b888b;color:white}
+.cafe-management-tools{margin:10px 0 16px;border:1px solid #d4e3e1;border-radius:12px;padding:10px}
+.cafe-management-tools summary{font-weight:750;cursor:pointer;padding:7px}
+#cafeCashPanel[hidden]{display:none!important}
+
+/* Kitchen is task-first; shared guest orders remain the sole order-entry screen. */
+.cafe-kitchen-shortcuts{display:flex;gap:8px;margin:10px 0}
+.cafe-kitchen-shortcuts button{flex:1;min-height:42px;border:1px solid #b7d9d4;border-radius:10px;background:#edf8f6;color:#125950;font-size:14px;font-weight:750;cursor:pointer}
+.cafe-kitchen-page .cafe-management-tools{margin-top:20px}
+
+/* Quick order entry: six fixed tables, with a separate rear table. */
+.staff-table-picker{background:#f4faf8;border:1px solid #b8dcd7;border-radius:14px;padding:14px;margin:12px 0}
+.staff-table-picker>strong{display:block;font-size:17px;color:#084b50}
+.staff-table-picker>p{font-size:13px;margin:6px 0 10px;color:#3b6364}
+.staff-table-zone{font-size:12px;font-weight:800;letter-spacing:.02em;color:#536c6d;margin:12px 0 7px}
+.staff-table-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.staff-table-grid button{min-height:52px;border-radius:12px;border:1px solid #8bcac6;background:white;color:#075b60;font:inherit;font-weight:800;cursor:pointer}
+.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:#078f94;color:white;border-color:#078f94;box-shadow:0 0 0 2px #a6e8df}
+.staff-table-grid button:focus-visible{outline:3px solid #e5ac2e;outline-offset:2px}
+@media(min-width:700px){.staff-table-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+.staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
+.staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
+.staff-table-grid button.has-open-bill.is-selected{background:#078f94;color:white}
+
+/* Delivery addresses and actions must fit narrow Telegram viewports. */
+.cafe-order-form, .cafe-order-form label, .kitchen-order-card { min-width: 0; }
+.cafe-order-form input, .cafe-order-form select, .cafe-order-form textarea { max-width: 100%; box-sizing: border-box; }
+.kitchen-order-details > span, .kitchen-order-items li > span { min-width: 0; overflow-wrap: anywhere; }
+.kitchen-order-top > div { min-width: 0; }
+.kitchen-order-actions { flex-wrap: wrap; }
+.kitchen-order-actions > button { min-width: 0; flex: 1 1 120px; overflow-wrap: anywhere; white-space: normal; }
+.kitchen-courier-assignment { display: flex; flex: 1 1 100%; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.kitchen-courier-select { width: 100%; min-width: 0; max-width: 100%; padding: 9px; border: 1px solid #ccd5d5; border-radius: 9px; box-sizing: border-box; }
+
+.cafe-refund-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #aacaca;border-radius:14px;padding:16px}.cafe-refund-dialog::backdrop{background:#0008}.cafe-refund-confirm{grid-template-columns:24px minmax(0,1fr);align-items:start}.cafe-refund-confirm input{min-height:20px;width:20px}
+
+#courierMapModal>div>div:first-child{position:sticky;top:-14px;z-index:2;background:white;flex-wrap:wrap;padding:8px 0}#courierMapTitle{min-width:0;flex:1 1 150px;font-size:20px}.courier-route-back{flex:0 0 auto;border:1px solid #0b777a;border-radius:10px;padding:12px;color:#07595c;background:#e8f7f5;font-weight:800}#courierRouteMap{min-height:180px!important;height:55dvh!important}
+
+.delivery-tracking-dialog{width:min(94vw,680px);max-width:680px;max-height:90dvh;overflow:auto;box-sizing:border-box;border:0;border-radius:14px;padding:16px}.delivery-tracking-dialog::backdrop{background:#0008}.delivery-tracking-header{position:sticky;top:0;background:white;z-index:1000;display:flex;flex-wrap:wrap;gap:12px;align-items:center}.delivery-tracking-map{height:min(52dvh,420px);min-height:180px;margin:12px 0}.delivery-tracking-dialog p{overflow-wrap:anywhere}.delivery-tracking-dialog small{display:block}
+    /* =====================================================
+       SUPER ADMIN
+       ===================================================== */
+
+    .admin-entry {
+      margin: 0 16px 10px;
+    }
+
+    .admin-entry-button {
+      width: 100%;
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--umma-gold, #d7a51f);
+      border-radius: 18px;
+      background: #fffdf5;
+      color: var(--umma-turquoise, #0fa3a8);
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .admin-entry-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 13px;
+      background: var(--umma-turquoise, #0fa3a8);
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .admin-entry-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .admin-entry-copy strong,
+    .admin-entry-copy small {
+      display: block;
+    }
+
+    .admin-entry-copy strong {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .admin-entry-copy small {
+      margin-top: 3px;
+      font-size: 11px;
+      opacity: .7;
+    }
+
+    .admin-entry-arrow {
+      font-size: 24px;
+      color: var(--umma-gold, #d7a51f);
+    }
+
+    .admin-page {
+      min-height: 100vh;
+      padding: 18px 16px 34px;
+      background: var(--umma-background, #edfafa);
+    }
+
+    .admin-page-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .admin-back {
+      border: 0;
+      background: transparent;
+      color: var(--umma-turquoise, #0fa3a8);
+      font: inherit;
+      font-weight: 800;
+      padding: 8px 0 18px;
+      cursor: pointer;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .admin-header > div:last-child {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .admin-header h1 {
+      overflow-wrap: anywhere;
+    }
+
+    .admin-header-icon {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: var(--umma-turquoise, #0fa3a8);
+      color: #fff;
+      font-size: 27px;
+    }
+
+    .admin-eyebrow {
+      color: var(--umma-gold, #d7a51f);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .admin-header h1 {
+      margin: 2px 0 3px;
+      color: var(--umma-turquoise, #0fa3a8);
+      font-size: 24px;
+    }
+
+    .admin-header p {
+      margin: 0;
+      color: #68737d;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .admin-card {
+      min-height: 120px;
+      padding: 15px;
+      border: 1px solid rgba(15, 163, 168, .18);
+      border-radius: 18px;
+      background: #fff;
+      text-align: left;
+      font: inherit;
+      color: var(--umma-turquoise, #0fa3a8);
+      cursor: pointer;
+    }
+
+    .admin-card > span {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 25px;
+    }
+
+    .admin-card strong,
+    .admin-card small {
+      display: block;
+    }
+
+    .admin-card strong {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .admin-card small {
+      margin-top: 4px;
+      color: #68737d;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .admin-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 16px;
+      background: rgba(15, 163, 168, .08);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+
+    .admin-status strong,
+    .admin-status small {
+      display: block;
+    }
+
+    .admin-status strong {
+      color: var(--umma-turquoise, #0fa3a8);
+      font-size: 12px;
+    }
+
+    .admin-status small {
+      margin-top: 2px;
+      color: #68737d;
+      font-size: 10px;
+    }
+
+    @media (max-width: 360px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+/* UMMA LOCATION MAP */
+#locationAdminMap { z-index: 1; background: #eaf1f2; }
+.umma-map-marker-wrap { background: transparent; border: 0; }
+.umma-map-marker { display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid #176b55;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#fff;box-shadow:0 2px 8px #0002;font-size:15px; }
+.umma-map-marker.is-cafe { background:#0fa3a8;color:#fff;border-color:#08777b; }
+.leaflet-popup-content { line-height:1.55; }
+.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:#0fa3a8;color:#fff;padding:7px 10px;font-weight:700;cursor:pointer; }
+#locationForm label { display:block; margin:10px 0; }
+#locationForm input:not([type="checkbox"]),#locationForm select { display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:5px;border:1px solid #d4dfdf;border-radius:10px;background:#fff;font:inherit; }
+#locationForm input[readonly] { background:#f3f7f7;color:#5b6c6c; }
+#locationForm input[type="checkbox"] { width:18px;height:18px; }
+#locationForm .cafe-submit:disabled { opacity:.6; }
+
+
+/* UMMA CAFE ACCOUNTING */
+.accounting-page-inner { max-width: 920px; }
+.accounting-toolbar { display:flex; gap:10px; align-items:end; margin:14px 0; }
+.accounting-toolbar label { flex:1; font-size:12px; font-weight:800; color:#52656a; }
+.accounting-toolbar select, .accounting-fields input, .accounting-fields select, .accounting-form input, .accounting-form select {
+  display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:11px 12px;
+  border:1px solid #d8e5e5; border-radius:10px; background:#fff; color:#173b3d; font:inherit; min-width:0;
+}
+.accounting-message { margin:12px 0; padding:12px 14px; border-radius:12px; background:#e7f7f0; color:#17634c; font-size:13px; }
+.accounting-message.is-error { background:#fff0ed; color:#a02e22; }
+.accounting-tabs { display:flex; gap:7px; overflow-x:auto; padding:5px 0 12px; margin-bottom:8px; }
+.accounting-tabs button, .accounting-secondary, .accounting-list button {
+  border:1px solid #cfe3e3; border-radius:10px; padding:9px 12px; background:#fff; color:#0a7479;
+  font:inherit; font-size:12px; font-weight:800; white-space:nowrap; cursor:pointer;
+}
+.accounting-tabs button.active { background:#0fa3a8; color:#fff; border-color:#0fa3a8; }
+.accounting-content h3 { margin:22px 0 10px; color:#116c70; font-size:17px; }
+.accounting-content h4 { margin:16px 0 8px; color:#35585a; }
+.accounting-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.accounting-metrics article, .accounting-form, .accounting-note {
+  padding:14px; border:1px solid #dceaea; border-radius:15px; background:#fff; margin-bottom:12px;
+}
+.accounting-metrics small, .accounting-metrics strong, .accounting-metrics span { display:block; }
+.accounting-metrics small { color:#64777b; font-size:11px; }
+.accounting-metrics strong { margin:8px 0 5px; color:#0b777c; font-size:20px; overflow-wrap:anywhere; }
+.accounting-metrics span { color:#6d7b7e; font-size:10px; line-height:1.4; }
+.accounting-note { color:#53686a; font-size:12px; line-height:1.55; background:#fffdf5; border-color:#f0dfb1; }
+.accounting-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.accounting-fields label, .accounting-form label { display:block; min-width:0; color:#52656a; font-size:12px; font-weight:700; margin-bottom:10px; }
+.accounting-fields .accounting-check { display:flex; align-items:center; gap:8px; }
+.accounting-check input { width:auto; margin:0; }
+.accounting-primary { display:block; width:100%; border:0; border-radius:11px; padding:12px 14px; background:#0fa3a8; color:#fff; font:inherit; font-size:13px; font-weight:900; cursor:pointer; }
+.accounting-form .accounting-secondary { margin:4px 0 12px; }
+.accounting-line { display:grid; grid-template-columns:minmax(0,2fr) minmax(75px,.8fr) minmax(75px,1fr) 36px; gap:7px; align-items:center; margin:8px 0; }
+.accounting-line input, .accounting-line select { min-width:0; width:100%; box-sizing:border-box; padding:9px 8px; border:1px solid #d8e5e5; border-radius:9px; background:#fff; font:inherit; font-size:12px; }
+.accounting-line button { border:0; border-radius:8px; background:#fff0ed; color:#9b3028; font-size:20px; min-height:36px; }
+.accounting-production-line { grid-template-columns:minmax(0,2fr) minmax(80px,.8fr) 36px; }
+.accounting-production-line[data-direction="output"] { grid-template-columns:minmax(0,2fr) minmax(80px,.8fr); }
+.accounting-list { display:grid; gap:9px; }
+.accounting-list article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px; padding:13px; border:1px solid #dceaea; border-radius:13px; background:#fff; }
+.accounting-list article > div:first-child strong, .accounting-list article > div:first-child small { display:block; }
+.accounting-list article strong { color:#174c4f; font-size:13px; }
+.accounting-list article small { display:block; color:#708083; font-size:11px; line-height:1.45; margin-top:4px; overflow-wrap:anywhere; }
+.accounting-list article > span { grid-column:1/-1; font-size:11px; color:#66787a; }
+.accounting-list-end { display:flex; flex-direction:column; align-items:flex-end; gap:6px; text-align:right; }
+.accounting-status { display:inline-block; border-radius:20px; padding:4px 7px; background:#f1f5f5; color:#607174; font-size:10px; white-space:nowrap; }
+.accounting-status.posted, .accounting-status.paid { background:#e6f7ef; color:#17634c; }
+.accounting-status.draft, .accounting-status.unpaid { background:#fff6df; color:#8a6500; }
+.accounting-table-wrap { overflow:auto; background:#fff; border:1px solid #dceaea; border-radius:12px; }
+.accounting-table { width:100%; border-collapse:collapse; font-size:12px; min-width:580px; }
+.accounting-table th, .accounting-table td { padding:10px; border-bottom:1px solid #e8f0f0; text-align:left; }
+.accounting-table th { color:#5e7477; background:#f4fafa; }
+.accounting-empty { padding:14px; border:1px dashed #cbdede; border-radius:12px; color:#718183; font-size:12px; }
+@media(max-width:520px) {
+  .accounting-toolbar { align-items:stretch; flex-direction:column; }
+  .accounting-fields { grid-template-columns:1fr; }
+  .accounting-metrics { grid-template-columns:1fr 1fr; }
+  .accounting-metrics strong { font-size:16px; }
+  .accounting-line { grid-template-columns:minmax(0,1.5fr) minmax(62px,.7fr) minmax(75px,1fr) 30px; gap:5px; }
+  .accounting-production-line { grid-template-columns:minmax(0,1.5fr) minmax(70px,.8fr) 30px; }
+}
+
+.accounting-table td button { border:1px solid #cfe3e3; border-radius:8px; padding:7px 9px; background:#fff; color:#0a7479; font:inherit; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
+.accounting-table td small { display:block; margin-top:4px; color:#708083; font-size:10px; }
+
+.accounting-toolbar-meta { display:flex; align-items:center; gap:9px; justify-content:flex-end; }
+.accounting-toolbar-meta small { color:#718183; font-size:10px; white-space:nowrap; }
+@media(max-width:520px) { .accounting-toolbar-meta { justify-content:space-between; } }
+
+
+/* Accounting mini-app viewport: keep the whole long workspace scrollable */
+#cafeAccountingPage {
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+#cafeAccountingPage .accounting-page-inner {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+}
+#cafeAccountingPage .accounting-content {
+  min-width: 0;
+  padding-bottom: 24px;
+}
+#cafeAccountingPage .accounting-tabs {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.app{width:320px;margin:0}.qa-toolbar{position:fixed;right:12px;top:12px;z-index:200;background:white;padding:12px;display:grid;gap:8px;max-width:220px}button{cursor:pointer}</style></head>
+
+<body>
+
+<div class="app">
+
+<!-- HOME -->
+  <main>
+
+    <!-- BRAND -->
+    <section class="brand">
+
+      <img
+        class="brand-logo"
+        src="https://raw.githubusercontent.com/ummaibrahim24072026-netizen/umma-global-mini-app/main/logo/assets/umma-logo.png?v=2"
+        onerror="this.style.display='none';"
+        alt="Umma Global"
+      >
+
+      <div class="brand-title">
+        <span>UMMA</span>
+        <strong>GLOBAL</strong>
+      </div>
+
+      <div class="brand-line"></div>
+
+      <p>
+        Единая экосистема для жизни,<br>
+        бизнеса и общества.
+      </p>
+
+      <small>UMMA GLOBAL</small>
+
+    </section>
+
+
+    <!-- WELCOME -->
+    <section class="welcome-card">
+
+      <div class="welcome-image">
+        🕌
+      </div>
+
+      <div class="welcome-content">
+
+        <h2>
+          Ассаляму алейкум<br>
+          ва рахматуллахи ва баракатух,<br>
+          <strong>УММА!</strong>
+        </h2>
+
+        <p>
+          Добро пожаловать в Umma Global.
+        </p>
+
+      </div>
+
+      <button
+        class="gold-circle"
+        aria-label="Открыть"
+      >
+        →
+      </button>
+
+    </section>
+
+
+    <!-- SUPER ADMIN -->
+    <section
+      id="adminEntry"
+      class="admin-entry"
+      hidden
+      aria-hidden="true"
+    >
+
+      <button
+        type="button"
+        class="admin-entry-button"
+      >
+
+        <span class="admin-entry-icon">
+          ⚙️
+        </span>
+
+        <span class="admin-entry-copy">
+
+          <strong>
+            Администрирование
+          </strong>
+
+          <small>
+            Управление Umma Global
+          </small>
+
+        </span>
+
+        <span class="admin-entry-arrow">
+          →
+        </span>
+
+      </button>
+
+    </section>
+
+
+    <!-- CAFE STAFF ENTRY -->
+    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true">
+      <button type="button" class="admin-entry-button" id="staffEntryButton">
+        <span class="admin-entry-icon">🧾</span>
+        <span class="admin-entry-copy"><strong>Приём заказов</strong><small>Оформить заказ, добавить блюда, принять оплату</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+      <button type="button" class="admin-entry-button" id="staffKitchenEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">🍳</span>
+        <span class="admin-entry-copy"><strong>Кухня</strong><small>Новые заказы, дозаказы и приготовление</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+      <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">📊</span>
+        <span class="admin-entry-copy"><strong>Учёт кафе</strong><small>Склад, закупки, производство и расходы</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+    </section>
+
+    <!-- AYAH -->
+    <section class="ayah-card">
+
+      <div class="ayah-book">
+        📖
+      </div>
+
+      <div class="ayah-content">
+
+        <span>
+          АЯТ ДНЯ
+        </span>
+
+        <p>
+          «И помогайте друг другу<br>
+          в благочестии и богобоязненности...»
+        </p>
+
+        <small>
+          Коран, 5:2
+        </small>
+
+      </div>
+
+      <button
+        class="turquoise-circle"
+        aria-label="Аят дня"
+      >
+        →
+      </button>
+
+    </section>
+
+
+    <!-- CAFE -->
+    <section class="cafe-card">
+
+      <div class="cafe-background"></div>
+
+      <div class="halal">
+        ☪ ХАЛЯЛЬ
+      </div>
+
+      <div class="cafe-content">
+
+        <h1>
+          Кафе Umma
+        </h1>
+
+        <p>
+          Халяльная еда<br>
+          для вас и вашей семьи
+        </p>
+
+        <button
+          class="cafe-button"
+          data-page="cafe"
+        >
+          <span>
+            Открыть кафе
+          </span>
+
+          <b>
+            →
+          </b>
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- SERVICES -->
+    <section class="services">
+
+      <div class="services-heading">
+
+        <h2>
+          Сервисы Umma
+        </h2>
+
+        <button id="allServicesBtn">
+          Все сервисы →
+        </button>
+
+      </div>
+
+
+      <div class="services-grid">
+
+        <button
+          class="service"
+          data-page="market"
+        >
+          <span class="service-icon">🛒</span>
+          <strong>Рынок Umma</strong>
+          <small>Продукты и товары</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="travel"
+        >
+          <span class="service-icon">✈️</span>
+          <strong>Путешествия</strong>
+          <small>Туры, билеты, отели</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="hotels"
+        >
+          <span class="service-icon">🏨</span>
+          <strong>Отели Umma</strong>
+          <small>Проживание по миру</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="realestate"
+        >
+          <span class="service-icon">🏠</span>
+          <strong>Недвижимость</strong>
+          <small>Жильё, аренда, инвестиции</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="community"
+        >
+          <span class="service-icon">👥</span>
+          <strong>Сообщество</strong>
+          <small>Люди, помощь и связи</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="business"
+        >
+          <span class="service-icon">💼</span>
+          <strong>Бизнес</strong>
+          <small>Возможности и партнёрства</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="education"
+        >
+          <span class="service-icon">🎓</span>
+          <strong>Образование</strong>
+          <small>Школа, медресе, университет</small>
+        </button>
+
+
+        <button
+          class="service"
+          data-page="health"
+        >
+          <span class="service-icon">♥</span>
+          <strong>Здоровье</strong>
+          <small>Спорт и здоровый образ жизни</small>
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- FARM -->
+    <section class="farm-card">
+
+      <div class="farm-icon">
+        🌿
+      </div>
+
+      <div class="farm-content">
+
+        <h2>
+          Umma Farm
+        </h2>
+
+        <p>
+          Халяльное производство<br>
+          и натуральные продукты
+        </p>
+
+      </div>
+
+      <button
+        class="farm-button"
+        aria-label="Umma Farm"
+      >
+        <span>
+          Подробнее
+        </span>
+
+        <b>
+          →
+        </b>
+      </button>
+
+    </section>
+
+  </main>
+
+
+  <!-- ADMIN PAGE -->
+  <section
+    id="adminPage"
+    class="admin-page"
+    hidden
+  >
+
+    <div class="admin-page-inner">
+
+      <button
+        id="adminBack"
+        type="button"
+        class="admin-back"
+      >
+        ← Назад
+      </button>
+
+
+      <div class="admin-header">
+
+        <div class="admin-header-icon">
+          ⚙️
+        </div>
+
+        <div>
+
+          <div class="admin-eyebrow">
+            SUPER ADMIN
+          </div>
+
+          <h1>
+            Администрирование
+          </h1>
+
+          <p>
+            Центральное управление экосистемой Umma Global.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="admin-grid">
+
+        <button
+          type="button"
+          class="admin-card"
+          id="adminUsersButton"
+        >
+          <span>👥</span>
+          <strong>Пользователи</strong>
+          <small>Роли, статусы и доступ</small>
+        </button>
+
+
+        <button
+          type="button"
+          class="admin-card"
+          id="adminKitchenButton"
+        >
+          <span>🍳</span>
+          <strong>Заказы кафе</strong>
+          <small>Кухня и статусы заказов</small>
+        </button>
+
+        <button
+          type="button"
+          class="admin-card"
+          id="locationOpenMapButton"
+        >
+          <span>🗺️</span>
+          <strong>Локации и карта</strong>
+          <small>Кафе, склады, адреса и администраторы</small>
+        </button>
+
+
+        <button
+          type="button"
+          class="admin-card"
+        >
+          <span>💼</span>
+          <strong>Предприниматели</strong>
+          <small>Бизнесы и владельцы</small>
+        </button>
+
+
+        <button
+          type="button"
+          class="admin-card"
+          id="adminStaffButton"
+        >
+          <span>🧑‍💼</span>
+          <strong>Сотрудники</strong>
+          <small>Рабочие доступы</small>
+        </button>
+
+
+        <button
+          type="button"
+          class="admin-card"
+          id="adminProductsButton"
+        >
+          <span>📦</span>
+          <strong>Товары и инвентарь</strong>
+          <small>Каталог и остатки</small>
+        </button>
+
+
+        <button type="button" class="admin-card" id="adminAccountingButton">
+          <span>📊</span>
+          <strong>Учёт кафе</strong>
+          <small>Закупки, склад, производство, расходы</small>
+        </button>
+
+        <button
+          type="button"
+          class="admin-card"
+        >
+          <span>🧾</span>
+          <strong>Заказы</strong>
+          <small>Заказы и статусы</small>
+        </button>
+
+      </div>
+
+
+      <h2 class="admin-section-title">Управление кафе</h2>
+      <details class="cafe-management-tools"><summary>⚙️ Управление кафе</summary>
+      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
+      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
+
+      </details>
+
+      <div class="admin-status">
+
+        <span class="status-dot"></span>
+
+        <div>
+
+          <strong>
+            Доступ подтверждён
+          </strong>
+
+          <small>
+            Роль: super_admin
+          </small>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- USERS PAGE -->
+  <section
+    id="adminUsersPage"
+    class="admin-page"
+    hidden
+  >
+
+    <div class="admin-page-inner">
+
+      <button
+        id="adminUsersBack"
+        type="button"
+        class="admin-back"
+      >
+        ← Назад
+      </button>
+
+
+      <div class="admin-header">
+
+        <div class="admin-header-icon">
+          👥
+        </div>
+
+        <div>
+
+          <div class="admin-eyebrow">
+            SUPER ADMIN
+          </div>
+
+          <h1>
+            Пользователи
+          </h1>
+
+          <p>
+            Пользователи Umma Global, роли, статусы и доступ.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="admin-status">
+
+        <span class="status-dot"></span>
+
+        <div>
+
+          <strong>
+            Раздел открыт
+          </strong>
+
+          <small>
+            Следующим шагом подключим данные из telegram_users.
+          </small>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- LOCATION DIRECTORY AND MAP — SUPER ADMIN ONLY -->
+  <section id="locationAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="locationAdminBack" class="cafe-back">← Администрирование</button>
+        <button type="button" id="locationRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Локации и карта</h1>
+        <p>Добавляйте кафе, склады и другие точки. Положение на карте будет использоваться для выбора филиала и построения маршрутов доставки.</p>
+      </div>
+      <div id="locationAdminMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
+      <div id="locationAdminMap" style="height:420px;min-height:320px;border:1px solid #dce7e7;border-radius:16px;overflow:hidden;margin:12px 0"></div>
+      <div style="font-size:12px;color:#607171;margin:6px 0 16px">Карта OpenStreetMap. Нажмите на карту, чтобы поставить точку, или перетащите маркер. Поиск адреса помогает найти приблизительное место — всегда проверяйте положение.</div>
+      <div class="cafe-staff-list-heading"><h2>Все локации</h2><button id="locationNew" type="button" class="cafe-submit">＋ Новая локация</button></div>
+      <div id="locationAdminList" class="cafe-staff-assignments" style="margin-bottom:20px"></div>
+      <form id="locationForm" class="cafe-staff-assign-form">
+        <h2 id="locationFormTitle">Добавить новую локацию</h2>
+        <input id="locationId" type="hidden">
+        <label>Название кафе / места<input id="locationName" maxlength="160" required placeholder="Например, HALAL UMMA — филиал 2"></label>
+        <label>Тип локации
+          <select id="locationType" required>
+            <option value="cafe">Кафе</option><option value="restaurant">Ресторан</option><option value="warehouse">Склад</option><option value="market">Магазин</option><option value="other">Другое</option>
+          </select>
+        </label>
+        <label>Адрес<input id="locationAddress" maxlength="500" required placeholder="Улица, дом, район"></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Город / остров<input id="locationCity" maxlength="120" required placeholder="Город или остров"></label>
+          <label>Страна<input id="locationCountry" maxlength="120" value="Vietnam" required></label>
+        </div>
+        <label>Телефон места (необязательно)<input id="locationPhone" maxlength="50" placeholder="+84…"></label>
+        <button type="button" id="locationFindAddress" class="cafe-my-orders-refresh" style="width:100%;margin:4px 0 10px">⌕ Найти адрес на карте</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Широта<input id="locationLatitude" type="number" step="any" readonly required placeholder="Выберите точку"></label>
+          <label>Долгота<input id="locationLongitude" type="number" step="any" readonly required placeholder="Выберите точку"></label>
+        </div>
+        <div id="locationManagerWrap">
+          <label>Главный администратор кафе
+            <select id="locationManager"><option value="">Загружаем список пользователей…</option></select>
+          </label>
+          <p class="cafe-staff-form-hint">У каждого кафе один главный администратор. Один администратор может управлять несколькими кафе. Только суперадминистратор назначает главного администратора.</p>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px"><input id="locationActive" type="checkbox" checked> Локация активна</label>
+        <button type="submit" id="locationSave" class="cafe-submit">Сохранить локацию</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CAFE PRODUCT CATALOG ADMIN -->
+  <section id="cafeProductsAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeProductsAdminBack" class="cafe-back">← Администрирование</button>
+        <h1>Товары кафе</h1>
+        <p>Добавляйте и редактируйте блюда. Скрытие не удаляет историю заказов.</p>
+      </div>
+      <form id="cafeProductForm" class="cafe-staff-assign-form">
+        <h2 id="cafeProductFormTitle">Добавить товар</h2>
+        <input id="cafeProductId" type="hidden">
+        <label>Название на русском<input id="cafeProductRu" maxlength="160" required></label>
+        <label>Tên tiếng Việt<input id="cafeProductVi" maxlength="160" required></label>
+        <label>Name in English<input id="cafeProductEn" maxlength="160" required></label>
+        <label>Категория<select id="cafeProductCategory"><option value="">Без категории</option></select></label>
+        <label>Цена, VND<input id="cafeProductPrice" type="number" min="0" max="100000000" step="1000" required></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Вес / объём<input id="cafeProductWeight" type="number" min="0.1" step="0.1" placeholder="450"></label>
+          <label>Единица<select id="cafeProductWeightUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select></label>
+        </div>
+        <label>Описание на русском<textarea id="cafeProductDescRu" rows="2"></textarea></label>
+        <label>Описание на вьетнамском<textarea id="cafeProductDescVi" rows="2"></textarea></label>
+        <label>Описание на английском<textarea id="cafeProductDescEn" rows="2"></textarea></label>
+        <label>URL фото (необязательно)<input id="cafeProductImage" type="url" placeholder="https://…"></label>
+        <label>Артикул (необязательно)<input id="cafeProductSku" maxlength="100"></label>
+        <div style="display:flex;gap:8px"><button id="cafeProductSave" type="submit" class="cafe-submit">Сохранить товар</button><button id="cafeProductCancelEdit" type="button" class="cafe-my-orders-refresh">Очистить</button></div>
+        <div id="cafeProductsAdminMessage" class="cafe-order-result" hidden></div>
+      </form>
+      <div class="cafe-staff-list-heading"><h2>Каталог</h2><button id="cafeProductsAdminRefresh" type="button" class="cafe-my-orders-refresh">↻ Обновить</button></div>
+      <div id="cafeProductsAdminList" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
+  <!-- CAFE STAFF MANAGEMENT -->
+  <section id="cafeStaffAdminPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeStaffAdminBack" class="cafe-back">← Администрирование</button>
+        <h1>Сотрудники кафе</h1>
+        <p>Назначение ролей и доступов по филиалам Umma</p>
+      </div>
+      <form id="cafeStaffAssignForm" class="cafe-staff-assign-form">
+        <h2>Назначить сотрудника</h2>
+        <label>Telegram ID пользователя
+          <input id="cafeStaffTelegramId" name="telegramId" inputmode="numeric" pattern="[0-9]+" required placeholder="Например, 123456789">
+        </label>
+        <p class="cafe-staff-form-hint">Пользователь должен хотя бы один раз открыть Umma Global. Если его роль «user», она автоматически изменится на employee.</p>
+        <label>Кафе / филиал
+          <select id="cafeStaffLocation" name="locationId" required>
+            <option value="">Загружаем список кафе…</option>
+          </select>
+        </label>
+        <label>Должность
+          <select id="cafeStaffRole" name="staffRole" required>
+            <option value="manager">Менеджер — все статусы заказов</option>
+            <option value="cashier">Кассир</option>
+            <option value="waiter">Официант</option>
+            <option value="kitchen">Кухня</option>
+            <option value="courier">Курьер — забор и подтверждение доставки</option>
+          </select>
+        </label>
+        <button id="cafeStaffAssignSubmit" type="submit" class="cafe-submit">Сохранить назначение</button>
+        <div id="cafeStaffAdminMessage" class="cafe-order-result" hidden></div>
+      </form>
+      <div class="cafe-staff-list-heading">
+        <h2>Назначенные сотрудники</h2>
+        <button type="button" id="cafeStaffAdminRefresh" class="cafe-my-orders-refresh">↻ Обновить</button>
+      </div>
+      <div id="cafeStaffAssignments" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
+  <!-- WAITER ORDER ENTRY — SEPARATE FROM CASH/KITCHEN -->
+  <section id="cafeWaiterPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeWaiterBack" class="cafe-back">← Назад</button>
+        <button type="button" id="cafeWaiterRefresh" class="cafe-kitchen-refresh">↻ Обновить меню</button>
+        <button type="button" id="cafeWaiterKitchen" class="cafe-kitchen-refresh">🍳 Кухня</button>
+        <h1>Приём заказов</h1>
+        <p>Рабочее место приёма заказов · HALAL UMMA</p>
+      </div>
+      <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
+        Сотрудник принимает заказ, добавляет блюда и оформляет оплату. Заказ автоматически появляется на отдельном экране кухни.
+      </div>
+<div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
+        <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
+        <button type="button" id="staffActiveOrdersToggle" class="staff-workspace-tab" aria-selected="false">📋 Активные заказы</button>
+        <button type="button" id="staffClosedOrdersToggle" class="staff-workspace-tab" aria-selected="false">✓ Закрытые заказы</button>
+      </div>
+      <section class="staff-order-builder">
+
+        <div id="staffOrderFormWrap">
+          <h2>Оформить заказ гостя</h2><label id="staffOrderLocationLabel" hidden>Кафе / филиал<select id="staffOrderLocation" required><option value="">Выберите кафе</option></select></label>
+          <div class="staff-table-picker" id="staffTablePicker">
+            <strong>Где обслуживаем гостя?</strong>
+            <p>Передняя зона — столы 1–5, задняя зона — стол 6.</p>
+            <div class="staff-table-zone">Передняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Передняя зона">
+              <button type="button" data-staff-table="1">Стол 1</button>
+              <button type="button" data-staff-table="2">Стол 2</button>
+              <button type="button" data-staff-table="3">Стол 3</button>
+              <button type="button" data-staff-table="4">Стол 4</button>
+              <button type="button" data-staff-table="5">Стол 5</button>
+            </div>
+            <div class="staff-table-zone">Задняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Задняя зона"><button type="button" data-staff-table="6">Стол 6</button></div>
+            <div class="staff-table-zone">Другой способ получения</div>
+            <div class="staff-table-grid"><button type="button" data-staff-service="pickup">🥡 С собой</button><button type="button" data-staff-service="delivery">🛵 Доставка</button></div>
+            <p id="staffTableSelectionHint" class="cafe-order-hint">Нажмите стол или «С собой», затем добавляйте блюда.</p>
+          </div>
+          <p>Создай заказ для гостя здесь. Для контроля уже оформленных заказов открой вкладку «Активные заказы».</p><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
+          <div id="staffOrderSummary" class="cafe-cart" hidden>
+            <h3>Состав заказа</h3>
+            <div id="staffOrderCart"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
+            <div class="cafe-cart-total"><span>Итого</span><strong id="staffOrderTotal">0 ₫</strong></div>
+            <form id="staffOrderForm" class="cafe-order-form">
+              <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
+              <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
+              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="broadcast">Предложить всем активным курьерам кафе</option><option value="nearest">Сначала ближайшему к кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
+              <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Сейчас, до передачи заказа</option><option value="later">После трапезы — общий счёт</option><option value="on_delivery" hidden>При получении — наличными курьеру</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
+              <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
+              <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
+            </form>
+          </div>
+        </div>
+        <div id="staffActiveOrdersWrap" hidden>
+          <h2>Активные заказы</h2>
+          <p>Все незавершённые заказы кафе: оплата, сумма и текущий этап выполнения.</p>
+          <div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем заказы…</p></div>
+          <div id="staffActiveOrders" class="staff-active-orders"></div>
+        </div>
+        <div id="staffClosedOrdersWrap" hidden>
+          <h2>Закрытые заказы</h2>
+          <p>Завершённые и отменённые заказы. Статус оплаты указан отдельно.</p>
+          <div id="staffClosedOrders" class="staff-active-orders"></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- COURIER MAP AND ROUTE -->
+  <section id="courierMapModal" hidden style="position:fixed;inset:0;z-index:11000;background:#fff;overflow:auto;padding:14px;box-sizing:border-box">
+    <div style="max-width:900px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
+        <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
+      </div>
+      <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
+      <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
+      <small style="color:#68737d">Маршрут строится по OpenStreetMap/OSRM. Проверяйте дорожные условия и точность адреса перед выездом.</small>
+    </div>
+  </section>
+
+  <!-- CAFE KITCHEN -->
+  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Назад</button>
+        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <button type="button" id="kitchenTabletToggle" class="cafe-kitchen-refresh" aria-pressed="false">▣ Режим планшета</button>
+        <button type="button" id="cafeCashToggle" class="cafe-kitchen-refresh" aria-expanded="false">💰 Касса и смена</button>
+        <h1>Кухня · Заказы</h1>
+        <p>HALAL UMMA · Нячанг</p>
+      </div>
+      <div class="cafe-kitchen-shortcuts">
+        <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
+      </div>
+      <section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
+        <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
+        <button type="button" data-kitchen-filter="all">Все</button>
+      </div>
+      <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
+      <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+    </div>
+  </section>
+
+  <!-- CAFE BRANCH INVENTORY -->
+  <section id="cafeInventoryPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeInventoryBack" class="cafe-back">← К заказам</button>
+        <button type="button" id="cafeInventoryRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Товары и остатки</h1>
+        <p>Цены и наличие отдельно для каждого кафе HALAL UMMA.</p>
+      </div>
+      <label style="display:block;margin:12px 0;font-weight:700">Кафе
+        <select id="cafeInventoryLocation" style="display:block;width:100%;padding:12px;margin-top:6px;border:1px solid #d4dfdf;border-radius:10px"></select>
+      </label>
+      <div id="cafeInventoryMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
+      <details id="cafeInventoryCreateWrap" style="background:#fff;border:1px solid #dce7e7;border-radius:14px;padding:14px;margin:12px 0">
+        <summary style="font-weight:800;cursor:pointer">＋ Добавить товар в каталог</summary>
+        <form id="cafeInventoryCreateProduct" class="cafe-staff-assign-form" style="margin-top:12px">
+          <label>Название на русском<input id="cafeInvNameRu" maxlength="160" required></label>
+          <label>Tên tiếng Việt<input id="cafeInvNameVi" maxlength="160" required></label>
+          <label>Name in English<input id="cafeInvNameEn" maxlength="160" required></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Цена, VND<input id="cafeInvNewPrice" type="number" min="0" max="100000000" step="1000" required></label>
+            <label>Количество<input id="cafeInvNewQty" type="number" min="0" max="100000" step="1" value="0" required></label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Вес/объём<input id="cafeInvWeight" type="number" min="0.1" step="0.1" placeholder="450"></label>
+            <label>Единица<select id="cafeInvWeightUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select></label>
+          </div>
+          <label>Артикул (необязательно)<input id="cafeInvSku" maxlength="100"></label>
+          <button type="submit" id="cafeInventoryCreateSubmit" class="cafe-submit">Добавить товар</button>
+        </form>
+      </details>
+      <h2>Наличие и цены по выбранному кафе</h2>
+      <div id="cafeInventoryProducts" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
+  <!-- CAFE ORDERING -->
+  <section id="cafePage" class="cafe-page" hidden>
+    <div class="cafe-page-inner">
+      <div class="cafe-page-header">
+        <button type="button" id="cafeBack" class="cafe-back">← Главная</button>
+        <span class="cafe-halal-pill">☪ ХАЛЯЛЬ</span>
+        <h1>Кафе Umma</h1>
+        <p>Свежая халяльная еда в Нячанге</p>
+      </div>
+
+      <div class="cafe-my-orders-toolbar">
+        <button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button>
+        <button type="button" id="cafeMyOrdersRefresh" class="cafe-my-orders-refresh" hidden>↻ Обновить</button>
+      </div>
+      <section id="cafeMyOrdersSection" class="cafe-my-orders-section" hidden>
+        <div id="cafeMyOrdersMessage" class="cafe-message">Загружаем ваши заказы…</div>
+        <div id="cafeMyOrdersList" class="cafe-my-orders-list"></div>
+      </section>
+      <div id="cafeLoading" class="cafe-message">Загружаем меню…</div>
+      <div id="cafeError" class="cafe-message" hidden></div>
+      <div id="cafeProducts" class="cafe-products" aria-live="polite"></div>
+
+      <section class="cafe-cart">
+        <div class="cafe-cart-heading">
+          <h2>Ваш заказ</h2>
+          <span id="cafeCartCount">0 позиций</span>
+        </div>
+        <div id="cafeCartItems" class="cafe-cart-items">
+          <p class="cafe-empty-cart">Добавьте блюда из меню.</p>
+        </div>
+        <div class="cafe-cart-total">
+          <span>Итого</span>
+          <strong id="cafeCartTotal">0 ₫</strong>
+        </div>
+
+        <form id="cafeOrderForm" class="cafe-order-form">
+          <label>Как выбрать кафе
+            <select id="cafeLocationMode" name="locationMode">
+              <option value="nearest">Ближайшее кафе по геолокации</option>
+              <option value="manual">Выбрать кафе вручную</option>
+            </select>
+          </label>
+          <div id="cafeLocationMessage" class="cafe-order-hint" aria-live="polite">Определяем ближайшее кафе…</div>
+          <label id="cafeLocationSelectLabel" hidden>Кафе для заказа
+            <select id="cafeLocationSelect" name="locationId" required></select>
+          </label>
+          <label>Как получить заказ
+            <select id="cafeOrderType" name="orderType" required>
+              <option value="pickup">С собой</option>
+              <option value="dine_in">В кафе</option>
+              <option value="delivery">Доставка</option>
+            </select>
+          </label>
+          <label>Имя
+            <input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя">
+          </label>
+          <label>Телефон
+            <input id="cafeCustomerPhone" name="customerPhone" maxlength="40" autocomplete="tel" placeholder="+84…">
+          </label>
+          <label id="cafeAddressLabel" hidden>Адрес доставки
+            <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="500" rows="2" placeholder="Улица, дом, квартира"></textarea>
+          </label>
+          <label>Комментарий к заказу
+            <textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Пожелания к заказу (необязательно)"></textarea>
+          </label>
+          <label>Оплата
+            <select id="cafePaymentMethod" name="paymentMethod">
+              <option value="cash">Наличными</option>
+              <option value="qr">QR-платёж (подтверждение отдельно)</option><option value="bank_transfer">Перевод на российский / казахстанский банк</option>
+            </select>
+          </label>
+          <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
+          <p class="cafe-order-hint">Стоимость рассчитывается по актуальным ценам меню. Оплата пока не списывается автоматически.</p>
+        </form>
+        <div id="cafeOrderResult" class="cafe-order-result" hidden></div>
+      </section>
+    </div>
+    <div id="cafeStickyOrder" class="cafe-sticky-order" hidden>
+      <div class="cafe-sticky-order-info"><span id="cafeStickyCount">0 блюд</span><strong id="cafeStickyTotal">0 ₫</strong></div>
+      <button type="button" id="cafeStickyGoToOrder">Ваш заказ ↓</button>
+    </div>
+  </section>
+
+  <!-- CAFE ACCOUNTING -->
+  <section id="cafeAccountingPage" class="admin-page" hidden>
+    <div class="admin-page-inner accounting-page-inner">
+      <button id="accountingBack" type="button" class="admin-back">← Назад</button>
+      <div class="admin-header">
+        <div class="admin-header-icon">📊</div>
+        <div><div class="admin-eyebrow">UMMA CAFE</div><h1>Учёт кафе</h1><p>Закупки, склад, производство и расходы по филиалам.</p></div>
+      </div>
+      <div class="accounting-toolbar">
+        <label>Филиал
+          <select id="accountingLocation"></select>
+        </label>
+        <div class="accounting-toolbar-meta"><small>Автообновление раз в минуту</small><button type="button" id="accountingRefresh" class="accounting-secondary">↻ Обновить</button></div>
+      </div>
+      <div id="accountingMessage" class="accounting-message" hidden></div>
+      <nav class="accounting-tabs" aria-label="Разделы учёта">
+        <button type="button" data-accounting-tab="dashboard" class="active">Обзор</button>
+        <button type="button" data-accounting-tab="stock">Склад</button>
+        <button type="button" data-accounting-tab="purchases">Закупки</button>
+        <button type="button" data-accounting-tab="production">Производство</button>
+        <button type="button" data-accounting-tab="expenses">Расходы</button>
+        <button type="button" data-accounting-tab="suppliers">Поставщики</button>
+        <button type="button" data-accounting-tab="recipes">Рецептуры</button>
+      </nav>
+      <div id="accountingContent" class="accounting-content"></div>
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-item active"
+      data-page="home"
+    >
+      <span>⌂</span>
+      <small>Главная</small>
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-page="cafe"
+    >
+      <span>🍽</span>
+      <small>Кафе</small>
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-page="market"
+    >
+      <span>🛒</span>
+      <small>Рынок</small>
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-page="services"
+    >
+      <span>✈</span>
+      <small>Услуги</small>
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-page="community"
+    >
+      <span>👥</span>
+      <small>Сообщество</small>
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-page="more"
+    >
+      <span>•••</span>
+      <small>Ещё</small>
+    </button>
+
+  </nav>
+
+</div>
+
+
+<!-- TOAST -->
+<div
+  class="toast"
+  id="toast"
+>
+  Скоро здесь появится этот раздел
+</div>
+
+
+<!-- CORE -->
+
+
+
+
+<!-- AUTH -->
+
+
+<!-- ADMIN -->
+
+
+
+
+
+<!-- CAFE -->
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<!-- CONSISTENT BACK NAVIGATION -->
+
+
+<!-- START -->
+
+
+<aside class="qa-toolbar"><strong>QA · только фиктивные данные</strong><label>Роль<select id="qaRole"><option value="manager">Менеджер</option><option value="kitchen">Кухня</option><option value="courier">Курьер</option></select></label><label>Ширина<select id="qaWidth"><option>320</option><option>390</option><option>768</option></select></label><button id="qaOrders">Приём заказов</button><button id="qaKitchen">Кухня</button><button id="qaPaid">Тестовый оплаченный заказ</button></aside><script>window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};
+const qaLocation={id:'11111111-1111-4111-8111-111111111111',name:'QA HALAL UMMA',location_type:'cafe'};
+const product={id:'33333333-3333-4333-8333-333333333333',name_ru:'Тестовый плов',name_vi:'QA pilaf',name_en:'QA pilaf',price_vnd:120000};
+let qaRole='manager',qaPhotoUrls=new Map(),qaDeclined=new Set();
+let qaOrders=[{id:'44444444-4444-4444-8444-444444444444',location_id:qaLocation.id,order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,customer_name:'QA guest',delivery_address:'Длинный адрес доставки '+ 'LongAddressWithoutSpaces'.repeat(6),payment_method:'cash',payment_timing:'on_delivery',payment_status:'pending',total_vnd:120000,deliveryProofs:[{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',kind:'pickup',courier_telegram_id:20}],staffRole:'manager',canAcceptPayments:true,cafe_order_items:[{product_name_ru:'Тестовый плов',quantity:1,line_total_vnd:120000}],created_at:new Date().toISOString()}];
+const reply=data=>new Response(JSON.stringify({ok:true,...data}),{headers:{'Content-Type':'application/json'}});
+window.fetch=async(url,options={})=>{const body=options.body?JSON.parse(options.body):{};
+if(!options.body)return reply({products:[product]});
+if(body.staffOrder){const id=crypto.randomUUID();const amount=body.items.reduce((sum,item)=>sum+item.quantity*120000,0);qaOrders.push({...qaOrders[0],id,order_number:qaOrders.length+1,status:'pending',payment_status:'pending',deliveryProofs:[],delivery_status:'waiting_courier',courier_telegram_id:null,customer_name:body.customerName,delivery_address:body.deliveryAddress,payment_method:body.paymentMethod,payment_timing:body.paymentTiming,total_vnd:amount});return reply({order:{id,orderNumber:qaOrders.length,totalVnd:amount}});}
+if(body.action==='list')return reply({orders:qaOrders.filter(o=>qaRole!=='courier'||o.courier_telegram_id===20).map(o=>({...o,staffRole:qaRole})),courierOffers:qaRole==='courier'?qaOrders.filter(o=>o.delivery_status==='waiting_courier'&&!qaDeclined.has(o.id)&&!['completed','cancelled'].includes(o.status)).map(o=>({orderId:o.id,orderNumber:o.order_number,locationName:qaLocation.name,kitchenStatus:o.status,expiresAt:new Date(Date.now()+900000).toISOString()})):[],locationIds:[qaLocation.id],locations:[qaLocation],staffRole:qaRole,actorTelegramId:qaRole==='courier'?20:10,couriers:[{telegram_id:20,location_id:qaLocation.id,name:'Очень длинное тестовое имя курьера'}]});
+if(body.action==='cashList')return reply({locationId:qaLocation.id,cafeName:qaLocation.name,locations:[qaLocation],receipts:[],refunds:[],handovers:[],staff:[],shifts:[],actorTelegramId:10,cashSummary:{total24hVnd:0,cash24hVnd:0,refund24hVnd:0,pendingHandovers:0}});
+const order=qaOrders.find(o=>o.id===body.orderId);
+if(body.action==='uploadDeliveryProof'&&order){const proof={id:crypto.randomUUID(),kind:body.kind,courier_telegram_id:20,verified_at:new Date().toISOString()};order.deliveryProofs.push(proof);qaPhotoUrls.set(proof.id,'data:image/jpeg;base64,'+body.imageBase64);return reply({proof});}
+if(body.action==='viewDeliveryProof')return reply({url:qaPhotoUrls.get(body.proofId)||'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jS1EAAAAASUVORK5CYII='});
+if(body.action==='respondCourierOffer'&&order){if(!body.accept&&!body.reason?.trim())return reply({ok:false,error:'Укажите причину отказа'});if(body.accept){order.courier_telegram_id=20;order.delivery_status='courier_assigned';order.deliveryProofs=[];}else qaDeclined.add(order.id);return reply({order});}
+if(body.action==='courierPosition')return reply({});
+
+if(body.action==='refundOrder'&&order){order.payment_status='refunded';order.status='cancelled';return reply({refund:{id:crypto.randomUUID(),amount_vnd:order.total_vnd}});}
+if(body.action==='updatePayment'&&order)order.payment_status=body.paymentStatus;
+if(body.action==='updateDelivery'&&order){order.delivery_status=body.deliveryStatus;if(body.deliveryStatus==='picked_up')order.deliveryProofs.push({id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',kind:'handover',courier_telegram_id:20});}
+if(body.action==='updateStatus'&&order)order.status=body.status;
+return reply({});};
+window.ummaCafeRequests={request:(url,payload)=>window.fetch(url,{body:JSON.stringify(payload)})};
+window.showToast=()=>{};
+</script><script>/* Courier offers and private delivery evidence. No silent location tracking. */
+(() => {
+ 'use strict';
+ const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+ async function api(payload){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Операция доставки не выполнена');return result;}
+ let busy=false,lastOfferSignature='';
+ function message(text){const own=document.getElementById('courierWorkflowMessage');const root=own&&!document.getElementById('courierOffers')?.hidden?own:document.getElementById('cafeKitchenMessage');if(root){root.hidden=false;root.textContent=text;}}
+ function renderOffers(offers,role){const root=document.getElementById('courierOffers');if(!root)return;root.hidden=role!=='courier';if(root.hidden){lastOfferSignature='';return;}const signature=JSON.stringify(offers);if(signature===lastOfferSignature)return;lastOfferSignature=signature;
+ root.innerHTML='<h2>Предложения доставок</h2><p>Заказ получит первый подтвердивший курьер. Отказ требует причины.</p><button type="button" id="courierGeoOnce" class="kitchen-action">Обновить геопозицию для подбора на 10 минут</button><div id="courierWorkflowMessage" role="status"></div>'+offers.map(o=>'<article class="kitchen-order-card"><strong>Доставка №'+esc(o.orderNumber)+'</strong><p>'+esc(o.locationName)+' · '+esc(o.kitchenStatus==='ready'?'Готов':'Готовится')+'</p><div class="kitchen-order-actions"><button class="kitchen-action" data-courier-accept="'+esc(o.orderId)+'">Принять доставку</button><button class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться с причиной</button></div></article>').join('');
+ }
+ async function respond(id,accept,reason=null){if(busy)return;busy=true;try{await api({action:'respondCourierOffer',orderId:id,accept,reason});await window.ummaKitchen.refresh();}catch(e){message(e.message);}finally{busy=false;}}
+ function decline(id){const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';dialog.innerHTML='<form class="cafe-order-form"><h3>Причина отказа</h3><label>Причина<textarea minlength="3" maxlength="500" required></textarea></label><div class="kitchen-order-actions"><button type="button">Назад</button><button type="submit" class="kitchen-cancel">Отправить отказ</button></div><p role="status"></p></form>';document.body.append(dialog);dialog.showModal();dialog.querySelector('[type="button"]').onclick=()=>dialog.remove();dialog.querySelector('form').onsubmit=async e=>{e.preventDefault();const reason=dialog.querySelector('textarea').value.trim();if(reason.length<3)return;dialog.remove();await respond(id,false,reason);};}
+ async function jpeg(file){if(!file||!file.type.startsWith('image/'))throw Error('Выберите фотографию');if(file.size>20000000)throw Error('Исходное фото слишком большое');
+  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Не удалось открыть фотографию'));img.src=data;});
+  const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(image.width,image.height));canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+  // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
+  return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+ }
+ async function photo(id,kind){const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.onchange=async()=>{if(busy)return;busy=true;try{message('Сохраняем фото…');const imageBase64=await jpeg(input.files?.[0]);await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});await api({action:'updateDelivery',orderId:id,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});await window.ummaKitchen.refresh();message('Фото сохранено, этап доставки подтверждён.');}catch(e){message(e.message);}finally{busy=false;}};input.click();}
+ document.addEventListener('click',async event=>{const target=event.target.closest?.('button');if(!target)return;
+ if(target.dataset.courierAccept)await respond(target.dataset.courierAccept,true);
+ if(target.dataset.courierDecline)decline(target.dataset.courierDecline);
+ if(target.dataset.deliveryPhoto)await photo(target.dataset.orderId,target.dataset.deliveryPhoto);
+ if(target.dataset.viewProof){try{const result=await api({action:'viewDeliveryProof',proofId:target.dataset.viewProof});const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';const image=document.createElement('img');image.style.width='100%';image.alt='Фото доставки';image.referrerPolicy='no-referrer';image.src=result.url;const close=document.createElement('button');close.textContent='← Назад';close.onclick=()=>dialog.remove();dialog.append(close,image);document.body.append(dialog);dialog.showModal();}catch(e){message(e.message);}}
+ if(target.id==='courierGeoOnce'){if(!navigator.geolocation){message('Геопозиция недоступна. Общие предложения всё равно доступны.');return;}message('Запрашиваем геопозицию…');navigator.geolocation.getCurrentPosition(async p=>{try{await api({action:'courierPosition',latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});message('Геопозиция обновлена; используется для подбора ближайшего курьера 10 минут.');}catch(e){message(e.message);}},()=>message('Геопозиция не получена. Вы можете принимать общие предложения.'),{maximumAge:60000,timeout:10000,enableHighAccuracy:true});}
+ });
+ document.addEventListener('umma:cafe-operation-recovered',async event=>{if(event.detail.payload.action==='uploadDeliveryProof'){await window.ummaKitchen.refresh();message('Фото сохранено. Теперь подтвердите получение или вручение заказа; повторно загружать фото не нужно.');}});
+ window.ummaCourierWorkflow={renderOffers};
+})();
+</script><script>/* Live location is opt-in, scoped to one delivery and stops at handover. */
+(() => {
+ 'use strict';
+ const base='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/';
+ async function api(endpoint,body){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const r=await fetch(base+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,initData}),signal:AbortSignal.timeout(10000)});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Не удалось обновить позицию');return data;}
+ let sharing=null,starting=false,viewer=null;
+ function notify(id,text){document.querySelectorAll('[data-tracking-status]').forEach(el=>{if(el.dataset.trackingStatus===id)el.textContent=text;});}
+ function refreshButtons(){document.querySelectorAll('[data-share-delivery]').forEach(el=>{el.textContent=sharing?.id===el.dataset.shareDelivery?'Остановить передачу позиции':'Передавать позицию клиенту';});}
+ function localStop(){if(!sharing)return;const s=sharing;sharing=null;navigator.geolocation?.clearWatch(s.watch);clearInterval(s.timer);refreshButtons();}
+ async function stop(){const s=sharing;if(!s)return;localStop();notify(s.id,'Передача позиции остановлена.');try{await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:s.id,enabled:false});}catch{notify(s.id,'Связь потеряна. Клиент увидит отсутствие свежей позиции через 60 секунд.');}}
+ async function publish(position,s){if(sharing!==s||s.sending||Date.now()-position.timestamp>20000)return;if(!Number.isFinite(position.coords.accuracy)||position.coords.accuracy>500){notify(s.id,'GPS пока неточный. Ожидаем точную позицию.');return;}if(Date.now()-s.lastSent<5000)return;s.sending=true;s.lastSent=Date.now();try{await api('cafe-kitchen',{action:'deliveryPosition',orderId:s.id,sessionId:s.session,sequence:++s.sequence,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy});if(sharing===s)notify(s.id,'Позиция передаётся клиенту. Держите приложение открытым.');}catch(e){if(sharing===s){notify(s.id,e.message);if(/session stopped|only during delivery|access denied/i.test(e.message))localStop();}}finally{s.sending=false;}}
+ async function start(id){if(starting)return;if(!navigator.geolocation){notify(id,'GPS недоступен на этом устройстве.');return;}starting=true;try{await stop();const r=await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:true});const s={id,session:r.sessionId,watch:null,timer:null,sequence:0,lastSent:0,sending:false};sharing=s;refreshButtons();notify(id,'Разрешите геопозицию. Передача работает пока приложение открыто.');const error=e=>{if(sharing!==s)return;if(e.code===1){notify(id,'Геопозиция запрещена. Разрешите её в настройках телефона.');localStop();api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:false}).catch(()=>{});}else notify(id,'GPS временно недоступен. Ожидаем новый сигнал.');};const options={enableHighAccuracy:true,maximumAge:5000,timeout:10000};s.watch=navigator.geolocation.watchPosition(p=>publish(p,s),error,options);s.timer=setInterval(()=>{if(sharing===s&&!document.hidden)navigator.geolocation.getCurrentPosition(p=>publish(p,s),error,options);},10000);}catch(e){notify(id,e.message);localStop();}finally{starting=false;}}
+ function syncOrders(orders){if(sharing&&!orders.some(o=>String(o.id)===sharing.id&&o.delivery_status==='picked_up'&&!['completed','cancelled'].includes(o.status)))stop();refreshButtons();}
+ function close(){if(!viewer)return;const v=viewer;viewer=null;clearTimeout(v.timer);v.map?.remove();v.dialog.remove();v.opener?.focus();}
+ const states={awaiting_pickup:'Курьер ещё не забрал заказ.',not_sharing:'Курьер пока не передаёт позицию.',stale:'Нет свежей позиции. GPS или связь временно недоступны.',delivered:'Заказ доставлен.',unavailable:'Отслеживание завершено или недоступно.'};
+ async function poll(v){if(viewer!==v)return;try{const data=await api('cafe-my-orders',{action:'deliveryTracking',orderId:v.id});if(viewer!==v)return;if(data.state==='live'){
+ v.status.textContent='Позиция обновлена '+new Date(data.updatedAt).toLocaleTimeString('ru-RU')+' · точность около '+Math.round(data.accuracy)+' м.';
+ if(window.L){if(!v.map){v.map=L.map(v.canvas).setView([data.latitude,data.longitude],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(v.map);v.marker=L.marker([data.latitude,data.longitude]).addTo(v.map);v.circle=L.circle([data.latitude,data.longitude],{radius:data.accuracy}).addTo(v.map);}else{v.marker.setLatLng([data.latitude,data.longitude]);v.circle.setLatLng([data.latitude,data.longitude]).setRadius(data.accuracy);if(v.follow.checked)v.map.panTo([data.latitude,data.longitude]);}v.canvas.hidden=false;}
+ else v.status.textContent+=' Карта не загрузилась; попробуйте открыть её заново.';
+ }else{v.status.textContent=states[data.state]||'Позиция недоступна.';v.canvas.hidden=true;v.map?.remove();v.map=null;}
+ if(['delivered','unavailable'].includes(data.state))return;
+ }catch(e){if(viewer===v){v.status.textContent='Связь потеряна. Ожидаем обновление…';v.canvas.hidden=true;}}
+ if(viewer===v)v.timer=setTimeout(()=>{if(!document.hidden)poll(v);else v.timer=setTimeout(()=>poll(v),5000);},5000);
+ }
+ function open(id,opener){close();const dialog=document.createElement('dialog');dialog.className='delivery-tracking-dialog';dialog.innerHTML='<div class="delivery-tracking-header"><button type="button" class="courier-route-back">← Назад к заказу</button><h3>Где мой курьер</h3></div><p role="status">Обновляем позицию…</p><label><input type="checkbox" checked> Следовать за курьером</label><div class="delivery-tracking-map" hidden></div><small>Позиция обновляется каждые 5 секунд при доступных GPS и связи.</small>';document.body.append(dialog);const v={id,dialog,opener,status:dialog.querySelector('[role="status"]'),canvas:dialog.querySelector('.delivery-tracking-map'),follow:dialog.querySelector('input'),map:null,timer:null};viewer=v;dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.showModal();dialog.querySelector('button').focus();poll(v);}
+ document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(b?.dataset.shareDelivery){const id=b.dataset.shareDelivery;sharing?.id===id?stop():start(id);}if(b?.dataset.trackDelivery)open(b.dataset.trackDelivery,b);});
+ window.addEventListener('pagehide',localStop);
+ window.ummaCourierTracking={syncOrders,close,isOpen:()=>!!viewer,isSharing:id=>sharing?.id===id};
+})();
+</script><script>/* UMMA CAFE — KITCHEN ORDER BOARD */
+(() => {
+  "use strict";
+  const PROOF_URL="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof";
+  const API = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen";
+  const byId = id => document.getElementById(id);
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" })[c]);
+  const money = value => new Intl.NumberFormat("vi-VN", { style:"currency", currency:"VND", maximumFractionDigits:0 }).format(Number(value) || 0);
+  const statusNames = { pending:"Ожидает подтверждения", confirmed:"Подтверждён", preparing:"Готовится", ready:"Готов", completed:"Выдан", cancelled:"Отменён" };
+  const nextStep = { pending:{status:"preparing",label:"Принять и готовить"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
+  let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map(), editingBillId = null;
+
+  function isAllowed() {
+    return ["super_admin", "admin", "employee"].includes(window.ummaRole);
+  }
+  function showMessage(text, visible = true) {
+    const el = byId("cafeKitchenMessage");
+    if (el) { el.textContent = text; el.hidden = !visible; }
+  }
+  function formatDate(value) {
+    try { return new Intl.DateTimeFormat("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }).format(new Date(value)); }
+    catch { return ""; }
+  }
+
+  function render() {
+    const root = byId("cafeKitchenOrders");
+    if (!root) return;
+    const shown = filter === "active" ? orders.filter(o => !["completed","cancelled"].includes(o.status)) : orders;
+    if (!shown.length) {
+      root.innerHTML = "";
+      showMessage(filter === "active" ? "Активных заказов пока нет." : "Заказов пока нет.");
+      return;
+    }
+    showMessage("", false);
+    root.innerHTML = shown.map(order => {
+      const notice=window.ummaKitchenLive?.notice(order)||"";
+      const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
+      const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
+      const next = nextStep[order.status];
+      const orderStaffRole = order.staffRole || staffRole;
+      const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
+      const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
+      const action = next && allowedForRole && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
+      const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
+        ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
+      const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
+      const type = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+      const paymentMethod = { cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
+      const paymentStatus = order.payment_status === "paid" ? "Оплачено" : order.payment_status === "refunded" ? "Возвращено" : "Ожидает оплаты";
+      const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
+      const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
+      const canManageDelivery = ["manager","cashier","waiter"].includes(orderStaffRole) ||
+        (orderStaffRole === "courier" && ["courier_assigned","picked_up"].includes(order.delivery_status));
+      let deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
+        !(["manager","cashier","waiter"].includes(orderStaffRole) && order.delivery_status === "waiting_courier")
+        && !(orderStaffRole === "courier" && Number(order.courier_telegram_id) !== Number(actorTelegramId))
+        && (order.delivery_status !== "courier_assigned" || order.status === "ready")
+        && !["completed","cancelled"].includes(order.status)
+        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-delivery-status="' + deliveryNext[order.delivery_status].status + '">' + deliveryNext[order.delivery_status].label + '</button>' : "";
+      const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
+      const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
+      if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Фото получения → забрать':'Фото вручения → доставлено')+'</button>':'<span>Ожидается фото от курьера</span>';
+      }
+      const evidenceActions=["manager","courier"].includes(orderStaffRole)?proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join(""):"";
+      const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
+      const routeLocation = locations.find(location => String(location.id) === String(order.location_id));
+      const routeAction = order.order_type === "delivery" && order.delivery_address
+        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(order.delivery_address) + '" data-route-origin-lat="' + esc(routeLocation?.latitude ?? "") + '" data-route-origin-lng="' + esc(routeLocation?.longitude ?? "") + '" data-route-origin-name="' + esc(routeLocation?.name ?? "") + '" data-route-order-number="' + esc(order.order_number) + '">🗺️ Маршрут</button>' : "";
+      const trackingAction=orderStaffRole==="courier"&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.delivery_status==="picked_up"&&!['completed','cancelled'].includes(order.status)?'<button type="button" class="kitchen-action" data-share-delivery="'+esc(order.id)+'">'+(window.ummaCourierTracking?.isSharing(String(order.id))?'Остановить передачу позиции':'Передавать позицию клиенту')+'</button><small data-tracking-status="'+esc(order.id)+'">Передача GPS работает пока приложение открыто.</small>':"";
+      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
+        ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
+      const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
+        && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
+      const paymentAction = canManagePayment && order.payment_status !== "paid"
+        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
+        : "";
+      const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
+      const details = [
+        order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
+        order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
+        '<span>📦 ' + esc(type) + '</span>',
+        '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
+        order.order_type === "delivery" ? '<span>🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
+        order.payment_timing ? '<span>🕒 '+esc({now:"Оплата до передачи заказа",later:"Оплата после трапезы",on_delivery:"Наличные курьеру при получении"}[order.payment_timing]||order.payment_timing)+'</span>' : "",
+        order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
+        order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
+        order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
+      ].filter(Boolean).join("");
+      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + trackingAction + '</div></article>';
+    }).join("");
+  }
+
+  async function api(payload) {
+    const initData = window.Telegram?.WebApp?.initData;
+    if (!initData) throw new Error("Откройте приложение через Telegram");
+    if(["addItems","refundOrder"].includes(payload.action)){
+      const response=await window.ummaCafeRequests.request(API,{...payload,initData});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||"Ошибка дозаказа");
+      return result;
+    }
+    const response = await fetch(API, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ ...payload, initData })
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Ошибка запроса");
+    return result;
+  }
+
+  let lastOrdersFingerprint = null;
+  async function loadOrders(options = {}) {
+    if (busy) return;
+    const silent = options?.silent === true;
+    busy = true;
+    if (!silent) showMessage("Загружаем заказы…");
+    try {
+      const result = await api({ action:"list" });
+      staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
+      couriers = Array.isArray(result.couriers) ? result.couriers : [];
+      locations = Array.isArray(result.locations) ? result.locations : [];
+      window.ummaLocationPins = locations;
+      actorTelegramId = result.actorTelegramId ?? null;
+      const incomingOrders = Array.isArray(result.orders) ? result.orders : [];
+      window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
+      staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
+      const fingerprint = JSON.stringify(incomingOrders);
+      const changed = fingerprint !== lastOrdersFingerprint;
+      orders = incomingOrders;
+      if (changed) {
+        lastOrdersFingerprint = fingerprint;
+        window.ummaKitchenLive?.update(orders);
+    window.ummaCourierTracking?.syncOrders(orders);
+        render();
+        renderOpenBills();
+        renderStaffActiveOrders();
+        renderStaffClosedOrders();
+      }
+    } catch (error) {
+      if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
+      else console.warn("Kitchen background refresh failed:", error);
+
+    } finally { busy = false; }
+  }
+
+  async function updateStatus(orderId, status) {
+    if (busy) return;
+    if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
+    busy = true;
+    showMessage("Обновляем статус…");
+    try {
+      if(status==="preparing"){
+        const current=orders.find(order=>String(order.id)===String(orderId));
+        if(current?.status==="pending"){
+          // Backend enforces pending → confirmed → preparing.
+          // Complete both transitions in one staff action while retaining
+          // acceptance ownership and the existing audit trail.
+          await api({ action:"updateStatus", orderId, status:"confirmed" });
+          try {
+            await api({ action:"updateStatus", orderId, status:"preparing" });
+          } catch (startError) {
+            await refreshAfterUpdate();
+            throw new Error("Заказ принят, но начало приготовления не подтверждено. Нажмите «Начать готовить» ещё раз. "+(startError instanceof Error?startError.message:""));
+          }
+        } else {
+          await api({ action:"updateStatus", orderId, status });
+        }
+      } else {
+        await api({ action:"updateStatus", orderId, status });
+      }
+      await refreshAfterUpdate();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Не удалось обновить статус");
+    } finally { busy = false; render(); }
+  }
+  async function refreshAfterUpdate() {
+    const result = await api({ action:"list" });
+    window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
+    orders = Array.isArray(result.orders) ? result.orders : [];
+    couriers = Array.isArray(result.couriers) ? result.couriers : [];
+    locations = Array.isArray(result.locations) ? result.locations : [];
+    window.ummaLocationPins = locations;
+    actorTelegramId = result.actorTelegramId ?? null;
+    window.ummaKitchenLive?.update(orders);
+    window.ummaCourierTracking?.syncOrders(orders);
+    render();
+    renderOpenBills();
+    renderStaffActiveOrders();
+    renderStaffClosedOrders();
+    updateTableAvailability();
+  }
+
+  function open() {
+    if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
+    const home = document.querySelector(".app > main");
+    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage"), inventory = byId("cafeInventoryPage"), locations = byId("locationAdminPage");
+    const nav = document.querySelector(".bottom-nav");
+    if (home) home.style.display = "none";
+    if (admin) admin.hidden = true;
+    if (users) users.hidden = true;
+    if (cafe) cafe.hidden = true;
+    if (staffAdmin) staffAdmin.hidden = true;
+    if (waiter) waiter.hidden = true;
+    if (kitchen) kitchen.hidden = false;
+    if (nav) nav.style.display = "none";
+    loadOrders();
+    window.ummaKitchenLive?.start();
+    loadCash();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  async function openWaiterPage() {
+    if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
+    const home = document.querySelector(".app > main");
+    const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage");
+    const nav = document.querySelector(".bottom-nav");
+    if (home) home.style.display = "none";
+    if (admin) admin.hidden = true;
+    if (users) users.hidden = true;
+    if (cafe) cafe.hidden = true;
+    if (kitchen) kitchen.hidden = true;
+    if (staffAdmin) staffAdmin.hidden = true;
+    if (waiter) waiter.hidden = false;
+    if (nav) nav.style.display = "none";
+    showMessage("Загружаем приём заказов…");
+    try {
+      const result = await api({action:"list"});
+      staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
+      staffRole = result.staffRole || "";
+      const isSuperAdmin = window.ummaRole === "super_admin";
+      if (!isSuperAdmin && staffRole === "courier") {
+        if (waiter) waiter.hidden = true;
+        open();
+        return;
+      }
+      orders = Array.isArray(result.orders) ? result.orders : [];
+      locations = Array.isArray(result.locations) ? result.locations : [];
+      const locationLabel=byId("staffOrderLocationLabel"), locationSelect=byId("staffOrderLocation");
+      if (locationLabel && locationSelect) {
+        locationLabel.hidden = !isSuperAdmin;
+        locationSelect.innerHTML = '<option value="">Выберите кафе</option>' + locations.filter(x=>["cafe","restaurant"].includes(x.location_type)).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+(x.city?' · '+esc(x.city):'')+'</option>').join("");
+        if (isSuperAdmin && locations.some(x=>String(x.id)===String(staffLocationIds[0]))) locationSelect.value=staffLocationIds[0];
+      }
+      if (!staffMenu.length) await loadStaffMenu();
+      renderOpenBills();
+      renderStaffActiveOrders();
+      showStaffWorkspace("order");
+      showMessage("", false);
+    } catch (e) {
+      showMessage(e instanceof Error ? e.message : "Не удалось открыть рабочее место");
+    }
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  // The kitchen never creates a second order form. All order actions live in one guest workspace.
+  byId("cafeKitchenToOrders")?.addEventListener("click",()=>{
+    openWaiterPage().then(()=>showStaffWorkspace("active"));
+  });
+  byId("adminKitchenButton")?.addEventListener("click", open);
+  byId("staffEntryButton")?.addEventListener("click",()=>openWaiterPage().then(()=>showStaffWorkspace("order")));
+  byId("staffKitchenEntryButton")?.addEventListener("click",open);
+  byId("cafeWaiterBack")?.addEventListener("click", () => {
+    const waiter=byId("cafeWaiterPage"), home=document.querySelector(".app > main"), nav=document.querySelector(".bottom-nav");
+    if(waiter) waiter.hidden=true;
+    if(home) home.style.display="";
+    if(nav) nav.style.display="";
+    if(typeof setActiveNav==="function") setActiveNav("home");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+  byId("cafeWaiterKitchen")?.addEventListener("click", open);
+  byId("cafeWaiterRefresh")?.addEventListener("click", loadStaffMenu);
+  byId("cafeKitchenBack")?.addEventListener("click", () => {
+    if (byId("cafeKitchenPage")) byId("cafeKitchenPage").hidden = true;
+    if (window.ummaRole === "super_admin" && typeof openAdminPanel === "function") {
+      openAdminPanel();
+      return;
+    }
+    const home = document.querySelector(".app > main");
+    const nav = document.querySelector(".bottom-nav");
+    if (home) home.style.display = "";
+    if (nav) nav.style.display = "";
+    if (typeof setActiveNav === "function") setActiveNav("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  byId("cafeKitchenRefresh")?.addEventListener("click", () => { loadOrders(); loadCash(); });
+  document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
+    filter = button.getAttribute("data-kitchen-filter") || "active";
+    document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
+    render();
+  }));
+  async function assignCourier(orderId) {
+    if (busy) return;
+    const select = Array.from(document.querySelectorAll("[data-courier-select]")).find(el => el.getAttribute("data-courier-select") === orderId);
+    const courierTelegramId = Number(select?.value);
+    if (!Number.isSafeInteger(courierTelegramId) || courierTelegramId <= 0) { showMessage("Сначала выберите курьера."); return; }
+    if (!confirm("Назначить выбранного курьера на этот заказ?")) return;
+    busy = true; showMessage("Назначаем курьера…");
+    try { await api({action:"assignCourier",orderId,courierTelegramId}); await refreshAfterUpdate(); showMessage("Предложение отправлено курьеру. Назначение произойдёт после его подтверждения."); }
+    catch(error) { showMessage(error instanceof Error ? error.message : "Не удалось назначить курьера"); }
+    finally { busy = false; render(); }
+  }
+  byId("cafeKitchenOrders")?.addEventListener("click", event => {
+    const target=event.target;
+    if (!(target instanceof Element)) return;
+    const button=target.closest("[data-assign-courier]");
+    if (button) assignCourier(button.getAttribute("data-assign-courier"));
+  });
+  async function updateDelivery(orderId, deliveryStatus) {
+    if (busy) return;
+    busy = true;
+    showMessage("Обновляем доставку…");
+    try {
+      await api({ action:"updateDelivery", orderId, deliveryStatus });
+      await refreshAfterUpdate();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Не удалось обновить доставку");
+    } finally { busy = false; render(); }
+  }
+  function openCashPayment(order) {
+    let modal=byId("cashPaymentModal");
+    if(!modal){
+      modal=document.createElement("div"); modal.id="cashPaymentModal";
+      modal.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+      modal.innerHTML='<section style="width:min(100%,420px);background:#fff;color:#173333;border-radius:18px;padding:20px"><h2 style="margin:0 0 8px">Приём наличных</h2><p id="cashPayDue" style="margin:0 0 14px"></p><label style="display:block;font-weight:600">Сколько денег дал клиент? (VND)<input id="cashPayTendered" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:20px;border:1px solid #cbd5d5;border-radius:10px;margin-top:6px"></label><div style="margin:14px 0;padding:14px;background:#edf7f7;border-radius:12px"><small>Сдача клиенту</small><div id="cashPayChange" style="font-size:26px;font-weight:800">—</div><small id="cashPayHint"></small></div><div style="display:flex;gap:8px"><button id="cashPayCancel" type="button" style="flex:1;padding:12px;border:1px solid #cbd5d5;border-radius:10px;background:#fff">Отмена</button><button id="cashPayConfirm" type="button" disabled style="flex:1;padding:12px;border:0;border-radius:10px;background:#0f8f93;color:#fff;font-weight:700">Подтвердить оплату</button></div></section>';
+      document.body.appendChild(modal);
+    }
+    const due=Number(order.total_vnd)||0, input=byId("cashPayTendered"), change=byId("cashPayChange"), hint=byId("cashPayHint"), confirm=byId("cashPayConfirm");
+    byId("cashPayDue").textContent="Заказ №"+order.order_number+" · к оплате "+money(due);
+    input.value=""; change.textContent="—"; hint.textContent="Введите сумму, которую фактически передал клиент."; confirm.disabled=true; modal.style.display="flex";
+    const recalc=()=>{const val=input.value.trim()===""?NaN:Number(input.value), valid=Number.isSafeInteger(val)&&val>=due;change.textContent=Number.isSafeInteger(val)&&val>=0?money(Math.max(0,val-due)):"—";hint.textContent=!Number.isSafeInteger(val)||val<0?"Введите корректную сумму.":val<due?"Не хватает: "+money(due-val):"Передайте клиенту указанную сдачу.";confirm.disabled=!valid;};
+    input.oninput=recalc; recalc(); input.focus();
+    byId("cashPayCancel").onclick=()=>{modal.style.display="none";};
+    confirm.onclick=async()=>{if(confirm.disabled)return;const tendered=Number(input.value);const changeAmount=tendered-due;confirm.disabled=true;modal.style.display="none";await updatePayment(order.id,"paid",tendered,changeAmount,"cash");};
+  }
+  function showRefund(order){
+    const dialog=document.createElement("dialog");dialog.className="cafe-refund-dialog";
+    dialog.innerHTML='<form class="cafe-order-form"><h3>Полный возврат · заказ №'+esc(order.order_number)+'</h3><p>Сумма: '+money(order.total_vnd)+'. Эта операция записывает уже выполненный возврат и отменяет заказ. Деньги автоматически не переводятся. Для наличных откройте свою смену.</p><label>Причина<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="cafe-refund-confirm"><input type="checkbox" name="payout" required>Я фактически вернул гостю всю указанную сумму</label><div class="kitchen-order-actions"><button type="button" data-close-refund>Назад</button><button type="submit" class="kitchen-cancel">Записать возврат и отменить заказ</button></div><p role="status"></p></form>';
+    document.body.append(dialog);dialog.showModal();
+    dialog.querySelector('[data-close-refund]').onclick=()=>{dialog.close();dialog.remove();};
+    dialog.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=dialog.querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;
+      try{await api({action:"refundOrder",orderId:order.id,reason:dialog.querySelector('[name="reason"]').value.trim(),payoutConfirmed:dialog.querySelector('[name="payout"]').checked});dialog.close();dialog.remove();await refreshAfterUpdate();}
+      catch(error){dialog.querySelector('[role="status"]').textContent=error.message;button.disabled=false;}
+    };
+  }
+  document.addEventListener('click',event=>{const button=event.target.closest('[data-refund-order]');if(!button)return;const order=orders.find(o=>String(o.id)===button.getAttribute('data-refund-order'));if(order)showRefund(order);});
+  async function updatePayment(orderId, paymentStatus, tenderedAmountVnd=null, changeGivenVnd=null, paymentMethod="") {
+    if (busy) return;
+    busy = true;
+    showMessage("Обновляем оплату…");
+    try {
+      await api({ action:"updatePayment", orderId, paymentStatus, tenderedAmountVnd, changeGivenVnd, paymentMethod });
+      await refreshAfterUpdate();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Не удалось обновить оплату");
+    } finally { busy = false; render(); renderOpenBills(); }
+  }
+  byId("cafeKitchenOrders")?.addEventListener("click", event => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const paymentButton = target.closest("[data-order-id][data-payment-status]");
+    if (paymentButton) {
+      const order=orders.find(o=>String(o.id)===paymentButton.getAttribute("data-order-id"));
+      if(paymentButton.getAttribute("data-payment-status")==="paid" && order && order.payment_method==="cash"){openCashPayment(order);}
+      else updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
+      return;
+    }
+    const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
+    if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status")); return; }
+    const button = target.closest("[data-order-id][data-new-status]");
+    if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
+  });
+
+ 
+  // Cash collection and end-of-shift handover panel.
+  let cashData = null;
+  let cashLocationId = "";
+  function ensureCashPanel() {
+    const page = byId("cafeKitchenPage");
+    if (!page || byId("cafeCashPanel")) return;
+    const section = document.createElement("section");
+    section.id = "cafeCashPanel";
+    section.hidden = true;
+    section.style.cssText = "margin:16px 0;padding:16px;border:1px solid #d7e3e3;border-radius:16px;background:#fff;color:#172b2b";
+    section.innerHTML = '<h2 style="margin:0 0 8px">Касса и сдача смены</h2><p style="margin:0 0 12px;color:#617070">Оплата заказа и передача наличных учитываются отдельно.</p><label style="display:block;margin-bottom:12px">Кафе<select id="cashLocationSelect" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><div id="cashSummary" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px"></div><div id="cashShiftControls"></div><form id="cashHandoverForm" style="display:grid;gap:10px;padding:12px;background:#f4f8f8;border-radius:12px"><h3 style="margin:0">Передать наличные</h3><label>Получатель<select id="cashReceiver" required style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></select></label><label>Сумма (VND)<input id="cashAmount" type="number" min="1" step="1000" required placeholder="Например, 500000" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><label>Комментарий (необязательно)<input id="cashNote" maxlength="500" placeholder="Например, сдача вечерней смены" style="display:block;width:100%;padding:12px;border:1px solid #cbd5d5;border-radius:10px;margin-top:5px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Передать на подтверждение</button></form><p id="cashMessage" hidden style="padding:10px;background:#edf7f7;border-radius:8px"></p><h3 style="margin:18px 0 8px">Передачи денег</h3><div id="cashHandovers"></div><h3 style="margin:18px 0 8px">Принятые оплаты за последние 24 часа</h3><div id="cashReceipts"></div>';
+    const ordersRoot = byId("cafeKitchenOrders");
+    if (ordersRoot) ordersRoot.insertAdjacentElement("afterend", section); else page.append(section);
+    const cashToggle = byId("cafeCashToggle");
+    cashToggle?.addEventListener("click", () => {
+      section.hidden = !section.hidden;
+      cashToggle.setAttribute("aria-expanded", String(!section.hidden));
+      cashToggle.textContent = section.hidden ? "💰 Касса и смена" : "↑ Скрыть кассу и смену";
+      if (!section.hidden) section.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    byId("cashLocationSelect")?.addEventListener("change", () => { cashLocationId = byId("cashLocationSelect").value; loadCash(); });
+    byId("cashHandoverForm")?.addEventListener("submit", createCashHandover);
+    section.addEventListener("click", event => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const action = target.closest("[data-handover-action]");
+      if (action) respondCashHandover(action.getAttribute("data-handover-id"), action.getAttribute("data-handover-action") === "accept");
+    });
+  }
+  function cashMessage(message) { const el=byId("cashMessage"); if(el){el.textContent=message;el.hidden=!message;} }
+  async function loadCash() {
+    ensureCashPanel();
+    const root=byId("cashHandovers"); if(!root) return;
+    root.textContent="Загружаем кассовые данные…";
+    try {
+      const result=await api({action:"cashList",locationId:cashLocationId||undefined});
+      cashData=result; cashLocationId=result.locationId||cashLocationId;
+      const loc=byId("cashLocationSelect");
+      if(loc){
+        const options=(result.locations||[]).map(x=>'<option value="'+esc(x.id)+'" '+(x.id===cashLocationId?'selected':'')+'>'+esc(x.name)+'</option>').join("");
+        loc.innerHTML=options; loc.value=cashLocationId; loc.hidden=(result.locations||[]).length<2;
+      }
+      const staff=result.staff||[];
+      const roleNames={manager:"Администратор",cashier:"Кассир",waiter:"Официант",kitchen:"Кухня",courier:"Курьер"};
+      const receivers=staff.filter(x=>Number(x.telegram_id)!==Number(result.actorTelegramId)&&["manager","cashier"].includes(x.staff_role));
+      const select=byId("cashReceiver");
+      if(select) select.innerHTML='<option value="">Выберите получателя</option>'+receivers.map(x=>'<option value="'+esc(x.telegram_id)+'">'+esc(roleNames[x.staff_role]||x.staff_role)+' · ID '+esc(x.telegram_id)+'</option>').join("");
+      const shifts=result.shifts||[];
+      const myShift=shifts.find(x=>Number(x.staff_telegram_id)===Number(result.actorTelegramId));
+      const shiftRoot=byId("cashShiftControls");
+      if(shiftRoot){
+        if(myShift){
+          shiftRoot.innerHTML='<div style="padding:12px;border:1px solid #b7dddd;border-radius:12px;background:#f0fbfb;margin-bottom:14px"><strong>Смена открыта</strong><div style="margin:6px 0">Начальная касса: '+money(myShift.opening_cash_vnd)+'</div><small>Открыта: '+esc(formatDate(myShift.opened_at))+'</small><form id="cashCloseShiftForm" style="display:grid;gap:8px;margin-top:10px"><label>Фактическая сумма в кассе (VND)<input id="cashCountedAmount" type="number" min="0" step="1000" required style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><label>Комментарий к расхождению<input id="cashCloseNote" maxlength="1000" placeholder="Необязательно" style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#a94736;color:white;font-weight:700">Закрыть смену и сверить кассу</button></form></div>';
+          byId("cashCloseShiftForm")?.addEventListener("submit",closeCashShift);
+        }else{
+          shiftRoot.innerHTML='<form id="cashOpenShiftForm" style="display:grid;gap:8px;padding:12px;background:#f0fbfb;border:1px solid #b7dddd;border-radius:12px;margin-bottom:14px"><h3 style="margin:0">Открытие смены</h3><label>Наличные в кассе на начало (VND)<input id="cashOpeningAmount" type="number" min="0" step="1000" value="0" required style="display:block;width:100%;padding:10px;border:1px solid #cbd5d5;border-radius:8px;margin-top:4px"></label><button type="submit" style="padding:12px;border:0;border-radius:10px;background:#0f8f93;color:white;font-weight:700">Открыть смену</button></form>';
+          byId("cashOpenShiftForm")?.addEventListener("submit",openCashShift);
+        }
+      }
+      const allReceipts=(result.receipts||[]);
+      const ledgerReceipts=allReceipts;
+      const total=result.cashSummary?.total24hVnd;
+      const cashTotal=result.cashSummary?.cash24hVnd;
+      const pendingCount=result.cashSummary?.pendingHandovers;
+      const summary=byId("cashSummary");
+      if(summary) summary.innerHTML=[
+        ["Оплаты минус возвраты за 24 ч.",total==null?"Недоступно":money(total)],["Наличные за 24 ч.",cashTotal==null?"Недоступно":money(cashTotal)],["Ожидают подтверждения",pendingCount==null?"Недоступно":String(pendingCount)],["Возвраты за 24 ч.",money(result.cashSummary?.refund24hVnd||0)],["Кафе",esc(result.cafeName||"")]
+      ].map(x=>'<div style="padding:10px;background:#f4f8f8;border-radius:10px"><small style="display:block;color:#617070">'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join("");
+      const refundRoot=byId("cashRefunds");if(refundRoot)refundRoot.innerHTML=(result.refunds||[]).map(f=>'<p><strong>Возврат '+money(f.amount_vnd)+'</strong> · '+esc(formatDate(f.refunded_at))+'<br>'+esc(f.reason)+'</p>').join("")||"<p>Возвратов пока нет.</p>";
+      const handovers=result.handovers||[];
+      root.innerHTML=handovers.length?handovers.map(h=>{
+        const outgoing=Number(h.from_telegram_id)===Number(result.actorTelegramId);
+        const incoming=Number(h.to_telegram_id)===Number(result.actorTelegramId);
+        const status={pending:"Ожидает подтверждения",accepted:"Принято",rejected:"Отклонено",cancelled:"Отменено"}[h.handover_status]||h.handover_status;
+        const controls=h.handover_status==="pending"&&incoming?'<div style="display:flex;gap:8px;margin-top:8px"><button type="button" data-handover-id="'+esc(h.id)+'" data-handover-action="accept" style="padding:9px;border:0;border-radius:8px;background:#0f8f93;color:#fff">Подтвердить приём</button><button type="button" data-handover-id="'+esc(h.id)+'" data-handover-action="reject" style="padding:9px;border:0;border-radius:8px">Отклонить</button></div>':"";
+        return '<article style="padding:12px;border:1px solid #d7e3e3;border-radius:10px;margin-bottom:8px"><strong>'+money(h.amount_vnd)+'</strong><div style="font-size:13px;margin-top:4px">'+(outgoing?'Вы передаёте получателю':'Отправитель → получатель')+' · '+esc(formatDate(h.created_at))+'</div><small>'+esc(status)+(h.note?' · '+esc(h.note):"")+'</small>'+controls+'</article>';
+      }).join(""):"<p>Передач денег пока нет.</p>";
+      const receiptsRoot=byId("cashReceipts");
+      if(receiptsRoot) receiptsRoot.innerHTML=ledgerReceipts.length?'<p style="font-size:12px;color:#617070">Последние подтверждённые оплаты (до 100 записей). Сводка выше учитывает последние 24 часа.</p>'+ledgerReceipts.slice(0,100).map(x=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #e6eeee"><span><strong>'+(x.order_number?'Заказ №'+esc(x.order_number):'Оплата заказа')+'</strong> · '+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[x.payment_method]||x.payment_method))+'<small style="display:block;color:#617070">'+esc(formatDate(x.collected_at))+' · Принял: '+esc(x.collector||('Сотрудник ID '+x.collected_by_telegram_id))+'</small>'+(x.receipt_status!=="confirmed"?'<small style="display:block;color:#9b3028">Статус: '+esc(x.receipt_status)+'</small>':'')+(x.payment_method==="cash"&&x.tendered_amount_vnd!=null?'<small style="display:block;color:#617070">Получено: '+money(x.tendered_amount_vnd)+' · Сдача: '+money(x.change_given_vnd||0)+'</small>':'')+'</span><strong>'+money(x.amount_vnd)+'</strong></div>').join(""):"<p>Подтверждённых оплат пока нет.</p>";
+    } catch(e) { root.textContent=e instanceof Error?e.message:"Не удалось загрузить кассовые данные"; }
+  }
+  async function openCashShift(event) {
+    event.preventDefault();
+    const amount=Number(byId("cashOpeningAmount")?.value);
+    if(!Number.isSafeInteger(amount)||amount<0){cashMessage("Укажите корректную начальную сумму.");return;}
+    try { await api({action:"openShift",locationId:cashLocationId,openingCashVnd:amount}); cashMessage("Смена открыта."); await loadCash(); }
+    catch(e){cashMessage(e instanceof Error?e.message:"Не удалось открыть смену");}
+  }
+  async function closeCashShift(event) {
+    event.preventDefault();
+    const amount=Number(byId("cashCountedAmount")?.value);
+    const shift=(cashData?.shifts||[]).find(x=>Number(x.staff_telegram_id)===Number(cashData?.actorTelegramId));
+    if(!shift||!Number.isSafeInteger(amount)||amount<0){cashMessage("Укажите фактическую сумму в кассе.");return;}
+    try {
+      const result=await api({action:"closeShift",shiftId:shift.id,countedCashVnd:amount,note:byId("cashCloseNote")?.value||""});
+      const closed=result.shift||{};
+      cashMessage("Смена закрыта. Расчётная касса: "+money(closed.expected_cash_vnd)+"; фактически: "+money(closed.counted_cash_vnd)+"; расхождение: "+money(closed.variance_vnd)+".");
+      await loadCash();
+    } catch(e){cashMessage(e instanceof Error?e.message:"Не удалось закрыть смену");}
+  }
+
+  async function createCashHandover(event) {
+    event.preventDefault();
+    const receiver=byId("cashReceiver")?.value, amount=Number(byId("cashAmount")?.value);
+    if(!receiver||!Number.isSafeInteger(amount)||amount<=0){cashMessage("Выберите получателя и укажите корректную сумму.");return;}
+    try {
+      await api({action:"createHandover",locationId:cashLocationId,toTelegramId:Number(receiver),amountVnd:amount,note:byId("cashNote")?.value.trim()||""});
+      byId("cashAmount").value=""; byId("cashNote").value=""; cashMessage("Передача создана. Получатель должен подтвердить фактический приём."); await loadCash();
+    } catch(e) { cashMessage(e instanceof Error?e.message:"Не удалось создать передачу"); }
+  }
+  async function respondCashHandover(id,accept) {
+    try { await api({action:"respondHandover",handoverId:id,accept}); cashMessage(accept?"Приём денег подтверждён.":"Передача отклонена."); await loadCash(); }
+    catch(e) { cashMessage(e instanceof Error?e.message:"Не удалось обработать передачу"); }
+  }
+
+  const STAFF_MENU_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu";
+  const STAFF_ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
+  const staffMoney = value => new Intl.NumberFormat("vi-VN", {style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(value)||0);
+  const staffName = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
+  function renderStaffCart() {
+    const root=byId("staffOrderCart"), total=byId("staffOrderTotal"), submit=byId("staffOrderSubmit");
+    if(!root||!total) return;
+    const items=[...staffCart.values()];
+    root.innerHTML=items.length ? items.map(x=>'<div class="cafe-cart-row"><div><strong>'+esc(staffName(x.product))+'</strong><small>'+staffMoney(x.product.price_vnd)+' × '+x.quantity+'</small></div><div class="cafe-cart-controls"><button type="button" data-staff-change="-1" data-product-id="'+esc(x.product.id)+'">−</button><strong>'+x.quantity+'</strong><button type="button" data-staff-change="1" data-product-id="'+esc(x.product.id)+'">+</button></div></div>').join("") : '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
+    total.textContent=staffMoney(items.reduce((sum,x)=>sum+Number(x.product.price_vnd)*x.quantity,0));
+    updateStaffMenuSelection();
+    refreshStaffCashFields();
+    const summary=byId("staffOrderSummary");
+    if(summary)summary.hidden=!items.length;
+    if(submit) submit.disabled=!items.length || busy;
+  }
+  function updateStaffMenuSelection() {
+    const root=byId("staffOrderMenu"); if(!root) return;
+    root.querySelectorAll("[data-staff-product]").forEach(card=>{
+      const id=card.getAttribute("data-staff-product"), item=staffCart.get(id);
+      const qty=card.querySelector("[data-staff-quantity]");
+      const minus=card.querySelector("[data-staff-minus]");
+      const button=card.querySelector("[data-staff-add]");
+      card.classList.toggle("staff-product-selected",!!item);
+      if(qty){qty.textContent=item?String(item.quantity):"";qty.hidden=!item;}
+      if(minus){minus.hidden=!item;minus.setAttribute("aria-label","Уменьшить количество "+(card.querySelector("h3")?.textContent||"товара"));}
+      if(button){button.setAttribute("aria-label",item?"Добавить ещё "+staffName(item.product):"Добавить "+(card.querySelector("h3")?.textContent||"товар"));button.textContent="+";}
+    });
+  }
+  async function loadStaffMenu() {
+    const root=byId("staffOrderMenu"); if(!root) return;
+    root.innerHTML='<div class="cafe-message">Загружаем меню…</div>';
+    try {
+      const response=await fetch(STAFF_MENU_URL), result=await response.json();
+      if(!response.ok||!result.ok) throw new Error(result.error||"Не удалось загрузить меню");
+      staffMenu=Array.isArray(result.products)?result.products:[];
+      root.innerHTML=staffMenu.map(p=>'<article class="cafe-product" data-staff-product="'+esc(p.id)+'"><h3>'+esc(staffName(p))+'</h3><div class="cafe-product-bottom"><span class="cafe-product-price">'+staffMoney(p.price_vnd)+'</span><div class="staff-product-qty-controls"><button type="button" class="staff-product-minus" data-staff-minus data-staff-change="-1" data-product-id="'+esc(p.id)+'" aria-label="Уменьшить количество" hidden>−</button><span class="staff-product-quantity" data-staff-quantity hidden></span><button type="button" class="cafe-add staff-product-plus" data-staff-add="'+esc(p.id)+'" aria-label="Добавить '+esc(staffName(p))+'">+</button></div></div></article>').join("");
+      updateStaffMenuSelection();
+    } catch(e) { root.textContent=e instanceof Error?e.message:"Ошибка загрузки меню"; }
+  }
+  byId("staffOrderToggle")?.addEventListener("click", async()=>{
+    const wrap=byId("staffOrderFormWrap"); if(!wrap) return;
+    wrap.hidden=!wrap.hidden;
+    if(!wrap.hidden){clearPreviousOrderFeedback();if(!staffMenu.length)await loadStaffMenu();}
+  });
+  function showStaffWorkspace(view) {
+    const form=byId("staffOrderFormWrap"), active=byId("staffActiveOrdersWrap"), closed=byId("staffClosedOrdersWrap");
+    const tabs=[["waiterOrderToggle","order"],["staffActiveOrdersToggle","active"],["staffClosedOrdersToggle","closed"]];
+    if(form)form.hidden=view!=="order";
+    if(active)active.hidden=view!=="active";
+    if(closed)closed.hidden=view!=="closed";
+    tabs.forEach(([id,name])=>{
+      const tab=byId(id);if(!tab)return;
+      const selected=view===name;
+      tab.classList.toggle("is-active",selected);
+      tab.setAttribute("aria-selected",String(selected));
+    });
+    if(view==="active"){renderOpenBills();renderStaffActiveOrders();}
+    if(view==="closed")renderStaffClosedOrders();
+  }
+  function clearPreviousOrderFeedback() {
+    const message=byId("staffOrderMessage");
+    if(message){message.textContent="";message.hidden=true;}
+    const cash=byId("staffCashReceived");
+    if(cash)cash.value="";
+    refreshStaffCashFields();
+  }
+  byId("waiterOrderToggle")?.addEventListener("click",async()=>{
+    clearPreviousOrderFeedback();
+    showStaffWorkspace("order");
+    const root=byId("staffOrderMenu");
+    if(root&&!staffMenu.length)await loadStaffMenu();
+    if(root&&!staffMenu.length&&!root.textContent.trim())root.textContent="Меню пока пустое. Нажмите «Обновить меню» или проверьте товары в каталоге кафе.";
+  });
+  byId("staffActiveOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("active"));
+  byId("staffClosedOrdersToggle")?.addEventListener("click",()=>showStaffWorkspace("closed"));
+  document.addEventListener("click",async event=>{
+    const target=event.target; if(!(target instanceof Element)) return;
+    const add=target.closest("[data-staff-add]");
+    const change=target.closest("[data-staff-change]");
+    const addToBill=target.closest("[data-add-to-bill]");
+    const settleBill=target.closest("[data-settle-bill]");
+    const proofButton=target.closest("[data-proof-order]");
+    if(proofButton){
+      const orderId=proofButton.getAttribute("data-proof-order");
+      const order=orders.find(o=>String(o.id)===String(orderId));
+      const initData=window.Telegram?.WebApp?.initData;
+      if(!initData){showMessage("Откройте приложение через Telegram");return;}
+      proofButton.disabled=true;
+      try{
+        const res=await fetch(PROOF_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list",initData,orderId})});
+        const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"Не удалось загрузить чек");
+        const pending=(data.proofs||[]).filter(x=>x.status==="pending");
+        if(!pending.length){window.alert("По этому заказу нет новых скриншотов перевода.");return;}
+        const latest=pending[0];
+        if(latest.url)window.open(latest.url,"_blank","noopener,noreferrer");
+        window.alert("Откройте чек и отдельно проверьте фактическое поступление денег на банковский счёт. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Принять оплату».");
+      }catch(e){showMessage(e.message||"Ошибка проверки чека");}finally{proofButton.disabled=false;}
+      return;
+    }
+    const staffAction=target.closest("#staffActiveOrders [data-order-id][data-new-status], #staffActiveOrders [data-order-id][data-payment-status]");
+    if(staffAction){
+      const orderId=staffAction.getAttribute("data-order-id");
+      const newStatus=staffAction.getAttribute("data-new-status");
+      if(newStatus){updateStatus(orderId,newStatus);return;}
+      const paymentStatus=staffAction.getAttribute("data-payment-status");
+      if(paymentStatus){
+        const order=orders.find(o=>String(o.id)===String(orderId));
+        if(paymentStatus==="paid"&&order?.payment_method==="cash")openCashPayment(order);
+        else if(order&&window.confirm("Подтвердить получение оплаты по заказу №"+order.order_number+"?"))updatePayment(orderId,paymentStatus,Number(order.total_vnd)||0,0,order.payment_method||"qr");
+        return;
+      }
+    }
+    if(settleBill) {
+      const order=orders.find(o=>String(o.id)===String(settleBill.getAttribute("data-settle-bill")));
+      if(!order)return;
+      if(order.payment_method==="cash") openCashPayment(order);
+      else if(window.confirm("Подтвердить, что оплата по счёту №"+order.order_number+" на "+money(order.total_vnd)+" действительно получена?")) updatePayment(order.id,"paid",Number(order.total_vnd)||0,0,order.payment_method||"qr");
+    } else if(addToBill) {
+      const wrap=byId("staffOrderFormWrap"); if(wrap){wrap.hidden=false;wrap.style.display="block";}
+      clearPreviousOrderFeedback();
+      setStaffOrderMode(addToBill.getAttribute("data-add-to-bill"));
+      byId("waiterOrderToggle").textContent="− Скрыть форму заказа";
+      byId("staffOrderMenu")?.scrollIntoView({behavior:"smooth",block:"start"});
+    } else if(add) {
+      const product=staffMenu.find(p=>String(p.id)===add.getAttribute("data-staff-add")); if(!product)return;
+      const current=staffCart.get(product.id); staffCart.set(product.id,{product,quantity:Math.min(99,(current?.quantity||0)+1)}); renderStaffCart();
+    } else if(change) {
+      const id=change.getAttribute("data-product-id"), current=staffCart.get(id); if(!current)return;
+      const quantity=current.quantity+Number(change.getAttribute("data-staff-change"));
+      if(quantity<=0)staffCart.delete(id);else staffCart.set(id,{...current,quantity});
+      renderStaffCart();
+    }
+  });
+  function selectedStaffCafeId(){
+    return String(byId("staffOrderLocation")?.value||staffLocationIds[0]||"");
+  }
+  function tableNumberForOrder(order){
+    const name=String(order.customer_name||"").trim();
+    const match=/^Стол\s*№?\s*([1-6])$/i.exec(name);
+    return match?Number(match[1]):null;
+  }
+  function openBillForTable(tableNumber,source=orders){
+    const locationId=selectedStaffCafeId();
+    return source.filter(order=>order.order_type==="dine_in"
+      &&tableNumberForOrder(order)===Number(tableNumber)
+      &&order.payment_status!=="paid"
+      &&!["completed","cancelled"].includes(order.status)
+      &&(!locationId||String(order.location_id)===locationId))
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0]||null;
+  }
+  function updateTableAvailability(){
+    document.querySelectorAll("[data-staff-table]").forEach(button=>{
+      const bill=openBillForTable(button.getAttribute("data-staff-table"));
+      button.classList.toggle("has-open-bill",!!bill);
+      button.title=bill?"Открытый счёт №"+bill.order_number+" — добавить блюда":"Свободен — новый заказ";
+    });
+  }
+  function selectStaffService(type,tableNumber=null){
+    const select=byId("staffOrderType"),guest=byId("staffOrderCustomerName");
+    if(!select||!guest)return;
+    setStaffOrderMode(null);
+    select.value=type;
+    if(byId("staffPaymentTiming"))byId("staffPaymentTiming").value=type==="delivery"?"on_delivery":"now";
+    if(type==="delivery"&&byId("staffOrderPayment"))byId("staffOrderPayment").value="courier";
+    guest.value=type==="dine_in"?"Стол №"+tableNumber:"";
+    const existingBill=type==="dine_in"?openBillForTable(tableNumber):null;
+    setStaffOrderMode(existingBill?.id||null);
+    const guestLabel=byId("staffOrderGuestLabel");
+    if(guestLabel)guestLabel.firstChild.textContent=type==="dine_in"?"Стол":"Имя гостя";
+    guest.placeholder=type==="dine_in"?"Стол №"+tableNumber:"Например, Ахмад";
+    const hint=byId("staffTableSelectionHint");
+    if(hint)hint.textContent=type==="dine_in"?(existingBill?"Стол №"+tableNumber+" занят. Дозаказ в счёт №"+existingBill.order_number+".":"Стол №"+tableNumber+" свободен. Новый заказ."):type==="pickup"?"С собой: добавьте блюда и укажите имя гостя.":"Доставка: добавьте блюда, имя и адрес.";
+    document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{
+      const selected=type==="dine_in"?button.getAttribute("data-staff-table")===String(tableNumber):button.getAttribute("data-staff-service")===type;
+      button.classList.toggle("is-selected",selected);
+      button.setAttribute("aria-pressed",String(selected));
+    });
+    select.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  document.addEventListener("click",event=>{
+    const table=event.target.closest?.("[data-staff-table]");
+    if(table){selectStaffService("dine_in",table.getAttribute("data-staff-table"));return;}
+    const service=event.target.closest?.("[data-staff-service]");
+    if(service)selectStaffService(service.getAttribute("data-staff-service"));
+  });
+  byId("staffOrderType")?.addEventListener("change",()=>{
+    const type=byId("staffOrderType").value;
+    if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=type!=="delivery";
+    if(byId("staffCourierDispatchLabel"))byId("staffCourierDispatchLabel").hidden=type!=="delivery";
+    if(!editingBillId){
+      const guest=byId("staffOrderCustomerName");
+      if(type!=="dine_in"&&guest?.value.startsWith("Стол №"))guest.value="";
+      const label=byId("staffOrderGuestLabel");if(label)label.firstChild.textContent=type==="dine_in"?"Стол или имя гостя":"Имя гостя";
+      document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{
+        const selected=type!=="dine_in"&&button.getAttribute("data-staff-service")===type;
+        if(selected){button.classList.add("is-selected");button.setAttribute("aria-pressed","true");}
+        else if(type!=="dine_in"){button.classList.remove("is-selected");button.setAttribute("aria-pressed","false");}
+      });
+    }
+    if(byId("staffPaymentTiming"))byId("staffPaymentTiming").value=type==="delivery"?"on_delivery":"now";
+    if(type==="delivery"&&byId("staffOrderPayment"))byId("staffOrderPayment").value="courier";
+    syncStaffPaymentOptions();
+  });
+  function renderOpenBills() {
+    // Open bills are already represented by active order cards.
+    const root=byId("staffOpenBills");
+    if(root)root.innerHTML="";
+  }
+  function renderStaffActiveOrders() {
+    const root=byId("staffActiveOrders");if(!root)return;
+    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    updateTableAvailability();
+    root.innerHTML=active.length?active.map(o=>{
+      const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
+      const itemList=items.map(i=>'<li>'+esc(i.product_name_ru)+' × '+Number(i.quantity)+'</li>').join("");
+      const payment=o.payment_status==="paid"?"Оплачено":"Ожидает оплаты";
+      const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type;
+      const next=nextStep[o.status],role=o.staffRole||staffRole;
+      const canAdvance=next&&["manager","waiter","cashier","kitchen"].includes(role)&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
+      const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
+      const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
+      const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+add+settle+step+'</div></article>';
+    }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
+  }
+  function renderStaffClosedOrders() {
+    const root=byId("staffClosedOrders");if(!root)return;
+    const closed=orders.filter(o=>["completed","cancelled"].includes(o.status))
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    root.innerHTML=closed.length?closed.map(o=>{
+      const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
+      const itemList=items.map(i=>'<li>'+esc(i.product_name_ru)+' × '+Number(i.quantity)+'</li>').join("");
+      const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type||"";
+      const status=o.status==="completed"?"Завершён":"Отменён";
+      const payment=o.payment_status==="paid"?"Оплачено":o.payment_status==="refunded"?"Возвращено":"Не оплачено";
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+status+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div></article>';
+    }).join(""):'<p class="cafe-empty-cart">Закрытых заказов пока нет.</p>';
+  }
+  function syncStaffPaymentOptions(source=null){
+    const type=byId("staffOrderType")?.value||"dine_in",timing=byId("staffPaymentTiming"),method=byId("staffOrderPayment");
+    if(timing){const later=timing.querySelector('option[value="later"]'),delivery=timing.querySelector('option[value="on_delivery"]');if(later)later.disabled=type!=="dine_in";if(delivery)delivery.hidden=type!=="delivery";
+      if(type!=="dine_in"&&timing.value==="later")timing.value="now";
+      if(type!=="delivery"&&timing.value==="on_delivery")timing.value="now";
+    }
+    if(method){const courier=method.querySelector('option[value="courier"]');if(courier)courier.hidden=type!=="delivery";
+      if(type!=="delivery"&&method.value==="courier")method.value="cash";
+      if(type==="delivery"&&timing){
+        if(source==="timing"){if(timing.value==="on_delivery")method.value="courier";else if(method.value==="courier")method.value="cash";}
+        else if(method.value==="courier")timing.value="on_delivery";
+        else if(source==="method"&&timing.value==="on_delivery")timing.value="now";
+      }
+    }
+    const atDelivery=timing?.value==="on_delivery";
+    const nowOption=timing?.querySelector('option[value="now"]');if(nowOption)nowOption.textContent="Сейчас, до передачи заказа";
+    const submit=byId("staffOrderSubmit");if(submit&&!editingBillId)submit.textContent=atDelivery?"Оформить доставку — оплата при получении":timing?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить полученную оплату";
+    const fields=byId("staffPaymentNowFields");if(fields)fields.hidden=!!editingBillId||timing?.value==="later";
+    const hint=byId("staffPaymentTimingHint");if(hint)hint.textContent=atDelivery?"Сейчас деньги не принимаются. Курьер подтвердит наличные после вручения заказа.":timing?.value==="later"?"Общий счёт оплачивается после трапезы.":"Подтверждайте оплату только после фактического получения денег. Перевод на карту требует отдельной проверки поступления.";
+    refreshStaffCashFields();
+  }
+  function setStaffOrderMode(billId=null) {
+    editingBillId=billId;
+    const notice=byId("staffOrderModeNotice");
+    const type=byId("staffOrderType"), timing=byId("staffPaymentTiming");
+    const paymentFields=byId("staffPaymentNowFields");
+    const submit=byId("staffOrderSubmit");
+    const bill=orders.find(o=>String(o.id)===String(billId));
+    if(type){type.value=bill?"dine_in":type.value;type.disabled=!!bill;}
+    if(timing){timing.value=bill?"later":(timing.value||"now");timing.disabled=!!bill;}
+    if(paymentFields)paymentFields.hidden=!!bill || timing?.value==="later";
+    if(notice){notice.hidden=!bill;notice.textContent=bill?"Добавление в счёт №"+bill.order_number+". Новый заказ не создаётся; сумма общего счёта пересчитается автоматически.":"";}
+    if(submit)submit.textContent=bill?"Добавить позиции в счёт №"+bill.order_number:(timing?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");
+    syncStaffPaymentOptions();
+  }
+  function staffOrderAmount() {
+    return [...staffCart.values()].reduce((sum,item)=>sum+Number(item.product.price_vnd)*item.quantity,0);
+  }
+  function refreshStaffCashFields() {
+    const method=byId("staffOrderPayment")?.value||"cash";
+    const fields=byId("staffCashPaymentFields");
+    const input=byId("staffCashReceived");
+    const dueEl=byId("staffCashDue"), changeEl=byId("staffCashChange"), hint=byId("staffCashHint");
+    const due=staffOrderAmount();
+    if(fields) fields.hidden=method!=="cash" || byId("staffPaymentTiming")?.value==="later";
+    if(dueEl) dueEl.textContent=staffMoney(due);
+    if(byId("staffPaymentTiming")?.value==="later" || editingBillId) return;
+    if(method!=="cash") return;
+    const raw=input?.value.trim()||"";
+    const received=raw===""?NaN:Number(raw);
+    const valid=Number.isSafeInteger(received)&&received>=due;
+    if(changeEl) changeEl.textContent=Number.isSafeInteger(received)&&received>=0?staffMoney(Math.max(0,received-due)):"—";
+    if(hint) hint.textContent=!Number.isSafeInteger(received)||received<0?"Введите сумму наличных, полученных от гостя.":received<due?"Не хватает: "+staffMoney(due-received):"Сдача рассчитана автоматически.";
+  }
+  byId("staffOrderPayment")?.addEventListener("change",()=>{syncStaffPaymentOptions("method");setStaffOrderMode(editingBillId);});
+  byId("staffPaymentTiming")?.addEventListener("change",()=>{syncStaffPaymentOptions("timing");setStaffOrderMode(editingBillId);});
+  byId("staffCashReceived")?.addEventListener("input",refreshStaffCashFields);
+  let staffOrderSubmitting = false;
+  byId("staffOrderForm")?.addEventListener("submit",async event=>{
+    event.preventDefault();
+    if (staffOrderSubmitting) return;
+    const message=byId("staffOrderMessage");
+    if(!staffCart.size){if(message){message.textContent="Добавьте хотя бы одно блюдо.";message.hidden=false;}return;}
+    const selectedLocation=window.ummaRole==="super_admin"?(byId("staffOrderLocation")?.value||""):staffLocationIds[0];
+    if(!selectedLocation){if(message){message.textContent=window.ummaRole==="super_admin"?"Выберите кафе / филиал.":"Не удалось определить кафе сотрудника. Обновите заказы.";message.hidden=false;}return;}
+    const initData=window.Telegram?.WebApp?.initData;
+    if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
+    const type=byId("staffOrderType").value;
+    const guestName=byId("staffOrderCustomerName")?.value.trim()||"";
+    if(!editingBillId&&!guestName){
+      if(message){message.textContent=type==="dine_in"?"Выберите стол 1–6.":"Укажите имя гостя для заказа с собой или доставки.";message.hidden=false;}
+      byId("staffOrderCustomerName")?.focus();return;
+    }
+    const address=byId("staffOrderAddress")?.value.trim()||"";
+    const paymentMethod=byId("staffOrderPayment").value;
+    const paymentTiming=type==="delivery"&&paymentMethod==="courier"?"on_delivery":(byId("staffPaymentTiming")?.value||"now");
+    if(type!=="dine_in"&&paymentTiming==="later"){if(message){message.textContent="Оплата позже разрешена только для заказа в кафе.";message.hidden=false;}return;}
+    if(paymentMethod==="courier"&&type!=="delivery"){if(message){message.textContent="Оплата курьеру доступна только для доставки.";message.hidden=false;}return;}
+    const orderTotal=staffOrderAmount();
+    const receivedRaw=byId("staffCashReceived")?.value.trim()||"";
+    const tendered=paymentMethod==="cash"?(receivedRaw===""?NaN:Number(receivedRaw)):orderTotal;
+    if(editingBillId && paymentTiming!=="later"){if(message){message.textContent="Для открытого счёта выберите оплату позже.";message.hidden=false;}return;}
+    if(!editingBillId && type==="delivery"&&!address){if(message){message.textContent="Укажите адрес доставки.";message.hidden=false;}return;}
+    if(!editingBillId && paymentTiming==="now" && paymentMethod==="cash"&&(!Number.isSafeInteger(tendered)||tendered<orderTotal)){if(message){message.textContent="Укажите полученную наличную сумму не меньше "+staffMoney(orderTotal)+". Сдача рассчитается автоматически.";message.hidden=false;}byId("staffCashReceived")?.focus();return;}
+    const changeAmount=paymentMethod==="cash"?tendered-orderTotal:0;
+    staffOrderSubmitting = true;
+    const submit=byId("staffOrderSubmit"); if(submit){submit.disabled=true;submit.textContent=editingBillId?"Добавляем позиции…":paymentTiming==="later"?"Открываем счёт…":paymentMethod==="courier"?"Оформляем доставку…":"Оформляем и подтверждаем оплату…";}
+    if(message)message.hidden=true;
+    try{
+      const items=[...staffCart.values()].map(x=>({productId:x.product.id,quantity:x.quantity}));
+      // Refresh before creating a dine-in order: another tablet may have
+      // opened this table since it was selected.
+      if(!editingBillId&&type==="dine_in"){
+        const match=/^Стол\s*№?\s*([1-6])$/i.exec(guestName);
+        if(match){
+          const fresh=await api({action:"list"});
+          const bill=openBillForTable(Number(match[1]),Array.isArray(fresh.orders)?fresh.orders:[]);
+          if(bill){
+            orders=Array.isArray(fresh.orders)?fresh.orders:orders;
+            setStaffOrderMode(bill.id);
+            if(message){message.textContent="Стол №"+match[1]+" уже имеет неоплаченный счёт №"+bill.order_number+". Новые блюда добавляются к нему.";message.hidden=false;}
+          }
+        }
+      }
+      if(editingBillId){
+        const added=await api({action:"addItems",orderId:editingBillId,items});
+        if(message){message.textContent="Добавлено в общий счёт №"+added.orderNumber+". Новый итог: "+staffMoney(added.totalVnd)+". Оплата остаётся после трапезы.";message.hidden=false;}
+      } else {
+        const response=await window.ummaCafeRequests.request(STAFF_ORDER_URL,{
+          initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
+          customerName:guestName,
+          customerPhone:"",
+          dispatchMode:byId("staffCourierDispatch")?.value||"broadcast",deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+        });
+        const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
+        const order=result.order;
+        if(paymentTiming==="now"&&paymentMethod!=="courier"&&paymentMethod!=="bank_transfer"){
+          try {
+            await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
+          } catch(paymentError) {
+            // Creation has committed. Retrying this cart would create a second sale.
+            staffCart.clear();byId("staffOrderForm").reset();setStaffOrderMode(null);renderStaffCart();
+            if(message){message.textContent="Заказ №"+order.orderNumber+" создан, но подтверждение оплаты не прошло: "+(paymentError instanceof Error?paymentError.message:"ошибка оплаты")+". Не оформляйте повторный заказ; проверьте его в рабочей панели.";message.hidden=false;}
+            await loadOrders(); return;
+          }
+          if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+        } else if(paymentMethod==="bank_transfer"){
+          if(message){message.textContent="Заказ №"+order.orderNumber+" создан. Перевод на карту ожидает скриншот и подтверждение поступления средств. Не отмечайте заказ оплаченным заранее.";message.hidden=false;}
+        } else if(paymentMethod==="courier"){
+          if(message){message.textContent="Заказ №"+order.orderNumber+" оформлен. Оплата курьеру при вручении; платёж пока не подтверждён.";message.hidden=false;}
+        } else {
+          if(message){message.textContent="Открыт счёт №"+order.orderNumber+" на "+staffMoney(order.totalVnd)+". Оплата будет после трапезы. Все последующие блюда добавляйте в этот счёт.";message.hidden=false;}
+        }
+      }
+      staffCart.clear();byId("staffOrderForm").reset();
+      document.querySelectorAll("[data-staff-table],[data-staff-service]").forEach(button=>{button.classList.remove("is-selected");button.setAttribute("aria-pressed","false");});
+      const tableHint=byId("staffTableSelectionHint");if(tableHint)tableHint.textContent="Нажмите стол или «С собой», затем добавляйте блюда.";if(byId("staffOrderAddressLabel"))byId("staffOrderAddressLabel").hidden=true;setStaffOrderMode(null);renderStaffCart();await loadOrders();
+    }catch(e){if(message){message.textContent=e instanceof Error?e.message:"Ошибка оформления заказа";message.hidden=false;}}
+    finally{staffOrderSubmitting = false; if(submit){submit.disabled=!staffCart.size;submit.textContent=editingBillId?"Добавить позиции в счёт":(byId("staffOrderPayment")?.value==="courier"?"Оформить доставку — оплата при получении":byId("staffPaymentTiming")?.value==="later"?"Открыть счёт и отправить заказ":"Оформить заказ и подтвердить оплату");}}
+  });
+  document.addEventListener("umma:cafe-operation-recovered",async event=>{
+    if(event.detail.payload.action==="refundOrder"){document.querySelectorAll('.cafe-refund-dialog').forEach(dialog=>dialog.remove());await loadOrders();await loadCash();showMessage("Возврат записан. Повторно выдавать деньги гостю не нужно.");return;}
+    if(!event.detail.payload.staffOrder&&event.detail.payload.action!=="addItems")return;
+    staffCart.clear();byId("staffOrderForm")?.reset();setStaffOrderMode(null);renderStaffCart();
+    const message=byId("staffOrderMessage"),result=event.detail.result;
+    if(message){message.hidden=false;message.textContent="Результат прежнего запроса восстановлен. Заказ №"+(result.order?.orderNumber||result.orderNumber)+". Проверьте состав и оплату в активных заказах.";}
+    await loadOrders();
+  });
+  renderStaffCart();
+  setStaffOrderMode(null);
+
+  window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
+})();
+</script><script>document.getElementById('qaRole').onchange=event=>{qaRole=event.target.value;window.ummaRole=qaRole==='manager'?'super_admin':'employee';window.ummaKitchen.open();};document.getElementById('qaWidth').onchange=event=>document.querySelector('.app').style.width=event.target.value+'px';document.getElementById('qaOrders').onclick=()=>document.getElementById('staffEntryButton').click();document.getElementById('qaKitchen').onclick=()=>window.ummaKitchen.open();document.getElementById('qaPaid').onclick=()=>{qaOrders[0].payment_status='paid';window.ummaKitchen.open();};document.getElementById('staffEntryButton').click();</script><script>/* Shared Leaflet route view for Umma delivery couriers */
+(() => {
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  let map=null,route=null,markers=[],opener=null,generation=0;
+  function close(){generation++;const modal=$("courierMapModal");if(modal){modal.hidden=true;modal.style.display="none";}opener?.focus();}
+  function status(text){if($("courierMapMessage"))$("courierMapMessage").textContent=text;}
+  function currentPosition(){
+    return new Promise(resolve=>{
+      if(!navigator.geolocation){resolve(null);return;}
+      navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),()=>resolve(null),{enableHighAccuracy:true,timeout:6500,maximumAge:60000});
+    });
+  }
+  async function findAddress(address){
+    const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(address+", Vietnam")+"&accept-language=ru,en";
+    const res=await fetch(url);if(!res.ok)throw new Error("Поиск адреса временно недоступен");
+    const data=await res.json();if(!data.length)throw new Error("Адрес не найден. Проверьте, что в заказе указан полный адрес.");
+    return {lat:Number(data[0].lat),lng:Number(data[0].lon),label:data[0].display_name};
+  }
+  function clearLayers(){
+    markers.forEach(m=>map.removeLayer(m));markers=[];
+    if(route){map.removeLayer(route);route=null;}
+  }
+  async function open(button){
+    const token=++generation;opener=button;
+    const address=button.getAttribute("data-route-address")||"";
+    const rawOriginLat=button.getAttribute("data-route-origin-lat"),rawOriginLng=button.getAttribute("data-route-origin-lng");
+    const originLat=rawOriginLat===""?NaN:Number(rawOriginLat),originLng=rawOriginLng===""?NaN:Number(rawOriginLng);
+    const originName=button.getAttribute("data-route-origin-name")||"Кафе";
+    const orderNo=button.getAttribute("data-route-order-number")||"";
+    const modal=$("courierMapModal");if(!modal)return;
+    modal.hidden=false;modal.style.display="block";
+    $("courierMapClose")?.focus();
+    if(!window.L){status("Библиотека карты не загрузилась. Можно вернуться к заказу.");return;}
+    $("courierMapTitle").textContent="Маршрут · Заказ №"+orderNo;
+    $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(address+", Vietnam");
+    if(!map){
+      map=L.map("courierRouteMap").setView([12.2388,109.1967],6);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+    }
+    setTimeout(()=>map&&map.invalidateSize(),80);
+    clearLayers();status("Находим адрес доставки…");
+    try{
+      const dest=await findAddress(address);if(token!==generation)return;
+      markers.push(L.marker([dest.lat,dest.lng]).addTo(map).bindPopup("Доставка · заказ №"+esc(orderNo)).openPopup());
+      const all=Array.isArray(window.ummaLocationPins)?window.ummaLocationPins:[];
+      all.filter(l=>l.latitude!=null&&l.longitude!=null).forEach(l=>{
+        const marker=L.circleMarker([Number(l.latitude),Number(l.longitude)],{radius:6,color:"#176b55",fillColor:"#0fa3a8",fillOpacity:.9}).addTo(map).bindPopup(esc(l.name)+(l.address?"<br>"+esc(l.address):""));
+        markers.push(marker);
+      });
+      status("Получаем ваше местоположение для построения маршрута…");
+      let origin=await currentPosition();if(token!==generation)return;
+      if(!origin&&Number.isFinite(originLat)&&Number.isFinite(originLng)&&originLat>=-90&&originLat<=90&&originLng>=-180&&originLng<=180)origin={lat:originLat,lng:originLng};
+      if(!origin){map.setView([dest.lat,dest.lng],15);status("Адрес найден. Разрешите геолокацию, чтобы построить маршрут от вас, или откройте Google Maps.");return;}
+      markers.push(L.marker([origin.lat,origin.lng]).addTo(map).bindPopup(originName+" · отправление"));
+      status("Строим автомобильный маршрут…");
+      const res=await fetch("https://router.project-osrm.org/route/v1/driving/"+origin.lng+","+origin.lat+";"+dest.lng+","+dest.lat+"?overview=full&geometries=geojson");
+      if(!res.ok)throw new Error("Сервис маршрутов временно недоступен");
+      const data=await res.json();if(token!==generation)return;if(data.code!=="Ok"||!data.routes||!data.routes.length)throw new Error("Не удалось построить маршрут для этих точек");
+      route=L.geoJSON(data.routes[0].geometry,{style:{color:"#0fa3a8",weight:5,opacity:.9}}).addTo(map);
+      map.fitBounds(route.getBounds(),{padding:[28,28]});
+      status("Маршрут построен · "+(data.routes[0].distance/1000).toFixed(1)+" км · около "+Math.round(data.routes[0].duration/60)+" мин. Время ориентировочное.");
+    }catch(e){if(token!==generation)return;status((e instanceof Error?e.message:"Не удалось построить маршрут")+" Используйте кнопку Google Maps для навигации.");}
+  }
+  document.addEventListener("click",event=>{
+    const target=event.target instanceof Element?event.target.closest("[data-show-route='true']"):null;
+    if(target){event.preventDefault();open(target);}
+  });
+  $("courierMapClose")?.addEventListener("click",close);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$("courierMapModal")?.hidden)close();});
+  window.UmmaCourierMap={open,close};
+})();</script><script>/* UMMA Global — consistent in-app back navigation.
+ * Records the previous visible screen without changing existing order, payment or API flows.
+ * Back restores the actual previous screen, not a hard-coded home/admin destination.
+ */
+(() => {
+  "use strict";
+  const screenIds = [
+    "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
+    "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
+    "cafeInventoryPage","cafePage","cafeAccountingPage"
+  ];
+  const backIds = new Set([
+    "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
+    "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
+    "cafeInventoryBack","cafeBack","accountingBack"
+  ]);
+  const stack=[];
+  const byId=id=>document.getElementById(id);
+  const main=()=>document.querySelector(".app > main");
+  const bottom=()=>document.querySelector(".bottom-nav");
+  function currentScreen(){
+    for(const id of screenIds){
+      const el=byId(id);
+      if(el&&!el.hidden)return id;
+    }
+    return "home";
+  }
+  function snapshot(){
+    return {
+      screen:currentScreen(),
+      mainDisplay:main()?.style.display??"",
+      navDisplay:bottom()?.style.display??"",
+      scrollY:window.scrollY||0
+    };
+  }
+  function restore(state){
+    for(const id of screenIds){
+      const el=byId(id);
+      if(el)el.hidden=id!==state.screen;
+    }
+    if(main())main().style.display=state.mainDisplay;
+    if(bottom())bottom().style.display=state.navDisplay;
+    if(state.screen==="home"&&typeof setActiveNav==="function")setActiveNav("home");
+    window.scrollTo({top:state.scrollY,behavior:"instant"});
+  }
+  function back(){
+    if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return;}
+    const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
+    if(currentScreen()==="cafeKitchenPage"){
+      const cash=byId("cafeCashPanel");
+      if(cash&&!cash.hidden){
+        cash.hidden=true;
+        const toggle=byId("cafeCashToggle");
+        if(toggle){toggle.setAttribute("aria-expanded","false");toggle.textContent="💰 Касса и смена";}
+        byId("cafeKitchenOrders")?.scrollIntoView({block:"start"});
+        return true;
+      }
+      const management=document.querySelector(".cafe-management-tools");
+      if(management?.open){management.open=false;return true;}
+    }
+    if(!stack.length)return false;
+    const prior=stack.pop();
+    restore(prior);
+    return true;
+  }
+  // Capture runs before legacy click handlers. For navigation only, observe
+  // the resulting screen after their synchronous DOM updates.
+  document.addEventListener("click",event=>{
+    const button=event.target.closest?.("button");
+    if(!button)return;
+    if(backIds.has(button.id)){
+      const cash=byId("cafeCashPanel");
+      const nested=currentScreen()==="cafeKitchenPage"&&(
+        (cash&&!cash.hidden)||document.querySelector(".cafe-management-tools")?.open
+      );
+      if(stack.length||nested){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        back();
+      }
+      return;
+    }
+    const before=snapshot();
+    window.setTimeout(()=>{
+      const after=currentScreen();
+      if(after!==before.screen){
+        const last=stack[stack.length-1];
+        if(!last||last.screen!==before.screen)stack.push(before);
+        if(stack.length>25)stack.shift();
+      }
+    },0);
+  },true);
+  // Expose a safe back action for a future Telegram native back button.
+  window.ummaNavigation={back,depth:()=>stack.length,current:currentScreen};
+})();
+</script></body>
+</html>
