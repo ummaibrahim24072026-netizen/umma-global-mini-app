@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs"
+    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",
+    "jsdom": "30.1.2",
     "pg": "8.23.1"
   }
 }
