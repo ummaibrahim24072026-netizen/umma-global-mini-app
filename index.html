@@ -25,7 +25,8 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=28">
+  <link rel="stylesheet" href="css/native.css?v=29">
+  <link rel="stylesheet" href="css/cafe-comfort.css?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -778,64 +779,61 @@
           <h2>Ваш заказ</h2>
           <span id="cafeCartCount">0 позиций</span>
         </div>
-        <div id="cafeCartItems" class="cafe-cart-items">
-          <p class="cafe-empty-cart">Добавьте блюда из меню.</p>
-        </div>
-        <div class="cafe-cart-total">
-          <span>Итого</span>
-          <strong id="cafeCartTotal">0 ₫</strong>
-        </div>
-
+        <details id="cafeCheckoutItems" class="cafe-checkout-disclosure cafe-checkout-items">
+          <summary><span>Состав заказа</span><span class="cafe-disclosure-action">Посмотреть / изменить</span></summary>
+          <div id="cafeCartItems" class="cafe-cart-items"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
+          <div class="cafe-cart-total"><span>Итого</span><strong id="cafeCartTotal">0 ₫</strong></div>
+        </details>
         <form id="cafeOrderForm" class="cafe-order-form">
-          <fieldset class="cafe-checkout-section"><legend>01 · Получение заказа</legend>
-          <label>Как выбрать кафе
-            <select id="cafeLocationMode" name="locationMode">
-              <option value="nearest">Ближайшее кафе по геолокации</option>
-              <option value="manual">Выбрать кафе вручную</option>
-            </select>
-          </label>
-          <div id="cafeLocationMessage" class="cafe-order-hint" aria-live="polite">Определяем ближайшее кафе…</div>
-          <label id="cafeLocationSelectLabel" hidden>Кафе для заказа
-            <select id="cafeLocationSelect" name="locationId" required></select>
-          </label>
-          <label>Как получить заказ
-            <select id="cafeOrderType" name="orderType" required>
-              <option value="pickup">С собой</option>
-              <option value="dine_in">В кафе</option>
-              <option value="delivery">Доставка</option>
-            </select>
-          </label>
-          </fieldset>
-          <fieldset class="cafe-checkout-section"><legend>02 · Контакты и адрес</legend>
-          <label>Имя
-            <input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя">
-          </label>
-          <label>Телефон (необязательно)
-            <input id="cafeCustomerPhone" name="customerPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="Для связи по заказу">
-          </label>
-          <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
-            <strong>Куда доставить?</strong>
-            <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
-            <p id="cafeDeliveryPointSummary" class="cafe-order-hint" role="status" aria-live="polite"></p>
-            <button type="button" id="cafeDeliveryPointClear" class="cafe-location-clear" hidden>Убрать точку</button>
-          </div>
-          <label id="cafeAddressLabel" hidden>Адрес и детали доставки
-            <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира, подъезд или ориентир"></textarea>
-          </label>
-          </fieldset>
-          <fieldset class="cafe-checkout-section"><legend>03 · Оплата и пожелания</legend>
-          <label>Комментарий к заказу
-            <textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Пожелания к заказу (необязательно)"></textarea>
-          </label>
-          <label>Оплата
-            <select id="cafePaymentMethod" name="paymentMethod">
-              <option value="cash">Наличными</option>
-              <option value="qr">QR-платёж (подтверждение отдельно)</option><option value="bank_transfer">Перевод на российский / казахстанский банк</option>
-            </select>
-          </label>
-          </fieldset>
+          <section class="cafe-checkout-section cafe-checkout-fulfilment" aria-labelledby="cafeFulfilmentTitle"><h3 id="cafeFulfilmentTitle">Как получить заказ</h3>
+            <div id="cafeCheckoutModes" class="cafe-checkout-modes" role="group" aria-label="Как получить заказ">
+              <button type="button" data-order-mode="delivery" aria-pressed="false" aria-controls="cafeOrderType">Доставка</button>
+              <button type="button" data-order-mode="pickup" aria-pressed="true" aria-controls="cafeOrderType">С собой</button>
+              <button type="button" data-order-mode="dine_in" aria-pressed="false" aria-controls="cafeOrderType">В кафе</button>
+            </div>
+            <label class="cafe-order-type-label" hidden>Как получить заказ
+              <select id="cafeOrderType" name="orderType" required>
+                <option value="pickup">С собой</option><option value="dine_in">В кафе</option><option value="delivery">Доставка</option>
+              </select>
+            </label>
+            <p id="cafeLocationMessage" class="cafe-order-hint cafe-selected-location" aria-live="polite">Загружаем кафе…</p>
+            <details id="cafeLocationDetails" class="cafe-location-settings" hidden>
+              <summary>Выбрать другое кафе</summary>
+              <label>Как выбрать кафе
+                <select id="cafeLocationMode" name="locationMode"><option value="nearest">Ближайшее кафе по геолокации</option><option value="manual">Выбрать кафе вручную</option></select>
+              </label>
+              <label id="cafeLocationSelectLabel" hidden>Кафе для заказа
+                <select id="cafeLocationSelect" name="locationId" required></select>
+              </label>
+            </details>
+            <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
+              <strong>Куда доставить?</strong>
+              <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
+              <p id="cafeDeliveryPointSummary" class="cafe-order-hint" role="status" aria-live="polite"></p>
+              <button type="button" id="cafeDeliveryPointClear" class="cafe-location-clear" hidden>Убрать точку</button>
+            </div>
+            <label id="cafeAddressLabel" hidden><span id="cafeAddressTitle">Или введите адрес доставки</span>
+              <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира или ориентир"></textarea>
+            </label>
+          </section>
+          <section class="cafe-checkout-section cafe-checkout-payment" aria-labelledby="cafePaymentTitle"><h3 id="cafePaymentTitle">Оплата</h3>
+            <label>Способ оплаты
+              <select id="cafePaymentMethod" name="paymentMethod"><option value="cash">Наличными</option><option value="qr">QR-платёж (подтверждение отдельно)</option><option value="bank_transfer">Перевод на российский / казахстанский банк</option></select>
+            </label>
+          </section>
+          <details id="cafeContactDetails" class="cafe-checkout-disclosure">
+            <summary><span>Контактные данные<small id="cafeContactSummary">Ваш профиль Telegram</small></span><span class="cafe-disclosure-action">Изменить</span></summary>
+            <div class="cafe-disclosure-fields">
+              <label>Имя (необязательно)<input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя"></label>
+              <label>Телефон (необязательно)<input id="cafeCustomerPhone" name="customerPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="Для связи по заказу"></label>
+            </div>
+          </details>
+          <details id="cafeNoteDetails" class="cafe-checkout-disclosure">
+            <summary><span>Пожелания к заказу<small id="cafeNoteSummary">Необязательно</small></span><span class="cafe-disclosure-action">Добавить</span></summary>
+            <div class="cafe-disclosure-fields"><label>Комментарий к заказу (необязательно)<textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Например, соус отдельно"></textarea></label></div>
+          </details>
           <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
-          <p class="cafe-order-hint">Стоимость рассчитывается по актуальным ценам меню. Оплата пока не списывается автоматически.</p>
+          <p class="cafe-order-hint cafe-checkout-footnote">Проверьте заказ перед подтверждением. Деньги автоматически не списываются.</p>
         </form>
         <div id="cafeOrderResult" class="cafe-order-result" hidden></div>
       </section>
@@ -974,8 +972,8 @@
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
-<script src="js/maps/delivery-location.js?v=6"></script>
-<script src="js/cafe/cafe.js?v=59"></script>
+<script src="js/maps/delivery-location.js?v=7"></script>
+<script src="js/cafe/cafe.js?v=60"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>

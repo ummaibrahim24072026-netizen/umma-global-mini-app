@@ -81,6 +81,12 @@
     if (!button) return;
     menuCategory = button.dataset.menuCategory;
     renderProducts();
+    const categoryBar=byId("cafeMenuCategories");
+    const page=byId("cafePage");
+    if(categoryBar&&page){
+      const top=Math.max(0,(byId("cafeProducts")?.getBoundingClientRect().top||0)-page.getBoundingClientRect().top+page.scrollTop-categoryBar.getBoundingClientRect().height-12);
+      if(page.scrollTop>top)page.scrollTop=top;
+    }
     byId("cafeMenuCategories").querySelector('[data-menu-category="' + menuCategory + '"]')?.focus({ preventScroll: true });
   });
   byId("cafeMenuReset")?.addEventListener("click", () => {
@@ -100,7 +106,9 @@
     // Reset a vanished section when switching cafe or refreshing stock.
     if (menuCategory !== "all" && !counts.get(menuCategory)) menuCategory = "all";
     const categories = [{ id: "all", label: "Все", count: availableProducts.length }, ...menuCategories.map(category => ({ ...category, count: counts.get(category.id) })).filter(category => category.count)];
+    const categoryScroll=root.scrollLeft;
     root.innerHTML = categories.map(category => '<button type="button" class="cafe-category" data-menu-category="' + category.id + '" aria-pressed="' + (menuCategory === category.id) + '" aria-controls="cafeProducts">' + category.label + '<span aria-hidden="true">' + category.count + '</span></button>').join("");
+    root.scrollLeft=categoryScroll;
     const reset = byId("cafeMenuReset");
     if (reset) reset.hidden = !menuQuery && menuCategory === "all";
   }
@@ -154,12 +162,15 @@
     input.value = (fullName || fallback).slice(0, 120);
   }
 
+  const countLabel=(amount,one,few,many)=>amount+" "+(amount%100>=11&&amount%100<=14?many:amount%10===1?one:amount%10>=2&&amount%10<=4?few:many);
+
   function renderCart() {
     fillTelegramCustomerName();
+    syncCheckoutSummaries();
     const root = byId("cafeCartItems"), countEl = byId("cafeCartCount"), totalEl = byId("cafeCartTotal"), submit = byId("cafeSubmitOrder");
     if (!root || !countEl || !totalEl) return;
     const entries = Array.from(cart.values());
-    countEl.textContent = count() + (count() === 1 ? " позиция" : " позиций");
+    countEl.textContent = countLabel(count(),"позиция","позиции","позиций");
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
@@ -168,7 +179,7 @@
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
     const stickyTotal = byId("cafeStickyTotal");
-    if (stickyCount) stickyCount.textContent = count() + (count() === 1 ? " блюдо" : " блюд");
+    if (stickyCount) stickyCount.textContent = countLabel(count(),"блюдо","блюда","блюд");
     if (stickyTotal) stickyTotal.textContent = money(total());
     if (sticky) sticky.hidden = entries.length === 0;
     const go = byId("cafeStickyGoToOrder");
@@ -219,7 +230,12 @@
       locationId = result.location?.id || locations[0]?.id || null;
       renderProducts();
       renderLocationOptions();
-      if (byId("cafeLocationMode")?.value !== "manual") requestNearestLocation();
+      if (locations.length===1) requestNearestLocation();
+      else {
+        locationMode="manual";
+        if(byId("cafeLocationMode"))byId("cafeLocationMode").value="manual";
+        renderLocationOptions();
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Ошибка загрузки меню");
     } finally { if (loadingEl) loadingEl.hidden = true; }
@@ -233,8 +249,12 @@
       return '<option value="' + esc(location.id) + '">' + esc(label) + '</option>';
     }).join("");
     if (locationId) select.value = locationId;
+    const multiple=locations.length>1;
+    if(byId("cafeLocationDetails"))byId("cafeLocationDetails").hidden=!multiple;
+    const modeLabel=byId("cafeLocationMode")?.closest("label");
+    if(modeLabel)modeLabel.hidden=!multiple;
     const manual = byId("cafeLocationSelectLabel");
-    if (manual) manual.hidden = byId("cafeLocationMode")?.value !== "manual";
+    if (manual) manual.hidden = !multiple || byId("cafeLocationMode")?.value !== "manual";
     updateLocationMessage();
   }
 
@@ -244,7 +264,7 @@
     if (text) { el.textContent = text; return; }
     const selected = locations.find(location => String(location.id) === String(locationId));
     window.ummaDeliveryLocation?.setCafeLocation(selected);
-    el.textContent = selected ? "Заказ будет отправлен в кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
+    el.textContent = selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
   }
 
   function haversineKm(lat1, lon1, lat2, lon2) {
@@ -273,7 +293,7 @@
       if (mode) mode.value = "manual";
       locationMode = "manual";
       if (manual) manual.hidden = false;
-      updateLocationMessage("Автовыбор пока недоступен: у каждого кафе должны быть указаны координаты. Выберите кафе вручную.");
+      updateLocationMessage("Выберите кафе, в котором хотите заказать.");
       return;
     }
     if (!navigator.geolocation) {
@@ -383,6 +403,15 @@
     if (change) changeProduct(change.getAttribute("data-product-id"), Number(change.getAttribute("data-cart-change")));
   });
 
+  function syncCheckoutSummaries(){
+    const customerName=byId("cafeCustomerName")?.value.trim()||"";
+    const phone=byId("cafeCustomerPhone")?.value.trim()||"";
+    const contact=byId("cafeContactSummary");
+    if(contact)contact.textContent=[customerName.startsWith("Telegram ID:")?"Профиль Telegram":customerName,phone].filter(Boolean).join(" · ")||"Ваш профиль Telegram";
+    const note=byId("cafeCustomerNote")?.value.trim()||"";
+    if(byId("cafeNoteSummary"))byId("cafeNoteSummary").textContent=note||"Необязательно";
+  }
+  ["cafeCustomerName","cafeCustomerPhone","cafeCustomerNote"].forEach(id=>byId(id)?.addEventListener("input",syncCheckoutSummaries));
   const orderType = byId("cafeOrderType"), addressLabel = byId("cafeAddressLabel"), addressInput = byId("cafeDeliveryAddress");
   function syncCustomerPayment(){
     const type=orderType?.value||"pickup", timing=byId("cafePaymentTiming"), method=byId("cafePaymentMethod");
@@ -393,23 +422,25 @@
   }
   function syncOrderMode() {
     const delivery = orderType?.value === "delivery";
-    byId("cafeOrderModes")?.querySelectorAll("[data-order-mode]").forEach(button => {
+    byId("cafePage")?.querySelectorAll("[data-order-mode]").forEach(button => {
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
     if (addressLabel) addressLabel.hidden = !delivery;
-    if (addressInput) addressInput.required = delivery && !window.ummaDeliveryLocation?.hasPoint();
+    const hasPoint=window.ummaDeliveryLocation?.hasPoint()===true;
+    if (addressInput) addressInput.required = delivery && !hasPoint;
+    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent=hasPoint?"Квартира, этаж, ориентир (необязательно)":"Или введите адрес доставки";
     if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
     syncCustomerPayment();
   }
   orderType?.addEventListener("change", syncOrderMode);
   document.addEventListener("umma:delivery-location-change", syncOrderMode);
-  byId("cafeOrderModes")?.addEventListener("click", event => {
+  byId("cafePage")?.addEventListener("click", event => {
     const button = event.target.closest("[data-order-mode]");
     if (!button || !orderType || !["dine_in", "pickup", "delivery"].includes(button.dataset.orderMode)) return;
     orderType.value = button.dataset.orderMode;
     orderType.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(() => { window.ummaDeliveryLocation?.reset(); syncOrderMode(); fillTelegramCustomerName(); }));
+  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(() => { window.ummaDeliveryLocation?.reset(); syncOrderMode(); fillTelegramCustomerName(); syncCheckoutSummaries(); ["cafeContactDetails","cafeNoteDetails"].forEach(id=>{if(byId(id))byId(id).open=false;}); }));
   byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
   byId("cafePaymentMethod")?.addEventListener("change",syncCustomerPayment);
   syncOrderMode();
