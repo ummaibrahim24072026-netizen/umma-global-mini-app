@@ -24,12 +24,19 @@ try{
  assert.ok(d.querySelector('[data-product-card="manti"]').classList.contains('cafe-product-no-photo'));
  assert.equal(d.querySelector('.cafe-halal-badge').getAttribute('aria-label'),'Халяль');
  assert.equal(d.querySelector('.cafe-product-photo').alt,'Плов');
+ const disclosure=d.querySelector('[data-product-card="plov"] .cafe-product-description');
+ assert.ok(disclosure);assert.equal(disclosure.open,false,'description initially collapsed');
+ assert.equal(d.querySelector('[data-product-card="manti"] .cafe-product-description'),null,'no empty disclosure');
+ disclosure.querySelector('summary').click();assert.equal(disclosure.open,true,'description opens on tap');
+ assert.equal(disclosure.querySelector('p').textContent,'С бараниной');
  d.querySelector('[data-add-product="plov"]').click();
+ assert.equal(disclosure.open,true,'quantity changes preserve expanded description');
+ disclosure.querySelector('summary').click();assert.equal(disclosure.open,false,'second tap collapses');
  assert.match(d.getElementById('cafeCartTotal').textContent,/120/);
  assert.equal(d.getElementById('cafeCustomerName').value,'Имя для заказа','manual name survives cart changes');
  assert.equal(d.getElementById('cafeStickyOrder').hidden,false);
  search('THỊT');assert.equal(d.querySelectorAll('[data-product-card]').length,1);assert.ok(d.querySelector('[data-product-card="manti"]'));
- search('бараниной');assert.equal(d.querySelectorAll('[data-product-card]').length,1);
+ search('бараниной');assert.equal(d.querySelector('.cafe-product-description').open,false,'filtered cards start collapsed');assert.equal(d.querySelectorAll('[data-product-card]').length,1);
  assert.equal(d.querySelector('.cafe-card-quantity strong').textContent,'1','quantity survives filtering');
  d.querySelector('[data-add-product="plov"]').click();d.querySelector('[data-add-product="plov"]').click();
  assert.equal(d.querySelector('.cafe-card-quantity strong').textContent,'2','stock limit preserved');
@@ -112,5 +119,5 @@ try{
   assert.equal(address.required,false);
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
- console.log('PASS menu: Telegram name/ID fallback, manual name and optional phone; header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
+ console.log('PASS menu: collapsed descriptions open/close, empty text omitted; Telegram name/ID fallback, manual name and optional phone; header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
 }finally{w.close();}
