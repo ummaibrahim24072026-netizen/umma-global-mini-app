@@ -58,9 +58,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .cafe-choice-option[aria-pressed="true"]{background:var(--umma-brand-pale);border-color:var(--umma-brand-primary);color:var(--umma-brand-deep);box-shadow:inset 0 0 0 1px var(--umma-brand-primary)}
 .cafe-choice-option[aria-pressed="true"] .cafe-choice-mark{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);color:#fff}
 
-/* The sign carries the actual reference color, with a contrasting dark wordmark. */
-#cafePage .cafe-banner-header{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);color:var(--umma-brand-on-primary)}
-#cafePage .cafe-banner-title text{fill:var(--umma-brand-on-primary)}
-#cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--umma-brand-on-primary)}
-#cafePage .cafe-brand-values{border-color:rgba(var(--umma-brand-on-primary-rgb),.3)}
-#cafePage .cafe-brand-values i{background:var(--umma-brand-on-primary)}
+/* Turquoise UMMA sign with the gold lettering and ornaments from the brand artwork. */
+#cafePage .cafe-banner-header{--cafe-sign-gold:#FFE7A3;background:var(--umma-brand-primary);border-color:#D7B75F;color:var(--cafe-sign-gold)}
+#cafePage .cafe-banner-header::before{border-color:#FFE7A380}
+#cafePage .cafe-banner-title text{fill:url(#cafeWordmarkGold)}
+#cafePage .cafe-banner-title svg,#cafePage .cafe-brand-seal{filter:drop-shadow(0 1px 1px #002D2E70)}
+#cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--cafe-sign-gold);text-shadow:0 1px 1px #002D2E70}
+#cafePage .cafe-brand-values{border-color:#FFE7A380}
+#cafePage .cafe-brand-values i{background:var(--cafe-sign-gold)}
