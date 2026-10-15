@@ -25,58 +25,79 @@
   },
   {
     "source_file": "4807.png",
-    "name_ru": "Чай 900 мл",
+    "name_ru": "Чай зелёный",
     "image_path": "logo/assets/menu/tea-900.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-GREEN-TEA-900",
     "volume_ml": 900,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 50000,
+    "weight_value": 900,
+    "weight_unit": "ml"
   },
   {
     "source_file": "5064.png",
-    "name_ru": "Окорочок куриный с салатом",
+    "name_ru": "Куриный окорочок с салатом",
     "image_path": "logo/assets/menu/chicken-leg-salad.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-CHICKEN-LEG-SALAD",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 80000,
+    "weight_value": 300,
+    "weight_unit": "g"
   },
   {
     "source_file": "5071.png",
     "name_ru": "Круассан",
     "image_path": "logo/assets/menu/croissant.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-CROISSANT",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 40000,
+    "weight_value": 100,
+    "weight_unit": "g"
   },
   {
     "source_file": "5183.png",
     "name_ru": "Борщ",
     "image_path": "logo/assets/menu/borscht.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-BORSCHT",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 90000,
+    "weight_value": 650,
+    "weight_unit": "g"
   },
   {
     "source_file": "5897.png",
     "name_ru": "Аджика",
     "image_path": "logo/assets/menu/adjika.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-ADJIKA",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 10000,
+    "weight_value": null,
+    "weight_unit": null
   },
   {
     "source_file": "5915.png",
     "name_ru": "Салат Оливье",
     "image_path": "logo/assets/menu/olivier.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-OLIVIER",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 50000,
+    "weight_value": 200,
+    "weight_unit": "g"
   },
   {
     "source_file": "7271.png",
-    "name_ru": "Винегрет",
+    "name_ru": "Салат Винегрет",
     "image_path": "logo/assets/menu/vinaigrette.png",
-    "product_sku": null,
+    "product_sku": "UMMA-CAFE-VINAIGRETTE",
     "volume_ml": null,
-    "status": "awaiting_catalog_product"
+    "status": "assigned",
+    "price_vnd": 50000,
+    "weight_value": 200,
+    "weight_unit": "g"
   }
 ]
