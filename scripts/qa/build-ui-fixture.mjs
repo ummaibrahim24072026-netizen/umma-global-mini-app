@@ -2,7 +2,7 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 // Generated UI fixture uses real markup/scripts and an in-memory backend. CSP blocks all external calls.
 const target=process.argv[2];if(!target)throw Error('QA output directory required');mkdirSync(target,{recursive:true});
 let html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,'');
-html=html.replace('src="logo/assets/umma-logo.webp?v=1"','src="../../logo/assets/umma-logo.webp?v=1"').replace("this.src='logo/assets/umma-logo.png'","this.src='../../logo/assets/umma-logo.png'");
+html=html.replace(/src="(logo\/assets\/[^"]+)"/g,'src="../../$1"').replace("this.src='logo/assets/umma-logo.png'","this.src='../../logo/assets/umma-logo.png'");
 html=html.replace(/^[ \t]+$/gm,'');
 html=html.replace('</head>','<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: \'self\'; connect-src \'none\'"><style>'+readFileSync('css/app.css','utf8')+readFileSync('css/admin.css','utf8')+readFileSync('css/native.css','utf8')+'.app{width:320px;margin:0}.qa-toolbar{position:fixed;right:12px;top:12px;z-index:200;background:white;padding:12px;display:grid;gap:8px;max-width:220px}button{cursor:pointer}</style></head>');
 const setup=`window.ummaRole='super_admin';window.Telegram={WebApp:{initData:'synthetic-qa-only',initDataUnsafe:{user:{id:10}}}};

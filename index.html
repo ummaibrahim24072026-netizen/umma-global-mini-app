@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=3">
+  <link rel="stylesheet" href="css/native.css?v=4">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -38,32 +38,16 @@
 <!-- HOME -->
   <main>
 
-    <!-- BRAND -->
-    <section class="brand">
-
-      <img
-        class="brand-logo"
-        src="logo/assets/umma-logo.webp?v=1"
-        onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='logo/assets/umma-logo.png';}else{this.style.display='none';}"
-        alt="Umma Global"
-      >
-
-      <div class="brand-title">
-        <span>UMMA</span>
-        <strong>GLOBAL</strong>
+    <!-- BRAND: original artwork supplied by the owner -->
+    <section class="brand brand-art" aria-label="UMMA Global">
+      <img class="brand-art-image" src="logo/assets/umma-home-art.webp?v=1"
+           width="1536" height="1536" fetchpriority="high" decoding="async"
+           alt="UMMA Global — золотой символ U на бирюзовом фоне с орнаментом и земным шаром">
+      <div class="brand-art-copy">
+        <p>Единая экосистема для жизни,<br>бизнеса и общества.</p>
+        <button type="button" class="brand-art-action" data-page="cafe">Открыть кафе <span aria-hidden="true">→</span></button>
       </div>
-
-      <div class="brand-line"></div>
-
-      <p>
-        Единая экосистема для жизни,<br>
-        бизнеса и общества.
-      </p>
-
-      <small>UMMA GLOBAL</small>
-
     </section>
-
 
     <!-- WELCOME -->
     <section class="welcome-card">
