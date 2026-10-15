@@ -171,6 +171,8 @@
     if (stickyCount) stickyCount.textContent = count() + (count() === 1 ? " блюдо" : " блюд");
     if (stickyTotal) stickyTotal.textContent = money(total());
     if (sticky) sticky.hidden = entries.length === 0;
+    const go = byId("cafeStickyGoToOrder");
+    if (go) { go.textContent = checkoutOpen ? (loading ? "Оформляем заказ…" : "Оформить заказ") : "Перейти к заказу"; go.disabled = loading || !entries.length; go.setAttribute("aria-busy", String(loading)); }
     renderProductSelection();
   }
 
@@ -329,9 +331,29 @@
   }
   byId("cafeLocationSelect")?.addEventListener("change", event => setSelectedLocation(event.target.value));
 
+  let checkoutOpen = false, menuScroll = 0;
+  function closeCheckout() {
+    if (!checkoutOpen) return;
+    checkoutOpen = false;
+    const page = byId("cafePage");
+    page?.classList.remove("is-checkout-open");
+    renderCart();
+    if (page) page.scrollTop = menuScroll;
+    byId("cafeStickyGoToOrder")?.focus({preventScroll:true});
+  }
+  byId("cafeCheckoutBack")?.addEventListener("click", closeCheckout);
   byId("cafeStickyGoToOrder")?.addEventListener("click", () => {
-    const cartSection = document.querySelector("#cafePage .cafe-cart");
-    if (cartSection) cartSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (loading || !cart.size) return;
+    if (checkoutOpen) { byId("cafeOrderForm")?.requestSubmit(byId("cafeSubmitOrder")); return; }
+    const page = byId("cafePage");
+    menuScroll = page?.scrollTop || 0;
+    checkoutOpen = true;
+    page?.classList.add("is-checkout-open");
+    if (page) page.scrollTop = 0;
+    const inner = page?.querySelector(".cafe-page-inner");
+    if (inner) inner.scrollTop = 0;
+    renderCart();
+    byId("cafeCheckoutBack")?.focus({preventScroll:true});
   });
 
   function changeProduct(productId, delta) {
@@ -459,6 +481,7 @@
       if (resultEl) { resultEl.textContent = error instanceof Error ? error.message : "Ошибка оформления заказа"; resultEl.hidden = false; }
     } finally {
       loading = false; renderCart();
+      if (checkoutOpen && resultEl && !resultEl.hidden) resultEl.scrollIntoView?.({block:"nearest",behavior:"smooth"});
       if (submit) submit.textContent = "Оформить заказ";
     }
   });
@@ -537,6 +560,8 @@
 
   byId("cafeBack")?.addEventListener("click", () => { if (typeof openPage === "function") openPage("home"); });
   window.ummaCafe = {
+    isCheckoutOpen: () => checkoutOpen && !byId("cafePage")?.hidden,
+    closeCheckout,
     refreshMenu: loadMenu,
     refreshMyOrders: loadMyOrders,
     openOrders:()=>{const section=byId("cafeMyOrdersSection"),refresh=byId("cafeMyOrdersRefresh");if(section)section.hidden=false;if(refresh)refresh.hidden=false;loadMyOrders();section?.scrollIntoView?.({block:"start",behavior:"smooth"});},

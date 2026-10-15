@@ -36,6 +36,11 @@ try{
  assert.match(d.getElementById('cafeCartTotal').textContent,/120/);
  assert.equal(d.getElementById('cafeCustomerName').value,'Имя для заказа','manual name survives cart changes');
  assert.equal(d.getElementById('cafeStickyOrder').hidden,false);
+ const footer=d.getElementById('cafeStickyGoToOrder'),page=d.getElementById('cafePage');
+ page.scrollTop=420;footer.click();assert.ok(page.classList.contains('is-checkout-open'));assert.equal(page.scrollTop,0);assert.equal(footer.textContent,'Оформить заказ');
+ d.getElementById('cafeCheckoutBack').click();assert.equal(page.scrollTop,420,'return restores menu position');assert.equal(d.getElementById('cafeCustomerName').value,'Имя для заказа');
+ w.eval(readFileSync('js/core/navigation.js','utf8'));footer.click();assert.equal(w.ummaNavigation.back(),true);assert.equal(w.ummaCafe.isCheckoutOpen(),false,'native Back returns to menu first');
+
  search('THỊT');assert.equal(d.querySelectorAll('[data-product-card]').length,1);assert.ok(d.querySelector('[data-product-card="manti"]'));
  search('бараниной');assert.equal(d.querySelector('.cafe-product-description').open,false,'filtered cards start collapsed');assert.equal(d.querySelectorAll('[data-product-card]').length,1);
  assert.equal(d.querySelector('.cafe-card-quantity strong').textContent,'1','quantity survives filtering');
@@ -104,13 +109,14 @@ try{
   modeButton(mode).click();
   d.querySelector('[data-add-product="'+id+'"]').click();
   assert.equal(orderType.value,mode,'adding food preserves header choice');
+  footer.click();assert.ok(w.ummaCafe.isCheckoutOpen());
   if(mode==='delivery'){
    const before=submitted.length;
-   d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+   footer.click();
    assert.equal(submitted.length,before,'missing delivery address blocks submission');
    address.value='QA address';
   }
-  d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+  footer.click();footer.click();assert.equal(footer.disabled,true,'single order submission locks footer');
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(submitted.at(-1).orderType,mode,'selected mode reaches actual order handler payload');
   assert.equal(submitted.at(-1).customerName,mode==='pickup'?'Telegram ID: 777':mode==='dine_in'?'Гость':'Ибрахим Умма');
@@ -118,7 +124,8 @@ try{
   assert.equal(d.getElementById('cafeCustomerName').value,mode==='pickup'?'Telegram ID: 777':'Ибрахим Умма','name restored after order reset');
   assert.equal(submitted.at(-1).paymentTiming,mode==='delivery'?'on_delivery':'now');
   assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','successful order resets selection');
-  assert.equal(address.required,false);
+  assert.equal(address.required,false);assert.equal(d.getElementById('cafeStickyOrder').hidden,true,'success removes submit footer');
+  d.getElementById('cafeCheckoutBack').click();
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
  console.log('PASS menu: collapsed descriptions open/close, empty text omitted; Telegram name/ID fallback, manual name and optional phone; header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');

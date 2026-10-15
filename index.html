@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=25">
+  <link rel="stylesheet" href="css/native.css?v=26">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -773,6 +773,7 @@
       <div id="cafeProducts" class="cafe-products" aria-label="Меню кафе"></div>
 
       <section class="cafe-cart">
+        <button type="button" id="cafeCheckoutBack" class="cafe-back">← Вернуться к меню</button>
         <div class="cafe-cart-heading">
           <h2>Ваш заказ</h2>
           <span id="cafeCartCount">0 позиций</span>
@@ -835,7 +836,7 @@
     </div>
     <div id="cafeStickyOrder" class="cafe-sticky-order" hidden>
       <div class="cafe-sticky-order-info"><span id="cafeStickyCount">0 блюд</span><strong id="cafeStickyTotal">0 ₫</strong></div>
-      <button type="button" id="cafeStickyGoToOrder">Ваш заказ ↓</button>
+      <button type="button" id="cafeStickyGoToOrder">Перейти к заказу</button>
     </div>
   </section>
 
@@ -968,7 +969,7 @@
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
 <script src="js/maps/delivery-location.js?v=6"></script>
-<script src="js/cafe/cafe.js?v=58"></script>
+<script src="js/cafe/cafe.js?v=59"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>
@@ -984,7 +985,7 @@
 <script src="js/cafe/accounting-admin.js?v=7"></script>
 
 <!-- CONSISTENT BACK NAVIGATION -->
-<script src="js/core/navigation.js?v=7"></script>
+<script src="js/core/navigation.js?v=8"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>

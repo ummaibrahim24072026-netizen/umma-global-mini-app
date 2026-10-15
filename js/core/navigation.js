@@ -51,6 +51,7 @@
     if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return true;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
     const modal=document.querySelector("dialog[open]");if(modal){modal.close?.();return true;}
+    if(window.ummaCafe?.isCheckoutOpen?.()){window.ummaCafe.closeCheckout();return true;}
     if(currentScreen()==="cafeKitchenPage"){
       const cash=byId("cafeCashPanel");
       if(cash&&!cash.hidden){
@@ -78,7 +79,7 @@
       const nested=currentScreen()==="cafeKitchenPage"&&(
         (cash&&!cash.hidden)||document.querySelector(".cafe-management-tools")?.open
       );
-      if(stack.length||nested){
+      if(stack.length||nested||window.ummaCafe?.isCheckoutOpen?.()){
         event.preventDefault();
         event.stopImmediatePropagation();
         back();
