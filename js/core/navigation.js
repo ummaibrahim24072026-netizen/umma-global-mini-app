@@ -50,6 +50,7 @@
     if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
     if(window.ummaCourierTracking?.isOpen()){window.ummaCourierTracking.close();return true;}
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
+    if(window.ummaCheckoutChoices?.isOpen()){window.ummaCheckoutChoices.close();return true;}
     const modal=document.querySelector("dialog[open]");if(modal){modal.close?.();return true;}
     if(window.ummaCafe?.isCheckoutOpen?.()){window.ummaCafe.closeCheckout();return true;}
     if(currentScreen()==="cafeKitchenPage"){

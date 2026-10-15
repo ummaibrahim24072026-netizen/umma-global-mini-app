@@ -308,35 +308,63 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 @media(max-width:360px){#cafePage .cafe-sticky-order button{padding:12px;font-size:13px}}
 
 /* Checkout: distinct surfaces and readable, consistent action hierarchy. */
-#cafePage.is-checkout-open>.cafe-page-inner{background:#e2eeea}
-#cafePage.is-checkout-open .cafe-cart{background:#f0f6f2;border-color:#b3cac2;box-shadow:0 8px 28px #123e3810}
-#cafePage #cafeCheckoutBack{min-height:46px;padding:11px 16px;color:#07535b;background:#fff;border:1px solid #7daba5;box-shadow:0 2px 4px #123e3808;font-weight:750}
-#cafePage .cafe-cart-heading{padding:18px 16px;border:1px solid #286666;border-radius:16px;background:linear-gradient(125deg,#103c40,#176066);gap:12px}
-#cafePage .cafe-cart-heading h2{color:#fff4d3;font-size:24px}
-#cafePage .cafe-cart-heading span{flex-shrink:0;padding:6px 10px;border:1px solid #c8ab6166;border-radius:9px;color:#ffe6a4;background:#ffffff0d;font-weight:700}
+#cafePage.is-checkout-open>.cafe-page-inner{background:#e5f5f5}
+#cafePage.is-checkout-open .cafe-cart{background:#f1fafa;border-color:#a5d4d6;box-shadow:0 8px 28px #087f8410}
+#cafePage #cafeCheckoutBack{min-height:46px;padding:11px 16px;color:#087f84;background:#fff;border:1px solid #7fc4c8;box-shadow:0 2px 4px #087f8408;font-weight:750}
+#cafePage .cafe-cart-heading{padding:18px 16px;border:1px solid #087f84;border-radius:16px;background:linear-gradient(125deg,#087f84,#0b949a);gap:12px}
+#cafePage .cafe-cart-heading h2{color:#ffffff;font-size:24px}
+#cafePage .cafe-cart-heading span{flex-shrink:0;padding:6px 10px;border:1px solid #c8ab6166;border-radius:9px;color:#ffffff;background:#ffffff0d;font-weight:700}
 #cafePage .cafe-cart-items{display:grid;gap:8px;margin-top:14px}
-#cafePage .cafe-cart-row{padding:12px;border:1px solid #d0dfd8;border-radius:14px;background:#fff;gap:10px}
-#cafePage .cafe-cart-row small{color:#4b645f}
+#cafePage .cafe-cart-row{padding:12px;border:1px solid #c8e4e5;border-radius:14px;background:#fff;gap:10px}
+#cafePage .cafe-cart-row small{color:#476e72}
 #cafePage .cafe-cart-controls{gap:7px}
-#cafePage .cafe-cart-controls button{width:44px;height:44px;border:1px solid #77a69f;background:#e3f0eb;color:#074f54;font-size:22px;border-radius:12px;box-shadow:0 2px 3px #123e380a}
-#cafePage .cafe-cart-controls button[data-cart-change="1"]{background:#075e65;border-color:#075e65;color:#fff}
-#cafePage .cafe-cart-total{margin-top:14px;padding:17px 16px;align-items:center;border:1px solid #195c5b;border-radius:14px;color:#eff9f4;background:#123f43;font-weight:700}
-#cafePage .cafe-cart-total strong{color:#ffe3a0;font-size:25px;line-height:1.3;overflow-wrap:anywhere}
+#cafePage .cafe-cart-controls button{width:44px;height:44px;border:1px solid #7bbfc4;background:#e3f6f6;color:#087f84;font-size:22px;border-radius:12px;box-shadow:0 2px 3px #087f840a}
+#cafePage .cafe-cart-controls button[data-cart-change="1"]{background:#087f84;border-color:#087f84;color:#fff}
+#cafePage .cafe-cart-total{margin-top:14px;padding:17px 16px;align-items:center;border:1px solid #087f84;border-radius:14px;color:#ffffff;background:#087f84;font-weight:700}
+#cafePage .cafe-cart-total strong{color:#fff0be;font-size:25px;line-height:1.3;overflow-wrap:anywhere}
 #cafePage .cafe-order-form{gap:18px;margin-top:24px}
-#cafePage .cafe-checkout-section{display:grid;gap:14px;min-width:0;margin:0;padding:16px 14px 18px;border:1px solid #bacfc5;border-radius:16px;background:#fff;box-shadow:0 3px 10px #123e3805}
-#cafePage .cafe-checkout-section legend{max-width:100%;padding:5px 10px;border:1px solid #bacfc5;border-radius:8px;background:#e2eee7;color:#214c46;font-size:13px;line-height:1.5;font-weight:800}
-#cafePage .cafe-order-form label{color:#23453f;font-size:14px;line-height:1.5;font-weight:750}
-#cafePage .cafe-order-form input,#cafePage .cafe-order-form select,#cafePage .cafe-order-form textarea{min-height:50px;border:1px solid #7eaaa0;border-radius:12px;background:#f6faf7;color:#183d38;padding:12px;font-size:16px;line-height:1.5;box-shadow:inset 0 1px 2px #123e3805}
-#cafePage .cafe-order-form input::placeholder,#cafePage .cafe-order-form textarea::placeholder{color:#5c726b;opacity:1}
-#cafePage .cafe-order-form :is(input,select,textarea):focus{outline:3px solid #b9ded3;outline-offset:2px;border-color:#075e65;background:#fff}
-#cafePage .cafe-order-hint{color:#4b655c}
-#cafePage .cafe-delivery-location{padding:14px;border:1px solid #abcfc2;border-radius:12px;background:#eaf5ee}
-#cafePage .cafe-location-button{min-height:50px;border-color:#075e65;background:#075e65;color:#fff;box-shadow:0 3px 7px #075e6520;font-size:14px;font-weight:750}
-#cafePage .cafe-location-clear{padding:8px 12px;border:1px solid #9ebbb0;border-radius:10px;background:#fff;color:#365c51;font-weight:700;text-decoration:none}
-#cafePage.is-checkout-open>.cafe-sticky-order{background:#123f43;border-top:2px solid #c3a257;box-shadow:0 -5px 20px #123e3820}
-#cafePage.is-checkout-open .cafe-sticky-order-info span{color:#deeee7}
-#cafePage.is-checkout-open .cafe-sticky-order-info strong{color:#ffe3a0}
+#cafePage .cafe-checkout-section{display:grid;gap:14px;min-width:0;margin:0;padding:16px 14px 18px;border:1px solid #b3dadd;border-radius:16px;background:#fff;box-shadow:0 3px 10px #087f8405}
+#cafePage .cafe-checkout-section legend{max-width:100%;padding:5px 10px;border:1px solid #b3dadd;border-radius:8px;background:#e2f5f5;color:#086d73;font-size:13px;line-height:1.5;font-weight:800}
+#cafePage .cafe-order-form label{color:#17575d;font-size:14px;line-height:1.5;font-weight:750}
+#cafePage .cafe-order-form input,#cafePage .cafe-order-form select,#cafePage .cafe-order-form textarea{min-height:50px;border:1px solid #82c6ca;border-radius:12px;background:#f4fbfb;color:#174c52;padding:12px;font-size:16px;line-height:1.5;box-shadow:inset 0 1px 2px #087f8405}
+#cafePage .cafe-order-form input::placeholder,#cafePage .cafe-order-form textarea::placeholder{color:#526f73;opacity:1}
+#cafePage .cafe-order-form :is(input,select,textarea):focus{outline:3px solid #b9e8eb;outline-offset:2px;border-color:#087f84;background:#fff}
+#cafePage .cafe-order-hint{color:#496b70}
+#cafePage .cafe-delivery-location{padding:14px;border:1px solid #abd7da;border-radius:12px;background:#e8f7f6}
+#cafePage .cafe-location-button{min-height:50px;border-color:#087f84;background:#087f84;color:#fff;box-shadow:0 3px 7px #087f8420;font-size:14px;font-weight:750}
+#cafePage .cafe-location-clear{padding:8px 12px;border:1px solid #95c8cc;border-radius:10px;background:#fff;color:#24656c;font-weight:700;text-decoration:none}
+#cafePage.is-checkout-open>.cafe-sticky-order{background:#087f84;border-top:2px solid #c3a257;box-shadow:0 -5px 20px #087f8420}
+#cafePage.is-checkout-open .cafe-sticky-order-info span{color:#e7fafa}
+#cafePage.is-checkout-open .cafe-sticky-order-info strong{color:#fff0be}
 #cafePage.is-checkout-open .cafe-sticky-order button{min-height:52px;border-color:#d3ad50;box-shadow:0 3px 8px #0002;font-weight:800}
 #cafePage :is(#cafeCheckoutBack,.cafe-cart-controls button,.cafe-location-button,.cafe-location-clear,#cafeStickyGoToOrder):focus-visible{outline:3px solid #ba8b29;outline-offset:3px}
 #cafePage :is(#cafeCheckoutBack,.cafe-cart-controls button,.cafe-location-button,.cafe-location-clear,#cafeStickyGoToOrder):active:not(:disabled){transform:translateY(1px);filter:brightness(.94)}
 @container umma-shell (max-width:380px){#cafePage .cafe-cart-heading{padding:14px 12px}#cafePage .cafe-cart-heading h2{font-size:21px}#cafePage .cafe-checkout-section{padding:14px 10px}#cafePage.is-checkout-open .cafe-sticky-order{gap:8px;padding-left:12px;padding-right:12px}#cafePage.is-checkout-open .cafe-sticky-order button{padding:12px;font-size:13px}}
+
+/* Smooth, app-owned choice panels replace Android select popups in checkout. */
+#cafePage .cafe-order-form select.cafe-choice-native{position:absolute;width:1px;min-width:0;max-width:1px;height:1px;min-height:0;padding:0;border:0;opacity:0;pointer-events:none;clip-path:inset(50%);overflow:hidden}
+#cafePage .cafe-choice-trigger{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-width:0;min-height:52px;padding:12px 14px;border:1px solid #82c6ca;border-radius:13px;color:#174c52;background:#f4fbfb;text-align:left;font:500 16px/1.5 Inter,sans-serif}
+#cafePage .cafe-choice-trigger>span:first-child{min-width:0;overflow-wrap:anywhere}
+#cafePage .cafe-choice-trigger:disabled{opacity:.55;cursor:default}
+#cafePage .cafe-choice-trigger:focus-visible{outline:3px solid #a9e5e8;outline-offset:2px;border-color:#087f84}
+.cafe-choice-chevron{flex-shrink:0;font-size:23px;color:#087f84}
+.cafe-choice-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,520px);max-width:100%;max-height:80dvh;overflow-y:auto;overscroll-behavior:contain;padding:10px 20px max(24px,env(safe-area-inset-bottom));border:1px solid #b8e1e3;border-bottom:0;border-radius:28px 28px 0 0;background:#f7fcfc;color:#174c52;box-shadow:0 -12px 48px #064f5333;animation:cafe-choice-rise .24s cubic-bezier(.2,.8,.2,1)}
+.cafe-choice-sheet::backdrop{background:#103b4566;backdrop-filter:blur(3px);animation:cafe-choice-dim .2s ease-out}
+.cafe-choice-sheet.is-closing{animation:cafe-choice-fall .16s ease-in forwards}
+.cafe-choice-sheet.is-closing::backdrop{animation:cafe-choice-dim .16s ease-in reverse forwards}
+.cafe-choice-handle{width:40px;height:5px;margin:0 auto 16px;border-radius:6px;background:#b4dadd}
+.cafe-choice-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.cafe-choice-heading h2{margin:0;font:750 21px/1.35 Inter,sans-serif;color:#175c63}
+.cafe-choice-close{flex:0 0 44px;width:44px;min-height:44px;border:1px solid #abd6d9;border-radius:50%;background:#e8f7f6;color:#087f84;font-size:26px}
+.cafe-choice-options{display:grid;gap:10px}
+.cafe-choice-option{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;width:100%;min-height:66px;padding:16px;border:1px solid #c7e1e3;border-radius:17px;background:#fff;color:#245c63;text-align:left;font:600 16px/1.5 Inter,sans-serif}
+.cafe-choice-option>span:first-child{min-width:0;overflow-wrap:anywhere}
+.cafe-choice-option[aria-pressed="true"]{background:#e2f6f6;border-color:#0fa3a8;box-shadow:inset 0 0 0 1px #0fa3a8;color:#076c73}
+.cafe-choice-mark{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1.5px solid #9ac8cb;border-radius:50%}
+.cafe-choice-option[aria-pressed="true"] .cafe-choice-mark{background:#087f84;border-color:#087f84;color:#fff}
+.cafe-choice-option:disabled{opacity:.45}
+.cafe-choice-sheet button:focus-visible{outline:3px solid #0fa3a8;outline-offset:3px}
+@keyframes cafe-choice-rise{from{transform:translateY(100%);opacity:.4}to{transform:translateY(0);opacity:1}}
+@keyframes cafe-choice-fall{to{transform:translateY(100%);opacity:0}}
+@keyframes cafe-choice-dim{from{background:#103b4500}to{background:#103b4566}}
+@media(prefers-reduced-motion:reduce){.cafe-choice-sheet,.cafe-choice-sheet::backdrop,.cafe-choice-sheet.is-closing,.cafe-choice-sheet.is-closing::backdrop{animation:none}}
