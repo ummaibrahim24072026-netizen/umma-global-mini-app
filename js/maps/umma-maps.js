@@ -60,7 +60,7 @@
       }).addTo(map);
       status('Включена запасная карта.');
     };
-    canvas.dataset.basemap = 'loading';
+    canvas.dataset.basemap = 'loading'; delete canvas.dataset.theme;
     load().then(() => {
       if (!active()) return;
       try {
@@ -86,7 +86,7 @@
   function marker(map, point, kind = 'destination') {
     return window.L.marker([point.lat, point.lng], {
       title: kind === 'courier' ? 'Курьер UMMA' : 'Точка доставки',
-      icon: window.L.divIcon({ className: 'umma-map-marker umma-map-marker-' + kind, html: '<span aria-hidden="true">' + (kind === 'courier' ? '➤' : '●') + '</span>', iconSize: [36, 36], iconAnchor: [18, 18] })
+      icon: window.L.divIcon({ className: 'umma-map-marker umma-map-marker-' + kind, html: '<span aria-hidden="true">' + (kind === 'courier' ? '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h11v11H3zM14 10h4l3 4v3h-7"/><circle cx="7" cy="18" r="2" fill="#087b80"/><circle cx="18" cy="18" r="2" fill="#087b80"/></svg>' : '●') + '</span>', iconSize: [36, 36], iconAnchor: [18, 18] })
     }).addTo(map);
   }
   window.UmmaMaps = { basemap, create, marker };
