@@ -9,7 +9,19 @@
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
   let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
-  let menuQuery = "";
+  let menuQuery = "", menuCategory = "all";
+  // Explicit SKU assignment avoids classifying chicken with salad as a salad.
+  const menuCategories = [
+    { id: "soups", label: "Супы", skus: ["SHURPA", "BORSCHT"] },
+    { id: "mains", label: "Горячее", skus: ["PLOV", "MANTI", "CHICKEN-LEG-SALAD"] },
+    { id: "salads", label: "Салаты", skus: ["SALAD", "OLIVIER", "VINAIGRETTE", "CRUNCHY-SALAD"] },
+    { id: "bakery", label: "Выпечка", skus: ["FLATBREAD", "SAMSA", "SAMSA-CHICKEN", "CHEESE-KHACHAPURI"] },
+    { id: "desserts", label: "Десерты", skus: ["CROISSANT"] },
+    { id: "drinks", label: "Напитки", skus: ["AYRAN", "AYRAN-500", "TURKISH-AYRAN-1000", "GREEN-TEA-900", "BLACK-TEA-LEMON-900", "BLACKBERRY-COMPOTE-500", "BLACKBERRY-COMPOTE-1000"] },
+    { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
+    { id: "other", label: "Другое", skus: [] }
+  ];
+  const categoryFor = product => menuCategories.find(category => category.skus.some(sku => product.sku === "UMMA-CAFE-" + sku))?.id || "other";
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -62,6 +74,35 @@
     renderProducts();
   });
 
+  byId("cafeMenuCategories")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-menu-category]");
+    if (!button) return;
+    menuCategory = button.dataset.menuCategory;
+    renderProducts();
+    byId("cafeMenuCategories").querySelector('[data-menu-category="' + menuCategory + '"]')?.focus({ preventScroll: true });
+  });
+  byId("cafeMenuReset")?.addEventListener("click", () => {
+    menuQuery = "";
+    menuCategory = "all";
+    const input = byId("cafeMenuSearch");
+    if (input) input.value = "";
+    if (byId("cafeMenuSearchClear")) byId("cafeMenuSearchClear").hidden = true;
+    renderProducts();
+    input?.focus({ preventScroll: true });
+  });
+
+  function renderCategories(availableProducts) {
+    const root = byId("cafeMenuCategories");
+    if (!root) return;
+    const counts = new Map(menuCategories.map(category => [category.id, availableProducts.filter(p => categoryFor(p) === category.id).length]));
+    // Reset a vanished section when switching cafe or refreshing stock.
+    if (menuCategory !== "all" && !counts.get(menuCategory)) menuCategory = "all";
+    const categories = [{ id: "all", label: "Все", count: availableProducts.length }, ...menuCategories.map(category => ({ ...category, count: counts.get(category.id) })).filter(category => category.count)];
+    root.innerHTML = categories.map(category => '<button type="button" class="cafe-category" data-menu-category="' + category.id + '" aria-pressed="' + (menuCategory === category.id) + '" aria-controls="cafeProducts">' + category.label + '<span aria-hidden="true">' + category.count + '</span></button>').join("");
+    const reset = byId("cafeMenuReset");
+    if (reset) reset.hidden = !menuQuery && menuCategory === "all";
+  }
+
   function renderProducts() {
     const root = byId("cafeProducts");
     if (!root) return;
@@ -71,13 +112,14 @@
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
     }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
+    renderCategories(availableProducts);
     const query = menuQuery.trim().toLocaleLowerCase();
-    const visibleProducts = availableProducts.filter(p => !query || [p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi].some(value => String(value || "").toLocaleLowerCase().includes(query)));
+    const visibleProducts = availableProducts.filter(p => (menuCategory === "all" || categoryFor(p) === menuCategory) && (!query || [p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi].some(value => String(value || "").toLocaleLowerCase().includes(query))));
     const resultCount = byId("cafeMenuCount");
-    if (resultCount) resultCount.textContent = query ? "Найдено: " + visibleProducts.length + " из " + availableProducts.length : "Доступно в меню: " + availableProducts.length;
-    if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос или нажмите «Сбросить», чтобы увидеть всё меню.</div>'; return; }
+    if (resultCount) resultCount.textContent = (query || menuCategory !== "all") ? "Найдено: " + visibleProducts.length + " из " + availableProducts.length : "Доступно в меню: " + availableProducts.length;
+    if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос, выберите другую категорию или нажмите «Показать всё меню».</div>'; return; }
     if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
-    root.innerHTML = visibleProducts.map(p => {
+    const productCard = p => {
       const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
       const selected = cart.get(p.id);
       const quantity = selected?.quantity || 0;
@@ -91,7 +133,9 @@
           ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + productId + '" aria-label="Уменьшить ' + esc(name(p)) + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + productId + '" aria-label="Добавить ещё ' + esc(name(p)) + '">+</button></div>'
           : '<button type="button" class="cafe-add" data-add-product="' + productId + '" aria-label="Добавить ' + esc(name(p)) + '">+</button>') +
         '</div></article>';
-    }).join("");
+    };
+    const groups = menuCategories.map(category => ({ ...category, products: visibleProducts.filter(p => categoryFor(p) === category.id) })).filter(category => category.products.length);
+    root.innerHTML = groups.map(category => '<h3 class="cafe-category-heading">' + category.label + '<span>' + category.products.length + '</span></h3>' + category.products.map(productCard).join("")).join("");
   }
 
   function renderCart() {

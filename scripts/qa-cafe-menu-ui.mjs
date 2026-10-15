@@ -32,5 +32,37 @@ try{
  const photo=d.querySelector('.cafe-product-photo');assert.ok(photo.closest('.cafe-product-media'));photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);assert.equal(photo.closest(".cafe-product-media").hidden,true,"failed photo collapses its frame");
  d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();
  assert.equal(d.getElementById('cafeStickyOrder').hidden,true);assert.equal(d.getElementById('cafeOrderForm').hidden,true);
- console.log('PASS menu: multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
+ // Exercise category/search intersection with distinct dishes and ambiguous names.
+ const extra=[
+  ['soup','SHURPA','Шурпа'],['chicken','CHICKEN-LEG-SALAD','Куриный окорочок с салатом'],
+  ['salad','CRUNCHY-SALAD','Салат Хрустящий'],['bread','FLATBREAD','Лепёшка'],
+  ['dessert','CROISSANT','Круассан'],['tea','GREEN-TEA-900','Чай зелёный'],['sauce','ADJIKA','Аджика']
+ ];
+ for(const [id,sku,name_ru] of extra){products.push({id,sku:'UMMA-CAFE-'+sku,name_ru,price_vnd:50000});inventory.push({product_id:id,location_id:'cafe',quantity:2,is_available:true});}
+ await w.ummaCafe.refreshMenu();
+ const category=id=>d.querySelector('[data-menu-category="'+id+'"]');
+ assert.equal(d.querySelectorAll('.cafe-category-heading').length,8,'all sections grouped; unknown SKU stays visible');
+ assert.equal(d.querySelector('.cafe-category-heading').textContent,'Супы1');
+ assert.equal(category('all').getAttribute('aria-pressed'),'true');
+ assert.ok(category('desserts'),'desserts separate from savoury bakery');
+ category('mains').click();
+ assert.equal(d.querySelectorAll('[data-product-card]').length,2);
+ assert.ok(d.querySelector('[data-product-card="chicken"]'),'chicken with salad remains a main');
+ assert.equal(category('mains').getAttribute('aria-pressed'),'true');
+ assert.equal(d.activeElement,category('mains'),'focus survives rerender');
+ d.querySelector('[data-add-product="plov"]').click();
+ category('salads').click();
+ assert.equal(d.querySelectorAll('[data-product-card]').length,1);
+ search('Плов');assert.equal(d.querySelectorAll('[data-product-card]').length,0,'search intersects selected category');
+ assert.equal(d.getElementById('cafeMenuReset').hidden,false);
+ d.getElementById('cafeMenuReset').click();
+ assert.equal(d.querySelectorAll('[data-product-card]').length,9);
+ assert.equal(category('all').getAttribute('aria-pressed'),'true');
+ assert.equal(d.getElementById('cafeMenuSearch').value,'');
+ assert.equal(d.querySelector('[data-product-card="plov"] .cafe-card-quantity strong').textContent,'1','cart survives category reset');
+ category('soups').click();inventory.find(row=>row.product_id==='soup').quantity=0;
+ await w.ummaCafe.refreshMenu();
+ assert.equal(category('soups'),null,'unavailable section omitted');
+ assert.equal(category('all').getAttribute('aria-pressed'),'true','vanished section resets after stock refresh');
+ console.log('PASS menu: grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
 }finally{w.close();}
