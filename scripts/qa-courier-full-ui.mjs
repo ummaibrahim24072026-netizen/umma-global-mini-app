@@ -2,8 +2,9 @@ import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert f
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{pretendToBeVisual:true,runScripts:'outside-only',url:'https://synthetic-qa.invalid'}),w=dom.window,d=w.document;
 const tick=()=>new Promise(r=>setTimeout(r,10));const until=async fn=>{for(let n=0;n<150;n++){if(fn())return;await tick();}assert.fail('Courier UI did not settle');};
-let order={id:'delivery',order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_method:'cash',payment_status:'pending',total_vnd:120000,deliveryProofs:[],cafe_order_items:[]},sharing=false,starts=0,stops=0,uploads=0,updates=0;
-w.Telegram={WebApp:{initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.ummaRole='employee';w.AbortSignal=AbortSignal;w.scrollTo=()=>{};
+let order={id:'delivery',order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_method:'cash',payment_status:'pending',total_vnd:120000,delivery_address:'Точка доставки: 12.25,109.18',deliveryProofs:[],cafe_order_items:[]},sharing=false,starts=0,stops=0,uploads=0,updates=0;
+let navigationLink;
+w.Telegram={WebApp:{openLink:link=>{navigationLink=link;},initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.ummaRole='employee';w.AbortSignal=AbortSignal;w.scrollTo=()=>{};
 w.ummaCourierTracking={start:async()=>{sharing=true;starts++;},stop:async()=>{sharing=false;stops++;},isSharing:()=>sharing,syncOrders:orders=>{if(sharing&&!orders.some(o=>o.delivery_status==='picked_up')){sharing=false;stops++;}}};
 const snapshot=()=>({id:order.id,status:order.status,deliveryStatus:order.delivery_status,paymentStatus:order.payment_status});
 const close=()=>{if(order.delivery_status==='delivered'&&order.payment_status==='paid')order.status='completed';};
@@ -14,13 +15,16 @@ let camera;w.HTMLInputElement.prototype.click=function(){camera=this;assert.equa
 const select=()=>{Object.defineProperty(camera,'files',{value:[{type:'image/jpeg',size:100}]});void camera.onchange();};
 const card=()=>d.getElementById('cafeKitchenOrders');const btn=kind=>card().querySelector('[data-delivery-photo="'+kind+'"]');
 try {
- w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
+ w.eval(readFileSync('js/maps/courier-route.js','utf8'));w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
  btn('pickup').click();assert.ok(camera.isConnected);order.customer_note='Polling changed this card while camera was open';await w.ummaKitchen.refresh({silent:true});assert.ok(camera.isConnected);select();
  await until(()=>btn('handover')&&sharing);assert.equal(btn('pickup'),null);assert.equal(starts,1);assert.equal(updates,0);assert.equal(d.querySelector('[data-courier-camera]'),null,'file input is removed after processing');
  const payment=card().querySelector('[data-payment-status="paid"]');assert.match(payment.textContent,/120/);assert.equal(payment.closest('.kitchen-secondary-actions'),null,'courier cash button is a primary action');
+ const route=card().querySelector('.kitchen-order-actions > [data-show-route]');
+ assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Построить маршрут');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(new URL(navigationLink).searchParams.get('destination'),order.delivery_address+', Vietnam');
  payment.click();const amount=d.getElementById('cashPayTendered');amount.value='150000';amount.dispatchEvent(new w.Event('input'));d.getElementById('cashPayConfirm').click();await until(()=>!card().querySelector('[data-payment-status="paid"]'));
+ assert.ok(card().querySelector('.kitchen-order-actions > [data-show-route]'),'navigation remains visible after payment');
  assert.ok(btn('handover'),'paid order still requires handover photo');assert.equal(sharing,true);
  btn('handover').click();select();await until(()=>!card().querySelector('[data-kitchen-order]'));assert.equal(sharing,false);assert.equal(stops,1);assert.equal(order.status,'completed');
- d.getElementById('courierClosedFilter').click();assert.ok(card().querySelector('[data-kitchen-order]'));assert.equal(card().querySelector('[data-delivery-photo]'),null);assert.equal(card().querySelector('[data-payment-status]'),null);
+ d.getElementById('courierClosedFilter').click();assert.equal(card().querySelector('.kitchen-order-actions > [data-show-route]'),null,'completed order has no primary navigation');assert.ok(card().querySelector('[data-kitchen-order]'));assert.equal(card().querySelector('[data-delivery-photo]'),null);assert.equal(card().querySelector('[data-payment-status]'),null);
  console.log('PASS full courier UI: connected camera survives polling, photo advances immediately, GPS starts, cash/change and amount shown, payment button disappears, handover stops GPS and closes order into history');
 }finally{w.close();}
