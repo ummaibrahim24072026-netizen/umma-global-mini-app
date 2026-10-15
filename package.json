@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs && node scripts/qa-delivery-tracking-ui.mjs && node scripts/qa-notifications-ui.mjs && node scripts/qa-native-shell.mjs && node scripts/qa-courier-controls.mjs && node scripts/qa-kitchen-responsiveness.mjs && node scripts/qa-courier-photo-ui.mjs && node scripts/qa-courier-full-ui.mjs && node scripts/qa-courier-desk-ui.mjs && node scripts/qa-cafe-menu-ui.mjs && node scripts/qa-delivery-location.mjs && node scripts/qa-umma-maps.mjs && node scripts/qa-checkout-choices.mjs && node scripts/qa-cafe-comfort.mjs && node scripts/qa-cafe-payment.mjs"
+    "test": "node scripts/verify-app.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs && node scripts/qa-delivery-tracking-ui.mjs && node scripts/qa-notifications-ui.mjs && node scripts/qa-native-shell.mjs && node scripts/qa-courier-controls.mjs && node scripts/qa-kitchen-responsiveness.mjs && node scripts/qa-courier-photo-ui.mjs && node scripts/qa-courier-full-ui.mjs && node scripts/qa-courier-desk-ui.mjs && node scripts/qa-cafe-menu-ui.mjs && node scripts/qa-delivery-location.mjs && node scripts/qa-umma-maps.mjs && node scripts/qa-checkout-choices.mjs && node scripts/qa-cafe-comfort.mjs && node scripts/qa-cafe-payment.mjs && node scripts/qa-payment-proof.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",
