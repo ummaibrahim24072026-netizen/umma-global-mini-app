@@ -75,7 +75,6 @@
  document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
  byId('servicesBack')?.addEventListener('click',()=>{if(!window.ummaNavigation?.back()&&typeof openPage==='function')openPage('home');});
  document.querySelector('.farm-button')?.addEventListener('click',()=>openService('farm'));
- document.querySelector('[aria-label="Аят дня"]')?.addEventListener('click',()=>info('Аят дня',document.querySelector('.ayah-content p')?.textContent.trim()+'\n'+document.querySelector('.ayah-content small')?.textContent.trim()));
  byId('nativeHomeShortcut')?.addEventListener('click',()=>{try{sdk?.addToHomeScreen?.();}catch{if(typeof showToast==='function')showToast('Добавление ярлыка недоступно в этой версии Telegram');}});
  if(byId('nativeHomeShortcut'))byId('nativeHomeShortcut').hidden=typeof sdk?.addToHomeScreen!=='function'||!sdk?.initData;
  window.ummaNativeShell={openService,geometry,isDialogOpen:()=>dialog?.open===true,closeDialog:()=>dialog?.close()};
