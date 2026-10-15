@@ -9,6 +9,7 @@
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
   let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
+  let menuQuery = "";
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -21,15 +22,45 @@
     if (el) { el.textContent = message; el.hidden = !message; }
   }
 
+  function productPhoto(product) {
+    if (!product.image_url) return "";
+    try {
+      const url = new URL(product.image_url, document.baseURI);
+      if (url.protocol !== "https:" || url.username || url.password) return "";
+      return '<img class="cafe-product-photo" src="' + esc(url.href) + '" alt="' + esc(name(product)) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+    } catch { return ""; }
+  }
+  byId("cafeProducts")?.addEventListener("error", event => {
+    if (event.target.matches?.(".cafe-product-photo")) event.target.hidden = true;
+  }, true);
+  byId("cafeMenuSearch")?.addEventListener("input", event => {
+    menuQuery = event.target.value;
+    const clear = byId("cafeMenuSearchClear");
+    if (clear) clear.hidden = !menuQuery;
+    renderProducts();
+  });
+  byId("cafeMenuSearchClear")?.addEventListener("click", () => {
+    menuQuery = "";
+    const input = byId("cafeMenuSearch");
+    if (input) { input.value = ""; input.focus(); }
+    byId("cafeMenuSearchClear").hidden = true;
+    renderProducts();
+  });
+
   function renderProducts() {
     const root = byId("cafeProducts");
     if (!root) return;
-    const visibleProducts = products.map(p => {
+    const availableProducts = products.map(p => {
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
     }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
+    const query = menuQuery.trim().toLocaleLowerCase();
+    const visibleProducts = availableProducts.filter(p => !query || [p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi].some(value => String(value || "").toLocaleLowerCase().includes(query)));
+    const resultCount = byId("cafeMenuCount");
+    if (resultCount) resultCount.textContent = query ? "Найдено: " + visibleProducts.length + " из " + availableProducts.length : "Доступно в меню: " + availableProducts.length;
+    if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос или нажмите «Сбросить», чтобы увидеть всё меню.</div>'; return; }
     if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
     root.innerHTML = visibleProducts.map(p => {
       const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
@@ -37,7 +68,7 @@
       const quantity = selected?.quantity || 0;
       const productId = esc(p.id);
       return '<article class="cafe-product' + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
-        '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
+        productPhoto(p) + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
         '<h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p>' +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
