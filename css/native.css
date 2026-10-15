@@ -235,3 +235,7 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 #cafeDeliveryMapConfirm:disabled{opacity:.45;cursor:default}
 #courierMapApple{display:block;margin:12px 0;padding:14px;text-align:center;color:#075e65;background:#fff;border:1px solid #b9d5d0;border-radius:12px;text-decoration:none;font-weight:650}#courierMapApple[hidden]{display:none}
 @media(max-width:640px){.delivery-map-dialog{position:fixed;top:auto;bottom:0;margin:0;width:100%;max-width:none;max-height:calc(var(--umma-viewport-height,100dvh) - var(--umma-safe-top,0px) - 12px);padding-bottom:calc(18px + var(--umma-safe-bottom,0px));border-radius:24px 24px 0 0}}
+
+/* High-resolution vector basemap loads only when the destination picker opens. */
+.delivery-location-map[data-basemap="loading"]::after{content:"Загружаем карту…";position:absolute;inset:0;z-index:400;display:grid;place-items:center;background:#edf5f0d9;color:#536d69;font-size:13px;pointer-events:none}
+.delivery-location-map .leaflet-control-attribution{max-width:calc(100% - 12px);font-size:10px;line-height:1.4;background:#ffffffed}

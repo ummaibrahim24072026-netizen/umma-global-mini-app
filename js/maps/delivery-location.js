@@ -16,9 +16,68 @@
   if (!dialog) return;
   let confirmed = null, draft = null, map = null, marker = null, opener = null;
   let cafe = { lat: 12.2388, lng: 109.1967 }, generation = 0, geoRequest = 0;
+  let libraries = null, basemapTimer = null;
+  const VECTOR_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+  const VECTOR_CREDIT = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://openmaptiles.org" target="_blank" rel="noopener">OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
   const confirm = $("cafeDeliveryMapConfirm"), gps = $("cafeDeliveryMapLocate");
   function status(text) { $("cafeDeliveryMapStatus").textContent = text; }
   function stopPending() { geoRequest++; gps.disabled = !map; gps.textContent = "Моё местоположение"; }
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      const fail = () => { window.clearTimeout(timer); script.remove(); reject(new Error("Map library unavailable")); };
+      const timer = window.setTimeout(fail, 12000);
+      script.src = src; script.async = true;
+      script.onload = () => { window.clearTimeout(timer); resolve(); };
+      script.onerror = fail;
+      document.head.append(script);
+    });
+  }
+  function loadVectorLibraries() {
+    if (window.maplibregl && window.L?.maplibreGL) return Promise.resolve();
+    if (!libraries) {
+      if (!document.getElementById("deliveryVectorMapCSS")) {
+        const css = document.createElement("link"); css.id = "deliveryVectorMapCSS"; css.rel = "stylesheet";
+        css.href = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"; document.head.append(css);
+      }
+      libraries = (async () => {
+        if (!window.maplibregl) await loadScript("https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js");
+        if (!window.L?.maplibreGL) await loadScript("https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js");
+      })().catch(error => { libraries = null; throw error; });
+    }
+    return libraries;
+  }
+  function addBasemap(session) {
+    let vector = null, raster = false;
+    const active = () => dialog.open && generation === session && map;
+    function fallback() {
+      if (!active() || raster) return;
+      raster = true; window.clearTimeout(basemapTimer);
+      try { vector?.remove(); } catch {}
+      $("cafeDeliveryMap").dataset.basemap = "raster-fallback";
+      let errors = 0;
+      window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).on("tileerror", () => {
+        if (active() && ++errors === 3) status("Карта загружается с ошибками. Можно закрыть окно и указать адрес вручную.");
+      }).addTo(map);
+      status("Включена запасная карта. Выберите точку и подтвердите адрес.");
+    }
+    $("cafeDeliveryMap").dataset.basemap = "loading";
+    loadVectorLibraries().then(() => {
+      if (!active()) return;
+      try {
+        if (!window.maplibregl?.supported()) { fallback(); return; }
+        vector = window.L.maplibreGL({ style: VECTOR_STYLE, attributionControl: { customAttribution: VECTOR_CREDIT } });
+        vector.addTo(map);
+        const gl = vector.getMaplibreMap(); let errors = 0;
+        basemapTimer = window.setTimeout(fallback, 15000);
+        gl.on("load", () => {
+          if (!active() || raster) return;
+          window.clearTimeout(basemapTimer); $("cafeDeliveryMap").dataset.basemap = "openfreemap";
+        });
+        gl.on("error", () => { if (++errors >= 3) fallback(); });
+      } catch { fallback(); }
+    }).catch(fallback);
+  }
   function notify() {
     $("cafeDeliveryPointSummary").textContent = confirmed ? "Точка доставки выбрана · " + coords(confirmed) : "Выберите точку на карте или введите полный адрес ниже.";
     $("cafeDeliveryPointLinks").hidden = !confirmed;
@@ -44,7 +103,9 @@
     $("cafeDeliveryDraftCoordinates").textContent = coords(draft);
   }
   function cleanup() {
-    generation++; stopPending(); map?.remove(); map = null; marker = null; draft = null;
+    generation++; window.clearTimeout(basemapTimer); stopPending();
+    try { map?.remove(); } catch {}
+    $("cafeDeliveryMap").replaceChildren(); map = null; marker = null; draft = null;
     opener?.focus({ preventScroll: true });
   }
   function open() {
@@ -62,12 +123,8 @@
     }
     try {
       map = window.L.map("cafeDeliveryMap", { scrollWheelZoom: false }).setView([cafe.lat, cafe.lng], 14);
-      let tileErrors = 0;
-      const session = generation;
-      window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).on("tileerror", () => {
-        if (!dialog.open || session !== generation) return;
-        if (++tileErrors === 3) status("Карта загружается с ошибками. Если улицы не видны, укажите адрес вручную или повторите позже.");
-      }).addTo(map);
+      map.attributionControl?.setPrefix(false);
+      addBasemap(generation);
       map.on("click", event => choose(event.latlng));
       gps.disabled = false; $("cafeDeliveryMapCenter").disabled = false;
       if (confirmed) { choose(confirmed); map.setView([confirmed.lat, confirmed.lng], 17, { animate: false }); }
