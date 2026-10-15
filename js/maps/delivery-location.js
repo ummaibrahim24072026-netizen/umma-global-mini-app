@@ -23,13 +23,8 @@
   function addBasemap() { disposeBasemap = window.UmmaMaps.basemap(map, $("cafeDeliveryMap"), status); }
   function notify() {
     $("cafeDeliveryPointSummary").textContent = confirmed ? "Точка доставки выбрана · " + coords(confirmed) : "Выберите точку на карте или введите полный адрес ниже.";
-    $("cafeDeliveryPointLinks").hidden = !confirmed;
     $("cafeDeliveryPointClear").hidden = !confirmed;
     $("cafeDeliveryMapOpen").textContent = confirmed ? "Изменить точку на карте" : "Указать на карте";
-    if (confirmed) {
-      $("cafeDeliveryGoogleLink").href = googlePlace(confirmed);
-      $("cafeDeliveryAppleLink").href = applePlace(confirmed);
-    }
     document.dispatchEvent(new Event("umma:delivery-location-change"));
   }
   function choose(point, message) {

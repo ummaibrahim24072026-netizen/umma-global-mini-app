@@ -46,8 +46,7 @@ try{
  $('cafeDeliveryMapConfirm').click();
  assert.equal(w.ummaDeliveryLocation.hasPoint(),true);assert.equal($('cafeDeliveryAddress').required,false);
  assert.equal(w.ummaDeliveryLocation.getAddress('Квартира 7'),'Квартира 7\nТочка доставки: 12.270000,109.210000');
- assert.equal(new URL($('cafeDeliveryGoogleLink').href).searchParams.get('query'),'12.270000,109.210000');
- assert.equal(new URL($('cafeDeliveryAppleLink').href).searchParams.get('coordinate'),'12.270000,109.210000');
+ assert.equal($('cafeDeliveryPointLinks'),null,'customer checkout has no navigator selection');
  assert.ok(w.ummaDeliveryLocation.getAddress('x'.repeat(500)).length<=500,'coordinates survive server address limit');
  // A manual choice wins over a delayed GPS result.
  $('cafeDeliveryMapOpen').click();$('cafeDeliveryMapLocate').click();

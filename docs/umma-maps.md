@@ -2,9 +2,9 @@
 
 The existing UMMA Global application now shares one map renderer for confirmed customer destinations, courier destinations and customer live tracking. Cartography is MapLibre GL JS + OpenFreeMap (OpenStreetMap data), with a standard OSM raster fallback on devices without WebGL. Attribution remains visible. No paid API key is added.
 
-Customer: checkout → delivery → choose a point → explicitly request GPS or move the marker → confirm. Coordinates remain embedded in the order address for compatibility with existing orders and courier links. GPS never silently selects a delivery address.
+Customer: no Google/Apple navigation links in checkout or tracking. Checkout → delivery → choose a point → explicitly request GPS or move the marker → confirm. Coordinates remain embedded in the order address for compatibility with existing orders and courier links. GPS never silently selects a delivery address.
 
-Courier: **Начать навигацию · Google Maps** opens a universal Google Maps directions URL directly from the tap, with the confirmed destination and no fixed origin. Google handles the current location and available navigation features. Telegram openLink is preferred; ordinary browsers use a normal HTTPS link. If the WebView API throws, an optional destination preview keeps the navigation link accessible. The internal OSRM route request has been removed.
+Courier: choose **Google Maps** or **Карты Apple** in the delivery order. Each opens its native directions URL directly from the tap, with the confirmed destination and no fixed origin. Google handles the current location and available navigation features. Telegram openLink is preferred; ordinary browsers use a normal HTTPS link. If the WebView API throws, an optional destination preview keeps the navigation link accessible. The internal OSRM route request has been removed.
 
 Customer tracking: the existing authenticated deliveryTracking API is polled every five seconds; a courier marker and accuracy circle move on the same map, with a separate destination marker where coordinates are available without reloading an iframe. Unchecking follow preserves the viewport while still updating the marker. Stale/inactive positions are hidden. The existing server scopes access to the ordering customer and ends sharing on handover. No tracking schema, permissions or Edge Function changes were needed.
 
