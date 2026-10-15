@@ -934,8 +934,8 @@
 <dialog id="cafeDeliveryMapDialog" class="delivery-map-dialog" aria-labelledby="cafeDeliveryMapTitle" aria-describedby="cafeDeliveryMapStatus">
   <div class="delivery-map-heading"><h2 id="cafeDeliveryMapTitle"><small class="umma-maps-brand">UMMA MAPS · ДОСТАВКА</small>Куда привезти заказ?</h2><button type="button" id="cafeDeliveryMapClose" aria-label="Закрыть карту" autofocus>✕</button></div>
   <p id="cafeDeliveryMapStatus" role="status" aria-live="polite"></p>
-  <div class="delivery-map-tools"><button type="button" id="cafeDeliveryMapLocate">Моё местоположение</button><button type="button" id="cafeDeliveryMapCenter">К кафе UMMA</button></div>
-  <div id="cafeDeliveryMap" class="delivery-location-map" aria-label="Карта для выбора точки доставки"></div>
+  <div class="delivery-map-tools"><button type="button" id="cafeDeliveryMapLocate">Моё местоположение</button><button type="button" id="cafeDeliveryMapManual">Указать на карте</button></div>
+  <div id="cafeDeliveryMap" class="delivery-location-map" tabindex="0" aria-label="Карта для выбора точки доставки"></div>
   <div class="umma-map-selection"><span class="umma-map-selection-icon" aria-hidden="true">⌖</span><div><strong>Точная точка доставки</strong><p id="cafeDeliveryDraftCoordinates" class="delivery-map-coordinates"></p></div></div>
   <button type="button" id="cafeDeliveryMapConfirm" disabled>Доставить сюда</button>
 </dialog>
@@ -964,7 +964,7 @@
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
-<script src="js/maps/delivery-location.js?v=5"></script>
+<script src="js/maps/delivery-location.js?v=6"></script>
 <script src="js/cafe/cafe.js?v=58"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-workflow.js?v=3"></script>

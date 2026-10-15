@@ -55,7 +55,7 @@
     status("Передвиньте карту или нажмите на нужное здание. Затем подтвердите точку.");
     dialog.showModal();
     if (!window.L?.map) {
-      gps.disabled = true; $("cafeDeliveryMapCenter").disabled = true;
+      gps.disabled = true; $("cafeDeliveryMapManual").disabled = true;
       status("Карта не загрузилась. Закройте окно и введите адрес вручную либо повторите позже.");
       return;
     }
@@ -67,11 +67,11 @@
       map.on("dragstart", stopPending);
       map.on("dragend", () => choose(map.getCenter()));
       window.L.marker([cafe.lat, cafe.lng], { interactive: false, keyboard: false, icon: window.L.divIcon({ className: "umma-cafe-marker", html: '<span>UMMA<br>CAFE</span>', iconSize: [48, 42], iconAnchor: [24, 42] }) }).addTo(map);
-      gps.disabled = false; $("cafeDeliveryMapCenter").disabled = false;
+      gps.disabled = false; $("cafeDeliveryMapManual").disabled = false;
       if (confirmed) { choose(confirmed); map.setView([confirmed.lat, confirmed.lng], 17, { animate: false }); }
       map.invalidateSize();
     } catch {
-      map?.remove(); map = null; gps.disabled = true; $("cafeDeliveryMapCenter").disabled = true;
+      map?.remove(); map = null; gps.disabled = true; $("cafeDeliveryMapManual").disabled = true;
       status("Карта недоступна. Можно закрыть окно и ввести адрес вручную.");
     }
   }
@@ -98,7 +98,13 @@
   $("cafeDeliveryMapClose").addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", cleanup);
   gps.addEventListener("click", locate);
-  $("cafeDeliveryMapCenter").addEventListener("click", () => { if (map) { stopPending(); map.setView([cafe.lat, cafe.lng], 16, { animate: false }); status("Кафе UMMA. Передвиньте карту к месту доставки или включите геолокацию."); } });
+  $("cafeDeliveryMapManual").addEventListener("click", () => {
+    if (!map || !dialog.open) return;
+    stopPending();
+    status("Нажмите на нужное здание или передвиньте карту к месту доставки. Затем нажмите «Доставить сюда».");
+    $("cafeDeliveryMap").focus({ preventScroll: true });
+    map.invalidateSize();
+  });
   confirm.addEventListener("click", () => {
     if (!valid(draft)) return;
     confirmed = { ...draft }; notify(); dialog.close();

@@ -91,7 +91,15 @@ try{
  vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap','real MapLibre 5 API supported');
  const drag=maps.at(-1);drag.center={lat:12.31,lng:109.24};drag.fire('dragend');
  assert.equal($('cafeDeliveryDraftCoordinates').textContent,'12.310000,109.240000','moving map chooses its center');
- $('cafeDeliveryMapCenter').click();assert.deepEqual(drag.center,{lat:12.25,lng:109.19},'cafe shortcut recenters');
+ $('cafeDeliveryMapLocate').click();const pendingManual=requests.at(-1);
+ $('cafeDeliveryMapManual').click();
+ assert.equal($('cafeDeliveryMapManual').textContent,'Указать на карте');
+ assert.equal($('cafeDeliveryMapCenter'),null,'customer has no cafe shortcut');
+ assert.deepEqual(drag.center,{lat:12.31,lng:109.24},'manual selection preserves current map position');
+ assert.equal(d.activeElement,$('cafeDeliveryMap'),'manual selection focuses map');
+ pendingManual.success({coords:{latitude:50,longitude:60,accuracy:10}});
+ assert.equal($('cafeDeliveryDraftCoordinates').textContent,'12.310000,109.240000','manual mode cancels delayed GPS');
+ assert.equal($('cafeDeliveryMapLocate').disabled,false);
  $('cafeDeliveryMapClose').click();
  // Unsupported WebGL and repeated vector errors switch to a free raster fallback.
  w.maplibregl.supported=()=>false;$('cafeDeliveryMapOpen').click();await tick();
