@@ -99,5 +99,37 @@
     "price_vnd": 50000,
     "weight_value": 200,
     "weight_unit": "g"
+  },
+  {
+    "source_file": "8993.jpg",
+    "name_ru": "Салат «Хрустящий»",
+    "image_path": "logo/assets/menu/pickled-salad-white.webp",
+    "status": "awaiting_catalog_product",
+    "product_sku": null,
+    "description_ru": "Маринованная капуста с огурцом и болгарским перцем."
+  },
+  {
+    "source_file": "8992.jpg",
+    "name_ru": "Чай чёрный с лимоном",
+    "image_path": "logo/assets/menu/black-tea-lemon-white.webp",
+    "status": "awaiting_catalog_product",
+    "product_sku": null
+  },
+  {
+    "source_file": "8990.jpg",
+    "name_ru": "Хачапури с сыром",
+    "image_path": "logo/assets/menu/cheese-khachapuri-white.webp",
+    "status": "awaiting_catalog_product",
+    "product_sku": null
+  },
+  {
+    "source_file": "8991.jpg",
+    "name_ru": "Самса",
+    "image_path": "logo/assets/menu/samsa-white.webp",
+    "status": "assigned",
+    "product_skus": [
+      "UMMA-CAFE-SAMSA-CHICKEN",
+      "UMMA-CAFE-SAMSA"
+    ]
   }
 ]
