@@ -75,7 +75,7 @@ try {
   await observer.query('select set_courier_dispatch_presence($1,true)',[actor]);
  }
  const marketOrder=async()=>{
-  const o=(await observer.query("select create_cafe_staff_order(11,$1,'[{\"productId\":\"33333333-3333-4333-8333-333333333333\",\"quantity\":1}]','delivery','Synthetic marketplace race') result",[location])).rows[0].result.order;
+  const o=(await observer.query("select create_cafe_staff_order(11,$1,'[{\"productId\":\"33333333-3333-4333-8333-333333333333\",\"quantity\":1}]','delivery','Synthetic marketplace race',null,'QA delivery address','cash') result",[location])).rows[0].result.order;
   await observer.query("update cafe_orders set dispatch_mode='broadcast' where id=$1",[o.id]);return o.id;
  };
  const waitForClaimLock=async()=>{let blocked=false;for(let n=0;n<30;n++){if(Number((await observer.query("select count(*) n from pg_stat_activity where datname='umma_qa' and wait_event_type='Lock' and query like '%claim_cafe_available_delivery%'")).rows[0].n)){blocked=true;break;}await new Promise(resolve=>setTimeout(resolve,50));}assert.ok(blocked,'Competing claim must wait on a database row lock');};
