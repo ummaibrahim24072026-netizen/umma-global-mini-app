@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=10">
+  <link rel="stylesheet" href="css/native.css?v=11">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -740,6 +740,8 @@
 
       <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
       <div class="cafe-menu-search"><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
+      <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
+      <button type="button" id="cafeMenuReset" class="cafe-menu-reset" hidden>Показать всё меню</button>
       <p id="cafeMenuCount" class="cafe-menu-count" role="status" aria-live="polite"></p>
 
       <div id="cafeLoading" class="cafe-message">Загружаем меню…</div>
@@ -925,7 +927,7 @@
 
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
-<script src="js/cafe/cafe.js?v=50"></script>
+<script src="js/cafe/cafe.js?v=51"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-workflow.js?v=3"></script>
 <script src="js/cafe/delivery-tracking.js?v=2"></script>
