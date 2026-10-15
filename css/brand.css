@@ -1,0 +1,66 @@
+/* UMMA screen palette, sampled from supplied artwork: RGB 3 / 162 / 165.
+ * Print reference: C81 M13 Y38 K0. CMYK requires a print profile for conversion.
+ * Strong shades carry small white text; primary is the brand accent. */
+:root{
+  --umma-brand-primary:#03A2A5;
+  --umma-brand-on-primary:#002D2E;
+  --umma-brand-on-primary-rgb:0,45,46;
+  --umma-brand-primary-rgb:3,162,165;
+  --umma-brand-strong:#02787A;
+  --umma-brand-strong-rgb:2,120,122;
+  --umma-brand-deep:#02595B;
+  --umma-brand-deep-rgb:2,89,91;
+  --umma-brand-night:#023D3E;
+  --umma-brand-night-rgb:2,61,62;
+  --umma-brand-ink:#163D3E;
+  --umma-brand-ink-rgb:22,61,62;
+  --umma-brand-text:#315E60;
+  --umma-brand-text-rgb:49,94,96;
+  --umma-brand-muted:#526F70;
+  --umma-brand-muted-rgb:82,111,112;
+  --umma-brand-line:#BDDCDD;
+  --umma-brand-line-rgb:189,220,221;
+  --umma-brand-line-strong:#80BFC1;
+  --umma-brand-line-strong-rgb:128,191,193;
+  --umma-brand-highlight:#80CED0;
+  --umma-brand-highlight-rgb:128,206,208;
+  --umma-brand-tint:#B6E3E4;
+  --umma-brand-tint-rgb:182,227,228;
+  --umma-brand-soft:#D5F0F0;
+  --umma-brand-soft-rgb:213,240,240;
+  --umma-brand-pale:#E5F6F6;
+  --umma-brand-pale-rgb:229,246,246;
+  --umma-brand-canvas:#F1FAFA;
+  --umma-brand-canvas-rgb:241,250,250;
+  --umma-brand-white:#FCFFFF;
+  --umma-brand-white-rgb:252,255,255;
+  --turquoise:var(--umma-brand-primary);
+  --turquoise-deep:var(--umma-brand-strong);
+  --turquoise-pale:var(--umma-brand-pale);
+  --umma-turquoise:var(--umma-brand-primary);
+  --surface:#fff;--canvas:var(--umma-brand-canvas);--cream:var(--umma-brand-canvas);
+  --ink:var(--umma-brand-ink);--muted:var(--umma-brand-muted);--line:var(--umma-brand-line);
+}
+/* Shared focus, form and active states across customer and staff screens. */
+::selection{background:var(--umma-brand-soft);color:var(--umma-brand-ink)}
+input[type=checkbox],input[type=radio]{accent-color:var(--umma-brand-strong)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline-color:var(--umma-brand-primary)}
+.native-app-mark,.service-icon,.gold-circle,.turquoise-circle{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
+.nav-item.active{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
+.admin-entry-icon{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
+.cafe-kitchen-header{background:linear-gradient(135deg,var(--umma-brand-deep),var(--umma-brand-strong));color:#fff}
+.cafe-page-header{background:linear-gradient(135deg,var(--umma-brand-deep),var(--umma-brand-strong))}
+.cafe-halal-badge text{fill:var(--umma-brand-deep)}
+#cafePage{--cafe-canvas:var(--umma-brand-canvas);--cafe-ink:var(--umma-brand-ink);--cafe-accent:var(--umma-brand-strong);--cafe-line:var(--umma-brand-line)}
+#cafePage .cafe-banner-header{background:linear-gradient(145deg,var(--umma-brand-soft),var(--umma-brand-tint));border-color:var(--umma-brand-line-strong)}
+#cafePage .cafe-banner-title text{fill:var(--umma-brand-strong)}
+#cafePage .cafe-category[aria-pressed="true"],#cafePage .cafe-banner-services button[aria-pressed="true"]{background:var(--umma-brand-strong);color:#fff;border-color:var(--umma-brand-strong)}
+.cafe-choice-option[aria-pressed="true"]{background:var(--umma-brand-pale);border-color:var(--umma-brand-primary);color:var(--umma-brand-deep);box-shadow:inset 0 0 0 1px var(--umma-brand-primary)}
+.cafe-choice-option[aria-pressed="true"] .cafe-choice-mark{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);color:#fff}
+
+/* The sign carries the actual reference color, with a contrasting dark wordmark. */
+#cafePage .cafe-banner-header{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);color:var(--umma-brand-on-primary)}
+#cafePage .cafe-banner-title text{fill:var(--umma-brand-on-primary)}
+#cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--umma-brand-on-primary)}
+#cafePage .cafe-brand-values{border-color:rgba(var(--umma-brand-on-primary-rgb),.3)}
+#cafePage .cafe-brand-values i{background:var(--umma-brand-on-primary)}

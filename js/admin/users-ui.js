@@ -73,7 +73,7 @@ function openAdminRoleModal(user) {
     <div style="
       font-size:22px;
       font-weight:800;
-      color:#173f3d;
+      color:var(--umma-brand-ink);
     ">
       Изменить роль
     </div>
@@ -90,7 +90,7 @@ function openAdminRoleModal(user) {
       margin-top:18px;
       font-size:13px;
       font-weight:700;
-      color:#173f3d;
+      color:var(--umma-brand-ink);
     ">
       Роль пользователя
     </div>
@@ -99,10 +99,10 @@ function openAdminRoleModal(user) {
       width:100%;
       margin-top:8px;
       padding:13px 14px;
-      border:1px solid #d9e4e4;
+      border:1px solid var(--umma-brand-line);
       border-radius:12px;
       background:#fff;
-      color:#173f3d;
+      color:var(--umma-brand-ink);
       font-size:15px;
     ">
       <option value="user">Пользователь</option>
@@ -121,8 +121,8 @@ function openAdminRoleModal(user) {
         padding:13px;
         border:0;
         border-radius:12px;
-        background:#edfafa;
-        color:#173f3d;
+        background:var(--umma-brand-pale);
+        color:var(--umma-brand-ink);
         font-weight:700;
         cursor:pointer;
       ">
@@ -134,7 +134,7 @@ function openAdminRoleModal(user) {
         padding:13px;
         border:0;
         border-radius:12px;
-        background:#0fa3a8;
+        background:var(--umma-brand-strong);
         color:#fff;
         font-weight:700;
         cursor:pointer;
@@ -274,7 +274,7 @@ function renderAdminUsers(users) {
     <div style="
       font-size:24px;
       font-weight:800;
-      color:#173f3d;
+      color:var(--umma-brand-ink);
     ">
       Пользователи
     </div>
@@ -301,8 +301,8 @@ function renderAdminUsers(users) {
     height:40px;
     border:0;
     border-radius:12px;
-    background:#edfafa;
-    color:#173f3d;
+    background:var(--umma-brand-pale);
+    color:var(--umma-brand-ink);
     font-size:20px;
     cursor:pointer;
     flex:none;
@@ -392,7 +392,7 @@ function renderAdminUsers(users) {
               <div style="
                 font-size:16px;
                 font-weight:700;
-                color:#173f3d;
+                color:var(--umma-brand-ink);
               ">
                 ${escapeHtml(name)}
               </div>
@@ -424,7 +424,7 @@ function renderAdminUsers(users) {
               <div style="
                 font-size:12px;
                 font-weight:700;
-                color:#173f3d;
+                color:var(--umma-brand-ink);
               ">
                 ${escapeHtml(role)}
               </div>
@@ -450,8 +450,8 @@ function renderAdminUsers(users) {
                         padding:7px 10px;
                         border:0;
                         border-radius:9px;
-                        background:#edfafa;
-                        color:#173f3d;
+                        background:var(--umma-brand-pale);
+                        color:var(--umma-brand-ink);
                         font-size:11px;
                         font-weight:700;
                         cursor:pointer;

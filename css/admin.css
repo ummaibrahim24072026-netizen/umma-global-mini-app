@@ -16,7 +16,7 @@
       border: 1px solid var(--umma-gold, #d7a51f);
       border-radius: 18px;
       background: #fffdf5;
-      color: var(--umma-turquoise, #0fa3a8);
+      color: var(--umma-turquoise, var(--umma-brand-primary));
       text-align: left;
       font: inherit;
       cursor: pointer;
@@ -30,7 +30,7 @@
       align-items: center;
       justify-content: center;
       border-radius: 13px;
-      background: var(--umma-turquoise, #0fa3a8);
+      background: var(--umma-turquoise, var(--umma-brand-primary));
       color: #fff;
       font-size: 20px;
     }
@@ -64,7 +64,7 @@
     .admin-page {
       min-height: 100vh;
       padding: 18px 16px 34px;
-      background: var(--umma-background, #edfafa);
+      background: var(--umma-background, var(--umma-brand-canvas));
     }
 
     .admin-page-inner {
@@ -75,7 +75,7 @@
     .admin-back {
       border: 0;
       background: transparent;
-      color: var(--umma-turquoise, #0fa3a8);
+      color: var(--umma-turquoise, var(--umma-brand-primary));
       font: inherit;
       font-weight: 800;
       padding: 8px 0 18px;
@@ -106,7 +106,7 @@
       align-items: center;
       justify-content: center;
       border-radius: 18px;
-      background: var(--umma-turquoise, #0fa3a8);
+      background: var(--umma-turquoise, var(--umma-brand-primary));
       color: #fff;
       font-size: 27px;
     }
@@ -120,7 +120,7 @@
 
     .admin-header h1 {
       margin: 2px 0 3px;
-      color: var(--umma-turquoise, #0fa3a8);
+      color: var(--umma-turquoise, var(--umma-brand-primary));
       font-size: 24px;
     }
 
@@ -140,12 +140,12 @@
     .admin-card {
       min-height: 120px;
       padding: 15px;
-      border: 1px solid rgba(15, 163, 168, .18);
+      border: 1px solid rgba(var(--umma-brand-primary-rgb), .18);
       border-radius: 18px;
       background: #fff;
       text-align: left;
       font: inherit;
-      color: var(--umma-turquoise, #0fa3a8);
+      color: var(--umma-turquoise, var(--umma-brand-primary));
       cursor: pointer;
     }
 
@@ -179,7 +179,7 @@
       margin-top: 14px;
       padding: 13px 15px;
       border-radius: 16px;
-      background: rgba(15, 163, 168, .08);
+      background: rgba(var(--umma-brand-primary-rgb), .08);
     }
 
     .status-dot {
@@ -196,7 +196,7 @@
     }
 
     .admin-status strong {
-      color: var(--umma-turquoise, #0fa3a8);
+      color: var(--umma-turquoise, var(--umma-brand-primary));
       font-size: 12px;
     }
 
@@ -214,15 +214,15 @@
 
 
 /* UMMA LOCATION MAP */
-#locationAdminMap { z-index: 1; background: #eaf1f2; }
+#locationAdminMap { z-index: 1; background: var(--umma-brand-pale); }
 .umma-map-marker-wrap { background: transparent; border: 0; }
 .umma-map-marker { display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid #176b55;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#fff;box-shadow:0 2px 8px #0002;font-size:15px; }
-.umma-map-marker.is-cafe { background:#0fa3a8;color:#fff;border-color:#08777b; }
+.umma-map-marker.is-cafe { background:var(--umma-brand-primary);color:#fff;border-color:var(--umma-brand-deep); }
 .leaflet-popup-content { line-height:1.55; }
-.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:#0fa3a8;color:#fff;padding:7px 10px;font-weight:700;cursor:pointer; }
+.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:var(--umma-brand-primary);color:#fff;padding:7px 10px;font-weight:700;cursor:pointer; }
 #locationForm label { display:block; margin:10px 0; }
-#locationForm input:not([type="checkbox"]),#locationForm select { display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:5px;border:1px solid #d4dfdf;border-radius:10px;background:#fff;font:inherit; }
-#locationForm input[readonly] { background:#f3f7f7;color:#5b6c6c; }
+#locationForm input:not([type="checkbox"]),#locationForm select { display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:5px;border:1px solid var(--umma-brand-line);border-radius:10px;background:#fff;font:inherit; }
+#locationForm input[readonly] { background:var(--umma-brand-canvas);color:var(--umma-brand-muted); }
 #locationForm input[type="checkbox"] { width:18px;height:18px; }
 #locationForm .cafe-submit:disabled { opacity:.6; }
 
@@ -230,56 +230,56 @@
 /* UMMA CAFE ACCOUNTING */
 .accounting-page-inner { max-width: 920px; }
 .accounting-toolbar { display:flex; gap:10px; align-items:end; margin:14px 0; }
-.accounting-toolbar label { flex:1; font-size:12px; font-weight:800; color:#52656a; }
+.accounting-toolbar label { flex:1; font-size:12px; font-weight:800; color:var(--umma-brand-muted); }
 .accounting-toolbar select, .accounting-fields input, .accounting-fields select, .accounting-form input, .accounting-form select {
   display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:11px 12px;
-  border:1px solid #d8e5e5; border-radius:10px; background:#fff; color:#173b3d; font:inherit; min-width:0;
+  border:1px solid var(--umma-brand-line); border-radius:10px; background:#fff; color:var(--umma-brand-ink); font:inherit; min-width:0;
 }
-.accounting-message { margin:12px 0; padding:12px 14px; border-radius:12px; background:#e7f7f0; color:#17634c; font-size:13px; }
+.accounting-message { margin:12px 0; padding:12px 14px; border-radius:12px; background:var(--umma-brand-pale); color:#17634c; font-size:13px; }
 .accounting-message.is-error { background:#fff0ed; color:#a02e22; }
 .accounting-tabs { display:flex; gap:7px; overflow-x:auto; padding:5px 0 12px; margin-bottom:8px; }
 .accounting-tabs button, .accounting-secondary, .accounting-list button {
-  border:1px solid #cfe3e3; border-radius:10px; padding:9px 12px; background:#fff; color:#0a7479;
+  border:1px solid var(--umma-brand-line); border-radius:10px; padding:9px 12px; background:#fff; color:var(--umma-brand-deep);
   font:inherit; font-size:12px; font-weight:800; white-space:nowrap; cursor:pointer;
 }
-.accounting-tabs button.active { background:#0fa3a8; color:#fff; border-color:#0fa3a8; }
-.accounting-content h3 { margin:22px 0 10px; color:#116c70; font-size:17px; }
-.accounting-content h4 { margin:16px 0 8px; color:#35585a; }
+.accounting-tabs button.active { background:var(--umma-brand-primary); color:#fff; border-color:var(--umma-brand-primary); }
+.accounting-content h3 { margin:22px 0 10px; color:var(--umma-brand-deep); font-size:17px; }
+.accounting-content h4 { margin:16px 0 8px; color:var(--umma-brand-text); }
 .accounting-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .accounting-metrics article, .accounting-form, .accounting-note {
-  padding:14px; border:1px solid #dceaea; border-radius:15px; background:#fff; margin-bottom:12px;
+  padding:14px; border:1px solid var(--umma-brand-soft); border-radius:15px; background:#fff; margin-bottom:12px;
 }
 .accounting-metrics small, .accounting-metrics strong, .accounting-metrics span { display:block; }
-.accounting-metrics small { color:#64777b; font-size:11px; }
-.accounting-metrics strong { margin:8px 0 5px; color:#0b777c; font-size:20px; overflow-wrap:anywhere; }
-.accounting-metrics span { color:#6d7b7e; font-size:10px; line-height:1.4; }
-.accounting-note { color:#53686a; font-size:12px; line-height:1.55; background:#fffdf5; border-color:#f0dfb1; }
+.accounting-metrics small { color:var(--umma-brand-muted); font-size:11px; }
+.accounting-metrics strong { margin:8px 0 5px; color:var(--umma-brand-strong); font-size:20px; overflow-wrap:anywhere; }
+.accounting-metrics span { color:var(--umma-brand-muted); font-size:10px; line-height:1.4; }
+.accounting-note { color:var(--umma-brand-muted); font-size:12px; line-height:1.55; background:#fffdf5; border-color:#f0dfb1; }
 .accounting-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.accounting-fields label, .accounting-form label { display:block; min-width:0; color:#52656a; font-size:12px; font-weight:700; margin-bottom:10px; }
+.accounting-fields label, .accounting-form label { display:block; min-width:0; color:var(--umma-brand-muted); font-size:12px; font-weight:700; margin-bottom:10px; }
 .accounting-fields .accounting-check { display:flex; align-items:center; gap:8px; }
 .accounting-check input { width:auto; margin:0; }
-.accounting-primary { display:block; width:100%; border:0; border-radius:11px; padding:12px 14px; background:#0fa3a8; color:#fff; font:inherit; font-size:13px; font-weight:900; cursor:pointer; }
+.accounting-primary { display:block; width:100%; border:0; border-radius:11px; padding:12px 14px; background:var(--umma-brand-primary); color:#fff; font:inherit; font-size:13px; font-weight:900; cursor:pointer; }
 .accounting-form .accounting-secondary { margin:4px 0 12px; }
 .accounting-line { display:grid; grid-template-columns:minmax(0,2fr) minmax(75px,.8fr) minmax(75px,1fr) 36px; gap:7px; align-items:center; margin:8px 0; }
-.accounting-line input, .accounting-line select { min-width:0; width:100%; box-sizing:border-box; padding:9px 8px; border:1px solid #d8e5e5; border-radius:9px; background:#fff; font:inherit; font-size:12px; }
+.accounting-line input, .accounting-line select { min-width:0; width:100%; box-sizing:border-box; padding:9px 8px; border:1px solid var(--umma-brand-line); border-radius:9px; background:#fff; font:inherit; font-size:12px; }
 .accounting-line button { border:0; border-radius:8px; background:#fff0ed; color:#9b3028; font-size:20px; min-height:36px; }
 .accounting-production-line { grid-template-columns:minmax(0,2fr) minmax(80px,.8fr) 36px; }
 .accounting-production-line[data-direction="output"] { grid-template-columns:minmax(0,2fr) minmax(80px,.8fr); }
 .accounting-list { display:grid; gap:9px; }
-.accounting-list article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px; padding:13px; border:1px solid #dceaea; border-radius:13px; background:#fff; }
+.accounting-list article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px; padding:13px; border:1px solid var(--umma-brand-soft); border-radius:13px; background:#fff; }
 .accounting-list article > div:first-child strong, .accounting-list article > div:first-child small { display:block; }
-.accounting-list article strong { color:#174c4f; font-size:13px; }
-.accounting-list article small { display:block; color:#708083; font-size:11px; line-height:1.45; margin-top:4px; overflow-wrap:anywhere; }
-.accounting-list article > span { grid-column:1/-1; font-size:11px; color:#66787a; }
+.accounting-list article strong { color:var(--umma-brand-ink); font-size:13px; }
+.accounting-list article small { display:block; color:var(--umma-brand-muted); font-size:11px; line-height:1.45; margin-top:4px; overflow-wrap:anywhere; }
+.accounting-list article > span { grid-column:1/-1; font-size:11px; color:var(--umma-brand-muted); }
 .accounting-list-end { display:flex; flex-direction:column; align-items:flex-end; gap:6px; text-align:right; }
-.accounting-status { display:inline-block; border-radius:20px; padding:4px 7px; background:#f1f5f5; color:#607174; font-size:10px; white-space:nowrap; }
-.accounting-status.posted, .accounting-status.paid { background:#e6f7ef; color:#17634c; }
+.accounting-status { display:inline-block; border-radius:20px; padding:4px 7px; background:var(--umma-brand-canvas); color:var(--umma-brand-muted); font-size:10px; white-space:nowrap; }
+.accounting-status.posted, .accounting-status.paid { background:var(--umma-brand-pale); color:#17634c; }
 .accounting-status.draft, .accounting-status.unpaid { background:#fff6df; color:#8a6500; }
-.accounting-table-wrap { overflow:auto; background:#fff; border:1px solid #dceaea; border-radius:12px; }
+.accounting-table-wrap { overflow:auto; background:#fff; border:1px solid var(--umma-brand-soft); border-radius:12px; }
 .accounting-table { width:100%; border-collapse:collapse; font-size:12px; min-width:580px; }
-.accounting-table th, .accounting-table td { padding:10px; border-bottom:1px solid #e8f0f0; text-align:left; }
-.accounting-table th { color:#5e7477; background:#f4fafa; }
-.accounting-empty { padding:14px; border:1px dashed #cbdede; border-radius:12px; color:#718183; font-size:12px; }
+.accounting-table th, .accounting-table td { padding:10px; border-bottom:1px solid var(--umma-brand-pale); text-align:left; }
+.accounting-table th { color:var(--umma-brand-muted); background:var(--umma-brand-canvas); }
+.accounting-empty { padding:14px; border:1px dashed var(--umma-brand-line); border-radius:12px; color:var(--umma-brand-muted); font-size:12px; }
 @media(max-width:520px) {
   .accounting-toolbar { align-items:stretch; flex-direction:column; }
   .accounting-fields { grid-template-columns:1fr; }
@@ -289,11 +289,11 @@
   .accounting-production-line { grid-template-columns:minmax(0,1.5fr) minmax(70px,.8fr) 30px; }
 }
 
-.accounting-table td button { border:1px solid #cfe3e3; border-radius:8px; padding:7px 9px; background:#fff; color:#0a7479; font:inherit; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
-.accounting-table td small { display:block; margin-top:4px; color:#708083; font-size:10px; }
+.accounting-table td button { border:1px solid var(--umma-brand-line); border-radius:8px; padding:7px 9px; background:#fff; color:var(--umma-brand-deep); font:inherit; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
+.accounting-table td small { display:block; margin-top:4px; color:var(--umma-brand-muted); font-size:10px; }
 
 .accounting-toolbar-meta { display:flex; align-items:center; gap:9px; justify-content:flex-end; }
-.accounting-toolbar-meta small { color:#718183; font-size:10px; white-space:nowrap; }
+.accounting-toolbar-meta small { color:var(--umma-brand-muted); font-size:10px; white-space:nowrap; }
 @media(max-width:520px) { .accounting-toolbar-meta { justify-content:space-between; } }
 
 
