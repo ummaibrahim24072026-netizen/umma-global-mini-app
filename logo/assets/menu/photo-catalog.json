@@ -104,23 +104,33 @@
     "source_file": "8993.jpg",
     "name_ru": "Салат «Хрустящий»",
     "image_path": "logo/assets/menu/pickled-salad-white.webp",
-    "status": "awaiting_catalog_product",
-    "product_sku": null,
-    "description_ru": "Маринованная капуста с огурцом и болгарским перцем."
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-CRUNCHY-SALAD",
+    "description_ru": "Маринованная капуста с огурцом и болгарским перцем.",
+    "price_vnd": 50000,
+    "weight_value": 250,
+    "weight_unit": "g"
   },
   {
     "source_file": "8992.jpg",
     "name_ru": "Чай чёрный с лимоном",
     "image_path": "logo/assets/menu/black-tea-lemon-white.webp",
-    "status": "awaiting_catalog_product",
-    "product_sku": null
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-BLACK-TEA-LEMON-900",
+    "price_vnd": 50000,
+    "weight_value": 900,
+    "weight_unit": "ml",
+    "volume_ml": 900
   },
   {
     "source_file": "8990.jpg",
     "name_ru": "Хачапури с сыром",
     "image_path": "logo/assets/menu/cheese-khachapuri-white.webp",
-    "status": "awaiting_catalog_product",
-    "product_sku": null
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-CHEESE-KHACHAPURI",
+    "price_vnd": 150000,
+    "weight_value": 220,
+    "weight_unit": "g"
   },
   {
     "source_file": "8991.jpg",
