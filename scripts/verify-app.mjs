@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=63/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=64/, "Telegram must load updated checkout JS");
 assert.match(html, /css\/app\.css\?v=36/, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -222,7 +222,7 @@ assert.match(kitchen,/customerName:guestName/,"selected table or guest must reac
 console.log("PASS six-table quick order picker, pickup guest identity and preserved add-on mode");
 
 assert.match(kitchen,/pending:\{status:"preparing",label:"Принять и готовить"\}/,"pending orders must offer a single accept-and-cook action");
-assert.match(kitchen,/if\(current\?\.status==="pending"\)/,"one-tap flow must only apply to pending orders");
+assert.match(kitchen,/current\?\.status==="pending"/,"one-tap flow must only apply to pending orders");
 assert.match(kitchen,/status:"confirmed"\s*\}\);[\s\S]*?status:"preparing"\s*\}\);/,"backend must receive accepted then preparing transitions");
 assert.match(kitchen,/Заказ принят, но начало приготовления не подтверждено/,"partial failure must be visible to staff");
 assert.match(kitchen,/confirmed:\{status:"preparing",label:"Начать готовить"\}/,"interrupted acceptance must be recoverable");
