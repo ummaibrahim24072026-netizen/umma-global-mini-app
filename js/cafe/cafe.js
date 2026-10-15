@@ -122,7 +122,7 @@
     if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос, выберите другую категорию или нажмите «Показать всё меню».</div>'; return; }
     if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
     const productCard = p => {
-      const weight = p.weight_value ? Number(p.weight_value) + (p.weight_unit === "ml" ? " мл" : " г") : "";
+      const weight = p.weight_value ? (p.weight_unit === "ml" ? Number(p.weight_value) + " мл" : "≈ " + Number(p.weight_value) + " г") : "";
       const selected = cart.get(p.id);
       const quantity = selected?.quantity || 0;
       const productId = esc(p.id);

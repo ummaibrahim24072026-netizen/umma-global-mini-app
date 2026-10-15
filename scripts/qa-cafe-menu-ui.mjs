@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{url:'https://umma.example/',runScripts:'outside-only'}),w=dom.window,d=w.document;
 const products=[
- {id:'plov',sku:'UMMA-CAFE-PLOV',name_ru:'Плов',name_en:'Plov',description_ru:'С бараниной',price_vnd:120000,image_url:'https://images.example/plov.jpg'},
+ {id:'plov',sku:'UMMA-CAFE-PLOV',name_ru:'Плов',name_en:'Plov',description_ru:'С бараниной',price_vnd:120000,weight_value:450,weight_unit:'g',image_url:'https://images.example/plov.jpg'},
  {id:'manti',sku:'QA-UNTRUSTED-PHOTO',name_ru:'Манты',description_vi:'Thịt cừu',price_vnd:150000,image_url:'javascript:alert(1)'},
  {id:'sold',name_ru:'Нет в наличии',price_vnd:1}
 ];
@@ -24,6 +24,7 @@ try{
  assert.ok(d.querySelector('[data-product-card="manti"]').classList.contains('cafe-product-no-photo'));
  assert.equal(d.querySelector('.cafe-halal-badge').getAttribute('aria-label'),'Халяль');
  assert.equal(d.querySelector('.cafe-product-photo').alt,'Плов');
+ assert.equal(d.querySelector('[data-product-card="plov"] .cafe-product-weight').textContent,'≈ 450 г');
  const disclosure=d.querySelector('[data-product-card="plov"] .cafe-product-description');
  assert.ok(disclosure);assert.equal(disclosure.open,false,'description initially collapsed');
  assert.equal(d.querySelector('[data-product-card="manti"] .cafe-product-description'),null,'no empty disclosure');
@@ -52,8 +53,9 @@ try{
   ['salad','CRUNCHY-SALAD','Салат Хрустящий'],['bread','FLATBREAD','Лепёшка'],
   ['dessert','CROISSANT','Круассан'],['tea','GREEN-TEA-900','Чай зелёный'],['sauce','ADJIKA','Аджика']
  ];
- for(const [id,sku,name_ru] of extra){products.push({id,sku:'UMMA-CAFE-'+sku,name_ru,price_vnd:50000});inventory.push({product_id:id,location_id:'cafe',quantity:2,is_available:true});}
+ for(const [id,sku,name_ru] of extra){products.push({id,sku:'UMMA-CAFE-'+sku,name_ru,price_vnd:50000,...(id==='tea'?{weight_value:900,weight_unit:'ml'}:{})});inventory.push({product_id:id,location_id:'cafe',quantity:2,is_available:true});}
  await w.ummaCafe.refreshMenu();
+ assert.equal(d.querySelector('[data-product-card="tea"] .cafe-product-weight').textContent,'900 мл','drink volume stays exact');
  const category=id=>d.querySelector('[data-menu-category="'+id+'"]');
  assert.equal(d.querySelectorAll('.cafe-category-heading').length,8,'all sections grouped; unknown SKU stays visible');
  assert.equal(d.querySelector('.cafe-category-heading').textContent,'Супы1');
