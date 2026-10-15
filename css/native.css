@@ -206,3 +206,12 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 #cafePage .cafe-halal-badge{position:absolute;top:8px;right:8px;width:42px;height:42px;pointer-events:none;filter:drop-shadow(0 1px 2px #075e6518)}
 #cafePage .cafe-product-no-photo .cafe-product-top{padding-top:44px}
 @container umma-shell (min-width:700px){#cafePage .cafe-product{padding:16px;gap:9px}#cafePage .cafe-product-media{width:calc(100% + 32px);margin:-16px -16px 4px}#cafePage .cafe-product h3{font-size:18px}#cafePage .cafe-product p{font-size:13px}#cafePage .cafe-product-bottom>.cafe-product-price{font-size:17px}#cafePage .cafe-halal-badge{width:48px;height:48px;top:12px;right:12px}}
+
+/* Native disclosure keeps product text closed until explicitly requested. */
+#cafePage .cafe-product-description{min-width:0;color:#536d69}
+#cafePage .cafe-product-description summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:6px 0;list-style:none;cursor:pointer;color:#075e65;font-size:12px;font-weight:600;line-height:1.4;touch-action:manipulation}
+.cafe-product-description summary::-webkit-details-marker{display:none}
+.cafe-product-description summary::after{content:"+";flex:0 0 auto;font-size:18px;font-weight:400}
+.cafe-product-description[open] summary::after{content:"−"}
+#cafePage .cafe-product-description summary:focus-visible{outline:2px solid #007580;outline-offset:2px;border-radius:6px}
+#cafePage .cafe-product-description p{margin:0;padding:8px 0 4px;border-top:1px solid #e5eeea}

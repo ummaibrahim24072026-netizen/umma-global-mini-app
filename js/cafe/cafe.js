@@ -129,7 +129,8 @@
       const photo = productPhoto(p);
       return '<article class="cafe-product' + (photo ? '' : ' cafe-product-no-photo') + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
         photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
-        '<h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p>' +
+        '<h3>' + esc(name(p)) + '</h3>' +
+        (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p>' + esc(description(p)) + '</p></details>' : '') +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
         (quantity
