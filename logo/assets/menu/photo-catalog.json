@@ -156,32 +156,35 @@
   },
   {
     "source_file": "8998.jpg",
-    "name_ru": "Компот ежевичный 0,5 л",
+    "name_ru": "Компот ежевичный",
     "image_path": "logo/assets/menu/blackberry-compote-500-white.webp",
     "volume_ml": 500,
     "weight_value": 500,
     "weight_unit": "ml",
-    "status": "awaiting_catalog_product",
-    "product_sku": null
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-BLACKBERRY-COMPOTE-500",
+    "price_vnd": 40000
   },
   {
     "source_file": "8997.jpg",
-    "name_ru": "Компот ежевичный 1 л",
+    "name_ru": "Компот ежевичный",
     "image_path": "logo/assets/menu/blackberry-compote-1000-white.webp",
     "volume_ml": 1000,
     "weight_value": 1000,
     "weight_unit": "ml",
-    "status": "awaiting_catalog_product",
-    "product_sku": null
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-BLACKBERRY-COMPOTE-1000",
+    "price_vnd": 80000
   },
   {
     "source_file": "8996.jpg",
-    "name_ru": "Айран турецкий 1 л",
+    "name_ru": "Айран турецкий",
     "image_path": "logo/assets/menu/turkish-ayran-1000-white.webp",
     "volume_ml": 1000,
     "weight_value": 1000,
     "weight_unit": "ml",
-    "status": "awaiting_catalog_product",
-    "product_sku": null
+    "status": "assigned",
+    "product_sku": "UMMA-CAFE-TURKISH-AYRAN-1000",
+    "price_vnd": 80000
   }
 ]
