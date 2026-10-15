@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=26">
+  <link rel="stylesheet" href="css/native.css?v=27">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -787,6 +787,7 @@
         </div>
 
         <form id="cafeOrderForm" class="cafe-order-form">
+          <fieldset class="cafe-checkout-section"><legend>01 · Получение заказа</legend>
           <label>Как выбрать кафе
             <select id="cafeLocationMode" name="locationMode">
               <option value="nearest">Ближайшее кафе по геолокации</option>
@@ -804,6 +805,8 @@
               <option value="delivery">Доставка</option>
             </select>
           </label>
+          </fieldset>
+          <fieldset class="cafe-checkout-section"><legend>02 · Контакты и адрес</legend>
           <label>Имя
             <input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя">
           </label>
@@ -819,6 +822,8 @@
           <label id="cafeAddressLabel" hidden>Адрес и детали доставки
             <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира, подъезд или ориентир"></textarea>
           </label>
+          </fieldset>
+          <fieldset class="cafe-checkout-section"><legend>03 · Оплата и пожелания</legend>
           <label>Комментарий к заказу
             <textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Пожелания к заказу (необязательно)"></textarea>
           </label>
@@ -828,6 +833,7 @@
               <option value="qr">QR-платёж (подтверждение отдельно)</option><option value="bank_transfer">Перевод на российский / казахстанский банк</option>
             </select>
           </label>
+          </fieldset>
           <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
           <p class="cafe-order-hint">Стоимость рассчитывается по актуальным ценам меню. Оплата пока не списывается автоматически.</p>
         </form>
