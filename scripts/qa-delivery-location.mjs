@@ -3,14 +3,16 @@ import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{url:'https://synthetic-qa.invalid/',runScripts:'outside-only'}),w=dom.window,d=w.document;
-const $=id=>d.getElementById(id),requests=[],maps=[],markers=[];
+const $=id=>d.getElementById(id),requests=[],maps=[],markers=[],vectors=[],rasters=[];
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition:(success,error,options)=>requests.push({success,error,options})}});
 function emitter(object){object.handlers={};object.on=function(event,fn){this.handlers[event]=fn;return this;};object.fire=function(event,data){this.handlers[event]?.(data);};return object;}
+w.maplibregl={supported:()=>true};
 w.L={
  map:()=>{const map=emitter({center:{lat:12,lng:109},setView(point){this.center={lat:point[0],lng:point[1]};return this;},getCenter(){return this.center;},invalidateSize(){},remove(){this.removed=true;}});maps.push(map);return map;},
- tileLayer:()=>emitter({addTo(){return this;}}),divIcon:options=>options,
+ tileLayer:options=>{rasters.push(options);return emitter({addTo(){return this;}});},divIcon:options=>options,
+ maplibreGL:options=>{const gl=emitter({});const layer={options,gl,addTo(){return this;},getMaplibreMap(){return gl;},remove(){this.removed=true;}};vectors.push(layer);return layer;},
  marker:point=>{const marker=emitter({point:{lat:point[0],lng:point[1]},addTo(){return this;},setLatLng(point){this.point={lat:point[0],lng:point[1]};return this;},getLatLng(){return this.point;}});markers.push(marker);return marker;}
 };
 w.Telegram={WebApp:{initData:'isolated-qa',initDataUnsafe:{user:{id:1,first_name:'QA'}}}};
@@ -26,6 +28,9 @@ try{
  assert.equal(requests.length,0,'opening menu must not request destination GPS');
  mode('delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,true);
  $('cafeDeliveryMapOpen').focus();$('cafeDeliveryMapOpen').click();
+ await tick();assert.equal(vectors.at(-1).options.style,'https://tiles.openfreemap.org/styles/liberty');
+ assert.match(vectors.at(-1).options.attributionControl.customAttribution,/OpenStreetMap/,'required credit retained');
+ vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap');assert.equal(rasters.length,0,'vector map is the primary provider');
  assert.equal($('cafeDeliveryMapDialog').open,true);assert.equal($('cafeDeliveryMapConfirm').disabled,true,'no default destination at cafe');
  assert.deepEqual(maps.at(-1).center,{lat:12.25,lng:109.19});
  maps.at(-1).fire('click',{latlng:{lat:12.26,lng:109.2}});
@@ -81,9 +86,15 @@ try{
  w.eval(readFileSync('js/core/navigation.js','utf8'));
  $('cafeDeliveryMapOpen').click();assert.equal(w.ummaNavigation.back(),true);assert.equal($('cafeDeliveryMapDialog').open,false);assert.equal($('cafeDeliveryMapDialog').isConnected,true,'Back preserves reusable picker');
  $('cafeOrderForm').reset();await tick();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);mode('delivery');assert.equal($('cafeDeliveryAddress').required,true);
+ // Unsupported WebGL and repeated vector errors switch to a free raster fallback.
+ w.maplibregl.supported=()=>false;$('cafeDeliveryMapOpen').click();await tick();
+ assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');$('cafeDeliveryMapClose').click();
+ w.maplibregl.supported=()=>true;$('cafeDeliveryMapOpen').click();await tick();
+ const failed=vectors.at(-1);failed.gl.fire('error');failed.gl.fire('error');failed.gl.fire('error');
+ assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');assert.equal(failed.removed,true);$('cafeDeliveryMapClose').click();
  // Missing map library still allows a manually entered address.
  delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/вручную/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();
  $('cafeDeliveryAddress').value='Полный адрес вручную';$('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
  assert.equal(payloads.at(-1).deliveryAddress,'Полный адрес вручную');
- console.log('PASS delivery point: explicit GPS consent/confirmation, map taps and dragging, cancellation, stale GPS, denied location, exact courier URLs, checkout payload and manual fallback (simulated map/GPS; no live orders)');
+ console.log('PASS OpenFreeMap vector provider/credit/fallback; delivery point: explicit GPS consent/confirmation, map taps and dragging, cancellation, stale GPS, denied location, exact courier URLs, checkout payload and manual fallback (simulated map/GPS; no live orders)');
 }finally{w.close();}
