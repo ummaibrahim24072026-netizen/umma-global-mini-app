@@ -241,6 +241,7 @@
     if (!el) return;
     if (text) { el.textContent = text; return; }
     const selected = locations.find(location => String(location.id) === String(locationId));
+    window.ummaDeliveryLocation?.setCafeLocation(selected);
     el.textContent = selected ? "Заказ будет отправлен в кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
   }
 
@@ -374,17 +375,19 @@
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
     if (addressLabel) addressLabel.hidden = !delivery;
-    if (addressInput) addressInput.required = delivery;
+    if (addressInput) addressInput.required = delivery && !window.ummaDeliveryLocation?.hasPoint();
+    if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
     syncCustomerPayment();
   }
   orderType?.addEventListener("change", syncOrderMode);
+  document.addEventListener("umma:delivery-location-change", syncOrderMode);
   byId("cafeOrderModes")?.addEventListener("click", event => {
     const button = event.target.closest("[data-order-mode]");
     if (!button || !orderType || !["dine_in", "pickup", "delivery"].includes(button.dataset.orderMode)) return;
     orderType.value = button.dataset.orderMode;
     orderType.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(() => { syncOrderMode(); fillTelegramCustomerName(); }));
+  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(() => { window.ummaDeliveryLocation?.reset(); syncOrderMode(); fillTelegramCustomerName(); }));
   byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
   byId("cafePaymentMethod")?.addEventListener("change",syncCustomerPayment);
   syncOrderMode();
@@ -396,7 +399,7 @@
     if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
     const initData = window.Telegram?.WebApp?.initData;
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
-    if (orderType?.value === "delivery" && !addressInput?.value.trim()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
+    if (orderType?.value === "delivery" && !addressInput?.value.trim() && !window.ummaDeliveryLocation?.hasPoint()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
 
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
@@ -415,7 +418,7 @@
           locationId,
           customerName: byId("cafeCustomerName")?.value.trim() || "",
           customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
-          deliveryAddress: addressInput?.value.trim() || "",
+          deliveryAddress: orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
           customerNote: byId("cafeCustomerNote")?.value.trim() || ""
       });
       const result = await response.json();

@@ -215,3 +215,23 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 .cafe-product-description[open] summary::after{content:"−"}
 #cafePage .cafe-product-description summary:focus-visible{outline:2px solid #007580;outline-offset:2px;border-radius:6px}
 #cafePage .cafe-product-description p{margin:0;padding:8px 0 4px;border-top:1px solid #e5eeea}
+
+/* Delivery point picker and confirmation. */
+.cafe-delivery-location{display:grid;gap:10px;padding:14px;border:1px solid #cbded8;border-radius:16px;background:#f4f8f6}
+.cafe-delivery-location[hidden],.cafe-delivery-map-links[hidden],.cafe-location-clear[hidden]{display:none}
+.cafe-delivery-location strong{font-size:14px;color:#173c3e}
+#cafePage .cafe-location-button,.delivery-map-tools button,.delivery-map-heading button{min-height:44px;padding:10px 12px;border:1px solid #b9d5d0;border-radius:12px;background:#fff;color:#075e65;font-size:13px;font-weight:650}
+.cafe-delivery-map-links{display:flex;flex-wrap:wrap;gap:8px 18px}.cafe-delivery-map-links a{display:inline-flex;align-items:center;min-height:44px;color:#075e65;font-size:13px}
+#cafePage .cafe-location-clear{min-height:44px;padding:6px 0;justify-self:start;border:0;background:transparent;color:#536d69;text-decoration:underline}
+.delivery-map-dialog{width:min(620px,calc(100vw - 24px));max-height:calc(var(--umma-viewport-height,100dvh) - var(--umma-safe-top,0px) - var(--umma-safe-bottom,0px) - 24px);padding:18px;border:1px solid #d9cb9a;border-radius:22px;box-sizing:border-box;overflow:auto;color:#173c3e;background:#fff}
+.delivery-map-dialog::backdrop{background:#122c2a88}
+.delivery-map-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.delivery-map-heading h2{margin:0;font-size:21px}
+#cafeDeliveryMapStatus{font-size:13px;line-height:1.5;min-height:40px;margin:12px 0}
+.delivery-map-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.delivery-map-tools button{flex:1 1 160px}
+.delivery-location-map{height:clamp(220px,40dvh,420px);width:100%;border:1px solid #cbded8;border-radius:14px;background:#edf5f0;isolation:isolate}
+.delivery-destination-marker{background:transparent;border:0}.delivery-destination-marker span{display:block;width:27px;height:27px;border:3px solid #fff;border-radius:50% 50% 50% 0;background:#007580;box-shadow:0 2px 5px #0005;transform:rotate(-45deg)}
+.delivery-map-coordinates{font-size:12px;color:#536d69;min-height:18px;margin:10px 0}
+#cafeDeliveryMapConfirm{display:block;width:100%;min-height:48px;padding:12px;border:1px solid var(--umma-gold-edge);border-radius:14px;background:var(--umma-gold-button);color:#173c3e;font-weight:750;box-shadow:var(--umma-gold-shadow)}
+#cafeDeliveryMapConfirm:disabled{opacity:.45;cursor:default}
+#courierMapApple{display:block;margin:12px 0;padding:14px;text-align:center;color:#075e65;background:#fff;border:1px solid #b9d5d0;border-radius:12px;text-decoration:none;font-weight:650}#courierMapApple[hidden]{display:none}
+@media(max-width:640px){.delivery-map-dialog{position:fixed;top:auto;bottom:0;margin:0;width:100%;max-width:none;max-height:calc(var(--umma-viewport-height,100dvh) - var(--umma-safe-top,0px) - 12px);padding-bottom:calc(18px + var(--umma-safe-bottom,0px));border-radius:24px 24px 0 0}}

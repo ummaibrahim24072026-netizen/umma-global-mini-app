@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=17">
+  <link rel="stylesheet" href="css/native.css?v=18">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -664,6 +664,7 @@
       </div>
       <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
       <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <a id="courierMapApple" target="_blank" rel="noopener noreferrer" hidden>Открыть маршрут в Картах Apple</a>
       <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
       <small style="color:#68737d">Карта и навигация — Google Maps. Проверьте адрес перед выездом.</small>
     </div>
@@ -804,8 +805,18 @@
           <label>Телефон (необязательно)
             <input id="cafeCustomerPhone" name="customerPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="Для связи по заказу">
           </label>
-          <label id="cafeAddressLabel" hidden>Адрес доставки
-            <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="500" rows="2" placeholder="Улица, дом, квартира"></textarea>
+          <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
+            <strong>Куда доставить?</strong>
+            <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
+            <p id="cafeDeliveryPointSummary" class="cafe-order-hint" role="status" aria-live="polite"></p>
+            <div id="cafeDeliveryPointLinks" class="cafe-delivery-map-links" hidden>
+              <a id="cafeDeliveryGoogleLink" target="_blank" rel="noopener noreferrer">Google Maps</a>
+              <a id="cafeDeliveryAppleLink" target="_blank" rel="noopener noreferrer">Карты Apple</a>
+            </div>
+            <button type="button" id="cafeDeliveryPointClear" class="cafe-location-clear" hidden>Убрать точку</button>
+          </div>
+          <label id="cafeAddressLabel" hidden>Адрес и детали доставки
+            <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира, подъезд или ориентир"></textarea>
           </label>
           <label>Комментарий к заказу
             <textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Пожелания к заказу (необязательно)"></textarea>
@@ -923,6 +934,15 @@
 </div>
 
 
+<dialog id="cafeDeliveryMapDialog" class="delivery-map-dialog" aria-labelledby="cafeDeliveryMapTitle" aria-describedby="cafeDeliveryMapStatus">
+  <div class="delivery-map-heading"><h2 id="cafeDeliveryMapTitle">Куда доставить?</h2><button type="button" id="cafeDeliveryMapClose" autofocus>Закрыть</button></div>
+  <p id="cafeDeliveryMapStatus" role="status" aria-live="polite"></p>
+  <div class="delivery-map-tools"><button type="button" id="cafeDeliveryMapLocate">Моё местоположение</button><button type="button" id="cafeDeliveryMapCenter">Выбрать центр карты</button></div>
+  <div id="cafeDeliveryMap" class="delivery-location-map" aria-label="Карта для выбора точки доставки"></div>
+  <p id="cafeDeliveryDraftCoordinates" class="delivery-map-coordinates"></p>
+  <button type="button" id="cafeDeliveryMapConfirm" disabled>Доставить сюда</button>
+</dialog>
+
 <!-- TOAST -->
 <div
   class="toast"
@@ -946,13 +966,14 @@
 
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
-<script src="js/cafe/cafe.js?v=56"></script>
+<script src="js/maps/delivery-location.js?v=1"></script>
+<script src="js/cafe/cafe.js?v=57"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-workflow.js?v=3"></script>
 <script src="js/cafe/delivery-tracking.js?v=2"></script>
 <script src="js/cafe/kitchen.js?v=61"></script>
   <script src="js/cafe/kitchen-live.js?v=5"></script>
-<script src="js/maps/courier-route.js?v=5"></script>
+<script src="js/maps/courier-route.js?v=6"></script>
 <script src="js/cafe/test-mode.js?v=12"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
 <script src="js/admin/location-admin.js?v=8"></script>
@@ -961,7 +982,7 @@
 <script src="js/cafe/accounting-admin.js?v=7"></script>
 
 <!-- CONSISTENT BACK NAVIGATION -->
-<script src="js/core/navigation.js?v=6"></script>
+<script src="js/core/navigation.js?v=7"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>

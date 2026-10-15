@@ -6,7 +6,9 @@
  function open(button){opener=button;const address=button.dataset.routeAddress||"";const modal=$("courierMapModal");if(!modal)return;
  modal.hidden=false;modal.style.display="block";$("courierMapTitle").textContent="Маршрут · Заказ №"+(button.dataset.routeOrderNumber||"");
  $("courierMapMessage").textContent=address+" · Навигация от вашего текущего положения откроется в Google Maps.";
- const destination=address+", Vietnam";
+ const point=window.ummaMapLinks?.parseAddress(address);
+ const destination=point?window.ummaMapLinks.coords(point):address+", Vietnam";
+ const apple=$("courierMapApple");if(apple){apple.hidden=false;apple.href="https://maps.apple.com/directions?destination="+encodeURIComponent(destination)+"&mode=driving";}
  $("courierMapExternal").href="https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination="+encodeURIComponent(destination);
  const frame=document.createElement("iframe");frame.title="Адрес доставки в Google Maps";frame.src="https://www.google.com/maps?q="+encodeURIComponent(destination)+"&output=embed";frame.style.cssText="width:100%;height:100%;border:0";frame.referrerPolicy="no-referrer";$("courierRouteMap").replaceChildren(frame);$("courierMapClose")?.focus();
  }
