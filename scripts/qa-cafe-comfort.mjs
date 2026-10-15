@@ -45,5 +45,9 @@ try{
  locations=[...locations,{id:'two',name:'UMMA Two'}];await w.ummaCafe.refreshMenu();
  assert.equal(gps,0,'multiple cafes wait for explicit nearest-cafe choice');assert.equal($('cafeLocationDetails').hidden,false);assert.equal($('cafeLocationMode').value,'manual');assert.equal($('cafeLocationSelectLabel').hidden,false);
  $('cafeLocationDetails').open=true;$('cafeLocationSelect').value='two';$('cafeLocationSelect').dispatchEvent(new w.Event('change'));assert.match($('cafeLocationMessage').textContent,/UMMA Two/);assert.equal($('cafeStickyOrder').hidden,true,'changing cafe clears previous cart');
+ locations=[];await w.ummaCafe.refreshMenu();
+ assert.equal($('cafeAvailabilityNotice').hidden,false);assert.match($('cafeLocationMessage').textContent,/приостановлен/);
+ d.querySelector('[data-add-product]').click();$('cafeStickyGoToOrder').click();
+ assert.equal($('cafeStickyGoToOrder').disabled,true);assert.match($('cafeStickyGoToOrder').textContent,/приостановлен/);assert.equal($('cafeSubmitOrder').disabled,true);
  console.log('PASS cafe comfort: compact optional fields, Telegram contact summary, cart editing, inline mode sync, delivery-only address and point validation, reset, sticky filter scroll, single/multiple cafe choices without automatic GPS');
 }finally{w.close();}
