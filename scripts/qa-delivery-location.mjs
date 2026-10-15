@@ -20,6 +20,7 @@ w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:[{id:'food',name_ru:
 const mode=type=>{ $('cafeOrderType').value=type;$('cafeOrderType').dispatchEvent(new w.Event('change'));};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 try{
+ w.eval(readFileSync('js/maps/umma-maps.js','utf8'));
  w.eval(readFileSync('js/maps/delivery-location.js','utf8'));
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
  await w.ummaCafe.refreshMenu();

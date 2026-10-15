@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=19">
+  <link rel="stylesheet" href="css/native.css?v=20">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -662,8 +662,12 @@
         <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
         <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
       </div>
+      <div class="umma-maps-brand">UMMA MAPS</div>
+      <button id="courierMapLocate" type="button" class="courier-route-back">Построить маршрут от меня</button>
+      <small id="courierMapPrivacy" class="umma-routing-credit">Нажимая «Построить маршрут», вы отправляете координаты своего положения и доставки сервису FOSSGIS. Он сохраняет запрос в журнале.</small>
       <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
       <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <small class="umma-routing-credit">Маршруты: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">OSRM / FOSSGIS</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Исправить карту</a></small>
       <a id="courierMapApple" target="_blank" rel="noopener noreferrer" hidden>Открыть маршрут в Картах Apple</a>
       <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Открыть навигацию в Google Maps</a>
       <small style="color:#68737d">Карта и навигация — Google Maps. Проверьте адрес перед выездом.</small>
@@ -935,7 +939,7 @@
 
 
 <dialog id="cafeDeliveryMapDialog" class="delivery-map-dialog" aria-labelledby="cafeDeliveryMapTitle" aria-describedby="cafeDeliveryMapStatus">
-  <div class="delivery-map-heading"><h2 id="cafeDeliveryMapTitle">Куда доставить?</h2><button type="button" id="cafeDeliveryMapClose" autofocus>Закрыть</button></div>
+  <div class="delivery-map-heading"><h2 id="cafeDeliveryMapTitle"><small class="umma-maps-brand">UMMA MAPS</small>Куда доставить?</h2><button type="button" id="cafeDeliveryMapClose" autofocus>Закрыть</button></div>
   <p id="cafeDeliveryMapStatus" role="status" aria-live="polite"></p>
   <div class="delivery-map-tools"><button type="button" id="cafeDeliveryMapLocate">Моё местоположение</button><button type="button" id="cafeDeliveryMapCenter">Выбрать центр карты</button></div>
   <div id="cafeDeliveryMap" class="delivery-location-map" aria-label="Карта для выбора точки доставки"></div>
@@ -966,14 +970,15 @@
 
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
-<script src="js/maps/delivery-location.js?v=2"></script>
+<script src="js/maps/umma-maps.js?v=1"></script>
+<script src="js/maps/delivery-location.js?v=3"></script>
 <script src="js/cafe/cafe.js?v=57"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-workflow.js?v=3"></script>
-<script src="js/cafe/delivery-tracking.js?v=2"></script>
+<script src="js/cafe/delivery-tracking.js?v=3"></script>
 <script src="js/cafe/kitchen.js?v=61"></script>
   <script src="js/cafe/kitchen-live.js?v=5"></script>
-<script src="js/maps/courier-route.js?v=6"></script>
+<script src="js/maps/courier-route.js?v=7"></script>
 <script src="js/cafe/test-mode.js?v=12"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
 <script src="js/admin/location-admin.js?v=8"></script>
