@@ -25,5 +25,22 @@ try{
  sdk.requestFullscreen=()=>{throw Error('unsupported client');};sdk.isFullscreen=false;d.getElementById('nativeFullscreen').click();assert.equal(expanded,2,'unsupported fullscreen falls back to expanded layout');
  delete sdk.requestFullscreen;w.ummaNativeShell.geometry();assert.equal(d.getElementById('nativeFullscreen').hidden,true);
  assert.equal(d.querySelectorAll('.bottom-nav>.nav-item').length,5);assert.ok(d.querySelectorAll('.umma-icon').length>10);
+ w.eval(readFileSync('js/admin/panel.js','utf8'));
+ const homeMarkup=d.querySelector('.app>main').innerHTML;
+ assert.equal(d.querySelector('.app>main #adminEntry'),null,'customer home contains no admin entry');
+ assert.equal(d.querySelector('.app>main #staffEntry'),null,'customer home contains no staff tools');
+ w.updateAdminUI('user');assert.equal(d.getElementById('adminEntry').hidden,true);assert.equal(d.getElementById('staffEntry').hidden,true);
+ w.ummaRole='super_admin';w.ummaPermissions.isSuperAdmin=true;w.updateAdminUI('super_admin');
+ assert.equal(d.querySelector('.app>main').innerHTML,homeMarkup,'superadmin sees exactly the same home markup');
+ assert.equal(d.getElementById('adminEntry').closest('section.native-screen').id,'servicesPage');
+ assert.equal(d.getElementById('adminEntry').hidden,false);assert.equal(d.getElementById('staffEntry').closest('#adminPage').id,'adminPage');
+ d.querySelector('.nav-item[data-page="more"]').click();await tick();
+ d.querySelector('#adminEntry button').click();await tick();assert.equal(d.getElementById('adminPage').hidden,false);assert.equal(d.getElementById('servicesPage').hidden,true);
+ assert.equal(d.getElementById('staffEntry').hidden,false);assert.ok(d.getElementById('staffCourierEntryButton'));
+ nativeBack();await tick();assert.equal(d.getElementById('servicesPage').hidden,false,'Back from administration returns to More');assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'more');
+ w.ummaRole='employee';w.ummaPermissions.isSuperAdmin=false;w.updateAdminUI('employee');assert.equal(d.getElementById('adminEntry').hidden,true);assert.equal(d.getElementById('staffEntry').closest('#servicesPage').id,'servicesPage');assert.equal(d.getElementById('staffEntry').hidden,false);
+ w.ummaRole='user';w.updateAdminUI('user');assert.equal(d.getElementById('staffEntry').hidden,true);w.openAdminPanel();assert.equal(d.getElementById('adminPage').hidden,true,'customer cannot open administration');
+ w.openPage('home');await tick();
+ console.log('PASS More role boundaries: identical client/superadmin home, admin-only entry and workspaces, staff access, denied customer access and Back to More');
  console.log('PASS native shell: supported fullscreen/fallback, Telegram safe areas, keyboard viewport, actual tabs, planned-service disclosure, modal back, single active screen and preserved internal scroll');
 }finally{w.close();}
