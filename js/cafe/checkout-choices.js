@@ -68,6 +68,7 @@
   select.classList.add("cafe-choice-native");select.tabIndex=-1;select.setAttribute("aria-hidden","true");
   select.after(trigger);
   trigger.addEventListener("click",event=>{event.preventDefault();open(select);});
+  select.addEventListener("click",event=>{event.preventDefault();open(select);});
   select.addEventListener("change",sync);
   select.addEventListener("invalid",event=>{event.preventDefault();open(select);});
   new MutationObserver(sync).observe(select,{childList:true,subtree:true,attributes:true,characterData:true});

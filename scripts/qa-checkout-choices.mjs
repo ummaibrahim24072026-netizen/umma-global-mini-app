@@ -11,6 +11,7 @@ const tick=()=>new Promise(r=>setTimeout(r,15));
 try {
  w.eval(readFileSync('js/cafe/checkout-choices.js','utf8'));
  w.eval(readFileSync('js/core/navigation.js','utf8'));
+ d.getElementById("cafePage").hidden=false;d.getElementById("cafeOrderForm").hidden=false;
  const selects=[...d.querySelectorAll('#cafeOrderForm select')];
  assert.ok(selects.length>=4);
  assert.equal(d.querySelectorAll('.cafe-choice-trigger').length,selects.length);
