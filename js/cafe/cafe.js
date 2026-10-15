@@ -351,15 +351,26 @@
     if(method){const cash=method.querySelector('option[value="cash"]');if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
     const hint=byId("cafePaymentHint");if(hint)hint.textContent=type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
   }
-  orderType?.addEventListener("change", () => {
-    const delivery = orderType.value === "delivery";
+  function syncOrderMode() {
+    const delivery = orderType?.value === "delivery";
+    byId("cafeOrderModes")?.querySelectorAll("[data-order-mode]").forEach(button => {
+      button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
+    });
     if (addressLabel) addressLabel.hidden = !delivery;
     if (addressInput) addressInput.required = delivery;
     syncCustomerPayment();
+  }
+  orderType?.addEventListener("change", syncOrderMode);
+  byId("cafeOrderModes")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-order-mode]");
+    if (!button || !orderType || !["dine_in", "pickup", "delivery"].includes(button.dataset.orderMode)) return;
+    orderType.value = button.dataset.orderMode;
+    orderType.dispatchEvent(new Event("change", { bubbles: true }));
   });
+  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(syncOrderMode));
   byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
   byId("cafePaymentMethod")?.addEventListener("change",syncCustomerPayment);
-  syncCustomerPayment();
+  syncOrderMode();
 
   byId("cafeOrderForm")?.addEventListener("submit", async event => {
     event.preventDefault();
