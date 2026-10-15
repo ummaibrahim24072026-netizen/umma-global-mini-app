@@ -15,7 +15,7 @@ function runtime(saved=[]){
  w.FileReader=class{readAsDataURL(){this.result='data:image/jpeg;base64,cWE=';queueMicrotask(()=>this.onload());}};
  w.Image=class{width=100;height=100;set src(value){queueMicrotask(()=>this.onload());}};
  w.HTMLCanvasElement.prototype.getContext=()=>({drawImage(){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/jpeg;base64,cWE=';
- w.HTMLInputElement.prototype.click=function(){if(cancel)return;Object.defineProperty(this,'files',{value:[{type:'image/jpeg',size:100}]});void this.onchange();};
+ w.HTMLInputElement.prototype.click=function(){if(cancel){this.oncancel?.();return;}Object.defineProperty(this,'files',{value:[{type:'image/jpeg',size:100}]});void this.onchange();};
  if(saved.length)w.sessionStorage.setItem('umma:courier-photo-transition:20',JSON.stringify(saved));
  w.eval(source);
  return {dom,w,d,calls,gps,get refreshes(){return refreshes;},set cancel(v){cancel=v;},set rejectUpload(v){rejectUpload=v;},set loseTransition(v){loseTransition=v;}};

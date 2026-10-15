@@ -47,7 +47,8 @@
   function render() {
     const root = byId("cafeKitchenOrders");
     if (!root) return;
-    const shown = filter === "active" ? orders.filter(o => !["completed","cancelled"].includes(o.status)) : orders;
+    const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
+    const shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
     if (!shown.length) {
       root.innerHTML = "";
       showMessage(filter === "active" ? "Активных заказов пока нет." : "Заказов пока нет.");
@@ -82,7 +83,7 @@
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото и GPS':'Вручить · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото и GPS':'Товар передал · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
       }
       if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
@@ -95,10 +96,11 @@
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
         && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
       const paymentAction = canManagePayment && order.payment_status !== "paid"
-        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
+        ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">' + (orderStaffRole==="courier"?'Принять оплату · '+money(order.total_vnd):'Подтвердить оплату') + '</button>'
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
-      const secondary = cancel + paymentAction + routeAction + courierAssignAction + refundAction + evidenceActions;
+      const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
+      const secondary = cancel + (orderStaffRole === "courier" ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
@@ -111,7 +113,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + deliveryAction + trackingAction + secondaryMenu + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + courierPayment + deliveryAction + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + trackingAction + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
     const template = document.createElement("template");
@@ -250,7 +252,10 @@
   }
 
   function open(asCourier = false) {
-    courierWorkspace=asCourier === true;lastOrdersFingerprint=null;
+    courierWorkspace=asCourier === true;lastOrdersFingerprint=null;filter="active";
+    const closedFilter=byId("courierClosedFilter");if(closedFilter)closedFilter.hidden=!courierWorkspace;
+    const allFilter=document.querySelector('[data-kitchen-filter="all"]');if(allFilter)allFilter.hidden=courierWorkspace;
+    document.querySelectorAll('[data-kitchen-filter]').forEach(button=>button.classList.toggle("is-active",button.dataset.kitchenFilter==="active"));
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
@@ -437,7 +442,8 @@
     busy = true;
     showMessage("Обновляем оплату…");
     try {
-      await api({ action:"updatePayment", orderId, paymentStatus, tenderedAmountVnd, changeGivenVnd, paymentMethod });
+      const result=await api({ action:"updatePayment", orderId, paymentStatus, tenderedAmountVnd, changeGivenVnd, paymentMethod });
+      applyCourierState(orderId,result.order||{paymentStatus});
       await refreshAfterUpdate();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось обновить оплату");
@@ -966,5 +972,15 @@
   setStaffOrderMode(null);
 
   document.addEventListener("umma:cafe-events",()=>{if(!document.hidden&&byId("cafeCashPanel")?.hidden===false)loadCash();});
-  window.ummaKitchen = { open, refresh:loadOrders, rerender:render };
+  function applyCourierState(orderId,state,proof=null) {
+    const order=orders.find(o=>String(o.id)===String(orderId));if(!order)return;
+    ordersRevision++;lastOrdersFingerprint=null;
+    if(state.deliveryStatus)order.delivery_status=state.deliveryStatus;
+    if(state.paymentStatus)order.payment_status=state.paymentStatus;
+    if(state.status)order.status=state.status;
+    if(proof && !order.deliveryProofs?.some(p=>p.id===proof.id))order.deliveryProofs=[...(order.deliveryProofs||[]),proof];
+    window.ummaCourierTracking?.syncOrders(orders);
+    render();renderStaffActiveOrders();renderStaffClosedOrders();
+  }
+  window.ummaKitchen = { open, refresh:loadOrders, rerender:render, applyCourierState };
 })();

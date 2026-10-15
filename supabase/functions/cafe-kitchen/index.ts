@@ -375,7 +375,12 @@ Deno.serve(async req => {
       return response(error?{ok:false,error:error.message}:data,error?400:200);
     }
     if(body.action==="uploadDeliveryProof"){
-      try{return response(await uploadDeliveryProof(supabase,telegramId,body));}catch(e){return response({ok:false,error:e instanceof Error?e.message:"Фото не сохранено"},/access denied|not allowed|Invalid delivery photo|Use JPEG|key reused|new photo/.test(String(e))?400:500);}
+      try{
+        const result=await uploadDeliveryProof(supabase,telegramId,body);
+        const notifications=dispatchCustomerNotifications(supabase,botToken).catch(()=>{console.error("Customer notification deferred");});
+        if(typeof EdgeRuntime!=="undefined") EdgeRuntime.waitUntil(notifications); else await notifications;
+        return response(result);
+      }catch(e){return response({ok:false,error:e instanceof Error?e.message:"Фото не сохранено"},/access denied|not allowed|Invalid delivery photo|Use JPEG|key reused|new photo/.test(String(e))?400:500);}
     }
     if(body.action==="viewDeliveryProof"){
       const {data,error}=await supabase.rpc("authorize_cafe_delivery_proof_view",{p_proof:body.proofId,p_actor:telegramId});if(error)return response({ok:false,error:error.message},400);

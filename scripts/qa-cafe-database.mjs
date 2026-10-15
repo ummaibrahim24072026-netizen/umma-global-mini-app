@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import {verifyCourierPhotoCompletion} from './qa-courier-photo-completion.mjs';
 import {verifyCafeCouriers} from './qa-cafe-couriers.mjs';
 import {verifyCafeRefunds} from './qa-cafe-refunds.mjs';
 import {verifyCafeDelivery} from './qa-cafe-delivery.mjs';
@@ -134,5 +135,6 @@ try {
   await verifyCafeCouriers(db,cafe,other,product);
   await verifyCafeEdges(db,cafe,product);
   await verifyCafeNotifications(db,cafe,product);
+  await verifyCourierPhotoCompletion(db,cafe,product);
   console.log('LIMIT: PGlite serializes queries; this does not prove multi-connection PostgreSQL locking or real device behavior.');
 } finally { await db.close(); }
