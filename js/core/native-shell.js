@@ -9,7 +9,7 @@
  for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
  const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','servicesPage'];
  scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
- const titles={home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Направления UMMA',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
+ const titles={home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Ещё',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
  const current=()=>scenes.find(id=>byId(id)&&!byId(id).hidden)||'home';
  let active='home',dialog=null;
  function syncScene(records=[]){

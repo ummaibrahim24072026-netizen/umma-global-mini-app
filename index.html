@@ -96,64 +96,6 @@
     </section>
 
 
-    <!-- SUPER ADMIN -->
-    <section
-      id="adminEntry"
-      class="admin-entry"
-      hidden
-      aria-hidden="true"
-    >
-
-      <button
-        type="button"
-        class="admin-entry-button"
-      >
-
-        <span class="admin-entry-icon">
-          ⚙️
-        </span>
-
-        <span class="admin-entry-copy">
-
-          <strong>
-            Администрирование
-          </strong>
-
-          <small>
-            Управление Umma Global
-          </small>
-
-        </span>
-
-        <span class="admin-entry-arrow">
-          →
-        </span>
-
-      </button>
-
-    </section>
-
-
-    <!-- CAFE STAFF ENTRY -->
-    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true"><h2 class="native-workspace-heading">Работа в кафе</h2>
-      <button type="button" class="admin-entry-button" id="staffEntryButton">
-        <span class="admin-entry-icon">🧾</span>
-        <span class="admin-entry-copy"><strong>Приём заказов</strong><small>Оформить заказ, добавить блюда, принять оплату</small></span>
-        <span class="admin-entry-arrow">→</span>
-      </button>
-      <button type="button" class="admin-entry-button" id="staffKitchenEntryButton" style="margin-top:8px">
-        <span class="admin-entry-icon">🍳</span>
-        <span class="admin-entry-copy"><strong>Кухня</strong><small>Новые заказы, дозаказы и приготовление</small></span>
-        <span class="admin-entry-arrow">→</span>
-      </button>
-      <button type="button" class="admin-entry-button" id="staffCourierEntryButton" style="margin-top:8px"><span class="admin-entry-icon">🛵</span><span class="admin-entry-copy"><strong>Курьер</strong><small>Выбрать себя, принять доставку, фото и GPS</small></span><span class="admin-entry-arrow">→</span></button>
-      <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
-        <span class="admin-entry-icon">📊</span>
-        <span class="admin-entry-copy"><strong>Учёт кафе</strong><small>Склад, закупки, производство и расходы</small></span>
-        <span class="admin-entry-arrow">→</span>
-      </button>
-    </section>
-
     <!-- AYAH -->
     <section class="ayah-card">
 
@@ -408,6 +350,29 @@
 
       </div>
 
+
+      <div id="adminWorkspaces">
+    <!-- CAFE STAFF ENTRY -->
+    <section id="staffEntry" class="admin-entry staff-entry" hidden aria-hidden="true"><h2 class="native-workspace-heading">Работа в кафе</h2>
+      <button type="button" class="admin-entry-button" id="staffEntryButton">
+        <span class="admin-entry-icon">🧾</span>
+        <span class="admin-entry-copy"><strong>Приём заказов</strong><small>Оформить заказ, добавить блюда, принять оплату</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+      <button type="button" class="admin-entry-button" id="staffKitchenEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">🍳</span>
+        <span class="admin-entry-copy"><strong>Кухня</strong><small>Новые заказы, дозаказы и приготовление</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+      <button type="button" class="admin-entry-button" id="staffCourierEntryButton" style="margin-top:8px"><span class="admin-entry-icon">🛵</span><span class="admin-entry-copy"><strong>Курьер</strong><small>Выбрать себя, принять доставку, фото и GPS</small></span><span class="admin-entry-arrow">→</span></button>
+      <button type="button" class="admin-entry-button" id="accountingEntryButton" style="margin-top:8px">
+        <span class="admin-entry-icon">📊</span>
+        <span class="admin-entry-copy"><strong>Учёт кафе</strong><small>Склад, закупки, производство и расходы</small></span>
+        <span class="admin-entry-arrow">→</span>
+      </button>
+    </section>
+
+      </div>
 
       <div class="admin-grid">
 
@@ -962,7 +927,56 @@
     </div>
   </section>
 
-  <section id="servicesPage" class="native-screen" hidden><div class="native-directory"><button type="button" id="servicesBack" class="cafe-back">← Назад</button><h1>Направления UMMA</h1><p>Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.</p><button type="button" class="cafe-submit" data-page="cafe">Открыть UMMA Cafe</button><button type="button" id="nativeHomeShortcut" class="cafe-back" hidden>Добавить на главный экран телефона</button><div id="nativeDirectory" class="native-directory-grid"></div></div></section>
+  <section id="servicesPage" class="native-screen" hidden>
+    <div class="native-directory">
+      <button type="button" id="servicesBack" class="cafe-back">← Назад</button>
+      <h1>Ещё</h1>
+    <!-- SUPER ADMIN -->
+    <section
+      id="adminEntry"
+      class="admin-entry"
+      hidden
+      aria-hidden="true"
+    >
+
+      <button
+        type="button"
+        class="admin-entry-button"
+      >
+
+        <span class="admin-entry-icon">
+          ⚙️
+        </span>
+
+        <span class="admin-entry-copy">
+
+          <strong>
+            Администрирование
+          </strong>
+
+          <small>
+            Управление Umma Global
+          </small>
+
+        </span>
+
+        <span class="admin-entry-arrow">
+          →
+        </span>
+
+      </button>
+
+    </section>
+
+
+      <div id="moreStaffAccess"></div>
+      <h2>Направления UMMA</h2>
+      <p>Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.</p>
+      <button type="button" class="cafe-submit" data-page="cafe">Открыть UMMA Cafe</button>
+      <button type="button" id="nativeHomeShortcut" class="cafe-back" hidden>Добавить на главный экран телефона</button>
+      <div id="nativeDirectory" class="native-directory-grid"></div>
+    </div>
+  </section>
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav" aria-label="Основные разделы">
     <button type="button" class="nav-item active" data-page="home" aria-current="page"><span data-native-icon="home"></span><small>Главная</small></button>
@@ -991,7 +1005,7 @@
 <script src="js/auth/auth.js?v=2"></script>
 
 <!-- ADMIN -->
-<script src="js/admin/panel.js?v=7"></script>
+<script src="js/admin/panel.js?v=8"></script>
 <script src="js/admin/users-api.js?v=2"></script>
 <script src="js/admin/users-ui.js?v=3"></script>
 <script src="js/admin/users-events.js?v=3"></script>
@@ -1018,6 +1032,6 @@
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=2"></script>
+<script src="js/core/native-shell.js?v=3"></script>
 </body>
 </html>

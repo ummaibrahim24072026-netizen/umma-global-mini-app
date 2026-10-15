@@ -31,6 +31,13 @@ function updateAdminUI(role) {
     adminEntry.setAttribute("aria-hidden", String(!isSuperAdmin));
   }
 
+  // Keep the customer home identical for every role. Superadmin workspaces
+  // live inside Administration; other staff enter from More.
+  const workspaceHost = document.getElementById(isSuperAdmin ? "adminWorkspaces" : "moreStaffAccess");
+  if (staffEntry && workspaceHost && staffEntry.parentElement !== workspaceHost) {
+    workspaceHost.append(staffEntry);
+  }
+
   if (staffEntry) {
     staffEntry.hidden = !canUseStaffWorkspace;
     staffEntry.setAttribute("aria-hidden", String(!canUseStaffWorkspace));
