@@ -29,7 +29,7 @@ try{
  search('<script>');assert.equal(d.querySelectorAll('[data-product-card]').length,0);assert.match(d.getElementById('cafeProducts').textContent,/Ничего не найдено/);
  assert.match(d.getElementById('cafeMenuCount').textContent,/0 из 2/);
  d.getElementById('cafeMenuSearchClear').click();assert.equal(d.querySelectorAll('[data-product-card]').length,2);assert.equal(d.activeElement.id,'cafeMenuSearch');
- const photo=d.querySelector('.cafe-product-photo');photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);
+ const photo=d.querySelector('.cafe-product-photo');assert.ok(photo.closest('.cafe-product-media'));photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);assert.equal(photo.closest(".cafe-product-media").hidden,true,"failed photo collapses its frame");
  d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();
  assert.equal(d.getElementById('cafeStickyOrder').hidden,true);assert.equal(d.getElementById('cafeOrderForm').hidden,true);
  console.log('PASS menu: multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
