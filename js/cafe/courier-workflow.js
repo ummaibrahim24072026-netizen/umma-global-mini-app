@@ -1,4 +1,4 @@
-/* Courier offers and private delivery evidence. No silent location tracking. */
+/* Courier offers and private delivery evidence; confirmed pickup starts delivery GPS. */
 (() => {
  'use strict';
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
@@ -33,7 +33,9 @@
    try {
     await api({action:'updateDelivery',orderId,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});
     forgetTransition(orderId);
-    await window.ummaKitchen.refresh().catch(()=>{});
+    if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop();
+    await window.ummaKitchen.refresh({afterMutation:true}).catch(()=>{});
+    if(kind==='pickup') await window.ummaCourierTracking?.start(orderId);
     message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Фото сохранено. Заказ вручён клиенту.');
    } catch(error) {
     message('Фото сохранено. '+(error.status>=400&&error.status<500?'Не удалось подтвердить этап: '+error.message:'Подтверждаем этап доставки после восстановления связи…'));

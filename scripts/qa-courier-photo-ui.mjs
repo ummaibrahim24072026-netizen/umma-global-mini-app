@@ -6,9 +6,10 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,10));
 const until=async check=>{for(let n=0;n<100;n++){if(check())return;await tick();}assert.fail('Photo workflow did not settle');};
 function runtime(saved=[]){
  const dom=new JSDOM('<div id="courierOffers" hidden></div><div id="cafeKitchenMessage"></div><button data-order-id="order" data-delivery-photo="pickup">Забрать · фото</button>',{pretendToBeVisual:true,runScripts:'outside-only',url:'https://synthetic-qa.invalid'}),w=dom.window,d=w.document;
- const calls=[];let cancel=false,rejectUpload=false,loseTransition=false,refreshes=0;
+ const calls=[],gps=[];let cancel=false,rejectUpload=false,loseTransition=false,refreshes=0;
  w.Telegram={WebApp:{initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.AbortSignal=AbortSignal;
  w.ummaKitchen={refresh:async()=>{refreshes++;}};
+ w.ummaCourierTracking={start:async id=>{assert.equal(calls.at(-1).deliveryStatus,'picked_up','GPS starts after server confirms pickup');gps.push({id,enabled:true});},stop:async()=>gps.push({enabled:false}),isSharing:()=>gps.at(-1)?.enabled===true};
  w.ummaCafeRequests={request:async(url,body)=>{calls.push(body);if(rejectUpload)return new Response('{"ok":false,"error":"QA upload rejected"}',{status:400});return new Response('{"ok":true,"proof":{"id":"proof"}}');}};
  w.fetch=async(url,options)=>{const body=JSON.parse(options.body);calls.push(body);if(loseTransition){loseTransition=false;throw Error('response lost');}return new Response('{"ok":true}');};
  w.FileReader=class{readAsDataURL(){this.result='data:image/jpeg;base64,cWE=';queueMicrotask(()=>this.onload());}};
@@ -17,7 +18,7 @@ function runtime(saved=[]){
  w.HTMLInputElement.prototype.click=function(){if(cancel)return;Object.defineProperty(this,'files',{value:[{type:'image/jpeg',size:100}]});void this.onchange();};
  if(saved.length)w.sessionStorage.setItem('umma:courier-photo-transition:20',JSON.stringify(saved));
  w.eval(source);
- return {dom,w,d,calls,get refreshes(){return refreshes;},set cancel(v){cancel=v;},set rejectUpload(v){rejectUpload=v;},set loseTransition(v){loseTransition=v;}};
+ return {dom,w,d,calls,gps,get refreshes(){return refreshes;},set cancel(v){cancel=v;},set rejectUpload(v){rejectUpload=v;},set loseTransition(v){loseTransition=v;}};
 }
 let r=runtime();
 try {
@@ -25,10 +26,12 @@ try {
  assert.equal(button.disabled,true);assert.equal(button.textContent,'Сохраняем фото…');
  await until(()=>r.refreshes===1);
  assert.deepEqual(r.calls.map(x=>x.action),['uploadDeliveryProof','updateDelivery'],'one photo automatically confirms pickup once');
+ assert.equal(r.gps.length,1,'pickup photo starts GPS automatically once');
  assert.equal(r.calls[1].deliveryStatus,'picked_up');assert.match(r.d.getElementById('cafeKitchenMessage').textContent,/получен курьером/);
  assert.equal(r.w.sessionStorage.length,0,'successful stage clears retry intent');
  button.dataset.deliveryPhoto='handover';button.click();await until(()=>r.refreshes===2);
  assert.equal(r.calls.at(-1).deliveryStatus,'delivered','handover photo automatically confirms delivery');
+ assert.equal(r.gps.at(-1).enabled,false,'handover stops GPS immediately');
  r.cancel=true;const before=r.calls.length;button.click();await tick();assert.equal(r.calls.length,before,'cancelled camera never advances a stage');
  r.cancel=false;r.rejectUpload=true;button.click();await until(()=>!button.disabled);assert.equal(r.calls.at(-1).action,'uploadDeliveryProof','rejected upload never confirms delivery');
  r.rejectUpload=false;
