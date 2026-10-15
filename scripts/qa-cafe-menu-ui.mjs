@@ -20,6 +20,9 @@ try{
  d.getElementById('cafeCustomerName').value='Имя для заказа';
  assert.equal(d.querySelectorAll('[data-product-card]').length,2);
  assert.equal(d.querySelectorAll('.cafe-product-photo').length,1,'unsafe URL omitted');
+ assert.equal(d.querySelectorAll('[data-product-card] .cafe-halal-badge').length,2,'one halal badge per product, including missing photo');
+ assert.ok(d.querySelector('[data-product-card="manti"]').classList.contains('cafe-product-no-photo'));
+ assert.equal(d.querySelector('.cafe-halal-badge').getAttribute('aria-label'),'Халяль');
  assert.equal(d.querySelector('.cafe-product-photo').alt,'Плов');
  d.querySelector('[data-add-product="plov"]').click();
  assert.match(d.getElementById('cafeCartTotal').textContent,/120/);
@@ -33,7 +36,7 @@ try{
  search('<script>');assert.equal(d.querySelectorAll('[data-product-card]').length,0);assert.match(d.getElementById('cafeProducts').textContent,/Ничего не найдено/);
  assert.match(d.getElementById('cafeMenuCount').textContent,/0 из 2/);
  d.getElementById('cafeMenuSearchClear').click();assert.equal(d.querySelectorAll('[data-product-card]').length,2);assert.equal(d.activeElement.id,'cafeMenuSearch');
- const photo=d.querySelector('.cafe-product-photo');assert.ok(photo.closest('.cafe-product-media'));photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);assert.equal(photo.closest(".cafe-product-media").hidden,true,"failed photo collapses its frame");
+ const photo=d.querySelector('.cafe-product-photo');assert.ok(photo.closest('.cafe-product-media'));photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);assert.ok(photo.closest('.cafe-product').classList.contains('cafe-product-no-photo'));assert.equal(photo.closest(".cafe-product-media").hidden,true,"failed photo collapses its frame");
  d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();
  assert.equal(d.getElementById('cafeStickyOrder').hidden,true);assert.equal(d.getElementById('cafeOrderForm').hidden,true);
  // Exercise category/search intersection with distinct dishes and ambiguous names.

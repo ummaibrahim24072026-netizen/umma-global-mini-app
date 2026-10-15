@@ -44,6 +44,7 @@
     ["UMMA-CAFE-SAMSA", "logo/assets/menu/samsa-white.webp"],
     ["UMMA-CAFE-SAMSA-CHICKEN", "logo/assets/menu/samsa-white.webp"]
   ]);
+  const halalBadge = '<svg class="cafe-halal-badge" viewBox="0 0 100 100" role="img" aria-label="Халяль" focusable="false"><path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z" fill="#fffdf5" stroke="#bd963e" stroke-width="3" stroke-linejoin="round"/><path d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z" fill="none" stroke="#bd963e" stroke-width="1.4"/><text x="50" y="48" text-anchor="middle" fill="#075e65" font-family="Times New Roman,serif" font-size="28" lang="ar">حلال</text><text x="50" y="70" text-anchor="middle" fill="#075e65" font-family="Arial,sans-serif" font-size="11" font-weight="700">HALAL</text></svg>';
   function productPhoto(product) {
     const source = productPhotos.get(product.sku) || product.image_url;
     if (!source) return "";
@@ -58,6 +59,7 @@
       event.target.hidden = true;
       const frame = event.target.closest(".cafe-product-media");
       if (frame) frame.hidden = true;
+      event.target.closest(".cafe-product")?.classList.add("cafe-product-no-photo");
     }
   }, true);
   byId("cafeMenuSearch")?.addEventListener("input", event => {
@@ -124,8 +126,9 @@
       const selected = cart.get(p.id);
       const quantity = selected?.quantity || 0;
       const productId = esc(p.id);
-      return '<article class="cafe-product' + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
-        productPhoto(p) + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
+      const photo = productPhoto(p);
+      return '<article class="cafe-product' + (photo ? '' : ' cafe-product-no-photo') + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
+        photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
         '<h3>' + esc(name(p)) + '</h3><p>' + esc(description(p)) + '</p>' +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
