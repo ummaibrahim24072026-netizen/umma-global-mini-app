@@ -20,12 +20,6 @@
     const header=el('header'),title=el('h2','Оплата заказа');title.id='cafePaymentTitle';
     const close=el('button','×','cafe-payment-close');close.type='button';close.setAttribute('aria-label','Закрыть оплату');close.onclick=()=>dialog.close();header.append(title,close);dialog.append(header);
   }
-  function copyRow(label,value) {
-    const row=el('div',null,'cafe-payment-copy'),text=el('div'),button=el('button','Копировать');button.type='button';button.setAttribute('aria-label','Копировать: '+label);
-    text.append(el('small',label),el('strong',value));
-    button.onclick=async()=>{try{await navigator.clipboard.writeText(value);button.textContent='Скопировано';}catch{button.textContent='Выделите текст';const range=document.createRange();range.selectNodeContents(text.lastChild);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);}};
-    row.append(text,button);return row;
-  }
   function receiptForm(orderId) {
     const section=el('section',null,'cafe-payment-receipt'),title=el('h3','Уже перевели?'),help=el('p','Прикрепите фото или скриншот перевода. JPG, PNG или WEBP до 5 МБ.','cafe-payment-help');
     const label=el('label','Выбрать скриншот','cafe-payment-file'),input=el('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.setAttribute('aria-label','Скриншот подтверждения оплаты');label.append(input);
@@ -47,7 +41,7 @@
       send.disabled=true;input.disabled=true;send.textContent='Отправляем…';send.setAttribute('aria-busy','true');
       const payload={action:'submit',initData:window.Telegram?.WebApp?.initData,orderId,bankCountry:'VN',...selected};
       const upload=(async()=>{const response=await fetch(proofEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store',signal:window.AbortSignal?.timeout?.(30000)});const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Не удалось отправить чек');return data;})();uploads.set(orderId,upload);
-      try{await upload;showSaved([{status:'pending'}]);selected=null;input.value='';preview.hidden=true;preview.removeAttribute('src');send.textContent='Чек отправлен';}
+      try{await upload;showSaved([{status:'pending'}]);selected=null;input.value='';preview.hidden=true;preview.removeAttribute('src');send.textContent='Чек отправлен';if(section.isConnected&&dialog.open){dialog.close();if(typeof showToast==='function')showToast('Скриншот отправлен. Ожидайте проверки кафе.');}}
       catch(error){status.textContent=(error.name==='TimeoutError'?'Ответ задерживается. Откройте оплату ещё раз, чтобы проверить отправку чека.':error.message)||'Не удалось отправить чек. Попробуйте ещё раз.';send.textContent='Повторить отправку';}
       finally{uploads.delete(orderId);input.disabled=false;send.disabled=!selected;send.removeAttribute('aria-busy');}
     };
@@ -71,14 +65,13 @@
     dialog.append(el('p','Заказ №'+payment.orderNumber+' · '+payment.bankName,'cafe-payment-meta'),el('p',money(payment.amount),'cafe-payment-amount'),qrLink);
     const save=el('a','Сохранить QR','cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';dialog.append(save);
     dialog.append(el('p','Сохраните QR и выберите его в сканере вашего банка. Сумма и назначение уже включены в код. Проверьте получателя перед переводом.','cafe-payment-help'));
-    dialog.append(copyRow('Счёт · '+payment.bankName,payment.account),copyRow('Назначение',payment.reference),copyRow('Сумма, VND',String(payment.amount)));
     const label=el('p','Ваш банк','cafe-payment-bank'),chooser=el('details',null,'cafe-payment-chooser'),summary=el('summary','Vietcombank'),list=el('div',null,'cafe-payment-banks');
     let selected='vcb';
     const open=el('a','Открыть банк','cafe-payment-open');open.rel='noopener noreferrer';open.target='_blank';
     function updateLink(){const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:payment.account+'@vcb',am:String(payment.amount),tn:payment.reference,app:selected,url:location.origin+location.pathname}).toString();open.href=url.href;qrLink.href=url.href;}
     banks.forEach(([value,name])=>{const button=el('button',name);button.type='button';button.setAttribute('aria-pressed',String(value===selected));button.onclick=()=>{selected=value;summary.textContent=name;chooser.open=false;list.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateLink();summary.focus();};list.append(button);});
     chooser.append(summary,list);updateLink();dialog.append(label,chooser,open);
-    dialog.append(el('p','Заполнение перевода по ссылке зависит от банка и телефона. Если реквизиты не появились — используйте QR или скопируйте счёт.','cafe-payment-help'),el('p','После перевода дождитесь подтверждения кафе. Повторно не оплачивайте заказ.','cafe-payment-notice'));
+    dialog.append(el('p','Заполнение перевода по ссылке зависит от банка и телефона. Если реквизиты не появились — используйте QR.','cafe-payment-help'),el('p','После перевода дождитесь подтверждения кафе. Повторно не оплачивайте заказ.','cafe-payment-notice'));
     dialog.append(receiptForm(payment.orderId));
   }
   async function show(orderId) {
