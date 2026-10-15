@@ -1,0 +1,29 @@
+{
+  "frame": {
+    "aspect_ratio": "1:1",
+    "background": "#ffffff",
+    "fit": "contain",
+    "position": "center",
+    "all_viewport_sizes": true
+  },
+  "edits": [
+    {
+      "source": "plov.png",
+      "output": "plov-white-v2.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit target: the supplied original UMMA cafe food photograph. For a real menu photo, change ONLY the background and canvas framing: seamless pure white #FFFFFF background, square 1:1 canvas, full original dish and white plate centered with an even white margin of about 5–7% around the complete subject. Remove any black letterboxing. Preserve the exact original food, portion, ingredient arrangement, plate, camera perspective, textures and colors; do not reimagine, restyle, add or remove food. Keep only a subtle natural contact shadow close to the plate; no gray or beige cast, no vignette, no text, no props. Output one square photo, not a collage."
+    },
+    {
+      "source": "shurpa.png",
+      "output": "shurpa-white-v2.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit target: the supplied original UMMA cafe food photograph. For a real menu photo, change ONLY the background and canvas framing: seamless pure white #FFFFFF background, square 1:1 canvas, full original dish and white plate centered with an even white margin of about 5–7% around the complete subject. Remove any black letterboxing. Preserve the exact original food, portion, ingredient arrangement, plate, camera perspective, textures and colors; do not reimagine, restyle, add or remove food. Keep only a subtle natural contact shadow close to the plate; no gray or beige cast, no vignette, no text, no props. Output one square photo, not a collage."
+    },
+    {
+      "source": "flatbread.jpg",
+      "output": "flatbread-white-v2.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit target: the supplied original UMMA cafe food photograph. For a real menu photo, change ONLY the background and canvas framing: seamless pure white #FFFFFF background, square 1:1 canvas, full original dish and white plate centered with an even white margin of about 5–7% around the complete subject. Remove any black letterboxing. Preserve the exact original food, portion, ingredient arrangement, plate, camera perspective, textures and colors; do not reimagine, restyle, add or remove food. Keep only a subtle natural contact shadow close to the plate; no gray or beige cast, no vignette, no text, no props. Output one square photo, not a collage."
+    }
+  ]
+}

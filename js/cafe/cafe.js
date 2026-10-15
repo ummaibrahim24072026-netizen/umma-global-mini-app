@@ -23,9 +23,9 @@
   }
 
   const productPhotos = new Map([
-    ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa.png"],
-    ["UMMA-CAFE-PLOV", "logo/assets/menu/plov.png"],
-    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread.jpg"],
+    ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa-white-v2.webp"],
+    ["UMMA-CAFE-PLOV", "logo/assets/menu/plov-white-v2.webp"],
+    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread-white-v2.webp"],
     ["UMMA-CAFE-MANTI", "logo/assets/menu/manti.png"],
     ["UMMA-CAFE-SALAD", "logo/assets/menu/salad.png"],
     ["UMMA-CAFE-AYRAN", "logo/assets/menu/ayran-300.png"]
@@ -36,11 +36,15 @@
     try {
       const url = new URL(source, document.baseURI);
       if (url.protocol !== "https:" || url.username || url.password) return "";
-      return '<img class="cafe-product-photo" src="' + esc(url.href) + '" alt="' + esc(name(product)) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+      return '<div class="cafe-product-media"><img class="cafe-product-photo" src="' + esc(url.href) + '" alt="' + esc(name(product)) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>';
     } catch { return ""; }
   }
   byId("cafeProducts")?.addEventListener("error", event => {
-    if (event.target.matches?.(".cafe-product-photo")) event.target.hidden = true;
+    if (event.target.matches?.(".cafe-product-photo")) {
+      event.target.hidden = true;
+      const frame = event.target.closest(".cafe-product-media");
+      if (frame) frame.hidden = true;
+    }
   }, true);
   byId("cafeMenuSearch")?.addEventListener("input", event => {
     menuQuery = event.target.value;
