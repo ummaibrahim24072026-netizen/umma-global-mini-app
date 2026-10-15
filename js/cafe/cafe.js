@@ -22,10 +22,12 @@
     if (el) { el.textContent = message; el.hidden = !message; }
   }
 
+  const productPhotos = new Map([["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa.png"]]);
   function productPhoto(product) {
-    if (!product.image_url) return "";
+    const source = productPhotos.get(product.sku) || product.image_url;
+    if (!source) return "";
     try {
-      const url = new URL(product.image_url, document.baseURI);
+      const url = new URL(source, document.baseURI);
       if (url.protocol !== "https:" || url.username || url.password) return "";
       return '<img class="cafe-product-photo" src="' + esc(url.href) + '" alt="' + esc(name(product)) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
     } catch { return ""; }
