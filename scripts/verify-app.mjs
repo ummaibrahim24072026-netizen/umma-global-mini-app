@@ -13,7 +13,7 @@ const locationAdmin = read("js/admin/location-admin.js");
 const courierRoute = read("js/maps/courier-route.js");
 const html = read("index.html");
 
-for (const [name, source] of [["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin], ["location-admin.js", locationAdmin], ["courier-route.js", courierRoute]]) {
+for (const [name, source] of [["delivery-location.js", read("js/maps/delivery-location.js")], ["kitchen.js", kitchen], ["cafe.js", cafe], ["test-mode.js", testMode], ["products-admin.js", productsAdmin], ["staff-admin.js", staffAdmin], ["inventory-admin.js", inventoryAdmin], ["location-admin.js", locationAdmin], ["courier-route.js", courierRoute]]) {
   new vm.Script(source, { filename: name });
   console.log("PASS syntax:", name);
 }
@@ -125,7 +125,7 @@ console.log("PASS sandbox isolated in superadmin developer settings");
 
 const navigation=read("js/core/navigation.js");
 new vm.Script(navigation,{filename:"navigation.js"});
-assert.match(html,/js\/core\/navigation\.js\?v=6/,"shared navigation not loaded");
+assert.match(html,/js\/core\/navigation\.js\?v=\d+/,"shared navigation not loaded");
 assert.match(html,/id="cafeWaiterKitchen"/,"kitchen shortcut missing in order workspace");
 assert.match(kitchen,/byId\("cafeWaiterKitchen"\)\?\.addEventListener\("click", open\)/,"kitchen shortcut must work");
 const ids=["adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage","cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage","cafeInventoryPage","cafePage","cafeAccountingPage"];
