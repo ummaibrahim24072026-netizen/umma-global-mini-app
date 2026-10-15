@@ -43,5 +43,8 @@ try {
  assert.equal(saved[0].kind,'handover','unknown update result retains only a stage intent');
  const restored=runtime(saved);
  try {await until(()=>restored.refreshes===1);assert.deepEqual(restored.calls.map(x=>x.action),['updateDelivery'],'reload resumes confirmation without another photo');assert.equal(restored.calls[0].deliveryStatus,'delivered');assert.equal(restored.w.sessionStorage.length,0);}finally{restored.w.close();}
+ const gpsBeforeLateReplay=r.gps.length;const callsBeforeLateReplay=r.calls.length;
+ r.w.document.dispatchEvent(new r.w.CustomEvent('umma:cafe-operation-recovered',{detail:{payload:{action:'uploadDeliveryProof',orderId:'already-closed',kind:'pickup'},result:{order:{id:'already-closed',status:'completed',deliveryStatus:'delivered',paymentStatus:'paid'}}}}));await tick();
+ assert.equal(r.gps.length,gpsBeforeLateReplay,'late pickup replay never restarts GPS after handover');assert.equal(r.calls.length,callsBeforeLateReplay,'committed stage needs no second delivery request');
  console.log('PASS courier photos: one tap, duplicate suppression, pickup/handover auto confirmation, cancel/rejection safety, lost upload recovery and durable transition retry after reload');
 } finally {r.w.close();}

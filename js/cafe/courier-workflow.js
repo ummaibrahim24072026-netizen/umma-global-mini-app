@@ -34,11 +34,12 @@
     const target=kind==='pickup'?'picked_up':'delivered';
     const committed=confirmedOrder && (confirmedOrder.deliveryStatus===target || confirmedOrder.status==='completed');
     const result=committed?{order:confirmedOrder}:await api({action:'updateDelivery',orderId,deliveryStatus:target});
-    window.ummaKitchen?.applyCourierState?.(orderId,result.order||{deliveryStatus:target},proof);
+    const state=result.order||{deliveryStatus:target};
+    window.ummaKitchen?.applyCourierState?.(orderId,state,proof);
     forgetTransition(orderId);
     if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop();
     await window.ummaKitchen.refresh({afterMutation:true}).catch(()=>{});
-    if(kind==='pickup') await window.ummaCourierTracking?.start(orderId);
+    if(kind==='pickup' && state.deliveryStatus==='picked_up' && !['completed','cancelled'].includes(state.status)) await window.ummaCourierTracking?.start(orderId);
     message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Фото сохранено. Заказ вручён клиенту.');
    } catch(error) {
     message('Фото сохранено. '+(error.status>=400&&error.status<500?'Не удалось подтвердить этап: '+error.message:'Подтверждаем этап доставки после восстановления связи…'));
