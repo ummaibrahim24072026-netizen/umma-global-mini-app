@@ -48,6 +48,36 @@
       "output": "samsa-white.webp",
       "method": "built-in image_gen",
       "prompt": "Use case: precise-object-edit. Asset: UMMA cafe real menu product photo. Image 1 is the edit target and source of the exact food/drink. Image 2 is a STYLE REFERENCE ONLY; never include its food. Keep exactly one original closed triangular baked samsa pastry with the black seeds in the middle, preserving its shape, crust and portion. Remove the unrelated khachapuri at the top-left. Do not cut the samsa or reveal the filling. Place it on one plain round white ceramic plate. Match the clean white-background food photography of image 2. All images in this series use the same three-quarter overhead camera view, about 30 degrees away from straight down. Square 1:1 canvas. Complete plate or tea set centered, occupying about 85% of canvas width with even white margins, no cropping. Seamless white #FFFFFF surface and background, plain WHITE dishware, diffuse bright neutral studio lighting, only a very soft natural contact shadow. Preserve the source food/drink identity, realistic ingredients, color and texture; no beautification that changes the recipe. Remove surrounding furniture, people, hands, table edges, utensils, patterns, logos, text, clutter. One photograph only, no collage or labels."
+    },
+    {
+      "source": "01-8999.jpg",
+      "output": "turkish-ayran-500-white.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit the supplied original bottled drink photograph for UMMA cafe menu. Isolate ONLY the single Айран турецкий 0,5 л bottle from the source. Preserve the exact bottle silhouette and proportions, size-specific shoulder and neck, black screw cap, original liquid color and opacity and actual fill level. Keep the drink unchanged and the bottle closed. Remove all surrounding dishes, menu boards, utensils, reflections of clutter, tabletop edges and gray background. Place the complete upright bottle centered on seamless pure white #FFFFFF surface/background, occupying about 82% of a square 1:1 canvas height. Same centered slightly elevated front camera view for all four bottled drinks, clean realistic neutral studio lighting, soft contact shadow under the base. No plate, no extra glass, no pouring, no fruit or garnish, no logo, no invented label, no text, no collage. Preserve the existing real-product identity; improve exposure and clarity without changing the packaging."
+    },
+    {
+      "source": "02-8998.jpg",
+      "output": "blackberry-compote-500-white.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit the supplied original bottled drink photograph for UMMA cafe menu. Isolate ONLY the single Компот ежевичный 0,5 л bottle from the source. Preserve the exact bottle silhouette and proportions, size-specific shoulder and neck, black screw cap, original liquid color and opacity and actual fill level. Keep the drink unchanged and the bottle closed. Remove all surrounding dishes, menu boards, utensils, reflections of clutter, tabletop edges and gray background. Place the complete upright bottle centered on seamless pure white #FFFFFF surface/background, occupying about 82% of a square 1:1 canvas height. Same centered slightly elevated front camera view for all four bottled drinks, clean realistic neutral studio lighting, soft contact shadow under the base. No plate, no extra glass, no pouring, no fruit or garnish, no logo, no invented label, no text, no collage. Preserve the existing real-product identity; improve exposure and clarity without changing the packaging."
+    },
+    {
+      "source": "03-8997.jpg",
+      "output": "blackberry-compote-1000-white.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit the supplied original bottled drink photograph for UMMA cafe menu. Isolate ONLY the single Компот ежевичный 1 л bottle from the source. Preserve the exact bottle silhouette and proportions, size-specific shoulder and neck, black screw cap, original liquid color and opacity and actual fill level. Keep the drink unchanged and the bottle closed. Remove all surrounding dishes, menu boards, utensils, reflections of clutter, tabletop edges and gray background. Place the complete upright bottle centered on seamless pure white #FFFFFF surface/background, occupying about 82% of a square 1:1 canvas height. Same centered slightly elevated front camera view for all four bottled drinks, clean realistic neutral studio lighting, soft contact shadow under the base. No plate, no extra glass, no pouring, no fruit or garnish, no logo, no invented label, no text, no collage. Preserve the existing real-product identity; improve exposure and clarity without changing the packaging."
+    },
+    {
+      "source": "04-8996.jpg",
+      "output": "turkish-ayran-1000-white.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Edit the supplied original bottled drink photograph for UMMA cafe menu. Isolate ONLY the single Айран турецкий 1 л bottle from the source. Preserve the exact bottle silhouette and proportions, size-specific shoulder and neck, black screw cap, original liquid color and opacity and actual fill level. Keep the drink unchanged and the bottle closed. Remove all surrounding dishes, menu boards, utensils, reflections of clutter, tabletop edges and gray background. Place the complete upright bottle centered on seamless pure white #FFFFFF surface/background, occupying about 82% of a square 1:1 canvas height. Same centered slightly elevated front camera view for all four bottled drinks, clean realistic neutral studio lighting, soft contact shadow under the base. No plate, no extra glass, no pouring, no fruit or garnish, no logo, no invented label, no text, no collage. Preserve the existing real-product identity; improve exposure and clarity without changing the packaging."
+    },
+    {
+      "source": "black-tea-lemon-white.webp",
+      "output": "black-tea-lemon-piala-v2.webp",
+      "method": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit. Image 1 is the black tea with lemon photo to edit. Image 2 is the exact required piala and layout reference from the green tea photo. Replace ONLY the handled white cup and saucer in image 1 with the SAME handleless white ceramic piala from image 2, including its exact shallow rounded shape, small base and pale green geometric decorative bands and dots. No handle and NO saucer. Fill the piala with amber black tea, not pale green tea. Match the green tea layout: glass teapot on the LEFT, piala on the RIGHT, same perspective and relative sizes. Preserve the black-tea amber color, lemon slice, glass teapot black lid and handle and infuser; do not turn it into green tea. Pure white #FFFFFF seamless background, soft neutral studio lighting, square 1:1 canvas, both objects fully visible with white margins, natural subtle contact shadow. No text, labels, other props or collage."
     }
   ]
 }
