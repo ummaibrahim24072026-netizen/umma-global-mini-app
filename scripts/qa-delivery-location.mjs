@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{url:'https://synthetic-qa.invalid/',runScripts:'outside-only'}),w=dom.window,d=w.document;
-const $=id=>d.getElementById(id),requests=[],maps=[],markers=[],vectors=[],rasters=[];
+const $=id=>d.getElementById(id),requests=[],maps=[],markers=[],vectors=[],rasters=[],paints=[];
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition:(success,error,options)=>requests.push({success,error,options})}});
@@ -12,7 +12,7 @@ w.maplibregl={supported:()=>true};
 w.L={
  map:()=>{const map=emitter({center:{lat:12,lng:109},setView(point){this.center={lat:point[0],lng:point[1]};return this;},getCenter(){return this.center;},invalidateSize(){},remove(){this.removed=true;}});maps.push(map);return map;},
  tileLayer:options=>{rasters.push(options);return emitter({addTo(){return this;}});},divIcon:options=>options,
- maplibreGL:options=>{const gl=emitter({});const layer={options,gl,addTo(){return this;},getMaplibreMap(){return gl;},remove(){this.removed=true;}};vectors.push(layer);return layer;},
+ maplibreGL:options=>{const gl=emitter({getStyle:()=>({layers:[{id:"water",type:"fill","source-layer":"water"},{id:"buildings",type:"fill","source-layer":"building"},{id:"labels",type:"symbol","source-layer":"place"}]}),setPaintProperty:(...args)=>paints.push(args)});const layer={options,gl,addTo(){return this;},getMaplibreMap(){return gl;},remove(){this.removed=true;}};vectors.push(layer);return layer;},
  marker:point=>{const marker=emitter({point:{lat:point[0],lng:point[1]},addTo(){return this;},setLatLng(point){this.point={lat:point[0],lng:point[1]};return this;},getLatLng(){return this.point;}});markers.push(marker);return marker;}
 };
 w.Telegram={WebApp:{initData:'isolated-qa',initDataUnsafe:{user:{id:1,first_name:'QA'}}}};
@@ -31,7 +31,7 @@ try{
  $('cafeDeliveryMapOpen').focus();$('cafeDeliveryMapOpen').click();
  await tick();assert.equal(vectors.at(-1).options.style,'https://tiles.openfreemap.org/styles/liberty');
  assert.match(vectors.at(-1).options.attributionControl.customAttribution,/OpenStreetMap/,'required credit retained');
- vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap');assert.equal(rasters.length,0,'vector map is the primary provider');
+ vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap');assert.equal(rasters.length,0,'vector map is the primary provider');assert.equal($('cafeDeliveryMap').dataset.theme,'umma');assert.ok(paints.some(p=>p[0]==='water'&&p[2]==='#abd8d5'),'UMMA water palette applied');
  assert.equal($('cafeDeliveryMapDialog').open,true);assert.equal($('cafeDeliveryMapConfirm').disabled,true,'no default destination at cafe');
  assert.deepEqual(maps.at(-1).center,{lat:12.25,lng:109.19});
  maps.at(-1).fire('click',{latlng:{lat:12.26,lng:109.2}});
@@ -87,6 +87,13 @@ try{
  w.eval(readFileSync('js/core/navigation.js','utf8'));
  $('cafeDeliveryMapOpen').click();assert.equal(w.ummaNavigation.back(),true);assert.equal($('cafeDeliveryMapDialog').open,false);assert.equal($('cafeDeliveryMapDialog').isConnected,true,'Back preserves reusable picker');
  $('cafeOrderForm').reset();await tick();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);mode('delivery');assert.equal($('cafeDeliveryAddress').required,true);
+ // MapLibre 5 has no supported() export: absent optional legacy API must not force fallback.
+ delete w.maplibregl.supported;$('cafeDeliveryMapOpen').click();await tick();
+ vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap','real MapLibre 5 API supported');
+ const drag=maps.at(-1);drag.center={lat:12.31,lng:109.24};drag.fire('dragend');
+ assert.equal($('cafeDeliveryDraftCoordinates').textContent,'12.310000,109.240000','moving map chooses its center');
+ $('cafeDeliveryMapCenter').click();assert.deepEqual(drag.center,{lat:12.25,lng:109.19},'cafe shortcut recenters');
+ $('cafeDeliveryMapClose').click();
  // Unsupported WebGL and repeated vector errors switch to a free raster fallback.
  w.maplibregl.supported=()=>false;$('cafeDeliveryMapOpen').click();await tick();
  assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');$('cafeDeliveryMapClose').click();

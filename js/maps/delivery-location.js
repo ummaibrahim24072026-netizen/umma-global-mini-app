@@ -57,7 +57,7 @@
     generation++;
     draft = null; confirm.disabled = true;
     $("cafeDeliveryDraftCoordinates").textContent = "";
-    status("Нажмите на нужное место на карте. Метку можно передвинуть.");
+    status("Передвиньте карту или нажмите на нужное здание. Затем подтвердите точку.");
     dialog.showModal();
     if (!window.L?.map) {
       gps.disabled = true; $("cafeDeliveryMapCenter").disabled = true;
@@ -65,10 +65,13 @@
       return;
     }
     try {
-      map = window.L.map("cafeDeliveryMap", { scrollWheelZoom: false }).setView([cafe.lat, cafe.lng], 14);
+      map = window.L.map("cafeDeliveryMap", { scrollWheelZoom: false }).setView([cafe.lat, cafe.lng], 16);
       map.attributionControl?.setPrefix(false);
       addBasemap(generation);
       map.on("click", event => choose(event.latlng));
+      map.on("dragstart", stopPending);
+      map.on("dragend", () => choose(map.getCenter()));
+      window.L.marker([cafe.lat, cafe.lng], { interactive: false, keyboard: false, icon: window.L.divIcon({ className: "umma-cafe-marker", html: '<span>UMMA<br>CAFE</span>', iconSize: [48, 42], iconAnchor: [24, 42] }) }).addTo(map);
       gps.disabled = false; $("cafeDeliveryMapCenter").disabled = false;
       if (confirmed) { choose(confirmed); map.setView([confirmed.lat, confirmed.lng], 17, { animate: false }); }
       map.invalidateSize();
@@ -100,7 +103,7 @@
   $("cafeDeliveryMapClose").addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", cleanup);
   gps.addEventListener("click", locate);
-  $("cafeDeliveryMapCenter").addEventListener("click", () => { if (map) choose(map.getCenter()); });
+  $("cafeDeliveryMapCenter").addEventListener("click", () => { if (map) { stopPending(); map.setView([cafe.lat, cafe.lng], 16, { animate: false }); status("Кафе UMMA. Передвиньте карту к месту доставки или включите геолокацию."); } });
   confirm.addEventListener("click", () => {
     if (!valid(draft)) return;
     confirmed = { ...draft }; notify(); dialog.close();

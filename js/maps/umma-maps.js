@@ -15,7 +15,6 @@
     });
   }
   function load() {
-    if (window.maplibregl && window.L?.maplibreGL) return Promise.resolve();
     if (!libraries) {
       if (!document.getElementById('deliveryVectorMapCSS')) {
         const css = document.createElement('link'); css.id = 'deliveryVectorMapCSS'; css.rel = 'stylesheet';
@@ -27,6 +26,26 @@
       })().catch(error => { libraries = null; throw error; });
     }
     return libraries;
+  }
+  // Preserve labels, road hierarchy and data; change only the cartographic palette.
+  function theme(gl) {
+    for (const layer of gl.getStyle?.().layers || []) {
+      const source = layer['source-layer'], id = layer.id;
+      try {
+        if (layer.type === 'background') gl.setPaintProperty(id, 'background-color', '#f5f3ec');
+        if (layer.type === 'fill' && source === 'water') gl.setPaintProperty(id, 'fill-color', '#abd8d5');
+        if (layer.type === 'fill' && source === 'building') {
+          gl.setPaintProperty(id, 'fill-color', '#d9d3c5');
+          gl.setPaintProperty(id, 'fill-outline-color', '#c5bcaa');
+        }
+        if (layer.type === 'fill' && (source === 'park' || /landcover_wood|landuse_park/.test(id))) gl.setPaintProperty(id, 'fill-color', '#dce9da');
+        if (layer.type === 'line' && source === 'waterway') gl.setPaintProperty(id, 'line-color', '#8fc9c6');
+        if (layer.type === 'symbol' && source === 'place') {
+          gl.setPaintProperty(id, 'text-color', '#244f50');
+          gl.setPaintProperty(id, 'text-halo-color', '#fffdf6');
+        }
+      } catch { /* A provider style update must not prevent map display. */ }
+    }
   }
   function basemap(map, canvas, status = () => {}) {
     let vector, timer, raster = false, disposed = false;
@@ -45,11 +64,11 @@
     load().then(() => {
       if (!active()) return;
       try {
-        if (!window.maplibregl?.supported()) { fallback(); return; }
+        if (typeof window.maplibregl?.supported === 'function' && !window.maplibregl.supported()) { fallback(); return; }
         vector = window.L.maplibreGL({ style, attributionControl: { customAttribution: credit } }).addTo(map);
         const gl = vector.getMaplibreMap(); let errors = 0;
         timer = setTimeout(fallback, 15000);
-        gl.on('load', () => { if (active() && !raster) { clearTimeout(timer); canvas.dataset.basemap = 'openfreemap'; } });
+        gl.on('load', () => { if (active() && !raster) { clearTimeout(timer); theme(gl); canvas.dataset.basemap = 'openfreemap'; canvas.dataset.theme = 'umma'; } });
         gl.on('error', () => { if (++errors >= 3) fallback(); });
       } catch { fallback(); }
     }).catch(fallback);

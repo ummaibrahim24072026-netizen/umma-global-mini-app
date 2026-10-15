@@ -248,3 +248,27 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 .umma-routing-credit{display:block;margin-top:10px;color:#536d69;font-size:11px}.umma-routing-credit a{color:#087b80}
 #courierMapLocate,#cafeDeliveryMapConfirm{background:linear-gradient(120deg,#cfae64,#e6ce95);color:#233e3d;border:1px solid #b89449;box-shadow:0 3px 12px #a4803022}
 @media(prefers-reduced-motion:no-preference){.umma-map-marker-courier{transition:transform 1s linear}}
+
+/* Umma Maps destination workspace: map first, confirmation always reachable. */
+#cafeDeliveryMapDialog{padding:0;border:1px solid #c6b47c;overflow:hidden;background:#f7f8f3;box-shadow:0 24px 90px #163d3e55;display:flex;flex-direction:column;gap:0}
+#cafeDeliveryMapDialog:not([open]){display:none}
+#cafeDeliveryMapDialog .delivery-map-heading{padding:20px 20px 16px;background:#123f42;color:#fff}
+#cafeDeliveryMapDialog .umma-maps-brand{color:#e3c77f;font-size:10px;margin-bottom:4px}
+#cafeDeliveryMapDialog .delivery-map-heading h2{font-size:22px;line-height:1.3;font-weight:700}
+#cafeDeliveryMapClose{flex:0 0 44px!important;padding:0!important;min-width:44px;background:#ffffff12!important;color:#fff!important;border-color:#ffffff40!important;font-size:20px!important}
+#cafeDeliveryMapStatus{padding:12px 20px;margin:0;min-height:58px;box-sizing:border-box;color:#355958;font-size:13px}
+#cafeDeliveryMapDialog .delivery-map-tools{padding:0 16px 12px;margin:0;gap:8px}
+#cafeDeliveryMapDialog .delivery-map-tools button{flex:1 1 0;min-width:0;border-radius:14px;background:#fff;font-size:12px}
+#cafeDeliveryMapLocate{color:#fff!important;background:#086f76!important;border-color:#086f76!important}
+#cafeDeliveryMap{position:relative;flex:1 1 auto;min-height:200px;height:min(52dvh,480px);border:0;border-top:1px solid #d9e3dd;border-bottom:1px solid #d9e3dd;border-radius:0;width:100%;box-sizing:border-box}
+#cafeDeliveryMap .leaflet-control-zoom{border:1px solid #d6ded8;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px #204c4822}
+#cafeDeliveryMap .leaflet-control-zoom a{color:#17595d;background:#fffffc;width:38px;height:38px;line-height:38px}
+.umma-map-selection{display:flex;align-items:center;gap:12px;padding:14px 20px 8px;flex-shrink:0}.umma-map-selection strong{font-size:13px;color:#204a49}
+.umma-map-selection-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e8dfc9;color:#86682a;font-size:27px}
+#cafeDeliveryDraftCoordinates{margin:4px 0 0;font-size:11px;font-variant-numeric:tabular-nums;min-height:14px}
+#cafeDeliveryMapConfirm{flex-shrink:0;width:calc(100% - 32px);margin:8px 16px 18px;min-height:52px;font-size:15px;border-radius:16px}
+.delivery-destination-marker span{background:#bb9443;border:4px solid #fff;box-shadow:0 3px 12px #3d352d55}
+.delivery-destination-marker span::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#fff}
+.umma-cafe-marker{background:transparent;border:0}.umma-cafe-marker span{display:grid;place-items:center;width:48px;height:40px;background:#124e51;color:#f0d28c;font-size:9px;font-weight:850;letter-spacing:.07em;text-align:center;line-height:1.2;border:2px solid #f0d28c;border-radius:12px;box-shadow:0 3px 12px #123f4244}
+@media(max-width:640px){#cafeDeliveryMapDialog{top:0;bottom:0;height:var(--umma-viewport-height,100dvh);max-height:var(--umma-viewport-height,100dvh);max-width:none;width:100%;margin:0;border:0;border-radius:0;padding:0}#cafeDeliveryMapDialog .delivery-map-heading{padding-top:calc(16px + var(--umma-safe-top,0px))}#cafeDeliveryMap{height:auto;min-height:140px}#cafeDeliveryMapConfirm{margin-bottom:calc(16px + var(--umma-safe-bottom,0px))}}
+@media(max-height:520px){#cafeDeliveryMapDialog .delivery-map-heading{padding:10px 16px}#cafeDeliveryMapStatus{min-height:0;padding:7px 16px}#cafeDeliveryMapDialog .delivery-map-tools{padding-bottom:6px}.umma-map-selection{padding-top:6px}#cafeDeliveryMapConfirm{margin-top:4px;margin-bottom:8px;min-height:44px}}
