@@ -76,3 +76,5 @@
 #cafePage .cafe-banner-services{margin-inline:-14px}
 
 #cafePage .cafe-availability-notice{padding:14px 16px;margin:12px 0;border:1px solid #b8dfe4;border-radius:14px;background:#e3f4f6;color:#2a6370;font-size:13px;line-height:1.6}
+/* Long availability messages wrap instead of pushing the total off narrow screens. */
+#cafePage .cafe-sticky-order button{flex:0 1 auto;min-width:0;max-width:65%;white-space:normal;overflow-wrap:anywhere}
