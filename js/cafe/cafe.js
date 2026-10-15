@@ -28,7 +28,9 @@
     ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread-white-v2.webp"],
     ["UMMA-CAFE-MANTI", "logo/assets/menu/manti.png"],
     ["UMMA-CAFE-SALAD", "logo/assets/menu/salad.png"],
-    ["UMMA-CAFE-AYRAN", "logo/assets/menu/ayran-300.png"]
+    ["UMMA-CAFE-AYRAN", "logo/assets/menu/ayran-300.png"],
+    ["UMMA-CAFE-SAMSA", "logo/assets/menu/samsa-white.webp"],
+    ["UMMA-CAFE-SAMSA-CHICKEN", "logo/assets/menu/samsa-white.webp"]
   ]);
   function productPhoto(product) {
     const source = productPhotos.get(product.sku) || product.image_url;
