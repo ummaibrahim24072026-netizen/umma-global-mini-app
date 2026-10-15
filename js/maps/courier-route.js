@@ -1,4 +1,4 @@
-/* Courier navigation opens Google Maps directly from a user gesture. */
+/* Courier navigation opens the selected Google or Apple Maps directly from a user gesture. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -8,7 +8,8 @@
     const point = window.ummaMapLinks?.parseAddress(address);
     return { address, point, text: point ? window.ummaMapLinks.coords(point) : address + ', Vietnam' };
   }
-  function url(button) {
+  function url(button, provider = button.dataset.navigationProvider) {
+    if (provider === 'apple') return 'https://maps.apple.com/directions?destination=' + encodeURIComponent(destination(button).text) + '&mode=driving';
     return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination=' + encodeURIComponent(destination(button).text);
   }
   function close() {
@@ -23,7 +24,7 @@
     const d = destination(button); modal.hidden = false; modal.style.display = 'block';
     $('courierMapTitle').textContent = 'Доставка · Заказ №' + (button.dataset.routeOrderNumber || '');
     $('courierMapMessage').textContent = d.address;
-    $('courierMapExternal').href = url(button);
+    $('courierMapExternal').href = url(button, 'google');
     $('courierMapApple').hidden = false;
     $('courierMapApple').href = 'https://maps.apple.com/directions?destination=' + encodeURIComponent(d.text) + '&mode=driving';
     if (d.point) try { map = window.UmmaMaps.create($('courierRouteMap'), d.point); window.UmmaMaps.marker(map, d.point); } catch (e) { $('courierMapMessage').textContent = e.message; }
