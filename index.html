@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=13">
+  <link rel="stylesheet" href="css/native.css?v=14">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -733,10 +733,22 @@
     <div class="cafe-page-inner">
       <button type="button" id="cafeBack" class="cafe-banner-back">← Главная</button>
       <header class="cafe-banner-header">
-        <h1 class="cafe-banner-title">Кафе UMMA</h1>
-        <div class="cafe-banner-viewport">
-          <img class="cafe-banner-image" src="logo/assets/umma-cafe-banner.png" width="1536" height="512" alt="UMMA — Central Asian Halal Cuisine. Unity · Care · Growth. Халяль." decoding="async" fetchpriority="high">
+        <div class="cafe-brand-lockup">
+          <svg class="cafe-brand-seal" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            <path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z"/>
+            <path class="cafe-seal-inner" d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z"/>
+            <text x="50" y="69" text-anchor="middle" class="cafe-seal-letter">U</text>
+          </svg>
+          <h1 class="cafe-banner-title" aria-label="Кафе UMMA">UMMA</h1>
+          <svg class="cafe-brand-seal" viewBox="0 0 100 100" role="img" aria-label="Халяль" focusable="false">
+            <path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z"/>
+            <path class="cafe-seal-inner" d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z"/>
+            <text x="50" y="54" text-anchor="middle" class="cafe-seal-arabic" lang="ar">حلال</text>
+            <text x="50" y="70" text-anchor="middle" class="cafe-seal-halal">HALAL</text>
+          </svg>
         </div>
+        <p class="cafe-brand-cuisine">Central Asian<br><span>Halal Cuisine</span></p>
+        <div class="cafe-brand-values" aria-label="Unity, Care, Growth"><span>Unity</span><i aria-hidden="true"></i><span>Care</span><i aria-hidden="true"></i><span>Growth</span></div>
         <div class="cafe-banner-services" aria-label="Способы заказа"><span>В кафе</span><i aria-hidden="true"></i><span>С собой</span><i aria-hidden="true"></i><span>Доставка</span></div>
       </header>
 
