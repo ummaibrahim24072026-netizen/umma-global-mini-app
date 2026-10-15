@@ -22,7 +22,11 @@
     if (el) { el.textContent = message; el.hidden = !message; }
   }
 
-  const productPhotos = new Map([["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa.png"]]);
+  const productPhotos = new Map([
+    ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa.png"],
+    ["UMMA-CAFE-PLOV", "logo/assets/menu/plov.png"],
+    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread.jpg"]
+  ]);
   function productPhoto(product) {
     const source = productPhotos.get(product.sku) || product.image_url;
     if (!source) return "";
