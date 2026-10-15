@@ -82,7 +82,7 @@
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото':'Вручить · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото и GPS':'Вручить · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
       }
       if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
@@ -154,8 +154,9 @@
   let refreshQueued=false;
   let lastOrdersFingerprint = null;
   async function loadOrders(options = {}) {
+    if (options?.afterMutation) { ordersRevision++; lastOrdersFingerprint = null; }
     if (busy || statusActions.size) {refreshQueued=true;return;}
-    if (ordersLoading) return;
+    if (ordersLoading) { if(options?.afterMutation) refreshQueued=true; return; }
     const revision = ordersRevision;
     const silent = options?.silent === true;
     ordersLoading = true;

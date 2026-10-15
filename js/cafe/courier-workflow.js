@@ -1,4 +1,4 @@
-/* Courier offers and private delivery evidence. No silent location tracking. */
+/* Courier offers and private delivery evidence; confirmed pickup starts delivery GPS. */
 (() => {
  'use strict';
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
@@ -33,7 +33,9 @@
    try {
     await api({action:'updateDelivery',orderId,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});
     forgetTransition(orderId);
-    await window.ummaKitchen.refresh().catch(()=>{});
+    if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop();
+    await window.ummaKitchen.refresh({afterMutation:true}).catch(()=>{});
+    if(kind==='pickup') await window.ummaCourierTracking?.start(orderId);
     message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Фото сохранено. Заказ вручён клиенту.');
    } catch(error) {
     message('Фото сохранено. '+(error.status>=400&&error.status<500?'Не удалось подтвердить этап: '+error.message:'Подтверждаем этап доставки после восстановления связи…'));
@@ -51,7 +53,7 @@
  window.addEventListener('online',()=>void resumeTransitions());
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void resumeTransitions();});
  // Resume only a recorded successful upload, never a cancelled camera selection.
- void resumeTransitions();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>void resumeTransitions(),{once:true});else void resumeTransitions();
  function message(text){const own=document.getElementById('courierWorkflowMessage');const root=own&&!document.getElementById('courierOffers')?.hidden?own:document.getElementById('cafeKitchenMessage');if(root){root.hidden=false;root.textContent=text;}}
  function renderOffers(offers,role){const root=document.getElementById('courierOffers');if(!root)return;root.hidden=role!=='courier';if(root.hidden){lastOfferSignature='';return;}const signature=JSON.stringify(offers);if(signature===lastOfferSignature||busy)return;lastOfferSignature=signature;
  root.innerHTML='<h2>Предложения доставок</h2><p>Заказ получит первый подтвердивший курьер. Отказ требует причины.</p><button type="button" id="courierGeoOnce" class="kitchen-action">Обновить геопозицию для подбора на 10 минут</button><div id="courierWorkflowMessage" role="status"></div>'+offers.map(o=>'<article class="kitchen-order-card"><strong>Доставка №'+esc(o.orderNumber)+'</strong><p>'+esc(o.locationName)+' · '+esc(o.kitchenStatus==='ready'?'Готов':'Готовится')+'</p><div class="kitchen-order-actions"><button class="kitchen-action" data-courier-accept="'+esc(o.orderId)+'">Принять доставку</button><button class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться с причиной</button></div></article>').join('');
