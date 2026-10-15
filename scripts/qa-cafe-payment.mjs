@@ -30,7 +30,7 @@ const dom=new JSDOM('<button data-pay-order="'+id+'">Pay</button>',{url:'https:/
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
 w.Telegram={WebApp:{initData:'synthetic'}};let calls=[],resolve;
-w.fetch=async(url,opts)=>{calls.push(JSON.parse(opts.body));return new Response(JSON.stringify({ok:true,payment:{...payment,reference:'<img src=x>'}}));};
+w.fetch=async(url,opts)=>{calls.push(JSON.parse(opts.body));return new Response(JSON.stringify({ok:true,payment:{...payment,orderNumber:'<img src=x>',reference:'<img src=x>'}}));};
 w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/payment.js'));
 await w.ummaCafePayment.show(id);assert.ok(d.querySelector('.cafe-payment-qr'));assert.equal(d.querySelectorAll('img:not([hidden])').length,1);assert.ok(d.querySelector('.cafe-payment-sheet').textContent.includes('<img src=x>'));const link=new URL(d.querySelector('.cafe-payment-open').href);assert.equal(link.hostname,'dl.vietqr.io');assert.equal(link.searchParams.get('am'),'125000');assert.equal(link.searchParams.get('app'),'vcb');assert.equal(calls.filter(c=>c.action==='paymentDetails').length,1);assert.equal(calls[0].action,'paymentDetails');assert.equal(d.querySelectorAll('[data-confirm-payment]').length,0);
 d.querySelector('.cafe-payment-close').click();assert.equal(d.querySelector('dialog').open,false);
