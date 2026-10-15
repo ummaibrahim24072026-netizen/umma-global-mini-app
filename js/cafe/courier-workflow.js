@@ -27,15 +27,19 @@
   if(retryTimer)return;
   retryTimer=setTimeout(()=>{retryTimer=null;void resumeTransitions();},10000);
  }
- async function completePhoto(orderId,kind){
+ async function completePhoto(orderId,kind,confirmedOrder=null,proof=null){
   if(completing.has(orderId))return completing.get(orderId);
   const task=(async()=>{
    try {
-    await api({action:'updateDelivery',orderId,deliveryStatus:kind==='pickup'?'picked_up':'delivered'});
+    const target=kind==='pickup'?'picked_up':'delivered';
+    const committed=confirmedOrder && (confirmedOrder.deliveryStatus===target || confirmedOrder.status==='completed');
+    const result=committed?{order:confirmedOrder}:await api({action:'updateDelivery',orderId,deliveryStatus:target});
+    const state=result.order||{deliveryStatus:target};
+    window.ummaKitchen?.applyCourierState?.(orderId,state,proof);
     forgetTransition(orderId);
     if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop();
     await window.ummaKitchen.refresh({afterMutation:true}).catch(()=>{});
-    if(kind==='pickup') await window.ummaCourierTracking?.start(orderId);
+    if(kind==='pickup' && state.deliveryStatus==='picked_up' && !['completed','cancelled'].includes(state.status)) await window.ummaCourierTracking?.start(orderId);
     message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Фото сохранено. Заказ вручён клиенту.');
    } catch(error) {
     message('Фото сохранено. '+(error.status>=400&&error.status<500?'Не удалось подтвердить этап: '+error.message:'Подтверждаем этап доставки после восстановления связи…'));
@@ -67,7 +71,34 @@
   // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
   return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
  }
- async function photo(id,kind,button){if(busy||completing.has(id))return;const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.onchange=async()=>{if(busy||!input.files?.length)return;busy=true;const label=button.textContent;button.disabled=true;button.textContent='Сохраняем фото…';button.setAttribute('aria-busy','true');try{message('Сохраняем фото…');const imageBase64=await jpeg(input.files?.[0]);await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});rememberTransition(id,kind);button.textContent=kind==='pickup'?'Подтверждаем получение…':'Подтверждаем вручение…';await completePhoto(id,kind);}catch(e){message(e.message);}finally{busy=false;if(button.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}}};input.click();}
+ let cameraInput=null;
+ async function photo(id,kind,button){
+  if(busy||completing.has(id)||cameraInput)return;
+  const input=document.createElement('input');cameraInput=input;
+  input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.hidden=true;
+  input.dataset.courierCamera=id;
+  const label=button.textContent;
+  button.disabled=true;button.textContent='Выберите или сделайте фото…';
+  const stepMessage=text=>{message(text);document.querySelectorAll('[data-courier-step-status]').forEach(el=>{if(el.dataset.courierStepStatus===id)el.textContent=text;});};
+  const cleanup=()=>{input.remove();if(cameraInput===input)cameraInput=null;if(button.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}};
+  input.oncancel=cleanup;
+  input.onchange=async()=>{
+   if(busy||!input.files?.length){cleanup();return;}
+   busy=true;button.textContent='Сохраняем фото…';button.setAttribute('aria-busy','true');
+   try {
+    stepMessage('Сохраняем фото…');
+    const imageBase64=await jpeg(input.files[0]);
+    const result=await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});
+    rememberTransition(id,kind);
+    button.textContent=kind==='pickup'?'Подтверждаем получение…':'Подтверждаем вручение…';
+    await completePhoto(id,kind,result.order,result.proof);
+   }catch(e){stepMessage('Фото не подтверждено: '+e.message);}
+   finally{busy=false;cleanup();}
+  };
+  // Keep a real, connected file input alive while the Telegram WebView opens its camera.
+  document.body.append(input);
+  try{input.click();}catch(e){stepMessage(e.message);cleanup();}
+ }
  document.addEventListener('click',async event=>{const target=event.target.closest?.('button');if(!target)return;
  if(target.dataset.courierAccept)await respond(target.dataset.courierAccept,true,null,target);
  if(target.dataset.courierDecline)decline(target.dataset.courierDecline);
@@ -75,6 +106,6 @@
  if(target.dataset.viewProof){if(target.disabled)return;target.disabled=true;const label=target.textContent;target.textContent='Открываем фото…';try{const result=await api({action:'viewDeliveryProof',proofId:target.dataset.viewProof});const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';const image=document.createElement('img');image.style.width='100%';image.alt='Фото доставки';image.referrerPolicy='no-referrer';image.src=result.url;const close=document.createElement('button');close.textContent='← Назад';close.onclick=()=>dialog.remove();dialog.append(close,image);document.body.append(dialog);dialog.showModal();}catch(e){message(e.message);}finally{target.disabled=false;target.textContent=label;}}
  if(target.id==='courierGeoOnce'){if(!navigator.geolocation){message('Геопозиция недоступна. Общие предложения всё равно доступны.');return;}if(target.disabled)return;const label=target.textContent;target.disabled=true;target.textContent='Определяем позицию…';const restore=()=>{target.disabled=false;target.textContent=label;};message('Запрашиваем геопозицию…');navigator.geolocation.getCurrentPosition(async p=>{try{await api({action:'courierPosition',latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});message('Геопозиция обновлена; используется для подбора ближайшего курьера 10 минут.');}catch(e){message(e.message);}finally{restore();}},()=>{message('Геопозиция не получена. Вы можете принимать общие предложения.');restore();},{maximumAge:60000,timeout:10000,enableHighAccuracy:true});}
  });
- document.addEventListener('umma:cafe-operation-recovered',async event=>{const payload=event.detail.payload;if(payload.action==='uploadDeliveryProof'){rememberTransition(payload.orderId,payload.kind);await completePhoto(payload.orderId,payload.kind);}});
+ document.addEventListener('umma:cafe-operation-recovered',async event=>{const payload=event.detail.payload;if(payload.action==='uploadDeliveryProof'){rememberTransition(payload.orderId,payload.kind);await completePhoto(payload.orderId,payload.kind,event.detail.result?.order,event.detail.result?.proof);}});
  window.ummaCourierWorkflow={renderOffers};
 })();

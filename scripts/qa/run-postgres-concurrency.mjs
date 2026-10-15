@@ -1,3 +1,4 @@
+import {verifyCourierPhotoCompletion} from '../qa-courier-photo-completion.mjs';
 import pg from 'pg';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import assert from 'node:assert/strict';
@@ -64,4 +65,5 @@ try {
  console.log('PASS native concurrent notification workers: SKIP LOCKED leases remain disjoint before commit');
 
 
+ await verifyCourierPhotoCompletion({query:(...args)=>observer.query(...args),exec:s=>observer.query(s)},location,'33333333-3333-4333-8333-333333333333','umma_qa_20261013');
 }finally {await Promise.all(clients.map(c=>c.end()));}

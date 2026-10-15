@@ -30,5 +30,5 @@ export async function uploadDeliveryProof(client:any, actor:number, body:any){
   }
  }
  const confirmed=await client.rpc('confirm_cafe_delivery_proof',{p_id:proof.id,p_actor:actor});if(confirmed.error)throw new Error(confirmed.error.message);
- return {ok:true,proof:confirmed.data.proof};
+ return {ok:true,proof:confirmed.data.proof,order:confirmed.data.order};
 }

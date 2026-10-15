@@ -15,7 +15,7 @@ function runtime(saved=[]){
  w.FileReader=class{readAsDataURL(){this.result='data:image/jpeg;base64,cWE=';queueMicrotask(()=>this.onload());}};
  w.Image=class{width=100;height=100;set src(value){queueMicrotask(()=>this.onload());}};
  w.HTMLCanvasElement.prototype.getContext=()=>({drawImage(){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/jpeg;base64,cWE=';
- w.HTMLInputElement.prototype.click=function(){if(cancel)return;Object.defineProperty(this,'files',{value:[{type:'image/jpeg',size:100}]});void this.onchange();};
+ w.HTMLInputElement.prototype.click=function(){if(cancel){this.oncancel?.();return;}Object.defineProperty(this,'files',{value:[{type:'image/jpeg',size:100}]});void this.onchange();};
  if(saved.length)w.sessionStorage.setItem('umma:courier-photo-transition:20',JSON.stringify(saved));
  w.eval(source);
  return {dom,w,d,calls,gps,get refreshes(){return refreshes;},set cancel(v){cancel=v;},set rejectUpload(v){rejectUpload=v;},set loseTransition(v){loseTransition=v;}};
@@ -43,5 +43,8 @@ try {
  assert.equal(saved[0].kind,'handover','unknown update result retains only a stage intent');
  const restored=runtime(saved);
  try {await until(()=>restored.refreshes===1);assert.deepEqual(restored.calls.map(x=>x.action),['updateDelivery'],'reload resumes confirmation without another photo');assert.equal(restored.calls[0].deliveryStatus,'delivered');assert.equal(restored.w.sessionStorage.length,0);}finally{restored.w.close();}
+ const gpsBeforeLateReplay=r.gps.length;const callsBeforeLateReplay=r.calls.length;
+ r.w.document.dispatchEvent(new r.w.CustomEvent('umma:cafe-operation-recovered',{detail:{payload:{action:'uploadDeliveryProof',orderId:'already-closed',kind:'pickup'},result:{order:{id:'already-closed',status:'completed',deliveryStatus:'delivered',paymentStatus:'paid'}}}}));await tick();
+ assert.equal(r.gps.length,gpsBeforeLateReplay,'late pickup replay never restarts GPS after handover');assert.equal(r.calls.length,callsBeforeLateReplay,'committed stage needs no second delivery request');
  console.log('PASS courier photos: one tap, duplicate suppression, pickup/handover auto confirmation, cancel/rejection safety, lost upload recovery and durable transition retry after reload');
 } finally {r.w.close();}

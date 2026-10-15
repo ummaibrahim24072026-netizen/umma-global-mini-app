@@ -1,6 +1,6 @@
 import {readFileSync,writeFileSync,mkdirSync,copyFileSync} from 'node:fs';
 const directory='supabase/release';mkdirSync(directory,{recursive:true});
-const files=['cafe-lifecycle-hardening.sql','cafe-courier-workflow.sql','cafe-delivery-tracking.sql','cafe-self-courier.sql','cafe-order-idempotency.sql','cafe-cash-summary.sql','cafe-delivery-hardening.sql','cafe-refunds.sql','cafe-notifications.sql'];
+const files=['cafe-lifecycle-hardening.sql','cafe-courier-workflow.sql','cafe-delivery-tracking.sql','cafe-self-courier.sql','cafe-order-idempotency.sql','cafe-cash-summary.sql','cafe-delivery-hardening.sql','cafe-refunds.sql','cafe-notifications.sql','courier-photo-completion.sql'];
 const bundle='-- Reviewable release proposal. NOT deployed. One atomic transaction.\nBEGIN;\n'+files.map(name=>'\n-- '+name+'\n'+readFileSync('supabase/proposals/'+name,'utf8').replace(/^BEGIN;\s*$/gm,'').replace(/^COMMIT;\s*$/gm,'')).join('\n')+'\nCOMMIT;\n';
 writeFileSync(directory+'/cafe-launch.sql',bundle);
 for(const [slug,path] of [['create-cafe-order','supabase/functions/create-cafe-order/index.ts'],['cafe-kitchen','supabase/functions/cafe-kitchen/index.ts']]){
