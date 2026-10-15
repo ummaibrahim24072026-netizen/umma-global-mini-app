@@ -5,7 +5,7 @@ const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/
 const dom=new JSDOM(html,{url:'https://umma.example/',runScripts:'outside-only'}),w=dom.window,d=w.document;
 const products=[
  {id:'plov',sku:'UMMA-CAFE-PLOV',name_ru:'Плов',name_en:'Plov',description_ru:'С бараниной',price_vnd:120000,image_url:'https://images.example/plov.jpg'},
- {id:'manti',sku:'UMMA-CAFE-MANTI',name_ru:'Манты',description_vi:'Thịt cừu',price_vnd:150000,image_url:'javascript:alert(1)'},
+ {id:'manti',sku:'QA-UNTRUSTED-PHOTO',name_ru:'Манты',description_vi:'Thịt cừu',price_vnd:150000,image_url:'javascript:alert(1)'},
  {id:'sold',name_ru:'Нет в наличии',price_vnd:1}
 ];
 const inventory=products.map((p,i)=>({product_id:p.id,location_id:'cafe',quantity:i===2?0:2,reserved_quantity:0,is_available:true}));
