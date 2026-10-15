@@ -492,6 +492,9 @@
           ? "<br>Уведомления сотрудникам кафе: " + Number(result.staffNotified)
           : "<br>Внимание: уведомление сотрудникам не подтверждено. Свяжитесь с кафе, если заказ срочный.";
         resultEl.innerHTML = "Заказ №" + esc(order.orderNumber) + " принят.<br>Кафе: " + esc(selectedCafe?.name || "Umma Cafe") + "<br>Статус: ожидает подтверждения кафе.<br>Сумма: " + money(order.totalVnd) + notificationLine;
+        if(byId("cafePaymentMethod")?.value==="qr") {
+          resultEl.innerHTML += '<p>QR с суммой заказа готов. Оплату подтвердит кафе после поступления денег.</p>' + window.ummaCafePayment.button(order.id);
+        }
         if(byId("cafePaymentMethod")?.value==="bank_transfer"){
           const country=byId("cafeTransferCountry")?.value||"RU";
           resultEl.innerHTML += '<div><p>Переведите сумму по реквизитам, полученным от кафе. Приложите скриншот перевода. Оплату подтвердит сотрудник после проверки поступления денег.</p><label>Скриншот перевода<input id="cafeTransferFile" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="cafeTransferSend" class="cafe-submit">Отправить чек</button><p id="cafeTransferMessage"></p></div>';
@@ -508,6 +511,7 @@
           });
         }
         resultEl.hidden = false;
+        if(byId("cafePaymentMethod")?.value==="qr") window.ummaCafePayment?.show(order.id);
       }
       byId("cafeOrderForm")?.reset();
       if (addressLabel) addressLabel.hidden = true;
@@ -577,7 +581,7 @@
         const itemsHtml = items.map(item => "<li><span>" + esc(item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
         const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
         const orderTypeName = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
-        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (order.qr_payment_available ? window.ummaCafePayment?.button(order.id) || '' : '') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
       }).join("");
     } catch (error) {
       if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }
