@@ -239,3 +239,12 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 /* High-resolution vector basemap loads only when the destination picker opens. */
 .delivery-location-map[data-basemap="loading"]::after{content:"Загружаем карту…";position:absolute;inset:0;z-index:400;display:grid;place-items:center;background:#edf5f0d9;color:#536d69;font-size:13px;pointer-events:none}
 .delivery-location-map .leaflet-control-attribution{max-width:calc(100% - 12px);font-size:10px;line-height:1.4;background:#ffffffed}
+
+/* Umma Maps: shared destination, routing and live courier surfaces. */
+.umma-maps-brand{display:block;font-size:11px;letter-spacing:.19em;font-weight:800;color:#977528;line-height:1.8}
+.umma-map-marker{display:grid;place-items:center;border-radius:50%;background:#087b80;border:3px solid #fff;color:#fff;box-shadow:0 3px 14px #163a3b44;box-sizing:border-box;font-size:19px}
+.umma-map-marker-destination{background:#b18d40}.umma-map-marker-courier{background:#087b80}
+.delivery-tracking-map,#courierRouteMap{border-radius:18px;overflow:hidden;isolation:isolate;background:#edf5f0;position:relative}
+.umma-routing-credit{display:block;margin-top:10px;color:#536d69;font-size:11px}.umma-routing-credit a{color:#087b80}
+#courierMapLocate,#cafeDeliveryMapConfirm{background:linear-gradient(120deg,#cfae64,#e6ce95);color:#233e3d;border:1px solid #b89449;box-shadow:0 3px 12px #a4803022}
+@media(prefers-reduced-motion:no-preference){.umma-map-marker-courier{transition:transform 1s linear}}
