@@ -2,8 +2,10 @@ import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {uploadDeliveryProof} from '../supabase/functions/_shared/courier-workflow.ts';
-export async function verifyCourierPhotoCompletion(db,cafe,product){
- await db.exec(readFileSync('supabase/proposals/courier-photo-completion.sql','utf8'));
+export async function verifyCourierPhotoCompletion(db,cafe,product,schema="public"){
+ assert.match(schema,/^[a-z_][a-z0-9_]*$/);
+ const sql=readFileSync('supabase/proposals/courier-photo-completion.sql','utf8');
+ await db.exec(schema==='public'?sql:sql.replace(/public\./g,schema+'.').replace(/'public'/g,"'"+schema+"'"));
  const q=(sql,args=[])=>db.query(sql,args);
  const rpc=async(name,args)=>{try{const keys=Object.keys(args);const r=await q('select '+name+'('+keys.map((k,i)=>k+' => $'+(i+1)).join(',')+') result',Object.values(args));return {data:r.rows[0].result,error:null};}catch(e){return {data:null,error:{message:e.message}};}};
  const objects=new Map();const client={rpc,storage:{from:()=>({upload:async(path,bytes)=>{objects.set(path,bytes);return {error:null};},download:async path=>({data:new Blob([objects.get(path)]),error:null})})}};
