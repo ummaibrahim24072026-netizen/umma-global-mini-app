@@ -64,5 +64,41 @@ try{
  await w.ummaCafe.refreshMenu();
  assert.equal(category('soups'),null,'unavailable section omitted');
  assert.equal(category('all').getAttribute('aria-pressed'),'true','vanished section resets after stock refresh');
- console.log('PASS menu: grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
+ // Header buttons and checkout must share one mode, including submission and reset.
+ const modeButton=mode=>d.querySelector('[data-order-mode="'+mode+'"]');
+ const orderType=d.getElementById('cafeOrderType'),address=d.getElementById('cafeDeliveryAddress');
+ assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true');
+ modeButton('delivery').click();assert.equal(orderType.value,'delivery');
+ assert.equal(address.required,true);assert.equal(d.getElementById('cafeAddressLabel').hidden,false);
+ assert.match(d.querySelector('#cafePaymentMethod option[value="cash"]').textContent,/курьеру/);
+ orderType.value='dine_in';orderType.dispatchEvent(new w.Event('change'));
+ assert.equal(modeButton('dine_in').getAttribute('aria-pressed'),'true','checkout updates header');
+ assert.equal(address.required,false);assert.equal(d.getElementById('cafeAddressLabel').hidden,true);
+ d.getElementById('cafeOrderForm').reset();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','form reset updates header');
+ w.Telegram={WebApp:{initData:'isolated-qa-only'}};
+ const submitted=[];
+ w.ummaCafeRequests={request:async(url,payload)=>{
+  submitted.push(payload);
+  return {ok:true,json:async()=>({ok:true,order:{id:'qa-order',orderNumber:1,totalVnd:50000},staffNotified:1})};
+ }};
+ for(const [mode,id] of [['delivery','tea'],['pickup','bread'],['dine_in','chicken']]){
+  modeButton(mode).click();
+  d.querySelector('[data-add-product="'+id+'"]').click();
+  assert.equal(orderType.value,mode,'adding food preserves header choice');
+  if(mode==='delivery'){
+   const before=submitted.length;
+   d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+   assert.equal(submitted.length,before,'missing delivery address blocks submission');
+   address.value='QA address';
+  }
+  d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(submitted.at(-1).orderType,mode,'selected mode reaches actual order handler payload');
+  assert.equal(submitted.at(-1).paymentTiming,mode==='delivery'?'on_delivery':'now');
+  assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','successful order resets selection');
+  assert.equal(address.required,false);
+ }
+ assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
+ console.log('PASS menu: header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
 }finally{w.close();}
