@@ -354,12 +354,17 @@ Deno.serve(async req => {
       return response({ok:true,order:updated});
     }
 
+    if(body.action==="courierAvailability"){
+      if(typeof body.online!=="boolean")return response({ok:false,error:"Укажите доступность курьера"},400);
+      const {data,error}=await supabase.rpc("set_courier_dispatch_presence",{p_actor:telegramId,p_online:body.online});
+      return response(error?{ok:false,error:error.message}:data,error?400:200);
+    }
     if(body.action==="courierOffers"){
       const {data,error}=await supabase.rpc("list_cafe_courier_offers",{p_actor:telegramId});return response(error?{ok:false,error:error.message}:{ok:true,offers:data},error?400:200);
     }
     if(body.action==="respondCourierOffer"){
       if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId)||typeof body.accept!=="boolean")return response({ok:false,error:"Некорректное предложение"},400);
-      const {data,error}=await supabase.rpc("respond_cafe_courier_offer",{p_order_id:body.orderId,p_actor_telegram_id:telegramId,p_accept:body.accept,p_reason:typeof body.reason==="string"?body.reason:null});
+      const {data,error}=await supabase.rpc(body.market===true&&body.accept?"claim_cafe_available_delivery":"respond_cafe_courier_offer",body.market===true&&body.accept?{p_order:body.orderId,p_actor:telegramId}:{p_order_id:body.orderId,p_actor_telegram_id:telegramId,p_accept:body.accept,p_reason:typeof body.reason==="string"?body.reason:null});
       if(error)return response({ok:false,error:error.code==="P0001"?error.message:"Не удалось ответить на предложение"},error.code==="P0001"?400:500);
       try{await dispatchCustomerNotifications(supabase,botToken);}catch{console.error("Customer notification deferred");}
       try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}return response(data);
@@ -437,8 +442,13 @@ Deno.serve(async req => {
         orderIds.length?supabase.from("cafe_delivery_proofs").select("id,order_id,courier_telegram_id,kind,verified_at").in("order_id",orderIds).not("verified_at","is",null):Promise.resolve({data:[],error:null})
       ]);
       if(offersError||proofsError)return response({ok:false,error:"Не удалось загрузить предложения или фото доставки"},500);
+      let dispatchBoard:any=null;
+      if(courierWorkspace){
+        const {data:board,error:boardError}=await supabase.rpc("get_cafe_courier_dispatch_board",{p_actor:telegramId});
+        if(boardError)console.error("Courier dispatch board unavailable");else dispatchBoard=board;
+      }
       const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
-      return response({ ok: true, orders: enrichedOrders, courierOffers:offers||[], staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
+      return response({ ok: true, dispatchBoard, orders: enrichedOrders, courierOffers:dispatchBoard?.offers||offers||[], staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
     }
 
     if (body.action === "addItems") {

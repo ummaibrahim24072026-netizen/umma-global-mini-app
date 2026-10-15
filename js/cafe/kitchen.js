@@ -88,8 +88,11 @@
       if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
-      const routeAction = order.order_type === "delivery" && order.delivery_address
-        ? '<div class="courier-navigation-options"><small>Навигация:</small>' + [["google","Google Maps"],["apple","Карты Apple"]].map(([provider,label]) => '<button type="button" class="kitchen-action" data-show-route="true" data-navigation-provider="' + provider + '" data-route-address="' + esc(order.delivery_address) + '" data-route-order-number="' + esc(order.order_number) + '">' + label + '</button>').join("") + '</div>' : "";
+      const pickup=locations.find(l=>String(l.id)===String(order.location_id));
+      const goingToCafe=orderStaffRole==="courier"&&order.delivery_status==="courier_assigned";
+      const routeAddress=goingToCafe?(pickup?.latitude!=null&&pickup?.longitude!=null?"Точка доставки: "+pickup.latitude+","+pickup.longitude:pickup?.address||pickup?.name||""):order.delivery_address;
+      const routeAction = order.order_type === "delivery" && routeAddress
+        ? '<div class="courier-navigation-options"><small>'+ (goingToCafe?'Маршрут к кафе:':'Маршрут к клиенту:') +'</small>' + [["google","Google Maps"],["apple","Карты Apple"]].map(([provider,label]) => '<button type="button" class="kitchen-action" data-show-route="true" data-navigation-provider="' + provider + '" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">' + label + '</button>').join("") + '</div>' : "";
       const trackingAction=orderStaffRole==="courier"&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.delivery_status==="picked_up"&&!['completed','cancelled'].includes(order.status)?'<button type="button" class="kitchen-action" data-share-delivery="'+esc(order.id)+'">'+(window.ummaCourierTracking?.isSharing(String(order.id))?'Остановить передачу позиции':'Передавать позицию клиенту')+'</button><small data-tracking-status="'+esc(order.id)+'">Передача GPS работает пока Telegram открыт. При переходе в Google Maps позиция может перестать обновляться.</small>':"";
       const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
@@ -102,6 +105,7 @@
       const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
       const secondary = cancel + (orderStaffRole === "courier" ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
+      const courierStage=orderStaffRole!=="courier"?"":'<div class="courier-order-stage">'+esc({courier_assigned:"Забрать из кафе",picked_up:"Доставить клиенту",delivered:order.payment_status==="paid"?"Доставка завершена":"Получить оплату"}[order.delivery_status]||"Доставка")+'</div>';
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
@@ -113,7 +117,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + courierPayment + deliveryAction + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + trackingAction + secondaryMenu + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + courierPayment + deliveryAction + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + trackingAction + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
     const template = document.createElement("template");
@@ -174,7 +178,7 @@
       window.ummaLocationPins = locations;
       actorTelegramId = result.actorTelegramId ?? null;
       const incomingOrders = Array.isArray(result.orders) ? result.orders : [];
-      window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
+      window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole,result.dispatchBoard);
       staffRole = result.staffRole || (window.ummaRole === "super_admin" ? "manager" : "");
       const fingerprint = JSON.stringify(incomingOrders);
       const changed = fingerprint !== lastOrdersFingerprint;
@@ -236,7 +240,7 @@
   async function refreshAfterUpdate() {
     ordersRevision++;
     const result = await api({ action:"list",workspace:courierWorkspace?"courier":"staff" });
-    window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
+    window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole,result.dispatchBoard);
     orders = Array.isArray(result.orders) ? result.orders : [];
     couriers = Array.isArray(result.couriers) ? result.couriers : [];
     locations = Array.isArray(result.locations) ? result.locations : [];
@@ -253,9 +257,15 @@
 
   function open(asCourier = false) {
     courierWorkspace=asCourier === true;lastOrdersFingerprint=null;filter="active";
+    byId("cafeKitchenPage")?.classList.toggle("courier-workspace",courierWorkspace);
+    const desk=window.ummaCourierDesk;
+    if(byId("cafeKitchenOrders"))byId("cafeKitchenOrders").hidden=false;
+    const filters=document.querySelector(".cafe-kitchen-filters");if(filters)filters.hidden=courierWorkspace&&!!desk;
+    document.querySelector('.kitchen-board-tools>summary').textContent=courierWorkspace?"Ещё":"Настройки кухни";
     const closedFilter=byId("courierClosedFilter");if(closedFilter)closedFilter.hidden=!courierWorkspace;
     const allFilter=document.querySelector('[data-kitchen-filter="all"]');if(allFilter)allFilter.hidden=courierWorkspace;
     document.querySelectorAll('[data-kitchen-filter]').forEach(button=>button.classList.toggle("is-active",button.dataset.kitchenFilter==="active"));
+    if(byId("courierOwnerSetup"))byId("courierOwnerSetup").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
@@ -932,7 +942,7 @@
           initData,staffOrder:true,locationId:selectedLocation,items,orderType:type,paymentMethod:paymentMethod==="courier"?"cash":paymentMethod,paymentTiming,
           customerName:guestName,
           customerPhone:"",
-          dispatchMode:byId("staffCourierDispatch")?.value||"broadcast",deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
+          dispatchMode:byId("staffCourierDispatch")?.value||"nearest",deliveryAddress:address,customerNote:byId("staffOrderNote").value.trim()
         });
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;

@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       return response({ ok: false, error: "Invalid payment method" }, 400);
     }
 
-    if(!["broadcast","nearest"].includes(body.dispatchMode??"broadcast"))return response({ok:false,error:"Некорректный режим подбора курьера"},400);
+    if(!["broadcast","nearest"].includes(body.dispatchMode??"nearest"))return response({ok:false,error:"Некорректный режим подбора курьера"},400);
     if(typeof body.locationId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.locationId)) {
       return response({ok:false,error:"Выберите кафе для заказа"},400);
     }
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
         p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
         p_payment_method: paymentMethod,
         p_payment_timing: paymentTiming,
-        p_dispatch_mode: body.dispatchMode ?? "broadcast",
+        p_dispatch_mode: body.dispatchMode ?? "nearest",
         p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
       });
       if(!staffError&&orderType==="delivery"&&!staffData?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch(e){console.error("Courier notification deferred");}}
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       p_delivery_address: typeof body.deliveryAddress === "string" ? body.deliveryAddress.slice(0, 500) : null,
       p_payment_method: paymentMethod,
         p_payment_timing: paymentTiming,
-        p_dispatch_mode: body.dispatchMode ?? "broadcast",
+        p_dispatch_mode: body.dispatchMode ?? "nearest",
       p_customer_note: typeof body.customerNote === "string" ? body.customerNote.slice(0, 1000) : null,
     }, body.initData);
 

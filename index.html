@@ -25,7 +25,7 @@
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
-  <link rel="stylesheet" href="css/native.css?v=24">
+  <link rel="stylesheet" href="css/native.css?v=25">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -632,7 +632,7 @@
             <form id="staffOrderForm" class="cafe-order-form">
               <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
               <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
-              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="broadcast">Предложить всем активным курьерам кафе</option><option value="nearest">Сначала ближайшему к кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="nearest">Сначала ближайшему свободному курьеру</option><option value="broadcast">Свободный выбор курьерами кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
               <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Сейчас, до передачи заказа</option><option value="later">После трапезы — общий счёт</option><option value="on_delivery" hidden>При получении — наличными курьеру</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
@@ -687,7 +687,7 @@
       <div class="cafe-kitchen-shortcuts">
         <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
       </div>
-      <section id="selfCourierControls" class="cafe-message" hidden><h2>Я — курьер</h2><label>Кафе<select id="selfCourierLocation"></select></label><p id="selfCourierStatus" role="status"></p><button type="button" id="selfCourierEnable" class="kitchen-action">Я доступен как курьер</button><button type="button" id="selfCourierDisable" class="kitchen-cancel">Завершить работу курьером</button><p>Принимайте доставку ниже. Фото и GPS включаются после назначения заказа.</p></section><section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
+      <details id="courierOwnerSetup" hidden><summary>Кафе и доступ курьера</summary><section id="selfCourierControls" class="cafe-message" hidden><h2>Я — курьер</h2><label>Кафе<select id="selfCourierLocation"></select></label><p id="selfCourierStatus" role="status"></p><button type="button" id="selfCourierEnable" class="kitchen-action">Я доступен как курьер</button><button type="button" id="selfCourierDisable" class="kitchen-cancel">Завершить работу курьером</button><p>Принимайте доставку ниже. Фото и GPS включаются после назначения заказа.</p></section></details><section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
         <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
         <button type="button" data-kitchen-filter="all">Все</button>
         <button type="button" id="courierClosedFilter" data-kitchen-filter="closed" hidden>Закрытые</button>
@@ -970,9 +970,10 @@
 <script src="js/maps/delivery-location.js?v=6"></script>
 <script src="js/cafe/cafe.js?v=58"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
-<script src="js/cafe/courier-workflow.js?v=6"></script>
+<script src="js/cafe/courier-desk.js?v=1"></script>
+<script src="js/cafe/courier-workflow.js?v=7"></script>
 <script src="js/cafe/delivery-tracking.js?v=6"></script>
-<script src="js/cafe/kitchen.js?v=66"></script>
+<script src="js/cafe/kitchen.js?v=67"></script>
   <script src="js/cafe/kitchen-live.js?v=5"></script>
 <script src="js/maps/courier-route.js?v=9"></script>
 <script src="js/cafe/test-mode.js?v=12"></script>
