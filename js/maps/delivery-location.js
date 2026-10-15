@@ -22,7 +22,7 @@
   function stopPending() { geoRequest++; gps.disabled = !map; gps.textContent = "Моё местоположение"; }
   function addBasemap() { disposeBasemap = window.UmmaMaps.basemap(map, $("cafeDeliveryMap"), status); }
   function notify() {
-    $("cafeDeliveryPointSummary").textContent = confirmed ? "Точка доставки выбрана · " + coords(confirmed) : "Выберите точку на карте или введите полный адрес ниже.";
+    $("cafeDeliveryPointSummary").textContent = confirmed ? "Место доставки отмечено на карте" : "Выберите точку на карте или введите полный адрес ниже.";
     $("cafeDeliveryPointClear").hidden = !confirmed;
     $("cafeDeliveryMapOpen").textContent = confirmed ? "Изменить точку на карте" : "Указать на карте";
     document.dispatchEvent(new Event("umma:delivery-location-change"));
