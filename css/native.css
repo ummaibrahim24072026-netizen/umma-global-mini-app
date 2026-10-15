@@ -78,3 +78,13 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 .courier-evidence { width:100%; }
 .courier-evidence summary { min-height:44px; padding:12px; cursor:pointer; font-weight:600; }
 .delivery-tracking-map iframe { min-height:320px; }
+
+/* Owner-supplied artwork stays complete; controls never cover the logo. */
+.brand.brand-art{display:flex;flex-direction:column;gap:0;padding:0;min-height:0;height:auto;flex:none;background:#006e73;border:1px solid #dbc37566;border-radius:24px;box-shadow:0 8px 26px #06585c14;overflow:hidden}
+.brand.brand-art::before,.brand.brand-art::after{display:none}
+.brand-art-image{display:block;width:100%;max-width:360px;height:auto;aspect-ratio:1;object-fit:contain;flex:none;margin:0 auto}
+.brand-art-copy{width:100%;padding:16px 20px 20px;text-align:center;background:linear-gradient(180deg,#006e73,#075358)}
+.brand.brand-art p{max-width:none;margin:0;color:#f8f3dc;font-size:14px;line-height:1.55;font-weight:500}
+.brand-art-action{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;max-width:300px;min-height:46px;margin:14px auto 0;padding:12px 20px;border:1px solid #f4db8f;border-radius:13px;background:#f5df9d;color:#173c3e;font-size:14px;font-weight:750;box-shadow:0 3px 10px #00383c22}
+.brand-art-action:hover{background:#ffe9ac}
+@container umma-shell (min-width:700px){.brand.brand-art{flex-direction:row;align-items:stretch;max-width:1120px}.brand-art-image{width:340px;max-width:42%;margin:0}.brand-art-copy{display:flex;flex-direction:column;justify-content:center;align-items:center;flex:1;padding:32px;background:linear-gradient(110deg,#006e73,#075358)}.brand.brand-art p{font-size:22px;line-height:1.55}.brand-art-action{margin-top:24px}}
