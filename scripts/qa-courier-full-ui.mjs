@@ -18,6 +18,7 @@ try {
  w.eval(readFileSync('js/maps/courier-route.js','utf8'));w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
  btn('pickup').click();assert.ok(camera.isConnected);order.customer_note='Polling changed this card while camera was open';await w.ummaKitchen.refresh({silent:true});assert.ok(camera.isConnected);select();
  await until(()=>btn('handover')&&sharing);assert.equal(btn('pickup'),null);assert.equal(starts,1);assert.equal(updates,0);assert.equal(d.querySelector('[data-courier-camera]'),null,'file input is removed after processing');
+ assert.equal(card().querySelector('[data-share-delivery]'),null,'automatic GPS has no manual stop button');assert.equal(card().querySelector('[data-tracking-status]'),null,'no redundant GPS status row');
  const payment=card().querySelector('[data-payment-status="paid"]');assert.match(payment.textContent,/120/);assert.equal(payment.closest('.kitchen-secondary-actions'),null,'courier cash button is a primary action');
  const route=card().querySelector('.kitchen-order-actions > [data-show-route]');
  assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Построить маршрут');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(new URL(navigationLink).searchParams.get('destination'),order.delivery_address+', Vietnam');
