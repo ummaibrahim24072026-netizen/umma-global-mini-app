@@ -10,6 +10,28 @@
   const nextStep = { pending:{status:"preparing",label:"Принять и готовить"}, confirmed:{status:"preparing",label:"Начать готовить"}, preparing:{status:"ready",label:"Заказ готов"}, ready:{status:"completed",label:"Заказ выдан"} };
   let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map(), editingBillId = null;
 
+  const statusActions = new Map();
+  let ordersLoading = false, ordersRevision = 0;
+
+  function syncStatusButtons() {
+    document.querySelectorAll("[data-order-id][data-new-status]").forEach(button => {
+      const label = statusActions.get(button.dataset.orderId);
+      if (!label) {
+        if (button.dataset.statusLabel !== undefined) {
+          button.disabled = false;
+          button.textContent = button.dataset.statusLabel;
+          delete button.dataset.statusLabel;
+          button.removeAttribute("aria-busy");
+        }
+        return;
+      }
+      if (button.dataset.statusLabel === undefined) button.dataset.statusLabel = button.textContent;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      if (button.dataset.newStatus !== "cancelled") button.textContent = label;
+    });
+  }
+
   function isAllowed() {
     return ["super_admin", "admin", "employee"].includes(window.ummaRole);
   }
@@ -31,8 +53,8 @@
       showMessage(filter === "active" ? "Активных заказов пока нет." : "Заказов пока нет.");
       return;
     }
-    showMessage("", false);
-    root.innerHTML = shown.map(order => {
+    if (["Активных заказов пока нет.", "Заказов пока нет."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
+    const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
       const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
@@ -76,6 +98,8 @@
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">Подтвердить оплату</button>'
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
+      const secondary = cancel + paymentAction + routeAction + courierAssignAction + refundAction + evidenceActions;
+      const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
@@ -87,8 +111,25 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + cancel + paymentAction + deliveryAction + routeAction + courierAssignAction + refundAction + evidenceActions + trackingAction + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + deliveryAction + trackingAction + secondaryMenu + '</div></article>';
     }).join("");
+    // Keep unchanged cards and their buttons mounted during background polling.
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    const existing = new Map([...root.children].map(card => [card.dataset.kitchenOrder, card]));
+    let position = 0;
+    for (const next of [...template.content.children]) {
+      const previous = existing.get(next.dataset.kitchenOrder);
+      existing.delete(next.dataset.kitchenOrder);
+      const markup = next.outerHTML;
+      const card = previous && previous._kitchenMarkup === markup ? previous : next;
+      card._kitchenMarkup = markup;
+      if (previous && card !== previous) previous.replaceWith(card);
+      if (root.children[position] !== card) root.insertBefore(card, root.children[position] || null);
+      position++;
+    }
+    for (const card of existing.values()) card.remove();
+    syncStatusButtons();
   }
 
   async function api(payload) {
@@ -113,14 +154,17 @@
   let refreshQueued=false;
   let lastOrdersFingerprint = null;
   async function loadOrders(options = {}) {
-    if (busy) {refreshQueued=true;return;}
+    if (busy || statusActions.size) {refreshQueued=true;return;}
+    if (ordersLoading) return;
+    const revision = ordersRevision;
     const silent = options?.silent === true;
-    busy = true;
+    ordersLoading = true;
     if (!silent) showMessage("Загружаем заказы…");
     try {
       const requestedWorkspace=courierWorkspace;
       const result = await api({ action:"list",workspace:requestedWorkspace?"courier":"staff" });
-      if(requestedWorkspace!==courierWorkspace)return;
+      if(requestedWorkspace!==courierWorkspace || revision!==ordersRevision || busy || statusActions.size){refreshQueued=true;return;}
+      if (!silent) showMessage("", false);
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       couriers = Array.isArray(result.couriers) ? result.couriers : [];
       locations = Array.isArray(result.locations) ? result.locations : [];
@@ -145,40 +189,49 @@
       if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
       else console.warn("Kitchen background refresh failed:", error);
 
-    } finally { busy = false;if(refreshQueued){refreshQueued=false;Promise.resolve().then(()=>loadOrders({silent:true}));} }
+    } finally { ordersLoading = false;if(refreshQueued && !busy && !statusActions.size){refreshQueued=false;Promise.resolve().then(()=>loadOrders({silent:true}));} }
   }
 
   async function updateStatus(orderId, status) {
-    if (busy) return;
+    if (statusActions.has(orderId)) return;
+    if (busy) { showMessage("Сохраняем предыдущее действие. Дождитесь подтверждения."); return; }
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
-    busy = true;
-    showMessage("Обновляем статус…");
+    const current=orders.find(order=>String(order.id)===String(orderId));
+    if (!current) return;
+    statusActions.set(orderId, status === "preparing" ? "Принимаем…" : status === "ready" ? "Подтверждаем готовность…" : "Сохраняем…");
+    ordersRevision++;
+    syncStatusButtons();
+    showMessage("", false);
+    const applyStatus = next => {
+      current.status = next;
+      lastOrdersFingerprint = null;
+      render(); renderStaffActiveOrders(); syncStatusButtons();
+    };
     try {
-      if(status==="preparing"){
-        const current=orders.find(order=>String(order.id)===String(orderId));
-        if(current?.status==="pending"){
-          // Backend enforces pending → confirmed → preparing.
-          // Complete both transitions in one staff action while retaining
-          // acceptance ownership and the existing audit trail.
-          await api({ action:"updateStatus", orderId, status:"confirmed" });
-          try {
-            await api({ action:"updateStatus", orderId, status:"preparing" });
-          } catch (startError) {
-            await refreshAfterUpdate();
-            throw new Error("Заказ принят, но начало приготовления не подтверждено. Нажмите «Начать готовить» ещё раз. "+(startError instanceof Error?startError.message:""));
-          }
-        } else {
-          await api({ action:"updateStatus", orderId, status });
+      if(status==="preparing" && current?.status==="pending"){
+        await api({ action:"updateStatus", orderId, status:"confirmed" });
+        applyStatus("confirmed");
+        try {
+          await api({ action:"updateStatus", orderId, status:"preparing" });
+        } catch (startError) {
+          throw new Error("Заказ принят, но начало приготовления не подтверждено. Нажмите «Начать готовить» ещё раз. "+(startError instanceof Error?startError.message:""));
         }
       } else {
         await api({ action:"updateStatus", orderId, status });
       }
-      await refreshAfterUpdate();
+      applyStatus(status);
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Не удалось обновить статус");
-    } finally { busy = false; render(); }
+    } finally {
+      statusActions.delete(orderId);
+      // Apply confirmed server state immediately; reconciliation does not block buttons.
+      render(); renderStaffActiveOrders(); syncStatusButtons();
+      refreshQueued = false;
+      void loadOrders({silent:true});
+    }
   }
   async function refreshAfterUpdate() {
+    ordersRevision++;
     const result = await api({ action:"list",workspace:courierWorkspace?"courier":"staff" });
     window.ummaCourierWorkflow?.renderOffers(result.courierOffers||[],result.staffRole);
     orders = Array.isArray(result.orders) ? result.orders : [];
@@ -323,7 +376,7 @@
     render();
   }));
   async function assignCourier(orderId) {
-    if (busy) return;
+    if (busy || statusActions.size) { showMessage("Сохраняем изменение заказа. Дождитесь подтверждения."); return; }
     const select = Array.from(document.querySelectorAll("[data-courier-select]")).find(el => el.getAttribute("data-courier-select") === orderId);
     const courierTelegramId = Number(select?.value);
     if (!Number.isSafeInteger(courierTelegramId) || courierTelegramId <= 0) { showMessage("Сначала выберите курьера."); return; }
@@ -340,7 +393,7 @@
     if (button) assignCourier(button.getAttribute("data-assign-courier"));
   });
   async function updateDelivery(orderId, deliveryStatus, button) {
-    if (busy) return;
+    if (busy || statusActions.size) { showMessage("Сохраняем изменение заказа. Дождитесь подтверждения."); return; }
     busy = true;
     if(button){button.disabled=true;button.textContent="Сохраняем…";button.setAttribute("aria-busy","true");}
     showMessage("Обновляем доставку…");
@@ -379,7 +432,7 @@
   }
   document.addEventListener('click',event=>{const button=event.target.closest('[data-refund-order]');if(!button)return;const order=orders.find(o=>String(o.id)===button.getAttribute('data-refund-order'));if(order)showRefund(order);});
   async function updatePayment(orderId, paymentStatus, tenderedAmountVnd=null, changeGivenVnd=null, paymentMethod="") {
-    if (busy) return;
+    if (busy || statusActions.size) { showMessage("Сохраняем изменение заказа. Дождитесь подтверждения."); return; }
     busy = true;
     showMessage("Обновляем оплату…");
     try {
