@@ -90,8 +90,8 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 @container umma-shell (min-width:700px){.brand.brand-art{flex-direction:row;align-items:stretch;max-width:1120px}.brand-art-image{width:340px;max-width:42%;margin:0}.brand-art-copy{display:flex;flex-direction:column;justify-content:center;align-items:center;flex:1;padding:32px;background:linear-gradient(110deg,#006e73,#075358)}.brand.brand-art p{font-size:22px;line-height:1.55}.brand-art-action{margin-top:24px}}
 
 /* A single welcome and primary action beneath the complete UMMA artwork. */
-.brand-art-copy .welcome-content{width:100%;margin:0 0 10px}
+.brand-art-copy .welcome-content{width:100%;margin:0 0 10px;flex:0 0 auto}
 .brand-art-copy .welcome-content h2{margin:0;color:#fff6db;font-size:18px;font-weight:600;line-height:1.5;text-wrap:balance}
-.brand-art-copy .welcome-content strong{color:#f5df9d}
+.brand-art-copy .welcome-content h2 strong{color:#f5df9d;font-size:inherit;font-weight:700}
 .brand.brand-art .brand-art-copy>p{font-size:13px;line-height:1.6;color:#d5e9e7}
 @container umma-shell (min-width:700px){.brand-art-copy .welcome-content{max-width:570px;margin-bottom:14px}.brand-art-copy .welcome-content h2{font-size:23px}.brand.brand-art .brand-art-copy>p{font-size:16px}}
