@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="stylesheet" href="css/admin.css?v=9">
   <link rel="stylesheet" href="css/native.css?v=29">
-  <link rel="stylesheet" href="css/cafe-comfort.css?v=1">
+  <link rel="stylesheet" href="css/cafe-comfort.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 </head>
@@ -753,7 +753,7 @@
             <text x="50" y="70" text-anchor="middle" class="cafe-seal-halal">HALAL</text>
           </svg>
         </div>
-        <p class="cafe-brand-cuisine">Central Asian<br><span>Halal Cuisine</span></p>
+        <p class="cafe-brand-cuisine">Central Asian<br> <span>Halal Cuisine</span></p>
         <div class="cafe-brand-values" aria-label="Unity, Care, Growth"><span>Unity</span><i aria-hidden="true"></i><span>Care</span><i aria-hidden="true"></i><span>Growth</span></div>
         <p class="cafe-brand-intention">Мы кормим людей<br>ради довольства Аллаха</p>
         <div id="cafeOrderModes" class="cafe-banner-services" role="group" aria-label="Как получить заказ">
@@ -764,6 +764,7 @@
       </header>
 
       <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
+      <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
       <div class="cafe-menu-search"><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
       <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
       <button type="button" id="cafeMenuReset" class="cafe-menu-reset" hidden>Показать всё меню</button>
@@ -973,7 +974,7 @@
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
 <script src="js/maps/delivery-location.js?v=7"></script>
-<script src="js/cafe/cafe.js?v=60"></script>
+<script src="js/cafe/cafe.js?v=61"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>

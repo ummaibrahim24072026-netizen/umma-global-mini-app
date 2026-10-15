@@ -174,7 +174,7 @@
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
-    if (submit) submit.disabled = loading || !entries.length;
+    if (submit) submit.disabled = loading || !entries.length || !locationId;
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
@@ -183,7 +183,7 @@
     if (stickyTotal) stickyTotal.textContent = money(total());
     if (sticky) sticky.hidden = entries.length === 0;
     const go = byId("cafeStickyGoToOrder");
-    if (go) { go.textContent = checkoutOpen ? (loading ? "Оформляем заказ…" : "Оформить заказ") : "Перейти к заказу"; go.disabled = loading || !entries.length; go.setAttribute("aria-busy", String(loading)); }
+    if (go) { go.textContent = checkoutOpen ? (!locationId ? "Приём заказов приостановлен" : loading ? "Оформляем заказ…" : "Оформить заказ") : "Перейти к заказу"; go.disabled = loading || !entries.length || (checkoutOpen && !locationId); go.setAttribute("aria-busy", String(loading)); }
     renderProductSelection();
   }
 
@@ -236,6 +236,8 @@
         if(byId("cafeLocationMode"))byId("cafeLocationMode").value="manual";
         renderLocationOptions();
       }
+      const notice=byId("cafeAvailabilityNotice");if(notice)notice.hidden=locations.length>0;
+      renderCart();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Ошибка загрузки меню");
     } finally { if (loadingEl) loadingEl.hidden = true; }
@@ -249,6 +251,7 @@
       return '<option value="' + esc(location.id) + '">' + esc(label) + '</option>';
     }).join("");
     if (locationId) select.value = locationId;
+    select.required=locations.length>0;
     const multiple=locations.length>1;
     if(byId("cafeLocationDetails"))byId("cafeLocationDetails").hidden=!multiple;
     const modeLabel=byId("cafeLocationMode")?.closest("label");
@@ -264,7 +267,7 @@
     if (text) { el.textContent = text; return; }
     const selected = locations.find(location => String(location.id) === String(locationId));
     window.ummaDeliveryLocation?.setCafeLocation(selected);
-    el.textContent = selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Выберите кафе для заказа.";
+    el.textContent = selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Приём заказов временно приостановлен.";
   }
 
   function haversineKm(lat1, lon1, lat2, lon2) {
@@ -448,6 +451,7 @@
   byId("cafeOrderForm")?.addEventListener("submit", async event => {
     event.preventDefault();
     if (loading) return;
+    if(!locationId){if(typeof showToast==="function")showToast("Приём заказов временно приостановлен");return;}
     const resultEl = byId("cafeOrderResult"), submit = byId("cafeSubmitOrder");
     if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
     const initData = window.Telegram?.WebApp?.initData;
