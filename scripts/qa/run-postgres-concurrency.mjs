@@ -1,3 +1,4 @@
+import {verifyCourierDispatchDesk} from '../qa-courier-dispatch-desk.mjs';
 import {verifyCourierPhotoCompletion} from '../qa-courier-photo-completion.mjs';
 import pg from 'pg';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -66,4 +67,23 @@ try {
 
 
  await verifyCourierPhotoCompletion({query:(...args)=>observer.query(...args),exec:s=>observer.query(s)},location,'33333333-3333-4333-8333-333333333333','umma_qa_20261013');
+ await verifyCourierDispatchDesk({query:(...args)=>observer.query(...args),exec:s=>observer.query(s)},location,'22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333','umma_qa_20261013');
+ // Dispatch: competing couriers serialize on the order; two orders serialize on courier presence.
+ await observer.query("insert into telegram_users(telegram_id,role) values(34,'employee'),(35,'employee'),(36,'employee')");
+ for(const actor of [34,35,36]){
+  await observer.query("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments) values($1,$2,'courier',true)",[actor,location]);
+  await observer.query('select set_courier_dispatch_presence($1,true)',[actor]);
+ }
+ const marketOrder=async()=>{
+  const o=(await observer.query("select create_cafe_staff_order(11,$1,'[{\"productId\":\"33333333-3333-4333-8333-333333333333\",\"quantity\":1}]','delivery','Synthetic marketplace race') result",[location])).rows[0].result.order;
+  await observer.query("update cafe_orders set dispatch_mode='broadcast' where id=$1",[o.id]);return o.id;
+ };
+ const waitForClaimLock=async()=>{let blocked=false;for(let n=0;n<30;n++){if(Number((await observer.query("select count(*) n from pg_stat_activity where datname='umma_qa' and wait_event_type='Lock' and query like '%claim_cafe_available_delivery%'")).rows[0].n)){blocked=true;break;}await new Promise(resolve=>setTimeout(resolve,50));}assert.ok(blocked,'Competing claim must wait on a database row lock');};
+ const shared=await marketOrder();await a.query('BEGIN');await a.query('select umma_qa_20261013.claim_cafe_available_delivery($1,34)',[shared]);
+ const rival=b.query('select umma_qa_20261013.claim_cafe_available_delivery($1,35)',[shared]);await waitForClaimLock();await a.query('COMMIT');await assert.rejects(rival,/no longer available/);
+ assert.equal(Number((await observer.query('select courier_telegram_id from cafe_orders where id=$1',[shared])).rows[0].courier_telegram_id),34);
+ const firstDelivery=await marketOrder(),secondDelivery=await marketOrder();await a.query('BEGIN');await a.query('select umma_qa_20261013.claim_cafe_available_delivery($1,36)',[firstDelivery]);
+ const overlapping=b.query('select umma_qa_20261013.claim_cafe_available_delivery($1,36)',[secondDelivery]);await waitForClaimLock();await a.query('COMMIT');await assert.rejects(overlapping,/current delivery/);
+ assert.equal((await observer.query('select courier_telegram_id from cafe_orders where id=$1',[secondDelivery])).rows[0].courier_telegram_id,null);
+ console.log('PASS native dispatch claims: two couriers/one order and one courier/two orders, observed lock waits, exactly one assignment');
 }finally {await Promise.all(clients.map(c=>c.end()));}
