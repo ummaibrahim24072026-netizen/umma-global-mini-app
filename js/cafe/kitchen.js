@@ -44,6 +44,20 @@
     catch { return ""; }
   }
 
+  function paymentProofButton(order) {
+    return order.canAcceptPayments===true && ['qr','bank_transfer'].includes(order.payment_method)
+      ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Скриншоты оплаты</button>' : '';
+  }
+  function showPaymentProofs(proofs) {
+    const dialog=document.createElement('dialog');dialog.className='cafe-payment-sheet';dialog.setAttribute('aria-label','Скриншоты оплаты');
+    const header=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent='Скриншоты оплаты';close.type='button';close.className='cafe-payment-close';close.textContent='×';close.setAttribute('aria-label','Закрыть чеки');close.onclick=()=>dialog.close();header.append(title,close);dialog.append(header);
+    const notice=document.createElement('p');notice.className='cafe-payment-notice';notice.textContent='Проверьте фактическое поступление денег в банке. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Подтвердить оплату» в заказе.';dialog.append(notice);
+    for(const proof of proofs){
+      const text=document.createElement('p');text.textContent=({pending:'На проверке',confirmed:'Проверен',rejected:'Отклонён'}[proof.status]||'Чек')+' · '+formatDate(proof.createdAt);dialog.append(text);
+      try{const url=new URL(proof.url);if(url.origin!=='https://zwzojugspldexyyljwpr.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/'))continue;const image=document.createElement('img');image.src=url.href;image.alt='Скриншот перевода';image.style.cssText='display:block;max-width:100%;height:auto;border-radius:12px';dialog.append(image);}catch{}
+    }
+    dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
+  }
   function render() {
     const root = byId("cafeKitchenOrders");
     if (!root) return;
@@ -106,7 +120,7 @@
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
       const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
-      const secondary = cancel + (orderStaffRole === "courier" ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
+      const secondary = paymentProofButton(order) + cancel + (orderStaffRole === "courier" ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
       const courierStage=orderStaffRole!=="courier"?"":'<div class="courier-order-stage">'+esc({courier_assigned:"Забрать из кафе",picked_up:"Доставить клиенту",delivered:order.payment_status==="paid"?"Доставка завершена":"Получить оплату"}[order.delivery_status]||"Доставка")+'</div>';
       const details = [
@@ -686,11 +700,9 @@
       try{
         const res=await fetch(PROOF_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list",initData,orderId})});
         const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"Не удалось загрузить чек");
-        const pending=(data.proofs||[]).filter(x=>x.status==="pending");
-        if(!pending.length){window.alert("По этому заказу нет новых скриншотов перевода.");return;}
-        const latest=pending[0];
-        if(latest.url)window.open(latest.url,"_blank","noopener,noreferrer");
-        window.alert("Откройте чек и отдельно проверьте фактическое поступление денег на банковский счёт. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Принять оплату».");
+        const proofs=data.proofs||[];
+        if(!proofs.length){showMessage("По этому заказу скриншоты оплаты пока не отправляли.");return;}
+        showPaymentProofs(proofs);
       }catch(e){showMessage(e.message||"Ошибка проверки чека");}finally{proofButton.disabled=false;}
       return;
     }
@@ -817,7 +829,7 @@
       const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+add+settle+step+'</div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+paymentProofButton(o)+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function renderStaffClosedOrders() {
