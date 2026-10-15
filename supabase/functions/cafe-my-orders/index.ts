@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { paymentFor, QR_LOCATION } from "./payment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,6 +74,16 @@ Deno.serve(async req => {
     }
     if (!user || user.is_active !== true) return response({ ok:false, error:"Профиль не найден или отключён" }, 403);
 
+    if (body.action === "paymentDetails") {
+      if (typeof body.orderId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.orderId)) return response({ok:false,error:"Некорректный заказ"},400);
+      const {data:order,error} = await supabase.from("cafe_orders")
+        .select("id,order_number,location_id,payment_method,payment_status,status,total_vnd,currency")
+        .eq("id",body.orderId).eq("customer_telegram_id",telegramId).maybeSingle();
+      if (error) return response({ok:false,error:"Не удалось загрузить оплату"},500);
+      const payment = order && paymentFor(order);
+      if (!payment) return response({ok:false,error:"QR-оплата недоступна: заказ уже оплачен, отменён или реквизиты этого кафе не настроены."},409);
+      return response({ok:true,payment});
+    }
     if(body.action==="notifications"||body.action==="readNotifications"){
       if(body.action==="readNotifications"&&(!Array.isArray(body.ids)||body.ids.length>50||body.ids.some((id:any)=>typeof id!=="string"||!/^[0-9a-f-]{36}$/i.test(id))))return response({ok:false,error:"Некорректные уведомления"},400);
       const {data,error}=await supabase.rpc(body.action==="notifications"?"get_cafe_notifications":"read_cafe_notifications",body.action==="notifications"?{p_actor:telegramId}:{p_actor:telegramId,p_ids:body.ids});
@@ -87,7 +98,7 @@ Deno.serve(async req => {
     }
     const { data: orders, error } = await supabase
       .from("cafe_orders")
-      .select("id,order_number,order_type,payment_method,payment_status,status,delivery_status,subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,currency,created_at,updated_at,confirmed_at,completed_at,cancelled_at,delivery_address,cafe_order_items(id,product_name_ru,product_name_vi,product_name_en,quantity,unit_price_vnd,line_total_vnd),cafe_order_events(id,from_status,to_status,note,created_at)")
+      .select("id,location_id,order_number,order_type,payment_method,payment_status,status,delivery_status,subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,currency,created_at,updated_at,confirmed_at,completed_at,cancelled_at,delivery_address,cafe_order_items(id,product_name_ru,product_name_vi,product_name_en,quantity,unit_price_vnd,line_total_vnd),cafe_order_events(id,from_status,to_status,note,created_at)")
       .eq("customer_telegram_id", telegramId)
       .order("created_at", { ascending:false })
       .limit(25);
@@ -95,7 +106,7 @@ Deno.serve(async req => {
       console.error("Customer orders query failed", error.message);
       return response({ ok:false, error:"Не удалось загрузить ваши заказы" }, 500);
     }
-    return response({ ok:true, orders:orders ?? [] });
+    return response({ ok:true, orders:(orders ?? []).map(order => ({...order,qr_payment_available:order.location_id === QR_LOCATION && !!paymentFor(order)})) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed";
     const authError = /Telegram|signature/i.test(message);
