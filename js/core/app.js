@@ -26,7 +26,7 @@ if (tg) {
 
   tg.setHeaderColor?.("#ffffff");
 
-  tg.setBackgroundColor?.("#f5f8f7");
+  tg.setBackgroundColor?.("#F1FAFA");
   tg.setBottomBarColor?.("#ffffff");
 
   tg.enableClosingConfirmation?.();
