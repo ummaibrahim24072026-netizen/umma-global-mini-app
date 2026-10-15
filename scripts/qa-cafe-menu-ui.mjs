@@ -12,14 +12,18 @@ const inventory=products.map((p,i)=>({product_id:p.id,location_id:'cafe',quantit
 w.fetch=async()=>({ok:true,json:async()=>({ok:true,products,inventory,inventoryControlEnabled:true,location:{id:'cafe',name:'UMMA'}})});
 const search=query=>{d.getElementById('cafeMenuSearch').value=query;d.getElementById('cafeMenuSearch').dispatchEvent(new w.Event('input'));};
 try{
+ w.Telegram={WebApp:{initDataUnsafe:{user:{id:123,first_name:'Ибрахим',last_name:'Умма'}}}};
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
  d.getElementById("cafePage").hidden=false;
  await w.ummaCafe.refreshMenu();
+ assert.equal(d.getElementById('cafeCustomerName').value,'Ибрахим Умма','Telegram full name fills checkout');
+ d.getElementById('cafeCustomerName').value='Имя для заказа';
  assert.equal(d.querySelectorAll('[data-product-card]').length,2);
  assert.equal(d.querySelectorAll('.cafe-product-photo').length,1,'unsafe URL omitted');
  assert.equal(d.querySelector('.cafe-product-photo').alt,'Плов');
  d.querySelector('[data-add-product="plov"]').click();
  assert.match(d.getElementById('cafeCartTotal').textContent,/120/);
+ assert.equal(d.getElementById('cafeCustomerName').value,'Имя для заказа','manual name survives cart changes');
  assert.equal(d.getElementById('cafeStickyOrder').hidden,false);
  search('THỊT');assert.equal(d.querySelectorAll('[data-product-card]').length,1);assert.ok(d.querySelector('[data-product-card="manti"]'));
  search('бараниной');assert.equal(d.querySelectorAll('[data-product-card]').length,1);
@@ -76,13 +80,15 @@ try{
  assert.equal(address.required,false);assert.equal(d.getElementById('cafeAddressLabel').hidden,true);
  d.getElementById('cafeOrderForm').reset();await new Promise(resolve=>setImmediate(resolve));
  assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','form reset updates header');
- w.Telegram={WebApp:{initData:'isolated-qa-only'}};
+ w.Telegram={WebApp:{initData:'isolated-qa-only',initDataUnsafe:{user:{id:123,first_name:'Ибрахим',last_name:'Умма'}}}};
  const submitted=[];
  w.ummaCafeRequests={request:async(url,payload)=>{
   submitted.push(payload);
   return {ok:true,json:async()=>({ok:true,order:{id:'qa-order',orderNumber:1,totalVnd:50000},staffNotified:1})};
  }};
  for(const [mode,id] of [['delivery','tea'],['pickup','bread'],['dine_in','chicken']]){
+  w.Telegram.WebApp.initDataUnsafe.user=mode==='pickup'?{id:777}:{id:123,first_name:'Ибрахим',last_name:'Умма'};
+  d.getElementById('cafeCustomerName').value=mode==='dine_in'?'Гость':'';
   modeButton(mode).click();
   d.querySelector('[data-add-product="'+id+'"]').click();
   assert.equal(orderType.value,mode,'adding food preserves header choice');
@@ -95,10 +101,13 @@ try{
   d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(submitted.at(-1).orderType,mode,'selected mode reaches actual order handler payload');
+  assert.equal(submitted.at(-1).customerName,mode==='pickup'?'Telegram ID: 777':mode==='dine_in'?'Гость':'Ибрахим Умма');
+  assert.equal(submitted.at(-1).customerPhone,'','phone remains optional');
+  assert.equal(d.getElementById('cafeCustomerName').value,mode==='pickup'?'Telegram ID: 777':'Ибрахим Умма','name restored after order reset');
   assert.equal(submitted.at(-1).paymentTiming,mode==='delivery'?'on_delivery':'now');
   assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','successful order resets selection');
   assert.equal(address.required,false);
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
- console.log('PASS menu: header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
+ console.log('PASS menu: Telegram name/ID fallback, manual name and optional phone; header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
 }finally{w.close();}

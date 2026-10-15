@@ -138,7 +138,20 @@
     root.innerHTML = groups.map(category => '<h3 class="cafe-category-heading">' + category.label + '<span>' + category.products.length + '</span></h3>' + category.products.map(productCard).join("")).join("");
   }
 
+  function fillTelegramCustomerName() {
+    const input = byId("cafeCustomerName");
+    if (!input || input.value.trim()) return;
+    // Display data only: authentication continues to use signed initData server-side.
+    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!user) return;
+    const fullName = [user.first_name, user.last_name].filter(value => typeof value === "string" && value.trim()).map(value => value.trim()).join(" ");
+    const id = String(user.id ?? "");
+    const fallback = /^\d+$/.test(id) && Number(id) > 0 ? "Telegram ID: " + id : "";
+    input.value = (fullName || fallback).slice(0, 120);
+  }
+
   function renderCart() {
+    fillTelegramCustomerName();
     const root = byId("cafeCartItems"), countEl = byId("cafeCartCount"), totalEl = byId("cafeCartTotal"), submit = byId("cafeSubmitOrder");
     if (!root || !countEl || !totalEl) return;
     const entries = Array.from(cart.values());
@@ -367,7 +380,7 @@
     orderType.value = button.dataset.orderMode;
     orderType.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(syncOrderMode));
+  byId("cafeOrderForm")?.addEventListener("reset", () => queueMicrotask(() => { syncOrderMode(); fillTelegramCustomerName(); }));
   byId("cafePaymentTiming")?.addEventListener("change",syncCustomerPayment);
   byId("cafePaymentMethod")?.addEventListener("change",syncCustomerPayment);
   syncOrderMode();
@@ -381,6 +394,7 @@
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
     if (orderType?.value === "delivery" && !addressInput?.value.trim()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
 
+    fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
     if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
     const submittedItems = Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity }));
