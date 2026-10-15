@@ -1,0 +1,82 @@
+[
+  {
+    "source_file": "4745.png",
+    "name_ru": "Манты",
+    "image_path": "logo/assets/menu/manti.png",
+    "product_sku": "UMMA-CAFE-MANTI",
+    "volume_ml": null,
+    "status": "assigned"
+  },
+  {
+    "source_file": "4758.png",
+    "name_ru": "Салат",
+    "image_path": "logo/assets/menu/salad.png",
+    "product_sku": "UMMA-CAFE-SALAD",
+    "volume_ml": null,
+    "status": "assigned"
+  },
+  {
+    "source_file": "4746.png",
+    "name_ru": "Айран 300 мл",
+    "image_path": "logo/assets/menu/ayran-300.png",
+    "product_sku": "UMMA-CAFE-AYRAN",
+    "volume_ml": 300,
+    "status": "assigned"
+  },
+  {
+    "source_file": "4807.png",
+    "name_ru": "Чай 900 мл",
+    "image_path": "logo/assets/menu/tea-900.png",
+    "product_sku": null,
+    "volume_ml": 900,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "5064.png",
+    "name_ru": "Окорочок куриный с салатом",
+    "image_path": "logo/assets/menu/chicken-leg-salad.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "5071.png",
+    "name_ru": "Круассан",
+    "image_path": "logo/assets/menu/croissant.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "5183.png",
+    "name_ru": "Борщ",
+    "image_path": "logo/assets/menu/borscht.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "5897.png",
+    "name_ru": "Аджика",
+    "image_path": "logo/assets/menu/adjika.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "5915.png",
+    "name_ru": "Салат Оливье",
+    "image_path": "logo/assets/menu/olivier.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  },
+  {
+    "source_file": "7271.png",
+    "name_ru": "Винегрет",
+    "image_path": "logo/assets/menu/vinaigrette.png",
+    "product_sku": null,
+    "volume_ml": null,
+    "status": "awaiting_catalog_product"
+  }
+]

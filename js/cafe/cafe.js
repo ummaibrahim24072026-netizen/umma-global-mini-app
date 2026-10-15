@@ -25,7 +25,10 @@
   const productPhotos = new Map([
     ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa.png"],
     ["UMMA-CAFE-PLOV", "logo/assets/menu/plov.png"],
-    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread.jpg"]
+    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread.jpg"],
+    ["UMMA-CAFE-MANTI", "logo/assets/menu/manti.png"],
+    ["UMMA-CAFE-SALAD", "logo/assets/menu/salad.png"],
+    ["UMMA-CAFE-AYRAN", "logo/assets/menu/ayran-300.png"]
   ]);
   function productPhoto(product) {
     const source = productPhotos.get(product.sku) || product.image_url;
