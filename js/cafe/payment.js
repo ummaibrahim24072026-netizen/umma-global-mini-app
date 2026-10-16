@@ -5,7 +5,7 @@
   const proofEndpoint = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof';
   const uploads=new Map();
   const banks = [['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
-  let dialog, sequence = 0;
+  let dialog, sequence = 0, activeOrder = null;
   const el = (tag, text, className) => {const node=document.createElement(tag);if(text)node.textContent=text;if(className)node.className=className;return node;};
   const money = amount => new Intl.NumberFormat('ru-RU').format(amount)+' ₫';
   function ensureDialog() {
@@ -75,6 +75,7 @@
     dialog.append(receiptForm(payment.orderId));
   }
   async function show(orderId) {
+    activeOrder=orderId;
     const sheet=ensureDialog();if(sheet.open)sheet.close();sheet.replaceChildren();heading();const status=el('p','Загружаем реквизиты…');status.setAttribute('role','status');sheet.append(status);sheet.showModal();const request=++sequence;
     try {
       const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram.');
@@ -84,6 +85,23 @@
       status.remove();render(data.payment);
     }catch(error){if(request===sequence&&sheet.open){status.textContent=error.message||'Не удалось загрузить оплату';if(!status.isConnected)sheet.append(status);}}
   }
+  document.addEventListener('umma:cafe-events',event=>{
+    if(!dialog?.open||!activeOrder)return;
+    if(event.detail?.events?.some(n=>n.order_id===activeOrder&&n.kind==='payment'))checkPaid();
+  });
+  let checking=false;
+  async function checkPaid(){
+    if(checking||!dialog?.open||!activeOrder||document.hidden)return;
+    checking=true;const orderId=activeOrder,request=sequence;
+    try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:window.Telegram?.WebApp?.initData}),cache:'no-store',signal:AbortSignal.timeout(10000)});
+      const data=await response.json();
+      if(response.ok&&data.ok&&dialog.open&&request===sequence&&data.orders?.some(o=>o.id===orderId&&o.payment_status==='paid')){
+        dialog.replaceChildren();heading();const success=el('p','✓ Оплачено','cafe-payment-amount');success.setAttribute('role','status');success.setAttribute('aria-live','polite');dialog.append(success,el('p','Спасибо! Оплата заказа подтверждена.','cafe-payment-help'));activeOrder=null;window.ummaCafe?.refreshMyOrders({silent:true});
+      }
+    }catch{}finally{checking=false;}
+  }
+  window.setInterval(checkPaid,3000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkPaid();});
   document.addEventListener('click',event=>{const button=event.target.closest('[data-pay-order]');if(button)show(button.dataset.payOrder);});
   window.ummaCafePayment={show,button:id=>/^[0-9a-f-]{36}$/i.test(String(id))?'<button type="button" class="cafe-payment-open" data-pay-order="'+id+'">Оплатить по QR</button>':''};
 })();
