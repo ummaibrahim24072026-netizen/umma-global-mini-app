@@ -494,6 +494,15 @@ QR с суммой заказа готов. Оплату подтвердит к
 Связь прервана|Connection lost|Mất kết nối
 Онлайн: автоматическое обновление включено|Online: automatic updates enabled|Trực tuyến: đã bật cập nhật tự động
 Связь прервана: повторяем подключение|Connection lost: reconnecting|Mất kết nối: đang kết nối lại
+Доставляем только в пределах зоны на карте. Выберите точку доставки.|We deliver only within the area shown on the map. Choose a delivery point.|Chúng tôi chỉ giao trong khu vực trên bản đồ. Hãy chọn điểm giao hàng.
+Адрес входит в зону доставки.|This address is within our delivery area.|Địa chỉ này nằm trong khu vực giao hàng.
+Этот адрес вне зоны доставки выбранного кафе. Выберите другой адрес или самовывоз.|This address is outside the selected cafe’s delivery area. Choose another address or pickup.|Địa chỉ này ngoài khu vực giao hàng của quán đã chọn. Hãy chọn địa chỉ khác hoặc tự đến lấy.
+Доставка из выбранного кафе пока недоступна. Выберите самовывоз.|Delivery from the selected cafe is currently unavailable. Please choose pickup.|Quán đã chọn hiện chưa giao hàng. Vui lòng chọn tự đến lấy.
+Выберите точку доставки на карте, чтобы проверить зону обслуживания.|Choose a delivery point on the map to check coverage.|Chọn điểm giao hàng trên bản đồ để kiểm tra phạm vi phục vụ.
+Для доставки нужна точка на карте. Доступ к геолокации необязателен.|Delivery requires a map pin. Location permission is optional.|Cần ghim điểm trên bản đồ để giao hàng. Không bắt buộc cấp quyền vị trí.
+Доставка доступна только в зоне выбранного кафе. Проверьте адрес на карте перед заказом.|Delivery is available only within the selected cafe’s service area. Check your address on the map before ordering.|Chỉ giao trong khu vực phục vụ của quán đã chọn. Kiểm tra địa chỉ trên bản đồ trước khi đặt.
+Карта не загрузилась. Проверьте соединение и повторите выбор точки. Без проверки зоны доставка недоступна.|The map did not load. Check your connection and try again. Delivery requires coverage verification.|Không tải được bản đồ. Kiểm tra kết nối và thử lại. Cần xác minh khu vực trước khi giao hàng.
+Карта недоступна. Повторите позже или выберите самовывоз.|The map is unavailable. Try later or choose pickup.|Bản đồ không khả dụng. Thử lại sau hoặc chọn tự đến lấy.
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }

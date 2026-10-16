@@ -16,24 +16,29 @@ w.L={
  marker:point=>{const marker=emitter({point:{lat:point[0],lng:point[1]},addTo(){return this;},setLatLng(point){this.point={lat:point[0],lng:point[1]};return this;},getLatLng(){return this.point;}});markers.push(marker);return marker;}
 };
 w.Telegram={WebApp:{initData:'isolated-qa',initDataUnsafe:{user:{id:1,first_name:'QA'}}}};
-w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:[{id:'food',name_ru:'QA',price_vnd:50000}],inventoryControlEnabled:false,location:{id:'cafe',name:'QA',latitude:12.25,longitude:109.19}})});
+w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:[{id:'food',name_ru:'QA',price_vnd:50000}],inventoryControlEnabled:false,location:{id:'cafe',name:'QA',latitude:12.25,longitude:109.19,delivery_zone:[[12.2,109.1],[12.4,109.1],[12.4,109.3],[12.2,109.3]]}})});
 const mode=type=>{ $('cafeOrderType').value=type;$('cafeOrderType').dispatchEvent(new w.Event('change'));};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 try{
  w.eval(readFileSync('js/maps/umma-maps.js','utf8'));
+ w.eval(readFileSync('js/maps/delivery-zone.js','utf8'));
  w.eval(readFileSync('js/maps/delivery-location.js','utf8'));
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
  await w.ummaCafe.refreshMenu();
  $('cafePage').hidden=false;
  d.querySelector('[data-add-product="food"]').click();
  assert.equal(requests.length,0,'opening menu must not request destination GPS');
- mode('delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,true);
+ mode('delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,false);
  $('cafeDeliveryMapOpen').focus();$('cafeDeliveryMapOpen').click();
  await tick();assert.equal(vectors.at(-1).options.style,'https://tiles.openfreemap.org/styles/liberty');
  assert.match(vectors.at(-1).options.attributionControl.customAttribution,/OpenStreetMap/,'required credit retained');
  vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap');assert.equal(rasters.length,0,'vector map is the primary provider');assert.equal($('cafeDeliveryMap').dataset.theme,'umma');assert.ok(paints.some(p=>p[0]==='water'&&p[2]==='#abd8d5'),'UMMA water palette applied');
  assert.equal($('cafeDeliveryMapDialog').open,true);assert.equal($('cafeDeliveryMapConfirm').disabled,true,'no default destination at cafe');
  assert.deepEqual(maps.at(-1).center,{lat:12.25,lng:109.19});
+ maps.at(-1).fire('click',{latlng:{lat:21.03,lng:105.85}});
+ assert.equal($('cafeDeliveryMapConfirm').disabled,true,'outside area cannot be confirmed');
+ assert.match($('cafeDeliveryMapStatus').textContent,/вне зоны/);
+ $('cafeDeliveryMapConfirm').click();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);
  maps.at(-1).fire('click',{latlng:{lat:12.26,lng:109.2}});
  assert.equal(w.ummaDeliveryLocation.hasPoint(),false,'draft is not confirmed');
  $('cafeDeliveryMapClose').click();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);
@@ -53,6 +58,14 @@ try{
  maps.at(-1).fire('click',{latlng:{lat:12.28,lng:109.22}});
  requests.at(-1).success({coords:{latitude:50,longitude:60,accuracy:10}});
  $('cafeDeliveryMapConfirm').click();assert.match(w.ummaDeliveryLocation.getAddress(''),/12.280000,109.220000/);
+ // Staff uses the same zone picker without changing the customer's destination.
+ $('staffOrderLocation').innerHTML='<option value="cafe">QA cafe</option>';
+ $('staffOrderAddressLabel').hidden=false; $('staffOrderAddress').value='Apartment 8';$('staffDeliveryMapOpen').click();await tick();
+ assert.equal($('cafeDeliveryMapDialog').open,true);
+ maps.at(-1).fire('click',{latlng:{lat:21.03,lng:105.85}});assert.equal($('cafeDeliveryMapConfirm').disabled,true);
+ maps.at(-1).fire('click',{latlng:{lat:12.25,lng:109.20}});$('cafeDeliveryMapConfirm').click();
+ assert.equal($('staffOrderAddress').value,'Apartment 8\nТочка доставки: 12.250000,109.200000');
+ assert.match(w.ummaDeliveryLocation.getAddress(''),/12.280000,109.220000/,'staff selection preserves customer destination');
  // Marker dragging, cancellation, permission denial and stale callbacks.
  $('cafeDeliveryMapOpen').click();
  markers.at(-1).point={lat:12.29,lng:109.23};markers.at(-1).fire('dragend');
@@ -85,7 +98,7 @@ try{
  assert.equal(new URL($('courierMapExternal').href).searchParams.get('destination'),'QA Street, Vietnam');w.UmmaCourierMap.close();
  w.eval(readFileSync('js/core/navigation.js','utf8'));
  $('cafeDeliveryMapOpen').click();assert.equal(w.ummaNavigation.back(),true);assert.equal($('cafeDeliveryMapDialog').open,false);assert.equal($('cafeDeliveryMapDialog').isConnected,true,'Back preserves reusable picker');
- $('cafeOrderForm').reset();await tick();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);mode('delivery');assert.equal($('cafeDeliveryAddress').required,true);
+ $('cafeOrderForm').reset();await tick();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);mode('delivery');assert.equal($('cafeDeliveryAddress').required,false);
  // MapLibre 5 has no supported() export: absent optional legacy API must not force fallback.
  delete w.maplibregl.supported;$('cafeDeliveryMapOpen').click();await tick();
  vectors.at(-1).gl.fire('load');assert.equal($('cafeDeliveryMap').dataset.basemap,'openfreemap','real MapLibre 5 API supported');
@@ -107,9 +120,9 @@ try{
  w.maplibregl.supported=()=>true;$('cafeDeliveryMapOpen').click();await tick();
  const failed=vectors.at(-1);failed.gl.fire('error');failed.gl.fire('error');failed.gl.fire('error');
  assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');assert.equal(failed.removed,true);$('cafeDeliveryMapClose').click();
- // Missing map library still allows a manually entered address.
- delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/вручную/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();
- $('cafeDeliveryAddress').value='Полный адрес вручную';$('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
- assert.equal(payloads.at(-1).deliveryAddress,'Полный адрес вручную');
+ // Missing map library fails closed: free text cannot establish coverage.
+ delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/Без проверки зоны/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();
+ const beforeManual=payloads.length; $('cafeDeliveryAddress').value='Полный адрес вручную';$('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
+ assert.equal(payloads.length,beforeManual,'a typed address cannot bypass the map when unavailable');
  console.log('PASS OpenFreeMap vector provider/credit/fallback; delivery point: explicit GPS consent/confirmation, map taps and dragging, cancellation, stale GPS, denied location, exact courier URLs, checkout payload and manual fallback (simulated map/GPS; no live orders)');
 }finally{w.close();}

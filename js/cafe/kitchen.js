@@ -1007,5 +1007,5 @@
     window.ummaCourierTracking?.syncOrders(orders);
     render();renderStaffActiveOrders();renderStaffClosedOrders();
   }
-  window.ummaKitchen = { open, refresh:loadOrders, rerender:render, applyCourierState };
+  window.ummaKitchen = { getLocationId: selectedStaffCafeId, open, refresh:loadOrders, rerender:render, applyCourierState };
 })();

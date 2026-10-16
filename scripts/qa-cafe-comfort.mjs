@@ -8,7 +8,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 let gps=0,confirmed=false;
 w.Telegram={WebApp:{initData:'isolated-qa',initDataUnsafe:{user:{id:123,first_name:'Ибрахим'}}}};
 Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(){gps++;}}});
-w.ummaDeliveryLocation={hasPoint:()=>confirmed,setCafeLocation(){},reset(){confirmed=false;}};
+w.ummaDeliveryLocation={hasPoint:()=>confirmed,availability:()=>confirmed?"available":"required",setCafeLocation(){},reset(){confirmed=false;}};
 let locations=[{id:'one',name:'UMMA Cafe',address:'Scenia Bay'}];
 const products=[{id:'soup',sku:'UMMA-CAFE-SHURPA',name_ru:'Шурпа',price_vnd:90000},{id:'salad',sku:'UMMA-CAFE-SALAD',name_ru:'Салат',price_vnd:50000}];
 w.fetch=async()=>({ok:true,json:async()=>({ok:true,products,locations,location:locations[0],inventoryControlEnabled:false})});
@@ -21,7 +21,7 @@ try{
  assert.equal($('cafeContactDetails').open,false);assert.equal($('cafeNoteDetails').open,false);assert.equal($('cafeCheckoutItems').open,false);
  assert.match($('cafeContactSummary').textContent,/Ибрахим/);
  const mode=value=>$('cafeCheckoutModes').querySelector('[data-order-mode="'+value+'"]').click();
- mode('delivery');assert.equal($('cafeOrderType').value,'delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,true);
+ mode('delivery');assert.equal($('cafeOrderType').value,'delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,false);
  assert.equal($('cafeOrderModes').querySelector('[data-order-mode="delivery"]').getAttribute('aria-pressed'),'true');
  confirmed=true;d.dispatchEvent(new w.Event('umma:delivery-location-change'));assert.equal($('cafeDeliveryAddress').required,false);assert.match($('cafeAddressTitle').textContent,/необязательно/);
  mode('pickup');assert.equal($('cafeDeliveryLocation').hidden,true);assert.equal($('cafeAddressLabel').hidden,true);assert.equal($('cafeDeliveryAddress').required,false);

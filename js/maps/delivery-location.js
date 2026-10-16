@@ -14,15 +14,26 @@
   window.ummaMapLinks = { parseAddress, coords, googlePlace, applePlace };
   const dialog = $("cafeDeliveryMapDialog");
   if (!dialog) return;
-  let confirmed = null, draft = null, map = null, marker = null, opener = null;
+  let confirmed = null, draft = null, map = null, marker = null, opener = null, zone = null, zoneLayer = null;
   let cafe = { lat: 12.2388, lng: 109.1967 }, generation = 0, geoRequest = 0;
-  let disposeBasemap = null;
+  let disposeBasemap = null, external = null;
   const confirm = $("cafeDeliveryMapConfirm"), gps = $("cafeDeliveryMapLocate");
   function status(text) { $("cafeDeliveryMapStatus").textContent = text; }
   function stopPending() { geoRequest++; gps.disabled = !map; gps.textContent = "Моё местоположение"; }
   function addBasemap() { disposeBasemap = window.UmmaMaps.basemap(map, $("cafeDeliveryMap"), status); }
+  function available(point) { return !!point && window.ummaDeliveryZone?.contains(zone, [point.lat, point.lng]) === true; }
+  function availability() { return !Array.isArray(zone) ? "unavailable" : !confirmed ? "required" : available(confirmed) ? "available" : "outside"; }
   function notify() {
-    $("cafeDeliveryPointSummary").textContent = confirmed ? "Место доставки отмечено на карте" : "Выберите точку на карте или введите полный адрес ниже.";
+    const messages = {
+      unavailable: "Доставка из выбранного кафе пока недоступна. Выберите самовывоз.",
+      required: "Доставляем только в пределах зоны на карте. Выберите точку доставки.",
+      available: "Адрес входит в зону доставки.",
+      outside: "Этот адрес вне зоны доставки выбранного кафе. Выберите другой адрес или самовывоз."
+    };
+    const state=availability(), hint=$("cafeDeliveryZoneStatus");
+    if(hint){hint.textContent=messages[state];hint.dataset.state=state;}
+    if(map && window.L.polygon) {zoneLayer?.remove();zoneLayer=Array.isArray(zone)?window.L.polygon(zone,{color:'#007c80',weight:2,fillOpacity:0.12,interactive:false}).addTo(map):null;}
+    $("cafeDeliveryPointSummary").textContent = confirmed ? "Место доставки отмечено на карте" : "Для доставки нужна точка на карте. Доступ к геолокации необязателен.";
     $("cafeDeliveryPointClear").hidden = !confirmed;
     $("cafeDeliveryMapOpen").textContent = confirmed ? "Изменить точку на карте" : "Указать на карте";
     document.dispatchEvent(new Event("umma:delivery-location-change"));
@@ -30,39 +41,41 @@
   function choose(point, message) {
     if (!valid(point) || !map || !dialog.open) return;
     stopPending();
-    draft = { lat: point.lat, lng: point.lng };
+    draft = { lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6)) };
     if (!marker) {
       marker = window.L.marker([draft.lat, draft.lng], { draggable: true, title: "Точка доставки", alt: "Точка доставки", icon: window.L.divIcon({ className: "delivery-destination-marker", html: '<span aria-hidden="true"></span>', iconSize: [30, 38], iconAnchor: [15, 38] }) }).addTo(map);
       marker.on("dragstart", stopPending);
       marker.on("dragend", () => choose(marker.getLatLng(), "Проверьте точку и подтвердите доставку сюда."));
     } else marker.setLatLng([draft.lat, draft.lng]);
-    confirm.disabled = false;
-    status(message || "Проверьте точку и нажмите «Доставить сюда».");
+    confirm.disabled = !available(draft);
+    status(!available(draft) ? "Этот адрес вне зоны доставки выбранного кафе. Выберите другой адрес или самовывоз." : message || "Проверьте точку и нажмите «Доставить сюда».");
     $("cafeDeliveryDraftCoordinates").textContent = coords(draft);
   }
   function cleanup() {
     generation++; disposeBasemap?.(); disposeBasemap = null; stopPending();
     try { map?.remove(); } catch {}
-    $("cafeDeliveryMap").replaceChildren(); map = null; marker = null; draft = null;
+    $("cafeDeliveryMap").replaceChildren(); map = null; marker = null; draft = null; zoneLayer = null;
+    if(external){({zone,cafe,confirmed}=external.previous);external=null;notify();}
     opener?.focus({ preventScroll: true });
   }
-  function open() {
+  function open(source) {
     if (dialog.open) return;
-    opener = $("cafeDeliveryMapOpen");
+    opener = source || $("cafeDeliveryMapOpen");
     generation++;
     draft = null; confirm.disabled = true;
     $("cafeDeliveryDraftCoordinates").textContent = "";
-    status("Передвиньте карту или нажмите на нужное здание. Затем подтвердите точку.");
+    status("Доставляем только в пределах зоны на карте. Выберите точку доставки.");
     dialog.showModal();
     if (!window.L?.map) {
       gps.disabled = true; $("cafeDeliveryMapManual").disabled = true;
-      status("Карта не загрузилась. Закройте окно и введите адрес вручную либо повторите позже.");
+      status("Карта не загрузилась. Проверьте соединение и повторите выбор точки. Без проверки зоны доставка недоступна.");
       return;
     }
     try {
       map = window.L.map("cafeDeliveryMap", { scrollWheelZoom: false }).setView([cafe.lat, cafe.lng], 16);
       map.attributionControl?.setPrefix(false);
       addBasemap(generation);
+      if(Array.isArray(zone) && window.L.polygon) {zoneLayer=window.L.polygon(zone,{color:'#007c80',weight:2,fillOpacity:0.12,interactive:false}).addTo(map);map.fitBounds?.(zone,{padding:[20,20]});}
       map.on("click", event => choose(event.latlng));
       map.on("dragstart", stopPending);
       map.on("dragend", () => choose(map.getCenter()));
@@ -72,7 +85,7 @@
       map.invalidateSize();
     } catch {
       map?.remove(); map = null; gps.disabled = true; $("cafeDeliveryMapManual").disabled = true;
-      status("Карта недоступна. Можно закрыть окно и ввести адрес вручную.");
+      status("Карта недоступна. Повторите позже или выберите самовывоз.");
     }
   }
   function locate() {
@@ -94,7 +107,7 @@
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
     } catch { stopPending(); status("Доступ к геолокации недоступен. Поставьте точку на карте вручную."); }
   }
-  $("cafeDeliveryMapOpen").addEventListener("click", open);
+  $("cafeDeliveryMapOpen").addEventListener("click", () => open());
   $("cafeDeliveryMapClose").addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", cleanup);
   gps.addEventListener("click", locate);
@@ -106,22 +119,47 @@
     map.invalidateSize();
   });
   confirm.addEventListener("click", () => {
-    if (!valid(draft)) return;
+    if (!valid(draft) || !available(draft)) return;
+    if(external){external.onConfirm({...draft});dialog.close();return;}
     confirmed = { ...draft }; notify(); dialog.close();
   });
   $("cafeDeliveryPointClear").addEventListener("click", () => { confirmed = null; notify(); });
   window.ummaDeliveryLocation = {
     hasPoint: () => valid(confirmed) === true,
+    availability,
     getAddress: details => {
-      const text = String(details || "").trim().slice(0, 440);
+      const text = String(details || "").replace(/^Точка доставки:.*$/gm, "").trim().slice(0, 440);
       return confirmed ? [text, "Точка доставки: " + coords(confirmed)].filter(Boolean).join("\n") : text;
     },
     setCafeLocation: location => {
+      zone = Array.isArray(location?.delivery_zone) ? location.delivery_zone : null;
+      if(draft) {confirm.disabled=!available(draft);}
+      notify();
       if (location?.latitude == null || location?.longitude == null) return;
       const point = { lat: Number(location.latitude), lng: Number(location.longitude) };
       if (valid(point)) cafe = point;
     },
     reset: () => { if (dialog.open) dialog.close(); confirmed = null; notify(); }
   };
+  $("staffDeliveryMapOpen")?.addEventListener("click",async()=>{
+    if(dialog.open)return;
+    const button=$("staffDeliveryMapOpen"),hint=$("staffDeliveryMapStatus");
+    button.disabled=true;
+    try{
+      const response=await fetch("https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-menu",{cache:"no-store"});
+      const result=await response.json();if(!response.ok||!result.ok)throw Error("Не удалось проверить зону доставки");
+      const id=$("staffOrderLocation")?.value||window.ummaKitchen?.getLocationId?.();
+      const location=(result.locations||[result.location]).find(l=>l&&String(l.id)===String(id));
+      if(!location?.delivery_zone)throw Error("Доставка из выбранного кафе пока недоступна. Выберите самовывоз.");
+      external={previous:{zone,cafe,confirmed},onConfirm:point=>{
+        const input=$("staffOrderAddress"),details=input.value.replace(/^Точка доставки:.*$/gm,"").trim().slice(0,440);
+        input.value=[details,"Точка доставки: "+coords(point)].filter(Boolean).join("\n");
+        input.dispatchEvent(new Event("change",{bubbles:true}));hint.textContent="Адрес входит в зону доставки.";
+      }};
+      zone=location.delivery_zone;cafe={lat:Number(location.latitude),lng:Number(location.longitude)};
+      confirmed=parseAddress($("staffOrderAddress").value);open(button);
+    }catch(e){hint.textContent=e.message;}
+    finally{button.disabled=false;}
+  });
   notify();
 })();

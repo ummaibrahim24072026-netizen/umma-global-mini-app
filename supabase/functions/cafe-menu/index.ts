@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         .order("sort_order", { ascending: true }),
       supabase
         .from("locations")
-        .select("id, name, address, city, country, latitude, longitude")
+        .select("id, name, address, city, country, latitude, longitude, delivery_zone")
         .eq("location_type", "cafe")
         .eq("is_active", true)
         .order("name", { ascending: true }),

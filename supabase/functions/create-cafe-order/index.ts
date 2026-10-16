@@ -130,6 +130,11 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    const deliveryErrors: Record<string,string> = {
+      DELIVERY_POINT_REQUIRED: "Выберите точку доставки на карте, чтобы проверить зону обслуживания.",
+      DELIVERY_UNAVAILABLE: "Доставка из выбранного кафе пока недоступна. Выберите самовывоз.",
+      DELIVERY_OUTSIDE_ZONE: "Этот адрес вне зоны доставки выбранного кафе. Выберите другой адрес или самовывоз.",
+    };
     if (body.staffOrder === true) {
       if (typeof body.locationId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.locationId)) {
         return response({ ok: false, error: "Не выбрано кафе" }, 400);
@@ -149,6 +154,7 @@ Deno.serve(async (req) => {
       });
       if(!staffError&&orderType==="delivery"&&!staffData?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch(e){console.error("Courier notification deferred");}}
       if (staffError) {
+        if (deliveryErrors[staffError.message]) return response({ok:false,code:staffError.message,error:deliveryErrors[staffError.message]},400);
         if (staffError.code === "23505" && /cafe_one_open_bill_per_numbered_table/.test(staffError.message || "")) {
           return response({ok:false,error:"У этого стола уже есть открытый счёт. Обновите список заказов и добавьте блюда в существующий счёт."},409);
         }
@@ -178,6 +184,7 @@ Deno.serve(async (req) => {
 
     if(!error&&orderType==="delivery"&&!data?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}}
     if (error) {
+      if (deliveryErrors[error.message]) return response({ok:false,code:error.message,error:deliveryErrors[error.message]},400);
       console.error("Order creation rejected:", error.message);
       const clientErrors = [
         "Invalid idempotent order request", "Idempotency key reused", "Order operation access denied", "Cafe location is required", "Invalid customer", "Invalid order type", "Invalid payment method",

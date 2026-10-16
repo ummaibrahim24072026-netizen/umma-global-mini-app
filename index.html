@@ -22,9 +22,9 @@
     rel="stylesheet"
   >
 
-  <script src="js/core/languages-extra.js?v=2"></script>
-  <script src="js/core/languages.js?v=4"></script>
-  <script src="js/core/translations.js?v=3"></script>
+  <script src="js/core/languages-extra.js?v=3"></script>
+  <script src="js/core/languages.js?v=5"></script>
+  <script src="js/core/translations.js?v=4"></script>
   <script src="js/core/i18n.js?v=3"></script>
 
 
@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="css/app.css?v=37">
   <link rel="stylesheet" href="css/admin.css?v=10">
   <link rel="stylesheet" href="css/native.css?v=30">
-  <link rel="stylesheet" href="css/cafe-comfort.css?v=4">
+  <link rel="stylesheet" href="css/cafe-comfort.css?v=5">
   <link rel="stylesheet" href="css/brand.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -517,6 +517,14 @@
           </label>
           <p class="cafe-staff-form-hint">У каждого кафе один главный администратор. Один администратор может управлять несколькими кафе. Только суперадминистратор назначает главного администратора.</p>
         </div>
+        <fieldset id="locationDeliveryZoneEditor" class="cafe-delivery-zone-editor">
+          <legend>Зона доставки</legend>
+          <p>Без зоны доставка недоступна. Выберите существующее кафе, затем отметьте границу на карте по порядку. Самовывоз работает отдельно.</p>
+          <div class="delivery-map-tools"><button type="button" id="locationZoneDraw" disabled>Нарисовать зону</button><button type="button" id="locationZoneUndo" disabled>Отменить точку</button><button type="button" id="locationZoneStop" disabled>Завершить рисование</button></div>
+          <button type="button" id="locationZoneClear" disabled>Отключить доставку</button>
+          <p id="locationZoneStatus" role="status"></p>
+          <button type="button" id="locationZoneSave" disabled>Сохранить зону доставки</button>
+        </fieldset>
         <label style="display:flex;align-items:center;gap:8px"><input id="locationActive" type="checkbox" checked> Локация активна</label>
         <button type="submit" id="locationSave" class="cafe-submit">Сохранить локацию</button>
       </form>
@@ -642,7 +650,7 @@
             <form id="staffOrderForm" class="cafe-order-form">
               <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
               <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
-              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="nearest">Сначала ближайшему свободному курьеру</option><option value="broadcast">Свободный выбор курьерами кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="nearest">Сначала ближайшему свободному курьеру</option><option value="broadcast">Свободный выбор курьерами кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<textarea id="staffOrderAddress" maxlength="500" rows="3" placeholder="Адрес доставки"></textarea><button type="button" id="staffDeliveryMapOpen">Указать на карте</button><small id="staffDeliveryMapStatus" role="status">Выберите точку доставки на карте, чтобы проверить зону обслуживания.</small></label>
               <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
               <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Сейчас, до передачи заказа</option><option value="later">После трапезы — общий счёт</option><option value="on_delivery" hidden>При получении — наличными курьеру</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
               <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
@@ -772,6 +780,7 @@
         </div>
       </header>
 
+      <p class="cafe-order-hint">Доставка доступна только в зоне выбранного кафе. Проверьте адрес на карте перед заказом.</p>
       <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
       <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
       <div class="cafe-menu-search"><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
@@ -819,10 +828,11 @@
             <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
               <strong>Куда доставить?</strong>
               <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
+              <p id="cafeDeliveryZoneStatus" class="cafe-order-hint" role="status" aria-live="polite"></p>
               <p id="cafeDeliveryPointSummary" class="cafe-order-hint" role="status" aria-live="polite"></p>
               <button type="button" id="cafeDeliveryPointClear" class="cafe-location-clear" hidden>Убрать точку</button>
             </div>
-            <label id="cafeAddressLabel" hidden><span id="cafeAddressTitle">Или введите адрес доставки</span>
+            <label id="cafeAddressLabel" hidden><span id="cafeAddressTitle">Квартира, этаж, ориентир (необязательно)</span>
               <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира или ориентир"></textarea>
             </label>
           </section>
@@ -982,20 +992,21 @@
 <!-- CAFE -->
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
-<script src="js/maps/delivery-location.js?v=7"></script>
+<script src="js/maps/delivery-zone.js?v=1"></script>
+<script src="js/maps/delivery-location.js?v=8"></script>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/cafe/payment.js?v=9"></script>
-<script src="js/cafe/cafe.js?v=65"></script>
+<script src="js/cafe/cafe.js?v=66"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>
 <script src="js/cafe/delivery-tracking.js?v=6"></script>
-<script src="js/cafe/kitchen.js?v=70"></script>
+<script src="js/cafe/kitchen.js?v=71"></script>
   <script src="js/cafe/kitchen-live.js?v=5"></script>
 <script src="js/maps/courier-route.js?v=9"></script>
 <script src="js/cafe/test-mode.js?v=12"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
-<script src="js/admin/location-admin.js?v=9"></script>
+<script src="js/admin/location-admin.js?v=10"></script>
 <script src="js/cafe/products-admin.js?v=1"></script>
 <script src="js/cafe/inventory-admin.js?v=2"></script>
 <script src="js/cafe/accounting-admin.js?v=7"></script>

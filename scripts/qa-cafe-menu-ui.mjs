@@ -90,7 +90,7 @@ try{
  const orderType=d.getElementById('cafeOrderType'),address=d.getElementById('cafeDeliveryAddress');
  assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true');
  modeButton('delivery').click();assert.equal(orderType.value,'delivery');
- assert.equal(address.required,true);assert.equal(d.getElementById('cafeAddressLabel').hidden,false);
+ assert.equal(address.required,false);assert.equal(d.getElementById('cafeAddressLabel').hidden,false);
  assert.match(d.querySelector('#cafePaymentMethod option[value="cash"]').textContent,/курьеру/);
  orderType.value='dine_in';orderType.dispatchEvent(new w.Event('change'));
  assert.equal(modeButton('dine_in').getAttribute('aria-pressed'),'true','checkout updates header');
@@ -115,6 +115,10 @@ try{
    footer.click();
    assert.equal(submitted.length,before,'missing delivery address blocks submission');
    address.value='QA address';
+   d.getElementById('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+   assert.equal(submitted.length,before,'typed address cannot bypass delivery zone verification');
+   w.ummaDeliveryLocation={availability:()=> 'available',hasPoint:()=>true,getAddress:details=>details+'\nТочка доставки: 12.24,109.19',reset(){delete w.ummaDeliveryLocation;}};
+   d.dispatchEvent(new w.Event('umma:delivery-location-change'));
   }
   footer.click();footer.click();assert.equal(footer.disabled,true,'single order submission locks footer');
   await new Promise(resolve=>setImmediate(resolve));

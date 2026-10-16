@@ -165,6 +165,7 @@
 
   const countLabel=(amount,one,few,many)=>amount+" "+(amount%100>=11&&amount%100<=14?many:amount%10===1?one:amount%10>=2&&amount%10<=4?few:many);
 
+  function deliveryBlocked() { return orderType?.value === "delivery" && window.ummaDeliveryLocation?.availability?.() !== "available"; }
   function renderCart() {
     fillTelegramCustomerName();
     syncCheckoutSummaries();
@@ -175,7 +176,7 @@
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no" dir="auto">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
-    if (submit) submit.disabled = loading || !entries.length || !locationId;
+    if (submit) submit.disabled = loading || !entries.length || !locationId || deliveryBlocked();
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
@@ -184,7 +185,7 @@
     if (stickyTotal) stickyTotal.textContent = money(total());
     if (sticky) sticky.hidden = entries.length === 0;
     const go = byId("cafeStickyGoToOrder");
-    if (go) { go.textContent = checkoutOpen ? (!locationId ? "Приём заказов приостановлен" : loading ? "Оформляем заказ…" : "Оформить заказ") : "Перейти к заказу"; go.disabled = loading || !entries.length || (checkoutOpen && !locationId); go.setAttribute("aria-busy", String(loading)); }
+    if (go) { go.textContent = checkoutOpen ? (!locationId ? "Приём заказов приостановлен" : loading ? "Оформляем заказ…" : "Оформить заказ") : "Перейти к заказу"; go.disabled = loading || !entries.length || (checkoutOpen && (!locationId || deliveryBlocked())); go.setAttribute("aria-busy", String(loading)); }
     renderProductSelection();
   }
 
@@ -430,11 +431,11 @@
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
     if (addressLabel) addressLabel.hidden = !delivery;
-    const hasPoint=window.ummaDeliveryLocation?.hasPoint()===true;
-    if (addressInput) addressInput.required = delivery && !hasPoint;
-    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent=hasPoint?"Квартира, этаж, ориентир (необязательно)":"Или введите адрес доставки";
+    if (addressInput) addressInput.required = false;
+    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent="Квартира, этаж, ориентир (необязательно)";
     if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
     syncCustomerPayment();
+    renderCart();
   }
   orderType?.addEventListener("change", syncOrderMode);
   document.addEventListener("umma:delivery-location-change", syncOrderMode);
@@ -457,7 +458,7 @@
     if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
     const initData = window.Telegram?.WebApp?.initData;
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
-    if (orderType?.value === "delivery" && !addressInput?.value.trim() && !window.ummaDeliveryLocation?.hasPoint()) { addressInput?.focus(); if (typeof showToast === "function") showToast("Укажите адрес доставки"); return; }
+    if (deliveryBlocked()) { byId("cafeDeliveryMapOpen")?.focus(); if (typeof showToast === "function") showToast(byId("cafeDeliveryZoneStatus")?.textContent || "Выберите точку доставки на карте, чтобы проверить зону обслуживания."); return; }
 
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");

@@ -5,6 +5,7 @@
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   let map=null,markers=[],pin=null,locations=[],users=[],managers=[],selectedId=null,busy=false;
+  let zoneDraft=null, zoneLayer=null, drawingZone=false, zoneDirty=false;
   const typeNames={cafe:"Кафе",restaurant:"Ресторан",warehouse:"Склад",market:"Магазин",other:"Другое"};
   async function api(payload){
     const initData=window.Telegram?.WebApp?.initData;
@@ -37,6 +38,7 @@
     map=L.map("locationAdminMap",{scrollWheelZoom:true}).setView([12.2388,109.1967],6);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
     map.on("click",async e=>{
+      if(drawingZone){zoneDraft.push([Number(e.latlng.lat.toFixed(6)),Number(e.latlng.lng.toFixed(6))]);zoneDirty=true;renderZone();return;}
       setPin(e.latlng.lat,e.latlng.lng,false);
       const addr=$("locationAddress").value.trim();
       if(!addr){try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+e.latlng.lat+"&lon="+e.latlng.lng+"&zoom=18&addressdetails=1&accept-language=ru,en");if(r.ok){const d=await r.json();if(d.display_name)$("locationAddress").value=d.display_name;const a=d.address||{};if(!$("locationCity").value)$("locationCity").value=a.city||a.town||a.village||a.county||"";}}catch{}}
@@ -68,15 +70,27 @@
       return '<article class="cafe-staff-card" style="margin-bottom:10px"><div class="cafe-staff-card-head"><div><strong>'+esc(l.name)+'</strong><small>'+esc(typeNames[l.location_type]||l.location_type)+' · '+esc(l.city||l.country||"")+'</small></div><span class="'+(l.is_active?"cafe-staff-active":"cafe-staff-inactive")+'">'+(l.is_active?"Активна":"Отключена")+'</span></div><p style="margin:8px 0">'+esc(l.address||"Адрес не указан")+'</p><p style="font-size:12px;color:var(--umma-brand-muted);margin:4px 0">Координаты: '+esc(coords)+'</p><p style="font-size:12px;color:var(--umma-brand-muted);margin:4px 0">Администратор: '+esc(user?displayName(user):"Не назначен")+'</p><div class="cafe-staff-card-foot"><button type="button" class="cafe-staff-payment-permission" data-edit-location="'+esc(l.id)+'">Открыть на карте / изменить</button></div></article>';
     }).join("");
   }
+  function renderZone(){
+    zoneLayer?.remove();zoneLayer=null;
+    if(map&&zoneDraft?.length>=3)zoneLayer=L.polygon(zoneDraft,{color:'#007c80',fillOpacity:0.15,interactive:false}).addTo(map);
+    else if(map&&zoneDraft?.length)zoneLayer=L.polyline(zoneDraft,{color:'#007c80',interactive:false}).addTo(map);
+    $("locationZoneStatus").textContent=drawingZone?"Нажимайте на карту вдоль границы зоны. Точек: "+zoneDraft.length:zoneDraft?.length?"Точек в зоне: "+zoneDraft.length+(zoneDirty?". Изменения ещё не сохранены.":". Зона сохранена."):"Доставка отключена.";
+    $("locationZoneSave").disabled=!selectedId||!zoneDirty||drawingZone;
+    $("locationZoneDraw").disabled=!selectedId;
+    $("locationZoneUndo").disabled=!drawingZone||!zoneDraft?.length;
+    $("locationZoneStop").disabled=!drawingZone;
+    $("locationZoneClear").disabled=!selectedId;
+  }
   function resetForm(){
-    selectedId=null;$("locationForm").reset();$("locationId").value="";$("locationActive").checked=true;$("locationCountry").value="Vietnam";
+    selectedId=null;zoneDraft=null;drawingZone=false;zoneDirty=false;renderZone();$("locationForm").reset();$("locationId").value="";$("locationActive").checked=true;$("locationCountry").value="Vietnam";
     $("locationFormTitle").textContent="Добавить новую локацию";$("locationSave").textContent="Сохранить локацию";$("locationManagerWrap").hidden=false;fillManagerSelect("");
     if(pin&&map){map.removeLayer(pin);pin=null;}
     $("locationLatitude").value="";$("locationLongitude").value="";
   }
   function editLocation(id){
     const l=locations.find(x=>String(x.id)===String(id));if(!l)return;
-    selectedId=l.id;$("locationId").value=l.id;$("locationName").value=l.name||"";$("locationType").value=l.location_type||"cafe";$("locationAddress").value=l.address||"";
+    if(zoneDirty && !window.confirm("Несохранённые изменения зоны будут потеряны. Продолжить?"))return;
+    selectedId=l.id;zoneDraft=l.delivery_zone?l.delivery_zone.map(p=>[...p]):null;drawingZone=false;zoneDirty=false;renderZone();$("locationId").value=l.id;$("locationName").value=l.name||"";$("locationType").value=l.location_type||"cafe";$("locationAddress").value=l.address||"";
     $("locationCity").value=l.city||"";$("locationCountry").value=l.country||"Vietnam";$("locationPhone").value=l.phone||"";$("locationActive").checked=!!l.is_active;
     $("locationLatitude").value=l.latitude??"";$("locationLongitude").value=l.longitude??"";
     const m=managerFor(l.id);fillManagerSelect(m?.telegram_id||"");
@@ -111,6 +125,17 @@
       setPin(Number(a[0].lat),Number(a[0].lon),true);message("Адрес найден. Проверьте точку на карте и при необходимости передвиньте маркер.");
     }catch(e){message(e.message||"Не удалось найти адрес");}
   }
+  $("locationZoneDraw")?.addEventListener("click",()=>{if(!selectedId)return;zoneDraft=[];drawingZone=true;zoneDirty=true;renderZone();$("locationAdminMap").scrollIntoView({behavior:"smooth",block:"center"});});
+  $("locationZoneUndo")?.addEventListener("click",()=>{zoneDraft?.pop();renderZone();});
+  $("locationZoneStop")?.addEventListener("click",()=>{if(zoneDraft?.length<3){message("Для зоны нужны минимум 3 точки.");return;}drawingZone=false;renderZone();});
+  $("locationZoneClear")?.addEventListener("click",()=>{zoneDraft=null;drawingZone=false;zoneDirty=true;renderZone();});
+  $("locationZoneSave")?.addEventListener("click",async()=>{
+    if(!selectedId||busy||!zoneDirty||drawingZone)return;
+    busy=true;$("locationZoneSave").disabled=true;
+    try{await api({action:"deliveryZone",id:selectedId,zone:zoneDraft});const l=locations.find(l=>l.id===selectedId);if(l)l.delivery_zone=zoneDraft;zoneDirty=false;message("Зона доставки сохранена. Новые заказы проверяются по этой зоне.");window.ummaCafe?.refreshMenu();}
+    catch(e){message(e.message||"Не удалось сохранить зону доставки");}
+    finally{busy=false;renderZone();}
+  });
   $("locationOpenMapButton")?.addEventListener("click",open);
   $("locationAdminBack")?.addEventListener("click",()=>{if($("locationAdminPage"))$("locationAdminPage").hidden=true;if(typeof openAdminPanel==="function")openAdminPanel();});
   $("locationRefresh")?.addEventListener("click",load);
@@ -126,7 +151,7 @@
     busy=true;$("locationSave").disabled=true;message("Сохраняем локацию и назначение администратора…");
     try{
       const d=await api({action:"save",id:selectedId,name:$("locationName").value.trim(),location_type:type,address:$("locationAddress").value.trim(),city:$("locationCity").value.trim(),country:$("locationCountry").value.trim(),phone:$("locationPhone").value.trim(),latitude:$("locationLatitude").value,longitude:$("locationLongitude").value,is_active:$("locationActive").checked,manager_telegram_id:isCafe?manager:null});
-      const saved=d.location||d;selectedId=saved.id;await load(true);editLocation(selectedId);message("Локация сохранена. Главный администратор привязан к этому кафе.");
+      const saved=d.location||d;selectedId=saved.id;await load(true);if(!zoneDirty)editLocation(selectedId);message("Локация сохранена. Главный администратор привязан к этому кафе.");
     }catch(err){message(err.message||"Не удалось сохранить локацию");}
     finally{busy=false;$("locationSave").disabled=false;}
   });

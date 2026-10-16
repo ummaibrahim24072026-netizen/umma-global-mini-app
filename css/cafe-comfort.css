@@ -78,3 +78,10 @@
 #cafePage .cafe-availability-notice{padding:14px 16px;margin:12px 0;border:1px solid var(--umma-brand-line);border-radius:14px;background:var(--umma-brand-pale);color:var(--umma-brand-text);font-size:13px;line-height:1.6}
 /* Long availability messages wrap instead of pushing the total off narrow screens. */
 #cafePage .cafe-sticky-order button{flex:0 1 auto;min-width:0;max-width:65%;white-space:normal;overflow-wrap:anywhere}
+
+/* Delivery eligibility remains visible before payment or order creation. */
+#cafeDeliveryZoneStatus { padding:12px; border-radius:12px; background:#e6f5f3; color:#145957; }
+#cafeDeliveryZoneStatus[data-state="outside"], #cafeDeliveryZoneStatus[data-state="unavailable"] { background:#fff0e6; color:#843d18; }
+.cafe-delivery-zone-editor { min-inline-size:0; margin-block:16px; padding:14px; border:1px solid #c6dddd; border-radius:12px; }
+.cafe-delivery-zone-editor p { font-size:14px; line-height:1.5; }
+.cafe-delivery-zone-editor button { margin-block:4px; padding:10px; border:1px solid #a9cece; border-radius:10px; background:#edf8f7; color:#145957; }
