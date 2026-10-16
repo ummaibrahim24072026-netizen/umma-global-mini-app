@@ -1,5 +1,5 @@
 // Closed history must never crowd active orders out of the staff workspace.
-const columns = "id, order_number, customer_name, customer_phone, delivery_address, customer_note, order_type, payment_method, payment_timing, dispatch_mode, payment_status, paid_at, paid_by_telegram_id, delivery_status, courier_telegram_id, status, accepted_by_telegram_id, accepted_at, subtotal_vnd, delivery_fee_vnd, discount_vnd, total_vnd, created_at, location_id, cafe_order_items(id, product_name_ru, quantity, unit_price_vnd, line_total_vnd)";
+const columns = "id, order_number, customer_telegram_id, customer_name, customer_phone, delivery_address, customer_note, order_type, payment_method, payment_timing, dispatch_mode, payment_status, paid_at, paid_by_telegram_id, delivery_status, courier_telegram_id, status, accepted_by_telegram_id, accepted_at, subtotal_vnd, delivery_fee_vnd, discount_vnd, total_vnd, created_at, location_id, cafe_order_items(id, product_name_ru, quantity, unit_price_vnd, line_total_vnd)";
 
 export async function loadCafeOrders(client: any, scope: { locationIds: string[] | null; courierId: number | null }) {
   const query = () => {
@@ -23,5 +23,5 @@ export async function loadCafeOrders(client: any, scope: { locationIds: string[]
   const { data: closed, error } = await query().in("status", ["completed", "cancelled"])
     .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(100);
   if (error) return { data: null, error };
-  return { data: [...active, ...(closed ?? [])], error: null };
+  return { data: [...active, ...(closed ?? [])].map(({customer_telegram_id, ...order}) => ({...order,chat_available:customer_telegram_id!=null})), error: null };
 }

@@ -503,6 +503,58 @@ QR с суммой заказа готов. Оплату подтвердит к
 Доставка доступна только в зоне выбранного кафе. Проверьте адрес на карте перед заказом.|Delivery is available only within the selected cafe’s service area. Check your address on the map before ordering.|Chỉ giao trong khu vực phục vụ của quán đã chọn. Kiểm tra địa chỉ trên bản đồ trước khi đặt.
 Карта не загрузилась. Проверьте соединение и повторите выбор точки. Без проверки зоны доставка недоступна.|The map did not load. Check your connection and try again. Delivery requires coverage verification.|Không tải được bản đồ. Kiểm tra kết nối và thử lại. Cần xác minh khu vực trước khi giao hàng.
 Карта недоступна. Повторите позже или выберите самовывоз.|The map is unavailable. Try later or choose pickup.|Bản đồ không khả dụng. Thử lại sau hoặc chọn tự đến lấy.
+Чат с курьером|Chat with courier|Chat với tài xế
+Чат с клиентом|Chat with customer|Chat với khách hàng
+Чат доставки|Delivery chat|Chat giao hàng
+Сообщения|Messages|Tin nhắn
+Сообщение|Message|Tin nhắn
+Напишите сообщение|Write a message|Nhập tin nhắn
+Отправить|Send|Gửi
+Отправляем…|Sending…|Đang gửi…
+Фото / видео|Photo / video|Ảnh / video
+Записать голосовое|Record voice message|Ghi âm tin nhắn
+Остановить запись|Stop recording|Dừng ghi âm
+Убрать вложение|Remove attachment|Bỏ tệp đính kèm
+Показать оригинал|Show original|Xem bản gốc
+Оригинал|Original|Bản gốc
+Автоперевод|Automatic translation|Bản dịch tự động
+Озвучка перевода · ИИ|Translated audio · AI voice|Âm thanh bản dịch · Giọng AI
+Прочитано|Read|Đã đọc
+Отправлено|Sent|Đã gửi
+Ранее|Older messages|Tin nhắn cũ hơn
+Вы|You|Bạn
+Клиент|Customer|Khách hàng
+Курьер|Courier|Tài xế
+Фотография|Photo|Ảnh
+Видео|Video|Video
+Голосовое сообщение|Voice message|Tin nhắn thoại
+Переводим…|Translating…|Đang dịch…
+Чат станет доступен после назначения курьера.|Chat will be available once a courier is assigned.|Chat khả dụng sau khi tài xế được phân công.
+Доставка завершена. Чат доступен для чтения.|Delivery has ended. Chat is read-only.|Giao hàng đã kết thúc. Chỉ có thể đọc tin nhắn.
+Текст и голос переводятся автоматически. Озвучка перевода создана ИИ.|Text and voice messages are translated automatically. Translated audio uses an AI voice.|Văn bản và giọng nói được dịch tự động. Âm thanh bản dịch dùng giọng AI.
+Автоперевод пока недоступен. Сообщения доставляются в оригинале.|Automatic translation is unavailable. Original messages are delivered.|Tạm chưa có dịch tự động. Tin nhắn được gửi ở dạng gốc.
+Автоперевод пока недоступен. Показан оригинал.|Automatic translation unavailable. Showing the original.|Tạm chưa có dịch tự động. Hiển thị bản gốc.
+Не удалось перевести. Оригинал сохранён.|Translation failed. The original is saved.|Dịch không thành công. Bản gốc đã được lưu.
+Фото до 8 МБ, видео до 20 МБ. Голосовая запись — до 60 секунд.|Photos up to 8 MB, videos up to 20 MB. Voice recordings up to 60 seconds.|Ảnh tối đa 8 MB, video tối đa 20 MB. Ghi âm tối đa 60 giây.
+Запись недоступна. Отправьте текстовое сообщение.|Recording is unavailable. Please send a text message.|Không thể ghi âm. Vui lòng gửi tin nhắn văn bản.
+Разрешите микрофон для записи голосового сообщения.|Allow microphone access to record a voice message.|Cho phép truy cập micrô để ghi âm tin nhắn.
+Не удалось записать голосовое сообщение.|Could not record the voice message.|Không thể ghi âm tin nhắn.
+Файл слишком большой или имеет неподдерживаемый формат.|The file is too large or its format is unsupported.|Tệp quá lớn hoặc định dạng không được hỗ trợ.
+Прослушайте запись и нажмите «Отправить».|Listen to the recording, then press Send.|Nghe bản ghi rồi nhấn Gửi.
+Идёт запись. Максимум 60 секунд.|Recording. Maximum 60 seconds.|Đang ghi âm. Tối đa 60 giây.
+Микрофон недоступен. Можно отправить текст, фото или видео.|Microphone unavailable. You can send text, photos or videos.|Micrô không khả dụng. Có thể gửi văn bản, ảnh hoặc video.
+Не удалось открыть чат.|Could not open the chat.|Không thể mở chat.
+Не удалось загрузить файл. Повторите отправку.|Could not upload the file. Retry sending.|Không thể tải tệp lên. Vui lòng gửi lại.
+Чат доступен только клиенту и назначенному курьеру.|Only the customer and assigned courier can access this chat.|Chỉ khách hàng và tài xế được phân công có thể truy cập chat.
+Отправка недоступна: курьер ещё не назначен или доставка завершена.|Sending unavailable: no courier assigned or delivery has ended.|Không thể gửi: chưa có tài xế hoặc giao hàng đã kết thúc.
+Проверьте сообщение, размер и формат файла.|Check the message, file size and format.|Kiểm tra tin nhắn, kích thước và định dạng tệp.
+Файл ещё не загружен полностью. Повторите отправку.|The file upload is incomplete. Retry sending.|Tệp chưa tải lên hoàn tất. Vui lòng gửi lại.
+Повтор запроса отличается от исходного сообщения.|The retry differs from the original message.|Yêu cầu gửi lại khác với tin nhắn gốc.
+Слишком много сообщений. Попробуйте немного позже.|Too many messages. Try again shortly.|Quá nhiều tin nhắn. Vui lòng thử lại sau.
+Перевод уже обрабатывается.|Translation is already in progress.|Bản dịch đang được xử lý.
+Не удалось выполнить действие в чате. Повторите попытку.|Could not complete the chat action. Please retry.|Không thể thực hiện thao tác chat. Vui lòng thử lại.
+Автоперевод пока не подключён. Доступен оригинал сообщения.|Automatic translation is not connected. The original is available.|Chưa kết nối dịch tự động. Bản gốc vẫn khả dụng.
+Не удалось перевести сообщение. Оригинал сохранён.|Could not translate the message. The original is saved.|Không thể dịch tin nhắn. Bản gốc đã được lưu.
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }

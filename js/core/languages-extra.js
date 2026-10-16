@@ -319,6 +319,15 @@ VietQR для оплаты заказа №{id}|Sargyt №{id} üçin VietQR|Vie
 Доставка доступна только в зоне выбранного кафе. Проверьте адрес на карте перед заказом.|Eltip bermek saýlanan kafeniň hyzmat zolagy bilen çäklenýär. Sargytdan öň salgyny kartada barlaň.|Расонидан танҳо дар ҳудуди қаҳвахонаи интихобшуда имконпазир аст. Пеш аз фармоиш суроғаро дар харита санҷед.|Yetkazish faqat tanlangan kafe hududida mavjud. Buyurtmadan oldin manzilni xaritada tekshiring.|配達は選択したカフェのサービス範囲内に限ります。注文前に地図で住所を確認してください。|پەقەت تاللانغان ئاشخانىنىڭ مۇلازىمەت دائىرىسىگە يەتكۈزۈلىدۇ. زاكازدىن بۇرۇن ئادرېسنى خەرىتىدە تەكشۈرۈڭ.
 Карта не загрузилась. Проверьте соединение и повторите выбор точки. Без проверки зоны доставка недоступна.|Karta ýüklenmedi. Birikmäni barlap gaýtadan synanyşyň. Eltip bermek üçin zolak barlanmaly.|Харита бор нашуд. Пайвастро санҷида, такрор кунед. Пеш аз расонидан ҳудуд бояд санҷида шавад.|Xarita yuklanmadi. Ulanishni tekshirib qayta urinib ko‘ring. Yetkazish uchun hudud tekshirilishi kerak.|地図を読み込めませんでした。接続を確認して再度お試しください。配達には範囲の確認が必要です。|خەرىتە يۈكلەنمىدى. ئۇلىنىشنى تەكشۈرۈپ قايتا سىناڭ. يەتكۈزۈش ئۈچۈن دائىرە تەكشۈرۈلۈشى كېرەك.
 Карта недоступна. Повторите позже или выберите самовывоз.|Karta elýeterli däl. Soňrak synanyşyň ýa-da alyp gitmegi saýlaň.|Харита дастрас нест. Баъдтар такрор кунед ё худгирифтро интихоб кунед.|Xarita mavjud emas. Keyinroq urinib ko‘ring yoki olib ketishni tanlang.|地図を利用できません。後でもう一度試すか、持ち帰りを選択してください。|خەرىتىنى ئىشلەتكىلى بولمايدۇ. كېيىن قايتا سىناڭ ياكى ئۆزىڭىز ئېلىپ كېتىشنى تاللاڭ.
+Чат с курьером|Eltip beriji bilen söhbet|Суҳбат бо расонанда|Kuryer bilan suhbat|配達員とチャット|يەتكۈزگۈچى بىلەن پاراڭ
+Чат с клиентом|Müşderi bilen söhbet|Суҳбат бо муштарӣ|Mijoz bilan suhbat|お客様とチャット|خېرىدار بىلەن پاراڭ
+Сообщение|Habar|Паём|Xabar|メッセージ|ئۇچۇر
+Фото / видео|Surat / wideo|Акс / видео|Rasm / video|写真・動画|رەسىم / سىن
+Записать голосовое|Sesli habar ýazdyrmak|Сабти паёми овозӣ|Ovozli xabar yozish|音声メッセージを録音|ئاۋازلىق ئۇچۇر خاتىرىلەش
+Остановить запись|Ýazgyny duruzmak|Қатъи сабт|Yozishni to‘xtatish|録音を停止|خاتىرىلەشنى توختىتىش
+Показать оригинал|Asyl nusgany görkezmek|Нишон додани асл|Aslini ko‘rsatish|原文を表示|ئەسلىسىنى كۆرسىتىش
+Автоперевод|Awtomatiki terjime|Тарҷумаи худкор|Avtomatik tarjima|自動翻訳|ئاپتوماتىك تەرجىمە
+Озвучка перевода · ИИ|Terjime sesi · Emeli aň|Садои тарҷума · Зеҳни сунъӣ|Tarjima ovozi · Sun’iy intellekt|翻訳音声 · AI生成|تەرجىمە ئاۋازى · سۈنئىي ئەقىل
 `;
  const catalogue=Object.create(null);
  for(const line of rows.trim().split('\n')){
