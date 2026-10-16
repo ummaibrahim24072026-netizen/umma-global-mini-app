@@ -65,29 +65,42 @@
     let selected='vcb';try{const saved=localStorage.getItem('umma-payment-bank');if(banks.some(([id])=>id===saved))selected=saved;}catch{}
     const open=el('a','Оплатить','cafe-payment-open');open.rel='noopener noreferrer';open.target='_blank';open.dataset.bankPay='';
     const status=el('p','Оплата подтвердится автоматически. Скриншот не нужен.','cafe-payment-live');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-    const bankHint=el('p',null,'cafe-payment-help cafe-payment-bank-hint');
-    function updateLink(){const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:payment.account+'@vcb',am:String(payment.amount),tn:payment.reference,app:selected,url:location.origin+location.pathname}).toString();open.href=url.href;summary.textContent=banks.find(([id])=>id===selected)[1];bankHint.textContent=selected==='vcb'?'Vietcombank открывается без заполненного перевода. Используйте QR, если реквизиты не появились.':'';bankHint.hidden=selected!=='vcb';}
-    banks.forEach(([value,name])=>{const button=el('button',name);button.type='button';button.setAttribute('aria-pressed',String(value===selected));button.onclick=()=>{selected=value;try{localStorage.setItem('umma-payment-bank',value);}catch{}chooser.open=false;list.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateLink();summary.focus();};list.append(button);});
-    chooser.append(summary,list);updateLink();
-    let lastOpen=0;
-    open.onclick=event=>{
-      if(lastOpen&&Date.now()-lastOpen<1500){event.preventDefault();return;}
-      lastOpen=Date.now();paymentOpened=true;open.textContent='Открыть банк снова';dialog.dataset.paymentState='waiting';status.textContent='Ждём подтверждение банка… Если уже оплатили, не переводите повторно.';
-      const webApp=window.Telegram?.WebApp;
-      if(typeof webApp?.openLink==='function'){event.preventDefault();try{webApp.openLink(open.href);}catch{window.location.assign(open.href);}}
-    };
-    dialog.append(label,chooser,open,status,bankHint);
-    const qrDetails=disclosure('Показать QR-код','cafe-payment-alternative',details=>{
+    const qrPrimary=el('section',null,'cafe-payment-qr-primary');
+    const qrDetails=disclosure('Показать QR-код','cafe-payment-alternative',details=>buildQr(details,false));
+    function buildQr(container,primary) {
       const qr=qrcode(0,'M');qr.addData(payment.qrPayload);qr.make();
       const count=qr.getModuleCount(),scale=8,padding=4,canvas=document.createElement('canvas');canvas.width=canvas.height=(count+padding*2)*scale;
       const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#000';
       for(let y=0;y<count;y++)for(let x=0;x<count;x++)if(qr.isDark(y,x))context.fillRect((x+padding)*scale,(y+padding)*scale,scale,scale);
       const image=el('img',null,'cafe-payment-qr');image.src=canvas.toDataURL('image/png');image.alt='VietQR для оплаты заказа №'+payment.orderNumber;
-      const save=el('a','Сохранить QR','cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';
-      details.append(image,save,el('p','Откройте сохранённый QR в сканере вашего банка. Сумма и номер заказа уже указаны.','cafe-payment-help'));
-    });
+      const save=el('a',primary?'Сохранить QR для оплаты':'Сохранить QR',primary?'cafe-payment-open':'cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';
+      container.append(image,save);
+      if(primary){
+        const steps=el('ol',null,'cafe-payment-steps');
+        ['Сохраните QR на телефон или сделайте скриншот.','Откройте Vietcombank → QR → выберите изображение из галереи.','Проверьте получателя и подтвердите перевод.'].forEach(text=>steps.append(el('li',text)));
+        container.append(steps);
+      }
+      container.append(el('p',primary?'Сумма и номер заказа уже в QR. Не меняйте их при оплате.':'Выберите сохранённый QR в сканере банка. Сумма и номер заказа уже указаны.','cafe-payment-help'));
+    }
+    function updateLink(){
+      summary.textContent=banks.find(([id])=>id===selected)[1];
+      const useQr=selected==='vcb';open.hidden=useQr;qrPrimary.hidden=!useQr;qrDetails.hidden=useQr;
+      if(useQr){open.removeAttribute('href');qrDetails.open=false;if(!qrPrimary.childElementCount)buildQr(qrPrimary,true);}
+      else{const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:payment.account+'@vcb',am:String(payment.amount),tn:payment.reference,app:selected,url:location.origin+location.pathname}).toString();open.href=url.href;}
+    }
+    banks.forEach(([value,name])=>{const button=el('button',name);button.type='button';button.setAttribute('aria-pressed',String(value===selected));button.onclick=()=>{selected=value;try{localStorage.setItem('umma-payment-bank',value);}catch{}chooser.open=false;list.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateLink();summary.focus();};list.append(button);});
+    chooser.append(summary,list);updateLink();
+    let lastOpen=0;
+    open.onclick=event=>{
+      if(selected==='vcb'){event.preventDefault();return;}
+      if(lastOpen&&Date.now()-lastOpen<1500){event.preventDefault();return;}
+      lastOpen=Date.now();paymentOpened=true;open.textContent='Открыть банк снова';dialog.dataset.paymentState='waiting';status.textContent='Ждём подтверждение банка… Если уже оплатили, не переводите повторно.';
+      const webApp=window.Telegram?.WebApp;
+      if(typeof webApp?.openLink==='function'){event.preventDefault();try{webApp.openLink(open.href);}catch{window.location.assign(open.href);}}
+    };
+    dialog.append(label,chooser,open,qrPrimary,status);
     const help=disclosure('Оплатили, но статус не изменился?','cafe-payment-alternative cafe-payment-support',details=>{
-      details.append(el('p','Не оплачивайте повторно. Если подтверждение задерживается, можно отправить скриншот для проверки.','cafe-payment-help'),receiptForm(payment.orderId));
+      details.append(el('p','Не оплачивайте повторно. Если изменили сумму или назначение, автоматическое подтверждение не сработает. Отправьте скриншот: сотрудник проверит поступление и поможет с разницей в сумме.','cafe-payment-help'),receiptForm(payment.orderId));
     });
     dialog.append(qrDetails,help);
   }

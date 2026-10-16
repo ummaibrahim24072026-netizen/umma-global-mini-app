@@ -19,3 +19,7 @@
 .cafe-payment-sheet[data-payment-state=paid] .cafe-payment-amount{color:#08745b;padding-top:18px}
 .cafe-payment-bank-hint{font-size:12px;margin:6px 0 16px}
 .cafe-payment-bank-hint[hidden]{display:none}
+
+.cafe-payment-sheet [hidden]{display:none!important}
+.cafe-payment-qr-primary{margin-top:18px}
+.cafe-payment-steps{padding-left:22px;font:400 14px/1.5 system-ui;color:#375c5d}.cafe-payment-steps li{margin:7px 0}

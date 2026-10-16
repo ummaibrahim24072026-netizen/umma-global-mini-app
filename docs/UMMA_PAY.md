@@ -45,3 +45,9 @@ Pending messages are stored in the app's private SQLite database. Immediate deli
 ## Build
 
 Use JDK 17, Android SDK platform/build-tools 35. The Gradle project pins AGP 8.7.3. A manual SDK build script is included for environments without Gradle. Protect and persist the release signing key: future APK updates must use the same certificate. Do not upload it to the public repository.
+
+## Customer bank routing
+
+Vietcombank has no autofill support in the VietQR deeplink registry. Selecting it shows the order-specific QR immediately, a save action and gallery-scanner instructions. No empty transfer deeplink is offered. The other listed banks keep the autofilled payment link with a QR fallback. Bank selection is remembered. QR rendering stays local; amount and UMMA reference come from the signed owner-scoped endpoint.
+
+A QR pre-fills fields but cannot prevent edits inside the payer's bank. Only an exact incoming amount and UMMA reference confirm an order. A wrong amount stays in private review. A transfer without UMMA may never reach this relay, because the phone filters notifications by UMMA; it cannot be attributed automatically. The support disclosure explains both cases, prohibits repeat payment and offers a screenshot for staff reconciliation. Screenshots themselves never confirm payment. Do not automatically request a top-up or refund from an unverified screenshot.
