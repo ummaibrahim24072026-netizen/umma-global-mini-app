@@ -6,6 +6,11 @@ const acct='1212121212';
 const good='VCB Digibank\nTK 1212121212 +120,000 VND luc 10:00. So du 500,000 VND. ND: UMMA 123';
 assert.deepEqual(parseVcb(good,acct),{amount:120000,orderNumber:'123'});
 for(const text of [good.replace('+','-'),good.replace(acct,'1234567890'),good.replace('UMMA 123','UMMA 123 UMMA 124'),good.replace('+120,000 VND','120,000 VND'),good.replace(acct,'***9069'),good+' TK 1234567890',good.replace('UMMA 123','UMMA 1234abc')])assert.equal(parseVcb(text,acct),null,text);
+const bankFormat='Thông báo VCB\nSố dư TK VCB 1212121212 +10,000 VND lúc 16-10-2026 14:32:28. Số dư 123,456 VND. Ref UMMA 76#SP#synthetic-reference';
+assert.deepEqual(parseVcb(bankFormat,acct),{amount:10000,orderNumber:'76'});
+assert.equal(parseVcb(bankFormat.replace(acct,'9999999999'),acct),null);
+assert.equal(parseVcb(bankFormat.replace('+10,000','-10,000'),acct),null);
+assert.equal(parseVcb(bankFormat.replace(acct,'***1212'),acct),null);
 const db=new PGlite();
 try{
  await db.exec(readFileSync('tests/fixtures/supabase-public-schema.sql','utf8'));
@@ -13,12 +18,22 @@ try{
  await db.exec(readFileSync('supabase/proposals/cafe-courier-workflow.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/cafe-notifications.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
  await db.exec("insert into locations(name,location_type) values('QA','cafe'); insert into telegram_users(telegram_id,role) values(99,'user');");
  const loc=(await db.query('select id from locations')).rows[0].id;
  const device=(await db.query("insert into umma_private.pay_devices(location_id,account,activation_hash,activation_expires) values($1,$2,'code',now()+interval '1 hour') returning id",[loc,acct])).rows[0].id;
  const pair=()=>db.query("select umma_pay_pair('code','token') r");await pair();await pair();await assert.rejects(db.query("select umma_pay_pair('code','other')"),/Invalid/);
  async function order(number,total=120000){return(await db.query("insert into cafe_orders(location_id,customer_telegram_id,order_number,order_type,payment_method,total_vnd,subtotal_vnd) overriding system value values($1,99,$2,'pickup','qr',$3,$3) returning id",[loc,number,total])).rows[0].id;}
  async function ingest(key,number=123,amount=120000,text=key,stamp=new Date().toISOString(),token='token'){return(await db.query('select umma_pay_ingest($1,$2,$3,$4,$5,$6,$7) r',[token,key,text,text,stamp,amount,number])).rows[0].r;}
+ const recovered=await order(76,10000);
+ assert.equal((await ingest('reparse',null,null,bankFormat)).reason,'unrecognized_notification');
+ assert.equal((await ingest('reparse',76,10000,'changed text')).duplicate,true);
+ const recognized=parseVcb(bankFormat,acct);
+ // Preserve the original Android post timestamp on retry.
+ const saved=(await db.query("select posted_at from umma_private.pay_events where event_key='reparse'")).rows[0].posted_at.toISOString();
+ assert.equal((await ingest('reparse',recognized.orderNumber,recognized.amount,bankFormat,saved)).state,'confirmed');
+ assert.equal((await ingest('reparse',76,10000,bankFormat,saved)).duplicate,true);
+ assert.equal(Number((await db.query('select count(*) n from cafe_payment_receipts where order_id=$1',[recovered])).rows[0].n),1);
  const id=await order(123);assert.equal((await ingest('ok')).state,'confirmed');
  assert.equal((await ingest('ok')).duplicate,true);
  assert.equal((await ingest('new-key',123,120000,'ok')).duplicate,true);
