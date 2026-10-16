@@ -22,6 +22,10 @@
     rel="stylesheet"
   >
 
+  <script src="js/core/translations.js?v=1"></script>
+  <script src="js/core/i18n.js?v=1"></script>
+  <link rel="stylesheet" href="css/i18n.css?v=1">
+
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=37">
   <link rel="stylesheet" href="css/admin.css?v=10">
@@ -36,7 +40,7 @@
 <body>
 
 <div class="app">
-<aside id="cafeNotificationBar" class="cafe-notification-bar"><div class="native-app-title"><span class="native-app-mark" data-native-icon="home"></span><span id="nativeAppTitle">UMMA Global</span></div><small id="cafeLiveConnection" role="status" hidden>Подключаемся…</small><button type="button" id="nativeFullscreen" class="native-fullscreen" aria-label="На весь экран" hidden><span data-native-icon="expand"></span></button><button type="button" id="cafeNotificationBell" aria-label="Уведомления" class="cafe-notification-bell" hidden><span data-native-icon="bell"></span><b id="cafeNotificationCount" hidden>0</b></button><span id="cafeNotificationAnnouncement" class="cafe-notification-announcement" role="status" aria-live="polite"></span></aside>
+<aside id="cafeNotificationBar" class="cafe-notification-bar"><div class="native-app-title"><span class="native-app-mark" data-native-icon="home"></span><span id="nativeAppTitle">UMMA Global</span></div><button type="button" id="languageBtn" class="umma-language-button" aria-label="Выбрать язык">RU</button><small id="cafeLiveConnection" role="status" hidden>Подключаемся…</small><button type="button" id="nativeFullscreen" class="native-fullscreen" aria-label="На весь экран" hidden><span data-native-icon="expand"></span></button><button type="button" id="cafeNotificationBell" aria-label="Уведомления" class="cafe-notification-bell" hidden><span data-native-icon="bell"></span><b id="cafeNotificationCount" hidden>0</b></button><span id="cafeNotificationAnnouncement" class="cafe-notification-announcement" role="status" aria-live="polite"></span></aside>
 
 <!-- HOME -->
   <main>
@@ -961,7 +965,7 @@
 
 <!-- CORE -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/core/app.js?v=6"></script>
+<script src="js/core/app.js?v=7"></script>
 
 <!-- AUTH -->
 <script src="js/auth/auth.js?v=2"></script>
@@ -978,7 +982,7 @@
 <script src="js/maps/delivery-location.js?v=7"></script>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/cafe/payment.js?v=8"></script>
-<script src="js/cafe/cafe.js?v=63"></script>
+<script src="js/cafe/cafe.js?v=64"></script>
 <script src="js/cafe/notifications.js?v=3"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>

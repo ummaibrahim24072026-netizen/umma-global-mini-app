@@ -1,0 +1,7 @@
+.umma-language-button{flex:none;min-width:44px;min-height:44px;border:1px solid #c6e4e3;border-radius:12px;background:#f1fafa;color:#075e65;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.umma-language-dialog{width:min(90vw,380px);border:1px solid #c6e4e3;border-radius:22px;padding:24px;color:#075e65;background:#f1fafa;box-shadow:0 18px 60px #073e3c33}
+.umma-language-dialog::backdrop{background:#073e3c88}
+.umma-language-dialog h2{font-size:21px;margin:0 0 18px}
+.umma-language-dialog button{display:block;width:100%;min-height:48px;margin-block:9px;padding:12px;border:1px solid #c6e4e3;border-radius:12px;background:white;color:#075e65;font:inherit;text-align:start;cursor:pointer}
+.umma-language-dialog button[aria-pressed=true]{border:2px solid #aa8539;background:#fff9e9;font-weight:700}
+.umma-language-dialog button:focus-visible,.umma-language-button:focus-visible{outline:3px solid #aa8539;outline-offset:3px}

@@ -83,7 +83,7 @@ let toastTimer;
 function showToast(message) {
   if (!toast) return;
   clearTimeout(toastTimer);
-  toast.textContent = String(message);
+  toast.textContent = window.ummaI18n?.t(message) ?? String(message);
   toast.setAttribute("aria-hidden","false");
   toast.classList.add("show");
   toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},2600);
@@ -180,7 +180,7 @@ menuBtn?.addEventListener("click", () => {
 
 languageBtn?.addEventListener("click", () => {
 
-  showToast("Выбор языка");
+  window.ummaI18n?.openPicker();
 
 });
 
@@ -253,7 +253,7 @@ function updateTelegramUserInterface(user) {
     welcomeTitle.innerHTML =
       `Ассаляму алейкум<br>
        ва рахматуллахи ва баракатух,<br>
-       <strong>${escapeHtml(firstName)}!</strong>`;
+       <strong translate="no">${escapeHtml(firstName)}!</strong>`;
 
   } else {
 

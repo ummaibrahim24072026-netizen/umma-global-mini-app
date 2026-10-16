@@ -5,7 +5,7 @@
   const ORDER_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/create-cafe-order";
   const PROOF_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof";
   const MY_ORDERS_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders";
-  const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
+  const money = value => new Intl.NumberFormat(window.ummaI18n?.locale() || "vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
   const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
   let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
@@ -24,8 +24,8 @@
   const categoryFor = product => menuCategories.find(category => category.skus.some(sku => product.sku === "UMMA-CAFE-" + sku))?.id || "other";
   const cart = new Map();
   const byId = id => document.getElementById(id);
-  const name = p => p.name_ru || p.name_en || p.name_vi || "Блюдо";
-  const description = p => p.description_ru || p.description_en || "";
+  const name = p => window.ummaI18n?.field(p, "name") || p.name_ru || p.name_en || p.name_vi || "Блюдо";
+  const description = p => window.ummaI18n?.field(p, "description") || p.description_ru || p.description_en || "";
   const count = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0);
   const total = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * Number(item.price_vnd), 0);
 
@@ -137,8 +137,8 @@
       const photo = productPhoto(p);
       return '<article class="cafe-product' + (photo ? '' : ' cafe-product-no-photo') + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
         photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
-        '<h3>' + esc(name(p)) + '</h3>' +
-        (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p>' + esc(description(p)) + '</p></details>' : '') +
+        '<h3 translate="no">' + esc(name(p)) + '</h3>' +
+        (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p translate="no">' + esc(description(p)) + '</p></details>' : '') +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
         (quantity
@@ -173,7 +173,7 @@
     countEl.textContent = countLabel(count(),"позиция","позиции","позиций");
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
-    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong>' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
+    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length || !locationId;
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");
@@ -578,11 +578,11 @@
       if (root) root.innerHTML = orders.map(order => {
         const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
         const events = Array.isArray(order.cafe_order_events) ? order.cafe_order_events : [];
-        const itemsHtml = items.map(item => "<li><span>" + esc(item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
-        const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
+        const itemsHtml = items.map(item => "<li><span>" + esc(window.ummaI18n?.field(item, "product_name") || item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
+        const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString(window.ummaI18n?.locale() || "ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
         const paymentLabel = order.payment_status==='paid'?'✓ Оплачено':order.payment_status==='refunded'?'Оплата возвращена':'Ожидается оплата';
         const orderTypeName = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
-        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><p class="cafe-payment-status" data-payment-status="'+esc(order.payment_status)+'">'+paymentLabel+'</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (order.qr_payment_available ? window.ummaCafePayment?.button(order.id) || '' : '') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString(window.ummaI18n?.locale() || "ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><p class="cafe-payment-status" data-payment-status="'+esc(order.payment_status)+'">'+paymentLabel+'</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (order.qr_payment_available ? window.ummaCafePayment?.button(order.id) || '' : '') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
       }).join("");
     } catch (error) {
       if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }
@@ -607,5 +607,12 @@
     openOrders:()=>{const section=byId("cafeMyOrdersSection"),refresh=byId("cafeMyOrdersRefresh");if(section)section.hidden=false;if(refresh)refresh.hidden=false;loadMyOrders();section?.scrollIntoView?.({block:"start",behavior:"smooth"});},
     open: () => { if (typeof openPage === "function") openPage("cafe"); if (!products.length) loadMenu(); }
   };
+  window.addEventListener("umma:languagechange", () => {
+    const expanded = [...document.querySelectorAll("[data-product-card] details[open]")].map(el => el.closest("[data-product-card]").dataset.productCard);
+    renderProducts(); renderCart();
+    for (const card of document.querySelectorAll("[data-product-card]")) if (expanded.includes(card.dataset.productCard)) { const details=card.querySelector("details"); if(details)details.open=true; }
+    myOrdersFingerprint="";
+    if(byId("cafeOrdersPage")?.hidden===false)loadMyOrders();
+  });
   renderCart();
 })();
