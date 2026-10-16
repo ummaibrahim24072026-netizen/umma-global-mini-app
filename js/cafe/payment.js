@@ -5,7 +5,7 @@
   const proofEndpoint = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-transfer-proof';
   const uploads=new Map();
   const banks = [['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
-  let dialog, sequence = 0, activeOrder = null;
+  let dialog, sequence = 0, activeOrder = null, paymentOpened = false;
   const el = (tag, text, className) => {const node=document.createElement(tag);if(text)node.textContent=text;if(className)node.className=className;return node;};
   const money = amount => new Intl.NumberFormat('ru-RU').format(amount)+' ₫';
   function ensureDialog() {
@@ -54,29 +54,46 @@
     if(inFlight){input.disabled=true;status.textContent='Чек отправляется…';inFlight.then(loadSaved,loadSaved).finally(()=>{input.disabled=false;send.disabled=!selected;});}else loadSaved();
     return section;
   }
+  function disclosure(label,className,build) {
+    const details=el('details',null,className),summary=el('summary',label);details.append(summary);
+    let built=false;details.addEventListener('toggle',()=>{if(details.open&&!built){built=true;build(details);}});return details;
+  }
   function render(payment) {
     if(!payment || !/^\d{6,19}$/.test(payment.account) || !Number.isSafeInteger(payment.amount) || payment.amount<=0 || typeof payment.qrPayload!=='string' || payment.bankCode!=='vcb')throw Error('Некорректные реквизиты');
-    const qr=qrcode(0,'M');qr.addData(payment.qrPayload);qr.make();
-    const count=qr.getModuleCount(),scale=8,padding=4,canvas=document.createElement('canvas');canvas.width=canvas.height=(count+padding*2)*scale;
-    const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#000';
-    for(let y=0;y<count;y++)for(let x=0;x<count;x++)if(qr.isDark(y,x))context.fillRect((x+padding)*scale,(y+padding)*scale,scale,scale);
-    const image=el('img',null,'cafe-payment-qr');image.src=canvas.toDataURL('image/png');image.alt='VietQR для оплаты заказа №'+payment.orderNumber;
-    const qrLink=el('a');qrLink.target='_blank';qrLink.rel='noopener noreferrer';qrLink.setAttribute('aria-label','Открыть выбранный банк для оплаты');qrLink.append(image);
-    dialog.append(el('p','Заказ №'+payment.orderNumber+' · '+payment.bankName,'cafe-payment-meta'),el('p',money(payment.amount),'cafe-payment-amount'),qrLink);
-    const save=el('a','Сохранить QR','cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';dialog.append(save);
-    dialog.append(el('p','Сохраните QR и выберите его в сканере вашего банка. Сумма и назначение уже включены в код. Проверьте получателя перед переводом.','cafe-payment-help'));
-    const label=el('p','Ваш банк','cafe-payment-bank'),chooser=el('details',null,'cafe-payment-chooser'),summary=el('summary','Vietcombank'),list=el('div',null,'cafe-payment-banks');
-    let selected='vcb';
-    const open=el('a','Открыть банк','cafe-payment-open');open.rel='noopener noreferrer';open.target='_blank';
-    function updateLink(){const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:payment.account+'@vcb',am:String(payment.amount),tn:payment.reference,app:selected,url:location.origin+location.pathname}).toString();open.href=url.href;qrLink.href=url.href;}
-    banks.forEach(([value,name])=>{const button=el('button',name);button.type='button';button.setAttribute('aria-pressed',String(value===selected));button.onclick=()=>{selected=value;summary.textContent=name;chooser.open=false;list.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateLink();summary.focus();};list.append(button);});
-    chooser.append(summary,list);updateLink();dialog.append(label,chooser,open);
-    dialog.append(el('p','Заполнение перевода по ссылке зависит от банка и телефона. Если реквизиты не появились — используйте QR.','cafe-payment-help'),el('p','После перевода дождитесь подтверждения кафе. Повторно не оплачивайте заказ.','cafe-payment-notice'));
-    dialog.append(receiptForm(payment.orderId));
+    dialog.append(el('p','Заказ №'+payment.orderNumber,'cafe-payment-meta'),el('p',money(payment.amount),'cafe-payment-amount'));
+    const label=el('p','Ваш банк','cafe-payment-bank'),chooser=el('details',null,'cafe-payment-chooser'),summary=el('summary'),list=el('div',null,'cafe-payment-banks');
+    let selected='vcb';try{const saved=localStorage.getItem('umma-payment-bank');if(banks.some(([id])=>id===saved))selected=saved;}catch{}
+    const open=el('a','Оплатить','cafe-payment-open');open.rel='noopener noreferrer';open.target='_blank';open.dataset.bankPay='';
+    const status=el('p','Оплата подтвердится автоматически. Скриншот не нужен.','cafe-payment-live');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    const bankHint=el('p',null,'cafe-payment-help cafe-payment-bank-hint');
+    function updateLink(){const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:payment.account+'@vcb',am:String(payment.amount),tn:payment.reference,app:selected,url:location.origin+location.pathname}).toString();open.href=url.href;summary.textContent=banks.find(([id])=>id===selected)[1];bankHint.textContent=selected==='vcb'?'Vietcombank открывается без заполненного перевода. Используйте QR, если реквизиты не появились.':'';bankHint.hidden=selected!=='vcb';}
+    banks.forEach(([value,name])=>{const button=el('button',name);button.type='button';button.setAttribute('aria-pressed',String(value===selected));button.onclick=()=>{selected=value;try{localStorage.setItem('umma-payment-bank',value);}catch{}chooser.open=false;list.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateLink();summary.focus();};list.append(button);});
+    chooser.append(summary,list);updateLink();
+    let lastOpen=0;
+    open.onclick=event=>{
+      if(lastOpen&&Date.now()-lastOpen<1500){event.preventDefault();return;}
+      lastOpen=Date.now();paymentOpened=true;open.textContent='Открыть банк снова';dialog.dataset.paymentState='waiting';status.textContent='Ждём подтверждение банка… Если уже оплатили, не переводите повторно.';
+      const webApp=window.Telegram?.WebApp;
+      if(typeof webApp?.openLink==='function'){event.preventDefault();try{webApp.openLink(open.href);}catch{window.location.assign(open.href);}}
+    };
+    dialog.append(label,chooser,open,status,bankHint);
+    const qrDetails=disclosure('Показать QR-код','cafe-payment-alternative',details=>{
+      const qr=qrcode(0,'M');qr.addData(payment.qrPayload);qr.make();
+      const count=qr.getModuleCount(),scale=8,padding=4,canvas=document.createElement('canvas');canvas.width=canvas.height=(count+padding*2)*scale;
+      const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#000';
+      for(let y=0;y<count;y++)for(let x=0;x<count;x++)if(qr.isDark(y,x))context.fillRect((x+padding)*scale,(y+padding)*scale,scale,scale);
+      const image=el('img',null,'cafe-payment-qr');image.src=canvas.toDataURL('image/png');image.alt='VietQR для оплаты заказа №'+payment.orderNumber;
+      const save=el('a','Сохранить QR','cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';
+      details.append(image,save,el('p','Откройте сохранённый QR в сканере вашего банка. Сумма и номер заказа уже указаны.','cafe-payment-help'));
+    });
+    const help=disclosure('Оплатили, но статус не изменился?','cafe-payment-alternative cafe-payment-support',details=>{
+      details.append(el('p','Не оплачивайте повторно. Если подтверждение задерживается, можно отправить скриншот для проверки.','cafe-payment-help'),receiptForm(payment.orderId));
+    });
+    dialog.append(qrDetails,help);
   }
   async function show(orderId) {
-    activeOrder=orderId;
-    const sheet=ensureDialog();if(sheet.open)sheet.close();sheet.replaceChildren();heading();const status=el('p','Загружаем реквизиты…');status.setAttribute('role','status');sheet.append(status);sheet.showModal();const request=++sequence;
+    activeOrder=orderId;paymentOpened=false;
+    const sheet=ensureDialog();if(sheet.open)sheet.close();sheet.replaceChildren();sheet.dataset.paymentState='pending';heading();const status=el('p','Загружаем реквизиты…');status.setAttribute('role','status');sheet.append(status);sheet.showModal();const request=++sequence;
     try {
       const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram.');
       const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'paymentDetails',initData,orderId}),cache:'no-store',signal:window.AbortSignal?.timeout?.(12000)});
@@ -94,14 +111,14 @@
     if(checking||!dialog?.open||!activeOrder||document.hidden)return;
     checking=true;const orderId=activeOrder,request=sequence;
     try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:window.Telegram?.WebApp?.initData}),cache:'no-store',signal:AbortSignal.timeout(10000)});
-      const data=await response.json();
+      const data=await response.json();if(!response.ok||!data.ok)throw Error('Payment status unavailable');
       if(response.ok&&data.ok&&dialog.open&&request===sequence&&data.orders?.some(o=>o.id===orderId&&o.payment_status==='paid')){
-        dialog.replaceChildren();heading();const success=el('p','✓ Оплачено','cafe-payment-amount');success.setAttribute('role','status');success.setAttribute('aria-live','polite');dialog.append(success,el('p','Спасибо! Оплата заказа подтверждена.','cafe-payment-help'));activeOrder=null;window.ummaCafe?.refreshMyOrders({silent:true});
-      }
-    }catch{}finally{checking=false;}
+        sequence++;dialog.replaceChildren();dialog.dataset.paymentState='paid';heading();const success=el('p','✓ Оплачено','cafe-payment-amount');success.setAttribute('role','status');success.setAttribute('aria-live','polite');dialog.append(success,el('p','Спасибо! Оплата заказа подтверждена.','cafe-payment-help'));activeOrder=null;paymentOpened=false;window.ummaCafe?.refreshMyOrders({silent:true});
+      }else if(request===sequence&&dialog.open){const status=dialog.querySelector('.cafe-payment-live');if(status)status.textContent=paymentOpened?'Ждём подтверждение банка… Если уже оплатили, не переводите повторно.':'Оплата подтвердится автоматически. Скриншот не нужен.';}
+    }catch{if(request===sequence&&dialog?.open){const status=dialog.querySelector('.cafe-payment-live');if(status)status.textContent='Нет связи. Проверим оплату автоматически после восстановления.';}}finally{checking=false;}
   }
   window.setInterval(checkPaid,3000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkPaid();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(paymentOpened){const status=dialog?.querySelector('.cafe-payment-live');if(status)status.textContent='Проверяем поступление оплаты…';}checkPaid();}});
   document.addEventListener('click',event=>{const button=event.target.closest('[data-pay-order]');if(button)show(button.dataset.payOrder);});
-  window.ummaCafePayment={show,button:id=>/^[0-9a-f-]{36}$/i.test(String(id))?'<button type="button" class="cafe-payment-open" data-pay-order="'+id+'">Оплатить по QR</button>':''};
+  window.ummaCafePayment={show,button:id=>/^[0-9a-f-]{36}$/i.test(String(id))?'<button type="button" class="cafe-payment-open" data-pay-order="'+id+'">Оплатить</button>':''};
 })();

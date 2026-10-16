@@ -30,7 +30,7 @@ w.FileReader=class{readAsDataURL(file){this.result='data:'+file.type+';base64,'+
 const payment={orderId:id,orderNumber:'DEMO',account:'0000000000',bankCode:'vcb',bankName:'Vietcombank',amount:125000,reference:'UMMA DEMO',qrPayload:'UI TEST ONLY'};
 w.fetch=async(url,opts)=>{const body=JSON.parse(opts.body);requests.push(body);if(body.action==='paymentDetails')return new Response(JSON.stringify({ok:true,payment}));if(body.action==='mine')return new Response(JSON.stringify({ok:true,proofs:mine}));if(mode==='held')return new Promise(resolve=>held=resolve);if(mode==='fail')return new Response('{"ok":false,"error":"Ошибка сети"}',{status:500});return new Response('{"ok":true,"proofId":"synthetic"}');};
 w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/payment.js'));
-await w.ummaCafePayment.show(id);await until(()=>d.querySelector('.cafe-payment-receipt').textContent.includes('Чек отправлен на проверку'));
+await w.ummaCafePayment.show(id);assert.equal(d.querySelector('input[type=file]'),null);const support=d.querySelector('.cafe-payment-support');support.open=true;support.dispatchEvent(new w.Event('toggle'));await until(()=>d.querySelector('.cafe-payment-receipt').textContent.includes('Чек отправлен на проверку'));
 assert.equal(d.querySelector('.cafe-payment-copy'),null);assert.equal(d.querySelector('.cafe-payment-sheet').textContent.includes('Копировать'),false);
 const input=d.querySelector('input[type=file]'),send=d.querySelector('.cafe-payment-receipt button');
 async function select(type,size){Object.defineProperty(input,'files',{configurable:true,value:[{type,size}]});input.dispatchEvent(new w.Event('change'));await tick();}
