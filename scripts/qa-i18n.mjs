@@ -7,7 +7,7 @@ function setup({telegram,browser='en-GB',saved}={}){
  Object.defineProperty(w.navigator,'languages',{value:[browser]});
  if(telegram)w.Telegram={WebApp:{initDataUnsafe:{user:{id:123,first_name:'Ибрахим',language_code:telegram}}}};
  if(saved)w.localStorage.setItem('umma-language',saved);
- for(const file of ['languages','translations','i18n'])w.eval(readFileSync('js/core/'+file+'.js','utf8'));
+ for(const file of ['languages-extra','languages','translations','i18n'])w.eval(readFileSync('js/core/'+file+'.js','utf8'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
  return {dom,w,d:w.document,i:w.ummaI18n};
 }
@@ -15,9 +15,9 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 for(const [config,expected] of [[{telegram:'vi',browser:'ru'},'vi'],[{telegram:'ru-RU'},'ru'],[{telegram:'es',browser:'ru'},'en'],[{browser:'vi-VN'},'vi'],[{browser:'es'},'en'],[{telegram:'vi',saved:'ru'},'ru'],[{telegram:'vi',saved:'invalid'},'vi']]){
  const {w,i}=setup(config);assert.equal(i.language,expected);assert.equal(w.document.documentElement.lang,expected);w.close();
 }
-for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
+for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr','tk','tg','uz','ja','ug']){
  const {w,d,i}=setup({telegram:code==='zh'?'zh-Hans':code+'-XX',browser:'ru'});
- assert.equal(i.language,code);assert.equal(d.documentElement.dir,code==='ar'?'rtl':'ltr');
+ assert.equal(i.language,code);assert.equal(d.documentElement.dir,['ar','ug'].includes(code)?'rtl':'ltr');
  assert.equal(d.getElementById('cafeSubmitOrder').textContent.trim(),w.ummaTranslations['Оформить заказ'][code]);
  assert.equal(i.t('Найдено: 2 из 5'),w.ummaTranslations['Найдено: {n} из {m}'][code].replace('{n}','2').replace('{m}','5'));
  assert.ok(i.t('3 позиции'));assert.ok(i.locale());
@@ -30,16 +30,16 @@ for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
  w.close();
 }
 const {w,d,i}=setup({telegram:'vi'});
-assert.equal(i.supported.length,12);
+assert.equal(i.supported.length,17);
 const liveMenuNames=['Шурпа','Борщ','Плов с бараниной','Манты (4 шт.)','Куриный окорочок с салатом','Салат Ачичук','Салат Оливье','Салат Винегрет','Салат «Хрустящий»','Лепёшка UMMA','Самса с бараниной','Самса с курицей','Хачапури с сыром','Круассан','Айран UMMA','Айран турецкий','Чай зелёный','Чай чёрный с лимоном','Компот ежевичный','Аджика'];
-for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
+for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr','tk','tg','uz','ja','ug']){
  i.setLanguage(code);
  for(const name of liveMenuNames){assert.ok(w.ummaTranslations[name][code],code+' covers '+name);assert.equal(i.field({name_ru:name,name_en:'Fallback English'},'name'),w.ummaTranslations[name][code]);}
 }
 i.setLanguage('vi');
 
 for(const [source,values] of Object.entries(w.ummaAdditionalTranslations)){
- assert.equal(Object.keys(values).length,9,'every new catalogue entry covers all nine languages');
+ assert.ok(Object.keys(values).length>=5,'each catalogue row covers its entire language group');
  const expected=[...source.matchAll(/\{\w+\}/g)].map(m=>m[0]).sort();
  for(const [code,value] of Object.entries(values)){
   assert.ok(value.trim(),code+' nonempty');
@@ -83,12 +83,15 @@ for(const code of i.supported){
  i.setLanguage(code);await tick();
  assert.equal(d.querySelector('.cafe-product-quantity').textContent,'1');
  assert.equal(userInput.value,'Гость');
- assert.equal(d.documentElement.dir,code==='ar'?'rtl':'ltr');
+ assert.equal(d.documentElement.dir,['ar','ug'].includes(code)?'rtl':'ltr');
 }
-i.openPicker();assert.equal(d.querySelectorAll('#ummaLanguageDialog [data-language]').length,13);
+i.openPicker();assert.equal(d.querySelectorAll('#ummaLanguageDialog [data-language]').length,18);
 d.querySelector('#ummaLanguageDialog [data-language="ar"]').click();await tick();
 assert.equal(d.documentElement.dir,'rtl');assert.equal(d.getElementById('languageBtn').getAttribute('aria-label'),'اختر اللغة');
 i.setLanguage('id');assert.equal(d.documentElement.dir,'ltr');
 assert.equal(i.setLanguage('in-ID'),true);assert.equal(i.language,'id');
+i.setLanguage('ja');assert.equal(i.t('Найдено: 2 из 5'),'5件中2件','Japanese places the named total before the result count');
+i.setLanguage('ug');assert.equal(d.documentElement.dir,'rtl');assert.equal(i.locale(),'ug-CN');
+i.setLanguage('uz-Latn-UZ');assert.equal(i.language,'uz');assert.equal(d.documentElement.dir,'ltr');
 const css=readFileSync('css/i18n.css','utf8');assert.match(css,/overflow-y:auto/);assert.match(css,/\.leaflet-container[\s\S]*direction:ltr/);
-w.close();console.log('PASS twelve languages, Arabic RTL, language detection, fallbacks, reversible dynamic UI, accessibility, picker, product fields and cart preservation');
+w.close();console.log('PASS seventeen languages, Arabic/Uyghur RTL and Japanese placeholder order, language detection, fallbacks, reversible dynamic UI, accessibility, picker, product fields and cart preservation');

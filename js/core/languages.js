@@ -367,11 +367,13 @@ QR с суммой заказа готов. Оплату подтвердит к
   const [source,...values]=line.split('|');if(values.length!==codes.length||values.some(x=>!x))throw Error('Incomplete language row: '+source);
   catalogue[source]=Object.fromEntries(codes.map((code,index)=>[code,values[index]]));
  }
+ for(const [source,values] of Object.entries(window.ummaExtraTranslations||{}))catalogue[source]={...catalogue[source],...values};
+ const allCodes=[...codes,...Object.keys(window.ummaExtraLanguages||{})];
  const dishAliases={"Салат Оливье":"Оливье","Салат Винегрет":"Винегрет"};
- for(const [source,target] of Object.entries(dishAliases))catalogue[source]={...catalogue[target]};
+ for(const [source,target] of Object.entries(dishAliases))catalogue[source]={...catalogue[target],...catalogue[source]};
  const aliases={"Нет заказов": "У вас пока нет заказов.", "Заказов пока нет.": "У вас пока нет заказов.", "Школа, медресе и университет": "Школа, медресе, университет", "Ошибка оформления заказа": "Не удалось оформить заказ", "Ошибка загрузки меню": "Не удалось загрузить меню", "Чек отправлен. Ожидайте подтверждения сотрудником кафе.": "Скриншот отправлен. Ожидайте проверки кафе.", "Курьер принял заказ": "У курьера", "Профиль Telegram": "Ваш профиль Telegram", "Не удалось отправить чек": "Не удалось отправить чек. Попробуйте ещё раз.", "Проверьте точку и подтвердите доставку сюда.": "Проверьте точку и нажмите «Доставить сюда».", "Доступ к геолокации недоступен. Поставьте точку на карте вручную.": "Геолокация недоступна. Поставьте точку на карте вручную.", "Скачать QR": "Сохранить QR", "Отправить скриншот": "Отправить чек"};
- for(const [source,target] of Object.entries(aliases))catalogue[source]={...catalogue[target]};
- for(const [source,target] of [["🥡 С собой","С собой"],["🛵 Доставка","Доставка"],["🍳 Кухня","Кухня"],["📋 Приём заказов","Приём заказов"],["＋ Оформить заказ","Оформить заказ"]]){const prefix=source.slice(0,source.indexOf(" ")+1);catalogue[source]=Object.fromEntries(codes.map(code=>[code,prefix+catalogue[target][code]]));}
- window.ummaLanguages=Object.freeze(Object.fromEntries(Object.entries(metadata).map(([code,value])=>[code,Object.freeze(value)])));
+ for(const [source,target] of Object.entries(aliases))catalogue[source]={...catalogue[target],...catalogue[source]};
+ for(const [source,target] of [["🥡 С собой","С собой"],["🛵 Доставка","Доставка"],["🍳 Кухня","Кухня"],["📋 Приём заказов","Приём заказов"],["＋ Оформить заказ","Оформить заказ"]]){const prefix=source.slice(0,source.indexOf(" ")+1);catalogue[source]=Object.fromEntries(allCodes.filter(code=>catalogue[target][code]).map(code=>[code,prefix+catalogue[target][code]]));}
+ window.ummaLanguages=Object.freeze(Object.fromEntries(Object.entries({...metadata,...window.ummaExtraLanguages}).map(([code,value])=>[code,Object.freeze(value)])));
  window.ummaAdditionalTranslations=catalogue;
 })();

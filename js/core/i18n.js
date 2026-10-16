@@ -39,7 +39,9 @@
    for(const [ru,en,vi] of templates){
     const pattern=ru.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\{(\w+)\}/g,(_,name)=>name==='n'||name==='m'?'([0-9]+)':name==='id'?'([A-Za-z0-9#-]+)':'(.+)');
     const match=trimmed.match(new RegExp('^'+pattern+'$'));if(!match)continue;
-    let index=0;result=(catalogue[ru]?.[language]||(language==='vi'?vi:en)).replace(/\{\w+\}/g,()=>match[++index]);break;
+    const names=[...ru.matchAll(/\{(\w+)\}/g)].map(entry=>entry[1]);
+    const params=Object.fromEntries(names.map((name,index)=>[name,match[index+1]]));
+    result=(catalogue[ru]?.[language]||(language==='vi'?vi:en)).replace(/\{(\w+)\}/g,(_,name)=>params[name]);break;
    }
   }
   if(!result){
