@@ -28,11 +28,18 @@ w.Telegram={WebApp:{initData:'synthetic',isVersionAtLeast:()=>true,downloadFile:
 const details={...payment,orderId:'11111111-1111-4111-8111-111111111111',account:'1212121212',amount:120000,bankCode:'vcb',reference:'UMMA 123',downloadUrl:'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders?qr=synthetic&sig=synthetic'};
 w.fetch=async()=>{fetchCount++;if(mode==='network')throw Error('Нет связи');return new Response(JSON.stringify({ok:true,payment:{...details,qrPayload:mode==='changed'?'other':qrPayload,downloadUrl:mode==='hostile'?'https://evil.invalid/x':details.downloadUrl}}));};
 w.eval(readFileSync('js/vendor/qrcode-generator.js','utf8'));w.eval(readFileSync('js/cafe/payment.js','utf8'));await w.ummaCafePayment.show(details.orderId);
+let now=Date.now();w.Date.now=()=>now;
 const save=d.querySelector('[data-save-qr]');assert.equal(save.tagName,'BUTTON');assert.equal(save.disabled,false);
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
-save.click();save.click();await tick();assert.equal(downloads.length,1);assert.equal(fetchCount,2,'one initial fetch and one fresh signed URL, duplicate tap blocked');assert.equal(downloads[0].url,details.downloadUrl);assert.equal(downloads[0].file_name,'UMMA-123.png');assert.equal(save.disabled,true);callback(false);await tick();assert.equal(save.disabled,false);assert.match(save.parentElement.textContent,/Сохранение отменено/);
-save.click();await tick();callback(true);await tick();assert.match(save.parentElement.textContent,/Скачивание запрошено/);assert.doesNotMatch(save.parentElement.textContent,/QR сохранён/,'accepted request is not a completed download');
-for(const failure of ['network','changed','hostile','throw']){mode=failure;const count=downloads.length;save.click();await tick();assert.equal(save.disabled,false);assert.equal(downloads.length,count);assert.match(save.parentElement.textContent,/Попробуйте ещё раз/);}
-mode='ok';w.Telegram.WebApp.isVersionAtLeast=()=>false;save.click();await tick();assert.equal(browserLinks.at(-1),details.downloadUrl,'old Telegram/browser uses an HTTPS attachment, not a data URL');
+save.click();assert.equal(downloads.length,1,'native API invoked synchronously within the tap');save.click();assert.equal(downloads.length,1,'double tap suppressed');assert.equal(fetchCount,1,'no network await between tap and native download');assert.equal(downloads[0].url,details.downloadUrl);assert.equal(downloads[0].file_name,'UMMA-123.png');assert.equal(save.disabled,false,'missing Telegram callback never disables save');
+const fallback=d.querySelector('a.cafe-payment-save');assert.equal(fallback.hidden,false);assert.equal(fallback.href,details.downloadUrl,'direct HTTPS fallback works without a Telegram callback');
+callback(false);assert.match(save.parentElement.textContent,/Сохранение отменено/);
+now+=1300;save.click();callback(true);assert.match(save.parentElement.textContent,/Скачивание запрошено/);assert.doesNotMatch(save.parentElement.textContent,/QR сохранён/,'accepted request is not a completed download');
+now+=1300;mode='throw';save.click();assert.equal(save.disabled,false);assert.equal(fallback.hidden,false);assert.match(save.parentElement.textContent,/Попробуйте ещё раз/);
+mode='ok';w.Telegram.WebApp.isVersionAtLeast=()=>false;now+=1300;save.click();assert.equal(browserLinks.at(-1),details.downloadUrl,'old Telegram/browser uses a physical-tap HTTPS attachment');
+// An expired link refreshes first and explicitly asks for a new physical tap.
+now+=241000;const count=downloads.length;save.click();await tick();assert.equal(downloads.length,count);assert.match(save.parentElement.textContent,/QR готов/);assert.equal(save.disabled,false);
+w.Telegram.WebApp.isVersionAtLeast=()=>true;save.click();assert.equal(downloads.length,count+1);
+for(const failure of ['network','changed','hostile']){now+=241000;mode=failure;const count=downloads.length;save.click();await tick();assert.equal(save.disabled,false);assert.equal(downloads.length,count);assert.match(save.parentElement.textContent,/Попробуйте ещё раз/);}
 assert.equal(d.querySelector('dialog').dataset.paymentState,'pending','saving never confirms payment');dom.window.close();
-console.log('PASS QR download: signed expiring URL, PNG decode, HEAD/attachment, tampering rejection; native Telegram save, cancellation/retry/double-tap, old-client fallback, changed-order guard and no false saved/paid status');
+console.log('PASS QR download: signed expiring URL, PNG decode, HEAD/attachment, tampering rejection; synchronous physical-tap download, missing callback never locks button, direct HTTPS fallback, cancellation/retry/double-tap, expired-link refresh, changed-order guard and no false saved/paid status');

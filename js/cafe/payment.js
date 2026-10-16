@@ -75,28 +75,36 @@
       const image=el('img',null,'cafe-payment-qr');image.src=canvas.toDataURL('image/png');image.alt='VietQR для оплаты заказа №'+payment.orderNumber;
       const save=el('button',primary?'Сохранить QR для оплаты':'Сохранить QR',primary?'cafe-payment-open':'cafe-payment-save');save.type='button';save.dataset.saveQr='';
       const saveStatus=el('p',null,'cafe-payment-help');saveStatus.setAttribute('role','status');saveStatus.setAttribute('aria-live','polite');
-      let saving=false;
+      const fallback=el('a','Открыть QR и сохранить изображение','cafe-payment-save');fallback.target='_blank';fallback.rel='noopener noreferrer';fallback.hidden=true;
+      let saving=false,downloadUrl=payment.downloadUrl,preparedAt=Date.now(),attempt=0,lastTap=0;
+      function safeUrl(value){const url=new URL(value),api=new URL(endpoint);if(url.origin!==api.origin||url.pathname!==api.pathname||!url.searchParams.has('qr')||!url.searchParams.has('sig'))throw Error('Не удалось получить ссылку на QR');return url.href;}
+      function fallbackReady(url){fallback.href=url;fallback.download='UMMA-'+payment.orderNumber+'.png';fallback.hidden=false;}
       save.onclick=async()=>{
-        if(saving)return;saving=true;save.disabled=true;save.setAttribute('aria-busy','true');saveStatus.textContent='Подготавливаем QR…';
+        if(saving||(lastTap&&Date.now()-lastTap<1200))return;saving=true;const current=++attempt;save.setAttribute('aria-busy','true');saveStatus.textContent='Подготавливаем QR…';
         try {
-          const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'paymentDetails',initData:window.Telegram?.WebApp?.initData,orderId:payment.orderId}),cache:'no-store',signal:window.AbortSignal?.timeout?.(12000)});
-          const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Не удалось подготовить QR');
-          if(!save.isConnected||!dialog.open)return;
-          if(data.payment?.qrPayload!==payment.qrPayload)throw Error('Заказ изменился. Закройте оплату и откройте её снова.');
-          const url=new URL(data.payment.downloadUrl),api=new URL(endpoint);
-          if(url.origin!==api.origin||url.pathname!==api.pathname||!url.searchParams.has('qr')||!url.searchParams.has('sig'))throw Error('Не удалось получить ссылку на QR');
-          const webApp=window.Telegram?.WebApp,fileName='UMMA-'+payment.orderNumber+'.png';
-          if(typeof webApp?.downloadFile==='function'&&(typeof webApp.isVersionAtLeast!=='function'||webApp.isVersionAtLeast('8.0'))){
-            saveStatus.textContent='Подтвердите сохранение изображения в Telegram.';
-            await new Promise((resolve,reject)=>{try{webApp.downloadFile({url:url.href,file_name:fileName},accepted=>{if(save.isConnected)saveStatus.textContent=accepted?'Скачивание запрошено. После загрузки выберите QR в банке: QR → изображение из галереи или файлов.':'Сохранение отменено. Нажмите ещё раз, чтобы повторить.';resolve();});}catch(error){reject(error);}});
-          }else{
-            const link=el('a');link.href=url.href;link.download=fileName;link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();link.remove();
-            saveStatus.textContent='Открыта загрузка PNG. Если Telegram её блокирует, откройте мини-приложение в браузере и повторите сохранение.';
+          // Use the freshly issued URL synchronously within the physical tap.
+          // Android WebViews may lose user activation across a network await.
+          if(!downloadUrl||Date.now()-preparedAt>240000){
+            const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'paymentDetails',initData:window.Telegram?.WebApp?.initData,orderId:payment.orderId}),cache:'no-store',signal:window.AbortSignal?.timeout?.(12000)});
+            const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Не удалось подготовить QR');
+            if(!save.isConnected||!dialog.open)return;
+            if(data.payment?.qrPayload!==payment.qrPayload)throw Error('Заказ изменился. Закройте оплату и откройте её снова.');
+            downloadUrl=safeUrl(data.payment.downloadUrl);preparedAt=Date.now();
+            saveStatus.textContent='QR готов. Нажмите «Сохранить QR» ещё раз.';fallbackReady(downloadUrl);return;
           }
-        }catch(error){saveStatus.textContent=(error.message||'Не удалось сохранить QR')+'. Попробуйте ещё раз.';}
+          const url=safeUrl(downloadUrl),webApp=window.Telegram?.WebApp,fileName='UMMA-'+payment.orderNumber+'.png';
+          fallbackReady(url);lastTap=Date.now();
+          if(typeof webApp?.downloadFile==='function'&&(typeof webApp.isVersionAtLeast!=='function'||webApp.isVersionAtLeast('8.0'))){
+            saveStatus.textContent='Подтвердите скачивание в Telegram. Если окно не появилось, используйте ссылку ниже.';
+            webApp.downloadFile({url,file_name:fileName},accepted=>{if(current===attempt&&save.isConnected)saveStatus.textContent=accepted?'Скачивание запрошено. После загрузки выберите QR в банке.':'Сохранение отменено. Можно повторить или открыть изображение по ссылке ниже.';});
+          }else{
+            if(typeof webApp?.openLink==='function')webApp.openLink(url);else fallback.click();
+            saveStatus.textContent='Открыта загрузка QR. Если она не началась, нажмите ссылку ниже.';
+          }
+        }catch(error){lastTap=0;saveStatus.textContent=(error.message||'Не удалось сохранить QR')+'. Попробуйте ещё раз или откройте QR по ссылке ниже.';}
         finally{saving=false;save.disabled=false;save.removeAttribute('aria-busy');}
       };
-      container.append(image,save,saveStatus);
+      container.append(image,save,saveStatus,fallback);
       if(primary){
         const steps=el('ol',null,'cafe-payment-steps');
         ['Сохраните QR на телефон или сделайте скриншот.','Откройте Vietcombank → QR → выберите изображение из галереи.','Проверьте получателя и подтвердите перевод.'].forEach(text=>steps.append(el('li',text)));
