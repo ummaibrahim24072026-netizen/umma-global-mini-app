@@ -6,7 +6,7 @@
 .umma-language-dialog button[aria-pressed=true]{border:2px solid #aa8539;background:#fff9e9;font-weight:700}
 .umma-language-dialog button:focus-visible,.umma-language-button:focus-visible{outline:3px solid #aa8539;outline-offset:3px}
 
-/* Language picker remains reachable on small screens with all twelve options. */
+/* Language picker remains reachable on small screens with all language options. */
 .umma-language-dialog{max-height:82vh;max-height:82dvh;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box}
 .umma-language-dialog button{white-space:normal;overflow-wrap:anywhere;line-height:1.5}
 :lang(th){line-height:1.65}
@@ -22,3 +22,13 @@ html[dir="rtl"] .tracking-legend span::before{margin-right:0;margin-left:6px}
 /* Do not mirror map tiles, QR imagery, phone numbers, identifiers or coordinates. */
 .leaflet-container,.delivery-location-map,.delivery-map-coordinates,.cafe-payment-qr,input[type="tel"],input[type="number"],[data-i18n-ltr]{direction:ltr;unicode-bidi:isolate}
 .cafe-product-price,.cafe-cart-row small,.cafe-payment-amount{unicode-bidi:isolate}
+
+/* Isolate only numeric values: card order and labels keep the reading direction. */
+.cafe-product-weight,.cafe-product-price,.cafe-cart-row small,.cafe-cart-total>strong,
+.cafe-sticky-order-info>strong,.cafe-my-order-total>strong,.cafe-my-order-items strong,
+.cafe-card-quantity,.cafe-cart-controls,.cafe-product-quantity,
+input[autocomplete="tel"],input[id$="TelegramId"],#locationPhone{direction:ltr;unicode-bidi:isolate}
+#cafePage .cafe-product-weight{white-space:nowrap}
+html[dir="rtl"] .brand-art-action>span{animation-name:umma-cafe-arrow-rtl;transform:scaleX(-1)}
+@keyframes umma-cafe-arrow-rtl{0%,20%,80%,100%{transform:translateX(0) scaleX(-1)}50%{transform:translateX(-6px) scaleX(-1)}}
+@media(prefers-reduced-motion:reduce){html[dir="rtl"] .brand-art-action>span{animation:none;transform:scaleX(-1)}}

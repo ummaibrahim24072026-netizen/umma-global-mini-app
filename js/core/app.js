@@ -253,7 +253,7 @@ function updateTelegramUserInterface(user) {
     welcomeTitle.innerHTML =
       `Ассаляму алейкум<br>
        ва рахматуллахи ва баракатух,<br>
-       <strong translate="no">${escapeHtml(firstName)}!</strong>`;
+       <strong translate="no" dir="auto">${escapeHtml(firstName)}!</strong>`;
 
   } else {
 

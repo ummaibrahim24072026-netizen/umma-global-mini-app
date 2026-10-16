@@ -26,6 +26,7 @@
   const byId = id => document.getElementById(id);
   const name = p => window.ummaI18n?.field(p, "name") || p.name_ru || p.name_en || p.name_vi || "Блюдо";
   const description = p => window.ummaI18n?.field(p, "description") || p.description_ru || p.description_en || "";
+  const searchText = value => String(value ?? "").normalize("NFKC").toLocaleLowerCase(window.ummaI18n?.locale());
   const count = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0);
   const total = () => Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * Number(item.price_vnd), 0);
 
@@ -123,8 +124,8 @@
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
     }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
     renderCategories(availableProducts);
-    const query = menuQuery.trim().toLocaleLowerCase();
-    const visibleProducts = availableProducts.filter(p => (menuCategory === "all" || categoryFor(p) === menuCategory) && (!query || [p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi].some(value => String(value || "").toLocaleLowerCase().includes(query))));
+    const query = searchText(menuQuery).trim();
+    const visibleProducts = availableProducts.filter(p => (menuCategory === "all" || categoryFor(p) === menuCategory) && (!query || [name(p), description(p), p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi, ...Object.values(window.ummaTranslations?.[p.name_ru] || {})].some(value => searchText(value).includes(query))));
     const resultCount = byId("cafeMenuCount");
     if (resultCount) resultCount.textContent = (query || menuCategory !== "all") ? "Найдено: " + visibleProducts.length + " из " + availableProducts.length : "Доступно в меню: " + availableProducts.length;
     if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос, выберите другую категорию или нажмите «Показать всё меню».</div>'; return; }
@@ -136,9 +137,9 @@
       const productId = esc(p.id);
       const photo = productPhoto(p);
       return '<article class="cafe-product' + (photo ? '' : ' cafe-product-no-photo') + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
-        photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight">' + esc(weight) + '</span></div>' +
-        '<h3 translate="no">' + esc(name(p)) + '</h3>' +
-        (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p translate="no">' + esc(description(p)) + '</p></details>' : '') +
+        photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight" dir="ltr">' + esc(weight) + '</span></div>' +
+        '<h3 translate="no" dir="auto">' + esc(name(p)) + '</h3>' +
+        (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p translate="no" dir="auto">' + esc(description(p)) + '</p></details>' : '') +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
         (quantity
@@ -173,7 +174,7 @@
     countEl.textContent = countLabel(count(),"позиция","позиции","позиций");
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
-    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
+    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no" dir="auto">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length || !locationId;
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const sticky = byId("cafeStickyOrder");

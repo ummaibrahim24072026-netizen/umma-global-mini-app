@@ -361,6 +361,12 @@ QR с суммой заказа готов. Оплату подтвердит к
 Айран турецкий|عيران تركي|Ayran Turki|อัยรันตุรกี|土耳其咸酸奶|터키식 아이란|Ayran turc|Türkischer Ayran|Ayran turco|Türk ayranı
 Чай чёрный с лимоном|شاي أسود بالليمون|Teh hitam dengan lemon|ชาดำมะนาว|柠檬红茶|레몬 홍차|Thé noir au citron|Schwarzer Tee mit Zitrone|Chá preto com limão|Limonlu siyah çay
 Основные разделы|الأقسام الرئيسية|Bagian utama|เมนูหลัก|主要栏目|주요 메뉴|Rubriques principales|Hauptbereiche|Secções principais|Ana bölümler
+Онлайн|متصل|Online|ออนไลน์|在线|온라인|En ligne|Online|Ligado|Çevrimiçi
+Связь прервана|انقطع الاتصال|Koneksi terputus|การเชื่อมต่อขาดหาย|连接中断|연결 끊김|Connexion perdue|Verbindung unterbrochen|Ligação perdida|Bağlantı kesildi
+Онлайн: автоматическое обновление включено|متصل: التحديث التلقائي مفعّل|Online: pembaruan otomatis aktif|ออนไลน์: เปิดอัปเดตอัตโนมัติแล้ว|在线：已启用自动更新|온라인: 자동 업데이트 켜짐|En ligne : actualisation automatique activée|Online: automatische Aktualisierung aktiv|Ligado: atualização automática ativa|Çevrimiçi: otomatik güncelleme açık
+Связь прервана: повторяем подключение|انقطع الاتصال: جارٍ إعادة الاتصال|Koneksi terputus: menyambungkan kembali|ขาดการเชื่อมต่อ: กำลังเชื่อมต่อใหม่|连接中断：正在重连|연결 끊김: 다시 연결 중|Connexion perdue : reconnexion|Verbindung unterbrochen: erneuter Verbindungsaufbau|Ligação perdida: a voltar a ligar|Bağlantı kesildi: yeniden bağlanıyor
+Управление Umma Global|إدارة UMMA Global|Kelola UMMA Global|จัดการ UMMA Global|管理UMMA Global|UMMA Global 관리|Gérer UMMA Global|UMMA Global verwalten|Gerir UMMA Global|UMMA Global yönetimi
+Туры, билеты и маршруты|الجولات والتذاكر والمسارات|Tur, tiket dan rute|ทัวร์ ตั๋วและเส้นทาง|旅游、票务与路线|투어, 티켓 및 경로|Circuits, billets et itinéraires|Touren, Tickets und Routen|Passeios, bilhetes e rotas|Turlar, biletler ve rotalar
 `;
  const catalogue=Object.create(null);
  for(const line of rows.trim().split('\n')){

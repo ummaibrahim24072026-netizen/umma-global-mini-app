@@ -303,6 +303,13 @@ VietQR для оплаты заказа №{id}|Sargyt №{id} üçin VietQR|Vie
 Нет свежей позиции. GPS или связь временно недоступны.|Täze ýerleşiş ýok. GPS ýa-da aragatnaşyk wagtlaýyn ýok.|Ҷойгиршавии нав нест. GPS ё алоқа муваққатан дастрас нест.|Yangi joylashuv yo‘q. GPS yoki aloqa vaqtincha mavjud emas.|最新の位置情報がありません。GPSまたは通信が一時的に利用できません。|يېڭى ئورۇن ئۇچۇرى يوق. GPS ياكى تور ۋاقىتلىق ئىشلىمەيۋاتىدۇ.
 Отслеживание завершено или недоступно.|Yzarlama tamamlandy ýa-da elýeterli däl.|Пайгирӣ анҷом ёфт ё дастрас нест.|Kuzatish yakunlangan yoki mavjud emas.|追跡が終了したか、利用できません。|ئىز قوغلاش تاماملاندى ياكى ئىشلىمەيدۇ.
 Позиция недоступна.|Ýerleşiş elýeterli däl.|Ҷойгиршавӣ дастрас нест.|Joylashuv mavjud emas.|位置情報を利用できません。|ئورۇن ئۇچۇرى يوق.
+Онлайн|Onlaýn|Онлайн|Onlayn|オンライン|توردا
+Связь прервана|Birikme kesildi|Алоқа қатъ шуд|Aloqa uzildi|接続が切れました|ئۇلىنىش ئۈزۈلدى
+Онлайн: автоматическое обновление включено|Onlaýn: awtomatik täzelenme açyk|Онлайн: навсозии худкор фаъол аст|Onlayn: avtomatik yangilanish yoqilgan|オンライン：自動更新が有効です|توردا: ئاپتوماتىك يېڭىلاش ئېچىلغان
+Связь прервана: повторяем подключение|Birikme kesildi: täzeden birikdirilýär|Алоқа қатъ шуд: аз нав пайваст мешавем|Aloqa uzildi: qayta ulanmoqda|接続が切れました：再接続中|ئۇلىنىش ئۈزۈلدى: قايتا ئۇلىنىۋاتىدۇ
+Управление Umma Global|UMMA Global dolandyryşy|Идоракунии UMMA Global|UMMA Global boshqaruvi|UMMA Globalの管理|UMMA Global نى باشقۇرۇش
+Туры, билеты и маршруты|Syýahatlar, petekler we ugurlar|Саёҳатҳо, чиптаҳо ва хатсайрҳо|Turlar, chiptalar va yo‘nalishlar|ツアー・チケット・ルート|ساياھەت، بېلەت ۋە يوللار
+Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.|Maşgalamyza gerek zatlaryň ählisi. Kafe programmada işleýär; beýleki hyzmatlar taýýarlanýar.|Ҳама чиз барои оилаи мо. Кафе дар барнома фаъол аст; дигар хизматҳо омода мешаванд.|Oilamizga kerak bo‘lgan hamma narsa. Kafe ilovada ishlayapti; boshqa xizmatlar tayyorlanmoqda.|私たちの家族に必要なすべてを。カフェは利用可能で、その他のサービスは準備中です。|ئائىلىمىزگە كېرەكلىك ھەممە نەرسە. ئاشخانا ئەپتە ئىشلىمەكتە؛ باشقا مۇلازىمەتلەر تەييارلىنىۋاتىدۇ.
 `;
  const catalogue=Object.create(null);
  for(const line of rows.trim().split('\n')){

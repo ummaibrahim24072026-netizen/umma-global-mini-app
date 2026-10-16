@@ -60,7 +60,8 @@
   }
   function render(payment) {
     if(!payment || !/^\d{6,19}$/.test(payment.account) || !Number.isSafeInteger(payment.amount) || payment.amount<=0 || typeof payment.qrPayload!=='string' || payment.bankCode!=='vcb')throw Error('Некорректные реквизиты');
-    dialog.append(el('p','Заказ №'+payment.orderNumber,'cafe-payment-meta'),el('p',money(payment.amount),'cafe-payment-amount'));
+    const amount=el('p',money(payment.amount),'cafe-payment-amount');amount.dir='ltr';
+    dialog.append(el('p','Заказ №'+payment.orderNumber,'cafe-payment-meta'),amount);
     const label=el('p','Ваш банк','cafe-payment-bank'),chooser=el('details',null,'cafe-payment-chooser'),summary=el('summary'),list=el('div',null,'cafe-payment-banks');
     let selected='vcb';try{const saved=localStorage.getItem('umma-payment-bank');if(banks.some(([id])=>id===saved))selected=saved;}catch{}
     const open=el('a','Оплатить','cafe-payment-open');open.rel='noopener noreferrer';open.target='_blank';open.dataset.bankPay='';

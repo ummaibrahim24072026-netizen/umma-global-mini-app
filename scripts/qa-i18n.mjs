@@ -93,5 +93,27 @@ assert.equal(i.setLanguage('in-ID'),true);assert.equal(i.language,'id');
 i.setLanguage('ja');assert.equal(i.t('Найдено: 2 из 5'),'5件中2件','Japanese places the named total before the result count');
 i.setLanguage('ug');assert.equal(d.documentElement.dir,'rtl');assert.equal(i.locale(),'ug-CN');
 i.setLanguage('uz-Latn-UZ');assert.equal(i.language,'uz');assert.equal(d.documentElement.dir,'ltr');
+// Regression: RTL must preserve product identity and find the names actually displayed.
+products.push({id:'soup',sku:'UMMA-CAFE-SHURPA',name_ru:'Шурпа',name_en:'Shurpa',weight_value:650,weight_unit:'g',price_vnd:90000});
+products.push({id:'borscht',sku:'UMMA-CAFE-BORSCHT',name_ru:'Борщ',name_en:'Borscht',weight_value:650,weight_unit:'g',image_url:'https://images.example/borscht.jpg',price_vnd:90000});
+await w.ummaCafe.refreshMenu();
+const style=d.createElement('style');style.textContent=readFileSync('css/i18n.css','utf8');d.head.append(style);
+for(const code of ['ar','ug','ja','ru']){
+ i.setLanguage(code);await tick();
+ const soup=d.querySelector('[data-product-card="soup"]'),borscht=d.querySelector('[data-product-card="borscht"]');
+ assert.ok(soup.compareDocumentPosition(borscht)&w.Node.DOCUMENT_POSITION_FOLLOWING,'source order stays shurpa then borscht');
+ assert.match(soup.querySelector('img').src,/shurpa/);assert.match(borscht.querySelector('img').src,/borscht/);
+ assert.equal(w.getComputedStyle(soup.querySelector('.cafe-product-weight')).direction,'ltr');
+ assert.equal(soup.querySelector('.cafe-product-weight').textContent,code==='ru'?'≈ 650 г':'≈ 650 g');
+ assert.equal(w.getComputedStyle(d.querySelector('.cafe-cart-controls')).direction,'ltr');
+ assert.equal(w.getComputedStyle(d.getElementById('cafeCartTotal')).direction,'ltr');
+ assert.equal(i.t('Онлайн'),code==='ru'?'Онлайн':w.ummaTranslations['Онлайн'][code]);
+ search.value=code==='ja'?'ｼｭﾙﾊﾟ':i.field(products.find(p=>p.id==='soup'),'name');
+ search.dispatchEvent(new w.Event('input'));await tick();
+ assert.equal(d.querySelectorAll('[data-product-card]').length,1,'localized and width-normalized search works: '+code);
+ assert.equal(d.querySelector('[data-product-card]').dataset.productCard,'soup');
+ search.value='';search.dispatchEvent(new w.Event('input'));await tick();
+ assert.equal(userInput.value,'Гость','RTL and search never rewrite contact input');
+}
 const css=readFileSync('css/i18n.css','utf8');assert.match(css,/overflow-y:auto/);assert.match(css,/\.leaflet-container[\s\S]*direction:ltr/);
 w.close();console.log('PASS seventeen languages, Arabic/Uyghur RTL and Japanese placeholder order, language detection, fallbacks, reversible dynamic UI, accessibility, picker, product fields and cart preservation');

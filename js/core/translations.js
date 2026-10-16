@@ -490,6 +490,10 @@ QR с суммой заказа готов. Оплату подтвердит к
 Переведите сумму по реквизитам, полученным от кафе. Приложите скриншот перевода. Оплату подтвердит сотрудник после проверки поступления денег.|Transfer the amount using the cafe’s bank details and attach a screenshot. Staff will confirm after checking receipt of funds.|Chuyển tiền theo thông tin ngân hàng của quán và đính kèm ảnh. Nhân viên xác nhận sau khi kiểm tra đã nhận tiền.
 Скриншот перевода|Transfer screenshot|Ảnh chuyển khoản
 Проверьте метку и при необходимости передвиньте её.|Check the pin and move it if needed.|Kiểm tra dấu ghim và di chuyển nếu cần.
+Онлайн|Online|Trực tuyến
+Связь прервана|Connection lost|Mất kết nối
+Онлайн: автоматическое обновление включено|Online: automatic updates enabled|Trực tuyến: đã bật cập nhật tự động
+Связь прервана: повторяем подключение|Connection lost: reconnecting|Mất kết nối: đang kết nối lại
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }
