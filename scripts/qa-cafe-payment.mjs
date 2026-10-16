@@ -17,7 +17,7 @@ for(const change of [{payment_status:'paid'},{payment_status:'refunded'},{status
 let handler,queries=[],owned=true;
 const client={from(table){const filters=[];const query={select(){return query;},eq(k,v){filters.push([k,v]);return query;},async maybeSingle(){queries.push({table,filters});if(table==='telegram_users')return {data:{telegram_id:42,is_active:true}};return {data:owned?order:null};}};return query;}};
 const source=stripTypeScriptTypes(read('supabase/functions/cafe-my-orders/index.ts').replace(/^import .*;\n/gm,''));
-vm.runInNewContext(source,{Deno:{serve:fn=>handler=fn,env:{get:key=>key==='TELEGRAM_BOT_TOKEN'?'test-only-token':'test-only'}},createClient:()=>client,paymentFor,QR_LOCATION,crypto:webcrypto,URLSearchParams,TextEncoder,Response,console});
+vm.runInNewContext(source,{Deno:{serve:fn=>handler=fn,env:{get:key=>key==='TELEGRAM_BOT_TOKEN'?'test-only-token':'test-only'}},createClient:()=>client,paymentFor,QR_LOCATION,qrDownloadUrl:async()=>"https://qa.invalid/qr",qrDownloadResponse:()=>new Response(null,{status:403}),crypto:webcrypto,URLSearchParams,TextEncoder,Response,console});
 const params=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),user:JSON.stringify({id:42})});
 const check=[...params].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');
 const secret=createHmac('sha256','WebAppData').update('test-only-token').digest();params.set('hash',createHmac('sha256',secret).update(check).digest('hex'));

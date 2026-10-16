@@ -1,10 +1,11 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { paymentFor, QR_LOCATION } from "./payment.ts";
+import { qrDownloadUrl, qrDownloadResponse } from "./qr-download.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
 };
 function response(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -48,6 +49,11 @@ async function verifyTelegramInitData(initData: string, botToken: string): Promi
 
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers:corsHeaders });
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    const secret=Deno.env.get('TELEGRAM_BOT_TOKEN');
+    if(!secret)return response({ok:false,error:'Server configuration error'},500);
+    return qrDownloadResponse(req,secret);
+  }
   if (req.method !== "POST") return response({ ok:false, error:"Method not allowed" }, 405);
   try {
     const body = await req.json();
@@ -82,7 +88,7 @@ Deno.serve(async req => {
       if (error) return response({ok:false,error:"Не удалось загрузить оплату"},500);
       const payment = order && paymentFor(order);
       if (!payment) return response({ok:false,error:"QR-оплата недоступна: заказ уже оплачен, отменён или реквизиты этого кафе не настроены."},409);
-      return response({ok:true,payment});
+      return response({ok:true,payment:{...payment,downloadUrl:await qrDownloadUrl(payment,botToken,supabaseUrl)}});
     }
     if(body.action==="notifications"||body.action==="readNotifications"){
       if(body.action==="readNotifications"&&(!Array.isArray(body.ids)||body.ids.length>50||body.ids.some((id:any)=>typeof id!=="string"||!/^[0-9a-f-]{36}$/i.test(id))))return response({ok:false,error:"Некорректные уведомления"},400);

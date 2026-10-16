@@ -73,8 +73,30 @@
       const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.fillStyle='#000';
       for(let y=0;y<count;y++)for(let x=0;x<count;x++)if(qr.isDark(y,x))context.fillRect((x+padding)*scale,(y+padding)*scale,scale,scale);
       const image=el('img',null,'cafe-payment-qr');image.src=canvas.toDataURL('image/png');image.alt='VietQR для оплаты заказа №'+payment.orderNumber;
-      const save=el('a',primary?'Сохранить QR для оплаты':'Сохранить QR',primary?'cafe-payment-open':'cafe-payment-save');save.href=image.src;save.download='UMMA-'+payment.orderNumber+'.png';
-      container.append(image,save);
+      const save=el('button',primary?'Сохранить QR для оплаты':'Сохранить QR',primary?'cafe-payment-open':'cafe-payment-save');save.type='button';save.dataset.saveQr='';
+      const saveStatus=el('p',null,'cafe-payment-help');saveStatus.setAttribute('role','status');saveStatus.setAttribute('aria-live','polite');
+      let saving=false;
+      save.onclick=async()=>{
+        if(saving)return;saving=true;save.disabled=true;save.setAttribute('aria-busy','true');saveStatus.textContent='Подготавливаем QR…';
+        try {
+          const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'paymentDetails',initData:window.Telegram?.WebApp?.initData,orderId:payment.orderId}),cache:'no-store',signal:window.AbortSignal?.timeout?.(12000)});
+          const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Не удалось подготовить QR');
+          if(!save.isConnected||!dialog.open)return;
+          if(data.payment?.qrPayload!==payment.qrPayload)throw Error('Заказ изменился. Закройте оплату и откройте её снова.');
+          const url=new URL(data.payment.downloadUrl),api=new URL(endpoint);
+          if(url.origin!==api.origin||url.pathname!==api.pathname||!url.searchParams.has('qr')||!url.searchParams.has('sig'))throw Error('Не удалось получить ссылку на QR');
+          const webApp=window.Telegram?.WebApp,fileName='UMMA-'+payment.orderNumber+'.png';
+          if(typeof webApp?.downloadFile==='function'&&(typeof webApp.isVersionAtLeast!=='function'||webApp.isVersionAtLeast('8.0'))){
+            saveStatus.textContent='Подтвердите сохранение изображения в Telegram.';
+            await new Promise((resolve,reject)=>{try{webApp.downloadFile({url:url.href,file_name:fileName},accepted=>{if(save.isConnected)saveStatus.textContent=accepted?'Скачивание запрошено. После загрузки выберите QR в банке: QR → изображение из галереи или файлов.':'Сохранение отменено. Нажмите ещё раз, чтобы повторить.';resolve();});}catch(error){reject(error);}});
+          }else{
+            const link=el('a');link.href=url.href;link.download=fileName;link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();link.remove();
+            saveStatus.textContent='Открыта загрузка PNG. Если Telegram её блокирует, откройте мини-приложение в браузере и повторите сохранение.';
+          }
+        }catch(error){saveStatus.textContent=(error.message||'Не удалось сохранить QR')+'. Попробуйте ещё раз.';}
+        finally{saving=false;save.disabled=false;save.removeAttribute('aria-busy');}
+      };
+      container.append(image,save,saveStatus);
       if(primary){
         const steps=el('ol',null,'cafe-payment-steps');
         ['Сохраните QR на телефон или сделайте скриншот.','Откройте Vietcombank → QR → выберите изображение из галереи.','Проверьте получателя и подтвердите перевод.'].forEach(text=>steps.append(el('li',text)));

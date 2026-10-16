@@ -23,3 +23,5 @@
 .cafe-payment-sheet [hidden]{display:none!important}
 .cafe-payment-qr-primary{margin-top:18px}
 .cafe-payment-steps{padding-left:22px;font:400 14px/1.5 system-ui;color:#375c5d}.cafe-payment-steps li{margin:7px 0}
+
+button.cafe-payment-save{width:100%;border:0;background:transparent;font:700 14px system-ui;cursor:pointer}.cafe-payment-qr-primary button:disabled{opacity:.6;cursor:wait}
