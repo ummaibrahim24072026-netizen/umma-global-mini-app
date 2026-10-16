@@ -66,6 +66,19 @@ try{
  const original=await transcribeMessage('fake-local-test',new Blob(['synthetic voice']),'voice.webm',provider);assert.equal(await translateMessage('fake-local-test',original,'vi',provider),'Tôi đang ở lối vào.');assert.equal((await speakMessage('fake-local-test','Tôi đang ở lối vào.','vi',provider)).size,3);
  assert.equal(JSON.parse(calls[1].options.body).store,false);assert.equal(JSON.parse(calls[2].options.body).response_format,'mp3');
  await assert.rejects(translateMessage('fake','text','vi',async()=>new Response('limited',{status:429})),/provider 429/);
+ const fallbackCalls=[];
+ const azureProvider=async(url,options)=>{fallbackCalls.push({url,options});if(url.includes('api.openai.com'))return new Response(JSON.stringify({error:{code:'credit_balance_exhausted'}}),{status:429});return new Response(JSON.stringify([{translations:[{to:'vi',text:'Tôi ở cửa số 13.'}]}]));};
+ const azure={key:'synthetic-azure-key',region:'southeastasia'};
+ assert.equal(await translateMessage('synthetic-openai-key','Я у входа 13','vi',azureProvider,azure),'Tôi ở cửa số 13.');
+ assert.equal(fallbackCalls.length,2);assert.equal(fallbackCalls[1].options.headers.Authorization,undefined,'OpenAI credentials never reach Azure');
+ assert.equal(fallbackCalls[0].options.headers['Ocp-Apim-Subscription-Key'],undefined,'Azure credentials never reach OpenAI');
+ assert.deepEqual(JSON.parse(fallbackCalls[1].options.body),[{Text:'Я у входа 13'}]);
+ fallbackCalls.length=0;await translateMessage('','text','vi',azureProvider,azure);assert.equal(fallbackCalls.length,1,'Azure works with no OpenAI key');
+ await assert.rejects(translateMessage('','text','vi',async()=>new Response('quota exhausted',{status:403}),azure),/Azure translation provider 403/);
+ await assert.rejects(translateMessage('','text','vi',async()=>new Response(JSON.stringify([{translations:[{to:'ru',text:'wrong language'}]}])),azure),/Azure translation output/);
+ let contacted=false;await assert.rejects(translateMessage('','text','invalid',async()=>{contacted=true;},azure),/Translation input/);assert.equal(contacted,false);
+ assert.equal(await translateMessage('','你好','zh',async(url)=>{assert.match(url,/to=zh-Hans/);return new Response(JSON.stringify([{translations:[{to:'zh-Hans',text:'你好'}]}]));},azure),'你好');
+ console.log('PASS Azure fallback: exhausted primary, Azure-only, credential separation, text-only payload, quota failures, language mapping and output validation');
  // Execute the deployed entrypoint against the isolated SQL engine and provider double.
  let handler,notificationRuns=0,dbCalls=0;
  const client={rpc:async(name,args)=>{assert.equal(name,'delivery_chat_action');dbCalls++;try{return {data:await action(args.p_actor,args.p_action,args.p_body,args.p_order),error:null};}catch(e){return {data:null,error:{message:e.message}};}},storage:{from:name=>{assert.equal(name,'delivery-chat');return {
@@ -77,7 +90,7 @@ try{
  const signed=id=>{const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),user:JSON.stringify({id})});const c=[...p].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');p.set('hash',createHmac('sha256',createHmac('sha256','WebAppData').update(bot).digest()).update(c).digest('hex'));return p.toString();};
  vm.runInNewContext(stripTypeScriptTypes(readFileSync('supabase/functions/delivery-chat/index.ts','utf8')).replace(/^import .*;\n/gm,''),{
   Deno:{serve:fn=>handler=fn,env:{get:key=>({TELEGRAM_BOT_TOKEN:bot,SUPABASE_URL:'https://isolated.invalid',SUPABASE_SERVICE_ROLE_KEY:'fake',OPENAI_API_KEY:'fake'})[key]}},
-  createClient:()=>client,verifyTelegramInitData,translateMessage:(k,t,l)=>translateMessage(k,t,l,provider),transcribeMessage:(k,b,f)=>transcribeMessage(k,b,f,provider),speakMessage:(k,t,l)=>speakMessage(k,t,l,provider),validMedia,languageNames:{ru:'Russian',vi:'Vietnamese'},dispatchCustomerNotifications:async()=>{notificationRuns++;},fetch:async()=>new Response(new Uint8Array([26,69,223,163,0,0,0,0])),Response,Request,Uint8Array,Map,Set,AbortSignal,Error,crypto,TextEncoder,console
+  createClient:()=>client,verifyTelegramInitData,translateMessage:(k,t,l,_send,azure)=>translateMessage(k,t,l,provider,azure),transcribeMessage:(k,b,f)=>transcribeMessage(k,b,f,provider),speakMessage:(k,t,l)=>speakMessage(k,t,l,provider),validMedia,languageNames:{ru:'Russian',vi:'Vietnamese'},dispatchCustomerNotifications:async()=>{notificationRuns++;},fetch:async()=>new Response(new Uint8Array([26,69,223,163,0,0,0,0])),Response,Request,Uint8Array,Map,Set,AbortSignal,Error,crypto,TextEncoder,console
  });
  const post=async(actor,body)=>{const r=await handler(new Request('https://isolated.invalid',{method:'POST',body:JSON.stringify({initData:signed(actor),orderId:order,language:'ru',...body})}));return {status:r.status,data:await r.json()};};
  const beforeAuth=dbCalls;assert.equal((await post(20,{initData:'tampered',action:'list'})).status,401);assert.equal(dbCalls,beforeAuth);
