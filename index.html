@@ -570,7 +570,363 @@
         </label>
         <label>Должность
           <select id="cafeStaffRole" name="staffRole" required>
-          …11319 tokens truncated…3dый экран телефона</button>
+            <option value="manager">Менеджер — все статусы заказов</option>
+            <option value="cashier">Кассир</option>
+            <option value="waiter">Официант</option>
+            <option value="kitchen">Кухня</option>
+            <option value="courier">Курьер — забор и подтверждение доставки</option>
+          </select>
+        </label>
+        <button id="cafeStaffAssignSubmit" type="submit" class="cafe-submit">Сохранить назначение</button>
+        <div id="cafeStaffAdminMessage" class="cafe-order-result" hidden></div>
+      </form>
+      <div class="cafe-staff-list-heading">
+        <h2>Назначенные сотрудники</h2>
+        <button type="button" id="cafeStaffAdminRefresh" class="cafe-my-orders-refresh">↻ Обновить</button>
+      </div>
+      <div id="cafeStaffAssignments" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
+  <!-- WAITER ORDER ENTRY — SEPARATE FROM CASH/KITCHEN -->
+  <section id="cafeWaiterPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeWaiterBack" class="cafe-back">← Назад</button>
+        <button type="button" id="cafeWaiterRefresh" class="cafe-kitchen-refresh">↻ Обновить меню</button>
+        <button type="button" id="cafeWaiterKitchen" class="cafe-kitchen-refresh">🍳 Кухня</button>
+        <h1>Приём заказов</h1>
+        <p>Рабочее место приёма заказов · HALAL UMMA</p>
+      </div>
+      <div style="padding:12px;margin:12px 0;background:#eaf7f7;border-radius:12px;color:#174344">
+        Сотрудник принимает заказ, добавляет блюда и оформляет оплату. Заказ автоматически появляется на отдельном экране кухни.
+      </div>
+<div class="staff-workspace-tabs" role="tablist" aria-label="Работа с заказами">
+        <button type="button" id="waiterOrderToggle" class="staff-workspace-tab is-active" aria-selected="true">＋ Оформить заказ</button>
+        <button type="button" id="staffActiveOrdersToggle" class="staff-workspace-tab" aria-selected="false">📋 Активные заказы</button>
+        <button type="button" id="staffClosedOrdersToggle" class="staff-workspace-tab" aria-selected="false">✓ Закрытые заказы</button>
+      </div>
+      <section class="staff-order-builder">
+
+        <div id="staffOrderFormWrap">
+          <h2>Оформить заказ гостя</h2><label id="staffOrderLocationLabel" hidden>Кафе / филиал<select id="staffOrderLocation" required><option value="">Выберите кафе</option></select></label>
+          <div class="staff-table-picker" id="staffTablePicker">
+            <strong>Где обслуживаем гостя?</strong>
+            <p>Передняя зона — столы 1–5, задняя зона — стол 6.</p>
+            <div class="staff-table-zone">Передняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Передняя зона">
+              <button type="button" data-staff-table="1">Стол 1</button>
+              <button type="button" data-staff-table="2">Стол 2</button>
+              <button type="button" data-staff-table="3">Стол 3</button>
+              <button type="button" data-staff-table="4">Стол 4</button>
+              <button type="button" data-staff-table="5">Стол 5</button>
+            </div>
+            <div class="staff-table-zone">Задняя зона</div>
+            <div class="staff-table-grid" role="group" aria-label="Задняя зона"><button type="button" data-staff-table="6">Стол 6</button></div>
+            <div class="staff-table-zone">Другой способ получения</div>
+            <div class="staff-table-grid"><button type="button" data-staff-service="pickup">🥡 С собой</button><button type="button" data-staff-service="delivery">🛵 Доставка</button></div>
+            <p id="staffTableSelectionHint" class="cafe-order-hint">Нажмите стол или «С собой», затем добавляйте блюда.</p>
+          </div>
+          <p>Создай заказ для гостя здесь. Для контроля уже оформленных заказов открой вкладку «Активные заказы».</p><div id="staffOrderModeNotice" class="cafe-order-result" hidden></div><div id="staffOrderMenu" class="cafe-products"></div>
+          <div id="staffOrderSummary" class="cafe-cart" hidden>
+            <h3>Состав заказа</h3>
+            <div id="staffOrderCart"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
+            <div class="cafe-cart-total"><span>Итого</span><strong id="staffOrderTotal">0 ₫</strong></div>
+            <form id="staffOrderForm" class="cafe-order-form">
+              <label>Тип заказа<select id="staffOrderType"><option value="dine_in">В кафе</option><option value="pickup">С собой</option><option value="delivery">Доставка</option></select></label>
+              <label id="staffOrderGuestLabel">Стол или имя гостя<input id="staffOrderCustomerName" maxlength="120" placeholder="Выберите стол выше или укажите имя"></label>
+              <label id="staffCourierDispatchLabel" hidden>Как подобрать курьера<select id="staffCourierDispatch"><option value="nearest">Сначала ближайшему свободному курьеру</option><option value="broadcast">Свободный выбор курьерами кафе</option></select></label><label id="staffOrderAddressLabel" hidden>Адрес доставки<input id="staffOrderAddress" maxlength="500" placeholder="Адрес доставки"></label>
+              <label>Комментарий<textarea id="staffOrderNote" maxlength="1000" rows="2" placeholder="Например, без острого"></textarea></label>
+              <label>Когда оплатит гость<select id="staffPaymentTiming" required><option value="now">Сейчас, до передачи заказа</option><option value="later">После трапезы — общий счёт</option><option value="on_delivery" hidden>При получении — наличными курьеру</option></select></label><div id="staffPaymentNowFields"><label>Способ оплаты<select id="staffOrderPayment" required><option value="cash">Наличными</option><option value="qr">QR-кодом</option><option value="bank_transfer">Перевод на карту</option><option value="courier" hidden>Оплата курьеру при доставке</option></select></label><div id="staffCashPaymentFields" class="staff-cash-payment-fields"><label>Получено от гостя, VND<input id="staffCashReceived" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000"></label><div class="staff-change-summary"><span>Сумма заказа</span><strong id="staffCashDue">0 ₫</strong><span>Сдача гостю</span><strong id="staffCashChange">—</strong></div><p id="staffCashHint" class="cafe-order-hint">Введите сумму, которую гость передал наличными.</p></div></div><p id="staffPaymentTimingHint" class="cafe-order-hint">При оплате позже все новые блюда будут добавляться в один открытый счёт. Оплата — после завершения трапезы.</p>
+              <button type="submit" id="staffOrderSubmit" class="cafe-submit" disabled>Отправить заказ на кухню</button>
+              <div id="staffOrderMessage" class="cafe-order-result" hidden></div>
+            </form>
+          </div>
+        </div>
+        <div id="staffActiveOrdersWrap" hidden>
+          <h2>Активные заказы</h2>
+          <p>Все незавершённые заказы кафе: оплата, сумма и текущий этап выполнения.</p>
+          <div id="staffOpenBills" class="staff-open-bills"><p class="cafe-empty-cart">Загружаем заказы…</p></div>
+          <div id="staffActiveOrders" class="staff-active-orders"></div>
+        </div>
+        <div id="staffClosedOrdersWrap" hidden>
+          <h2>Закрытые заказы</h2>
+          <p>Завершённые и отменённые заказы. Статус оплаты указан отдельно.</p>
+          <div id="staffClosedOrders" class="staff-active-orders"></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- COURIER MAP AND ROUTE -->
+  <section id="courierMapModal" hidden style="position:fixed;inset:0;z-index:11000;background:#fff;overflow:auto;padding:14px;box-sizing:border-box">
+    <div style="max-width:900px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
+        <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
+      </div>
+      <div class="umma-maps-brand">UMMA MAPS</div>
+      <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
+      <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <a id="courierMapApple" target="_blank" rel="noopener noreferrer" hidden>Открыть маршрут в Картах Apple</a>
+      <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Начать навигацию в Google Maps</a>
+      <small style="color:#68737d">Голосовые подсказки доступны в приложении Google Maps. При переключении из Telegram передача позиции клиенту может приостановиться.</small>
+    </div>
+  </section>
+
+  <!-- CAFE KITCHEN -->
+  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Назад</button>
+        <details class="kitchen-board-tools"><summary>Настройки кухни</summary>
+        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <button type="button" id="kitchenTabletToggle" class="cafe-kitchen-refresh" aria-pressed="false">▣ Режим планшета</button>
+        <button type="button" id="cafeCashToggle" class="cafe-kitchen-refresh" aria-expanded="false">💰 Касса и смена</button>
+        </details>
+        <h1>Кухня · Заказы</h1>
+        <p>HALAL UMMA · Нячанг</p>
+      </div>
+      <div class="cafe-kitchen-shortcuts">
+        <button type="button" id="cafeKitchenToOrders" class="cafe-kitchen-refresh">📋 Приём заказов</button>
+      </div>
+      <details id="courierOwnerSetup" hidden><summary>Кафе и доступ курьера</summary><section id="selfCourierControls" class="cafe-message" hidden><h2>Я — курьер</h2><label>Кафе<select id="selfCourierLocation"></select></label><p id="selfCourierStatus" role="status"></p><button type="button" id="selfCourierEnable" class="kitchen-action">Я доступен как курьер</button><button type="button" id="selfCourierDisable" class="kitchen-cancel">Завершить работу курьером</button><p>Принимайте доставку ниже. Фото и GPS включаются после назначения заказа.</p></section></details><section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
+        <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
+        <button type="button" data-kitchen-filter="all">Все</button>
+        <button type="button" id="courierClosedFilter" data-kitchen-filter="closed" hidden>Закрытые</button>
+      </div>
+      <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
+      <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+    </div>
+  </section>
+
+  <!-- CAFE BRANCH INVENTORY -->
+  <section id="cafeInventoryPage" class="cafe-staff-admin-page" hidden>
+    <div class="cafe-staff-admin-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeInventoryBack" class="cafe-back">← К заказам</button>
+        <button type="button" id="cafeInventoryRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <h1>Товары и остатки</h1>
+        <p>Цены и наличие отдельно для каждого кафе HALAL UMMA.</p>
+      </div>
+      <label style="display:block;margin:12px 0;font-weight:700">Кафе
+        <select id="cafeInventoryLocation" style="display:block;width:100%;padding:12px;margin-top:6px;border:1px solid #d4dfdf;border-radius:10px"></select>
+      </label>
+      <div id="cafeInventoryMessage" class="cafe-order-result" style="margin:12px 0" hidden></div>
+      <details id="cafeInventoryCreateWrap" style="background:#fff;border:1px solid #dce7e7;border-radius:14px;padding:14px;margin:12px 0">
+        <summary style="font-weight:800;cursor:pointer">＋ Добавить товар в каталог</summary>
+        <form id="cafeInventoryCreateProduct" class="cafe-staff-assign-form" style="margin-top:12px">
+          <label>Название на русском<input id="cafeInvNameRu" maxlength="160" required></label>
+          <label>Tên tiếng Việt<input id="cafeInvNameVi" maxlength="160" required></label>
+          <label>Name in English<input id="cafeInvNameEn" maxlength="160" required></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Цена, VND<input id="cafeInvNewPrice" type="number" min="0" max="100000000" step="1000" required></label>
+            <label>Количество<input id="cafeInvNewQty" type="number" min="0" max="100000" step="1" value="0" required></label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label>Вес/объём<input id="cafeInvWeight" type="number" min="0.1" step="0.1" placeholder="450"></label>
+            <label>Единица<select id="cafeInvWeightUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select></label>
+          </div>
+          <label>Артикул (необязательно)<input id="cafeInvSku" maxlength="100"></label>
+          <button type="submit" id="cafeInventoryCreateSubmit" class="cafe-submit">Добавить товар</button>
+        </form>
+      </details>
+      <h2>Наличие и цены по выбранному кафе</h2>
+      <div id="cafeInventoryProducts" class="cafe-staff-assignments"></div>
+    </div>
+  </section>
+
+  <!-- CAFE ORDERING -->
+  <section id="cafePage" class="cafe-page" hidden>
+    <div class="cafe-page-inner">
+      <button type="button" id="cafeBack" class="cafe-banner-back">← Главная</button>
+      <header class="cafe-banner-header">
+        <div class="cafe-brand-lockup">
+          <svg class="cafe-brand-seal" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            <path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z"/>
+            <path class="cafe-seal-inner" d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z"/>
+            <text x="50" y="69" text-anchor="middle" class="cafe-seal-letter">U</text>
+          </svg>
+          <h1 class="cafe-banner-title" aria-label="Кафе UMMA"><svg viewBox="0 0 400 108" aria-hidden="true" focusable="false"><defs><linearGradient id="cafeWordmarkGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7c7"/><stop offset=".5" stop-color="#ffe9a0"/><stop offset="1" stop-color="#ddb65b"/></linearGradient></defs><text x="200" y="87" text-anchor="middle" textLength="390" lengthAdjust="spacingAndGlyphs" fill="url(#cafeWordmarkGold)">UMMA</text></svg></h1>
+          <svg class="cafe-brand-seal" viewBox="0 0 100 100" role="img" aria-label="Халяль" focusable="false">
+            <path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z"/>
+            <path class="cafe-seal-inner" d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z"/>
+            <text x="50" y="48" text-anchor="middle" class="cafe-seal-arabic" lang="ar">حلال</text>
+            <text x="50" y="70" text-anchor="middle" class="cafe-seal-halal">HALAL</text>
+          </svg>
+        </div>
+        <p class="cafe-brand-cuisine">Central Asian<br> <span>Halal Cuisine</span></p>
+        <div class="cafe-brand-values" aria-label="Unity, Care, Growth"><span>Unity</span><i aria-hidden="true"></i><span>Care</span><i aria-hidden="true"></i><span>Growth</span></div>
+        <p class="cafe-brand-intention">Мы кормим людей<br>ради довольства Аллаха</p>
+        <div id="cafeOrderModes" class="cafe-banner-services" role="group" aria-label="Как получить заказ">
+          <button type="button" data-order-mode="dine_in" aria-pressed="false" aria-controls="cafeOrderType">В кафе</button>
+          <button type="button" data-order-mode="pickup" aria-pressed="true" aria-controls="cafeOrderType">С собой</button>
+          <button type="button" data-order-mode="delivery" aria-pressed="false" aria-controls="cafeOrderType">Доставка</button>
+        </div>
+      </header>
+
+      <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
+      <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
+      <div class="cafe-menu-search"><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
+      <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
+      <button type="button" id="cafeMenuReset" class="cafe-menu-reset" hidden>Показать всё меню</button>
+      <p id="cafeMenuCount" class="cafe-menu-count" role="status" aria-live="polite"></p>
+
+      <div id="cafeLoading" class="cafe-message">Загружаем меню…</div>
+      <div id="cafeError" class="cafe-message" hidden></div>
+      <div id="cafeProducts" class="cafe-products" aria-label="Меню кафе"></div>
+
+      <section class="cafe-cart">
+        <button type="button" id="cafeCheckoutBack" class="cafe-back">← Вернуться к меню</button>
+        <div class="cafe-cart-heading">
+          <h2>Ваш заказ</h2>
+          <span id="cafeCartCount">0 позиций</span>
+        </div>
+        <details id="cafeCheckoutItems" class="cafe-checkout-disclosure cafe-checkout-items">
+          <summary><span>Состав заказа</span><span class="cafe-disclosure-action">Посмотреть / изменить</span></summary>
+          <div id="cafeCartItems" class="cafe-cart-items"><p class="cafe-empty-cart">Добавьте блюда из меню.</p></div>
+          <div class="cafe-cart-total"><span>Итого</span><strong id="cafeCartTotal">0 ₫</strong></div>
+        </details>
+        <form id="cafeOrderForm" class="cafe-order-form">
+          <section class="cafe-checkout-section cafe-checkout-fulfilment" aria-labelledby="cafeFulfilmentTitle"><h3 id="cafeFulfilmentTitle">Как получить заказ</h3>
+            <div id="cafeCheckoutModes" class="cafe-checkout-modes" role="group" aria-label="Как получить заказ">
+              <button type="button" data-order-mode="delivery" aria-pressed="false" aria-controls="cafeOrderType">Доставка</button>
+              <button type="button" data-order-mode="pickup" aria-pressed="true" aria-controls="cafeOrderType">С собой</button>
+              <button type="button" data-order-mode="dine_in" aria-pressed="false" aria-controls="cafeOrderType">В кафе</button>
+            </div>
+            <label class="cafe-order-type-label" hidden>Как получить заказ
+              <select id="cafeOrderType" name="orderType" required>
+                <option value="pickup">С собой</option><option value="dine_in">В кафе</option><option value="delivery">Доставка</option>
+              </select>
+            </label>
+            <p id="cafeLocationMessage" class="cafe-order-hint cafe-selected-location" aria-live="polite">Загружаем кафе…</p>
+            <details id="cafeLocationDetails" class="cafe-location-settings" hidden>
+              <summary>Выбрать другое кафе</summary>
+              <label>Как выбрать кафе
+                <select id="cafeLocationMode" name="locationMode"><option value="nearest">Ближайшее кафе по геолокации</option><option value="manual">Выбрать кафе вручную</option></select>
+              </label>
+              <label id="cafeLocationSelectLabel" hidden>Кафе для заказа
+                <select id="cafeLocationSelect" name="locationId" required></select>
+              </label>
+            </details>
+            <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
+              <strong>Куда доставить?</strong>
+              <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
+              <p id="cafeDeliveryPointSummary" class="cafe-order-hint" role="status" aria-live="polite"></p>
+              <button type="button" id="cafeDeliveryPointClear" class="cafe-location-clear" hidden>Убрать точку</button>
+            </div>
+            <label id="cafeAddressLabel" hidden><span id="cafeAddressTitle">Или введите адрес доставки</span>
+              <textarea id="cafeDeliveryAddress" name="deliveryAddress" maxlength="440" rows="2" placeholder="Улица, дом, квартира или ориентир"></textarea>
+            </label>
+          </section>
+          <section class="cafe-checkout-section cafe-checkout-payment" aria-labelledby="cafePaymentTitle"><h3 id="cafePaymentTitle">Оплата</h3>
+            <label>Способ оплаты
+              <select id="cafePaymentMethod" name="paymentMethod"><option value="cash">Наличными</option><option value="qr">QR · VietQR</option><option value="bank_transfer">Перевод на российский / казахстанский банк</option></select>
+            </label>
+          </section>
+          <details id="cafeContactDetails" class="cafe-checkout-disclosure">
+            <summary><span>Контактные данные<small id="cafeContactSummary">Ваш профиль Telegram</small></span><span class="cafe-disclosure-action">Изменить</span></summary>
+            <div class="cafe-disclosure-fields">
+              <label>Имя (необязательно)<input id="cafeCustomerName" name="customerName" maxlength="120" autocomplete="name" placeholder="Ваше имя"></label>
+              <label>Телефон (необязательно)<input id="cafeCustomerPhone" name="customerPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="Для связи по заказу"></label>
+            </div>
+          </details>
+          <details id="cafeNoteDetails" class="cafe-checkout-disclosure">
+            <summary><span>Пожелания к заказу<small id="cafeNoteSummary">Необязательно</small></span><span class="cafe-disclosure-action">Добавить</span></summary>
+            <div class="cafe-disclosure-fields"><label>Комментарий к заказу (необязательно)<textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Например, соус отдельно"></textarea></label></div>
+          </details>
+          <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
+          <p class="cafe-order-hint cafe-checkout-footnote">Проверьте заказ перед подтверждением. Деньги автоматически не списываются.</p>
+        </form>
+        <div id="cafeOrderResult" class="cafe-order-result" hidden></div>
+      </section>
+    </div>
+    <div id="cafeStickyOrder" class="cafe-sticky-order" hidden>
+      <div class="cafe-sticky-order-info"><span id="cafeStickyCount">0 блюд</span><strong id="cafeStickyTotal">0 ₫</strong></div>
+      <button type="button" id="cafeStickyGoToOrder">Перейти к заказу</button>
+    </div>
+  </section>
+
+  <section id="cafeOrdersPage" class="cafe-page native-screen" hidden><div class="cafe-page-inner"><header class="cafe-page-header"><button type="button" id="cafeOrdersBack" class="cafe-back">← Назад</button><button type="button" id="cafeMyOrdersRefresh" class="cafe-my-orders-refresh">↻ Обновить</button><h1>Мои заказы</h1><p>Статусы, оплата и доставка обновляются автоматически.</p></header>      <section id="cafeMyOrdersSection" class="cafe-my-orders-section">
+        <div id="cafeMyOrdersMessage" class="cafe-message">Загружаем ваши заказы…</div>
+        <div id="cafeMyOrdersList" class="cafe-my-orders-list"></div>
+      </section></div></section>
+
+  <!-- CAFE ACCOUNTING -->
+  <section id="cafeAccountingPage" class="admin-page" hidden>
+    <div class="admin-page-inner accounting-page-inner">
+      <button id="accountingBack" type="button" class="admin-back">← Назад</button>
+      <div class="admin-header">
+        <div class="admin-header-icon">📊</div>
+        <div><div class="admin-eyebrow">UMMA CAFE</div><h1>Учёт кафе</h1><p>Закупки, склад, производство и расходы по филиалам.</p></div>
+      </div>
+      <div class="accounting-toolbar">
+        <label>Филиал
+          <select id="accountingLocation"></select>
+        </label>
+        <div class="accounting-toolbar-meta"><small>Автообновление раз в минуту</small><button type="button" id="accountingRefresh" class="accounting-secondary">↻ Обновить</button></div>
+      </div>
+      <div id="accountingMessage" class="accounting-message" hidden></div>
+      <nav class="accounting-tabs" aria-label="Разделы учёта">
+        <button type="button" data-accounting-tab="dashboard" class="active">Обзор</button>
+        <button type="button" data-accounting-tab="stock">Склад</button>
+        <button type="button" data-accounting-tab="purchases">Закупки</button>
+        <button type="button" data-accounting-tab="production">Производство</button>
+        <button type="button" data-accounting-tab="expenses">Расходы</button>
+        <button type="button" data-accounting-tab="suppliers">Поставщики</button>
+        <button type="button" data-accounting-tab="recipes">Рецептуры</button>
+      </nav>
+      <div id="accountingContent" class="accounting-content"></div>
+    </div>
+  </section>
+
+  <section id="servicesPage" class="native-screen" hidden>
+    <div class="native-directory">
+      <button type="button" id="servicesBack" class="cafe-back">← Назад</button>
+      <h1>Ещё</h1>
+    <!-- SUPER ADMIN -->
+    <section
+      id="adminEntry"
+      class="admin-entry"
+      hidden
+      aria-hidden="true"
+    >
+
+      <button
+        type="button"
+        class="admin-entry-button"
+      >
+
+        <span class="admin-entry-icon">
+          ⚙️
+        </span>
+
+        <span class="admin-entry-copy">
+
+          <strong>
+            Администрирование
+          </strong>
+
+          <small>
+            Управление Umma Global
+          </small>
+
+        </span>
+
+        <span class="admin-entry-arrow">
+          →
+        </span>
+
+      </button>
+
+    </section>
+
+
+      <div id="moreStaffAccess"></div>
+      <h2>Направления UMMA</h2>
+      <p>Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.</p>
+      <button type="button" class="cafe-submit" data-page="cafe">Открыть UMMA Cafe</button>
+      <button type="button" id="nativeHomeShortcut" class="cafe-back" hidden>Добавить на главный экран телефона</button>
       <div id="nativeDirectory" class="native-directory-grid"></div>
     </div>
   </section>
