@@ -493,5 +493,6 @@ QR с суммой заказа готов. Оплату подтвердит к
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }
+ for(const [source,values] of Object.entries(window.ummaAdditionalTranslations||{}))catalogue[source]={...catalogue[source],...values};
  window.ummaTranslations=Object.freeze(catalogue);
 })();

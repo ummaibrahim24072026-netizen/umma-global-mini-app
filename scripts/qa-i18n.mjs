@@ -7,15 +7,40 @@ function setup({telegram,browser='en-GB',saved}={}){
  Object.defineProperty(w.navigator,'languages',{value:[browser]});
  if(telegram)w.Telegram={WebApp:{initDataUnsafe:{user:{id:123,first_name:'Ибрахим',language_code:telegram}}}};
  if(saved)w.localStorage.setItem('umma-language',saved);
- for(const file of ['translations','i18n'])w.eval(readFileSync('js/core/'+file+'.js','utf8'));
+ for(const file of ['languages','translations','i18n'])w.eval(readFileSync('js/core/'+file+'.js','utf8'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
  return {dom,w,d:w.document,i:w.ummaI18n};
 }
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
-for(const [config,expected] of [[{telegram:'vi',browser:'ru'},'vi'],[{telegram:'ru-RU'},'ru'],[{telegram:'fr',browser:'ru'},'en'],[{browser:'vi-VN'},'vi'],[{browser:'de'},'en'],[{telegram:'vi',saved:'ru'},'ru'],[{telegram:'vi',saved:'invalid'},'vi']]){
+for(const [config,expected] of [[{telegram:'vi',browser:'ru'},'vi'],[{telegram:'ru-RU'},'ru'],[{telegram:'es',browser:'ru'},'en'],[{browser:'vi-VN'},'vi'],[{browser:'es'},'en'],[{telegram:'vi',saved:'ru'},'ru'],[{telegram:'vi',saved:'invalid'},'vi']]){
  const {w,i}=setup(config);assert.equal(i.language,expected);assert.equal(w.document.documentElement.lang,expected);w.close();
 }
+for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
+ const {w,d,i}=setup({telegram:code==='zh'?'zh-Hans':code+'-XX',browser:'ru'});
+ assert.equal(i.language,code);assert.equal(d.documentElement.dir,code==='ar'?'rtl':'ltr');
+ assert.equal(d.getElementById('cafeSubmitOrder').textContent.trim(),w.ummaTranslations['Оформить заказ'][code]);
+ assert.equal(i.t('Найдено: 2 из 5'),w.ummaTranslations['Найдено: {n} из {m}'][code].replace('{n}','2').replace('{m}','5'));
+ assert.ok(i.t('3 позиции'));assert.ok(i.locale());
+ const cashValue=d.querySelector('#cafePaymentMethod option[value="cash"]')?.value;
+ i.setLanguage('ar');i.setLanguage('ru');assert.equal(d.documentElement.dir,'ltr');
+ assert.equal(d.getElementById('cafeSubmitOrder').textContent.trim(),'Оформить заказ');
+ assert.equal(d.querySelector('#cafePaymentMethod option[value="cash"]')?.value,cashValue,'API enum stays unchanged');
+ i.setLanguage(code);assert.equal(w.localStorage.getItem('umma-language'),code);
+ assert.equal(i.field({name_ru:'Плов',name_en:'Plov'},'name'),w.ummaTranslations['Плов'][code]);
+ w.close();
+}
 const {w,d,i}=setup({telegram:'vi'});
+assert.equal(i.supported.length,12);
+for(const [source,values] of Object.entries(w.ummaAdditionalTranslations)){
+ assert.equal(Object.keys(values).length,9,'every new catalogue entry covers all nine languages');
+ const expected=[...source.matchAll(/\{\w+\}/g)].map(m=>m[0]).sort();
+ for(const [code,value] of Object.entries(values)){
+  assert.ok(value.trim(),code+' nonempty');
+  assert.deepEqual([...value.matchAll(/\{\w+\}/g)].map(m=>m[0]).sort(),expected,code+' preserves dynamic placeholders: '+source);
+ }
+}
+
+
 assert.equal(d.getElementById('cafeSubmitOrder').textContent.trim(),'Đặt hàng');
 assert.equal(i.t('Найдено: 2 из 5'),'Tìm thấy: 2 / 5');
 assert.equal(i.t('≈ 450 г'),'≈ 450 g');
@@ -47,4 +72,16 @@ w.eval(readFileSync('js/core/app.js','utf8'));
 w.eval(readFileSync('js/core/native-shell.js','utf8'));
 d.getElementById('languageBtn').click();assert.equal(d.getElementById('ummaLanguageDialog').open,true,'real header button opens picker');
 d.querySelectorAll('#ummaLanguageDialog button')[3].click();await tick();assert.equal(d.documentElement.lang,'vi');assert.equal(d.getElementById('languageBtn').textContent,'VI');
-w.close();console.log('PASS language detection, fallbacks, reversible dynamic UI, accessibility, picker, product fields and cart preservation');
+for(const code of i.supported){
+ i.setLanguage(code);await tick();
+ assert.equal(d.querySelector('.cafe-product-quantity').textContent,'1');
+ assert.equal(userInput.value,'Гость');
+ assert.equal(d.documentElement.dir,code==='ar'?'rtl':'ltr');
+}
+i.openPicker();assert.equal(d.querySelectorAll('#ummaLanguageDialog [data-language]').length,13);
+d.querySelector('#ummaLanguageDialog [data-language="ar"]').click();await tick();
+assert.equal(d.documentElement.dir,'rtl');assert.equal(d.getElementById('languageBtn').getAttribute('aria-label'),'اختر اللغة');
+i.setLanguage('id');assert.equal(d.documentElement.dir,'ltr');
+assert.equal(i.setLanguage('in-ID'),true);assert.equal(i.language,'id');
+const css=readFileSync('css/i18n.css','utf8');assert.match(css,/overflow-y:auto/);assert.match(css,/\.leaflet-container[\s\S]*direction:ltr/);
+w.close();console.log('PASS twelve languages, Arabic RTL, language detection, fallbacks, reversible dynamic UI, accessibility, picker, product fields and cart preservation');

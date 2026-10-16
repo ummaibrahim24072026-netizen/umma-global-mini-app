@@ -5,3 +5,20 @@
 .umma-language-dialog button{display:block;width:100%;min-height:48px;margin-block:9px;padding:12px;border:1px solid #c6e4e3;border-radius:12px;background:white;color:#075e65;font:inherit;text-align:start;cursor:pointer}
 .umma-language-dialog button[aria-pressed=true]{border:2px solid #aa8539;background:#fff9e9;font-weight:700}
 .umma-language-dialog button:focus-visible,.umma-language-button:focus-visible{outline:3px solid #aa8539;outline-offset:3px}
+
+/* Language picker remains reachable on small screens with all twelve options. */
+.umma-language-dialog{max-height:82vh;max-height:82dvh;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box}
+.umma-language-dialog button{white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+:lang(th){line-height:1.65}
+html[dir="rtl"] body{font-family:system-ui,"Noto Sans Arabic",Tahoma,sans-serif}
+html[dir="rtl"] .brand,html[dir="rtl"] .service,html[dir="rtl"] .native-directory-card,html[dir="rtl"] .cafe-choice-option,html[dir="rtl"] #cafePage .cafe-choice-trigger,html[dir="rtl"] .native-screen,html[dir="rtl"] .cafe-payment-sheet{text-align:start}
+html[dir="rtl"] .native-screen h1,html[dir="rtl"] .native-screen h2,html[dir="rtl"] .native-screen h3,html[dir="rtl"] #cafePage .cafe-choice-trigger,html[dir="rtl"] .cafe-choice-option{font-family:inherit}
+html[dir="rtl"] #cafePage .cafe-product-weight,html[dir="rtl"] #cafePage .cafe-disclosure-action{text-align:end}
+html[dir="rtl"] .cafe-cart-controls{margin-left:0;margin-right:auto}
+html[dir="rtl"] #cafePage .cafe-halal-badge{right:auto;left:8px}
+html[dir="rtl"] .courier-offer-route>div{padding-left:0;padding-right:13px;border-left:0;border-right:3px solid #d5bd81}
+html[dir="rtl"] .courier-offer-route>div+div{border-color:var(--umma-brand-strong)}
+html[dir="rtl"] .tracking-legend span::before{margin-right:0;margin-left:6px}
+/* Do not mirror map tiles, QR imagery, phone numbers, identifiers or coordinates. */
+.leaflet-container,.delivery-location-map,.delivery-map-coordinates,.cafe-payment-qr,input[type="tel"],input[type="number"],[data-i18n-ltr]{direction:ltr;unicode-bidi:isolate}
+.cafe-product-price,.cafe-cart-row small,.cafe-payment-amount{unicode-bidi:isolate}

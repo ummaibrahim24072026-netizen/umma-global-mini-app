@@ -1,9 +1,10 @@
 /* Local, deterministic translations: no network requests and no changes to API values. */
 (() => {
  'use strict';
- const supported=['ru','en','vi'], key='umma-language', catalogue=window.ummaTranslations||{};
+ const metadata=window.ummaLanguages||{ru:{locale:'ru-RU'},en:{locale:'en-GB'},vi:{locale:'vi-VN'}};
+ const supported=Object.keys(metadata), key='umma-language', catalogue=window.ummaTranslations||{};
  const normalise=value=>String(value||'').toLowerCase().replace(/_/g,'-').split('-')[0];
- const supportedCode=value=>supported.includes(normalise(value))?normalise(value):null;
+ const supportedCode=value=>{const code=normalise(value)==='in'?'id':normalise(value);return supported.includes(code)?code:null;};
  const readPreference=()=>{try{return localStorage.getItem(key)||'auto';}catch{return 'auto';}};
  let preference=readPreference();
  if(preference!=='auto'&&!supportedCode(preference))preference='auto';
@@ -38,19 +39,25 @@
    for(const [ru,en,vi] of templates){
     const pattern=ru.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\{(\w+)\}/g,(_,name)=>name==='n'||name==='m'?'([0-9]+)':name==='id'?'([A-Za-z0-9#-]+)':'(.+)');
     const match=trimmed.match(new RegExp('^'+pattern+'$'));if(!match)continue;
-    let index=0;result=(language==='vi'?vi:en).replace(/\{\w+\}/g,()=>match[++index]);break;
+    let index=0;result=(catalogue[ru]?.[language]||(language==='vi'?vi:en)).replace(/\{\w+\}/g,()=>match[++index]);break;
    }
   }
   if(!result){
    const count=trimmed.match(/^(\d+) (?:позиция|позиции|позиций|блюдо|блюда|блюд)$/);
-   if(count)result=language==='vi'?count[1]+' món':count[1]+(count[1]==='1'?' item':' items');
+   if(count){const copy=metadata[language];result=copy?.items?(count[1]==='1'&&copy.item?copy.item:copy.items).replace('{n}',count[1]):language==='vi'?count[1]+' món':count[1]+(count[1]==='1'?' item':' items');}
    const weight=trimmed.match(/^(≈\s*)?(\d+(?:[.,]\d+)?) (г|мл)$/);
    if(weight)result=(weight[1]||'')+weight[2]+' '+(weight[3]==='г'?'g':'ml');
   }
+  if(!result&&!['en','vi'].includes(language))result=catalogue[trimmed]?.en;
   return result?source.slice(0,source.indexOf(source.trim()))+result+source.slice(source.trimEnd().length):source;
  }
- const locale=()=>({ru:'ru-RU',en:'en-GB',vi:'vi-VN'}[language]);
- function field(record,prefix){return record?.[prefix+'_'+language]||record?.[prefix+'_en']||record?.[prefix+'_ru']||record?.[prefix+'_vi']||'';}
+ const locale=()=>metadata[language]?.locale||'en-GB';
+ function field(record,prefix){
+  const specific=record?.[prefix+'_'+language];if(specific)return specific;
+  const russian=record?.[prefix+'_ru'];
+  if(russian&&catalogue[russian]?.[language])return t(russian);
+  return record?.[prefix+'_en']||russian||record?.[prefix+'_vi']||'';
+ }
  const textSources=new WeakMap(),attributeSources=new WeakMap();
  const skip='script,style,textarea,input,[contenteditable],code,pre,[translate="no"],[data-i18n-ignore],.leaflet-control-attribution';
  function translateText(node){
@@ -80,9 +87,9 @@
  }
  function sync(){
   document.documentElement.lang=language;
-  document.documentElement.dir='ltr';
+  document.documentElement.dir=metadata[language]?.dir||'ltr';
   const button=document.getElementById('languageBtn');
-  if(button){button.textContent=language.toUpperCase();button.setAttribute('aria-label',{ru:'Выбрать язык',en:'Choose language',vi:'Chọn ngôn ngữ'}[language]);}
+  if(button){button.textContent=language.toUpperCase();button.setAttribute('aria-label',metadata[language]?.choose||'Choose language');}
  }
  function setLanguage(value){
   if(value!=='auto'&&!supportedCode(value))return false;
@@ -95,10 +102,10 @@
  function openPicker(){
   dialog?.remove();returnFocus=document.activeElement;
   dialog=document.createElement('dialog');dialog.className='umma-language-dialog';dialog.id='ummaLanguageDialog';
-  const title=document.createElement('h2');title.id='ummaLanguageTitle';title.textContent={ru:'Язык приложения',en:'App language',vi:'Ngôn ngữ ứng dụng'}[language];
+  const title=document.createElement('h2');title.id='ummaLanguageTitle';title.textContent=metadata[language]?.title||'App language';
   dialog.setAttribute('aria-labelledby',title.id);dialog.append(title);
-  for(const [code,label] of [['auto',{ru:'Автоматически · Telegram / устройство',en:'Automatic · Telegram / device',vi:'Tự động · Telegram / thiết bị'}[language]],['ru','Русский'],['en','English'],['vi','Tiếng Việt']]){
-   const button=document.createElement('button');button.type='button';button.textContent=label;button.lang=code==='auto'?language:code;button.setAttribute('aria-pressed',String(preference===code));
+  for(const [code,label] of [['auto',metadata[language]?.auto||'Automatic · Telegram / device'],...supported.map(code=>[code,metadata[code].name||code.toUpperCase()])]){
+   const button=document.createElement('button');button.type='button';button.textContent=label;button.lang=code==='auto'?language:code;button.dir='auto';button.dataset.language=code;button.setAttribute('translate','no');button.setAttribute('aria-pressed',String(preference===code));
    button.onclick=()=>{setLanguage(code);dialog.close();};dialog.append(button);
   }
   const close=document.createElement('button');close.type='button';close.textContent=t('Закрыть');close.onclick=()=>dialog.close();dialog.append(close);
