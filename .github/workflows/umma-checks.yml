@@ -24,6 +24,8 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Verify app and isolated cafe workflows
         run: npm test
+      - name: Verify Android notification recovery with JVM doubles
+        run: python3 scripts/qa-android-relay.py
 
   postgres-concurrency:
     runs-on: ubuntu-latest

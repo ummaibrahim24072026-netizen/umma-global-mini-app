@@ -14,7 +14,7 @@ import pathlib,sys
 root,out=map(pathlib.Path,sys.argv[1:]);s=(root/'android/umma-pay/app/src/main/AndroidManifest.xml').read_text();(out/'AndroidManifest.xml').write_text(s.replace('<manifest ','<manifest package="global.umma.pay" ',1))
 PY
 "$build_tools/aapt2" compile --dir "$repo_root/android/umma-pay/app/src/main/res" -o "$build_dir/resources.zip"
-"$build_tools/aapt2" link -o "$build_dir/base.apk" -I "$android_jar" --manifest "$build_dir/AndroidManifest.xml" --min-sdk-version 26 --target-sdk-version 35 --version-code 1 --version-name 1.0.0 "$build_dir/resources.zip"
+"$build_tools/aapt2" link -o "$build_dir/base.apk" -I "$android_jar" --manifest "$build_dir/AndroidManifest.xml" --min-sdk-version 26 --target-sdk-version 35 --version-code 2 --version-name 1.1.0 "$build_dir/resources.zip"
 if command -v javac >/dev/null; then
  javac -source 8 -target 8 -classpath "$android_jar" -d "$build_dir/classes" "$repo_root"/android/umma-pay/app/src/main/java/global/umma/pay/*.java
 else
