@@ -30,7 +30,18 @@ try{
  await assert.rejects(action(20,'complete',{messageId:first.message.id,lease:randomUUID(),translatedText:'入口にいます。'}),/CHAT_LEASE/);
  await action(20,'complete',{messageId:first.message.id,lease:claim.translation.lease,translatedText:'入口にいます。'});
  assert.equal((await action(20,'list')).messages[0].translation.body,'入口にいます。');assert.equal((await action(20,'claim',{messageId:first.message.id})).claimed,false);
- const reply=await action(20,'send',{kind:'text',text:'到着しました',requestKey:randomUUID()});assert.equal((await action(10,'claim',{messageId:reply.message.id})).translation.language,'ru');
+ const reply=await action(20,'send',{kind:'text',text:'到着しました',requestKey:randomUUID()});const replyClaim=await action(10,'claim',{messageId:reply.message.id});assert.equal(replyClaim.translation.language,'ru');
+ let retryClaim=replyClaim;
+ for(let i=0;i<3;i++){
+  if(!retryClaim.claimed)retryClaim=await action(10,'claim',{messageId:reply.message.id});
+  await action(10,'fail',{messageId:reply.message.id,lease:retryClaim.translation.lease});
+  await q("update umma_private.delivery_chat_translations set leased_until=clock_timestamp()-interval '1 second' where message_id=$1",[reply.message.id]);
+  if(i<2)retryClaim=await action(10,'claim',{messageId:reply.message.id});
+ }
+ assert.equal((await action(10,'claim',{messageId:reply.message.id})).claimed,false,'automatic retries are bounded');
+ retryClaim=await action(10,'claim',{messageId:reply.message.id,forceRetry:true});assert.equal(retryClaim.claimed,true,'recipient can retry after provider credit is restored');
+ await action(10,'complete',{messageId:reply.message.id,lease:retryClaim.translation.lease,translatedText:'Я приехал.'});
+ assert.equal((await action(10,'claim',{messageId:reply.message.id,forceRetry:true})).claimed,false,'manual retry cannot rebill a ready translation');
  const prepare=await action(10,'prepare',{kind:'photo',mime:'image/png',size:8,text:'Вход',requestKey:randomUUID()});
  assert.equal((await action(20,'list')).messages.length,2,'unconfirmed attachments are hidden');
  await assert.rejects(action(10,'finish',{messageId:prepare.message.id}),/CHAT_UPLOAD/);

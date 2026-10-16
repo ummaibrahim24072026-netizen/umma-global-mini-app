@@ -15,7 +15,7 @@ CREATE INDEX delivery_chat_sender_rate ON umma_private.delivery_chat_messages(se
 CREATE TABLE umma_private.delivery_chat_translations(
  message_id uuid NOT NULL REFERENCES umma_private.delivery_chat_messages(id),language text NOT NULL,
  state text NOT NULL DEFAULT 'processing' CHECK(state IN ('processing','ready','failed')),body text,transcript text,audio_path text,
- lease uuid NOT NULL DEFAULT gen_random_uuid(),leased_until timestamptz NOT NULL DEFAULT clock_timestamp()+interval '120 seconds',attempts integer NOT NULL DEFAULT 1,
+ last_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),lease uuid NOT NULL DEFAULT gen_random_uuid(),leased_until timestamptz NOT NULL DEFAULT clock_timestamp()+interval '120 seconds',attempts integer NOT NULL DEFAULT 1,
  PRIMARY KEY(message_id,language)
 );
 ALTER TABLE umma_private.delivery_chat_profiles ENABLE ROW LEVEL SECURITY;
@@ -103,9 +103,9 @@ BEGIN
  lang:=ctx->>'language';
  SELECT * INTO t FROM umma_private.delivery_chat_translations WHERE message_id=m.id AND language=lang FOR UPDATE;
  IF p_action='claim' THEN
-  IF FOUND AND (t.state='ready' OR t.leased_until>clock_timestamp() OR t.attempts>=3) THEN RETURN jsonb_build_object('ok',true,'claimed',false,'state',t.state); END IF;
-  IF (SELECT coalesce(sum(tr.attempts),0) FROM umma_private.delivery_chat_translations tr JOIN umma_private.delivery_chat_messages msg ON msg.id=tr.message_id WHERE msg.recipient=p_actor AND msg.created_at>clock_timestamp()-interval '1 day')>=300 THEN RAISE EXCEPTION 'CHAT_RATE'; END IF;
-  INSERT INTO umma_private.delivery_chat_translations(message_id,language) VALUES(m.id,lang) ON CONFLICT(message_id,language) DO UPDATE SET state='processing',lease=gen_random_uuid(),leased_until=clock_timestamp()+interval '120 seconds',attempts=umma_private.delivery_chat_translations.attempts+1 RETURNING * INTO t;
+  IF FOUND AND (t.state='ready' OR t.leased_until>clock_timestamp() OR (t.attempts>=3 AND NOT coalesce((p_body->>'forceRetry')::boolean,false))) THEN RETURN jsonb_build_object('ok',true,'claimed',false,'state',t.state); END IF;
+  IF (SELECT coalesce(sum(tr.attempts),0) FROM umma_private.delivery_chat_translations tr JOIN umma_private.delivery_chat_messages msg ON msg.id=tr.message_id WHERE msg.recipient=p_actor AND tr.last_attempt_at>clock_timestamp()-interval '1 day')>=300 THEN RAISE EXCEPTION 'CHAT_RATE'; END IF;
+  INSERT INTO umma_private.delivery_chat_translations(message_id,language) VALUES(m.id,lang) ON CONFLICT(message_id,language) DO UPDATE SET state='processing',last_attempt_at=clock_timestamp(),lease=gen_random_uuid(),leased_until=clock_timestamp()+interval '120 seconds',attempts=umma_private.delivery_chat_translations.attempts+1 RETURNING * INTO t;
   RETURN jsonb_build_object('ok',true,'claimed',true,'message',to_jsonb(m),'translation',to_jsonb(t));
  END IF;
  IF p_action IN ('complete','fail') THEN

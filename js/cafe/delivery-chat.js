@@ -61,6 +61,14 @@
    if(translated){const label=el('small','Автоперевод');label.setAttribute('translate','yes');row.bodyContent.append(label);const original=el('details'),summary=el('summary','Показать оригинал');summary.setAttribute('translate','yes');const source=el('p');source.textContent=tr.transcript||m.text;source.dir='auto';original.append(summary,source);row.bodyContent.append(original);
     if(tr.audioUrl){const label=el('small','Озвучка перевода · ИИ');label.setAttribute('translate','yes');row.bodyContent.append(label,media('audio',tr.audioUrl,'Озвучка перевода · ИИ',true));}
    }else if(!m.own&&(m.kind==='voice'||!!m.text)){const label=el('small',!v.configured?'Автоперевод пока недоступен. Показан оригинал.':tr?.state==='failed'?'Не удалось перевести. Оригинал сохранён.':'Переводим…');label.setAttribute('translate','yes');row.bodyContent.append(label);}
+   if(!m.own&&tr?.state==='failed'){
+    const retry=el('button','Повторить перевод');retry.type='button';retry.dataset.chatRetry=m.id;
+    retry.onclick=async()=>{if(v.translating)return;v.translating=true;retry.disabled=true;status(v,'Переводим…');
+     try{await api(v,'translate',{messageId:m.id,retry:true});v.providerFailed=false;v.nextTry.delete(m.id);await poll(v,false);}
+     catch(e){status(v,e.message);}
+     finally{v.translating=false;retry.disabled=false;}
+    };row.bodyContent.append(retry);
+   }
   }
   for(const node of row.content.querySelectorAll('[data-chat-media]'))if(Date.now()-Number(node.dataset.urlCreated)>720000&&node.paused!==false){const url=node.dataset.chatMedia==='translated'?tr?.audioUrl:m.mediaUrl;if(url){node.src=url;node.dataset.urlCreated=String(Date.now());}}
   row.read.textContent=m.own?t(m.readAt?'Прочитано':'Отправлено'):'';row.read.setAttribute('translate','yes');return row;

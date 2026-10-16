@@ -51,7 +51,7 @@ Deno.serve(async req=>{
    await rpc('finish',{messageId:body.messageId});await notify();return reply({ok:true,messageId:body.messageId,sent:true});
   }
   const key=Deno.env.get('OPENAI_API_KEY');if(!key){await rpc('media',{messageId:body.messageId});return reply({ok:false,code:'TRANSLATION_UNAVAILABLE',error:'Автоперевод пока не подключён. Доступен оригинал сообщения.'},503);}
-  const claimed=await rpc('claim',{messageId:body.messageId});if(!claimed.claimed)return reply({ok:true,state:claimed.state});
+  const claimed=await rpc('claim',{messageId:body.messageId,forceRetry:body.retry===true});if(!claimed.claimed)return reply({ok:true,state:claimed.state});
   const m=claimed.message,t=claimed.translation;
   try{
    let original=m.body;

@@ -555,6 +555,7 @@ QR с суммой заказа готов. Оплату подтвердит к
 Не удалось выполнить действие в чате. Повторите попытку.|Could not complete the chat action. Please retry.|Không thể thực hiện thao tác chat. Vui lòng thử lại.
 Автоперевод пока не подключён. Доступен оригинал сообщения.|Automatic translation is not connected. The original is available.|Chưa kết nối dịch tự động. Bản gốc vẫn khả dụng.
 Не удалось перевести сообщение. Оригинал сохранён.|Could not translate the message. The original is saved.|Không thể dịch tin nhắn. Bản gốc đã được lưu.
+Повторить перевод|Retry translation|Dịch lại
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }
