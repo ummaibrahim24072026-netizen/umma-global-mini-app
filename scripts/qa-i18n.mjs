@@ -31,6 +31,13 @@ for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
 }
 const {w,d,i}=setup({telegram:'vi'});
 assert.equal(i.supported.length,12);
+const liveMenuNames=['Шурпа','Борщ','Плов с бараниной','Манты (4 шт.)','Куриный окорочок с салатом','Салат Ачичук','Салат Оливье','Салат Винегрет','Салат «Хрустящий»','Лепёшка UMMA','Самса с бараниной','Самса с курицей','Хачапури с сыром','Круассан','Айран UMMA','Айран турецкий','Чай зелёный','Чай чёрный с лимоном','Компот ежевичный','Аджика'];
+for(const code of ['ar','id','th','zh','ko','fr','de','pt','tr']){
+ i.setLanguage(code);
+ for(const name of liveMenuNames){assert.ok(w.ummaTranslations[name][code],code+' covers '+name);assert.equal(i.field({name_ru:name,name_en:'Fallback English'},'name'),w.ummaTranslations[name][code]);}
+}
+i.setLanguage('vi');
+
 for(const [source,values] of Object.entries(w.ummaAdditionalTranslations)){
  assert.equal(Object.keys(values).length,9,'every new catalogue entry covers all nine languages');
  const expected=[...source.matchAll(/\{\w+\}/g)].map(m=>m[0]).sort();
