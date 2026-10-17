@@ -18,10 +18,10 @@ try{
  d.querySelector('.nav-item[data-page="cafe"]').click();await tick();assert.equal(menu,1);assert.equal(d.getElementById('cafePage').hidden,false);assert.equal(d.getElementById('nativeAppTitle').textContent,'UMMA Cafe');
  nativeBack();await tick();assert.equal(main.style.display,'');assert.equal(main.scrollTop,210);
  d.querySelector('.nav-item[data-page="orders"]').click();await tick();assert.equal(orders,1);assert.equal(d.getElementById('cafeOrdersPage').hidden,false);assert.equal(d.getElementById('cafePage').hidden,true);assert.equal(d.getElementById('nativeAppTitle').textContent,'Мои заказы');assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'orders');
- d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,37);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
+ d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,38);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
  d.querySelector('[data-service=travel]').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);nativeBack();assert.equal(d.querySelector('.native-service-dialog').open,false);assert.equal(d.getElementById('servicesPage').hidden,false);
  // Exercise every planned destination, not just the original travel stub.
- assert.equal(d.querySelectorAll('.services-grid [data-service]').length,37);
+ assert.equal(d.querySelectorAll('.services-grid [data-service]').length,38);
  for(const item of w.ummaDirections.filter(item=>!item.available)){
   d.querySelector('#nativeDirectory [data-service="'+item.id+'"]').click();
   const sheet=d.querySelector('.native-service-dialog');assert.equal(sheet.open,true,item.id+' opens');
@@ -32,8 +32,8 @@ try{
  const search=d.getElementById('directionSearch'),group=d.getElementById('directionGroup');
  search.value='медресе';search.dispatchEvent(new w.Event('input'));assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,1);assert.ok(d.querySelector('#nativeDirectory [data-service=education]'));
  search.value='not-a-direction';search.dispatchEvent(new w.Event('input'));assert.equal(d.getElementById('directionEmpty').hidden,false);
- search.value='';group.value='family';group.dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,4);
- group.value='';group.dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,37);
+ search.value='';group.value='family';group.dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,5);
+ group.value='';group.dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,38);
  d.querySelector('#nativeDirectory [data-service=family]').click();d.querySelector('.native-service-dialog .cafe-submit').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(w.ummaNativeShell.isDialogOpen(),false);
  w.openPage('home');await tick();d.getElementById('adminPage').hidden=false;await tick();d.getElementById('cafeKitchenPage').hidden=false;await tick();assert.equal(d.getElementById('adminPage').hidden,true,'opening another screen removes stale overlapping page');
  w.openPage('cafe');await tick();d.getElementById('cafeOrderForm').hidden=false;d.getElementById('cafeContactDetails').open=true;const input=d.getElementById('cafeCustomerName');input.focus();assert.equal(d.activeElement,input);w.visualViewport.height=420;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),true);assert.equal(d.documentElement.style.getPropertyValue('--umma-viewport-height'),'420px');sdk.viewportStableHeight=420;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),true);sdk.viewportStableHeight=844;input.blur();w.visualViewport.height=844;w.ummaNativeShell.geometry();assert.equal(d.querySelector('.app').classList.contains('native-keyboard'),false);

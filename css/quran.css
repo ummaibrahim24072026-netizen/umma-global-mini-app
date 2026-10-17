@@ -1,0 +1,21 @@
+/* Reading layout deliberately overrides the compact legacy daily card. */
+.ayah-card{height:auto!important;min-height:120px;flex-basis:auto!important;align-items:flex-start;overflow:visible;padding:18px!important}
+.ayah-content{overflow:visible!important}.ayah-content .daily-verse-text p{font-size:15px;line-height:1.7;font-weight:400;margin:10px 0;white-space:normal}
+.ayah-content .daily-verse-text .quran-arabic{font-family:"Traditional Arabic","Noto Naskh Arabic",serif;font-size:25px;line-height:2.1;font-weight:400;text-align:right;letter-spacing:normal;word-spacing:normal}
+.ayah-content small{font-size:12px!important;line-height:1.6}.ayah-content button{border:1px solid var(--line);border-radius:12px;margin:10px 6px 0 0;padding:10px 14px;background:var(--turquoise-pale);color:var(--ink);font:600 14px Inter,sans-serif}
+.quran-dialog{width:min(100%,760px);height:min(94dvh,1100px);max-height:calc(100dvh - 16px);max-width:calc(100% - 16px);margin:auto;padding:0;border:1px solid var(--line);border-radius:20px;color:var(--ink);background:#fff;overflow:hidden}
+.quran-dialog[open]{display:flex;flex-direction:column}.quran-dialog::backdrop{background:rgba(10,40,40,.55)}
+.quran-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--canvas)}
+.quran-dialog button{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--turquoise-pale);color:var(--ink);font:inherit;min-height:44px;cursor:pointer}.quran-dialog button:disabled{opacity:.45;cursor:default}
+#quranBody{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:20px 18px max(26px,env(safe-area-inset-bottom));scroll-padding-top:20px;line-height:1.7;--quran-ru-size:20px;--quran-ar-size:32px}
+#quranBody h2{font-size:21px;margin:28px 0 12px}#quranBody h3{font:600 13px/1.6 Inter,sans-serif;color:var(--turquoise-deep)}
+#quranBody label{display:block;margin:12px 0;font-size:14px}#quranBody input,#quranBody select{display:block;width:100%;margin-top:6px;border:1px solid var(--line)}#quranBody input[type=range]{padding:0;min-height:44px}
+#quranBody a{color:var(--turquoise-deep);text-decoration:underline;overflow-wrap:anywhere}#quranBody details{margin:16px 0}#quranBody summary{cursor:pointer;font-weight:600;min-height:44px}
+.quran-verse{border-bottom:1px solid var(--line);padding:12px 0 22px;scroll-margin-top:16px}
+#quranBody .quran-arabic{font-family:"Traditional Arabic","Noto Naskh Arabic",serif;font-size:var(--quran-ar-size);line-height:2.2;text-align:right;letter-spacing:normal;word-spacing:normal;overflow-wrap:normal}
+#quranBody .quran-translation{font-size:var(--quran-ru-size);line-height:1.85}
+#quranBody[data-mode=arabic] .quran-translation,#quranBody[data-mode=translation] .quran-arabic{display:none}
+#quranList>button,#quranBookmarks>button{display:block;text-align:start;width:100%;margin:8px 0;white-space:normal;overflow-wrap:anywhere;line-height:1.7}
+#quranTafsir p{font-size:var(--quran-ru-size);line-height:1.9;white-space:pre-wrap}#quranTafsir article{padding:12px 0;border-bottom:1px solid var(--line)}
+.quran-verse-actions,.quran-surah-nav{display:flex;flex-wrap:wrap;gap:8px}.quran-verse-actions{font-size:13px}.quran-surah-nav{margin-top:20px}
+@media(max-width:420px){.ayah-book{display:none}.quran-dialog{max-width:100%;width:100%;height:100dvh;max-height:100dvh;border-radius:0}#quranBody{padding:16px 14px 30px}}

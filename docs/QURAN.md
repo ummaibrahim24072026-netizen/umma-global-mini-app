@@ -1,0 +1,17 @@
+# Quran reader and daily passage
+
+Public, account-free reading: home daily passage → original and Kuliev translation → published as-Saadi tafsir → the full surah at the selected ayah. Direct Quran entry is registered in the Family and Education directory. No backend, credential, account or database migration is needed.
+
+114 surahs and 6,236 aligned ayahs are stored as same-origin JSON, loaded by surah. Arabic text (`quran-uthmani`) and Russian translation (`ru.kuliev`, Elmir Kuliev) come from AlQuran Cloud. Published strings are retained exactly; no machine translation or generated commentary is used. `translate=no` and `data-i18n-ignore` exclude religious text from the app translator. Quran does not silently substitute another Russian translator.
+
+AlQuran Cloud terms: https://alquran.cloud/terms-and-conditions — Arabic reproduction and translation attribution are addressed in sections II and IV. Edition identifiers, translator and source are shown in the reader and source panel. Import metadata and hashes are in `assets/quran/sources.json`.
+
+Russian as-Saadi tafsir comes directly from QuranEnc's official browser, edition V1.0.0, released 27 July 2026 (verified on its home catalogue). Source blocks, including passage text and commentary continuations, are preserved without lexical editing. HTML is converted to plain text, with source ayah anchors and passage ranges retained. Some source ayahs lack a separately labelled commentary: these are recorded in `withoutSeparateCommentary`, not assigned invented commentary. The reader explains when only a source passage is available. Links open the official source at its ayah anchor. No source HTML executes in the app.
+
+QuranEnc conditional republication terms: https://quranenc.com/en/home/api/ — preserve content and transcript information, credit source and version, report errors, update to the latest source version, and exclude inappropriate advertising. This reading flow contains no advertising. Before any content update, check the official edition/version, reimport from its published source, review coordinate coverage and run `npm run test:quran`. Do not automatically rewrite religious texts. `scripts/import-quran-tafsir.mjs <absolute-html-directory>` imports 1.html…114.html and writes original HTML SHA-256 provenance in `tafsir-source-hashes.json`.
+
+The initial daily selection contains 40 distinct passages. It cycles after 40 calendar days; this is not a claim of 365 unique selections. Everyone sees the same passage by Asia/Ho_Chi_Minh calendar date. A 30-second foreground check plus focus and visibility events refresh at midnight/resume. Connected verses are shown together. Full text remains available through the source and surah links.
+
+Reading modes, bookmarks and last visible ayah are saved on the device; no cross-device sync. Search by surah name/number, `surah:ayah` and full Russian translation is supported. Text search loads local JSON in batches of six. A late search or reader response cannot overwrite a newer view. Requests can be retried after failures. Local JSON avoids reliance on upstream APIs during normal reading; this does not guarantee first-use offline availability.
+
+Validation: `npm run test:quran` checks verse alignment/counts, source passage coverage, unique daily references, midnight in Nha Trang, the full daily→tafsir→reader path, bookmarks, resume, modes, boundaries, reference lookup and full translation search in JSDOM. Physical phone rendering and Arabic font shaping require an on-device check.

@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="css/i18n.css?v=3">
   <link rel="stylesheet" href="css/delivery-chat.css?v=1">
 <link rel="stylesheet" href="css/market.css?v=4">
+  <link rel="stylesheet" href="css/quran.css?v=1">
 </head>
 
 <body>
@@ -64,34 +65,11 @@
       </div>
     </section>
 
-    <!-- AYAH -->
-    <section class="ayah-card">
-
-      <div class="ayah-book">
-        📖
-      </div>
-
-      <div class="ayah-content">
-
-        <span>
-          АЯТ ДНЯ
-        </span>
-
-        <p>
-          «И помогайте друг другу<br>
-          в благочестии и богобоязненности...»
-        </p>
-
-        <small>
-          Коран, 5:2
-        </small>
-
-      </div>
-
-
-
+    <!-- AYAH: exact published text, never machine-translated -->
+    <section class="ayah-card" aria-label="Аят дня">
+      <div class="ayah-book" aria-hidden="true">📖</div>
+      <div class="ayah-content" id="dailyAyahContent"><span>АЯТ ДНЯ</span><p role="status">Загрузка…</p></div>
     </section>
-
 
     <!-- SERVICES -->
     <section class="services">
@@ -1033,13 +1011,15 @@
 <script src="js/market/import.js?v=1"></script>
 <script src="js/b2b/b2b.js?v=1"></script>
 
+<script src="js/quran/quran.js?v=1"></script>
+
 <!-- CONSISTENT BACK NAVIGATION -->
-<script src="js/core/navigation.js?v=12"></script>
+<script src="js/core/navigation.js?v=13"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=8"></script>
+<script src="js/core/native-shell.js?v=9"></script>
 <script src="js/cafe/checkout-choices.js?v=1"></script>
 </body>
 </html>
