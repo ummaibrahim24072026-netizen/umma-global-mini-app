@@ -77,6 +77,9 @@ i.setLanguage('vi');await tick();assert.equal(d.querySelector('[data-product-car
 i.setLanguage('ru');await tick();assert.equal(d.querySelector('[data-product-card] h3').textContent,'Плов');
 w.eval(readFileSync('js/core/app.js','utf8'));
 w.eval(readFileSync('js/core/native-shell.js','utf8'));
+for(const [code,label] of [['en','Family'],['vi','Gia đình'],['ru','Семья']]){
+ i.setLanguage(code);await tick();assert.equal(d.querySelector('#nativeDirectory [data-service=family] strong').textContent,label);
+}
 d.getElementById('languageBtn').click();assert.equal(d.getElementById('ummaLanguageDialog').open,true,'real header button opens picker');
 d.querySelectorAll('#ummaLanguageDialog button')[3].click();await tick();assert.equal(d.documentElement.lang,'vi');assert.equal(d.getElementById('languageBtn').textContent,'VI');
 for(const code of i.supported){

@@ -24,14 +24,14 @@
 
   <script src="js/core/languages-extra.js?v=4"></script>
   <script src="js/core/languages.js?v=6"></script>
-  <script src="js/core/translations.js?v=8"></script>
+  <script src="js/core/translations.js?v=9"></script>
   <script src="js/core/i18n.js?v=3"></script>
 
 
   <!-- STYLES -->
   <link rel="stylesheet" href="css/app.css?v=37">
   <link rel="stylesheet" href="css/admin.css?v=10">
-  <link rel="stylesheet" href="css/native.css?v=30">
+  <link rel="stylesheet" href="css/native.css?v=31">
   <link rel="stylesheet" href="css/cafe-comfort.css?v=5">
   <link rel="stylesheet" href="css/brand.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -946,9 +946,17 @@
 
       <div id="moreStaffAccess"></div>
       <h2>Направления UMMA</h2>
-      <p>Всё, что нужно нашей семье. Кафе уже работает в приложении; остальные направления готовятся к запуску.</p>
+      <p>Кафе, Market и B2B доступны в приложении. Остальные направления готовятся к запуску.</p>
       <button type="button" class="cafe-submit" data-page="cafe">Открыть UMMA Cafe</button>
       <button type="button" id="nativeHomeShortcut" class="cafe-back" hidden>Добавить на главный экран телефона</button>
+      <div class="umma-direction-controls">
+        <label for="directionSearch">Поиск направления</label>
+        <input id="directionSearch" type="search" placeholder="Поиск направления" autocomplete="off">
+        <label for="directionGroup">Направления UMMA</label>
+        <select id="directionGroup"><option value="">Все направления</option></select>
+        <output id="directionCount" for="directionSearch directionGroup" aria-live="polite"></output>
+      </div>
+      <p id="directionEmpty" role="status" hidden>Ничего не найдено. Попробуйте другое название.</p>
       <div id="nativeDirectory" class="native-directory-grid"></div>
     </div>
   </section>
@@ -1031,7 +1039,7 @@
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=7"></script>
+<script src="js/core/native-shell.js?v=8"></script>
 <script src="js/cafe/checkout-choices.js?v=1"></script>
 </body>
 </html>

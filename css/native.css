@@ -368,3 +368,13 @@ label{line-height:1.45}textarea{min-height:96px}p,small,label,strong,h1,h2,h3{ov
 @keyframes cafe-choice-fall{to{transform:translateY(100%);opacity:0}}
 @keyframes cafe-choice-dim{from{background:rgba(var(--umma-brand-ink-rgb), 0)}to{background:rgba(var(--umma-brand-ink-rgb), 0.4)}}
 @media(prefers-reduced-motion:reduce){.cafe-choice-sheet,.cafe-choice-sheet::backdrop,.cafe-choice-sheet.is-closing,.cafe-choice-sheet.is-closing::backdrop{animation:none}}
+
+/* Complete ecosystem overview, using the existing responsive card grid. */
+.umma-direction-group{grid-column:1 / -1;margin:16px 0 0;font-size:17px;color:var(--ink);text-align:start}
+.umma-direction-controls{display:grid;gap:8px;margin-top:20px}
+.umma-direction-controls input,.umma-direction-controls select{width:100%;box-sizing:border-box}
+.umma-direction-controls label{font-size:13px;font-weight:600;color:var(--muted)}
+.umma-direction-controls output{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.native-directory-card,.service{text-align:start;min-width:0}
+.native-directory-card .native-coming,.service .native-coming{margin-top:auto;white-space:normal}
+.native-service-dialog ul{padding-inline-start:22px;line-height:1.7}
