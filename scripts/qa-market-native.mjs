@@ -1,3 +1,4 @@
+import{readFileSync}from'node:fs';
 import pg from 'pg';import assert from 'node:assert/strict';import{randomUUID}from'node:crypto';import{verifyMarketCommerce}from'./qa-market-commerce.mjs';
 const config={host:process.env.PGHOST||'127.0.0.1',port:Number(process.env.PGPORT||5432),database:process.env.PGDATABASE||'umma_qa',user:process.env.PGUSER||'postgres',password:process.env.PGPASSWORD};
 assert.ok(['127.0.0.1','localhost'].includes(config.host));assert.equal(config.database,'umma_qa');
@@ -23,5 +24,18 @@ try{
  await a.query('begin');await a.query(...core(randomUUID(),'writeoff_approve',{document_id:wr.document_id}));
  const double=b.query(...core(randomUUID(),'writeoff_approve',{document_id:wr.document_id})).then(()=>({ok:true}),e=>({error:e.message}));await waitForLock('market_operation');await a.query('commit');assert.match((await double).error,/already resolved/);
  assert.equal(Number((await c.query('select raw_quantity from market_batches where id=$1',[receipt.batch_ids[0]])).rows[0].raw_quantity),8);
+ await c.query(readFileSync('supabase/proposals/b2b.sql','utf8'));
+ const b2bProduct=(await c.query('select v.product_id from market_product_variants v join market_offers o on o.variant_id=v.id where o.warehouse_id=$1 and o.is_listed limit 1',[wh])).rows[0].product_id;
+ const enquiry={warehouse_id:wh,company_name:'Synthetic B2B QA',business_type:'cafe',contact_name:'QA',contact_phone:'000000000',city:'Nha Trang',fulfillment:'pickup',frequency:'weekly',items:[{product_id:b2bProduct,quantity:10,unit:'kg'}]};
+ const b2b=(actor,key,action,data)=>['select b2b_operation($1,$2,$3,$4::jsonb) r',[actor,key,action,JSON.stringify(data)]];
+ const enquiryKey=randomUUID();await a.query('begin');const firstEnquiry=(await a.query(...b2b(12,enquiryKey,'create',enquiry))).rows[0].r;
+ const enquiryReplay=b.query(...b2b(12,enquiryKey,'create',enquiry));await waitForLock('b2b_operation');await a.query('commit');assert.equal((await enquiryReplay).rows[0].r.replayed,true);
+ assert.equal(Number((await c.query('select count(*) n from b2b_requests')).rows[0].n),1,'one enquiry after simultaneous replay');
+ await c.query("insert into telegram_users(telegram_id,role)values(15,'super_admin')");
+ const change={id:firstEnquiry.request.id,version:1,status:'in_review',manager_reply:'Checking supply'};
+ await a.query('begin');await a.query(...b2b(10,randomUUID(),'respond',change));
+ const staleReply=b.query(...b2b(15,randomUUID(),'respond',{...change,status:'quoted',manager_reply:'Concurrent proposal'})).then(()=>({ok:true}),e=>({error:e.message}));
+ await waitForLock('b2b_operation');await a.query('commit');assert.match((await staleReply).error,/B2B_STALE_REQUEST/);
+ console.log('PASS B2B native PostgreSQL: one enquiry on concurrent retry and stale competing manager reply rejected');
  console.log('PASS Market native PostgreSQL concurrency: observed independent lock waits; one buyer, one payment and one writeoff');
 }finally{for(const client of clients){await client.query('rollback').catch(()=>{});await client.end();}}

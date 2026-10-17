@@ -17,4 +17,11 @@ seen=[];const created=await req({action:'order_create',initData:signed,actor:10,
 assert.equal((await req({action:'snapshot',initData:signed,data:{warehouse_id:'22222222-2222-4222-8222-222222222222'}})).status,403);
 assert.equal((await req({action:'warehouse_create',initData:signed,data:{}})).status,403);
 assert.equal((await req({action:'order_create',initData:signed,request_id:'invalid',data:{}})).status,400);
+seen=[];assert.equal((await req({action:'b2b_catalog'})).status,200);assert.equal(seen[0].name,'b2b_catalog');
+assert.equal((await req({action:'b2b_requests',initData:''})).status,401);
+seen=[];assert.equal((await req({action:'b2b_requests',initData:signed,data:{staff:true,p_actor:10}})).status,200);assert.equal(seen[0].name,'b2b_request_list');assert.equal(seen[0].args.p_actor,12);assert.equal(seen[0].args.p_staff,true);
+for(const action of ['b2b_create','b2b_cancel','b2b_respond']){
+ seen=[];assert.equal((await req({action,initData:signed,request_id:'11111111-1111-4111-8111-111111111111',data:{p_actor:10}})).status,200);assert.equal(seen[0].name,'b2b_operation');assert.equal(seen[0].args.p_actor,12);assert.equal(seen[0].args.p_action,action.slice(4));
+ assert.equal((await req({action,initData:signed,request_id:'bad',data:{}})).status,400);
+}
 console.log('PASS Market Edge: public catalogue only, signed identity, tamper rejection, denied staff scope and trusted actor selection');

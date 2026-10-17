@@ -21,12 +21,22 @@ Deno.serve(async(req:Request)=>{
   if(body.action!=='upload'&&raw.length>100000)return reply({ok:false,error:'Request too large'},413);
   if(!token||!url||!key)return reply({ok:false,error:'Server configuration error'},500);
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  if(body.action==='b2b_catalog'){const {data,error}=await db.rpc('b2b_catalog');if(error)throw error;return reply(data);}
   if(body.action==='catalog'){const {data,error}=await db.rpc('market_catalog',{p_warehouse:body.data?.warehouse_id||null});if(error)throw error;return reply(data);}
   if(typeof body.initData!=='string')return reply({ok:false,error:'Откройте приложение через Telegram'},401);
   const actor=await verifyTelegramInitData(body.initData,token);
   const {data:user,error:ue}=await db.from('telegram_users').select('role,is_active').eq('telegram_id',actor).maybeSingle();
   if(ue)throw ue;
   if(!user?.is_active)return reply({ok:false,error:'Market access denied'},403);
+  if(body.action==='b2b_requests'){
+   const {data,error}=await db.rpc('b2b_request_list',{p_actor:actor,p_staff:body.data?.staff===true,p_data:body.data||{}});
+   if(error)return reply({ok:false,error:error.message},error.message==='B2B_ACCESS_DENIED'?403:400);return reply(data);
+  }
+  if(['b2b_create','b2b_cancel','b2b_respond'].includes(body.action)){
+   if(!uuid.test(body.request_id||''))return reply({ok:false,error:'Operation request ID required'},400);
+   const {data,error}=await db.rpc('b2b_operation',{p_actor:actor,p_request:body.request_id,p_action:body.action.slice(4),p_data:body.data});
+   if(error)return reply({ok:false,error:error.message},error.message==='B2B_ACCESS_DENIED'?403:400);return reply(data);
+  }
   if(body.action==='my_orders'){const {data,error}=await db.rpc('market_order_view',{p_actor:actor,p_warehouse:null,p_staff:false});if(error)throw error;return reply(data);}
   if(body.action==='quote'||body.action==='order_create'||body.action==='order_cancel'||body.action==='substitution_answer'){
    if(body.action==='quote'){const {data,error}=await db.rpc('market_quote',{p_warehouse:body.data?.warehouse_id,p_items:body.data?.items});if(error)return reply({ok:false,error:error.message},400);return reply(data);}

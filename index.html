@@ -39,7 +39,7 @@
   <link rel="stylesheet" href="css/cafe-payment.css?v=7">
   <link rel="stylesheet" href="css/i18n.css?v=3">
   <link rel="stylesheet" href="css/delivery-chat.css?v=1">
-<link rel="stylesheet" href="css/market.css?v=3">
+<link rel="stylesheet" href="css/market.css?v=4">
 </head>
 
 <body>
@@ -110,6 +110,8 @@
 
 
       <div class="services-grid">
+
+        <button class="service" data-page="b2b"><span class="service-icon">▣</span><strong>UMMA B2B</strong><small>Продукты и товары для бизнеса</small></button>
 
         <button
           class="service"
@@ -300,6 +302,7 @@
       </div>
 
       <div class="admin-grid">
+<button type="button" class="admin-card" data-b2b-manage><span>▣</span><strong>Заявки B2B</strong><small>Оптовые поставки и ответы организациям</small></button>
 
         <button
           type="button"
@@ -980,7 +983,7 @@
 
 <!-- CORE -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/core/app.js?v=9"></script>
+<script src="js/core/app.js?v=10"></script>
 
 <!-- AUTH -->
 <script src="js/auth/auth.js?v=2"></script>
@@ -1019,14 +1022,15 @@
 <script src="js/market/stock.js?v=4"></script>
 <script src="js/market/customer.js?v=4"></script>
 <script src="js/market/workspace.js?v=3"></script>
+<script src="js/b2b/b2b.js?v=1"></script>
 
 <!-- CONSISTENT BACK NAVIGATION -->
-<script src="js/core/navigation.js?v=11"></script>
+<script src="js/core/navigation.js?v=12"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=6"></script>
+<script src="js/core/native-shell.js?v=7"></script>
 <script src="js/cafe/checkout-choices.js?v=1"></script>
 </body>
 </html>
