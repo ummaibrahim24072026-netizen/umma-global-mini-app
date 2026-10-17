@@ -71,9 +71,9 @@
   const cafe=document.createElement('button');cafe.type='button';cafe.className='cafe-submit';cafe.textContent='Открыть UMMA Cafe';cafe.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage('cafe');};sheet.append(cafe);
  }
  const grid=byId('nativeDirectory');if(grid)for(const [key,item] of Object.entries(catalogue)){
-  const b=document.createElement('button');b.type='button';b.dataset.service=key;b.className='native-directory-card';const title=document.createElement('strong');title.textContent=item[0];const desc=document.createElement('small');desc.textContent=item[1];const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(icon(key),title,desc,status);b.onclick=()=>openService(key);grid.append(b);
+  const b=document.createElement('button');b.type='button';b.dataset.service=key;b.className='native-directory-card';const title=document.createElement('strong');title.textContent=item[0];const desc=document.createElement('small');desc.textContent=item[1];const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(icon(key),title,desc);if(key!=='market')b.append(status);b.onclick=()=>openService(key);grid.append(b);
  }
- document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
+ document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';if(b.dataset.page!=='market')b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
  byId('servicesBack')?.addEventListener('click',()=>{if(!window.ummaNavigation?.back()&&typeof openPage==='function')openPage('home');});
  document.querySelector('.farm-button')?.addEventListener('click',()=>openService('farm'));
  byId('nativeHomeShortcut')?.addEventListener('click',()=>{try{sdk?.addToHomeScreen?.();}catch{if(typeof showToast==='function')showToast('Добавление ярлыка недоступно в этой версии Telegram');}});

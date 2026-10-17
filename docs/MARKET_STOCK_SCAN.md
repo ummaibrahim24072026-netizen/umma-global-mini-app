@@ -5,7 +5,7 @@ Release date: 2026-10-17. This module extends the existing UMMA GLOBAL applicati
 ## What is included
 
 - Public RU/EN/VI catalogue, categories, photos/descriptions, location prices, pieces, prepacked sets, fixed-weight and individually weighed packages. Exact package selection and final quote before payment.
-- Receiving plans, partial acceptance, active suppliers, batch expiry/storage and quality evidence. Meat requires provenance, halal-document reference and measured temperature; otherwise the batch enters quarantine.
+- Receiving plans, partial acceptance, active suppliers, batch expiry/storage and quality evidence. Both existing halal-meat categories and new meat/poultry categories enforce the quality gate. Meat requires provenance, halal-document reference and measured temperature; otherwise the batch enters quarantine.
 - Integer grams and integer VND. Packing balance, explicit approved losses, stable package UUIDs and historical batch/unit cost. Different package sizes can share one stock item.
 - Camera scanner (vendored ZXing) and manual fallback for manufacturer barcodes and UMMA QR. Server-side validation and operation replay protection.
 - 60 × 40 mm labels, configurable sizes, preview, batch printing and reprint history. System printing and a short-lived signed browser-print link for Telegram. Reprints keep original IDs and do not change stock.
@@ -18,7 +18,7 @@ Shared canonical tables remain `products`, `categories`, `suppliers`, `purchase_
 
 ## Deployment
 
-Apply `supabase/release/market-launch.sql` once through a versioned migration. It atomically assembles the three module proposals and `market-launch-setup.sql`. Deploy the `market-stock` Edge Function with `index.ts`, `auth.ts`, `labels.ts`; gateway JWT checking is disabled because signed Telegram initData is verified by the handler. Existing server-only Supabase keys and `TELEGRAM_BOT_TOKEN` are reused. No credentials belong in browser code.
+Apply `supabase/release/market-launch.sql` once through a versioned migration. It atomically assembles the module proposals, `market-quality.sql` and `market-launch-setup.sql`. Deploy the `market-stock` Edge Function with `index.ts`, `auth.ts`, `labels.ts`; gateway JWT checking is disabled because signed Telegram initData is verified by the handler. Existing server-only Supabase keys and `TELEGRAM_BOT_TOKEN` are reused. No credentials belong in browser code.
 
 Setup creates the 14 catalogue categories, a Market warehouse under the existing HALAL UMMA Nha Trang payment/delivery location, private evidence/public catalogue image buckets and minute maintenance for reservation expiry/notifications. Existing active location managers receive Market admin scope; cashiers retain cash scope. Super administrators can assign other roles in Market settings. No inventory, prices, suppliers, payments or customer orders are fabricated.
 

@@ -12,7 +12,7 @@ try{
  await db.exec(readFileSync('supabase/proposals/cafe-delivery-zone.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
- await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-quality.sql','utf8'));
  await db.exec(`insert into telegram_users(telegram_id,role)values(10,'super_admin'),(11,'employee'),(12,'user'),(13,'user'),(14,'employee');insert into locations(id,name,location_type,city)values('${loc}','HALAL UMMA','cafe','Nha Trang');insert into market_warehouses(id,location_id,name)values('${wh}','${loc}','QA');insert into market_staff_roles(telegram_id,location_id,role)values(11,'${loc}','picker'),(14,'${loc}','cashier');`);
  await q('insert into cafe_staff_shifts(location_id,staff_telegram_id,opened_by_telegram_id,opening_cash_vnd)values($1,14,14,1000000)',[loc]);
  const sup=(await core('supplier_create',{name:'QA'})).supplier_id;
@@ -114,6 +114,11 @@ try{
  const correctedBatch=await receive(drink.id,10,50000),wd=await core('writeoff_request',{batch_id:correctedBatch,quantity:2,reason:'Incorrect count'});await core('writeoff_approve',{document_id:wd.document_id});
  const correction=await manage('reverse_writeoff',{document_id:wd.document_id,reason:'Count corrected after recheck'});ok((await row('market_batches',correction.batch_id)).status==='quarantine','writeoff correction is a new quarantine document');await reject(manage('reverse_writeoff',{document_id:wd.document_id,reason:'Again'}),/already corrected/);
 
+ const legacyCategory=randomUUID();await q("insert into categories(id,name_ru,name_en,name_vi,category_type)values($1,'Халяльное мясо','Halal Meat','Thịt Halal','market')",[legacyCategory]);
+ const gated=(await core('product_create',{name_ru:'Legacy-category meat',category_id:legacyCategory,sale_mode:'individual_weight',measure:'g',price_vnd:1})).variant;
+ ok(gated.requires_quality_evidence,'existing halal meat category requires evidence');
+ await manage('product_update',{variant_id:gated.id,name_ru:'Legacy-category meat',category_id:legacyCategory,requires_quality_evidence:false});
+ ok((await row('market_product_variants',gated.id)).requires_quality_evidence,'meat category evidence gate cannot be disabled by an unchecked form field');
  // Existing Cafe operations still execute after the Market triggers and cash bridge are installed.
  const cafeProduct=randomUUID();await q("insert into products(id,name_ru,name_en,name_vi,product_type,price_vnd)values($1,'Cafe regression','Cafe regression','Cafe regression','cafe',120000)",[cafeProduct]);
  const cafe=(await q("select create_cafe_staff_order(10,$1,$2::jsonb,'pickup','Cafe regression') r",[loc,JSON.stringify([{productId:cafeProduct,quantity:1}])])).rows[0].r.order;
