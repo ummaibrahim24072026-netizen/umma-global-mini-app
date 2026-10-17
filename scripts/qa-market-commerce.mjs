@@ -1,6 +1,6 @@
 import {PGlite} from '@electric-sql/pglite';import{readFileSync}from'node:fs';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';
 export async function verifyMarketCommerce(db){
-const q=(sql,args=[])=>db.query(sql,args),loc='11111111-1111-4111-8111-111111111111',wh='22222222-2222-4222-8222-222222222222';let checks=0;
+const q=(sql,args=[])=>db.query(sql,args.map(v=>Array.isArray(v)?JSON.stringify(v):v)),loc='11111111-1111-4111-8111-111111111111',wh='22222222-2222-4222-8222-222222222222';let checks=0;
 const ok=(x,m)=>{assert.ok(x,m);checks++;},reject=async(x,r)=>{await assert.rejects(x,r);checks++;};
 const core=async(action,data={},actor=10,key=randomUUID())=>(await q('select market_operation($1,$2,$3,$4) r',[actor,key,action,{warehouse_id:wh,...data}])).rows[0].r;
 const op=async(action,data={},actor=12,key=randomUUID())=>(await q('select market_commerce_operation($1,$2,$3,$4) r',[actor,key,action,{warehouse_id:wh,...data}])).rows[0].r;
@@ -113,6 +113,15 @@ try{
  await core('release',{batch_id:unchecked,reason:'Inspected origin and temperature',quality_evidence:{temperature_c:'2.5',provenance:'Synthetic approved source',halal_document:'Synthetic evidence path'}});ok((await row('market_batches',unchecked)).status==='available','meat release records required evidence');
  const correctedBatch=await receive(drink.id,10,50000),wd=await core('writeoff_request',{batch_id:correctedBatch,quantity:2,reason:'Incorrect count'});await core('writeoff_approve',{document_id:wd.document_id});
  const correction=await manage('reverse_writeoff',{document_id:wd.document_id,reason:'Count corrected after recheck'});ok((await row('market_batches',correction.batch_id)).status==='quarantine','writeoff correction is a new quarantine document');await reject(manage('reverse_writeoff',{document_id:wd.document_id,reason:'Again'}),/already corrected/);
+
+ // Existing Cafe operations still execute after the Market triggers and cash bridge are installed.
+ const cafeProduct=randomUUID();await q("insert into products(id,name_ru,name_en,name_vi,product_type,price_vnd)values($1,'Cafe regression','Cafe regression','Cafe regression','cafe',120000)",[cafeProduct]);
+ const cafe=(await q("select create_cafe_staff_order(10,$1,$2::jsonb,'pickup','Cafe regression') r",[loc,JSON.stringify([{productId:cafeProduct,quantity:1}])])).rows[0].r.order;
+ await q("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments)values(10,$1,'manager',true)",[loc]);await q('select open_cafe_staff_shift($1,10,10,0)',[loc]);await q("select update_cafe_order_payment_cash($1,10,'paid',null,120000,0)",[cafe.id]);
+ for(const status of ['confirmed','preparing','ready','completed'])await q('select update_cafe_order_status($1,10,$2)',[cafe.id,status]);
+ ok((await row('cafe_orders',cafe.id)).status==='completed','Cafe order/payment/fulfilment works after Market schema');
+ await q('select refund_cafe_order($1,10,$2,$3,true)',[cafe.id,randomUUID(),'Actual Cafe regression refund']);
+ const shift=(await q("select id from cafe_staff_shifts where staff_telegram_id=10 and shift_status='open'")).rows[0];await q('select close_cafe_staff_shift($1,10,0,null)',[shift.id]);ok((await row('cafe_staff_shifts',shift.id)).shift_status==='closed','Cafe refund and cash shift remain correct');
  await db.exec('set role anon');await reject(q('select market_catalog(null)'),/permission denied/);await db.exec('reset role');
  console.log('PASS '+checks+' Market commerce checks: exact units, reservation, payment, wrong-item gate, factory quantities, picking, handover, refund and expiry');
 }catch(e){throw e;}

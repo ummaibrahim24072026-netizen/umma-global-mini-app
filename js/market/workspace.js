@@ -77,8 +77,9 @@
  }
  document.addEventListener('umma:market-render',event=>{
   ctx=event.detail;generation++;clearInterval(timer);
-  if(ctx.tab==='products')productTools();
-  else if(ctx.tab==='history'&&can('admin')){root().insertAdjacentHTML('beforeend',form('reverse_writeoff',select(t('Ошибочное подтверждённое списание','Incorrect posted writeoff','Phiếu hủy sai đã duyệt'),'document_id',options(ctx.state.documents.filter(d=>d.kind==='writeoff'&&d.status==='posted'),d=>d.id,d=>'#'+d.number+' · '+d.reason))+input(t('Причина исправления','Correction reason','Lý do sửa'),'reason','text','required minlength="3"'),t('Создать корректирующий документ','Create correction document','Tạo chứng từ điều chỉnh')));}
+  if(ctx.tab==='overview'&&(ctx.state.alerts||[]).length)root().insertAdjacentHTML('afterbegin','<div class="market-alerts">'+ctx.state.alerts.map(a=>`<p class="market-error">${esc(a.message)}</p>`).join('')+'</div>');
+  else if(ctx.tab==='products')productTools();
+  else if(ctx.tab==='history'&&can('admin')){root().insertAdjacentHTML('afterbegin',form('audit',input(t('С даты','From date','Từ ngày'),'from','date')+input(t('По дату','Through date','Đến ngày'),'to','date')+input(t('Сотрудник: Telegram ID (необязательно)','Staff Telegram ID (optional)','Telegram ID nhân viên (tùy chọn)'),'actor','number'),t('Показать журнал действий','Show audit trail','Xem nhật ký'))+'<div data-market-audit></div>');root().insertAdjacentHTML('beforeend',form('reverse_writeoff',select(t('Ошибочное подтверждённое списание','Incorrect posted writeoff','Phiếu hủy sai đã duyệt'),'document_id',options(ctx.state.documents.filter(d=>d.kind==='writeoff'&&d.status==='posted'),d=>d.id,d=>'#'+d.number+' · '+d.reason))+input(t('Причина исправления','Correction reason','Lý do sửa'),'reason','text','required minlength="3"'),t('Создать корректирующий документ','Create correction document','Tạo chứng từ điều chỉnh')));}
   else if(ctx.tab==='settings')settings();
   else if(ctx.tab==='cash'){if(can('cashier'))root().innerHTML=(ctx.state.shifts||[]).length?ctx.state.shifts.map(s=>form('shift_close',hidden('shift_id',s.id)+`<p>${esc(t('Смена открыта','Shift open','Ca đang mở'))}: ${esc(new Date(s.opened_at).toLocaleString())}</p>`+input(t('Фактически в кассе VND','Actual cash VND','Tiền mặt thực tế VND'),'counted_cash_vnd','number','required min="0" step="1"')+input(t('Комментарий','Note','Ghi chú'),'note'),t('Закрыть смену','Close shift','Đóng ca'))).join(''):form('shift_open',input(t('Наличные на начало смены VND','Opening cash VND','Tiền đầu ca VND'),'opening_cash_vnd','number','required min="0" step="1" value="0"'),t('Открыть смену','Open shift','Mở ca'));}
   else if(ctx.tab==='supplies')supplies();
@@ -102,6 +103,10 @@
    if(action==='receipt_draft'){data.lines=[{variant_id:data.variant_id,quantity:data.quantity}];delete data.variant_id;delete data.quantity;}
    if(action==='receipt_accept'){data.items=[{variant_id:data.variant_id,quantity:data.quantity,cost_vnd:data.cost_vnd,batch_number:data.batch_number,expires_on:data.expires_on,storage_place:data.storage_place,quality:data.quality,quality_evidence:{temperature_c:data.temperature_c,provenance:data.provenance,halal_document:data.halal_document}}];}
    if(action==='settings')data.expiry_days=data.expiry_days.split(',').map(s=>Number(s.trim()));
+   if(action==='audit'){
+    if(data.from)data.from=new Date(data.from+'T00:00:00+07:00').toISOString();if(data.to)data.to=new Date(new Date(data.to+'T00:00:00+07:00').getTime()+86400000).toISOString();
+    const result=await api.call('audit',{warehouse_id:ctx.warehouse,...data});root().querySelector('[data-market-audit]').innerHTML=result.events.map(e=>`<details class="market-card"><summary>${esc(e.action)} · ${esc(e.actor_telegram_id)} · ${esc(new Date(e.created_at).toLocaleString())}</summary><pre>${esc(JSON.stringify(e.payload,null,2))}</pre><pre>${esc(JSON.stringify(e.result,null,2))}</pre></details>`).join('');return;
+   }
    if(action==='report'){
     data.from=new Date(data.from+'T00:00:00+07:00').toISOString();data.to=new Date(new Date(data.to+'T00:00:00+07:00').getTime()+86400000).toISOString();
     const report=await api.call('report',{warehouse_id:ctx.warehouse,...data});

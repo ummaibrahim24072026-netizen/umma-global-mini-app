@@ -1,82 +1,50 @@
-# UMMA Market / Stock & Scan — implementation audit and first increment
+# UMMA Market / Stock & Scan
 
-Date: 2026-10-17. Specification: approved 29-section UMMA Market brief supplied by Ibrahim.
-Status: **development branch; not deployed; not ready for retail launch**.
+Release date: 2026-10-17. This module extends the existing UMMA GLOBAL application and its signed Telegram identity, purchasing, stock ledger, payments and courier workflow.
 
-## Audit evidence
+## What is included
 
-Repository baseline: `e53dde98eb85d72f079237ab18dde9fad99d16ed`, default branch `main`.
-Read-only inspection of Supabase project `zwzojugspldexyyljwpr` found existing RLS-enabled entities:
+- Public RU/EN/VI catalogue, categories, photos/descriptions, location prices, pieces, prepacked sets, fixed-weight and individually weighed packages. Exact package selection and final quote before payment.
+- Receiving plans, partial acceptance, active suppliers, batch expiry/storage and quality evidence. Meat requires provenance, halal-document reference and measured temperature; otherwise the batch enters quarantine.
+- Integer grams and integer VND. Packing balance, explicit approved losses, stable package UUIDs and historical batch/unit cost. Different package sizes can share one stock item.
+- Camera scanner (vendored ZXing) and manual fallback for manufacturer barcodes and UMMA QR. Server-side validation and operation replay protection.
+- 60 × 40 mm labels, configurable sizes, preview, batch printing and reprint history. System printing and a short-lived signed browser-print link for Telegram. Reprints keep original IDs and do not change stock.
+- Warehouse transfers, quarantine/release, approved writeoffs, correction documents, supplier/customer returns, shortage/surplus valuation and stocktake. A count freezes warehouse movements and cannot start with active reservations.
+- Exact-unit or FEFO reservations, stock expiry blocking and unpaid reservation expiry. Shared Cafe order/payment tables, existing VietQR/UMMA Pay matching, confirmed cash receipts, cash shifts, actual partial/full refund records.
+- Mandatory picking scans, wrong-package rejection, quantity checks, customer consent for same-price package substitutions, missing-position resolution, all-lines-complete gate and courier handover. Existing courier proof, chat, tracking and completion remain in use.
+- Warehouse/date financial reports, historical COGS, returns/refunds, writeoff/shortage/surplus costs, loss thresholds, expiry alerts, employee audit and multi-role administration.
 
-| Area | Existing entities | Decision |
-|---|---|---|
-| Catalogue | `categories`, `products`, `inventory` | Reuse `products`; retain Cafe inventory semantics. Market packaging is an extension. |
-| Purchasing | `suppliers`, `purchase_documents`, `purchase_items` | Reuse supplier identities and purchase documents. |
-| Stock | `stock_items`, `stock_balances`, `stock_movements` | Reuse base item identities, aggregate balances and movement ledger. |
-| Identity | `telegram_users`, `cafe_staff` | Reuse signed Telegram identity. Market permissions are scoped by location and may be combined. |
-| Fulfilment | `cafe_orders`, items, events, courier assignments/tracking/proofs | Preserve; integration remains to be implemented and tested. |
-| Payments | Cafe payment receipts, refunds, transfer proofs, UMMA Pay Edge Function | Preserve; Market payment/order integration remains to be implemented. |
+Shared canonical tables remain `products`, `categories`, `suppliers`, `purchase_documents`, `stock_items`, `stock_balances`, `stock_movements`, `telegram_users`, `cafe_orders` and their existing extensions. Market-specific tables add package, batch, document, reservation and control details. Cafe products and stock are not converted into Market inventory.
 
-At inspection there were no Market-specific tables. The Market route displayed a service placeholder.
+## Deployment
 
-The existing `validate_stock_item_product_link` trigger restricts linked Cafe finished goods to pieces/portions. Market therefore links a canonical `products` row to a canonical `stock_items` row through `market_product_variants`, without changing that Cafe trigger. Existing Cafe stock items and quantities are not adopted or converted implicitly.
+Apply `supabase/release/market-launch.sql` once through a versioned migration. It atomically assembles the three module proposals and `market-launch-setup.sql`. Deploy the `market-stock` Edge Function with `index.ts`, `auth.ts`, `labels.ts`; gateway JWT checking is disabled because signed Telegram initData is verified by the handler. Existing server-only Supabase keys and `TELEGRAM_BOT_TOKEN` are reused. No credentials belong in browser code.
 
-## This increment
+Setup creates the 14 catalogue categories, a Market warehouse under the existing HALAL UMMA Nha Trang payment/delivery location, private evidence/public catalogue image buckets and minute maintenance for reservation expiry/notifications. Existing active location managers receive Market admin scope; cashiers retain cash scope. Super administrators can assign other roles in Market settings. No inventory, prices, suppliers, payments or customer orders are fabricated.
 
-- Additive SQL proposal: `supabase/proposals/market-stock-scan.sql`.
-- Service-only transactional RPC `market_operation`. Signed Telegram authentication at `market-stock` Edge Function. No actor ID supplied by clients is trusted.
-- Product creation, barcode linking and supplier creation; RU/EN/VI product names, four sale-mode metadata values. Selling bundles/BOM and per-location pricing are not implemented yet.
-- Receipt with active supplier, planned/accepted quantities, exact total purchase cost, batch, storage place, expiry, quality flag and retained raw payload. Multi-line receipt supported by the RPC; initial UI submits one line at a time.
-- Failed/unreviewed quality defaults to quarantine.
-- Individual packaging using integer grams/pieces and integer VND cost allocation. Every VND is conserved across packs and remainder.
-- QR content `UMMA:<unit UUID>`, with database lookup. QR exposes no purchase costs.
-- Label selection, preview, default 60 × 40 mm, configurable dimensions, system print dialog, job history, retry/reprint without changing identities or stock.
-- Vendored ZXing Browser 0.1.5 plus upstream licenses; no scanner CDN dependency. Camera and manual entry use the same server scan validation.
-- Batch quarantine/release, writeoff requests with administrator approval, shortage and surplus counts. Surplus requires explicit valuation and is reported separately from shortage.
-- Stocktake freezes movements in the selected warehouse. Location and warehouse transaction locks coordinate stock mutations and aggregate balances.
-- New tables have RLS and no anon/authenticated grants. RPCs use SECURITY INVOKER and are service-role only. Warehouse/location permissions are checked again inside the transaction, including on request replay.
-- Confirmed Market documents, scan events and idempotency ledger entries cannot be modified/deleted through ordinary SQL operations. Corrections require additional documents.
-- Reuses `stock_balances` as a derived aggregate. A guard rejects legacy balance mutations for Market-managed items, preventing divergence through Cafe accounting endpoints.
-- Existing native navigation/back stack and home/Cafe layout preserved. Warehouse pages are staff-only; there is no public Market checkout yet.
+After database and Edge health checks, publish frontend from the same commit. Public entry: UMMA Market. Employee entry: the warehouse button in Market. Add suppliers/products, receive actual stock, pack where appropriate, set location offers and prices, then place an identified acceptance order.
 
-Cost model for this increment: each receipt line defines batch cost; packing allocates remaining batch cost proportionally in integer VND, carrying rounding remainder forward. Individual units retain their allocated historical cost. Shortages/writeoffs consume that cost. Surplus cost is explicitly provided. This is a proposed historical batch/unit method; a complete financial accounting method and reconciliation with future sales remain open.
+## Security and accounting
 
-`sent` print status means handed to the browser/system dialog. Browsers cannot confirm physical output. No claim is made that a specific Bluetooth printer, Wi-Fi printer or phone has passed acceptance.
+New tables have RLS and no anonymous/authenticated direct grants. RPC execution is service-role only; transaction-level role/location checks are repeated even on idempotent replay. The Edge Function derives actor ID from verified Telegram data. Catalogue JSON explicitly excludes internal purchase cost and private quality evidence. Evidence links require role checks; browser label links expire and recheck permission.
+
+Location/warehouse advisory locks and row locks coordinate stock and order transitions. Negative stock, duplicate sale, duplicate payment and repeated approval are blocked. Posted documents and immutable scan/operation ledgers are corrected by new documents. Legacy stock writes cannot bypass Market balances. Market order guards prevent generic Cafe status controls from skipping picking.
+
+Cost method: actual batch acquisition cost, proportional integer-VND allocation with rounding remainder retained, historical package/reservation cost, and FEFO physical allocation. Surplus requires explicit valuation. Financial losses are cost-based; cash refunds are reported separately from recognized sales credits. Refund entry records an actual confirmed payout; it does not initiate a bank transfer.
 
 ## Validation
 
-`npm run test:market` runs isolated PostgreSQL-engine (PGlite) checks and jsdom UI checks. Synthetic data only; no production purchases, orders, stock counts or payments were created.
+`npm test` includes existing Cafe/payment/delivery regressions and `npm run test:market`. Market tests cover receiving 10 kg, weight/cost conservation, 100 factory-coded drinks, three exact meat weights, selected-unit reservation/quote/payment, wrong/right scan, stock control, returns, substitutions, quality evidence, expiry and privacy. jsdom tests cover customer/staff interactions and uncertain-response retries. Edge and label tests check signatures, expiry, permissions and label contents.
 
-Database coverage: 10 kg receipt; 13 packs with 500 g remainder; exact 150001 VND cost conservation; balance rejection; idempotent receipt; changed-payload replay rejection; print/reprint invariance; QR lookup; 100 branded items using the manufacturer code; unknown barcode; quarantine/release; expired batch; administrator-only approval; repeated writeoff protection; immutable confirmed documents; stocktake freeze; shortage; explicit-cost surplus; RLS and RPC denial for anonymous access; legacy balance mutation guard.
+GitHub Actions also uses PostgreSQL 17 with independent sessions and observed lock waits: competing buyers, duplicate payment and concurrent writeoff approvals. The isolated database is dumped/restored and restored order counts compared. This is a recovery drill with synthetic data; it does not establish the production provider's backup retention or PITR subscription.
 
-UI coverage: escaped product names; product and receiving forms; retained operation ID after uncertain network response; manual scanner fallback; label preview generating QR SVG without prematurely creating a print job.
+## Operational acceptance still requiring real equipment/data
 
-Existing `npm test` Cafe/payment/courier checks passed after routing changes. The prior placeholder test now targets Travel explicitly; Market has separate tests.
+- Test camera decoding on the actual Telegram phones and print/scan a 60 × 40 mm label on the selected printer. Browser `sent` means handed to the system print dialogue, not confirmed physical output.
+- Wi-Fi/Bluetooth device-specific printer adapters and automatic electronic-scale input require selected compatible hardware. Current release uses system printing and manually entered measured weight.
+- Sets are prepacked stock units with recorded composition; automatic component/BOM assembly is not included.
+- Reports currently filter by warehouse/date; combined product/category/supplier drilldowns and configurable sub-admin approval-value limits are further enhancements. All writeoffs currently require an administrator.
+- Catalogue currently supports one main photo and multilingual descriptions per product; dedicated brand fields and photo galleries are further enhancements.
+- Validate real bank-notification ingestion, staff roles, courier handover and production backup/restore procedures with the operator before unrestricted retail operation. Never treat a payment screenshot as evidence of receipt.
 
-PGlite tests are not a real two-session concurrency test. Live Edge Function, real camera decode, physical labels, screen layout on target phones and hardware compatibility have not been accepted. TypeScript syntax has been checked; a live Deno deployment has not been tested.
-
-## Outstanding work before the full specification is complete
-
-| Specification area | Remaining implementation |
-|---|---|
-| Catalogue | Category administration, existing-product variant management, product photos, descriptions/composition, confirmed halal evidence workflow, location-specific prices and customer availability. |
-| Receiving | Draft/partial deliveries, explicit rejected quantities, supplier return documents, mandatory meat temperature/provenance/document checks, evidence uploads. |
-| Packing | Integrated approved loss document in the packing flow; scale adapters; stronger sale-mode validation and packaging metadata. |
-| Labels and scan | Hardware compatibility testing, target-phone camera tests, printer adapters where required, visual print QA at every supported size. |
-| Inventory/control | Approval limits, unit quarantine controls, guided unknown-item resolution, transfers between warehouses/locations, corrective documents, user-visible gross-loss/surplus reports. |
-| Orders and reserve | Customer catalogue/checkout, exact `unit_id` selection, FEFO, transactional reservations and release rules, reservation expiry, concurrent-buyer tests. |
-| Payments/returns | Reuse payment infrastructure via a tested Market adapter; reliable payment confirmation, cash workflow, cancellation, partial/full refund, sale-return and supplier-return accounting. |
-| Picking/delivery | Mandatory scan matching and quantities; wrong-meat rejection; substitution consent; completed-pick gate; existing courier integration and handover checks. |
-| Analytics | Period/location/item/supplier/staff filters, actual revenue/gross profit, loss thresholds, expiry reminders, audit and financial reconciliation. |
-| Operations | Staff-role management UI, pagination/large data sets, backup/restore drill, live advisors and full multi-session regression acceptance. |
-
-The 27 mandatory launch scenarios in the specification are the final acceptance gate; the passing foundation tests do not replace them. Do not label this branch as the complete Market system.
-
-## Deployment sequence for this increment
-
-1. Review SQL, verify current schema compatibility, confirm a restorable backup and test on a disposable development database.
-2. Apply the reviewed SQL proposal through the normal versioned release procedure; never rerun it blindly against production.
-3. Deploy `supabase/functions/market-stock/index.ts` together with `auth.ts`, with JWT gateway verification disabled because the handler validates signed Telegram initData. Existing `TELEGRAM_BOT_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` are server-side only.
-4. Run database advisors and signed/unsigned live endpoint checks. Create the first warehouse as super administrator; assign location-scoped Market roles.
-5. Publish frontend only with the matching database/function release. Run target-phone and printer acceptance using synthetic or explicitly identified test stock.
-6. Keep public Market ordering unavailable until reservation/payment/picking/delivery acceptance is complete.
+These operational checks are not claimed as passed by automated tests.

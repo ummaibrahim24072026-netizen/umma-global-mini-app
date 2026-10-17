@@ -1,12 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 import { verifyTelegramInitData } from './auth.ts';
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'};
+import { labelLink, serveLabels } from './labels.ts';
+const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const commerce=new Set(['order_create','order_cancel','payment_confirm','pick_scan','pick_complete','handover','pickup_complete','refund','missing','substitution_propose','substitution_answer','issue_resolve']);
 const management=new Set(['offer_save','settings','category_save','product_update','variant_create','receipt_draft','receipt_accept','receipt_close','pack_with_loss','transfer','supplier_return','customer_return','product_print','shift_open','shift_close','reverse_writeoff']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function allRows(make:any){
+ const rows:any[]=[];
+ for(let start=0;start<50000;start+=500){const {data,error}=await make().range(start,start+499);if(error)return {data:null,error};rows.push(...(data??[]));if(!data||data.length<500)return {data:rows,error:null};}
+ throw Error('Warehouse dataset too large; narrow the workspace scope');
+}
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
+ if(req.method==='GET'){const secret=Deno.env.get('TELEGRAM_BOT_TOKEN'),url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');if(!secret||!url||!key)return reply({ok:false,error:'Server configuration error'},500);return serveLabels(req,createClient(url,key,{auth:{persistSession:false}}),secret);}
  if(req.method!=='POST')return reply({ok:false,error:'Method not allowed'},405);
  try {
   const raw=await req.text(); if(raw.length>8000000)return reply({ok:false,error:'Request too large'},413);
@@ -56,14 +63,14 @@ Deno.serve(async(req:Request)=>{
   if(body.action==='snapshot') {
    if(!myRoles.some(r=>['admin','receiver','packer','warehouse','picker','cashier'].includes(r)))return reply({ok:false,error:'Market access denied'},403);
    const [{data:variants,error:ve},{data:batches,error:be},{data:documents,error:de},{data:suppliers,error:se}]=await Promise.all([
-    db.from('market_product_variants').select('*,products(*)').order('id'),
-    db.from('market_batches').select('*').eq('warehouse_id',warehouseId).order('created_at',{ascending:false}),
+    allRows(()=>db.from('market_product_variants').select('*,products(*)').order('id')),
+    allRows(()=>db.from('market_batches').select('*').eq('warehouse_id',warehouseId).order('created_at',{ascending:false}).order('id')),
     db.from('market_documents').select('*').eq('warehouse_id',warehouseId).order('created_at',{ascending:false}).limit(200),
     db.from('suppliers').select('id,name,is_active,is_halal_verified').eq('is_active',true).order('name')
    ]);
    for(const error of [ve,be,de,se])if(error)throw error;
    const ids=(batches??[]).map(b=>b.id);
-   const {data:units,error:un}=ids.length?await db.from('market_stock_units').select('*').in('batch_id',ids).order('created_at',{ascending:false}):{data:[],error:null};if(un)throw un;
+   const {data:units,error:un}=ids.length?await allRows(()=>db.from('market_stock_units').select('*,market_batches!inner(warehouse_id)').eq('market_batches.warehouse_id',warehouseId).order('id')):{data:[],error:null};if(un)throw un;
    const countIds=(documents??[]).filter(d=>d.kind==='count'&&d.status==='pending').map(d=>d.id);
    const {data:counts,error:ce}=countIds.length?await db.from('market_inventory_count_items').select('*').in('document_id',countIds):{data:[],error:null};if(ce)throw ce;
    const financial=myRoles.includes('admin')||myRoles.includes('receiver');
@@ -76,7 +83,19 @@ Deno.serve(async(req:Request)=>{
    for(const q of [offersQ,barcodesQ,categoriesQ,receivingQ,alertsQ,rolesQ,shiftsQ])if(q.error)throw q.error;
    return reply({ok:true,offers:offersQ.data,barcodes:barcodesQ.data,categories:categoriesQ.data,receiving:financial?receivingQ.data:[],alerts:alertsQ.data,shifts:shiftsQ.data,staffRoles:rolesQ.data,variants,batches:cleanBatches,units:cleanUnits,documents:cleanDocs,suppliers,counts:cleanCounts,roles:myRoles,financial,warehouse,asOf:new Date().toISOString()});
   }
+  if(body.action==='print_link'){
+   if(!myRoles.some(r=>['admin','packer','warehouse'].includes(r)))return reply({ok:false,error:'Market access denied'},403);
+   const {data:job,error:je}=await db.from('market_print_jobs').select('id,document_id').eq('id',body.data.job_id).single();if(je)throw je;
+   const {data:doc,error:de}=await db.from('market_documents').select('id').eq('id',job.document_id).eq('warehouse_id',warehouseId).eq('actor_telegram_id',actor).single();if(de||!doc)return reply({ok:false,error:'Print access denied'},403);
+   return reply({ok:true,url:await labelLink(job.id,actor,token,url)});
+  }
   if(body.action==='staff_orders'){const {data,error}=await db.rpc('market_order_view',{p_actor:actor,p_warehouse:warehouseId,p_staff:true});if(error)throw error;return reply(data);}
+  if(body.action==='audit'){
+   if(!myRoles.includes('admin'))return reply({ok:false,error:'Market access denied'},403);
+   let query=db.from('market_operations').select('actor_telegram_id,request_id,action,payload,result,created_at').eq('payload->>warehouse_id',warehouseId).order('created_at',{ascending:false}).limit(500);
+   if(body.data.from)query=query.gte('created_at',body.data.from);if(body.data.to)query=query.lt('created_at',body.data.to);if(body.data.actor)query=query.eq('actor_telegram_id',Number(body.data.actor));
+   const {data,error}=await query;if(error)throw error;return reply({ok:true,events:data});
+  }
   if(body.action==='report'){const {data,error}=await db.rpc('market_report',{p_actor:actor,p_warehouse:warehouseId,p_from:body.data.from,p_to:body.data.to});if(error)throw error;return reply(data);}
   if(body.action==='upload'){
    const publicPhoto=body.data.kind==='product';
