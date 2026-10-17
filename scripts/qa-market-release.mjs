@@ -15,6 +15,14 @@ try{
  const previews=(await db.query('select market_catalog(null) r')).rows[0].r.offers;assert.equal(previews.length,9);assert.ok(previews.every(x=>x.price_vnd===null&&x.available_quantity===0&&x.units.length===0));assert.equal(new Set(previews.map(x=>x.product.image_url)).size,9);
  assert.equal(Number((await db.query('select count(*) n from market_warehouses')).rows[0].n),1);
  assert.equal(Number((await db.query("select count(*) n from categories where category_type='market'")).rows[0].n),14);
+ await db.exec("insert into categories(name_ru,name_en,name_vi,category_type) select 'Выпечка','Bakery','Bánh','cafe' where not exists(select 1 from categories where category_type='cafe' and name_ru='Выпечка')");
+ await db.exec(readFileSync('supabase/proposals/baklava-and-market-catalog.sql','utf8'));await db.exec(readFileSync('supabase/proposals/baklava-and-market-catalog.sql','utf8'));
+ const foods=(await db.query("select * from products where sku like 'UMMA-CAFE-BAKLAVA-%' or sku in ('UMMA-MARKET-MOZZARELLA-ALBA','UMMA-MARKET-CHICKEN-FILLET-CP')")).rows;
+ assert.equal(foods.length,4,'seed is replay safe');assert.ok(foods.every(p=>p.price_vnd===null));
+ assert.ok(foods.filter(p=>p.product_type==='cafe').every(p=>p.catalog_preview&&p.weight_value===null),'dessert weights not invented');
+ const foodOffers=(await db.query('select market_catalog(null) r')).rows[0].r.offers;assert.equal(foodOffers.length,11);
+ assert.ok(foodOffers.every(o=>o.available_quantity===0&&o.price_vnd===null),'preview stock and prices remain unknown');
+ assert.equal((await db.query("select requires_quality_evidence,halal_verified from market_product_variants v join products p on p.id=v.product_id where p.sku='UMMA-MARKET-CHICKEN-FILLET-CP'")).rows[0].requires_quality_evidence,true,'meat quality gate retained');
  assert.equal(Number((await db.query("select count(*) n from market_batches")).rows[0].n),0,'no fictional inventory');
  assert.equal(Number((await db.query("select count(*) n from cafe_orders where source_module='market'")).rows[0].n),0,'no fictional orders');
  assert.ok((await db.query("select allowed_mime_types from storage.buckets where id='market-evidence'")).rows[0].allowed_mime_types.includes('application/pdf'));

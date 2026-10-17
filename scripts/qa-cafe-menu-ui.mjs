@@ -132,5 +132,17 @@ try{
   d.getElementById('cafeCheckoutBack').click();
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
+ products.push({id:'baklava',sku:'UMMA-CAFE-BAKLAVA-ALMOND',name_ru:'Пахлава с миндалем',price_vnd:null,catalog_preview:true});
+ await w.ummaCafe.refreshMenu();
+ const previewCard=d.querySelector('[data-product-card="baklava"]');
+ assert.ok(previewCard,'preview without stock appears');assert.match(previewCard.textContent,/Цена уточняется/);
+ assert.equal(previewCard.querySelector('[data-add-product]'),null,'no purchase button before price');
+ assert.ok(d.querySelector('[data-menu-category="desserts"]'),'baklava in desserts');
+ const forged=d.createElement('button');forged.setAttribute('data-add-product','baklava');d.body.append(forged);forged.click();
+ assert.equal(d.getElementById('cafeStickyOrder').hidden,true,'forged preview click cannot create cart line');
+ products.at(-1).catalog_preview=false;products.at(-1).price_vnd=50000;
+ inventory.push({product_id:'baklava',location_id:'cafe',quantity:2,is_available:true});await w.ummaCafe.refreshMenu();
+ assert.ok(d.querySelector('[data-product-card="baklava"] [data-add-product]'),'priced and stocked item becomes purchasable');
+
  console.log('PASS menu: collapsed descriptions open/close, empty text omitted; Telegram name/ID fallback, manual name and optional phone; header/checkout mode sync, address validation and three order payloads; grouped categories, search intersection, focus, stock refresh, cart preservation; multilingual search, no results/reset/focus, cart survives filtering, stock limits, photo URL safety and failed-image fallback');
 }finally{w.close();}

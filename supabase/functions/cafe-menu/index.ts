@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const [{ data: products, error: productError }, { data: locations, error: locationError }, { data: staffAssignments, error: staffError }, { data: inventory, error: inventoryError }, { data: runtimeSettings, error: settingsError }] = await Promise.all([
       supabase
         .from("products")
-        .select("id, name_ru, name_vi, name_en, description_ru, description_vi, description_en, price_vnd, weight_value, weight_unit, image_url, sku")
+        .select("id, name_ru, name_vi, name_en, description_ru, description_vi, description_en, price_vnd, weight_value, weight_unit, image_url, sku, catalog_preview")
         .eq("product_type", "cafe")
         .eq("is_active", true)
         .order("sort_order", { ascending: true }),
