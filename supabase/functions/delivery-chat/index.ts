@@ -8,7 +8,7 @@ const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9
 const errors:Record<string,string>={CHAT_ACCESS:'Чат доступен только клиенту и назначенному курьеру.',CHAT_CLOSED:'Отправка недоступна: курьер ещё не назначен или доставка завершена.',CHAT_INPUT:'Проверьте сообщение, размер и формат файла.',CHAT_UPLOAD:'Файл ещё не загружен полностью. Повторите отправку.',CHAT_KEY_REUSED:'Повтор запроса отличается от исходного сообщения.',CHAT_RATE:'Слишком много сообщений. Попробуйте немного позже.',CHAT_LEASE:'Перевод уже обрабатывается.'};
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(req.method==='GET')return reply({ok:true,ready:true,translationConfigured:!!Deno.env.get('OPENAI_API_KEY'),limits:{photo:8388608,video:20971520,voice:5242880,voiceSeconds:60}});
+ if(req.method==='GET')return reply({ok:true,ready:true,translationConfigured:true,voiceTranslationConfigured:!!Deno.env.get('OPENAI_API_KEY'),translationProvider:'mymemory',limits:{photo:8388608,video:20971520,voice:5242880,voiceSeconds:60}});
  if(req.method!=='POST')return reply({ok:false,error:'Method not allowed'},405);
  try{
   const raw=await req.text();if(raw.length>16000)return reply({ok:false,error:errors.CHAT_INPUT},413);const body=JSON.parse(raw);
@@ -26,7 +26,7 @@ Deno.serve(async req=>{
    const signed=paths.length?await bucket.createSignedUrls(paths,900):{data:[],error:null};if(signed.error)throw Error('Chat media unavailable');
    const urls=new Map((signed.data||[]).map((s:any)=>[s.path,s.signedUrl]));
    const threadKey=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.orderId+':'+String(data.context.peer)))),b=>b.toString(16).padStart(2,'0')).join('');
-   return reply({ok:true,context:{threadKey,orderNumber:data.context.orderNumber,role:data.context.role,canSend:data.context.canSend,language:data.context.language,peerLanguage:data.context.peerLanguage,waiting:!data.context.peer},translationConfigured:!!Deno.env.get('OPENAI_API_KEY'),messages:data.messages.map((m:any)=>({id:m.id,seq:m.seq,own:m.own,kind:m.kind,text:m.body,language:m.source_language,createdAt:m.created_at,readAt:m.read_at,mediaUrl:urls.get(m.object_path)||null,translation:m.translation?{state:m.translation.state,text:m.translation.body,transcript:m.translation.transcript,audioUrl:urls.get(m.translation.audio_path)||null,attempts:m.translation.attempts}:null}))});
+   return reply({ok:true,context:{threadKey,orderNumber:data.context.orderNumber,role:data.context.role,canSend:data.context.canSend,language:data.context.language,peerLanguage:data.context.peerLanguage,waiting:!data.context.peer},translationConfigured:true,voiceTranslationConfigured:!!Deno.env.get('OPENAI_API_KEY'),translationProvider:'mymemory',messages:data.messages.map((m:any)=>({id:m.id,seq:m.seq,own:m.own,kind:m.kind,text:m.body,language:m.source_language,createdAt:m.created_at,readAt:m.read_at,mediaUrl:urls.get(m.object_path)||null,translation:m.translation?{state:m.translation.state,text:m.translation.body,transcript:m.translation.transcript,audioUrl:urls.get(m.translation.audio_path)||null,attempts:m.translation.attempts}:null}))});
   }
   if(body.action==='send'||body.action==='prepare'){
    if(!uuid(body.requestKey)||typeof body.text!=='string'||body.text.length>2000||!['text','photo','video','voice'].includes(body.kind))return reply({ok:false,error:errors.CHAT_INPUT},400);
@@ -50,13 +50,13 @@ Deno.serve(async req=>{
    }
    await rpc('finish',{messageId:body.messageId});await notify();return reply({ok:true,messageId:body.messageId,sent:true});
   }
-  const key=Deno.env.get('OPENAI_API_KEY');if(!key){await rpc('media',{messageId:body.messageId});return reply({ok:false,code:'TRANSLATION_UNAVAILABLE',error:'Автоперевод пока не подключён. Доступен оригинал сообщения.'},503);}
+  const key=Deno.env.get('OPENAI_API_KEY')||'';if(!key&&(await rpc('media',{messageId:body.messageId})).message.kind==='voice'){return reply({ok:false,code:'TRANSLATION_UNAVAILABLE',error:'Автоперевод пока не подключён. Доступен оригинал сообщения.'},503);}
   const claimed=await rpc('claim',{messageId:body.messageId,forceRetry:body.retry===true});if(!claimed.claimed)return reply({ok:true,state:claimed.state});
   const m=claimed.message,t=claimed.translation;
   try{
    let original=m.body;
    if(m.kind==='voice'){const audio=await bucket.download(m.object_path);if(audio.error)throw Error('Voice unavailable');original=await transcribeMessage(key,audio.data,m.object_path.split('/').pop());}
-   const translated=await translateMessage(key,original,t.language);let audioPath=null;
+   const translated=await translateMessage(key||'',original,t.language,fetch,m.kind==='voice'?undefined:m.source_language);let audioPath=null;
    if(m.kind==='voice'){const audio=await speakMessage(key,translated,t.language);audioPath=body.orderId+'/translations/'+m.id+'/'+t.language+'/'+t.lease+'.mp3';const saved=await bucket.upload(audioPath,audio,{contentType:'audio/mpeg',upsert:true});if(saved.error)throw Error('Speech upload unavailable');}
    await rpc('complete',{messageId:m.id,lease:t.lease,translatedText:translated,transcript:m.kind==='voice'?original:null,audioPath});return reply({ok:true,state:'ready'});
   }catch{await rpc('fail',{messageId:m.id,lease:t.lease});return reply({ok:false,code:'TRANSLATION_FAILED',error:'Не удалось перевести сообщение. Оригинал сохранён.'},502);}

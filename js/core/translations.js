@@ -2,6 +2,14 @@
 (() => {
   'use strict';
   const rows = `
+Прослушать перевод|Listen to translation|Nghe bản dịch
+На телефоне нет голоса для выбранного языка.|No voice for this language is installed on this phone.|Điện thoại chưa cài giọng đọc cho ngôn ngữ này.
+Не удалось озвучить перевод.|Unable to read the translation aloud.|Không thể đọc bản dịch.
+Голосовая запись доступна в оригинале.|The voice recording is available in its original language.|Tin nhắn thoại được giữ nguyên ngôn ngữ gốc.
+Текст переводится автоматически. Для речи используйте микрофон на клавиатуре, затем отправьте текст. Голосовые записи доступны в оригинале.|Text is translated automatically. To speak, use your keyboard microphone, then send the text. Voice recordings remain in their original language.|Văn bản được dịch tự động. Để nói, dùng micrô trên bàn phím rồi gửi văn bản. Tin nhắn thoại giữ nguyên ngôn ngữ gốc.
+О переводе|About translation|Thông tin về bản dịch
+MyMemory получает текст сообщения и может хранить его по своим условиям.|MyMemory receives the message text and may retain it under its terms.|MyMemory nhận nội dung tin nhắn và có thể lưu trữ theo điều khoản của họ.
+Условия MyMemory|MyMemory terms|Điều khoản MyMemory
 Главная|Home|Trang chủ
 Ещё|More|Thêm
 Кафе|Cafe|Quán ăn

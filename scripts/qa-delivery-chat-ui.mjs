@@ -28,7 +28,7 @@ try{
  const opener=d.createElement('button');d.body.append(opener);w.ummaDeliveryChat.open(order,opener);await tick();
  const dialog=d.querySelector('.delivery-chat-dialog'),input=dialog.querySelector('textarea'),form=dialog.querySelector('form');
  assert.match(dialog.querySelector('h2').textContent,/№7/);assert.equal(dialog.querySelectorAll('.chat-message').length,2);assert.equal(dialog.querySelector('.chat-message img'),null,'untrusted message is rendered as text, never HTML');
- assert.match(dialog.textContent,/Я у входа/);assert.match(dialog.querySelector('details p').textContent,/<img/);assert.equal(dialog.querySelectorAll('.chat-message audio').length,2,'original voice and translated audio are both available');
+ assert.match(dialog.textContent,/Я у входа/);assert.match(dialog.querySelector('.chat-message details p').textContent,/<img/);assert.equal(dialog.querySelectorAll('.chat-message audio').length,2,'original voice and translated audio are both available');
  const playing=dialog.querySelector('.chat-message audio');
  d.dispatchEvent(new w.Event('visibilitychange'));await tick();assert.equal(dialog.querySelector('.chat-message audio'),playing,'polling retains player node');
  input.value='Тест';form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
@@ -43,6 +43,15 @@ try{
  assert.equal(w.ummaNavigation.back(),true);assert.equal(w.ummaDeliveryChat.isOpen(),false);assert.equal(d.activeElement,opener);
  // Closing during microphone permission acquisition must release a late stream.
  w.ummaDeliveryChat.open(order,opener);await tick();d.querySelector('[data-chat-record]').click();w.ummaDeliveryChat.close();const before=stops;requestMicrophone({getTracks:()=>[{stop(){stops++;}}]});await tick();assert.equal(stops,before+1);
+ // Free mode: truthful voice guidance, device TTS and provider disclosure.
+ let spoken,cancelled=0;w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+ w.speechSynthesis={getVoices:()=>[{lang:'ru-RU'}],cancel(){cancelled++;},speak(value){spoken=value;}};
+ const oldFetch=w.fetch;w.fetch=async(url,options)=>{const body=JSON.parse(options.body);if(body.action==='list'){const r=await oldFetch(url,options),data=await r.json();return {ok:true,json:async()=>({...data,translationProvider:'mymemory',voiceTranslationConfigured:false})};}return oldFetch(url,options);};
+ w.ummaDeliveryChat.open(order,opener);await tick();
+ assert.match(d.querySelector('.chat-note').textContent,/микрофон на клавиатуре/);
+ d.querySelector('[data-chat-speak]').click();assert.equal(spoken.text,'Я у входа.');assert.equal(spoken.lang,'ru-RU');
+ assert.equal(d.querySelector('.chat-privacy').hidden,false);
+ w.ummaDeliveryChat.close();assert.ok(cancelled>0);
  canSend=false;w.ummaDeliveryChat.open(order,opener);await tick();assert.equal(d.querySelector('.chat-compose [type=submit]').disabled,true);assert.match(d.querySelector('.chat-note').textContent,/завершена/);
  w.ummaDeliveryChat.close();assert.ok(reads>=3);
  console.log('PASS chat UI: safe original/translation rendering, paired voice players, stable media on polling, no-send before explicit confirmation, photo upload, duplicate tap/lost-response replay, microphone consent and late-stream cleanup, native Back/focus, closed-order read-only composer');

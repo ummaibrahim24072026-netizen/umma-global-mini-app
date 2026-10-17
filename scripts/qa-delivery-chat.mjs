@@ -5,7 +5,7 @@ import {randomUUID,createHmac} from 'node:crypto';
 import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 import {verifyTelegramInitData} from '../supabase/functions/delivery-chat/auth.ts';
-import {translateMessage,transcribeMessage,speakMessage,validMedia} from '../supabase/functions/delivery-chat/translation.ts';
+import {translateMessage,transcribeMessage,speakMessage,validMedia,freeTranslation,translationChunks} from '../supabase/functions/delivery-chat/translation.ts';
 const db=new PGlite(),order=randomUUID(),cafe=randomUUID();
 const q=(s,a=[])=>db.query(s,a);
 try{
@@ -66,8 +66,18 @@ try{
  const original=await transcribeMessage('fake-local-test',new Blob(['synthetic voice']),'voice.webm',provider);assert.equal(await translateMessage('fake-local-test',original,'vi',provider),'Tôi đang ở lối vào.');assert.equal((await speakMessage('fake-local-test','Tôi đang ở lối vào.','vi',provider)).size,3);
  assert.equal(JSON.parse(calls[1].options.body).store,false);assert.equal(JSON.parse(calls[2].options.body).response_format,'mp3');
  await assert.rejects(translateMessage('fake','text','vi',async()=>new Response('limited',{status:429})),/provider 429/);
+ // Keyless provider: Cyrillic/emoji byte limits, direction, quota and output validation.
+ const freeCalls=[],freeProvider=async(url,options)=>{const u=new URL(url);freeCalls.push(u);assert.equal(u.origin,'https://api.mymemory.translated.net');assert.equal(u.pathname,'/get');assert.ok(new TextEncoder().encode(u.searchParams.get('q')).length<=500);assert.equal(options.redirect,'error');return new Response(JSON.stringify({responseStatus:200,quotaFinished:false,responseData:{translatedText:'Tôi ở lối vào.'}}));};
+ assert.equal(await translateMessage('','Я у входа.','vi',freeProvider,'ru'),'Tôi ở lối vào.');assert.equal(freeCalls[0].searchParams.get('langpair'),'ru|vi');
+ assert.equal(await freeTranslation('hello','en','en',()=>{throw Error('Same language must not call provider');}),'hello');
+ const long='Привет 👨‍👩‍👧‍👦 '.repeat(130);for(const chunk of translationChunks(long))assert.ok(new TextEncoder().encode(chunk).length<=480);
+ const multiline=await freeTranslation('Первая строка.\n\nВторая строка.','ru','vi',freeProvider);assert.match(multiline,/\n\n/);
+ await assert.rejects(freeTranslation('text','en','vi',async()=>new Response(JSON.stringify({responseStatus:403,responseData:{translatedText:'MYMEMORY WARNING'}}))),/quota/);
+ await assert.rejects(freeTranslation('text','en','vi',async()=>new Response(JSON.stringify({responseStatus:200,quotaFinished:true,responseData:{translatedText:'quota'}}))),/quota/);
+ await assert.rejects(freeTranslation('text','en','vi',async()=>new Response(JSON.stringify({responseStatus:200,responseData:{translatedText:''}}))),/output/);
+ await assert.rejects(freeTranslation('text','xx','vi',freeProvider),/input/);
  // Execute the deployed entrypoint against the isolated SQL engine and provider double.
- let handler,notificationRuns=0,dbCalls=0;
+ let handler,notificationRuns=0,dbCalls=0,serverKey='fake';
  const client={rpc:async(name,args)=>{assert.equal(name,'delivery_chat_action');dbCalls++;try{return {data:await action(args.p_actor,args.p_action,args.p_body,args.p_order),error:null};}catch(e){return {data:null,error:{message:e.message}};}},storage:{from:name=>{assert.equal(name,'delivery-chat');return {
   createSignedUrls:async paths=>({data:paths.map(path=>({path,signedUrl:'https://isolated.invalid/'+path}))}),
   createSignedUploadUrl:async path=>({data:{signedUrl:'https://isolated.invalid/upload/'+path}}),
@@ -76,8 +86,8 @@ try{
  const bot='fake-test-bot-token';
  const signed=id=>{const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),user:JSON.stringify({id})});const c=[...p].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');p.set('hash',createHmac('sha256',createHmac('sha256','WebAppData').update(bot).digest()).update(c).digest('hex'));return p.toString();};
  vm.runInNewContext(stripTypeScriptTypes(readFileSync('supabase/functions/delivery-chat/index.ts','utf8')).replace(/^import .*;\n/gm,''),{
-  Deno:{serve:fn=>handler=fn,env:{get:key=>({TELEGRAM_BOT_TOKEN:bot,SUPABASE_URL:'https://isolated.invalid',SUPABASE_SERVICE_ROLE_KEY:'fake',OPENAI_API_KEY:'fake'})[key]}},
-  createClient:()=>client,verifyTelegramInitData,translateMessage:(k,t,l)=>translateMessage(k,t,l,provider),transcribeMessage:(k,b,f)=>transcribeMessage(k,b,f,provider),speakMessage:(k,t,l)=>speakMessage(k,t,l,provider),validMedia,languageNames:{ru:'Russian',vi:'Vietnamese'},dispatchCustomerNotifications:async()=>{notificationRuns++;},fetch:async()=>new Response(new Uint8Array([26,69,223,163,0,0,0,0])),Response,Request,Uint8Array,Map,Set,AbortSignal,Error,crypto,TextEncoder,console
+  Deno:{serve:fn=>handler=fn,env:{get:key=>({TELEGRAM_BOT_TOKEN:bot,SUPABASE_URL:'https://isolated.invalid',SUPABASE_SERVICE_ROLE_KEY:'fake',OPENAI_API_KEY:serverKey})[key]}},
+  createClient:()=>client,verifyTelegramInitData,translateMessage:(k,t,l,send,source)=>translateMessage(k,t,l,source?freeProvider:provider,source),transcribeMessage:(k,b,f)=>transcribeMessage(k,b,f,provider),speakMessage:(k,t,l)=>speakMessage(k,t,l,provider),validMedia,languageNames:{ru:'Russian',vi:'Vietnamese'},dispatchCustomerNotifications:async()=>{notificationRuns++;},fetch:async()=>new Response(new Uint8Array([26,69,223,163,0,0,0,0])),Response,Request,Uint8Array,Map,Set,AbortSignal,Error,crypto,TextEncoder,console
  });
  const post=async(actor,body)=>{const r=await handler(new Request('https://isolated.invalid',{method:'POST',body:JSON.stringify({initData:signed(actor),orderId:order,language:'ru',...body})}));return {status:r.status,data:await r.json()};};
  const beforeAuth=dbCalls;assert.equal((await post(20,{initData:'tampered',action:'list'})).status,401);assert.equal(dbCalls,beforeAuth);
@@ -89,5 +99,9 @@ try{
  const callsBefore=calls.length;assert.equal((await post(10,{action:'translate',messageId:pending.id})).data.state,'ready');assert.equal(calls.length,callsBefore+3,'real entrypoint invokes transcription, translation and speech once');
  assert.equal((await post(10,{action:'translate',messageId:pending.id})).data.state,'ready');assert.equal(calls.length,callsBefore+3,'ready translation cache prevents repeat provider billing');
  const listing=(await post(10,{action:'list'})).data;const rendered=listing.messages.find(m=>m.id===pending.id);assert.ok(rendered.mediaUrl);assert.ok(rendered.translation.audioUrl);assert.equal(rendered.object_path,undefined);assert.equal(rendered.sender,undefined);assert.equal(rendered.translation.lease,undefined);assert.ok(notificationRuns>0);
+ serverKey='';
+ const keylessMessage=await post(20,{action:'send',requestKey:randomUUID(),kind:'text',text:'Synthetic keyless message',language:'vi'});assert.equal(keylessMessage.status,200);
+ const beforeFree=freeCalls.length;const keyless=await post(10,{action:'translate',messageId:keylessMessage.data.messageId});assert.equal(keyless.data.state,'ready','authenticated keyless text uses saved sender language and free provider');
+ assert.equal(freeCalls.length,beforeFree+1);assert.equal((await post(10,{action:'list'})).data.translationConfigured,true);
  console.log('PASS private delivery chat: customer/current courier authorization, reassignment isolation, closed chat, idempotent text/media and notifications, verified upload metadata, opposite language preferences, translation cache/lease, attachment MIME/size/rate guards, protected RPC; STT→translation→TTS pipeline with isolated provider double');
 }catch(e){console.error({message:e.message,position:e.position,internalPosition:e.internalPosition,internalQuery:e.internalQuery,where:e.where});process.exitCode=1;}finally{await db.close();}
