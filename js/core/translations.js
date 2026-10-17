@@ -10,6 +10,9 @@
 О переводе|About translation|Thông tin về bản dịch
 MyMemory получает текст сообщения и может хранить его по своим условиям.|MyMemory receives the message text and may retain it under its terms.|MyMemory nhận nội dung tin nhắn và có thể lưu trữ theo điều khoản của họ.
 Условия MyMemory|MyMemory terms|Điều khoản MyMemory
+Загружаем чат…|Loading chat…|Đang tải cuộc trò chuyện…
+Повторить подключение|Reconnect|Kết nối lại
+Клиент и курьер в этом заказе используют один Telegram-аккаунт. Для переписки нужны два разных аккаунта.|The customer and courier use the same Telegram account for this order. Chat requires two different accounts.|Khách hàng và tài xế đang dùng cùng một tài khoản Telegram cho đơn này. Trò chuyện cần hai tài khoản khác nhau.
 Главная|Home|Trang chủ
 Ещё|More|Thêm
 Кафе|Cafe|Quán ăn

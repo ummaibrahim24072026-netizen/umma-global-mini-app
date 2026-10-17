@@ -5,7 +5,7 @@ import {dispatchCustomerNotifications} from '../_shared/customer-notifications.t
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,x-client-info,apikey,content-type','Access-Control-Allow-Methods':'GET,POST,OPTIONS'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
-const errors:Record<string,string>={CHAT_ACCESS:'Чат доступен только клиенту и назначенному курьеру.',CHAT_CLOSED:'Отправка недоступна: курьер ещё не назначен или доставка завершена.',CHAT_INPUT:'Проверьте сообщение, размер и формат файла.',CHAT_UPLOAD:'Файл ещё не загружен полностью. Повторите отправку.',CHAT_KEY_REUSED:'Повтор запроса отличается от исходного сообщения.',CHAT_RATE:'Слишком много сообщений. Попробуйте немного позже.',CHAT_LEASE:'Перевод уже обрабатывается.'};
+const errors:Record<string,string>={CHAT_ACCESS:'Чат доступен только клиенту и назначенному курьеру.',CHAT_SELF:'Клиент и курьер в этом заказе используют один Telegram-аккаунт. Для переписки нужны два разных аккаунта.',CHAT_CLOSED:'Отправка недоступна: курьер ещё не назначен или доставка завершена.',CHAT_INPUT:'Проверьте сообщение, размер и формат файла.',CHAT_UPLOAD:'Файл ещё не загружен полностью. Повторите отправку.',CHAT_KEY_REUSED:'Повтор запроса отличается от исходного сообщения.',CHAT_RATE:'Слишком много сообщений. Попробуйте немного позже.',CHAT_LEASE:'Перевод уже обрабатывается.'};
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
  if(req.method==='GET')return reply({ok:true,ready:true,translationConfigured:true,voiceTranslationConfigured:false,translationProvider:'mymemory',limits:{photo:8388608,video:20971520,voice:5242880,voiceSeconds:60}});
@@ -18,7 +18,7 @@ Deno.serve(async req=>{
   const actor=await verifyTelegramInitData(body.initData,token);
   if(!uuid(body.orderId)||!['list','send','prepare','finish','translate'].includes(body.action)||!languageNames[body.language])return reply({ok:false,error:errors.CHAT_INPUT},400);
   const db=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}}),bucket=db.storage.from('delivery-chat');
-  async function rpc(action:string,args:any={}){const r=await db.rpc('delivery_chat_action',{p_actor:actor,p_action:action,p_order:body.orderId,p_body:{...args,language:body.language}});if(r.error)throw Error(r.error.message);return r.data;}
+  async function rpc(action:string,args:any={}){const r=await db.rpc('delivery_chat_action',{p_actor:actor,p_action:action,p_order:body.orderId,p_body:{...args,language:body.language}});if(r.error){if(r.error.message==='CHAT_ACCESS'&&action==='list'){const own=await db.from('cafe_orders').select('id').eq('id',body.orderId).eq('customer_telegram_id',actor).eq('courier_telegram_id',actor).maybeSingle();if(own.data)throw Error('CHAT_SELF');}throw Error(r.error.message);}return r.data;}
   async function notify(){try{await dispatchCustomerNotifications(db,token!);}catch{console.error('Chat notification deferred');}}
   if(body.action==='list'){
    if(body.before!==undefined&&(!Number.isSafeInteger(body.before)||body.before<1))return reply({ok:false,error:errors.CHAT_INPUT},400);

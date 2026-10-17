@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {randomUUID,createHmac} from 'node:crypto';
 import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
+import {JSDOM,VirtualConsole} from 'jsdom';
 import {verifyTelegramInitData} from '../supabase/functions/delivery-chat/auth.ts';
 import {translateMessage,transcribeMessage,speakMessage,validMedia,freeTranslation,translationChunks} from '../supabase/functions/delivery-chat/translation.ts';
 const db=new PGlite(),order=randomUUID(),cafe=randomUUID();
@@ -78,7 +79,7 @@ try{
  await assert.rejects(freeTranslation('text','xx','vi',freeProvider),/input/);
  // Execute the deployed entrypoint against the isolated SQL engine and provider double.
  let handler,notificationRuns=0,dbCalls=0,serverKey='fake';
- const client={rpc:async(name,args)=>{assert.equal(name,'delivery_chat_action');dbCalls++;try{return {data:await action(args.p_actor,args.p_action,args.p_body,args.p_order),error:null};}catch(e){return {data:null,error:{message:e.message}};}},storage:{from:name=>{assert.equal(name,'delivery-chat');return {
+ const client={from:name=>{assert.equal(name,'cafe_orders');const filters={};const chain={select(){return chain;},eq(key,value){filters[key]=value;return chain;},async maybeSingle(){return {data:(await q('select id from cafe_orders where id=$1 and customer_telegram_id=$2 and courier_telegram_id=$3',[filters.id,filters.customer_telegram_id,filters.courier_telegram_id])).rows[0]||null};}};return chain;},rpc:async(name,args)=>{assert.equal(name,'delivery_chat_action');dbCalls++;try{return {data:await action(args.p_actor,args.p_action,args.p_body,args.p_order),error:null};}catch(e){return {data:null,error:{message:e.message}};}},storage:{from:name=>{assert.equal(name,'delivery-chat');return {
   createSignedUrls:async paths=>({data:paths.map(path=>({path,signedUrl:'https://isolated.invalid/'+path}))}),
   createSignedUploadUrl:async path=>({data:{signedUrl:'https://isolated.invalid/upload/'+path}}),
   createSignedUrl:async path=>({data:{signedUrl:'https://isolated.invalid/'+path}}),download:async()=>({data:new Blob([new Uint8Array([26,69,223,163,0,0,0,0])])}),upload:async()=>({error:null})
@@ -103,5 +104,29 @@ try{
  const keylessMessage=await post(20,{action:'send',requestKey:randomUUID(),kind:'text',text:'Synthetic keyless message',language:'vi'});assert.equal(keylessMessage.status,200);
  const beforeFree=freeCalls.length;const keyless=await post(10,{action:'translate',messageId:keylessMessage.data.messageId});assert.equal(keyless.data.state,'ready','authenticated keyless text uses saved sender language and free provider');
  assert.equal(freeCalls.length,beforeFree+1);assert.equal((await post(10,{action:'list'})).data.translationConfigured,true);
+ // Two independent client UIs communicate through the real Edge handler and SQL RPC.
+ const linkOrder=randomUUID();await q("insert into telegram_users(telegram_id,role,language_code) values(101,'user','ru'),(202,'employee','vi')");
+ await q("insert into cafe_orders(id,location_id,customer_telegram_id,courier_telegram_id,order_type,delivery_status,delivery_address) values($1,$2,101,202,'delivery','courier_assigned','Synthetic linked UI address')",[linkOrder,cafe]);
+ const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),windows=[];
+ const until=async check=>{for(let i=0;i<200;i++){if(check())return;await new Promise(r=>setTimeout(r,5));}assert.fail('Linked chat UI timed out: '+windows.map(w=>w.document.querySelector('.delivery-chat-dialog')?.textContent).join(' / '));};
+ const makeWindow=(actor,lang)=>{const dom=new JSDOM(html,{url:'https://isolated-link.invalid',runScripts:'outside-only',virtualConsole:new VirtualConsole()}),w=dom.window;windows.push(w);Object.defineProperty(w.document,'hidden',{value:false});
+ w.crypto.randomUUID=randomUUID;w.AbortSignal.timeout=()=>undefined;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLMediaElement.prototype.pause=function(){};
+ w.Telegram={WebApp:{initData:signed(actor)}};w.ummaI18n={language:lang,t:s=>s,locale:()=>lang};w.fetch=async(url,options)=>handler(new Request('https://isolated.invalid',{method:options.method,body:options.body,headers:options.headers}));
+ w.eval(readFileSync('js/cafe/delivery-chat.js','utf8'));const b=w.document.createElement('button');b.dataset.deliveryChat=linkOrder;w.document.body.append(b);b.click();return w;};
+ try{
+ const customer=makeWindow(101,'ru'),courier=makeWindow(202,'vi');
+ await until(()=>!customer.document.querySelector('.chat-compose textarea').disabled&&!courier.document.querySelector('.chat-compose textarea').disabled);
+ const sendFrom=(w,text)=>{const input=w.document.querySelector('.chat-compose textarea');input.value=text;input.dispatchEvent(new w.Event('input'));w.document.querySelector('form.chat-compose').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));};
+ sendFrom(customer,'Synthetic customer message 13');await until(()=>customer.document.querySelector('.chat-compose textarea').value==='');
+ courier.document.dispatchEvent(new courier.Event('visibilitychange'));await until(()=>courier.document.querySelector('.chat-message'));
+ assert.match(courier.document.querySelector('.chat-message').textContent,/Synthetic customer message 13|Tôi ở lối vào/);
+ sendFrom(courier,'Synthetic courier reply 13');await until(()=>courier.document.querySelector('.chat-compose textarea').value==='');
+ customer.document.dispatchEvent(new customer.Event('visibilitychange'));await until(()=>customer.document.querySelectorAll('.chat-message').length===2);
+ const linked=await action(101,'list',{language:'ru'},linkOrder);assert.equal(linked.messages.length,2);assert.equal(linked.messages[0].sender,101);assert.equal(linked.messages[1].sender,202);assert.equal(linked.messages[1].recipient,101);
+ assert.equal(customer.document.querySelector('.chat-compose [type="submit"]').disabled,false);assert.equal(courier.document.querySelector('.chat-compose [type="submit"]').disabled,false);
+ console.log('PASS two linked independent chat UIs: customer sends, courier receives and replies, customer receives; real Edge HMAC and SQL; no live accounts or messages');
+ }finally{for(const w of windows){w.ummaDeliveryChat.close();w.close();}}
+ await q('update cafe_orders set courier_telegram_id=customer_telegram_id where id=$1',[order]);
+ const selfChat=await post(10,{action:'list'});assert.equal(selfChat.status,409);assert.equal(selfChat.data.code,'CHAT_SELF');assert.match(selfChat.data.error,/два разных аккаунта/);
  console.log('PASS private delivery chat: customer/current courier authorization, reassignment isolation, closed chat, idempotent text/media and notifications, verified upload metadata, opposite language preferences, translation cache/lease, attachment MIME/size/rate guards, protected RPC; STT→translation→TTS pipeline with isolated provider double');
 }catch(e){console.error({message:e.message,position:e.position,internalPosition:e.internalPosition,internalQuery:e.internalQuery,where:e.where});process.exitCode=1;}finally{await db.close();}

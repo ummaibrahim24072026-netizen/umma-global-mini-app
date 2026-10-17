@@ -52,6 +52,11 @@ try{
  d.querySelector('[data-chat-speak]').click();assert.equal(spoken.text,'Я у входа.');assert.equal(spoken.lang,'ru-RU');
  assert.equal(d.querySelector('.chat-privacy').hidden,false);
  w.ummaDeliveryChat.close();assert.ok(cancelled>0);
+ // Same-account denial is explained, while transient network failures can reconnect.
+ w.fetch=async()=>({ok:false,json:async()=>({ok:false,code:'CHAT_SELF',error:'Клиент и курьер используют один Telegram-аккаунт. Нужны два разных аккаунта.'})});
+ w.ummaDeliveryChat.open(order,opener);await tick();assert.match(d.querySelector('.chat-note').textContent,/два разных аккаунта/);assert.equal(d.querySelector('.chat-compose textarea').disabled,true);assert.equal(d.querySelector('[data-chat-refresh]').hidden,true);d.querySelector('[data-chat-close]').click();assert.equal(w.ummaDeliveryChat.isOpen(),false);
+ let disconnected=true;w.fetch=async(...args)=>{if(disconnected){disconnected=false;throw Error('Нет соединения');}return oldFetch(...args);};
+ w.ummaDeliveryChat.open(order,opener);await tick();assert.equal(d.querySelector('[data-chat-refresh]').hidden,false);d.querySelector('[data-chat-refresh]').click();await tick();assert.equal(d.querySelector('.chat-compose textarea').disabled,false);assert.equal(d.querySelector('[data-chat-refresh]').hidden,true);w.ummaDeliveryChat.close();
  canSend=false;w.ummaDeliveryChat.open(order,opener);await tick();assert.equal(d.querySelector('.chat-compose [type=submit]').disabled,true);assert.match(d.querySelector('.chat-note').textContent,/завершена/);
  w.ummaDeliveryChat.close();assert.ok(reads>=3);
  console.log('PASS chat UI: safe original/translation rendering, paired voice players, stable media on polling, no-send before explicit confirmation, photo upload, duplicate tap/lost-response replay, microphone consent and late-stream cleanup, native Back/focus, closed-order read-only composer');
