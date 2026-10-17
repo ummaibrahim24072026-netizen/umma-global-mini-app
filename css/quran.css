@@ -20,7 +20,7 @@
 .quran-dialog [hidden]{display:none!important}
 .quran-dialog[open]{display:flex;flex-direction:column}
 .quran-dialog::backdrop{background:rgba(10,40,40,.55)}
-.quran-dialog>header{display:grid;grid-template-columns:auto minmax(0,1fr) 44px;align-items:center;gap:10px;flex:none;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--canvas)}
+.quran-dialog>header{display:grid;grid-template-columns:auto minmax(0,1fr) 44px;align-items:center;gap:10px;flex:none;padding:calc(10px + var(--umma-safe-top,0px)) max(14px,var(--umma-safe-right,0px)) 10px max(14px,var(--umma-safe-left,0px));border-bottom:1px solid var(--line);background:var(--canvas)}
 .quran-header-title{display:flex;min-width:0;align-items:center;justify-content:center;gap:8px}
 .quran-header-title .quran-emblem{width:30px;height:30px;flex:none}
 #quranHeading{font-size:16px;line-height:1.35;overflow-wrap:break-word;text-align:center}
@@ -28,7 +28,7 @@
 .quran-dialog button:disabled{opacity:.45;cursor:default}
 #quranBack{padding:8px 10px;font-size:13px}
 #quranClose{width:44px;padding:8px;background:transparent;font-size:20px}
-#quranBody{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:24px 24px max(28px,env(safe-area-inset-bottom));scroll-padding-top:20px;line-height:1.7;--quran-ru-size:20px;--quran-ar-size:32px;text-align:start;word-break:normal;overflow-wrap:break-word;hyphens:none}
+#quranBody{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:24px 24px max(28px,var(--umma-safe-bottom,env(safe-area-inset-bottom)));scroll-padding-top:20px;line-height:1.7;--quran-ru-size:20px;--quran-ar-size:32px;text-align:start;word-break:normal;overflow-wrap:break-word;hyphens:none}
 #quranBody h2{font-size:22px;line-height:1.4;margin:28px 0 8px;font-weight:700}
 #quranBody h3{font:600 13px/1.6 Inter,system-ui,sans-serif;color:var(--turquoise-deep);margin:0 0 16px;letter-spacing:normal}
 #quranBody label{display:block;margin:12px 0;font-size:14px}
@@ -67,11 +67,11 @@
 #quranReadSurah,#quranContinue{display:block;width:100%;margin-top:20px}
 #quranResume{width:100%}
 @media(max-width:420px){
- .quran-dialog{max-width:100%;width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0}
- .quran-dialog>header{padding:8px 12px;gap:8px}
+ .quran-dialog{max-width:100%;width:100%;height:var(--umma-viewport-height,100dvh);max-height:min(100dvh,var(--umma-viewport-height,100dvh));border:0;border-radius:0}
+ .quran-dialog>header{padding:calc(8px + var(--umma-safe-top,0px)) max(12px,var(--umma-safe-right,0px)) 8px max(12px,var(--umma-safe-left,0px));gap:8px}
  .quran-header-title .quran-emblem{width:26px;height:26px}
  #quranHeading{font-size:15px}
- #quranBody{padding:18px 16px max(28px,env(safe-area-inset-bottom))}
+ #quranBody{padding:18px 16px max(28px,var(--umma-safe-bottom,env(safe-area-inset-bottom)))}
  #quranBody .quran-catalog-intro{gap:12px;padding:16px 12px}
  .quran-catalog-intro .quran-emblem{width:48px;height:48px}
  #quranBody .quran-catalog-intro h2{font-size:20px}
