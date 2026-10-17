@@ -1,8 +1,10 @@
--- UMMA Market release: execute atomically through versioned migration; do not rerun.
+-- UMMA Market: atomic versioned release; never rerun against an installed database.
 BEGIN;
+SET LOCAL lock_timeout = '10s';
 
 -- Source: market-stock-scan.sql
 -- UMMA Stock & Scan: additive warehouse foundation. Existing Cafe tables and rows are preserved.
+
 CREATE TABLE public.market_warehouses (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), location_id uuid NOT NULL REFERENCES public.locations(id),
  name text NOT NULL CHECK(length(trim(name)) BETWEEN 1 AND 160), is_active boolean NOT NULL DEFAULT true,
@@ -376,8 +378,10 @@ DO $$ DECLARE t text; f record; BEGIN
 END $$;
 GRANT USAGE,SELECT ON SEQUENCE public.market_documents_number_seq TO service_role;
 
+
 -- Source: market-commerce.sql
 -- Shared orders/payment/delivery with Market allocations. Apply after market-stock-scan.sql.
+
 ALTER TABLE public.cafe_orders ADD COLUMN source_module text NOT NULL DEFAULT 'cafe' CHECK(source_module IN ('cafe','market'));
 ALTER TABLE public.market_print_jobs ADD COLUMN variant_ids uuid[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.market_stock_units DROP CONSTRAINT market_stock_units_status_check;
@@ -548,6 +552,7 @@ BEGIN
  IF TG_OP='INSERT' THEN IF internal_ IS DISTINCT FROM true THEN RAISE EXCEPTION 'Use Market checkout'; END IF; RETURN NEW; END IF;
  SELECT * INTO m FROM public.market_orders WHERE order_id=OLD.id;
  IF NOT FOUND THEN RAISE EXCEPTION 'Market order extension missing'; END IF;
+ IF OLD.payment_status='pending' AND NEW.payment_status='paid' AND (m.released OR (m.picked_at IS NULL AND m.reserve_until<now())) THEN RAISE EXCEPTION 'Market reservation expired; payment requires review'; END IF;
  IF NEW.status='ready' AND OLD.status<>'ready' AND (m.picked_at IS NULL OR EXISTS(SELECT 1 FROM public.market_reservations WHERE order_id=OLD.id AND state='reserved' AND picked_quantity<>quantity)) THEN RAISE EXCEPTION 'Complete all picking scans first'; END IF;
  IF NEW.delivery_status='picked_up' AND OLD.delivery_status<>'picked_up' AND (m.handed_at IS NULL OR m.handed_to IS DISTINCT FROM NEW.courier_telegram_id OR m.picked_at IS NULL OR (NEW.payment_timing IS DISTINCT FROM 'on_delivery' AND NEW.payment_status<>'paid')) THEN RAISE EXCEPTION 'Market handover not authorized'; END IF;
  IF NEW.status IS DISTINCT FROM OLD.status AND internal_ IS DISTINCT FROM true AND NOT(NEW.status='completed' AND OLD.status='ready' AND NEW.delivery_status='delivered' AND NEW.payment_status='paid') THEN RAISE EXCEPTION 'Use Market order controls'; END IF;
@@ -797,7 +802,9 @@ END $$;
 CREATE TRIGGER market_picking_immutable BEFORE UPDATE OR DELETE ON public.market_picking_events FOR EACH ROW EXECUTE FUNCTION public.market_immutable();
 CREATE TRIGGER market_refunds_immutable BEFORE UPDATE OR DELETE ON public.market_refunds FOR EACH ROW EXECUTE FUNCTION public.market_immutable();
 
+
 -- Source: market-management.sql
+
 ALTER TABLE public.market_warehouses ADD COLUMN loss_alert_vnd bigint NOT NULL DEFAULT 500000 CHECK(loss_alert_vnd>=0);
 CREATE UNIQUE INDEX market_variant_shape ON public.market_product_variants(product_id,sale_mode,coalesce(fixed_quantity,0));
 CREATE TABLE public.market_writeoff_corrections(original_document_id uuid PRIMARY KEY REFERENCES public.market_documents(id),correction_document_id uuid NOT NULL UNIQUE REFERENCES public.market_documents(id));
@@ -1023,6 +1030,8 @@ DO $patch$ DECLARE src text; BEGIN
  EXECUTE src;
  SELECT pg_get_functiondef('public.refund_cafe_order(uuid,bigint,uuid,text,boolean)'::regprocedure) INTO src;
  IF position('INTO available;' IN src)=0 THEN RAISE EXCEPTION 'Refund compatibility changed'; END IF;
+ IF position('IF o.payment_status' IN src)=0 THEN RAISE EXCEPTION 'Refund order compatibility changed'; END IF;
+ src:=replace(src,'IF o.payment_status',E'IF o.source_module=''market'' THEN RAISE EXCEPTION ''Use Market refund controls''; END IF;\n IF o.payment_status');
  src:=replace(src,'INTO available;',E'INTO available;\n  available:=available-coalesce((SELECT sum(amount_vnd) FROM public.market_refunds WHERE cash_shift_id=shift.id),0);');
  EXECUTE src;
 END $patch$;
@@ -1042,25 +1051,9 @@ REVOKE ALL ON FUNCTION public.market_loss_alert() FROM PUBLIC,anon,authenticated
 
 
 
--- Source: market-quality.sql
--- Apply the meat quality gate to both existing and new catalogue category names.
-CREATE FUNCTION public.market_require_meat_evidence() RETURNS trigger
-LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public AS $$
-BEGIN
- IF EXISTS(SELECT 1 FROM public.products p JOIN public.categories c ON c.id=p.category_id
- WHERE p.id=NEW.product_id AND c.category_type='market'
- AND (c.name_en ~* '(meat|poultry|chicken)' OR c.name_ru ~* '(мяс|птиц|куриц)')) THEN
-  NEW.requires_quality_evidence:=true;
- END IF;
- RETURN NEW;
-END $$;
-CREATE TRIGGER market_require_meat_evidence BEFORE INSERT OR UPDATE ON public.market_product_variants
-FOR EACH ROW EXECUTE FUNCTION public.market_require_meat_evidence();
-REVOKE ALL ON FUNCTION public.market_require_meat_evidence() FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.market_require_meat_evidence() TO service_role;
-
 -- Source: market-launch-setup.sql
 -- Deployment setup. No inventory, prices or customer transactions are fabricated.
+
 INSERT INTO public.categories(name_ru,name_en,name_vi,category_type,sort_order)
 SELECT c.ru,c.en,c.vi,'market',c.position FROM (VALUES
  ('Овощи','Vegetables','Rau củ',10),('Фрукты','Fruit','Trái cây',20),
@@ -1091,7 +1084,7 @@ AND EXISTS(SELECT 1 FROM public.market_warehouses w WHERE w.location_id=s.locati
 ON CONFLICT DO NOTHING;
 INSERT INTO storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 VALUES('market-catalog','market-catalog',true,5242880,ARRAY['image/jpeg','image/png','image/webp']),
-('market-evidence','market-evidence',false,5242880,ARRAY['image/jpeg','image/png','image/webp'])
+('market-evidence','market-evidence',false,5242880,ARRAY['image/jpeg','image/png','image/webp','application/pdf'])
 ON CONFLICT(id) DO NOTHING;
 -- Restrictive policy also holds if other modules add permissive storage policies later.
 CREATE POLICY market_files_service_only ON storage.objects AS RESTRICTIVE FOR ALL TO anon,authenticated
@@ -1099,4 +1092,24 @@ USING(bucket_id NOT IN ('market-catalog','market-evidence'))
 WITH CHECK(bucket_id NOT IN ('market-catalog','market-evidence'));
 SELECT cron.schedule('umma-market-maintenance','* * * * *','select public.market_expire_reservations();');
 NOTIFY pgrst,'reload schema';
+
+
+-- Source: market-quality.sql
+-- Apply the meat quality gate to both existing and new catalogue category names.
+
+CREATE FUNCTION public.market_require_meat_evidence() RETURNS trigger
+LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM public.products p JOIN public.categories c ON c.id=p.category_id
+ WHERE p.id=NEW.product_id AND c.category_type='market'
+ AND (c.name_en ~* '(meat|poultry|chicken)' OR c.name_ru ~* '(мяс|птиц|куриц)')) THEN
+  NEW.requires_quality_evidence:=true;
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER market_require_meat_evidence BEFORE INSERT OR UPDATE ON public.market_product_variants
+FOR EACH ROW EXECUTE FUNCTION public.market_require_meat_evidence();
+REVOKE ALL ON FUNCTION public.market_require_meat_evidence() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.market_require_meat_evidence() TO service_role;
+
 COMMIT;

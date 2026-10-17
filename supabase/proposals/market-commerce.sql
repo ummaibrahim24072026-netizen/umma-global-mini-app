@@ -170,6 +170,7 @@ BEGIN
  IF TG_OP='INSERT' THEN IF internal_ IS DISTINCT FROM true THEN RAISE EXCEPTION 'Use Market checkout'; END IF; RETURN NEW; END IF;
  SELECT * INTO m FROM public.market_orders WHERE order_id=OLD.id;
  IF NOT FOUND THEN RAISE EXCEPTION 'Market order extension missing'; END IF;
+ IF OLD.payment_status='pending' AND NEW.payment_status='paid' AND (m.released OR (m.picked_at IS NULL AND m.reserve_until<now())) THEN RAISE EXCEPTION 'Market reservation expired; payment requires review'; END IF;
  IF NEW.status='ready' AND OLD.status<>'ready' AND (m.picked_at IS NULL OR EXISTS(SELECT 1 FROM public.market_reservations WHERE order_id=OLD.id AND state='reserved' AND picked_quantity<>quantity)) THEN RAISE EXCEPTION 'Complete all picking scans first'; END IF;
  IF NEW.delivery_status='picked_up' AND OLD.delivery_status<>'picked_up' AND (m.handed_at IS NULL OR m.handed_to IS DISTINCT FROM NEW.courier_telegram_id OR m.picked_at IS NULL OR (NEW.payment_timing IS DISTINCT FROM 'on_delivery' AND NEW.payment_status<>'paid')) THEN RAISE EXCEPTION 'Market handover not authorized'; END IF;
  IF NEW.status IS DISTINCT FROM OLD.status AND internal_ IS DISTINCT FROM true AND NOT(NEW.status='completed' AND OLD.status='ready' AND NEW.delivery_status='delivered' AND NEW.payment_status='paid') THEN RAISE EXCEPTION 'Use Market order controls'; END IF;

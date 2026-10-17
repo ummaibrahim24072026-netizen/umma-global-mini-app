@@ -30,7 +30,7 @@ AND EXISTS(SELECT 1 FROM public.market_warehouses w WHERE w.location_id=s.locati
 ON CONFLICT DO NOTHING;
 INSERT INTO storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 VALUES('market-catalog','market-catalog',true,5242880,ARRAY['image/jpeg','image/png','image/webp']),
-('market-evidence','market-evidence',false,5242880,ARRAY['image/jpeg','image/png','image/webp'])
+('market-evidence','market-evidence',false,5242880,ARRAY['image/jpeg','image/png','image/webp','application/pdf'])
 ON CONFLICT(id) DO NOTHING;
 -- Restrictive policy also holds if other modules add permissive storage policies later.
 CREATE POLICY market_files_service_only ON storage.objects AS RESTRICTIVE FOR ALL TO anon,authenticated
