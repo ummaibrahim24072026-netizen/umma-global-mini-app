@@ -16,6 +16,7 @@ try{
  await until(()=>d.getElementById('dailyAyahUnderstand'));
  assert.equal(w.ummaQuran.dateKey(new Date('2026-10-17T16:59:59Z')),'2026-10-17');assert.equal(w.ummaQuran.dateKey(new Date('2026-10-17T17:00:00Z')),'2026-10-18');
  assert.equal(w.ummaQuran.dayIndex(new Date('2026-10-17T17:00:00Z'))-w.ummaQuran.dayIndex(new Date('2026-10-17T16:59:59Z')),1);
+ const disclosure=d.querySelector('.daily-ayah'),summary=disclosure.querySelector('summary');assert.equal(disclosure.open,false);assert.ok(summary.querySelector('.daily-ayah-preview').textContent);assert.ok(d.getElementById('quranDirect').closest('.daily-ayah-expanded'));summary.click();assert.equal(disclosure.open,true);summary.click();assert.equal(disclosure.open,false);summary.click();
  d.getElementById('dailyAyahUnderstand').click();await until(()=>d.querySelector('#quranTafsir article'));assert.ok(d.querySelector('#quranTafsir').closest('[data-i18n-ignore]'));assert.match(d.getElementById('quranTafsirStatus').textContent,/V1.0.0/);
  d.getElementById('quranReadSurah').click();await until(()=>d.getElementById('quranMode'));assert.ok(d.querySelector('[data-scrolled=true]'));
  d.getElementById('quranMode').value='arabic';d.getElementById('quranMode').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('quranBody').dataset.mode,'arabic');
