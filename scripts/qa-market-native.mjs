@@ -1,0 +1,27 @@
+import pg from 'pg';import assert from 'node:assert/strict';import{randomUUID}from'node:crypto';import{verifyMarketCommerce}from'./qa-market-commerce.mjs';
+const config={host:process.env.PGHOST||'127.0.0.1',port:Number(process.env.PGPORT||5432),database:process.env.PGDATABASE||'umma_qa',user:process.env.PGUSER||'postgres',password:process.env.PGPASSWORD};
+assert.ok(['127.0.0.1','localhost'].includes(config.host));assert.equal(config.database,'umma_qa');
+const clients=await Promise.all([0,1,2].map(async()=>{const c=new pg.Client(config);await c.connect();return c;})),[a,b,c]=clients;
+const wh='22222222-2222-4222-8222-222222222222',loc='11111111-1111-4111-8111-111111111111';
+const call=(actor,key,action,data)=>['select market_commerce_operation($1,$2,$3,$4::jsonb) r',[actor,key,action,JSON.stringify({warehouse_id:wh,...data})]];
+async function waitForLock(pattern){for(let n=0;n<40;n++){const r=await c.query("select exists(select 1 from pg_stat_activity where datname='umma_qa' and pid<>pg_backend_pid() and wait_event_type='Lock' and query like $1) waiting",['%'+pattern+'%']);if(r.rows[0].waiting)return;await new Promise(r=>setTimeout(r,50));}throw Error('Expected independent backend lock wait: '+pattern);}
+try{
+ await verifyMarketCommerce({query:(...args)=>c.query(...args),exec:sql=>c.query(sql)});
+ const available=(await c.query("select u.id,u.variant_id from market_stock_units u join market_product_variants v on v.id=u.variant_id where u.status='available' and v.sale_mode='fixed_weight' order by u.id limit 1")).rows[0];
+ const items=[{variant_id:available.variant_id,unit_id:available.id,count:1}],quote=(await c.query('select market_quote($1,$2::jsonb) r',[wh,JSON.stringify(items)])).rows[0].r;
+ const data={items,order_type:'pickup',payment_method:'cash',customer_name:'Concurrent QA',customer_phone:'+840000000',expected_total_vnd:quote.subtotal_vnd};
+ await a.query('begin');const winner=(await a.query(...call(12,randomUUID(),'order_create',data))).rows[0].r;
+ const loser=b.query(...call(13,randomUUID(),'order_create',data)).then(()=>({ok:true}),e=>({error:e.message}));await waitForLock('market_commerce_operation');await a.query('commit');assert.match((await loser).error,/no rows|available/);
+ assert.equal(Number((await c.query("select count(*) n from market_reservations where unit_id=$1 and state='reserved'",[available.id])).rows[0].n),1);
+ const payment={order_id:winner.order_id,amount_vnd:winner.total_vnd,received_confirmed:true,reference:'Concurrent receipt QA'};
+ await a.query('begin');await a.query(...call(14,randomUUID(),'payment_confirm',payment));const secondPayment=b.query(...call(14,randomUUID(),'payment_confirm',payment)).then(()=>({ok:true}),e=>({error:e.message}));await waitForLock('market_commerce_operation');await a.query('commit');assert.match((await secondPayment).error,/already resolved|closed/);
+ assert.equal(Number((await c.query('select count(*) n from cafe_payment_receipts where order_id=$1',[winner.order_id])).rows[0].n),1);
+ const supplier=(await c.query('select id from suppliers limit 1')).rows[0].id,variant=(await c.query("select id from market_product_variants where sale_mode='piece' order by id limit 1")).rows[0].id;
+ const core=(key,action,data)=>['select market_operation(10,$1,$2,$3::jsonb) r',[key,action,JSON.stringify({warehouse_id:wh,...data})]];
+ const receipt=(await c.query(...core(randomUUID(),'receive',{supplier_id:supplier,items:[{variant_id:variant,quantity:10,cost_vnd:50000,batch_number:'Concurrent writeoff',quality:'passed'}]}))).rows[0].r;
+ const wr=(await c.query(...core(randomUUID(),'writeoff_request',{batch_id:receipt.batch_ids[0],quantity:2,reason:'Concurrent loss QA'}))).rows[0].r;
+ await a.query('begin');await a.query(...core(randomUUID(),'writeoff_approve',{document_id:wr.document_id}));
+ const double=b.query(...core(randomUUID(),'writeoff_approve',{document_id:wr.document_id})).then(()=>({ok:true}),e=>({error:e.message}));await waitForLock('market_operation');await a.query('commit');assert.match((await double).error,/already resolved/);
+ assert.equal(Number((await c.query('select raw_quantity from market_batches where id=$1',[receipt.batch_ids[0]])).rows[0].raw_quantity),8);
+ console.log('PASS Market native PostgreSQL concurrency: observed independent lock waits; one buyer, one payment and one writeoff');
+}finally{for(const client of clients){await client.query('rollback').catch(()=>{});await client.end();}}

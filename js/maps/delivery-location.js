@@ -125,6 +125,12 @@
   });
   $("cafeDeliveryPointClear").addEventListener("click", () => { confirmed = null; notify(); });
   window.ummaDeliveryLocation = {
+    chooseForLocation: (location,onConfirm,source) => {
+      if(dialog.open||!Array.isArray(location?.delivery_zone))return;
+      external={previous:{zone,cafe,confirmed},onConfirm};zone=location.delivery_zone;
+      if(Number.isFinite(Number(location.latitude))&&Number.isFinite(Number(location.longitude)))cafe={lat:Number(location.latitude),lng:Number(location.longitude)};
+      confirmed=null;open(source);
+    },
     hasPoint: () => valid(confirmed) === true,
     availability,
     getAddress: details => {

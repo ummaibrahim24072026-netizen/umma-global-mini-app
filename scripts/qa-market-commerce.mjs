@@ -1,0 +1,134 @@
+import {PGlite} from '@electric-sql/pglite';import{readFileSync}from'node:fs';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';
+export async function verifyMarketCommerce(db){
+const q=(sql,args=[])=>db.query(sql,args.map(v=>Array.isArray(v)?JSON.stringify(v):v)),loc='11111111-1111-4111-8111-111111111111',wh='22222222-2222-4222-8222-222222222222';let checks=0;
+const ok=(x,m)=>{assert.ok(x,m);checks++;},reject=async(x,r)=>{await assert.rejects(x,r);checks++;};
+const core=async(action,data={},actor=10,key=randomUUID())=>(await q('select market_operation($1,$2,$3,$4) r',[actor,key,action,{warehouse_id:wh,...data}])).rows[0].r;
+const op=async(action,data={},actor=12,key=randomUUID())=>(await q('select market_commerce_operation($1,$2,$3,$4) r',[actor,key,action,{warehouse_id:wh,...data}])).rows[0].r;
+const row=async(table,id,col='id')=>(await q(`select * from ${table} where ${col}=$1`,[id])).rows[0];
+try{
+ await db.exec(readFileSync('tests/fixtures/supabase-public-schema.sql','utf8'));
+ await db.exec(`do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon;end if;if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated;end if;if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role;end if;end $$;alter table locations add column if not exists delivery_zone jsonb;alter table cafe_orders add column if not exists payment_timing text;alter table cafe_orders add column if not exists dispatch_mode text default 'nearest';`);
+ await db.exec(readFileSync('supabase/release/cafe-launch.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/cafe-delivery-zone.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-quality.sql','utf8'));
+ await db.exec(`insert into telegram_users(telegram_id,role)values(10,'super_admin'),(11,'employee'),(12,'user'),(13,'user'),(14,'employee');insert into locations(id,name,location_type,city)values('${loc}','HALAL UMMA','cafe','Nha Trang');insert into market_warehouses(id,location_id,name)values('${wh}','${loc}','QA');insert into market_staff_roles(telegram_id,location_id,role)values(11,'${loc}','picker'),(14,'${loc}','cashier');`);
+ await q('insert into cafe_staff_shifts(location_id,staff_telegram_id,opened_by_telegram_id,opening_cash_vnd)values($1,14,14,1000000)',[loc]);
+ const sup=(await core('supplier_create',{name:'QA'})).supplier_id;
+ const meat=(await core('product_create',{name_ru:'Мясо',sale_mode:'individual_weight',measure:'g',price_vnd:339000})).variant;
+ const drink=(await core('product_create',{name_ru:'Напиток',sale_mode:'piece',measure:'pcs',price_vnd:10000,barcode:'8935049500123'})).variant;
+ await q('insert into market_offers(warehouse_id,variant_id,price_vnd) values($1,$2,339000),($1,$3,10000)',[wh,meat.id,drink.id]);
+ const receive=async(variant,quantity,cost,expiry='2099-12-31')=>(await core('receive',{supplier_id:sup,items:[{variant_id:variant,quantity,cost_vnd:cost,batch_number:randomUUID(),quality:'passed',expires_on:expiry}]})).batch_ids[0];
+ const batch=await receive(meat.id,8340,2502000);const units=(await core('pack',{batch_id:batch,quantities:[2520,2780,3040],remaining_quantity:0})).unit_ids;
+ const drinks=await receive(drink.id,100,500001);
+ const mk=async(items,payment='cash',who=12)=>{const quote=(await q('select market_quote($1,$2) r',[wh,items])).rows[0].r;return {warehouse_id:wh,items,order_type:'pickup',payment_method:payment,customer_name:'QA customer',customer_phone:'+840000000',expected_total_vnd:quote.subtotal_vnd};};
+ const cart=[{variant_id:meat.id,unit_id:units[1],count:1}];const data=await mk(cart,'qr');const key=randomUUID();const order=await op('order_create',data,12,key);
+ ok(order.total_vnd===942420,'exact 2.780 kg price');ok((await op('order_create',data,12,key)).replayed,'create replay');
+ await reject(op('order_create',{...data,expected_total_vnd:1},12,key),/key reused/);
+ await reject(op('order_create',data,13),/no rows/);ok((await row('market_stock_units',units[1])).status==='reserved','specific unit reserved');
+ await reject(op('order_cancel',{order_id:order.order_id},13),/access denied/);
+ const allocation=(await q('select * from market_reservations where order_id=$1',[order.order_id])).rows[0];
+ ok(!(await op('pick_scan',{order_id:order.order_id,allocation_id:allocation.id,code:'UMMA:'+units[1]},11)).ok,'no online picking before payment');
+ await reject(op('payment_confirm',{order_id:order.order_id,received_confirmed:true,amount_vnd:1,reference:'QA'},14),/amount mismatch/);
+ await op('payment_confirm',{order_id:order.order_id,received_confirmed:true,amount_vnd:942420,reference:'Received QA transfer'},14);
+ const wrong=await op('pick_scan',{order_id:order.order_id,allocation_id:allocation.id,code:'UMMA:'+units[2]},11);ok(!wrong.ok&&wrong.error.includes(units[1]),'wrong meat blocked with required ID');
+ await reject(op('pick_complete',{order_id:order.order_id},11),/required positions/);
+ const scanKey=randomUUID(),scanData={order_id:order.order_id,allocation_id:allocation.id,code:'UMMA:'+units[1]};await op('pick_scan',scanData,11,scanKey);ok((await op('pick_scan',scanData,11,scanKey)).replayed,'scan replay');
+ await op('pick_complete',{order_id:order.order_id},11);await op('pickup_complete',{order_id:order.order_id,package_count:1},14);
+ ok((await row('market_stock_units',units[1])).status==='sold','sold at verified handover');ok((await row('cafe_orders',order.order_id)).status==='completed','shared order completed');
+ await reject(op('pickup_complete',{order_id:order.order_id,package_count:1},14),/Ready and paid/);
+ const two=await op('order_create',await mk([{variant_id:drink.id,count:2}]));const alloc=(await q('select * from market_reservations where order_id=$1',[two.order_id])).rows[0];
+ await reject(core('count_start'),/active reservations/);await reject(core('pack',{batch_id:drinks,quantities:[1],remaining_quantity:99}),/reserved orders/);
+ const pending=await core('writeoff_request',{batch_id:drinks,quantity:99,reason:'QA'});await reject(core('writeoff_approve',{document_id:pending.document_id}),/reserved orders/);
+ ok(!(await op('pick_scan',{order_id:two.order_id,allocation_id:alloc.id,code:'wrong',quantity:2},11)).ok,'factory wrong code blocked');
+ await op('pick_scan',{order_id:two.order_id,allocation_id:alloc.id,code:'8935049500123',quantity:2},11);await op('pick_complete',{order_id:two.order_id},11);
+ await op('payment_confirm',{order_id:two.order_id,amount_vnd:20000,received_confirmed:true,reference:'Actual cash'},14);await op('pickup_complete',{order_id:two.order_id,package_count:1},14);
+ ok(Number((await row('market_batches',drinks)).raw_quantity)===98,'factory stock deducted once');
+ const refund=await op('refund',{order_id:order.order_id,amount_vnd:400000,payout_confirmed:true,reason:'Actual partial refund',reference:'Bank payout QA'},10);ok(refund.refunded_vnd===400000,'partial refund');
+ await reject(op('refund',{order_id:order.order_id,amount_vnd:600000,payout_confirmed:true,reason:'Too much',reference:'QA'},10),/exceeds/);
+ await op('refund',{order_id:order.order_id,amount_vnd:542420,payout_confirmed:true,reason:'Remaining refund',reference:'QA payout'},10);ok((await row('cafe_orders',order.order_id)).payment_status==='refunded','full refund total');
+ const exp=await op('order_create',await mk([{variant_id:meat.id,unit_id:units[0],count:1}],'qr'));
+ await q("update market_orders set reserve_until=now()-interval '1 minute' where order_id=$1",[exp.order_id]);await q('select market_expire_reservations()');ok((await row('market_stock_units',units[0])).status==='available','expiry releases exact unit');ok((await row('cafe_orders',exp.order_id)).status==='cancelled','expired order cancelled');
+ await reject(op('payment_confirm',{order_id:exp.order_id,amount_vnd:854280,received_confirmed:true,reference:'Late pay'},14),/closed/);
+ const cancel=await op('order_create',await mk([{variant_id:drink.id,count:1}]));await op('order_cancel',{order_id:cancel.order_id});ok(Number((await row('market_batches',drinks)).reserved_raw)===0,'cancel releases raw reserve');
+ await core('quarantine',{batch_id:batch,reason:'QA'});await reject(q('select market_quote($1,$2)',[wh,[{variant_id:meat.id,unit_id:units[2],count:1}]]),/no rows/);await core('release',{batch_id:batch,reason:'QA checked'});
+
+ // Additional warehouse, financial and shared-delivery acceptance scenarios.
+ const manage=async(action,data={},actor=10,key=randomUUID())=>(await q('select market_management_operation($1,$2,$3,$4) r',[actor,key,action,{warehouse_id:wh,...data}])).rows[0].r;
+ const vb=(await core('product_create',{name_ru:'Огурцы',sale_mode:'fixed_weight',measure:'g',fixed_quantity:1000,price_vnd:30000})).variant;
+ const half=(await manage('variant_create',{source_variant_id:vb.id,sale_mode:'fixed_weight',fixed_quantity:500})).variant_id;
+ await manage('offer_save',{variant_id:vb.id,price_vnd:30000});await manage('offer_save',{variant_id:half,price_vnd:17000});
+ const cucumber=await receive(vb.id,10000,150001);const cp=await core('pack',{batch_id:cucumber,quantities:[1000,1000,1000,1000,1000,1000,500,500,500,500,500,500,500],remaining_quantity:500});
+ ok((await row('market_stock_units',cp.unit_ids[6])).variant_id===half,'500 g variant chosen during packing');
+ const cat=(await q('select market_catalog($1) r',[wh])).rows[0].r;ok(cat.offers.find(x=>x.variant_id===half).units.length===7,'half kilo packs listed separately');
+ await reject(manage('offer_save',{variant_id:half,price_vnd:100},11),/access denied/);
+ const draft=await manage('receipt_draft',{supplier_id:sup,lines:[{variant_id:drink.id,quantity:10}]});
+ const part={draft_id:draft.draft_id,items:[{variant_id:drink.id,quantity:6,cost_vnd:30000,batch_number:'Partial',quality:'passed'}]};
+ await manage('receipt_accept',part);ok((await row('market_receiving_drafts',draft.draft_id)).state==='partial','partial receiving retains remaining plan');
+ await reject(manage('receipt_accept',part),/exceeds remaining/);await manage('receipt_close',{draft_id:draft.draft_id,reason:'Supplier delivered only six'});ok((await row('market_receiving_drafts',draft.draft_id)).state==='closed','rejected remainder documented');
+ await q('insert into market_warehouses(id,location_id,name) values($1,$2,$3)',['77777777-7777-4777-8777-777777777777',loc,'Second QA warehouse']);
+ const transfer=await manage('transfer',{batch_id:cucumber,quantity:200,target_warehouse_id:'77777777-7777-4777-8777-777777777777',reason:'Move raw stock'});ok(Number((await row('market_batches',transfer.target_batch_id)).raw_quantity)===200,'warehouse transfer creates traced destination batch');
+ const original=(await q('select * from market_reservations where order_id=$1',[order.order_id])).rows[0];
+ const returned=await manage('customer_return',{allocation_id:original.id,quantity:2780,reason:'Customer returned package'});ok((await row('market_stock_units',returned.unit_id)).status==='quarantine','returned meat has a new quarantined identity');
+ await reject(manage('customer_return',{allocation_id:original.id,quantity:2780,reason:'Duplicate return'}),/exceeds sold/);
+ const qrorder=await op('order_create',await mk([{variant_id:meat.id,unit_id:units[0],count:1}],'qr'));
+ const number=Number((await row('cafe_orders',qrorder.order_id)).order_number),amount=qrorder.total_vnd;
+ await q("insert into umma_private.pay_devices(location_id,account,token_hash,enabled) values($1,'SYNTHETIC',repeat('a',64),true)",[loc]);
+ const pay=async(ev,amt=amount)=>(await q("select umma_pay_ingest(repeat('a',64),$1,$2,$3,now(),$4,$5) r",[ev,ev+'hash','Synthetic notification '+ev,amt,number])).rows[0].r;
+ ok((await pay('bad-amount',amount+1)).state==='review','bank amount mismatch not confirmed');ok((await pay('valid-payment')).state==='confirmed','existing UMMA Pay confirms Market order');ok((await pay('valid-payment')).duplicate,'bank replay does not duplicate receipt');
+ ok((await row('market_orders',qrorder.order_id,'order_id')).reserve_until===null,'bank confirmation freezes reservation for fulfilment');
+ await reject(q("update cafe_orders set status='ready' where id=$1",[qrorder.order_id]),/picking scans|controls/);
+ await q("insert into telegram_users(telegram_id,role)values(20,'employee')");await q("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments)values(20,$1,'courier',true)",[loc]);
+ await q("update locations set delivery_zone='[[12.20,109.17],[12.30,109.17],[12.30,109.22],[12.20,109.22]]',latitude=12.25,longitude=109.19 where id=$1",[loc]);
+ const deliveryData=await mk([{variant_id:drink.id,count:1}]);deliveryData.order_type='delivery';deliveryData.delivery_address='QA address\nТочка доставки: 12.250000,109.190000';
+ const outside={...deliveryData,delivery_address:'Outside\nТочка доставки: 10.000000,106.000000'};await reject(op('order_create',outside),/OUTSIDE_ZONE/);
+ await q('create schema if not exists umma_courier_internal');await q('create table if not exists umma_courier_internal.worker_control(id boolean primary key,dispatch_enabled boolean)');await q('insert into umma_courier_internal.worker_control values(true,true) on conflict(id)do update set dispatch_enabled=true');
+ await q('select set_courier_dispatch_presence(20,true)');
+ const delivered=await op('order_create',deliveryData);await q('select ensure_cafe_courier_offers($1)',[delivered.order_id]);await q('select respond_cafe_courier_offer($1,20,true)',[delivered.order_id]);
+ const da=(await q('select * from market_reservations where order_id=$1',[delivered.order_id])).rows[0];await op('pick_scan',{order_id:delivered.order_id,allocation_id:da.id,code:'8935049500123',quantity:1},11);await op('pick_complete',{order_id:delivered.order_id},11);
+ await reject(q("select update_cafe_delivery_status($1,20,'picked_up')",[delivered.order_id]),/photo|handover/i);
+ await op('handover',{order_id:delivered.order_id,package_count:1},11);
+ for(const kind of ['pickup','handover']){
+  const proof=(await q("select begin_cafe_delivery_proof($1,20,$2,$3,$4,'image/jpeg',1024) r",[delivered.order_id,randomUUID(),kind,(kind==='pickup'?'a':'b').repeat(64)])).rows[0].r.proof;
+  await q('select confirm_cafe_delivery_proof($1,20)',[proof.id]);
+  if(kind==='pickup')ok((await row('market_orders',delivered.order_id,'order_id')).sale_posted,'courier pickup consumes verified stock');
+ }
+ await op('payment_confirm',{order_id:delivered.order_id,amount_vnd:delivered.total_vnd,received_confirmed:true,reference:'Courier actual cash'},14);
+ await q("select update_cafe_order_status($1,20,'completed')",[delivered.order_id]);ok((await row('cafe_orders',delivered.order_id)).status==='completed','shared courier delivery completes a Market order');
+ const report=(await q("select market_report(10,$1,now()-interval '1 day',now()+interval '1 day') r",[wh])).rows[0].r;ok(Number(report.revenue_vnd)>0&&Number(report.picking_errors)>0,'warehouse report reconciles sales and picking errors');
+ const view=(await q('select market_order_view(12,null,false) r')).rows[0].r;ok(view.orders.every(o=>o.customer_telegram_id===12),'customer sees own orders only');ok(view.orders.every(o=>o.allocations.every(a=>a.cost_vnd===undefined)),'customer does not see procurement costs');
+
+ const subOrder=await op('order_create',await mk([{variant_id:vb.id,unit_id:cp.unit_ids[0],count:1}]));
+ const subItem=(await q('select item_id from market_order_lines where order_id=$1',[subOrder.order_id])).rows[0].item_id;
+ const proposal=await op('substitution_propose',{order_id:subOrder.order_id,item_id:subItem,replacement_unit_id:cp.unit_ids[1],reason:'Original package damaged'},11);
+ await reject(op('substitution_answer',{order_id:subOrder.order_id,issue_id:proposal.issue_id,answer:'accept'},13),/Only the customer/);
+ await op('substitution_answer',{order_id:subOrder.order_id,issue_id:proposal.issue_id,answer:'accept'});
+ ok((await row('market_stock_units',cp.unit_ids[0])).status==='available'&&(await row('market_stock_units',cp.unit_ids[1])).status==='reserved','customer consent swaps exact reservation atomically');
+ await op('order_cancel',{order_id:subOrder.order_id});
+ const lossBatch=await receive(vb.id,2050,30750);const withLoss=await manage('pack_with_loss',{batch_id:lossBatch,quantities:[1000,1000],remaining_quantity:0,loss_quantity:50,reason:'Measured packing loss'});ok(withLoss.unit_ids.length===2&&Number((await row('market_batches',lossBatch)).raw_quantity)===0,'packing loss has a posted approval and balanced output');
+ await manage('product_update',{variant_id:meat.id,name_ru:'Мясо',is_active:true,requires_quality_evidence:true});
+ const unchecked=await receive(meat.id,1000,300000);ok((await row('market_batches',unchecked)).status==='quarantine','meat without evidence is quarantined despite passed checkbox');
+ await reject(core('release',{batch_id:unchecked,reason:'Inspection'}),/evidence required/);
+ await core('release',{batch_id:unchecked,reason:'Inspected origin and temperature',quality_evidence:{temperature_c:'2.5',provenance:'Synthetic approved source',halal_document:'Synthetic evidence path'}});ok((await row('market_batches',unchecked)).status==='available','meat release records required evidence');
+ const correctedBatch=await receive(drink.id,10,50000),wd=await core('writeoff_request',{batch_id:correctedBatch,quantity:2,reason:'Incorrect count'});await core('writeoff_approve',{document_id:wd.document_id});
+ const correction=await manage('reverse_writeoff',{document_id:wd.document_id,reason:'Count corrected after recheck'});ok((await row('market_batches',correction.batch_id)).status==='quarantine','writeoff correction is a new quarantine document');await reject(manage('reverse_writeoff',{document_id:wd.document_id,reason:'Again'}),/already corrected/);
+
+ const legacyCategory=randomUUID();await q("insert into categories(id,name_ru,name_en,name_vi,category_type)values($1,'Халяльное мясо','Halal Meat','Thịt Halal','market')",[legacyCategory]);
+ const gated=(await core('product_create',{name_ru:'Legacy-category meat',category_id:legacyCategory,sale_mode:'individual_weight',measure:'g',price_vnd:1})).variant;
+ ok(gated.requires_quality_evidence,'existing halal meat category requires evidence');
+ await manage('product_update',{variant_id:gated.id,name_ru:'Legacy-category meat',category_id:legacyCategory,requires_quality_evidence:false});
+ ok((await row('market_product_variants',gated.id)).requires_quality_evidence,'meat category evidence gate cannot be disabled by an unchecked form field');
+ // Existing Cafe operations still execute after the Market triggers and cash bridge are installed.
+ const cafeProduct=randomUUID();await q("insert into products(id,name_ru,name_en,name_vi,product_type,price_vnd)values($1,'Cafe regression','Cafe regression','Cafe regression','cafe',120000)",[cafeProduct]);
+ const cafe=(await q("select create_cafe_staff_order(10,$1,$2::jsonb,'pickup','Cafe regression') r",[loc,JSON.stringify([{productId:cafeProduct,quantity:1}])])).rows[0].r.order;
+ await q("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments)values(10,$1,'manager',true)",[loc]);await q('select open_cafe_staff_shift($1,10,10,0)',[loc]);await q("select update_cafe_order_payment_cash($1,10,'paid',null,120000,0)",[cafe.id]);
+ for(const status of ['confirmed','preparing','ready','completed'])await q('select update_cafe_order_status($1,10,$2)',[cafe.id,status]);
+ ok((await row('cafe_orders',cafe.id)).status==='completed','Cafe order/payment/fulfilment works after Market schema');
+ await q('select refund_cafe_order($1,10,$2,$3,true)',[cafe.id,randomUUID(),'Actual Cafe regression refund']);
+ const shift=(await q("select id from cafe_staff_shifts where staff_telegram_id=10 and shift_status='open'")).rows[0];await q('select close_cafe_staff_shift($1,10,0,null)',[shift.id]);ok((await row('cafe_staff_shifts',shift.id)).shift_status==='closed','Cafe refund and cash shift remain correct');
+ await db.exec('set role anon');await reject(q('select market_catalog(null)'),/permission denied/);await db.exec('reset role');
+ console.log('PASS '+checks+' Market commerce checks: exact units, reservation, payment, wrong-item gate, factory quantities, picking, handover, refund and expiry');
+}catch(e){throw e;}
+}
+if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){const db=new PGlite();try{await verifyMarketCommerce(db);}catch(e){console.error(e.message,e.where||'');process.exitCode=1;}finally{await db.close();}}

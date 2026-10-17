@@ -7,9 +7,9 @@
  function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','umma-icon');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[name]||paths.more);svg.append(p);return svg;}
  document.querySelectorAll('[data-native-icon]').forEach(el=>el.replaceChildren(icon(el.dataset.nativeIcon)));
  for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
- const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','servicesPage'];
+ const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','marketPage','marketShopPage','servicesPage'];
  scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
- const titles={home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Ещё',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
+ const titles={marketPage:'UMMA Stock & Scan',marketShopPage:'UMMA Market',home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Ещё',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
  const current=()=>scenes.find(id=>byId(id)&&!byId(id).hidden)||'home';
  let active='home',dialog=null;
  function syncScene(records=[]){
@@ -62,6 +62,7 @@
   dialog.onclose=()=>syncScene();document.body.append(dialog);dialog.showModal();syncScene();return dialog;
  }
  function openService(key){
+  if(key==='market'){window.ummaMarket?.open();return;}
   if(key==='services'||key==='more'){
    scenes.forEach(id=>{if(byId(id))byId(id).hidden=id!=='servicesPage';});document.querySelector('.app>main').style.display='none';const nav=document.querySelector('.bottom-nav');if(nav)nav.style.display='';if(typeof setActiveNav==='function')setActiveNav('more');return;
   }
@@ -70,9 +71,9 @@
   const cafe=document.createElement('button');cafe.type='button';cafe.className='cafe-submit';cafe.textContent='Открыть UMMA Cafe';cafe.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage('cafe');};sheet.append(cafe);
  }
  const grid=byId('nativeDirectory');if(grid)for(const [key,item] of Object.entries(catalogue)){
-  const b=document.createElement('button');b.type='button';b.className='native-directory-card';const title=document.createElement('strong');title.textContent=item[0];const desc=document.createElement('small');desc.textContent=item[1];const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(icon(key),title,desc,status);b.onclick=()=>openService(key);grid.append(b);
+  const b=document.createElement('button');b.type='button';b.dataset.service=key;b.className='native-directory-card';const title=document.createElement('strong');title.textContent=item[0];const desc=document.createElement('small');desc.textContent=item[1];const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(icon(key),title,desc);if(key!=='market')b.append(status);b.onclick=()=>openService(key);grid.append(b);
  }
- document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
+ document.querySelectorAll('.service[data-page]').forEach(b=>{const badge=document.createElement('span');badge.className='native-coming';badge.textContent='Готовится';if(b.dataset.page!=='market')b.append(badge);b.querySelector('.service-icon')?.replaceChildren(icon(b.dataset.page));});
  byId('servicesBack')?.addEventListener('click',()=>{if(!window.ummaNavigation?.back()&&typeof openPage==='function')openPage('home');});
  document.querySelector('.farm-button')?.addEventListener('click',()=>openService('farm'));
  byId('nativeHomeShortcut')?.addEventListener('click',()=>{try{sdk?.addToHomeScreen?.();}catch{if(typeof showToast==='function')showToast('Добавление ярлыка недоступно в этой версии Telegram');}});

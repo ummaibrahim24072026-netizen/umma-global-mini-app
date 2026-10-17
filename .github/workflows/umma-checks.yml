@@ -54,6 +54,24 @@ jobs:
           PGDATABASE: umma_qa
           PGPASSWORD: isolated-ci-only
         run: node scripts/qa/run-postgres-concurrency.mjs
+      - name: Verify Market commerce and independent stock races
+        env:
+          PGHOST: 127.0.0.1
+          PGDATABASE: umma_qa
+          PGPASSWORD: isolated-ci-only
+        run: node scripts/qa-market-native.mjs
+      - name: Verify database backup and restore in isolated PostgreSQL
+        env:
+          QA_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          mkdir -p artifacts
+          docker exec "$QA_PG_CONTAINER" pg_dump -U postgres -Fc umma_qa > artifacts/market-recovery.dump
+          docker exec "$QA_PG_CONTAINER" createdb -U postgres umma_restore_qa
+          docker exec -i "$QA_PG_CONTAINER" pg_restore -U postgres -d umma_restore_qa < artifacts/market-recovery.dump
+          expected=$(docker exec "$QA_PG_CONTAINER" psql -U postgres -d umma_qa -Atc "select count(*) from public.market_orders")
+          restored=$(docker exec "$QA_PG_CONTAINER" psql -U postgres -d umma_restore_qa -Atc "select count(*) from public.market_orders")
+          test "$expected" = "$restored"
+          echo "PASS isolated database recovery: $restored Market orders restored"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
