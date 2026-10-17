@@ -7,7 +7,7 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","servicesPage"
+    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","marketShopPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",

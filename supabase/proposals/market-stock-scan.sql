@@ -15,10 +15,10 @@ CREATE TABLE public.market_staff_roles (
 -- Canonical catalogue, suppliers, purchase documents, stock items and movements are reused.
 CREATE TABLE public.market_product_variants (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), product_id uuid NOT NULL REFERENCES public.products(id),
- stock_item_id uuid NOT NULL UNIQUE REFERENCES public.stock_items(id),
+ stock_item_id uuid NOT NULL REFERENCES public.stock_items(id),
  sale_mode text NOT NULL CHECK(sale_mode IN ('piece','set','fixed_weight','individual_weight')),
  measure text NOT NULL CHECK(measure IN ('g','pcs')), fixed_quantity bigint CHECK(fixed_quantity>0),
- storage_conditions text, halal_evidence text, is_active boolean NOT NULL DEFAULT true
+ storage_conditions text, halal_evidence text, halal_verified boolean NOT NULL DEFAULT false, requires_quality_evidence boolean NOT NULL DEFAULT false, is_active boolean NOT NULL DEFAULT true
 );
 CREATE TABLE public.market_product_barcodes (
  code text PRIMARY KEY CHECK(length(code) BETWEEN 1 AND 128),
@@ -38,7 +38,7 @@ CREATE TABLE public.market_documents (
 CREATE TABLE public.market_batches (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), variant_id uuid NOT NULL REFERENCES public.market_product_variants(id),
  warehouse_id uuid NOT NULL REFERENCES public.market_warehouses(id), receipt_id uuid NOT NULL REFERENCES public.purchase_documents(id),
- batch_number text NOT NULL, expires_on date, storage_place text,
+ batch_number text NOT NULL, expires_on date, storage_place text, quality_evidence jsonb NOT NULL DEFAULT '{}',
  status text NOT NULL CHECK(status IN ('available','quarantine')),
  raw_quantity bigint NOT NULL CHECK(raw_quantity>=0), raw_cost_vnd bigint NOT NULL CHECK(raw_cost_vnd>=0),
  created_at timestamptz NOT NULL DEFAULT now(), CHECK(raw_quantity>0 OR raw_cost_vnd=0)
@@ -46,6 +46,7 @@ CREATE TABLE public.market_batches (
 CREATE INDEX market_batches_warehouse_idx ON public.market_batches(warehouse_id,variant_id,expires_on);
 CREATE TABLE public.market_stock_units (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), batch_id uuid NOT NULL REFERENCES public.market_batches(id),
+ variant_id uuid NOT NULL REFERENCES public.market_product_variants(id),
  quantity bigint NOT NULL CHECK(quantity>0), cost_vnd bigint NOT NULL CHECK(cost_vnd>=0),
  status text NOT NULL DEFAULT 'available' CHECK(status IN ('available','quarantine','written_off')),
  packing_document_id uuid NOT NULL REFERENCES public.market_documents(id), created_at timestamptz NOT NULL DEFAULT now()
@@ -102,14 +103,16 @@ CREATE TRIGGER market_operations_immutable BEFORE UPDATE OR DELETE ON public.mar
 CREATE TRIGGER market_scans_immutable BEFORE UPDATE OR DELETE ON public.market_scan_events FOR EACH ROW EXECUTE FUNCTION public.market_immutable();
 -- Freeze warehouse movements while a count is open; no false discrepancies from concurrent work.
 -- The same warehouse advisory lock is held by every mutation, including count start/close.
+CREATE FUNCTION public.market_assert_batch_mutable(p_batch uuid,p_action text) RETURNS void LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN RETURN; END $$;
+CREATE FUNCTION public.market_assert_warehouse_countable(p_warehouse uuid) RETURNS void LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN RETURN; END $$;
 CREATE FUNCTION public.market_sync_balance(p_warehouse uuid,p_variant uuid) RETURNS void
 LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public AS $$
 DECLARE v_location uuid; v_item uuid; v_qty numeric; v_cost bigint;
 BEGIN
  SELECT w.location_id INTO STRICT v_location FROM public.market_warehouses w WHERE w.id=p_warehouse;
  SELECT stock_item_id INTO STRICT v_item FROM public.market_product_variants WHERE id=p_variant;
- SELECT coalesce(sum(b.raw_quantity),0)+coalesce((SELECT sum(u.quantity) FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id JOIN public.market_warehouses w ON w.id=b.warehouse_id WHERE w.location_id=v_location AND b.variant_id=p_variant AND u.status<>'written_off'),0),
- coalesce(sum(b.raw_cost_vnd),0)+coalesce((SELECT sum(u.cost_vnd) FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id JOIN public.market_warehouses w ON w.id=b.warehouse_id WHERE w.location_id=v_location AND b.variant_id=p_variant AND u.status<>'written_off'),0)
+ SELECT coalesce(sum(b.raw_quantity),0)+coalesce((SELECT sum(u.quantity) FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id JOIN public.market_warehouses w ON w.id=b.warehouse_id WHERE w.location_id=v_location AND b.variant_id=p_variant AND u.status IN ('available','quarantine','reserved')),0),
+ coalesce(sum(b.raw_cost_vnd),0)+coalesce((SELECT sum(u.cost_vnd) FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id JOIN public.market_warehouses w ON w.id=b.warehouse_id WHERE w.location_id=v_location AND b.variant_id=p_variant AND u.status IN ('available','quarantine','reserved')),0)
  INTO v_qty,v_cost FROM public.market_batches b JOIN public.market_warehouses w ON w.id=b.warehouse_id WHERE w.location_id=v_location AND b.variant_id=p_variant;
  PERFORM set_config('umma.market_operation','on',true);
  INSERT INTO public.stock_balances(location_id,stock_item_id,quantity_on_hand,average_unit_cost_vnd)
@@ -137,7 +140,7 @@ BEGIN
  IF p_actor IS NULL OR p_request IS NULL OR p_data IS NULL THEN RAISE EXCEPTION 'Missing operation identity'; END IF;
  SELECT * INTO STRICT v_w FROM public.market_warehouses WHERE id=(p_data->>'warehouse_id')::uuid AND is_active;
  v_roles:=CASE p_action WHEN 'receive' THEN ARRAY['receiver'] WHEN 'supplier_create' THEN ARRAY['receiver'] WHEN 'pack' THEN ARRAY['packer']
- WHEN 'writeoff_request' THEN ARRAY['warehouse'] WHEN 'count_start' THEN ARRAY['warehouse']
+ WHEN 'writeoff_request' THEN ARRAY['warehouse','packer'] WHEN 'count_start' THEN ARRAY['warehouse']
  WHEN 'count_submit' THEN ARRAY['warehouse'] WHEN 'quarantine' THEN ARRAY['warehouse']
  WHEN 'scan' THEN ARRAY['receiver','packer','warehouse','picker'] WHEN 'print' THEN ARRAY['packer','warehouse']
  WHEN 'print_result' THEN ARRAY['packer','warehouse'] ELSE ARRAY['admin'] END;
@@ -166,13 +169,16 @@ BEGIN
   v_result:=jsonb_build_object('ok',true,'supplier_id',v_item);
  ELSIF p_action='product_create' THEN
   IF length(trim(coalesce(p_data->>'name_ru','')))=0 THEN RAISE EXCEPTION 'Product name required'; END IF;
+  IF p_data->>'sale_mode' IN ('fixed_weight','individual_weight') AND p_data->>'measure'<>'g' THEN RAISE EXCEPTION 'Weight variants require grams'; END IF;
+  IF nullif(p_data->>'category_id','') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.categories WHERE id=(p_data->>'category_id')::uuid AND category_type='market') THEN RAISE EXCEPTION 'Invalid Market category'; END IF;
   IF p_data->>'measure' NOT IN ('g','pcs') THEN RAISE EXCEPTION 'Invalid measure'; END IF;
-  INSERT INTO public.products(name_ru,name_en,name_vi,description_ru,product_type,price_vnd,image_url,sku,is_active)
-  VALUES(p_data->>'name_ru',coalesce(p_data->>'name_en',''),coalesce(p_data->>'name_vi',''),p_data->>'description_ru','market',(p_data->>'price_vnd')::integer,nullif(p_data->>'image_url',''),nullif(p_data->>'sku',''),true) RETURNING id INTO v_product;
+  INSERT INTO public.products(category_id,name_ru,name_en,name_vi,description_ru,description_en,description_vi,product_type,price_vnd,image_url,sku,is_active)
+  VALUES(nullif(p_data->>'category_id','')::uuid,p_data->>'name_ru',coalesce(p_data->>'name_en',''),coalesce(p_data->>'name_vi',''),p_data->>'description_ru',p_data->>'description_en',p_data->>'description_vi','market',(p_data->>'price_vnd')::integer,nullif(p_data->>'image_url',''),nullif(p_data->>'sku',''),true) RETURNING id INTO v_product;
   INSERT INTO public.stock_items(name_ru,name_en,name_vi,item_type,base_unit,created_by_telegram_id)
   VALUES(p_data->>'name_ru',p_data->>'name_en',p_data->>'name_vi','finished_good',p_data->>'measure',p_actor) RETURNING id INTO v_item;
-  INSERT INTO public.market_product_variants(product_id,stock_item_id,sale_mode,measure,fixed_quantity,storage_conditions,halal_evidence)
-  VALUES(v_product,v_item,p_data->>'sale_mode',p_data->>'measure',nullif(p_data->>'fixed_quantity','')::bigint,p_data->>'storage_conditions',p_data->>'halal_evidence') RETURNING * INTO v_v;
+  INSERT INTO public.market_product_variants(product_id,stock_item_id,sale_mode,measure,fixed_quantity,storage_conditions,halal_evidence,requires_quality_evidence)
+  VALUES(v_product,v_item,p_data->>'sale_mode',p_data->>'measure',nullif(p_data->>'fixed_quantity','')::bigint,p_data->>'storage_conditions',p_data->>'halal_evidence',coalesce((p_data->>'requires_quality_evidence')::boolean,false) OR EXISTS(SELECT 1 FROM public.categories WHERE id=nullif(p_data->>'category_id','')::uuid AND name_en IN ('Meat','Poultry'))) RETURNING * INTO v_v;
+  INSERT INTO public.market_product_barcodes(code,variant_id,format) VALUES('UMMA-PRODUCT-'||v_v.id,v_v.id,'internal');
   IF nullif(p_data->>'barcode','') IS NOT NULL THEN
    INSERT INTO public.market_product_barcodes(code,variant_id) VALUES(p_data->>'barcode',v_v.id);
   END IF;
@@ -189,13 +195,14 @@ BEGIN
   VALUES(v_w.id,'receipt','posted',p_data,p_actor,now()) RETURNING id INTO v_doc;
   FOR v_row IN SELECT * FROM jsonb_array_elements(p_data->'items') LOOP
    SELECT * INTO STRICT v_v FROM public.market_product_variants WHERE id=(v_row->>'variant_id')::uuid AND is_active;
+   IF nullif(v_row->'quality_evidence'->>'temperature_c','') IS NOT NULL THEN PERFORM (v_row->'quality_evidence'->>'temperature_c')::numeric; END IF;
    v_q:=(v_row->>'quantity')::bigint; v_cost:=(v_row->>'cost_vnd')::bigint;
    IF v_q IS NULL OR v_q<=0 OR v_cost IS NULL OR v_cost<0 OR nullif(v_row->>'batch_number','') IS NULL THEN RAISE EXCEPTION 'Invalid receipt line'; END IF;
    IF (v_row->>'planned_quantity')::bigint<v_q THEN RAISE EXCEPTION 'Accepted quantity exceeds planned quantity'; END IF;
    INSERT INTO public.purchase_items(purchase_document_id,stock_item_id,quantity,unit_cost_vnd,line_total_vnd,notes)
    VALUES(v_receipt,v_v.stock_item_id,v_q,v_cost::numeric/v_q,v_cost,v_row->>'notes');
-   INSERT INTO public.market_batches(variant_id,warehouse_id,receipt_id,batch_number,expires_on,storage_place,status,raw_quantity,raw_cost_vnd)
-   VALUES(v_v.id,v_w.id,v_receipt,v_row->>'batch_number',nullif(v_row->>'expires_on','')::date,v_row->>'storage_place',CASE WHEN v_row->>'quality'='passed' THEN 'available' ELSE 'quarantine' END,v_q,v_cost) RETURNING id INTO v_batch;
+   INSERT INTO public.market_batches(variant_id,warehouse_id,receipt_id,batch_number,expires_on,storage_place,status,raw_quantity,raw_cost_vnd,quality_evidence)
+   VALUES(v_v.id,v_w.id,v_receipt,v_row->>'batch_number',nullif(v_row->>'expires_on','')::date,v_row->>'storage_place',CASE WHEN v_row->>'quality'='passed' AND (NOT v_v.requires_quality_evidence OR (nullif(v_row->'quality_evidence'->>'halal_document','') IS NOT NULL AND nullif(v_row->'quality_evidence'->>'provenance','') IS NOT NULL AND nullif(v_row->'quality_evidence'->>'temperature_c','') IS NOT NULL)) THEN 'available' ELSE 'quarantine' END,v_q,v_cost,coalesce(v_row->'quality_evidence','{}')) RETURNING id INTO v_batch;
    INSERT INTO public.stock_movements(location_id,stock_item_id,movement_type,quantity_delta,unit_cost_vnd,source_type,source_id,actor_telegram_id)
    VALUES(v_w.location_id,v_v.stock_item_id,'purchase_in',v_q,v_cost::numeric/v_q,'purchase_document',v_receipt,p_actor);
    PERFORM public.market_sync_balance(v_w.id,v_v.id);
@@ -205,6 +212,7 @@ BEGIN
   v_result:=jsonb_build_object('ok',true,'document_id',v_doc,'receipt_id',v_receipt,'batch_ids',v_units);
  ELSIF p_action='pack' THEN
   SELECT * INTO STRICT v_b FROM public.market_batches WHERE id=(p_data->>'batch_id')::uuid AND warehouse_id=v_w.id FOR UPDATE;
+  PERFORM public.market_assert_batch_mutable(v_b.id,p_action);
   IF v_b.status<>'available' OR v_b.expires_on<(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN RAISE EXCEPTION 'Batch blocked or expired'; END IF;
   SELECT * INTO STRICT v_v FROM public.market_product_variants WHERE id=v_b.variant_id;
   IF jsonb_array_length(p_data->'quantities') NOT BETWEEN 1 AND 500 THEN RAISE EXCEPTION 'Packing requires 1..500 units'; END IF;
@@ -219,7 +227,7 @@ BEGIN
    v_used:=(v_row#>>'{}')::bigint;
    IF v_used<=0 THEN RAISE EXCEPTION 'Exact positive weight or quantity required'; END IF;
    v_cost:=round(v_total::numeric*v_used/v_q); v_total:=v_total-v_cost; v_q:=v_q-v_used;
-   INSERT INTO public.market_stock_units(batch_id,quantity,cost_vnd,packing_document_id) VALUES(v_b.id,v_used,v_cost,v_doc) RETURNING id INTO v_unit;
+   INSERT INTO public.market_stock_units(batch_id,variant_id,quantity,cost_vnd,packing_document_id) VALUES(v_b.id,coalesce((SELECT id FROM public.market_product_variants WHERE stock_item_id=v_v.stock_item_id AND sale_mode='fixed_weight' AND fixed_quantity=v_used AND is_active ORDER BY id LIMIT 1),v_b.variant_id),v_used,v_cost,v_doc) RETURNING id INTO v_unit;
    v_units:=v_units||jsonb_build_array(v_unit);
   END LOOP;
   UPDATE public.market_batches SET raw_quantity=v_q,raw_cost_vnd=v_total WHERE id=v_b.id;
@@ -230,13 +238,16 @@ BEGIN
   IF p_action='writeoff_request' THEN
    v_q:=(p_data->>'quantity')::bigint;
    IF nullif(p_data->>'unit_id','') IS NOT NULL THEN
-    SELECT * INTO STRICT v_u FROM public.market_stock_units WHERE id=(p_data->>'unit_id')::uuid AND batch_id=v_b.id AND status<>'written_off' FOR UPDATE;
+    SELECT * INTO STRICT v_u FROM public.market_stock_units WHERE id=(p_data->>'unit_id')::uuid AND batch_id=v_b.id AND status IN ('available','quarantine','reserved') FOR UPDATE;
     v_q:=v_u.quantity;
    ELSIF v_q IS NULL OR v_q<=0 OR v_q>v_b.raw_quantity THEN RAISE EXCEPTION 'Invalid writeoff quantity'; END IF;
    INSERT INTO public.market_documents(warehouse_id,kind,status,reason,payload,actor_telegram_id)
    VALUES(v_w.id,'writeoff','pending',p_data->>'reason',p_data||jsonb_build_object('quantity',v_q),p_actor) RETURNING id INTO v_doc;
   ELSE
-   UPDATE public.market_batches SET status=CASE WHEN p_action='quarantine' THEN 'quarantine' ELSE 'available' END WHERE id=v_b.id;
+   SELECT * INTO STRICT v_v FROM public.market_product_variants WHERE id=v_b.variant_id;
+   IF nullif(p_data->'quality_evidence'->>'temperature_c','') IS NOT NULL THEN PERFORM (p_data->'quality_evidence'->>'temperature_c')::numeric; END IF;
+   IF p_action='release' AND v_v.requires_quality_evidence AND (nullif(coalesce(p_data->'quality_evidence',v_b.quality_evidence)->>'halal_document','') IS NULL OR nullif(coalesce(p_data->'quality_evidence',v_b.quality_evidence)->>'provenance','') IS NULL OR nullif(coalesce(p_data->'quality_evidence',v_b.quality_evidence)->>'temperature_c','') IS NULL) THEN RAISE EXCEPTION 'Meat quality, halal and temperature evidence required'; END IF;
+   UPDATE public.market_batches SET quality_evidence=coalesce(p_data->'quality_evidence',quality_evidence),status=CASE WHEN p_action='quarantine' THEN 'quarantine' ELSE 'available' END WHERE id=v_b.id;
    INSERT INTO public.market_documents(warehouse_id,kind,status,reason,payload,actor_telegram_id,posted_at)
    VALUES(v_w.id,p_action,'posted',p_data->>'reason',p_data,p_actor,now()) RETURNING id INTO v_doc;
   END IF;
@@ -247,9 +258,10 @@ BEGIN
   v_payload:=v_d.payload;
   IF p_action='writeoff_approve' THEN
    SELECT * INTO STRICT v_b FROM public.market_batches WHERE id=(v_payload->>'batch_id')::uuid AND warehouse_id=v_w.id FOR UPDATE;
+   PERFORM public.market_assert_batch_mutable(v_b.id,p_action);
    v_q:=(v_payload->>'quantity')::bigint;
    IF nullif(v_payload->>'unit_id','') IS NOT NULL THEN
-    SELECT * INTO STRICT v_u FROM public.market_stock_units WHERE id=(v_payload->>'unit_id')::uuid AND batch_id=v_b.id AND status<>'written_off' FOR UPDATE;
+    SELECT * INTO STRICT v_u FROM public.market_stock_units WHERE id=(v_payload->>'unit_id')::uuid AND batch_id=v_b.id AND status IN ('available','quarantine','reserved') FOR UPDATE;
     v_q:=v_u.quantity; v_cost:=v_u.cost_vnd;
     UPDATE public.market_stock_units SET status='written_off' WHERE id=v_u.id;
    ELSE
@@ -265,10 +277,11 @@ BEGIN
   UPDATE public.market_documents SET status=CASE WHEN p_action='writeoff_approve' THEN 'posted' ELSE 'rejected' END,approved_by=p_actor,posted_at=now(),result=jsonb_build_object('cost_vnd',v_cost) WHERE id=v_d.id;
   v_result:=jsonb_build_object('ok',true,'document_id',v_d.id,'cost_vnd',v_cost);
  ELSIF p_action='count_start' THEN
+  PERFORM public.market_assert_warehouse_countable(v_w.id);
   INSERT INTO public.market_documents(warehouse_id,kind,status,payload,actor_telegram_id)
   VALUES(v_w.id,'count','pending',p_data,p_actor) RETURNING id INTO v_doc;
   INSERT INTO public.market_inventory_count_items(document_id,batch_id,expected_raw,expected_units)
-  SELECT v_doc,b.id,b.raw_quantity,coalesce((SELECT jsonb_agg(u.id ORDER BY u.id) FROM public.market_stock_units u WHERE u.batch_id=b.id AND u.status<>'written_off'),'[]') FROM public.market_batches b WHERE warehouse_id=v_w.id;
+  SELECT v_doc,b.id,b.raw_quantity,coalesce((SELECT jsonb_agg(u.id ORDER BY u.id) FROM public.market_stock_units u WHERE u.batch_id=b.id AND u.status IN ('available','quarantine','reserved')),'[]') FROM public.market_batches b WHERE warehouse_id=v_w.id;
   v_result:=jsonb_build_object('ok',true,'document_id',v_doc);
  ELSIF p_action='count_submit' THEN
   SELECT * INTO STRICT v_d FROM public.market_documents WHERE id=(p_data->>'document_id')::uuid AND warehouse_id=v_w.id AND kind='count' AND status='pending' FOR UPDATE;
@@ -276,7 +289,7 @@ BEGIN
    v_q:=(v_row->>'actual_raw')::bigint;
    IF v_q IS NULL OR v_q<0 OR jsonb_typeof(v_row->'actual_units')<>'array' THEN RAISE EXCEPTION 'Invalid count'; END IF;
    IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(v_row->'actual_units') x GROUP BY x HAVING count(*)>1) THEN RAISE EXCEPTION 'Duplicate scanned unit'; END IF;
-   IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(v_row->'actual_units') x WHERE NOT EXISTS(SELECT 1 FROM public.market_stock_units u WHERE u.id::text=x AND u.batch_id=(v_row->>'batch_id')::uuid AND u.status<>'written_off')) THEN RAISE EXCEPTION 'Unknown unit or invalid unit status'; END IF;
+   IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(v_row->'actual_units') x WHERE NOT EXISTS(SELECT 1 FROM public.market_stock_units u WHERE u.id::text=x AND u.batch_id=(v_row->>'batch_id')::uuid AND u.status IN ('available','quarantine','reserved'))) THEN RAISE EXCEPTION 'Unknown unit or invalid unit status'; END IF;
    UPDATE public.market_inventory_count_items SET actual_raw=v_q,actual_units=v_row->'actual_units',surplus_cost_vnd=nullif(v_row->>'surplus_cost_vnd','')::bigint WHERE document_id=v_d.id AND batch_id=(v_row->>'batch_id')::uuid;
    IF NOT FOUND THEN RAISE EXCEPTION 'Batch outside count'; END IF;
   END LOOP;
@@ -302,7 +315,7 @@ BEGIN
     IF v_count.actual_raw<=v_count.expected_raw THEN
      UPDATE public.market_batches SET raw_quantity=v_count.actual_raw,raw_cost_vnd=raw_cost_vnd-v_cost WHERE id=v_b.id;
     END IF;
-    FOR v_u IN SELECT * FROM public.market_stock_units WHERE batch_id=v_b.id AND status<>'written_off' LOOP
+    FOR v_u IN SELECT * FROM public.market_stock_units WHERE batch_id=v_b.id AND status IN ('available','quarantine','reserved') LOOP
      IF NOT v_count.actual_units ? v_u.id::text THEN
       UPDATE public.market_stock_units SET status='written_off' WHERE id=v_u.id;
       v_q:=v_q+v_u.quantity; v_cost:=v_cost+v_u.cost_vnd;
@@ -331,7 +344,7 @@ BEGIN
  ELSIF p_action='print' THEN
   IF jsonb_array_length(p_data->'unit_ids') NOT BETWEEN 1 AND 500 THEN RAISE EXCEPTION 'Select 1..500 labels'; END IF;
   FOR v_unit IN SELECT value::uuid FROM jsonb_array_elements_text(p_data->'unit_ids') LOOP
-   IF NOT EXISTS(SELECT 1 FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id WHERE u.id=v_unit AND b.warehouse_id=v_w.id AND u.status<>'written_off') THEN RAISE EXCEPTION 'Label unit unavailable'; END IF;
+   IF NOT EXISTS(SELECT 1 FROM public.market_stock_units u JOIN public.market_batches b ON b.id=u.batch_id WHERE u.id=v_unit AND b.warehouse_id=v_w.id AND u.status IN ('available','quarantine','reserved')) THEN RAISE EXCEPTION 'Label unit unavailable'; END IF;
   END LOOP;
   INSERT INTO public.market_documents(warehouse_id,kind,status,payload,actor_telegram_id,posted_at)
   VALUES(v_w.id,'print','posted',p_data,p_actor,now()) RETURNING id INTO v_doc;
@@ -353,7 +366,7 @@ DO $$ DECLARE t text; f record; BEGIN
   EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated',t);
   EXECUTE format('GRANT ALL ON public.%I TO service_role',t);
  END LOOP;
- FOR f IN SELECT p.oid::regprocedure signature FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('market_can','market_operation','market_sync_balance','market_guard_balance','market_immutable') LOOP
+ FOR f IN SELECT p.oid::regprocedure signature FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('market_can','market_operation','market_sync_balance','market_guard_balance','market_immutable','market_assert_batch_mutable','market_assert_warehouse_countable') LOOP
   EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f.signature);
   EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f.signature);
  END LOOP;

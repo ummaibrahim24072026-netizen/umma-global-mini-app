@@ -12,15 +12,16 @@
  const selectedUnits=new Set(), pending=new Map();
  const status=(msg,bad=false)=>{const el=page.querySelector('#marketStatus');el.textContent=msg;el.className=bad?'market-error':'market-status';};
  const api=async(action,data={},key)=>{
+  if(window.ummaMarketApi)return window.ummaMarketApi.call(action,data,key);
   const initData=window.Telegram?.WebApp?.initData;if(!initData)throw new Error(text('Откройте приложение через Telegram','Open the app in Telegram','Mở ứng dụng trong Telegram'));
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
-  try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,action,data,request_id:key}),signal:controller.signal});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Market request failed');return result;}finally{clearTimeout(timeout);}
+  try{const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,action,data,request_id:key}),signal:controller.signal});const result=await response.json();if(!response.ok||!result.ok){const e=new Error(result.error||'Market request failed');e.confirmed=true;throw e;}return result;}finally{clearTimeout(timeout);}
  };
  // Keep the same key after an uncertain network response. Repeated submits cannot duplicate stock.
  const mutate=async(action,data)=>{
   const payload={warehouse_id:warehouse,...data},identity=JSON.stringify([action,payload]);
   let key=pending.get(identity);if(!key){key=crypto.randomUUID();pending.set(identity,key);}
-  const result=await api(action,payload,key);pending.delete(identity);return result;
+  try{const result=await api(action,payload,key);pending.delete(identity);return result;}catch(e){if(e.confirmed)pending.delete(identity);throw e;}
  };
  const variant=id=>state?.variants.find(v=>v.id===id);
  const product=id=>variant(id)?.products||{};
@@ -44,7 +45,7 @@
   if(!boot){workspace.replaceChildren();return;}
   const top=`<div class="market-toolbar">${select(text('Склад','Warehouse','Kho'),'warehouse',options(boot.warehouses,w=>w.id,w=>w.name))}${(boot.isSuperAdmin||can('admin'))?btn('warehouse_create',text('Добавить склад','Add warehouse','Thêm kho')):''}</div>`;
   if(!state){workspace.innerHTML=top+`<p>${esc(text('Нет доступных складов. Администратор может создать первый склад.','No accessible warehouses. An administrator can create one.','Chưa có kho. Quản trị viên có thể tạo kho.'))}</p>`;return;}
-  const tabs=[['overview','Остатки','Stock','Tồn kho'],['products','Товары','Products','Sản phẩm'],['receive','Приёмка','Receiving','Nhập kho'],['pack','Фасовка','Packing','Đóng gói'],['control','Контроль','Stock control','Kiểm soát'],['count','Инвентаризация','Stocktake','Kiểm kê'],['labels','Этикетки','Labels','Nhãn'],['history','История','History','Lịch sử']];
+  const tabs=[['orders','Заказы и сборка','Orders & picking','Đơn hàng & soạn'],['overview','Остатки','Stock','Tồn kho'],['products','Товары','Products','Sản phẩm'],['receive','Приёмка','Receiving','Nhập kho'],['pack','Фасовка','Packing','Đóng gói'],['control','Контроль','Stock control','Kiểm soát'],['count','Инвентаризация','Stocktake','Kiểm kê'],['labels','Этикетки','Labels','Nhãn'],['history','История','History','Lịch sử'],['supplies','Поставки','Supplies','Đơn nhập'],['transfers','Перемещения','Transfers','Chuyển kho'],['returns','Возвраты','Returns','Trả hàng'],['analytics','Отчёты','Reports','Báo cáo'],['cash','Касса','Cash','Quỹ'],['settings','Настройки','Settings','Cài đặt']];
   workspace.innerHTML=top+`<nav class="market-tabs" aria-label="Market">${tabs.map(([id,ru,en,vi])=>`<button type="button" data-market-tab="${id}" aria-current="${id===tab?'page':'false'}">${esc(text(ru,en,vi))}</button>`).join('')}</nav><div class="market-tools">${btn('scan',text('Сканировать код','Scan code','Quét mã'))}<span>${esc(text('Вес вводится в целых граммах. Деньги — в VND.','Enter weight in whole grams; money in VND.','Nhập trọng lượng bằng gam nguyên; tiền bằng VND.'))}</span></div><div id="marketBody"></div>`;
   workspace.querySelector('[name="warehouse"]').value=warehouse;
   let html='';
@@ -54,16 +55,16 @@
    html+=state.batches.map(b=>`<article class="market-card"><div><h3>${esc(batchName(b))}</h3><p>${esc(text('Нерасфасовано','Unpacked','Chưa đóng gói'))}: <strong>${esc(quantity(b.raw_quantity,variant(b.variant_id)))}</strong></p><p>${esc(b.storage_place||'—')} · ${esc(b.expires_on||'—')}</p></div><span class="market-badge ${isBlocked(b)?'blocked':''}">${esc(isBlocked(b)?text('Заблокировано','Blocked','Bị chặn'):text('Доступно','Available','Có sẵn'))}</span></article>`).join('')||`<p>${esc(text('Товар ещё не принят.','No stock received yet.','Chưa nhập hàng.'))}</p>`;
   } else if(tab==='products'){
    html=state.variants.map(v=>`<article class="market-card"><div><h3>${esc(name(v.id))}</h3><p>${esc(v.sale_mode)} · ${esc(v.measure)} · ${money(v.products?.price_vnd)}</p></div></article>`).join('');
-   if(can('admin'))html+=`<details class="market-card" open><summary>${esc(text('Новый товар','New product','Sản phẩm mới'))}</summary>${form('product_create',field('Название RU','name_ru','text','required maxlength="160"')+field('Name EN','name_en','text','maxlength="160"')+field('Tên VI','name_vi','text','maxlength="160"')+select(text('Способ продажи','Sale mode','Hình thức bán'),'sale_mode',options([{id:'piece',n:'Поштучно / Piece'},{id:'set',n:'Набор / Set'},{id:'fixed_weight',n:'Фиксированный вес / Fixed weight'},{id:'individual_weight',n:'Индивидуальный вес / Individual weight'}],x=>x.id,x=>x.n))+select(text('Базовая единица','Base unit','Đơn vị cơ bản'),'measure','<option value="g">g</option><option value="pcs">pcs</option>')+field('VND','price_vnd','number','required min="0" step="1"')+field(text('Размер упаковки (г / шт.)','Pack size (g / pcs)','Khối lượng gói (g / cái)'),'fixed_quantity','number','min="1" step="1"')+field(text('Заводской штрих-код','Manufacturer barcode','Mã vạch nhà sản xuất'),'barcode')+field('Фото URL (HTTPS)','image_url','url')+field(text('Условия хранения','Storage conditions','Điều kiện bảo quản'),'storage_conditions')+field(text('Основание халяльности','Halal evidence','Chứng nhận halal'),'halal_evidence'),text('Создать товар','Create product','Tạo sản phẩm'))}</details>`;
+   if(can('admin'))html+=`<details class="market-card" open><summary>${esc(text('Новый товар','New product','Sản phẩm mới'))}</summary>${form('product_create',select(text('Категория','Category','Danh mục'),'category_id','<option value="">—</option>'+options(state.categories||[],c=>c.id,c=>c.name_ru),'required')+field('Название RU','name_ru','text','required maxlength="160"')+field('Name EN','name_en','text','maxlength="160"')+field('Tên VI','name_vi','text','maxlength="160"')+select(text('Способ продажи','Sale mode','Hình thức bán'),'sale_mode',options([{id:'piece',n:'Поштучно / Piece'},{id:'set',n:'Набор / Set'},{id:'fixed_weight',n:'Фиксированный вес / Fixed weight'},{id:'individual_weight',n:'Индивидуальный вес / Individual weight'}],x=>x.id,x=>x.n))+select(text('Базовая единица','Base unit','Đơn vị cơ bản'),'measure','<option value="g">g</option><option value="pcs">pcs</option>')+field('VND','price_vnd','number','required min="0" step="1"')+field(text('Размер упаковки (г / шт.)','Pack size (g / pcs)','Khối lượng gói (g / cái)'),'fixed_quantity','number','min="1" step="1"')+field(text('Заводской штрих-код','Manufacturer barcode','Mã vạch nhà sản xuất'),'barcode')+field('Описание / состав RU','description_ru')+field('Description / ingredients EN','description_en')+field('Mô tả / thành phần VI','description_vi')+field('Фото URL (HTTPS)','image_url','url')+field(text('Условия хранения','Storage conditions','Điều kiện bảo quản'),'storage_conditions')+field(text('Основание халяльности','Halal evidence','Chứng nhận halal'),'halal_evidence'),text('Создать товар','Create product','Tạo sản phẩm'))}</details>`;
   if(can('admin'))html+=form('barcode_link',select(text('Существующий товар','Existing product','Sản phẩm hiện có'),'variant_id',variantOptions())+field(text('Заводской штрих-код','Manufacturer barcode','Mã vạch nhà sản xuất'),'code','text','required maxlength="128"'),text('Связать код с товаром','Link barcode','Liên kết mã vạch'));
   } else if(tab==='receive'){
-   if(can('receiver'))html=form('receive',select(text('Поставщик','Supplier','Nhà cung cấp'),'supplier_id',options(state.suppliers,s=>s.id,s=>s.name),'required')+btn('supplier_create',text('Добавить поставщика','Add supplier','Thêm nhà cung cấp'))+select(text('Товар','Product','Sản phẩm'),'variant_id',variantOptions(),'required')+field(text('План (г / шт.)','Planned (g / pcs)','Dự kiến (g / cái)'),'planned_quantity','number','required min="1" step="1"')+field(text('Принято (г / шт.)','Accepted (g / pcs)','Thực nhận (g / cái)'),'quantity','number','required min="1" step="1"')+field(text('Закупочная стоимость всей строки VND','Total line cost VND','Tổng giá mua VND'),'cost_vnd','number','required min="0" step="1"')+field(text('Номер партии','Batch number','Số lô'),'batch_number','text','required')+field(text('Срок годности','Expiry date','Hạn sử dụng'),'expires_on','date')+field(text('Место хранения','Storage place','Vị trí lưu trữ'),'storage_place')+select(text('Контроль качества','Quality check','Kiểm tra chất lượng'),'quality',`<option value="quarantine">${esc(text('Карантин: требуется проверка','Quarantine: check required','Cách ly: cần kiểm tra'))}</option><option value="passed">${esc(text('Проверка пройдена','Passed','Đã đạt'))}</option>`)+field(text('Примечание','Notes','Ghi chú'),'notes'),text('Подтвердить приёмку','Receive stock','Xác nhận nhập kho'));
+   if(can('receiver'))html=form('receive',select(text('Поставщик','Supplier','Nhà cung cấp'),'supplier_id',options(state.suppliers,s=>s.id,s=>s.name),'required')+btn('supplier_create',text('Добавить поставщика','Add supplier','Thêm nhà cung cấp'))+select(text('Товар','Product','Sản phẩm'),'variant_id',variantOptions(),'required')+field(text('План (г / шт.)','Planned (g / pcs)','Dự kiến (g / cái)'),'planned_quantity','number','required min="1" step="1"')+field(text('Принято (г / шт.)','Accepted (g / pcs)','Thực nhận (g / cái)'),'quantity','number','required min="1" step="1"')+field(text('Закупочная стоимость всей строки VND','Total line cost VND','Tổng giá mua VND'),'cost_vnd','number','required min="0" step="1"')+field(text('Номер партии','Batch number','Số lô'),'batch_number','text','required')+field(text('Срок годности','Expiry date','Hạn sử dụng'),'expires_on','date')+field(text('Место хранения','Storage place','Vị trí lưu trữ'),'storage_place')+select(text('Контроль качества','Quality check','Kiểm tra chất lượng'),'quality',`<option value="quarantine">${esc(text('Карантин: требуется проверка','Quarantine: check required','Cách ly: cần kiểm tra'))}</option><option value="passed">${esc(text('Проверка пройдена','Passed','Đã đạt'))}</option>`)+field(text('Температура °C','Temperature °C','Nhiệt độ °C'),'temperature_c','number','step="0.1"')+field(text('Происхождение','Provenance','Nguồn gốc'),'provenance')+field(text('Халяль-документ / путь','Halal document / path','Tài liệu halal / đường dẫn'),'halal_document')+field(text('Примечание','Notes','Ghi chú'),'notes'),text('Подтвердить приёмку','Receive stock','Xác nhận nhập kho'));
   } else if(tab==='pack'){
-   if(can('packer'))html=form('pack',select(text('Исходная партия','Source batch','Lô nguồn'),'batch_id',batchOptions(),'required')+`<label>${esc(text('Точный вес / количество каждой упаковки — через запятую','Exact quantity of every package, comma separated','Số lượng chính xác mỗi gói, cách nhau bằng dấu phẩy'))}<textarea name="quantities" placeholder="1000, 1000, 500" required></textarea></label>`+field(text('Остаток нерасфасованного (г / шт.)','Unpacked remainder (g / pcs)','Phần còn lại (g / cái)'),'remaining_quantity','number','required min="0" step="1"')+`<p>${esc(text('Баланс: исходное количество = упаковки + остаток. Потери сначала оформляются подтверждённым списанием.','Balance: source = packages + remainder. Record and approve any loss before packing.','Cân bằng: nguồn = các gói + phần còn lại. Ghi nhận và duyệt hao hụt trước khi đóng gói.'))}</p>`,text('Расфасовать и создать QR','Pack and create QR codes','Đóng gói và tạo mã QR'));
+   if(can('packer'))html=form('pack',select(text('Исходная партия','Source batch','Lô nguồn'),'batch_id',batchOptions(),'required')+`<label>${esc(text('Точный вес / количество каждой упаковки — через запятую','Exact quantity of every package, comma separated','Số lượng chính xác mỗi gói, cách nhau bằng dấu phẩy'))}<textarea name="quantities" placeholder="1000, 1000, 500" required></textarea></label>`+field(text('Остаток нерасфасованного (г / шт.)','Unpacked remainder (g / pcs)','Phần còn lại (g / cái)'),'remaining_quantity','number','required min="0" step="1"')+field(text('Потери (г / шт.)','Loss (g / pcs)','Hao hụt (g / cái)'),'loss_quantity','number','value="0" min="0" step="1"')+`<p>${esc(text('Баланс: исходное количество = упаковки + остаток. Потери сначала оформляются подтверждённым списанием.','Balance: source = packages + remainder. Record and approve any loss before packing.','Cân bằng: nguồn = các gói + phần còn lại. Ghi nhận và duyệt hao hụt trước khi đóng gói.'))}</p>`,text('Расфасовать и создать QR','Pack and create QR codes','Đóng gói và tạo mã QR'));
   } else if(tab==='control'){
    if(can('warehouse'))html=form('writeoff_request',select(text('Партия','Batch','Lô'),'batch_id',batchOptions(),'required')+field(text('ID упаковки (пусто — нерасфасованный товар)','Package ID (blank for unpacked stock)','ID gói (để trống cho hàng chưa đóng gói)'),'unit_id')+field(text('Количество (г / шт.)','Quantity (g / pcs)','Số lượng (g / cái)'),'quantity','number','min="1" step="1"')+field(text('Причина','Reason','Lý do'),'reason','text','required maxlength="1000"'),text('Отправить списание на проверку','Request writeoff approval','Gửi yêu cầu hủy hàng'));
    if(can('warehouse'))html+=form('quarantine',select(text('Партия','Batch','Lô'),'batch_id',batchOptions())+field(text('Причина карантина','Quarantine reason','Lý do cách ly'),'reason','text','required'),text('Перевести в карантин','Quarantine','Cách ly'));
-   if(can('admin'))html+=form('release',select(text('Партия','Batch','Lô'),'batch_id',batchOptions())+field(text('Результат проверки','Inspection result','Kết quả kiểm tra'),'reason','text','required'),text('Разрешить продажу после проверки','Release after inspection','Cho phép bán sau kiểm tra'));
+   if(can('admin'))html+=form('release',select(text('Партия','Batch','Lô'),'batch_id',batchOptions())+field(text('Результат проверки','Inspection result','Kết quả kiểm tra'),'reason','text','required')+field('Temperature °C','temperature_c','number','step="0.1"')+field('Provenance','provenance')+field('Halal document / path','halal_document'),text('Разрешить продажу после проверки','Release after inspection','Cho phép bán sau kiểm tra'));
    html+=state.documents.filter(d=>d.kind==='writeoff'&&d.status==='pending').map(d=>`<article class="market-card"><div><h3>${esc(docTitle(d))}</h3><p>${esc(d.reason)}</p><p>${esc(d.payload.quantity)} · ${esc(d.payload.unit_id||d.payload.batch_id)}</p></div>${can('admin')?btn('writeoff_approve',text('Подтвердить','Approve','Duyệt'),`data-id="${d.id}"`)+btn('writeoff_reject',text('Отклонить','Reject','Từ chối'),`data-id="${d.id}"`):''}</article>`).join('');
   } else if(tab==='count'){
    const active=state.documents.find(d=>d.kind==='count'&&d.status==='pending');
@@ -81,6 +82,7 @@
    html=state.documents.map(d=>`<article class="market-card"><div><h3>${esc(docTitle(d))}</h3><p>${esc(new Date(d.created_at).toLocaleString())} · ${esc(d.actor_telegram_id)}</p><p>${esc(d.reason||'')}</p>${d.result?.cost_vnd!=null?`<p>${money(d.result.cost_vnd)}</p>`:''}</div></article>`).join('');
   }
   page.querySelector('#marketBody').innerHTML=html||`<p>${esc(text('Нет доступных действий.','No available actions.','Không có thao tác khả dụng.'))}</p>`;
+  document.dispatchEvent(new CustomEvent('umma:market-render',{detail:{tab,state,warehouse,boot}}));
  }
  async function refresh(){
   boot=await api('bootstrap');
@@ -97,11 +99,11 @@
  async function scan(onResult){
   closeScanner();const dialog=document.createElement('dialog');scanDialog=dialog;dialog.className='market-scanner';
   dialog.innerHTML=`<h2>UMMA Scan</h2><video playsinline muted></video><p role="status"></p><form>${field(text('Код вручную','Enter code','Nhập mã'),'code','text','required maxlength="128" autocomplete="off"')}<button type="submit">${esc(text('Проверить','Verify','Kiểm tra'))}</button></form>${btn('scanner_close',text('Закрыть','Close','Đóng'))}`;
-  document.body.append(dialog);dialog.showModal();let handling=false;
+  document.body.append(dialog);dialog.showModal();let handling=false,lastCode='',lastTime=0;
   dialog.addEventListener('cancel',event=>{event.preventDefault();closeScanner();});
   dialog.querySelector('[data-market-action="scanner_close"]').onclick=closeScanner;
   const read=async code=>{
-   if(handling)return;handling=true;
+   if(handling||(code===lastCode&&Date.now()-lastTime<1500))return;handling=true;lastCode=code;lastTime=Date.now();
    try{const result=await mutate('scan',{code});await onResult(result,code);closeScanner();}
    catch(e){dialog.querySelector('[role="status"]').textContent=e.message;handling=false;}
   };
@@ -130,13 +132,15 @@
  page.addEventListener('submit',e=>{
   const f=e.target.closest('[data-market-form]');if(!f)return;e.preventDefault();if(!f.reportValidity())return;
   run(async()=>{
-   const data=Object.fromEntries(new FormData(f)),action=f.dataset.marketForm;
+   const data=Object.fromEntries(new FormData(f));let action=f.dataset.marketForm;
    let payload=data;
-   if(action==='receive'){const {supplier_id,...item}=data;payload={supplier_id,items:[item]};}
-   if(action==='pack')payload={...data,quantities:data.quantities.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean),loss_quantity:0};
+   if(action==='receive'){const {supplier_id,...item}=data;payload={supplier_id,items:[{...item,quality_evidence:{temperature_c:item.temperature_c,provenance:item.provenance,halal_document:item.halal_document}}]};}
+   if(action==='pack')payload={...data,quantities:data.quantities.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean),loss_quantity:Number(data.loss_quantity||0)};
    if(action==='count_submit')payload={document_id:data.document_id,items:[{batch_id:data.batch_id,actual_raw:data.actual_raw,surplus_cost_vnd:data.surplus_cost_vnd,actual_units:data.actual_units.split(/[\s,;]+/).filter(Boolean)}]};
+   if(action==='release'&&[data.temperature_c,data.provenance,data.halal_document].some(Boolean))payload={...data,quality_evidence:{temperature_c:data.temperature_c,provenance:data.provenance,halal_document:data.halal_document}};
+   if(action==='pack'&&Number(data.loss_quantity)>0)action='pack_with_loss';
    const result=await mutate(action,payload);if(result.unit_ids){selectedUnits.clear();result.unit_ids.forEach(id=>selectedUnits.add(id));tab='labels';}
-   await refresh();status(text('Операция сохранена','Operation saved','Đã lưu thao tác'));
+   await refresh();status(result.approval_required?text('Потери отправлены на утверждение. После подтверждения повторите фасовку без повторного списания.','Loss approval requested. After approval, pack without recording the loss again.','Đã gửi duyệt hao hụt. Sau khi duyệt, đóng gói mà không ghi hao hụt lần nữa.'):text('Операция сохранена','Operation saved','Đã lưu thao tác'));
   });
  });
  page.addEventListener('click',e=>{
@@ -146,6 +150,13 @@
   if(action==='scan'||action==='scan_count'){
    scan(async (result,code)=>{
     if(action==='scan_count'){
+     if(result.type==='product'){
+      const batch=state.batches.find(x=>x.id===b.dataset.id),v=variant(batch.variant_id);
+      if(result.variant.stock_item_id!==v.stock_item_id)throw new Error('Неверный товар для этой партии');
+      const amount=window.prompt(text('Фактическое количество (г / шт.)','Actual quantity (g / pcs)','Số lượng thực tế (g / cái)'),'1');
+      if(amount===null)return;if(!/^\d+$/.test(amount))throw new Error('Введите целое количество');
+      const input=page.querySelector(`[data-count-units="${b.dataset.id}"]`).closest('form').querySelector('[name=actual_raw]');input.value=Number(input.value||0)+Number(amount);return;
+     }
      if(result.type!=='unit'||result.unit.batch_id!==b.dataset.id||result.unit.status==='written_off')throw new Error(text('Нужна упаковка выбранной партии','Scan a package from the selected batch','Quét gói thuộc lô đã chọn'));
      const area=page.querySelector(`[data-count-units="${b.dataset.id}"]`),ids=new Set(area.value.split(/\s+/).filter(Boolean));ids.add(result.unit.id);area.value=[...ids].join('\n');
     }else if(result.type==='unknown'){status(text('Код неизвестен. Добавьте товар или привяжите код к существующему.','Unknown code. Create a product or link it to an existing one.','Mã chưa có. Tạo sản phẩm hoặc liên kết với sản phẩm hiện có.'));tab='products';render();const input=page.querySelector('[name="barcode"]');if(input)input.value=code||'';}
@@ -171,5 +182,5 @@
  page.querySelector('#marketBack').onclick=()=>{closeScanner();if(!window.ummaNavigation?.back())window.openPage?.('home');};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)closeScanner();});
  new MutationObserver(()=>{if(page.hidden)closeScanner();}).observe(page,{attributes:true,attributeFilter:['hidden']});
- window.ummaMarket={open,closeScanner};
+ window.ummaMarket={open,closeScanner,scan,refreshWorkspace:refresh,getWorkspace:()=>({state,warehouse,boot}),openTab:id=>{tab=id;render();}};
 })();
