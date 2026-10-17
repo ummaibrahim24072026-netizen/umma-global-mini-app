@@ -8,3 +8,10 @@ const rows={market_print_jobs:{id:job,document_id:job,unit_ids:[unit],variant_id
 const db={rpc:async()=>({data:allowed,error:null}),from(table){const q={select(){return q;},eq(){return q;},async single(){return{data:rows[table],error:null};},async in(){return{data:rows[table],error:null};}};return q;}};
 const response=await serveLabels(new Request(url),db,secret),html=await response.text();assert.equal(response.status,200);assert.ok(html.includes('size:60mm 40mm'));assert.ok(html.includes('Pack: 2026-10-17'));assert.ok(html.includes('2.780 kg'));assert.ok(html.includes('Мясо &lt;script&gt;'));assert.ok(html.includes('<svg'));assert.ok(!html.includes('cost_vnd'));allowed=false;assert.equal((await serveLabels(new Request(url),db,secret)).status,403);
 console.log('PASS signed browser labels: expiry/tamper/role checks, private data exclusion, exact weight, VN date, QR SVG and print layout');
+
+const {JSDOM}=await import('jsdom');let requested='';
+const browser=new JSDOM(readFileSync('market-print.html','utf8'),{url:'https://umma.example/market-print.html#'+new URL(url).search.slice(1),runScripts:'dangerously',beforeParse(w){w.fetch=async(endpoint)=>{requested=String(endpoint);return{ok:true,text:async()=>html};};}});
+await new Promise(r=>setTimeout(r,30));
+assert.ok(requested.startsWith('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/market-stock?'));
+assert.equal(browser.window.location.hash,'');assert.equal(browser.window.document.querySelector('iframe').hidden,false);assert.ok(browser.window.document.querySelector('iframe').srcdoc.includes('2.780 kg'));assert.equal(browser.window.document.querySelector('iframe').getAttribute('sandbox'),'allow-scripts allow-modals');browser.window.close();
+console.log('PASS external print bridge: fixed API, capability removed from address, isolated printable document');

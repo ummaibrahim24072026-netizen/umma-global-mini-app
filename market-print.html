@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>UMMA Market — печать</title><style>body{margin:0;background:#eff8f6;color:#164e49;font:16px Arial,sans-serif}p{padding:24px}iframe{border:0;width:100%;height:100vh;display:block}</style></head><body><p id="status">Загрузка этикеток UMMA Market…</p><iframe title="Этикетки UMMA Market" sandbox="allow-scripts allow-modals" hidden></iframe><script>
+(async()=>{
+ const status=document.getElementById('status');
+ try{
+  const params=new URLSearchParams(location.hash.slice(1)),labels=params.get('labels'),sig=params.get('sig');
+  history.replaceState(null,'',location.pathname);
+  if(!labels||labels.length>500||!sig||!/^[a-f0-9]{64}$/.test(sig))throw Error();
+  const endpoint=new URL('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/market-stock');
+  endpoint.search=new URLSearchParams({labels,sig}).toString();
+  const response=await fetch(endpoint,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+  if(!response.ok)throw Error();
+  const html=await response.text();if(!html.startsWith('<!doctype html>'))throw Error();
+  const frame=document.querySelector('iframe');frame.srcdoc=html;frame.hidden=false;status.hidden=true;
+ }catch{status.textContent='Ссылка недействительна, истекла или доступ отозван. Откройте печать в UMMA Market ещё раз.';}
+})();
+</script></body></html>

@@ -13,7 +13,7 @@ async function allRows(make:any){
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(req.method==='GET'){const secret=Deno.env.get('TELEGRAM_BOT_TOKEN'),url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');if(!secret||!url||!key)return reply({ok:false,error:'Server configuration error'},500);return serveLabels(req,createClient(url,key,{auth:{persistSession:false}}),secret);}
+ if(req.method==='GET'){const secret=Deno.env.get('TELEGRAM_BOT_TOKEN'),url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');if(!secret||!url||!key)return reply({ok:false,error:'Server configuration error'},500);const page=await serveLabels(req,createClient(url,key,{auth:{persistSession:false}}),secret);const headers=new Headers(page.headers);headers.set('Access-Control-Allow-Origin','*');return new Response(page.body,{status:page.status,headers});}
  if(req.method!=='POST')return reply({ok:false,error:'Method not allowed'},405);
  try {
   const raw=await req.text(); if(raw.length>8000000)return reply({ok:false,error:'Request too large'},413);
