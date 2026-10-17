@@ -1,9 +1,13 @@
 import {JSDOM} from 'jsdom';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
+import {normalizeRussianText} from './quran-russian-text.mjs';
+assert.equal(normalizeRussianText('Ал- лах Все-\nвышний кото- рые по-ступает'), 'Аллах Всевышний которые поступает');
+assert.equal(normalizeRussianText('Во- первых кто-\nлибо по- доброму из- за аль- Кура'), 'Во-первых кто-либо по-доброму из-за аль-Кура');
+assert.equal(normalizeRussianText('какое-ли- бо — слово.\nНовый абзац.'), 'какое-либо — слово.\nНовый абзац.');
 const read=p=>JSON.parse(readFileSync('assets/quran/'+p,'utf8'));
 const index=read('index.json'),daily=read('daily.json');assert.equal(index.length,114);assert.equal(index.reduce((n,s)=>n+s.count,0),6236);
-for(const s of index){const data=read(s.number+'.json');assert.equal(data.verses.length,s.count);data.verses.forEach((v,i)=>{assert.equal(v.number,i+1);assert.ok(/[\u0600-\u06ff]/.test(v.arabic));assert.ok(/[а-яА-Я]/.test(v.translation));});const tafsir=read('tafsir/'+s.number+'.json');const mapped=new Set(tafsir.blocks.flatMap(x=>x.ayas));assert.equal(mapped.size,s.count);}
+for(const s of index){const data=read(s.number+'.json');assert.equal(data.verses.length,s.count);data.verses.forEach((v,i)=>{assert.equal(v.number,i+1);assert.ok(/[\u0600-\u06ff]/.test(v.arabic));assert.ok(/[а-яА-Я]/.test(v.translation));assert.equal(normalizeRussianText(v.translation),v.translation);});const tafsir=read('tafsir/'+s.number+'.json');for(const block of tafsir.blocks){assert.equal(normalizeRussianText(block.text),block.text);assert.doesNotMatch(block.text,/[А-Яа-яЁё]-\s+[А-Яа-яЁё]|\u00ad/u);}const mapped=new Set(tafsir.blocks.flatMap(x=>x.ayas));assert.equal(mapped.size,s.count);}
 assert.equal(new Set(daily.map(x=>x.join(':'))).size,daily.length);for(const [s,a,b] of daily){assert.ok(a>0&&b>=a&&b<=index[s-1].count);}
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://umma.test/'}),w=dom.window,d=w.document;

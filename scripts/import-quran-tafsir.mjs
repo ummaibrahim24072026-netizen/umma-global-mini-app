@@ -1,5 +1,6 @@
 /* Import only the authorised published edition. Original lexical content is retained. */
 import {parse} from 'parse5';
+import {normalizeRussianText} from './quran-russian-text.mjs';
 const attr=(el,name)=>el.attrs?.find(x=>x.name===name)?.value||'';
 const hasClass=(el,name)=>attr(el,'class').split(/\s+/).includes(name);
 function all(root,predicate){const out=[];function walk(n){if(predicate(n))out.push(n);for(const child of n.childNodes||[])walk(child);}walk(root);return out;}
@@ -16,7 +17,7 @@ for(const surah of index.filter(s=>!process.argv[3]||s.number===Number(process.a
  const doc=parse(raw),blocks=[];let pending=[],active=[];
  for(const el of all(doc,n=>hasClass(n,'saadi-anchor')||(n.tagName==='article'&&hasClass(n,'saadi-block')))){
   if(hasClass(el,'saadi-anchor')){const n=Number(attr(el,'id').replace('aya-',''));if(n>0)pending.push(n);continue;}
-  const text=textContent(findClass(el,'saadi-text')||{}).trim();if(!text)continue;
+  const text=normalizeRussianText(textContent(findClass(el,'saadi-text')||{}).trim());if(!text)continue;
   if(hasClass(el,'saadi-passage')){
    const nums=textContent(findClass(el,'saadi-block-label')||{}).match(/\d+/g)?.map(Number)||[];
    if(!nums.length)throw Error('Missing passage coordinates '+surah.number);

@@ -17,6 +17,10 @@
     "author": "Абдуррахман ас-Саади",
     "version": "V1.0.0",
     "release": "2026-07-27",
-    "terms": "https://quranenc.com/en/home/api/"
+    "terms": "https://quranenc.com/en/home/api/",
+    "textNormalization": {
+      "date": "2026-10-17",
+      "description": "Removed print line-break hyphens and joined split Russian words; retained lexical hyphens, paragraph breaks and punctuation. Source hashes refer to the unmodified source HTML."
+    }
   }
 }
