@@ -1,0 +1,22 @@
+{
+  "retrieved": "2026-10-17",
+  "arabic": {
+    "source": "https://api.alquran.cloud/v1/quran/quran-uthmani",
+    "edition": "quran-uthmani",
+    "sha256": "0df03e1d6da4fc8138208fec1688f2b416f0dd4ebbd514179f3e5e0fbaf4195f"
+  },
+  "translation": {
+    "source": "https://api.alquran.cloud/v1/quran/ru.kuliev",
+    "edition": "ru.kuliev",
+    "author": "Эльмир Кулиев",
+    "sha256": "8a2bcd0f0db00aabe8057e6a72f70e666f2b59af8259a3ae2dc7b85274b9a74f"
+  },
+  "tafsir": {
+    "source": "https://quranenc.com/en/browse/russian_saadi",
+    "publisher": "QuranEnc.com",
+    "author": "Абдуррахман ас-Саади",
+    "version": "V1.0.0",
+    "release": "2026-07-27",
+    "terms": "https://quranenc.com/en/home/api/"
+  }
+}

@@ -46,6 +46,7 @@
     if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":state.screen==="cafeOrdersPage"?"orders":"cafe");
   }
   function back(){
+    if(window.ummaQuran?.isOpen())return window.ummaQuran.back();
     if(window.ummaDeliveryChat?.isOpen()){window.ummaDeliveryChat.close();return true;}
     if(window.ummaNativeShell?.isDialogOpen()){window.ummaNativeShell.closeDialog();return true;}
     if(window.ummaNotifications?.isOpen()){window.ummaNotifications.close();return true;}
