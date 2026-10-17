@@ -12,7 +12,7 @@ try{
  await db.exec(readFileSync('supabase/proposals/cafe-delivery-zone.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
- await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-quality.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-quality.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-unpriced-catalog.sql','utf8'));
  await db.exec(`insert into telegram_users(telegram_id,role)values(10,'super_admin'),(11,'employee'),(12,'user'),(13,'user'),(14,'employee');insert into locations(id,name,location_type,city)values('${loc}','HALAL UMMA','cafe','Nha Trang');insert into market_warehouses(id,location_id,name)values('${wh}','${loc}','QA');insert into market_staff_roles(telegram_id,location_id,role)values(11,'${loc}','picker'),(14,'${loc}','cashier');`);
  await q('insert into cafe_staff_shifts(location_id,staff_telegram_id,opened_by_telegram_id,opening_cash_vnd)values($1,14,14,1000000)',[loc]);
  const sup=(await core('supplier_create',{name:'QA'})).supplier_id;
@@ -128,6 +128,11 @@ try{
  ok((await row('cafe_orders',cafe.id)).status==='completed','Cafe order/payment/fulfilment works after Market schema');
  await q('select refund_cafe_order($1,10,$2,$3,true)',[cafe.id,randomUUID(),'Actual Cafe regression refund']);
  const shift=(await q("select id from cafe_staff_shifts where staff_telegram_id=10 and shift_status='open'")).rows[0];await q('select close_cafe_staff_shift($1,10,0,null)',[shift.id]);ok((await row('cafe_staff_shifts',shift.id)).shift_status==='closed','Cafe refund and cash shift remain correct');
+ await q('update market_offers set price_vnd=null where warehouse_id=$1 and variant_id=$2',[wh,drink.id]);
+ const previewCatalog=(await q('select market_catalog($1) r',[wh])).rows[0].r;
+ ok(previewCatalog.offers.find(x=>x.variant_id===drink.id).price_vnd===null,'preview price remains null in public catalogue');
+ await reject(q('select market_quote($1,$2) r',[wh,[{variant_id:drink.id,count:1}]]),/Price not set/);
+ await reject(q('update products set price_vnd=null where id=$1',[cafeProduct]),/non_market_product_price_required/);
  await db.exec('set role anon');await reject(q('select market_catalog(null)'),/permission denied/);await db.exec('reset role');
  console.log('PASS '+checks+' Market commerce checks: exact units, reservation, payment, wrong-item gate, factory quantities, picking, handover, refund and expiry');
 }catch(e){throw e;}

@@ -105,6 +105,7 @@ BEGIN
   SELECT * INTO STRICT v FROM public.market_product_variants WHERE id=(i->>'variant_id')::uuid AND is_active;
   SELECT * INTO STRICT p FROM public.products WHERE id=v.product_id AND is_active;
   SELECT * INTO STRICT o FROM public.market_offers WHERE warehouse_id=p_warehouse AND variant_id=v.id AND is_listed;
+  IF o.price_vnd IS NULL THEN RAISE EXCEPTION 'Price not set'; END IF;
   count_:=(i->>'count')::integer; IF count_ IS NULL OR count_ NOT BETWEEN 1 AND 99 THEN RAISE EXCEPTION 'Invalid quantity'; END IF;
   IF v.sale_mode IN ('individual_weight','fixed_weight') THEN
    SELECT * INTO STRICT u FROM public.market_stock_units WHERE id=(i->>'unit_id')::uuid AND variant_id IN (SELECT id FROM public.market_product_variants WHERE stock_item_id=v.stock_item_id) AND status='available';
