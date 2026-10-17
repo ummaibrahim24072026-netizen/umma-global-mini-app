@@ -7,12 +7,12 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","servicesPage"
+    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
     "cafeStaffAdminBack","cafeWaiterBack","cafeKitchenBack",
-    "cafeInventoryBack","cafeBack","cafeOrdersBack","accountingBack","servicesBack"
+    "marketBack","cafeInventoryBack","cafeBack","cafeOrdersBack","accountingBack","servicesBack"
   ]);
   const stack=[];
   const byId=id=>document.getElementById(id);
