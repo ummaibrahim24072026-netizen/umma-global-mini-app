@@ -11,6 +11,8 @@ try{
  await db.exec("insert into locations(name,location_type,city)values('HALAL UMMA','cafe','Nha Trang')");
  await db.exec(sql);
  await db.exec(readFileSync('supabase/proposals/market-postlaunch-hardening.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-postlaunch-hardening.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/market-vegetables-catalog.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-vegetables-catalog.sql','utf8'));
+ const previews=(await db.query('select market_catalog(null) r')).rows[0].r.offers;assert.equal(previews.length,9);assert.ok(previews.every(x=>x.price_vnd===null&&x.available_quantity===0&&x.units.length===0));assert.equal(new Set(previews.map(x=>x.product.image_url)).size,9);
  assert.equal(Number((await db.query('select count(*) n from market_warehouses')).rows[0].n),1);
  assert.equal(Number((await db.query("select count(*) n from categories where category_type='market'")).rows[0].n),14);
  assert.equal(Number((await db.query("select count(*) n from market_batches")).rows[0].n),0,'no fictional inventory');

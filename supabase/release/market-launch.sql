@@ -487,6 +487,7 @@ BEGIN
   SELECT * INTO STRICT v FROM public.market_product_variants WHERE id=(i->>'variant_id')::uuid AND is_active;
   SELECT * INTO STRICT p FROM public.products WHERE id=v.product_id AND is_active;
   SELECT * INTO STRICT o FROM public.market_offers WHERE warehouse_id=p_warehouse AND variant_id=v.id AND is_listed;
+  IF o.price_vnd IS NULL THEN RAISE EXCEPTION 'Price not set'; END IF;
   count_:=(i->>'count')::integer; IF count_ IS NULL OR count_ NOT BETWEEN 1 AND 99 THEN RAISE EXCEPTION 'Invalid quantity'; END IF;
   IF v.sale_mode IN ('individual_weight','fixed_weight') THEN
    SELECT * INTO STRICT u FROM public.market_stock_units WHERE id=(i->>'unit_id')::uuid AND variant_id IN (SELECT id FROM public.market_product_variants WHERE stock_item_id=v.stock_item_id) AND status='available';
@@ -1111,5 +1112,24 @@ CREATE TRIGGER market_require_meat_evidence BEFORE INSERT OR UPDATE ON public.ma
 FOR EACH ROW EXECUTE FUNCTION public.market_require_meat_evidence();
 REVOKE ALL ON FUNCTION public.market_require_meat_evidence() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.market_require_meat_evidence() TO service_role;
+
+
+-- Source: market-unpriced-catalog.sql
+-- Preview Market catalogue items without inventing sale prices or stock.
+
+ALTER TABLE public.products ALTER COLUMN price_vnd DROP NOT NULL;
+ALTER TABLE public.products ADD CONSTRAINT non_market_product_price_required CHECK(product_type='market' OR price_vnd IS NOT NULL);
+ALTER TABLE public.market_offers ALTER COLUMN price_vnd DROP NOT NULL;
+DO $patch$
+DECLARE src text;
+BEGIN
+ SELECT pg_get_functiondef('public.market_quote(uuid,jsonb)'::regprocedure) INTO src;
+ IF position('Price not set' IN src)=0 THEN
+  IF position('count_:=' IN src)=0 THEN RAISE EXCEPTION 'Market quote compatibility changed'; END IF;
+  src:=replace(src,'count_:=',E'IF o.price_vnd IS NULL THEN RAISE EXCEPTION ''Price not set''; END IF;\n  count_:=');
+  EXECUTE src;
+ END IF;
+END $patch$;
+NOTIFY pgrst,'reload schema';
 
 COMMIT;
