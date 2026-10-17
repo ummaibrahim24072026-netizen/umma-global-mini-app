@@ -8,7 +8,7 @@ const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9
 const errors:Record<string,string>={CHAT_ACCESS:'Чат доступен только клиенту и назначенному курьеру.',CHAT_CLOSED:'Отправка недоступна: курьер ещё не назначен или доставка завершена.',CHAT_INPUT:'Проверьте сообщение, размер и формат файла.',CHAT_UPLOAD:'Файл ещё не загружен полностью. Повторите отправку.',CHAT_KEY_REUSED:'Повтор запроса отличается от исходного сообщения.',CHAT_RATE:'Слишком много сообщений. Попробуйте немного позже.',CHAT_LEASE:'Перевод уже обрабатывается.'};
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(req.method==='GET')return reply({ok:true,ready:true,translationConfigured:true,voiceTranslationConfigured:!!Deno.env.get('OPENAI_API_KEY'),translationProvider:'mymemory',limits:{photo:8388608,video:20971520,voice:5242880,voiceSeconds:60}});
+ if(req.method==='GET')return reply({ok:true,ready:true,translationConfigured:true,voiceTranslationConfigured:false,translationProvider:'mymemory',limits:{photo:8388608,video:20971520,voice:5242880,voiceSeconds:60}});
  if(req.method!=='POST')return reply({ok:false,error:'Method not allowed'},405);
  try{
   const raw=await req.text();if(raw.length>16000)return reply({ok:false,error:errors.CHAT_INPUT},413);const body=JSON.parse(raw);
@@ -26,7 +26,7 @@ Deno.serve(async req=>{
    const signed=paths.length?await bucket.createSignedUrls(paths,900):{data:[],error:null};if(signed.error)throw Error('Chat media unavailable');
    const urls=new Map((signed.data||[]).map((s:any)=>[s.path,s.signedUrl]));
    const threadKey=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.orderId+':'+String(data.context.peer)))),b=>b.toString(16).padStart(2,'0')).join('');
-   return reply({ok:true,context:{threadKey,orderNumber:data.context.orderNumber,role:data.context.role,canSend:data.context.canSend,language:data.context.language,peerLanguage:data.context.peerLanguage,waiting:!data.context.peer},translationConfigured:true,voiceTranslationConfigured:!!Deno.env.get('OPENAI_API_KEY'),translationProvider:'mymemory',messages:data.messages.map((m:any)=>({id:m.id,seq:m.seq,own:m.own,kind:m.kind,text:m.body,language:m.source_language,createdAt:m.created_at,readAt:m.read_at,mediaUrl:urls.get(m.object_path)||null,translation:m.translation?{state:m.translation.state,text:m.translation.body,transcript:m.translation.transcript,audioUrl:urls.get(m.translation.audio_path)||null,attempts:m.translation.attempts}:null}))});
+   return reply({ok:true,context:{threadKey,orderNumber:data.context.orderNumber,role:data.context.role,canSend:data.context.canSend,language:data.context.language,peerLanguage:data.context.peerLanguage,waiting:!data.context.peer},translationConfigured:true,voiceTranslationConfigured:false,translationProvider:'mymemory',messages:data.messages.map((m:any)=>({id:m.id,seq:m.seq,own:m.own,kind:m.kind,text:m.body,language:m.source_language,createdAt:m.created_at,readAt:m.read_at,mediaUrl:urls.get(m.object_path)||null,translation:m.translation?{state:m.translation.state,text:m.translation.body,transcript:m.translation.transcript,audioUrl:urls.get(m.translation.audio_path)||null,attempts:m.translation.attempts}:null}))});
   }
   if(body.action==='send'||body.action==='prepare'){
    if(!uuid(body.requestKey)||typeof body.text!=='string'||body.text.length>2000||!['text','photo','video','voice'].includes(body.kind))return reply({ok:false,error:errors.CHAT_INPUT},400);
