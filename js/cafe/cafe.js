@@ -16,7 +16,7 @@
     { id: "mains", label: "Горячее", skus: ["PLOV", "MANTI", "CHICKEN-LEG-SALAD"] },
     { id: "salads", label: "Салаты", skus: ["SALAD", "OLIVIER", "VINAIGRETTE", "CRUNCHY-SALAD"] },
     { id: "bakery", label: "Выпечка", skus: ["FLATBREAD", "SAMSA", "SAMSA-CHICKEN", "CHEESE-KHACHAPURI"] },
-    { id: "desserts", label: "Десерты", skus: ["CROISSANT"] },
+    { id: "desserts", label: "Десерты", skus: ["CROISSANT", "BAKLAVA-ALMOND", "BAKLAVA-WALNUT"] },
     { id: "drinks", label: "Напитки", skus: ["AYRAN", "AYRAN-500", "TURKISH-AYRAN-1000", "GREEN-TEA-900", "BLACK-TEA-LEMON-900", "BLACKBERRY-COMPOTE-500", "BLACKBERRY-COMPOTE-1000"] },
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
     { id: "other", label: "Другое", skus: [] }
@@ -118,11 +118,12 @@
     const root = byId("cafeProducts");
     if (!root) return;
     const availableProducts = products.map(p => {
+      if (p.catalog_preview || p.price_vnd == null) return { ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
-    }).filter(p => p && p.stockIsAvailable && p.stockAvailable > 0);
+    }).filter(p => p && (p.catalog_preview || (p.stockIsAvailable && p.stockAvailable > 0)));
     renderCategories(availableProducts);
     const query = searchText(menuQuery).trim();
     const visibleProducts = availableProducts.filter(p => (menuCategory === "all" || categoryFor(p) === menuCategory) && (!query || [name(p), description(p), p.name_ru, p.name_en, p.name_vi, p.description_ru, p.description_en, p.description_vi, ...Object.values(window.ummaTranslations?.[p.name_ru] || {})].some(value => searchText(value).includes(query))));
@@ -141,8 +142,8 @@
         '<h3 translate="no" dir="auto">' + esc(name(p)) + '</h3>' +
         (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p translate="no" dir="auto">' + esc(description(p)) + '</p></details>' : '') +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
-        '<div class="cafe-product-bottom"><span class="cafe-product-price">' + money(p.price_vnd) + '</span>' +
-        (quantity
+        '<div class="cafe-product-bottom"><span class="cafe-product-price">' + (p.catalog_preview ? 'Цена уточняется' : money(p.price_vnd)) + '</span>' +
+        (p.catalog_preview ? '' : quantity
           ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + productId + '" aria-label="Уменьшить ' + esc(name(p)) + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + productId + '" aria-label="Добавить ещё ' + esc(name(p)) + '">+</button></div>'
           : '<button type="button" class="cafe-add" data-add-product="' + productId + '" aria-label="Добавить ' + esc(name(p)) + '">+</button>') +
         '</div></article>';
@@ -211,7 +212,9 @@
       const productName = card.querySelector("h3")?.textContent || "блюдо";
       const safeName = esc(productName);
       const safeId = esc(id);
-      bottom.innerHTML = priceHtml + (quantity
+      const product = products.find(p => String(p.id) === String(id));
+      const preview = product?.catalog_preview || product?.price_vnd == null;
+      bottom.innerHTML = priceHtml + (preview ? '' : quantity
         ? '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-cart-change="-1" data-product-id="' + safeId + '" aria-label="Уменьшить ' + safeName + '">−</button><strong>' + quantity + '</strong><button type="button" class="cafe-qty-btn" data-add-product="' + safeId + '" aria-label="Добавить ещё ' + safeName + '">+</button></div>'
         : '<button type="button" class="cafe-add" data-add-product="' + safeId + '" aria-label="Добавить ' + safeName + '">+</button>');
     });
@@ -384,7 +387,7 @@
   function changeProduct(productId, delta) {
     const baseProduct = products.find(p => String(p.id) === String(productId));
     const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
-    if (!baseProduct) return;
+    if (!baseProduct || baseProduct.catalog_preview || baseProduct.price_vnd == null) return;
     if (inventoryControlEnabled && (!stock || stock.is_available === false)) return;
     const product = inventoryControlEnabled
       ? { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,

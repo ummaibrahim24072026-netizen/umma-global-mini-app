@@ -13,6 +13,7 @@ try{
  await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/market-stock-scan.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-commerce.sql','utf8').replaceAll('e22788bd-4734-4b3a-911e-ba103d52617a',loc));await db.exec(readFileSync('supabase/proposals/market-management.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-quality.sql','utf8'));await db.exec(readFileSync('supabase/proposals/market-unpriced-catalog.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/cafe-catalog-preview.sql','utf8'));
  await db.exec(`insert into telegram_users(telegram_id,role)values(10,'super_admin'),(11,'employee'),(12,'user'),(13,'user'),(14,'employee');insert into locations(id,name,location_type,city)values('${loc}','HALAL UMMA','cafe','Nha Trang');insert into market_warehouses(id,location_id,name)values('${wh}','${loc}','QA');insert into market_staff_roles(telegram_id,location_id,role)values(11,'${loc}','picker'),(14,'${loc}','cashier');`);
  await q('insert into cafe_staff_shifts(location_id,staff_telegram_id,opened_by_telegram_id,opening_cash_vnd)values($1,14,14,1000000)',[loc]);
  const sup=(await core('supplier_create',{name:'QA'})).supplier_id;
@@ -133,6 +134,11 @@ try{
  ok(previewCatalog.offers.find(x=>x.variant_id===drink.id).price_vnd===null,'preview price remains null in public catalogue');
  await reject(q('select market_quote($1,$2) r',[wh,[{variant_id:drink.id,count:1}]]),/Price not set/);
  await reject(q('update products set price_vnd=null where id=$1',[cafeProduct]),/non_market_product_price_required/);
+ const preview=randomUUID();
+ await q("insert into products(id,name_ru,name_en,name_vi,product_type,price_vnd,catalog_preview)values($1,'Preview','Preview','Preview','cafe',null,true)",[preview]);
+ await reject(q("select create_cafe_staff_order(10,$1,$2::jsonb,'pickup','Preview rejected')",[loc,JSON.stringify([{productId:preview,quantity:1}])]),/Cafe price not set/);
+ await q('update products set price_vnd=50000 where id=$1',[preview]);
+ ok((await row('products',preview)).catalog_preview===false,'setting real price clears Cafe preview');
  await db.exec('set role anon');await reject(q('select market_catalog(null)'),/permission denied/);await db.exec('reset role');
  console.log('PASS '+checks+' Market commerce checks: exact units, reservation, payment, wrong-item gate, factory quantities, picking, handover, refund and expiry');
 }catch(e){throw e;}
