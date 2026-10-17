@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
 import {validGTIN, previewImport, publicationBlockers} from '../js/market/catalog/import-preview.js';
+import {parseCSV} from '../js/market/catalog/csv.js';
+assert.deepEqual(parseCSV('\ufeffname_ru,supplier_sku,gtin\r\n"QA, product",001,00000000\r\n'),[{name_ru:'QA, product',supplier_sku:'001',gtin:'00000000'}]);
+assert.deepEqual(parseCSV('name_ru;supplier_sku\n"QA ""quoted""\nline";002'),[{name_ru:'QA "quoted"\nline',supplier_sku:'002'}]);
+assert.throws(()=>parseCSV('a,a\n1,2'),/заголовки/);
+assert.throws(()=>parseCSV('a,b\n"unfinished,2'),/кавычки/);
+assert.throws(()=>parseCSV('a,b\n1,2,3'),/столбцов/);
 assert.equal(validGTIN('4006381333931'), true);
 assert.equal(validGTIN('96385074'), true);
 assert.equal(validGTIN('4006381333932'), false);

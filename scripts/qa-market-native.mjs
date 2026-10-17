@@ -36,6 +36,15 @@ try{
  await a.query('begin');await a.query(...b2b(10,randomUUID(),'respond',change));
  const staleReply=b.query(...b2b(15,randomUUID(),'respond',{...change,status:'quoted',manager_reply:'Concurrent proposal'})).then(()=>({ok:true}),e=>({error:e.message}));
  await waitForLock('b2b_operation');await a.query('commit');assert.match((await staleReply).error,/B2B_STALE_REQUEST/);
+ await c.query(readFileSync('supabase/proposals/market-import.sql','utf8'));
+ const category=(await c.query("select id from categories where category_type='market' limit 1")).rows[0].id;
+ const importRows=[{name_ru:'Synthetic concurrent import',supplier_id:supplier,supplier_sku:'NATIVE-IMPORT-1',gtin:'4006381333931',category_id:category,sale_mode:'piece',measure:'pcs'}];
+ const staged=(await c.query(...core(randomUUID(),'import_stage',{rows:importRows,source_name:'native.csv'}))).rows[0].r;
+ await a.query('begin');await a.query(...core(randomUUID(),'import_commit',{job_id:staged.job_id}));
+ const concurrentImport=b.query(...core(randomUUID(),'import_commit',{job_id:staged.job_id}));
+ await waitForLock('market_operation');await a.query('commit');assert.equal((await concurrentImport).rows[0].r.replayed,true);
+ assert.equal(Number((await c.query("select count(*) n from market_supplier_products where supplier_sku='NATIVE-IMPORT-1'")).rows[0].n),1);
+ console.log('PASS Market import native PostgreSQL: observed competing commit lock wait and exactly one product/supplier mapping');
  console.log('PASS B2B native PostgreSQL: one enquiry on concurrent retry and stale competing manager reply rejected');
  console.log('PASS Market native PostgreSQL concurrency: observed independent lock waits; one buyer, one payment and one writeoff');
 }finally{for(const client of clients){await client.query('rollback').catch(()=>{});await client.end();}}
