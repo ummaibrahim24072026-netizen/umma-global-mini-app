@@ -7,7 +7,7 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","marketShopPage","servicesPage"
+    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","marketShopPage","b2bPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
@@ -53,6 +53,7 @@
     const route=byId("courierMapModal");if(route&&!route.hidden){window.UmmaCourierMap?.close();return true;}
     if(window.ummaCheckoutChoices?.isOpen()){window.ummaCheckoutChoices.close();return true;}
     const modal=document.querySelector("dialog[open]");if(modal){modal.close?.();return true;}
+    if(window.ummaB2B?.backToCatalog?.())return true;
     if(window.ummaCafe?.isCheckoutOpen?.()){window.ummaCafe.closeCheckout();return true;}
     if(currentScreen()==="cafeKitchenPage"){
       const cash=byId("cafeCashPanel");
