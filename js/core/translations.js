@@ -567,6 +567,102 @@ QR с суммой заказа готов. Оплату подтвердит к
 Автоперевод пока не подключён. Доступен оригинал сообщения.|Automatic translation is not connected. The original is available.|Chưa kết nối dịch tự động. Bản gốc vẫn khả dụng.
 Не удалось перевести сообщение. Оригинал сохранён.|Could not translate the message. The original is saved.|Không thể dịch tin nhắn. Bản gốc đã được lưu.
 Повторить перевод|Retry translation|Dịch lại
+UMMA Cafe|UMMA Cafe|UMMA Cafe
+Готовые блюда и напитки|Meals and drinks|Món ăn và đồ uống
+UMMA Market|UMMA Market|UMMA Market
+Продукты и товары для семьи|Groceries and household goods|Thực phẩm và hàng gia dụng
+UMMA B2B|UMMA B2B|UMMA B2B
+Продукты и товары для бизнеса|Food and supplies for businesses|Thực phẩm và hàng hóa cho doanh nghiệp
+Торговля|Trade|Thương mại
+Импорт, экспорт и оптовые поставки|Import, export and wholesale supply|Xuất nhập khẩu và cung ứng bán buôn
+Ферма|Farm|Nông trại
+Растениеводство, животноводство и натуральные продукты|Crops, livestock and natural produce|Trồng trọt, chăn nuôi và nông sản
+Производство|Production|Sản xuất
+Собственная продукция, переработка и упаковка|Own products, processing and packaging|Sản phẩm riêng, chế biến và đóng gói
+Семья|Family|Gia đình
+Поддержка семьи, отношения и семейные программы|Family support, relationships and programmes|Hỗ trợ gia đình, các mối quan hệ và chương trình gia đình
+Дети|Kids|Trẻ em
+Детские занятия, развитие и досуг|Activities, development and leisure for children|Hoạt động, phát triển và vui chơi cho trẻ em
+Забота|Care|Chăm sóc
+Поддержка пожилых и людей, которым нужна забота|Support for older people and those needing care|Hỗ trợ người cao tuổi và người cần chăm sóc
+Образование|Education|Giáo dục
+Детский сад, школа, медресе, университет и курсы|Kindergarten, school, madrasah, university and courses|Mẫu giáo, trường học, trường Hồi giáo, đại học và khóa học
+Детский сад|Kindergarten|Mẫu giáo
+Школа|School|Trường học
+Медресе|Madrasah|Trường Hồi giáo
+Университет|University|Đại học
+Курсы и обучение|Courses and learning|Khóa học và đào tạo
+Здоровье|Health|Sức khỏe
+Здоровье, профилактика и сопровождение|Health, prevention and support|Sức khỏe, phòng ngừa và hỗ trợ
+Фитнес|Fitness|Thể dục
+Тренировки, занятия и спортивные программы|Training, classes and sports programmes|Tập luyện, lớp học và chương trình thể thao
+Барбершоп|Barbershop|Tiệm cắt tóc nam
+Мужские стрижки и уход|Men’s haircuts and grooming|Cắt tóc và chăm sóc cho nam
+Женский салон|Women’s salon|Salon nữ
+Уход и услуги для женщин|Care and services for women|Chăm sóc và dịch vụ dành cho nữ
+Дом и быт|Home services|Dịch vụ gia đình
+Бытовые услуги, ремонт и обустройство|Household services, repairs and home improvement|Dịch vụ gia đình, sửa chữa và cải tạo nhà
+Недвижимость|Real estate|Bất động sản
+Жильё, покупка, продажа и аренда|Housing, buying, selling and rentals|Nhà ở, mua bán và cho thuê
+Клининг|Cleaning|Vệ sinh
+Уборка дома и коммерческих помещений|Home and commercial cleaning|Vệ sinh nhà ở và cơ sở kinh doanh
+Путешествия|Travel|Du lịch
+Организация поездок и билеты|Trip planning and tickets|Lập kế hoạch chuyến đi và vé
+Отели|Hotels|Khách sạn
+Проживание и бронирование отелей|Stays and hotel reservations|Lưu trú và đặt phòng khách sạn
+Туры и экскурсии|Tours and excursions|Tour và tham quan
+Экскурсии, маршруты и сопровождение|Excursions, itineraries and guides|Tham quan, hành trình và hướng dẫn
+Визовые услуги|Visa services|Dịch vụ thị thực
+Визы и сопровождение документов|Visas and document assistance|Thị thực và hỗ trợ giấy tờ
+Передвижение|Mobility|Di chuyển
+Транспортные сервисы и маршруты|Transport services and routes|Dịch vụ vận tải và lộ trình
+UMMA Taxi|UMMA Taxi|UMMA Taxi
+Городские поездки и трансферы|City rides and transfers|Chuyến đi trong thành phố và đưa đón
+Авто и мототехника|Vehicles|Phương tiện
+Покупка и продажа автомобилей и мототехники|Buying and selling cars and motorcycles|Mua bán ô tô và xe máy
+Прокат транспорта|Vehicle rental|Thuê xe
+Аренда автомобилей, мотоциклов и скутеров|Car, motorcycle and scooter rentals|Thuê ô tô, xe máy và xe tay ga
+Логистика|Logistics|Logistics
+Доставка, перевозки и отправления|Delivery, freight and shipments|Giao hàng, vận tải và gửi hàng
+Бизнес|Business|Kinh doanh
+Предпринимательство, партнёрства и франшиза|Entrepreneurship, partnerships and franchising|Khởi nghiệp, hợp tác và nhượng quyền
+Работа|Jobs|Việc làm
+Вакансии, специалисты и занятость|Vacancies, professionals and employment|Tuyển dụng, chuyên gia và việc làm
+Одежда и стиль|Fashion|Thời trang
+Одежда, аксессуары и собственные коллекции|Clothing, accessories and own collections|Quần áo, phụ kiện và bộ sưu tập riêng
+Энергия|Energy|Năng lượng
+Энергетические решения и проекты|Energy solutions and projects|Giải pháp và dự án năng lượng
+Финансы|Finance|Tài chính
+Финансовые сервисы и учёт|Financial services and accounting|Dịch vụ tài chính và kế toán
+Обмен валют|Currency exchange|Đổi ngoại tệ
+Обмен валют и переводы|Currency exchange and transfers|Đổi ngoại tệ và chuyển tiền
+Сообщество|Community|Cộng đồng
+Знакомства, взаимопомощь и связи|Connections, mutual support and networking|Kết nối, tương trợ và giao lưu
+Мероприятия|Events|Sự kiện
+Встречи, семейные и общественные мероприятия|Meetups, family and community events|Gặp gỡ, sự kiện gia đình và cộng đồng
+Медиа|Media|Truyền thông
+Новости, публикации и полезные материалы|News, publications and useful resources|Tin tức, bài viết và tài liệu hữu ích
+Благотворительность|Charity|Từ thiện
+Закят, садака и адресная помощь|Zakat, sadaqah and targeted assistance|Zakat, sadaqah và hỗ trợ theo nhu cầu
+Вакф|Waqf|Waqf
+Долгосрочные общественно полезные проекты и фонд|Long-term community projects and endowment|Dự án cộng đồng dài hạn và quỹ hiến tặng
+Еда и торговля|Food and trade|Ẩm thực và thương mại
+Семья и образование|Family and education|Gia đình và giáo dục
+Здоровье и уход|Health and care|Sức khỏe và chăm sóc
+Дом и услуги|Home and services|Nhà ở và dịch vụ
+Путешествия и проживание|Travel and stays|Du lịch và lưu trú
+Транспорт и доставка|Transport and delivery|Vận tải và giao hàng
+Бизнес и сервисы|Business and services|Kinh doanh và dịch vụ
+Общество и помощь|Community and support|Cộng đồng và hỗ trợ
+Направления UMMA|UMMA directions|Các lĩnh vực UMMA
+Поиск направления|Search directions|Tìm lĩnh vực
+Все направления|All directions|Tất cả lĩnh vực
+Ничего не найдено. Попробуйте другое название.|No results. Try another name.|Không tìm thấy. Hãy thử tên khác.
+Готовится к запуску|Preparing to launch|Đang chuẩn bị ra mắt
+Раздел в разработке. Услуги пока недоступны.|This section is in development. Services are not available yet.|Mục này đang phát triển. Dịch vụ chưa khả dụng.
+Планируемые возможности|Planned features|Tính năng dự kiến
+Ко всем направлениям|All directions|Tất cả lĩnh vực
+Кафе, Market и B2B доступны в приложении. Остальные направления готовятся к запуску.|Cafe, Market and B2B are available in the app. Other directions are being prepared.|Cafe, Market và B2B có trong ứng dụng. Các lĩnh vực khác đang được chuẩn bị.
 `;
  const catalogue = Object.create(null);
  for (const row of rows.trim().split('\n')) { const [ru,en,vi]=row.split('|'); if(!ru||!en||!vi)throw Error('Invalid translation row'); catalogue[ru]={en,vi}; }
