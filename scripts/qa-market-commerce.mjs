@@ -46,10 +46,11 @@ try{
  await op('payment_confirm',{order_id:two.order_id,amount_vnd:20000,received_confirmed:true,reference:'Actual cash'},14);await op('pickup_complete',{order_id:two.order_id,package_count:1},14);
  ok(Number((await row('market_batches',drinks)).raw_quantity)===98,'factory stock deducted once');
  const refund=await op('refund',{order_id:order.order_id,amount_vnd:400000,payout_confirmed:true,reason:'Actual partial refund',reference:'Bank payout QA'},10);ok(refund.refunded_vnd===400000,'partial refund');
+ await reject(q('select refund_cafe_order($1,10,$2,$3,true)',[order.order_id,randomUUID(),'Wrong module refund']),/Market refund controls/);
  await reject(op('refund',{order_id:order.order_id,amount_vnd:600000,payout_confirmed:true,reason:'Too much',reference:'QA'},10),/exceeds/);
  await op('refund',{order_id:order.order_id,amount_vnd:542420,payout_confirmed:true,reason:'Remaining refund',reference:'QA payout'},10);ok((await row('cafe_orders',order.order_id)).payment_status==='refunded','full refund total');
  const exp=await op('order_create',await mk([{variant_id:meat.id,unit_id:units[0],count:1}],'qr'));
- await q("update market_orders set reserve_until=now()-interval '1 minute' where order_id=$1",[exp.order_id]);await q('select market_expire_reservations()');ok((await row('market_stock_units',units[0])).status==='available','expiry releases exact unit');ok((await row('cafe_orders',exp.order_id)).status==='cancelled','expired order cancelled');
+ await q("update market_orders set reserve_until=now()-interval '1 minute' where order_id=$1",[exp.order_id]);await reject(q("update cafe_orders set payment_status='paid' where id=$1",[exp.order_id]),/reservation expired/);await q('select market_expire_reservations()');ok((await row('market_stock_units',units[0])).status==='available','expiry releases exact unit');ok((await row('cafe_orders',exp.order_id)).status==='cancelled','expired order cancelled');
  await reject(op('payment_confirm',{order_id:exp.order_id,amount_vnd:854280,received_confirmed:true,reference:'Late pay'},14),/closed/);
  const cancel=await op('order_create',await mk([{variant_id:drink.id,count:1}]));await op('order_cancel',{order_id:cancel.order_id});ok(Number((await row('market_batches',drinks)).reserved_raw)===0,'cancel releases raw reserve');
  await core('quarantine',{batch_id:batch,reason:'QA'});await reject(q('select market_quote($1,$2)',[wh,[{variant_id:meat.id,unit_id:units[2],count:1}]]),/no rows/);await core('release',{batch_id:batch,reason:'QA checked'});

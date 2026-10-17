@@ -224,6 +224,8 @@ DO $patch$ DECLARE src text; BEGIN
  EXECUTE src;
  SELECT pg_get_functiondef('public.refund_cafe_order(uuid,bigint,uuid,text,boolean)'::regprocedure) INTO src;
  IF position('INTO available;' IN src)=0 THEN RAISE EXCEPTION 'Refund compatibility changed'; END IF;
+ IF position('IF o.payment_status' IN src)=0 THEN RAISE EXCEPTION 'Refund order compatibility changed'; END IF;
+ src:=replace(src,'IF o.payment_status',E'IF o.source_module=''market'' THEN RAISE EXCEPTION ''Use Market refund controls''; END IF;\n IF o.payment_status');
  src:=replace(src,'INTO available;',E'INTO available;\n  available:=available-coalesce((SELECT sum(amount_vnd) FROM public.market_refunds WHERE cash_shift_id=shift.id),0);');
  EXECUTE src;
 END $patch$;
