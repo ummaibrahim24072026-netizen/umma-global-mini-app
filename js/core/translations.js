@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const rows = `
+Сейчас работает UMMA Cafe. UMMA Market и B2B — в разработке. Остальные направления готовятся к запуску.|UMMA Cafe is open. UMMA Market and B2B are in development. Other ventures are being prepared for launch.|UMMA Cafe đang hoạt động. UMMA Market và B2B đang được phát triển. Các lĩnh vực khác đang được chuẩn bị ra mắt.
 Арабский оригинал, перевод Кулиева и тафсир ас-Саади|Arabic text, Kuliev’s Russian translation and as-Saadi’s tafsir|Bản gốc Ả Rập, bản dịch tiếng Nga Kuliev và tafsir as-Saadi
 Блюда и напитки|Meals and drinks|Món ăn và đồ uống
 Товары для семьи|Family essentials|Hàng dùng gia đình
