@@ -21,3 +21,9 @@ All 38 registry entries share `directionArtwork()` on home and in the directory.
 The group concepts use the same generation brief: satin turquoise 3D objects, small champagne-gold details, cream supporting surfaces, pale contact shadows and a light background, one subject per registry entry. No app logo replacement. The Quran illustration is decorative only; Quran text, daily-verse selection and reader behavior are unchanged.
 
 `qa-home-browser.mjs` checks all 38 image loads, eight groups, directory overflow and translation coverage at eight widths in Russian, English and Vietnamese, in addition to existing home and navigation checks.
+
+## Navigation illustration family
+
+`navigation-atlas-v2.webp` is a separate five-symbol sheet generated with built-in ImageGen, using the approved service atlas as a material reference. Layout: 3 × 2 equal 512px cells; top row Home, Cafe, Orders; bottom row Events, More, empty. Each symbol uses simple front-facing satin turquoise forms, a small champagne-gold accent, cream detail and soft shadows on white. No text or background decorations. Navigation labels remain real translated text, and existing SVGs remain as load/error fallbacks. One shared WebP request serves all five symbols.
+
+Final navigation polish uses satin rather than glossy highlights, softer contact shadows and per-symbol optical size adjustments. The cloche is scaled by 1.10, clipboard by 1.05 and More by 1.08. The image grid and subjects are unchanged.
