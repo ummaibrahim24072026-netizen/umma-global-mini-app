@@ -16,6 +16,20 @@ w.fetch=async(url)=>({ok:true,json:async()=>url.includes('my-orders')?{ok:true,o
 try{
  w.eval(readFileSync('js/delivery/providers.js','utf8'));
  const api=w.ummaDeliveryProviders;
+ const android=new URL(api.link('maxim'));
+ assert.equal(android.host,'maxim-android.onelink.me');
+ assert.equal(android.pathname,'/ezSa');
+ assert.equal(android.searchParams.get('af_dp'),'maximzakaz://app');
+ assert.equal(android.searchParams.get('af_force_deeplink'),'true');
+ assert.match(android.searchParams.get('af_web_dp'),/id=com.taxsee.taxsee/);
+ assert.equal(api.link('maxim','private pickup','private dropoff'),api.link('maxim'),'unsupported route parameters must not leak personal data or pretend to prefill delivery');
+ w.Telegram.WebApp.platform='ios';
+ assert.equal(new URL(api.link('maxim')).host,'maxim-ios.onelink.me');
+ assert.match(new URL(api.link('maxim')).searchParams.get('af_web_dp'),/id579985456/);
+ w.Telegram.WebApp.platform='android';
+ const launch=d.createElement('a');launch.href=api.link('maxim');launch.setAttribute('data-open-carrier','');d.body.append(launch);
+ let opened;w.Telegram.WebApp.openLink=url=>{opened=url;};launch.click();
+ assert.equal(opened,launch.href,'Telegram opens the official HTTPS app link');launch.remove();
  assert.equal(api.external('lalamove'),false);assert.equal(api.external('unknown'),false);
  const u=new URL(api.link('lalamove','Scenia Bay & UMMA','A/B ? # тест'));
  assert.equal(u.searchParams.get('pickup'),'Scenia Bay & UMMA');assert.equal(u.searchParams.get('dropoff'),'A/B ? # тест');

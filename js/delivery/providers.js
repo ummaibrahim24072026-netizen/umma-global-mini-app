@@ -4,7 +4,7 @@
   const providers = Object.freeze({
     umma: { name: 'Курьер UMMA', enabled: true },
     grab: { name: 'GrabExpress', enabled: true, url: 'https://grab.onelink.me/2695613898/GESMS' },
-    maxim: { name: 'Maxim', enabled: true, url: 'https://taximaxim.com/l/app' },
+    maxim: { name: 'Maxim', enabled: true, url: 'https://maxim-android.onelink.me/ezSa' },
     lalamove: { name: 'Lalamove', enabled: false, url: 'https://web.lalamove.com/' }
   });
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -26,6 +26,20 @@
   function link(id,pickup,dropoff) {
     const p=providers[id];if(!p?.url)throw Error('Unknown delivery provider');
     const url=new URL(p.url);
+    if(id==='maxim'){
+      // Official launch links from Maxim's Nha Trang ordering-app page.
+      // Only the app home URI is confirmed; do not invent delivery/route parameters.
+      const platform=window.Telegram?.WebApp?.platform;
+      const ios=platform==='ios'||(platform!=='android'&&(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)));
+      const app=new URL(ios?'https://maxim-ios.onelink.me/IqHi':p.url);
+      app.searchParams.set('af_web_dp',ios?'https://apps.apple.com/app/id579985456':'https://play.google.com/store/apps/details?id=com.taxsee.taxsee');
+      app.searchParams.set('c','main');
+      app.searchParams.set('pid','taximaxim_site');
+      app.searchParams.set('is_retargeting','true');
+      app.searchParams.set('af_dp','maximzakaz://app');
+      app.searchParams.set('af_force_deeplink','true');
+      return app.href;
+    }
     if(id==='lalamove' && pickup?.trim() && dropoff?.trim()){
       url.searchParams.set('pickup',pickup.trim());url.searchParams.set('dropoff',dropoff.trim());
     }
