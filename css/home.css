@@ -91,3 +91,46 @@
 .umma-about-directions article button{border:0;border-radius:0;background:transparent;min-height:48px}
 .umma-about-directions article p{margin:0;padding:0 12px 14px;line-height:1.6;font-size:14px}
 .umma-about-directions small{color:var(--umma-brand-strong)}
+
+/* Direction cards: lightweight brand details, clear hierarchy and launch status. */
+.services .services-grid{flex:0 0 auto;gap:12px;padding:4px 2px 14px}
+.services-grid .service{position:relative;isolation:isolate;overflow:hidden;flex-basis:clamp(132px,37%,164px);max-width:164px;min-height:202px;padding:16px 14px;gap:9px;border-radius:22px;background:linear-gradient(150deg,var(--surface),var(--umma-brand-pale));border:1px solid var(--umma-brand-line);box-shadow:0 5px 14px rgba(var(--umma-brand-ink-rgb),.045)}
+.services-grid .service::before{content:"";position:absolute;z-index:-1;width:88px;height:88px;inset-inline-end:-34px;top:-30px;border:1px solid var(--umma-brand-line);border-radius:20px;transform:rotate(45deg);box-shadow:0 0 0 10px rgba(var(--umma-brand-primary-rgb),.025),0 0 0 20px rgba(var(--umma-brand-primary-rgb),.025);pointer-events:none}
+.services-grid .direction-emblem{display:grid;place-items:center;flex:none;width:46px;height:46px;margin-bottom:5px;border-radius:15px;background:var(--surface);border:1px solid var(--umma-brand-line);box-shadow:0 3px 9px rgba(var(--umma-brand-ink-rgb),.035);color:var(--umma-brand-strong)}
+.services-grid .direction-emblem .umma-icon{width:27px;height:27px}
+.services-grid .direction-arrow{position:absolute;inset-inline-end:14px;top:16px;color:var(--gold-dark);font-size:20px;line-height:1}
+.services-grid .service strong{font-size:16px;font-weight:750;line-height:1.3}
+.services-grid .service>small{font-size:11px;line-height:1.5;color:var(--muted);margin:0 0 7px;overflow-wrap:anywhere}
+.services-grid .service .native-coming,.services-grid .direction-live{display:inline-flex;align-items:center;gap:5px;margin-top:auto;padding:5px 7px;border-radius:8px;max-width:100%;font-size:10px;line-height:1.4;background:var(--surface);border:1px solid var(--umma-brand-line);color:var(--muted)}
+.services-grid .direction-live{color:var(--umma-brand-strong);font-weight:650}
+.services-grid .direction-live::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;background:currentColor}
+.services-grid .service[data-service=cafe]{border-color:var(--gold-dark)}
+@media(prefers-reduced-motion:no-preference){.services-grid .service{transition:transform .18s ease,box-shadow .18s ease}.services-grid .service:active{transform:translateY(2px) scale(.98);box-shadow:none}}
+
+.services-grid .direction-emblem .direction-icon-gold{stroke:var(--gold-dark)}
+
+/* Original UMMA illustration family. One cached atlas serves all six cards. */
+.services-grid .service{flex-basis:clamp(146px,42%,176px);max-width:176px;min-height:250px;gap:7px;background:linear-gradient(165deg,var(--surface) 35%,var(--umma-brand-pale));padding:12px 14px 14px}
+.services-grid .service::before{display:none}
+.services-grid .direction-emblem{position:relative;display:grid;width:calc(100% + 16px);height:auto;aspect-ratio:1;margin:-3px -8px 0;border:0;border-radius:14px;background:transparent;box-shadow:none;overflow:hidden;isolation:auto}
+.services-grid .direction-emblem>.umma-icon{grid-area:1/1}
+.services-grid .direction-emblem.artwork-ready>.umma-icon{visibility:hidden}
+.services-grid .direction-arrow{z-index:2;top:12px;inset-inline-end:12px;font-size:17px}
+.services-grid .service>small{margin-bottom:8px}
+
+/* The catalogue and home share the same 38 illustrations and registry. */
+.direction-emblem{position:relative;display:grid;place-items:center;flex:none;overflow:hidden;isolation:auto;color:var(--umma-brand-strong)}
+.direction-emblem>.umma-icon{grid-area:1/1;width:28px;height:28px}
+.direction-emblem.artwork-ready>.umma-icon{visibility:hidden}
+.direction-crop{position:relative;grid-area:1/1;width:100%;overflow:hidden;pointer-events:none;mix-blend-mode:multiply}
+.direction-artwork{position:absolute;display:block;max-width:none;object-fit:fill;pointer-events:none;opacity:0}
+.artwork-ready .direction-artwork{opacity:1}
+.native-directory-card{position:relative;isolation:isolate;overflow:hidden;border-radius:22px;background:linear-gradient(165deg,var(--surface) 35%,var(--umma-brand-pale));box-shadow:var(--shadow);padding:14px;gap:9px}
+.native-directory-card .direction-emblem{width:100%;aspect-ratio:1.15;margin-bottom:2px}
+.native-directory-card strong{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.native-directory-card>small{line-height:1.5;overflow-wrap:anywhere}
+.native-directory-card .direction-arrow{position:absolute;top:12px;inset-inline-end:12px;color:var(--gold-dark);font-size:18px}
+.native-directory-card .native-coming,.native-directory-card .direction-live{margin-top:auto;border:1px solid var(--umma-brand-line);border-radius:8px;padding:5px 7px;background:var(--surface);font-size:11px;line-height:1.4;color:var(--muted)}
+.native-directory-card .direction-live{color:var(--umma-brand-strong)}
+.native-directory-card[data-service=cafe]{border-color:var(--gold-dark)}
+@media(prefers-reduced-motion:no-preference){.native-directory-card{transition:transform .18s ease}.native-directory-card:active{transform:scale(.98)}}

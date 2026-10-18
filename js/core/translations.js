@@ -2,6 +2,13 @@
 (() => {
   'use strict';
   const rows = `
+Арабский оригинал, перевод Кулиева и тафсир ас-Саади|Arabic text, Kuliev’s Russian translation and as-Saadi’s tafsir|Bản gốc Ả Rập, bản dịch tiếng Nga Kuliev và tafsir as-Saadi
+Блюда и напитки|Meals and drinks|Món ăn và đồ uống
+Товары для семьи|Family essentials|Hàng dùng gia đình
+Поставки для бизнеса|Business supplies|Cung ứng cho doanh nghiệp
+Знания и развитие|Learning and growth|Học hỏi và phát triển
+Поездки и открытия|Travel and discovery|Du lịch và khám phá
+Отдых и комфорт|Rest and comfort|Nghỉ ngơi và tiện nghi
 UMMA GLOBAL — развивающаяся международная экосистема для жизни, семьи и бизнеса, основанная на исламских ценностях.|UMMA GLOBAL is a growing international ecosystem for everyday life, family and business, founded on Islamic values.|UMMA GLOBAL là hệ sinh thái quốc tế đang phát triển dành cho cuộc sống, gia đình và kinh doanh, dựa trên các giá trị Hồi giáo.
 Наш путь начинается в Нячанге. Мы объединяем полезные сервисы, предпринимательские инициативы и общественные проекты, стремясь приносить пользу людям в разных странах.|Our journey begins in Nha Trang. We bring together useful services, business initiatives and community projects, seeking to benefit people across countries.|Hành trình của chúng tôi bắt đầu tại Nha Trang. Chúng tôi kết nối các dịch vụ hữu ích, sáng kiến kinh doanh và dự án cộng đồng, hướng tới mang lại lợi ích cho mọi người ở nhiều quốc gia.
 Для нас UMMA — это наша большая семья, в которой важны доверие, уважение и забота друг о друге.|To us, UMMA is our extended family, built on trust, respect and care for one another.|Với chúng tôi, UMMA là đại gia đình, nơi sự tin tưởng, tôn trọng và quan tâm lẫn nhau luôn được coi trọng.
