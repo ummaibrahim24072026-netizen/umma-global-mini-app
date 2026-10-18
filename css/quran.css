@@ -81,5 +81,5 @@
 }
 @media(prefers-reduced-motion:no-preference){.daily-ayah-arrow{transition:transform .15s ease}}
 
-.ayah-content .daily-ayah-collapse{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:44px;margin:14px 0 0;background:var(--umma-brand-pale);border-color:var(--umma-brand-line)}
-.daily-ayah-collapse span{font-size:24px;line-height:1;color:var(--gold-dark)}
+.ayah-content .daily-ayah-collapse{display:grid;place-items:center;width:44px;min-width:44px;min-height:44px;margin:12px auto 0;padding:10px;background:transparent;border:0;box-shadow:none;color:var(--gold-dark)}
+.daily-ayah-collapse svg{display:block;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}

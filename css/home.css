@@ -71,8 +71,8 @@
 
 .brand-art-copy .welcome-content h2>.greeting-name{display:block;margin-top:3px;font-size:16px;line-height:1.35}
 
-/* Proposed luminous turquoise edges, taken from the existing artwork palette. */
-.app>main>.brand-art{background:var(--umma-brand-primary)}
-.brand.brand-art.home-fit-art::before{inset:0;width:auto;height:auto;border:0;border-radius:inherit;background-image:radial-gradient(ellipse at 50% 35%,var(--umma-brand-highlight),var(--umma-brand-primary) 70%);filter:none;opacity:1}
-.home-fit-art .brand-art-image{mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.brand-art .brand-art-copy{background:linear-gradient(180deg,transparent,rgba(var(--umma-brand-primary-rgb),.2) 40%,var(--umma-brand-primary));text-shadow:0 1px 5px var(--umma-brand-deep)}
+/* Edge colours sampled from the original artwork; the brand image is unaltered. */
+.app>main>.brand-art{background:#007b8b}
+.brand.brand-art.home-fit-art::before{inset:0;width:auto;height:auto;border:0;border-radius:inherit;background-image:linear-gradient(180deg,#016571 0%,#007b8b 16%,#008898 31%,#006070 46%,#02a0b4 62%,#067483 78%,#006070 100%);filter:none;opacity:1}
+.home-fit-art .brand-art-image{mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
+.brand-art .brand-art-copy{background:linear-gradient(180deg,transparent,rgba(0,96,112,.12) 45%,rgba(0,96,112,.7));text-shadow:0 1px 5px var(--umma-brand-deep)}
