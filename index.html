@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="css/delivery-chat.css?v=1">
 <link rel="stylesheet" href="css/market.css?v=4">
   <link rel="stylesheet" href="css/quran.css?v=4">
-  <link rel="stylesheet" href="css/home.css?v=1">
+  <link rel="stylesheet" href="css/home.css?v=2">
 </head>
 
 <body>
@@ -55,12 +55,12 @@
     <!-- BRAND: original artwork supplied by the owner -->
     <section class="brand brand-art" aria-label="UMMA Global">
       <img class="brand-art-image" src="logo/assets/umma-globe-hero.webp?v=1"
-           srcset="logo/assets/umma-globe-hero-480.webp 480w, logo/assets/umma-globe-hero.webp?v=1 1024w" sizes="(min-width: 600px) 392px, 70vw"
+           srcset="logo/assets/umma-globe-hero-480.webp 480w, logo/assets/umma-globe-hero.webp?v=1 1024w" sizes="(min-width: 600px) 560px, calc(100vw - 32px)"
            width="1024" height="1536" fetchpriority="high" decoding="async"
            alt="UMMA Global — золотой символ U на бирюзовом фоне с орнаментом и земным шаром">
       <div class="brand-art-copy">
         <div class="welcome-content">
-          <h2>Ассаляму алейкум<br>ва рахматуллахи ва баракатух!</h2>
+          <h2><span class="greeting-first-line">Ассаляму алейкум</span><span class="greeting-blessing">ва рахматуллахи ва баракатуху!</span></h2>
         </div>
         <p>Объединяем людей. Создаём возможности.</p>
         <button type="button" class="brand-art-action" data-page="cafe">Открыть кафе <span aria-hidden="true">→</span></button>
@@ -849,7 +849,7 @@
 
 <!-- CORE -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/core/app.js?v=11"></script>
+<script src="js/core/app.js?v=12"></script>
 
 <!-- AUTH -->
 <script src="js/auth/auth.js?v=2"></script>
@@ -899,7 +899,7 @@
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=10"></script>
+<script src="js/core/native-shell.js?v=11"></script>
 <script src="js/cafe/checkout-choices.js?v=1"></script>
 </body>
 </html>
