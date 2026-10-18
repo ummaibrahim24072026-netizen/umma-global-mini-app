@@ -23,6 +23,7 @@ try{
  w.eval(readFileSync('js/maps/umma-maps.js','utf8'));
  w.eval(readFileSync('js/maps/delivery-zone.js','utf8'));
  w.eval(readFileSync('js/maps/delivery-location.js','utf8'));
+ w.eval(readFileSync('js/delivery/providers.js','utf8'));
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
  await w.ummaCafe.refreshMenu();
  $('cafePage').hidden=false;
@@ -120,6 +121,30 @@ try{
  w.maplibregl.supported=()=>true;$('cafeDeliveryMapOpen').click();await tick();
  const failed=vectors.at(-1);failed.gl.fire('error');failed.gl.fire('error');failed.gl.fire('error');
  assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');assert.equal(failed.removed,true);$('cafeDeliveryMapClose').click();
+ // External carriers use confirmed pins without imposing UMMA's own courier polygon.
+ $('cafeCarrier').value='grab';$('cafeCarrier').dispatchEvent(new w.Event('change'));mode('delivery');
+ assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,false);
+ assert.equal($('cafeSubmitOrder').disabled,true);
+ $('cafeDeliveryMapOpen').click();maps.at(-1).fire('click',{latlng:{lat:12.45,lng:109.24}});
+ assert.equal($('cafeDeliveryMapConfirm').disabled,false,'external route availability belongs to the carrier');
+ $('cafeDeliveryMapClose').click();assert.equal(w.ummaDeliveryLocation.hasPoint(),false,'cancelled external draft is not a destination');
+ $('cafeDeliveryMapOpen').click();$('cafeDeliveryMapLocate').click();
+ requests.at(-1).success({coords:{latitude:12.45,longitude:109.24,accuracy:10}});
+ assert.equal(w.ummaDeliveryLocation.hasPoint(),false,'GPS still requires explicit confirmation');$('cafeDeliveryMapConfirm').click();
+ $('cafeDeliveryAddress').value='';$('cafeCustomerPhone').value='+84000';
+ $('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
+ const externalPayload=payloads.at(-1);assert.equal(externalPayload.orderType,'pickup');assert.equal(externalPayload.paymentMethod,'qr');
+ assert.equal(externalPayload.deliveryAddress,'Точка доставки: 12.450000,109.240000');
+ const points=w.ummaDeliveryProviders.routeDetails({delivery_address:externalPayload.deliveryAddress},{name:'UMMA',latitude:12.25,longitude:109.19});
+ assert.equal(points.pickup.latitude,12.25);assert.equal(points.dropoff.latitude,12.45);assert.equal(points.dropoff.longitude,109.24);
+ $('cafeCarrier').value='maxim';$('cafeCarrier').dispatchEvent(new w.Event('change'));assert.equal(w.ummaDeliveryLocation.hasPoint(),true,'changing external carrier preserves pin');
+ $('cafeCarrier').value='umma';$('cafeCarrier').dispatchEvent(new w.Event('change'));assert.equal($('cafeSubmitOrder').disabled,true,'own courier still enforces service area');
+ let marketPoint;w.ummaDeliveryLocation.chooseForLocation({latitude:12.25,longitude:109.19},p=>{marketPoint=p;},null,{unrestricted:true});
+ maps.at(-1).fire('click',{latlng:{lat:12.46,lng:109.25}});$('cafeDeliveryMapConfirm').click();
+ assert.equal(marketPoint.lat,12.46);assert.match(w.ummaDeliveryLocation.getAddress(''),/12.450000,109.240000/,'external Market picker restores Cafe point');
+ assert.equal(w.ummaDeliveryLocation.availability(),'outside','Market unrestricted mode must not leak into own delivery');
+ $('cafeDeliveryPointClear').click();
+ console.log('PASS external carrier maps: GPS confirmation, cancellation, no mandatory address, exact persisted pickup/dropoff coordinates, carrier switching and isolated Market scope');
  // Missing map library fails closed: free text cannot establish coverage.
  delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/Без проверки зоны/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();
  const beforeManual=payloads.length; $('cafeDeliveryAddress').value='Полный адрес вручную';$('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
