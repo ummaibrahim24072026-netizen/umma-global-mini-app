@@ -1,0 +1,118 @@
+/* UMMA GLOBAL · shared application surfaces. Brand sources: brand.css, app.css.
+   Home composition, Arabic reading type, maps and printable labels stay owned by
+   their modules. These rules style the application chrome, never business state. */
+:root{
+ --umma-radius-card:24px;--umma-radius-control:14px;
+ --umma-shadow-card:0 8px 28px rgba(var(--umma-brand-ink-rgb),.045);
+ --umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));
+ --umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));
+ --umma-focus:var(--umma-brand-strong);
+}
+/* A shared rhythm for customer, staff and management screens. */
+.app>.native-screen{background:var(--umma-brand-canvas);color:var(--umma-brand-ink);scroll-padding-block:18px;overscroll-behavior-y:contain}
+.native-screen :is(h1,h2,h3,p,label){overflow-wrap:break-word;hyphens:none}
+.native-screen :is(h1,h2,h3){letter-spacing:-.025em}
+.native-screen :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){
+ border:1px solid var(--umma-brand-line);border-radius:var(--umma-radius-control);background:var(--umma-brand-white);color:var(--umma-brand-ink);min-height:48px;font-size:16px;box-shadow:inset 0 1px 2px rgba(var(--umma-brand-ink-rgb),.025)
+}
+.native-screen :is(input,select,textarea):focus-visible,dialog :is(input,select,textarea,button,a):focus-visible{outline:2px solid var(--umma-focus);outline-offset:3px}
+.native-screen :is(input,textarea)::placeholder{color:var(--umma-brand-muted);opacity:1}
+.native-screen :is(.cafe-back,.admin-back,.accounting-secondary),.native-service-dialog>.cafe-back{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--umma-brand-line);border-radius:14px;background:#fff;color:var(--umma-brand-strong);font-weight:650;line-height:1.4
+}
+/* Page introductions: the same light material as the approved direction cards. */
+:is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header){
+ position:relative;margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);border-radius:var(--umma-radius-card);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card);gap:12px
+}
+#cafeOrdersPage .cafe-page-header{margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card)}
+#cafeOrdersPage .cafe-page-header::after{display:none}
+:is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header) h1,
+#cafeOrdersPage .cafe-page-header h1{color:var(--umma-brand-ink);font:750 clamp(22px,4vw,30px)/1.25 Inter,system-ui,sans-serif;margin:6px 0;display:flex;align-items:center;gap:12px;min-width:0}
+:is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header) p,
+#cafeOrdersPage .cafe-page-header p{color:var(--umma-brand-muted);font-size:14px;line-height:1.6;margin:0}
+:is(.market-header,.market-shop-header){flex-wrap:wrap;align-items:center}
+:is(.market-header,.market-shop-header)>div{flex:1;min-width:min(180px,100%)}
+:is(.market-header,.market-shop-header) small,.admin-eyebrow{color:var(--gold-dark)}
+.umma-page-emblem.direction-emblem{width:64px;height:64px;flex:0 0 64px;border-radius:18px;background:var(--umma-brand-pale)}
+.umma-page-emblem .direction-crop{width:100%}
+.admin-header-icon{background:var(--umma-brand-pale);color:var(--umma-brand-strong);border:1px solid var(--umma-brand-line)}
+.admin-entry-icon{background:var(--umma-brand-pale);color:var(--umma-brand-strong);border:1px solid var(--umma-brand-line)}
+/* Cards: deliberate visual hierarchy without a decorative image on every row. */
+:is(.admin-card,.accounting-metrics article,.accounting-form,.accounting-note,.cafe-staff-card,.cafe-cart,.cafe-my-order-card,.kitchen-order-card,.courier-offer-card,.market-card,.market-metrics article,.market-order,.market-product,.b2b-intro,.b2b-lines li){
+ border-color:var(--umma-brand-line);border-radius:var(--umma-radius-card);background:#fff;box-shadow:var(--umma-shadow-card)
+}
+.admin-card{padding:20px;color:var(--umma-brand-ink);background:var(--umma-surface)}
+.admin-card strong{font-size:17px}.admin-card small{color:var(--umma-brand-muted);line-height:1.55}
+:is(.accounting-metrics article,.market-metrics article){background:var(--umma-surface);border-top:2px solid var(--gold-light)}
+:is(.accounting-metrics,.market-metrics) strong{color:var(--umma-brand-strong);font-variant-numeric:tabular-nums}
+:is(.cafe-my-order-card,.kitchen-order-card,.market-order)>header{padding-bottom:12px;border-bottom:1px solid var(--umma-brand-line)}
+:is(.courier-desk-empty,.market-empty){background:var(--umma-surface);border:1px dashed var(--umma-brand-line-strong);border-radius:24px;color:var(--umma-brand-muted);line-height:1.7}
+.courier-personal-offers .courier-offer-card{background:var(--umma-surface);border:1px solid var(--gold)}
+.courier-desk-tabs{background:var(--umma-brand-soft)}
+.courier-desk-tabs button.is-active{background:#fff;color:var(--umma-brand-strong)}
+/* Primary and selected controls; errors/destructive controls retain module colours. */
+:is(.cafe-submit,.accounting-primary,.cafe-sticky-order button,.market-shop-cart button,.market-checkout button[type=submit],.b2b-request-bar button,.b2b-form button[type=submit]){border-radius:14px;background:var(--umma-action);color:#fff;min-height:48px;font-weight:700;box-shadow:0 4px 12px rgba(var(--umma-brand-primary-rgb),.12)}
+.market-primary{background:var(--umma-action)!important;color:#fff!important}
+:is(.market-tabs,.market-shop-categories,.accounting-tabs,.b2b-tabs){gap:8px;scroll-padding-inline:4px;scrollbar-width:thin;scrollbar-color:var(--umma-brand-line-strong) transparent}
+:is(.market-tabs,.market-shop-categories){background:var(--umma-brand-canvas)}
+:is(.market-tabs [aria-current=page],.market-shop-categories [aria-pressed=true],.b2b-tabs [aria-pressed=true],.accounting-tabs button.active,.cafe-kitchen-filters button.is-active){background:var(--umma-brand-soft);color:var(--umma-brand-deep);border:1px solid var(--umma-brand-line-strong);box-shadow:inset 0 1px 0 #fff}
+.market-page button,.market-shop button,.market-checkout button,.market-order button{border-radius:14px;border-color:var(--umma-brand-line);color:var(--umma-brand-strong)}
+.market-shop-cart button,.market-checkout button[type=submit],.b2b-request-bar button,.b2b-form button[type=submit]{color:#fff}
+.market-product button{background:var(--umma-brand-pale);border-color:var(--umma-brand-line);color:var(--umma-brand-strong)}
+.market-product-placeholder{background:var(--umma-surface);color:var(--gold-dark)}
+.market-halal{color:var(--umma-brand-strong)}
+.b2b-reply{background:var(--umma-brand-pale);border-inline-start:3px solid var(--gold);color:var(--umma-brand-text)}
+.market-checkout-total{background:var(--umma-brand-white)}
+/* Sheets, checkout, notifications, reading controls and delivery conversations. */
+:is(.native-service-dialog,.cafe-notifications-dialog,.cafe-refund-dialog,.delivery-map-dialog,.market-checkout,.market-scanner,.market-print-preview,.cafe-payment-sheet,.delivery-chat-dialog,.delivery-tracking-dialog,.quran-dialog){border-color:var(--umma-brand-line);background:var(--umma-brand-white);color:var(--umma-brand-ink);box-shadow:0 20px 70px rgba(var(--umma-brand-ink-rgb),.18)}
+:is(.native-service-dialog,.cafe-notifications-dialog,.cafe-refund-dialog,.delivery-map-dialog,.market-checkout,.quran-dialog)::backdrop{background:rgba(var(--umma-brand-ink-rgb),.42)}
+.native-service-dialog:not(.umma-about)>h2{color:var(--umma-brand-ink);font-size:26px;line-height:1.3;margin:12px 0}
+.native-service-dialog>.umma-page-emblem{width:128px;height:112px;margin:18px auto 12px;background:transparent}
+.native-service-dialog>.native-coming{display:inline-flex;align-items:center;min-height:32px;padding:6px 12px;background:var(--umma-brand-pale);color:var(--umma-brand-strong);border:1px solid var(--umma-brand-line);border-radius:10px;font-size:12px}
+.native-service-dialog>ul{padding:16px 16px 16px 34px;background:var(--umma-brand-pale);border:1px solid var(--umma-brand-line);border-radius:18px}
+.native-service-dialog>ul li+li{margin-top:10px}
+.cafe-notification-item{border-color:var(--umma-brand-line);border-radius:16px;margin-block:10px;background:#fff}
+.quran-dialog>header,.delivery-tracking-dialog .delivery-tracking-header{background:var(--umma-surface);color:var(--umma-brand-ink);border-bottom:1px solid var(--umma-brand-line)}
+.delivery-tracking-header .umma-icon{color:var(--umma-brand-strong)}
+#quranBody details{border-radius:18px;background:var(--umma-brand-pale)}
+.quran-dialog button{border-color:var(--umma-brand-line);border-radius:14px;background:var(--umma-brand-pale)}
+.quran-verse{border-color:var(--umma-brand-line)}
+.delivery-chat-dialog{border-radius:24px}
+/* Finish the home app bar with the same small brand sculptures as the dock. */
+.cafe-notification-bar .brand-nav-icon{position:relative;display:grid;place-items:center;width:34px;height:34px;flex:none}
+.cafe-notification-bar .nav-art{position:absolute;inset:0;overflow:hidden;opacity:0;mix-blend-mode:multiply;pointer-events:none}
+.cafe-notification-bar .nav-art img{position:absolute;width:300%;height:200%;max-width:none}
+.cafe-notification-bar .nav-art-ready .nav-art{opacity:1}
+.cafe-notification-bar .nav-art-ready>.umma-icon{visibility:hidden}
+/* Compact devices: readable full labels, single-column forms, no page-wide scroll. */
+@media(max-width:480px){
+ :is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header),#cafeOrdersPage .cafe-page-header{padding:16px;border-radius:22px}
+ .umma-page-emblem.direction-emblem{width:50px;height:50px;flex-basis:50px;border-radius:14px}
+ .native-service-dialog>.umma-page-emblem{width:128px;height:112px}
+ .admin-grid{grid-template-columns:1fr}
+ .accounting-toolbar{flex-wrap:wrap}.accounting-toolbar label{flex:1 1 100%}
+ .market-header>button:last-child,.market-shop-header>button:last-child{margin-left:0}
+ .market-form,.accounting-fields{grid-template-columns:minmax(0,1fr)}
+ :is(.market-page,.market-shop){width:100%;max-width:100%;margin:0}
+}
+@media(prefers-reduced-motion:reduce){.native-screen-enter{animation:none}}
+.umma-language-dialog{border-color:var(--umma-brand-line);border-radius:24px;background:var(--umma-brand-white);color:var(--umma-brand-ink);box-shadow:0 20px 70px rgba(var(--umma-brand-ink-rgb),.18)}
+.delivery-chat-dialog header{background:var(--umma-surface);color:var(--umma-brand-ink);border-bottom:1px solid var(--umma-brand-line)}
+.chat-message{border-color:var(--umma-brand-line);background:#fff;color:var(--umma-brand-ink);box-shadow:0 2px 8px rgba(var(--umma-brand-ink-rgb),.03)}
+.chat-message.is-mine{background:var(--umma-brand-pale)}
+.chat-compose{background:var(--umma-brand-white);border-color:var(--umma-brand-line)}
+.chat-compose [type=submit]{background:var(--umma-action);color:#fff}
+/* Text remains a normal inline formatting context beside decorative artwork. */
+.native-screen h1{overflow-wrap:anywhere}
+:is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header) h1,#cafeOrdersPage .cafe-page-header h1{display:block;overflow-wrap:anywhere}
+h1>.umma-page-emblem.direction-emblem{float:inline-start;margin-inline-end:12px;margin-block-end:4px}
+@media(max-width:480px){.admin-header{align-items:flex-start}.admin-header-icon{width:44px;height:44px;flex-basis:44px;border-radius:14px}.admin-header h1{font-size:22px}.admin-header{gap:10px}}
+.umma-admin-modal-panel{color:var(--umma-brand-ink);border:1px solid var(--umma-brand-line);box-sizing:border-box;overflow-wrap:anywhere}
+.umma-admin-modal-panel :is(button,input,select){min-height:44px;font-family:inherit;border-radius:14px}
+.umma-admin-modal-panel :is(input,select){font-size:16px;border:1px solid var(--umma-brand-line);color:var(--umma-brand-ink)}
+@media(max-width:480px){.umma-admin-modal-panel{max-height:calc(var(--umma-viewport-height,100dvh) - var(--umma-safe-top,0px) - var(--umma-safe-bottom,0px) - 32px);overflow:auto}}
+#cafeOrdersPage :is(.cafe-back,.cafe-my-orders-refresh){background:#fff;border-color:var(--umma-brand-line);color:var(--umma-brand-strong);border-radius:14px}
+.kitchen-action{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--umma-brand-ink);border-radius:14px}
+.chat-message-own{background:var(--umma-brand-pale)}
+.cafe-payment-close,.cafe-payment-notice{background:var(--umma-brand-pale);color:var(--umma-brand-ink)}
+.cafe-payment-open{background:var(--umma-action);color:#fff}

@@ -28,7 +28,7 @@ function openAdminRoleModal(user) {
     position: fixed;
     inset: 0;
     z-index: 100000;
-    background: rgba(0,0,0,.45);
+    background: rgba(var(--umma-brand-ink-rgb),.42);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,13 +39,14 @@ function openAdminRoleModal(user) {
   const panel =
     document.createElement("div");
 
+  panel.className = 'umma-admin-modal-panel';
   panel.style.cssText = `
     width: 100%;
     max-width: 420px;
-    background: #ffffff;
-    border-radius: 20px;
+    background: var(--umma-brand-white);
+    border-radius: 24px;
     padding: 22px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    box-shadow: 0 20px 60px rgba(var(--umma-brand-ink-rgb),.18);
   `;
 
 
@@ -64,7 +65,7 @@ function openAdminRoleModal(user) {
       font-size:12px;
       font-weight:700;
       letter-spacing:.08em;
-      color:#888;
+      color:var(--umma-brand-muted);
       margin-bottom:5px;
     ">
       UMMA GLOBAL
@@ -81,7 +82,7 @@ function openAdminRoleModal(user) {
     <div style="
       margin-top:8px;
       font-size:15px;
-      color:#555;
+      color:var(--umma-brand-text);
     ">
       ${escapeHtml(name)}
     </div>
@@ -101,7 +102,7 @@ function openAdminRoleModal(user) {
       padding:13px 14px;
       border:1px solid var(--umma-brand-line);
       border-radius:12px;
-      background:#fff;
+      background:var(--umma-brand-white);
       color:var(--umma-brand-ink);
       font-size:15px;
     ">
@@ -135,7 +136,7 @@ function openAdminRoleModal(user) {
         border:0;
         border-radius:12px;
         background:var(--umma-brand-strong);
-        color:#fff;
+        color:var(--umma-brand-white);
         font-weight:700;
         cursor:pointer;
       ">
@@ -223,7 +224,7 @@ function renderAdminUsers(users) {
     position: fixed;
     inset: 0;
     z-index: 99999;
-    background: rgba(0,0,0,.45);
+    background: rgba(var(--umma-brand-ink-rgb),.42);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -235,13 +236,14 @@ function renderAdminUsers(users) {
   const panel =
     document.createElement("div");
 
+  panel.className = 'umma-admin-modal-panel';
   panel.style.cssText = `
     width: 100%;
     max-width: 720px;
-    background: #ffffff;
-    border-radius: 20px;
+    background: var(--umma-brand-white);
+    border-radius: 24px;
     padding: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    box-shadow: 0 20px 60px rgba(var(--umma-brand-ink-rgb),.18);
   `;
 
 
@@ -265,7 +267,7 @@ function renderAdminUsers(users) {
       font-size:12px;
       font-weight:700;
       letter-spacing:.08em;
-      color:#888;
+      color:var(--umma-brand-muted);
       margin-bottom:4px;
     ">
       UMMA GLOBAL
@@ -281,7 +283,7 @@ function renderAdminUsers(users) {
 
     <div style="
       font-size:14px;
-      color:#777;
+      color:var(--umma-brand-muted);
       margin-top:4px;
     ">
       Всего: ${users.length}
@@ -333,7 +335,7 @@ function renderAdminUsers(users) {
     empty.style.cssText = `
       padding:30px 10px;
       text-align:center;
-      color:#777;
+      color:var(--umma-brand-muted);
     `;
 
     panel.appendChild(empty);
@@ -348,7 +350,7 @@ function renderAdminUsers(users) {
 
         card.style.cssText = `
           padding:14px 0;
-          border-top:1px solid #eeeeee;
+          border-top:1px solid var(--umma-brand-line);
         `;
 
 
@@ -399,7 +401,7 @@ function renderAdminUsers(users) {
 
               <div style="
                 font-size:13px;
-                color:#777;
+                color:var(--umma-brand-muted);
                 margin-top:4px;
               ">
                 ${escapeHtml(username)}
@@ -407,7 +409,7 @@ function renderAdminUsers(users) {
 
               <div style="
                 font-size:12px;
-                color:#999;
+                color:var(--umma-brand-muted);
                 margin-top:4px;
               ">
                 Telegram ID:
@@ -431,7 +433,7 @@ function renderAdminUsers(users) {
 
               <div style="
                 font-size:12px;
-                color:#777;
+                color:var(--umma-brand-muted);
                 margin-top:4px;
               ">
                 ${escapeHtml(status)}
