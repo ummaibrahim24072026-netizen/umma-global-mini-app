@@ -1,7 +1,7 @@
 /* Home uses the existing brand tokens and the original, unaltered artwork. */
 .app>main>.brand-art{display:flex;flex-direction:column;align-items:center;background:var(--umma-brand-deep);max-width:560px}
-.brand-art .brand-art-image{width:70%;height:auto;aspect-ratio:2/3;object-fit:contain;flex:none}
-.brand-art .brand-art-copy{position:relative;align-self:stretch;width:100%;margin-top:-44%;padding:14px 18px 20px;background:linear-gradient(180deg,transparent,rgba(var(--umma-brand-night-rgb),.78) 55%);text-shadow:0 1px 5px var(--umma-brand-night)}
+.brand-art .brand-art-image{width:100%;height:auto;aspect-ratio:2/3;object-fit:contain;flex:none}
+.brand-art .brand-art-copy{position:relative;align-self:stretch;width:100%;margin-top:-61%;padding:18px 18px 20px;background:linear-gradient(180deg,transparent,rgba(var(--umma-brand-night-rgb),.78) 55%);text-shadow:0 1px 5px var(--umma-brand-night)}
 .brand-art-copy .welcome-content{margin:0 auto 9px}
 .brand-art-copy .welcome-content h2{color:var(--umma-brand-white);font-size:clamp(16px,4.2vw,21px);line-height:1.4;font-weight:600;overflow-wrap:normal;word-break:normal;hyphens:none;text-wrap:balance}
 .brand.brand-art .brand-art-copy>p{color:var(--umma-gold-light,#fff1c7);font-size:13px;line-height:1.5;max-width:320px;margin:auto;overflow-wrap:normal;text-wrap:balance}
@@ -42,3 +42,29 @@
 .brand-art-copy .welcome-content h2 br{display:block}
 
 .ecosystem-card,.brand-art-action,.services-grid .service{font-family:Inter,system-ui,sans-serif}
+
+/* Full-width original artwork and a greeting personalised by the current profile. */
+.brand-art .brand-art-copy{background:linear-gradient(180deg,transparent,rgba(var(--umma-brand-night-rgb),.64) 44%,var(--umma-brand-night));}
+.brand-art-copy .welcome-content h2{font-size:18px;line-height:1.45;font-weight:500}
+.brand-art-copy .greeting-first-line{display:block;text-wrap:balance}
+.brand-art-copy .welcome-content h2 .greeting-name{color:var(--umma-gold-light,#fff1c7);font-weight:750;unicode-bidi:isolate}
+.brand-art-copy .greeting-blessing{display:block;margin-top:4px;font-size:14px;line-height:1.5;font-weight:450;text-wrap:balance}
+.brand-art .brand-art-copy .welcome-content{margin-bottom:12px}
+.brand-art .brand-art-copy>p{font-size:12px;line-height:1.6;max-width:360px}
+@media(max-width:360px){.brand-art .brand-art-copy{padding:14px 14px 18px}.brand-art-copy .welcome-content h2{font-size:16px}.brand-art-copy .greeting-blessing{font-size:12px}}
+@media(min-width:700px){.brand-art-copy .welcome-content h2{font-size:24px}.brand-art-copy .greeting-blessing{font-size:17px}}
+
+/* Keep the three introductory cards together on the first mobile screen. */
+.app>main{padding-top:10px}
+.app>main>.brand-art,.app>main>.ecosystem-intro{margin-bottom:10px}
+.brand-art .brand-art-copy{margin-top:-67%;padding-top:12px;padding-bottom:16px}
+.brand-art .brand-art-copy .welcome-content{margin-bottom:9px}
+.brand.brand-art .brand-art-copy>p{display:table;max-width:100%;padding:7px 12px;border:1px solid var(--umma-gold-edge,#d9bd74);border-radius:10px;background:rgba(var(--umma-brand-night-rgb),.85);color:#fff1c7;font-weight:750;font-size:12px;line-height:1.5;text-shadow:none;box-shadow:0 2px 8px rgba(var(--umma-brand-night-rgb),.2)}
+.brand-art-copy .brand-art-action{margin-top:10px}
+.ecosystem-card{padding-block:10px}
+.app>main>.ayah-card{margin-bottom:12px;padding-block:8px!important}
+
+.brand-art .brand-art-image{position:relative;z-index:1;width:var(--home-art-size,100%)}
+.brand-art .brand-art-copy{margin-top:calc(var(--home-art-size,100%) * -.67)}
+.brand.brand-art.home-fit-art::before{display:block;content:"";position:absolute;inset:-20px;z-index:0;background-image:image-set(url('../logo/assets/umma-globe-hero-480.webp') 1x,url('../logo/assets/umma-globe-hero.webp?v=1') 2x);background-size:cover;background-position:center top;filter:blur(24px) brightness(.65);opacity:.85;pointer-events:none}
+.home-fit-art .brand-art-image{mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}

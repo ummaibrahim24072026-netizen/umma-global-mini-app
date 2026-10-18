@@ -7,7 +7,7 @@ let fullscreen=0,expanded=0,nativeBack,menu=0,orders=0;
 const events={};
 const sdk={initData:'synthetic-ui-only',viewportStableHeight:844,viewportHeight:844,isFullscreen:false,platform:'android',safeAreaInset:{top:24,bottom:20},contentSafeAreaInset:{top:16,bottom:0},isVersionAtLeast:()=>true,ready(){},expand(){expanded++;},setHeaderColor(){},setBackgroundColor(){},setBottomBarColor(){},enableClosingConfirmation(){},onEvent:(name,fn)=>events[name]=fn,requestFullscreen(){fullscreen++;sdk.isFullscreen=true;events.fullscreenChanged?.();},BackButton:{show(){},hide(){},onClick:fn=>nativeBack=fn}};
 w.Telegram={WebApp:sdk};w.visualViewport={height:844,addEventListener(){}};
-w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=function({top}){this.scrollTop=top;};w.HTMLElement.prototype.scrollIntoView=()=>{};
+w.requestAnimationFrame=fn=>w.setTimeout(fn,0);w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=function({top}){this.scrollTop=top;};w.HTMLElement.prototype.scrollIntoView=()=>{};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 const tick=()=>new Promise(r=>setTimeout(r,20));
 try{
