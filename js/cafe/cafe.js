@@ -370,10 +370,34 @@
     if (page) page.scrollTop = menuScroll;
     byId("cafeStickyGoToOrder")?.focus({preventScroll:true});
   }
+  function showCheckoutError(message, field) {
+    const result = byId("cafeOrderResult");
+    if (result) { result.textContent = message; result.hidden = false; }
+    if (field) {
+      const details = field.closest("details");
+      if (details) details.open = true;
+      field.scrollIntoView?.({block:"center",behavior:"smooth"});
+      field.focus({preventScroll:true});
+    } else result?.scrollIntoView?.({block:"nearest",behavior:"smooth"});
+  }
+  // Native validation happens before submit; reveal collapsed invalid fields first.
+  byId("cafeOrderForm")?.addEventListener("invalid", event => {
+    event.preventDefault();
+    const field = event.target;
+    const message = field.id === "cafeCustomerPhone"
+      ? "Укажите телефон для связи с курьером."
+      : field.validationMessage || "Проверьте данные заказа.";
+    showCheckoutError(message, field);
+  }, true);
   byId("cafeCheckoutBack")?.addEventListener("click", closeCheckout);
   byId("cafeStickyGoToOrder")?.addEventListener("click", () => {
     if (loading || !cart.size) return;
-    if (checkoutOpen) { byId("cafeOrderForm")?.requestSubmit(byId("cafeSubmitOrder")); return; }
+    if (checkoutOpen) {
+      const form = byId("cafeOrderForm");
+      if (typeof form?.requestSubmit === "function") form.requestSubmit(byId("cafeSubmitOrder"));
+      else if (form?.reportValidity()) form.dispatchEvent(new Event("submit", {bubbles:true,cancelable:true}));
+      return;
+    }
     const page = byId("cafePage");
     menuScroll = page?.scrollTop || 0;
     checkoutOpen = true;
@@ -439,7 +463,10 @@
     if(byId("cafeCarrierHint"))byId("cafeCarrierHint").textContent=externalDelivery()?"Курьера оформляете в выбранном сервисе после подтверждения оплаты товара. Доставка оплачивается отдельно.":"Курьер UMMA доставит заказ в пределах зоны обслуживания.";
     window.ummaDeliveryLocation?.setCarrierMode?.(!!externalDelivery());
     if (addressInput) addressInput.required = false;
-    if(byId("cafeCustomerPhone"))byId("cafeCustomerPhone").required=!!externalDelivery();
+    const phone = byId("cafeCustomerPhone"), needsPhone = !!externalDelivery();
+    if (phone) phone.required = needsPhone;
+    if (byId("cafeCustomerPhoneTitle")) byId("cafeCustomerPhoneTitle").textContent = needsPhone ? "Телефон для курьера (обязательно)" : "Телефон (необязательно)";
+    if (needsPhone && !phone?.value.trim() && byId("cafeContactDetails")) byId("cafeContactDetails").open = true;
     if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent="Квартира, этаж, ориентир (необязательно)";
     if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
     syncCustomerPayment();
@@ -466,11 +493,12 @@
     const resultEl = byId("cafeOrderResult"), submit = byId("cafeSubmitOrder");
     if (!cart.size) { if (typeof showToast === "function") showToast("Сначала добавьте блюда в заказ"); return; }
     const initData = window.Telegram?.WebApp?.initData;
-    if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
+    if (!initData) { showCheckoutError("Откройте приложение через Telegram, чтобы оформить заказ."); return; }
     if (deliveryBlocked()) { byId("cafeDeliveryMapOpen")?.focus(); if (typeof showToast === "function") showToast(byId("cafeDeliveryZoneStatus")?.textContent || "Выберите точку доставки на карте, чтобы проверить зону обслуживания."); return; }
 
     const carrier=externalDelivery()?byId("cafeCarrier").value:"umma";
-    if(carrier!=="umma"&&(!window.ummaDeliveryLocation?.hasPoint?.()||!byId("cafeCustomerPhone")?.value.trim()||byId("cafePaymentMethod")?.value==="cash")){if(typeof showToast==="function")showToast("Отметьте точку на карте, укажите телефон и выберите предоплату товара.");return;}
+    if(carrier!=="umma"&&!byId("cafeCustomerPhone")?.value.trim()){showCheckoutError("Укажите телефон для связи с курьером.",byId("cafeCustomerPhone"));return;}
+    if(carrier!=="umma"&&(!window.ummaDeliveryLocation?.hasPoint?.()||byId("cafePaymentMethod")?.value==="cash")){showCheckoutError("Отметьте точку на карте и выберите предоплату товара.");return;}
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
     if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
