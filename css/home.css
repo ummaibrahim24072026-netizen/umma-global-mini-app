@@ -7,6 +7,8 @@
 .brand.brand-art .brand-art-copy>p{color:var(--umma-gold-light,#fff1c7);font-size:13px;line-height:1.5;max-width:320px;margin:auto;overflow-wrap:normal;text-wrap:balance}
 .brand-art-copy .brand-art-action{margin-top:14px;max-width:340px;min-height:46px;gap:12px;background:var(--umma-gold-button)}
 .brand-art-action>span{animation:none}
+@media(prefers-reduced-motion:no-preference){.brand-art-action>span{animation:umma-cafe-arrow 2.4s ease-in-out infinite}}
+.brand-art-action[aria-busy=true]>span{animation-play-state:paused}
 .brand-art-action[aria-busy=true]{opacity:.7;cursor:progress}
 .ecosystem-card{display:flex;align-items:center;gap:12px;width:100%;padding:15px 14px;border:1px solid var(--umma-brand-line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);color:var(--ink);text-align:start}
 .ecosystem-globe{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
@@ -59,7 +61,7 @@
 .app>main>.brand-art,.app>main>.ecosystem-intro{margin-bottom:10px}
 .brand-art .brand-art-copy{margin-top:-67%;padding-top:12px;padding-bottom:16px}
 .brand-art .brand-art-copy .welcome-content{margin-bottom:9px}
-.brand.brand-art .brand-art-copy>p{display:table;max-width:100%;padding:7px 12px;border:1px solid var(--umma-gold-edge,#d9bd74);border-radius:10px;background:rgba(var(--umma-brand-night-rgb),.85);color:#fff1c7;font-weight:750;font-size:12px;line-height:1.5;text-shadow:none;box-shadow:0 2px 8px rgba(var(--umma-brand-night-rgb),.2)}
+.brand.brand-art .brand-art-copy>p{display:table;max-width:100%;padding:7px 12px;border:1px solid var(--umma-gold-edge,#d9bd74);border-radius:10px;background:linear-gradient(135deg,#fff8d5f5,#fff3b0eb);color:var(--umma-brand-on-primary);font-weight:750;font-size:12px;line-height:1.5;text-shadow:none;box-shadow:inset 0 1px 0 #ffffffaa,0 2px 8px rgba(var(--umma-brand-night-rgb),.08)}
 .brand-art-copy .brand-art-action{margin-top:10px}
 .ecosystem-card{padding-block:10px}
 .app>main>.ayah-card{margin-bottom:12px;padding-block:8px!important}

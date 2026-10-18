@@ -33,6 +33,13 @@ for(const height of [760,844])for(const safeTop of [40,80]){
  const fit=await page.evaluate(()=>({bottom:document.querySelector('.ayah-card').getBoundingClientRect().bottom,nav:document.querySelector('.bottom-nav').getBoundingClientRect().top}));assert.ok(fit.bottom<=fit.nav-12,JSON.stringify({height,safeTop,...fit}));
 }
 await page.setViewportSize({width:390,height:844});await page.waitForTimeout(80);await page.evaluate(()=>{document.documentElement.style.setProperty('--umma-safe-top','40px');document.documentElement.style.setProperty('--umma-safe-bottom','20px');document.querySelector('.app>main').scrollTop=0;});await page.waitForTimeout(120);await page.screenshot({path:output+'/home-turquoise-preview.png'});
+if(process.env.QA_CAPTURE_ANIMATION){
+ const arrow=page.locator('.brand-art-action>span');assert.notEqual(await arrow.evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await arrow.evaluate(e=>getComputedStyle(e).animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});
+ fs.mkdirSync(output+'/frames',{recursive:true});
+ for(let frame=0;frame<24;frame++){await page.screenshot({path:output+'/frames/'+String(frame).padStart(3,'0')+'.png'});await page.waitForTimeout(65);}
+}
+
 await page.locator('.daily-ayah summary').click();await page.locator('#dailyAyahCollapse').scrollIntoViewIfNeeded();await page.screenshot({path:output+'/home-ayah-collapse-preview.png'});await page.locator('#dailyAyahCollapse').click();
 for(const name of ['Ибрахим','Мухаммад Абдуррахман','<img src=x onerror=alert(1)>']){
  await page.setViewportSize({width:320,height:844});await page.evaluate(name=>window.updateTelegramUserInterface({first_name:name}),name);
