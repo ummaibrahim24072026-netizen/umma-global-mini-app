@@ -34,7 +34,7 @@ try {
  for(const file of ['js/core/app.js','js/market/api.js','js/b2b/b2b.js','js/core/navigation.js','js/core/native-shell.js'])w.eval(readFileSync(file,'utf8'));
  d.querySelector('.service[data-page=b2b]').click();await tick();
  assert.equal(d.getElementById('b2bPage').hidden,false);assert.equal(w.ummaNavigation.current(),'b2bPage');
- assert.equal(d.querySelector('.service[data-page=b2b] .native-coming'),null,'B2B is a real active service');
+ assert.equal(d.querySelector('.service[data-page=b2b] .native-coming')?.textContent,'В разработке','B2B route remains accessible while launch status is disclosed');
  assert.ok(d.querySelector('[data-service=b2b]'),'B2B in More directory');
  assert.equal(d.querySelector('[data-b2b-product] img'),null,'unsafe image URL rejected');assert.equal(d.querySelector('#b2bPage script'),null);
  assert.match(d.querySelector('[data-b2b-product]').textContent,/<script>bad/,'name displayed as plain text');
