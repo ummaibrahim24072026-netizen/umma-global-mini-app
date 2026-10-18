@@ -18,7 +18,7 @@ for(const lang of ['ru','en','vi']){await page.evaluate(l=>window.ummaI18n.setLa
 await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.ummaI18n.setLanguage('ru'));
 await page.locator('.services-grid').scrollIntoViewIfNeeded();await page.screenshot({path:output+'/umma-home-directions-390.png'});
 await page.locator('[data-page=about]').click();await page.locator('.umma-about').waitFor();assert.equal(await page.locator('.umma-about-directions button').count(),38);await page.locator('.umma-about .cafe-back').click();
-await page.locator('.daily-ayah summary').click();assert.equal(await page.locator('.daily-ayah').getAttribute('open'),'');await page.locator('#quranDirect').click();await page.locator('#quranBody').waitFor();assert.ok(await page.locator('.quran-arabic[dir=rtl]').count());await page.evaluate(()=>document.getElementById('quranClose').click());
+await page.locator('.daily-ayah summary').click();assert.equal(await page.locator('.daily-ayah').getAttribute('open'),'');assert.equal((await page.locator('#dailyAyahCollapse').innerText()).trim(),'');await page.locator('#dailyAyahCollapse').click();assert.equal(await page.locator('.daily-ayah').getAttribute('open'),null);await page.locator('.daily-ayah summary').click();await page.locator('#quranDirect').click();await page.locator('#quranBody').waitFor();assert.ok(await page.locator('.quran-arabic[dir=rtl]').count());await page.evaluate(()=>document.getElementById('quranClose').click());
 for(const lang of ['en','vi']){await page.evaluate(l=>window.ummaI18n.setLanguage(l),lang);await page.locator('[data-page=about]').click();const aboutText=await page.locator('.umma-about').innerText();assert.ok(!/[А-Яа-яЁё]/.test(aboutText),lang+' about translations: '+aboutText.split('\n').filter(t=>/[А-Яа-яЁё]/.test(t)).join(' / '));await page.locator('.umma-about .cafe-back').click();}
 // Telegram safe-area coverage: the daily card must end above the fixed navigation.
 await page.evaluate(()=>document.querySelector('.daily-ayah').open=false);
@@ -28,6 +28,19 @@ for(const width of [320,360,375,390,414,430]){
  const fit=await page.evaluate(()=>({bottom:document.querySelector('.ayah-card').getBoundingClientRect().bottom,nav:document.querySelector('.bottom-nav').getBoundingClientRect().top}));assert.ok(fit.bottom<=fit.nav-2,JSON.stringify({width,...fit}));
  if(width===390)await page.screenshot({path:output+'/umma-home-telegram-safe-390.png'});
 }
+for(const height of [760,844])for(const safeTop of [40,80]){
+ await page.setViewportSize({width:390,height});await page.waitForTimeout(50);await page.evaluate(top=>{document.documentElement.style.setProperty('--umma-safe-top',top+'px');document.documentElement.style.setProperty('--umma-safe-bottom','20px');document.querySelector('.app>main').scrollTop=0;},safeTop);await page.waitForTimeout(120);
+ const fit=await page.evaluate(()=>({bottom:document.querySelector('.ayah-card').getBoundingClientRect().bottom,nav:document.querySelector('.bottom-nav').getBoundingClientRect().top}));assert.ok(fit.bottom<=fit.nav-12,JSON.stringify({height,safeTop,...fit}));
+}
+await page.setViewportSize({width:390,height:844});await page.waitForTimeout(80);await page.evaluate(()=>{document.documentElement.style.setProperty('--umma-safe-top','40px');document.documentElement.style.setProperty('--umma-safe-bottom','20px');document.querySelector('.app>main').scrollTop=0;});await page.waitForTimeout(120);await page.screenshot({path:output+'/home-turquoise-preview.png'});
+if(process.env.QA_CAPTURE_ANIMATION){
+ const arrow=page.locator('.brand-art-action>span');assert.notEqual(await arrow.evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await arrow.evaluate(e=>getComputedStyle(e).animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});
+ fs.mkdirSync(output+'/frames',{recursive:true});
+ for(let frame=0;frame<24;frame++){await page.screenshot({path:output+'/frames/'+String(frame).padStart(3,'0')+'.png'});await page.waitForTimeout(65);}
+}
+
+await page.locator('.daily-ayah summary').click();await page.locator('#dailyAyahCollapse').scrollIntoViewIfNeeded();await page.screenshot({path:output+'/home-ayah-collapse-preview.png'});await page.locator('#dailyAyahCollapse').click();
 for(const name of ['Ибрахим','Мухаммад Абдуррахман','<img src=x onerror=alert(1)>']){
  await page.setViewportSize({width:320,height:844});await page.evaluate(name=>window.updateTelegramUserInterface({first_name:name}),name);
  assert.equal(await page.locator('.greeting-name').textContent(),name);assert.equal(await page.locator('.welcome-content h2 img').count(),0);assert.equal(await page.locator('.welcome-content h2').evaluate(e=>e.lastElementChild.className),'greeting-name');assert.ok(!(await page.locator('.welcome-content h2').textContent()).includes('!'));
