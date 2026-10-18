@@ -2,6 +2,24 @@
 (() => {
   'use strict';
   const rows = `
+Кафе, Market, B2B и Коран доступны в приложении. Остальные направления готовятся к запуску.|Cafe, Market, B2B and Quran are available in the app. Other directions are being prepared.|Cafe, Market, B2B và Kinh Qur’an có trong ứng dụng. Các lĩnh vực khác đang được chuẩn bị.
+Коран|Quran|Kinh Qur’an
+Объединяем людей. Создаём возможности.|Bringing people together. Creating opportunities.|Kết nối mọi người. Tạo dựng cơ hội.
+Откройте мир UMMA GLOBAL|Discover the world of UMMA GLOBAL|Khám phá thế giới UMMA GLOBAL
+Единая экосистема для жизни, бизнеса и общества.|One ecosystem for life, business and community.|Một hệ sinh thái cho cuộc sống, kinh doanh và cộng đồng.
+Наши направления|Our directions|Các lĩnh vực của chúng tôi
+Маркет|Market|Cửa hàng
+Туры|Tours|Tour du lịch
+Отель|Hotel|Khách sạn
+О UMMA GLOBAL|About UMMA GLOBAL|Về UMMA GLOBAL
+Кто мы|Who we are|Chúng tôi là ai
+Наша миссия|Our mission|Sứ mệnh của chúng tôi
+Наши ценности|Our values|Giá trị của chúng tôi
+Как присоединиться|How to join|Cách tham gia
+В приложении|In the app|Trong ứng dụng
+UMMA GLOBAL — развивающаяся экосистема для нашей семьи, братьев и сестёр. Мы начинаем в Нячанге и стремимся объединять людей в разных странах.|UMMA GLOBAL is a growing ecosystem for our family, brothers and sisters. Starting in Nha Trang, we aim to connect people across countries.|UMMA GLOBAL là hệ sinh thái đang phát triển dành cho đại gia đình và anh chị em của chúng ta. Bắt đầu từ Nha Trang, chúng tôi mong muốn kết nối mọi người ở nhiều quốc gia.
+Вера, гостеприимство, честность, забота о семье и взаимопомощь. Мы кормим людей ради довольства Аллаха.|Faith, hospitality, honesty, care for family and mutual support. We feed people seeking Allah’s pleasure.|Đức tin, lòng hiếu khách, sự trung thực, quan tâm gia đình và tương trợ. Chúng tôi phục vụ bữa ăn để tìm kiếm sự hài lòng của Allah.
+Знакомьтесь с направлениями, пользуйтесь доступными сервисами и следите за развитием UMMA GLOBAL в приложении.|Explore our directions, use available services and follow UMMA GLOBAL’s progress in the app.|Khám phá các lĩnh vực, sử dụng dịch vụ hiện có và theo dõi sự phát triển của UMMA GLOBAL trong ứng dụng.
 Прослушать перевод|Listen to translation|Nghe bản dịch
 На телефоне нет голоса для выбранного языка.|No voice for this language is installed on this phone.|Điện thoại chưa cài giọng đọc cho ngôn ngữ này.
 Не удалось озвучить перевод.|Unable to read the translation aloud.|Không thể đọc bản dịch.

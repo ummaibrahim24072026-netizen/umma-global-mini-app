@@ -15,13 +15,22 @@ try{
  w.eval(readFileSync('js/core/navigation.js','utf8'));w.eval(readFileSync('js/core/native-shell.js','utf8'));
  assert.equal(fullscreen,1);assert.equal(expanded,1);assert.equal(d.documentElement.style.getPropertyValue('--umma-viewport-height'),'844px');assert.equal(d.documentElement.style.getPropertyValue('--umma-safe-top'),'max(40px, env(safe-area-inset-top, 0px))');
  const main=d.querySelector('.app>main');main.scrollTop=210;
+ d.querySelector('[data-page=about]').click();await tick();
+ const about=d.querySelector('.umma-about');assert.equal(about.open,true);
+ assert.deepEqual([...about.querySelectorAll('h3')].map(h=>h.textContent),['Кто мы','Наша миссия','Наши ценности','Наши направления','Как присоединиться']);
+ assert.equal(about.querySelectorAll('[class=umma-about-directions] button').length,38);
+ assert.match(about.textContent,/Готовится к запуску/);nativeBack();assert.equal(about.open,false);
+ const hero=d.querySelector('.brand-art-action');hero.click();hero.click();await tick();assert.equal(menu,1,'hero repeated tap enters cafe once');
+ assert.equal(hero.getAttribute('aria-busy'),'true');nativeBack();await new Promise(r=>setTimeout(r,460));assert.equal(hero.disabled,false);menu=0;
+ for(const id of ['education','tours','hotels']){d.querySelector('.services-grid [data-service='+id+']').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);assert.match(d.querySelector('.native-service-dialog').textContent,/Услуги пока недоступны/);nativeBack();}
+
  d.querySelector('.nav-item[data-page="cafe"]').click();await tick();assert.equal(menu,1);assert.equal(d.getElementById('cafePage').hidden,false);assert.equal(d.getElementById('nativeAppTitle').textContent,'UMMA Cafe');
  nativeBack();await tick();assert.equal(main.style.display,'');assert.equal(main.scrollTop,210);
  d.querySelector('.nav-item[data-page="orders"]').click();await tick();assert.equal(orders,1);assert.equal(d.getElementById('cafeOrdersPage').hidden,false);assert.equal(d.getElementById('cafePage').hidden,true);assert.equal(d.getElementById('nativeAppTitle').textContent,'Мои заказы');assert.equal(d.querySelector('[aria-current="page"]').dataset.page,'orders');
  d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,38);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
  d.querySelector('[data-service=travel]').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);nativeBack();assert.equal(d.querySelector('.native-service-dialog').open,false);assert.equal(d.getElementById('servicesPage').hidden,false);
  // Exercise every planned destination, not just the original travel stub.
- assert.equal(d.querySelectorAll('.services-grid [data-service]').length,38);
+ assert.deepEqual([...d.querySelectorAll('.services-grid [data-service]')].map(b=>b.dataset.service),['cafe','market','b2b','education','tours','hotels']);
  for(const item of w.ummaDirections.filter(item=>!item.available)){
   d.querySelector('#nativeDirectory [data-service="'+item.id+'"]').click();
   const sheet=d.querySelector('.native-service-dialog');assert.equal(sheet.open,true,item.id+' opens');
