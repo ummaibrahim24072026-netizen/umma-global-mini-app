@@ -23,7 +23,7 @@ The approved home, illustrated directions and five-tab navigation define the app
 | Market / B2B | Individual illustrated headings, turquoise selected tabs, light catalogue, enquiry and checkout surfaces. Existing development labels remain unchanged. |
 | Warehouse | Shared receiving, packing, stock, import, documents, reports and cash controls/cards. Printed QR labels are unchanged. |
 | Staff / kitchen / courier | Illustrated workspace headings, readable operational cards, prominent actions, distinct error/destructive states. |
-| Administration | Light workspace cards, consistent forms, brand icons and user/role modal surfaces. |
+| Administration | Illustrated workspace cards, consistent forms, brand icons and user/role modal surfaces. |
 | Notifications / tracking / chat / payment / maps / language | Shared light sheets, borders, surfaces and focus treatment. Map controls, QR codes and payment behaviour remain module-owned. |
 
 `decoratePages()` only adds decorative heading artwork. Its observer responds to inserted headings, rather than every status update, and does not request data or change navigation.

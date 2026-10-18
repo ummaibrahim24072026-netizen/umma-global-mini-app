@@ -431,6 +431,11 @@
    const item=catalogue[key];if(!item)continue;
    const artwork=directionArtwork(item);artwork.classList.add('umma-page-emblem');title.prepend(artwork);
   }
+  document.querySelectorAll('.admin-card').forEach(card=>{
+   const holder=card.querySelector(':scope > span');if(!holder||holder.dataset.brandReady)return;
+   const item=catalogue[card.dataset.brandDirection||holder.dataset.brandDirection];if(!item)return;
+   holder.className='admin-card-emblem';holder.setAttribute('aria-hidden','true');holder.replaceChildren(directionArtwork(item));holder.dataset.brandReady='true';
+  });
   for(const [id,name] of Object.entries({adminPage:'business',adminUsersPage:'community'})){
    const holder=byId(id)?.querySelector('.admin-header-icon');if(holder&&!holder.dataset.brandReady){holder.replaceChildren(icon(name));holder.dataset.brandReady='true';}
   }

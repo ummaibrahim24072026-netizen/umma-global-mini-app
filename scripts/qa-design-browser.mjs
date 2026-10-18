@@ -49,6 +49,22 @@ await page.evaluate(()=>window.ummaNativeShell.openService('education'));
 await page.locator('.native-service-dialog .umma-page-emblem.artwork-ready').waitFor();
 await page.setViewportSize({width:390,height:844});await page.screenshot({path:output+'/education.png'});
 assert.equal(await page.locator('.native-service-dialog').evaluate(e=>e.scrollWidth>e.clientWidth+1),false);
+
+await page.locator('.native-service-dialog .cafe-back').click();
+await page.evaluate(()=>window.ummaI18n.setLanguage('ru'));
+for(const sheet of ['language','notifications','chat','tracking']){
+ if(sheet==='language')await page.locator('#languageBtn').click();
+ if(sheet==='notifications')await page.evaluate(()=>document.getElementById('cafeNotificationBell').click());
+ if(sheet==='chat')await page.evaluate(()=>window.ummaDeliveryChat.open('isolated-qa-order'));
+ if(sheet==='tracking')await page.evaluate(()=>{const b=document.createElement('button');b.dataset.trackDelivery='isolated-qa-order';document.body.append(b);b.click();b.remove();});
+ const selector={language:'.umma-language-dialog',notifications:'.cafe-notifications-dialog',chat:'.delivery-chat-dialog',tracking:'.delivery-tracking-dialog'}[sheet];
+ await page.locator(selector).waitFor();
+ for(const width of widths){await page.setViewportSize({width,height:844});await page.waitForTimeout(40);assert.equal(await page.locator(selector).evaluate(e=>e.scrollWidth>e.clientWidth+1),false,sheet+' '+width);}
+ if(sheet==='tracking')assert.notEqual(await page.locator('.delivery-tracking-header button').evaluate(e=>getComputedStyle(e).color),'rgb(255, 255, 255)');
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:output+'/'+sheet+'.png'});
+ await page.evaluate(sheet=>{if(sheet==='chat')window.ummaDeliveryChat.close();else if(sheet==='tracking')window.ummaCourierTracking.close();else document.querySelector('dialog[open]').close();},sheet);
+}
+
 assert.deepEqual(errors,[]);fs.writeFileSync(output+'/all-pages-results.json',JSON.stringify(results,null,2));
-console.log('PASS 15 application screens x 8 widths x 3 languages; planned service artwork; no horizontal overflow or JavaScript errors. Local isolated DOM preview, no live transactions.');
+console.log('PASS 15 application screens x 8 widths x 3 languages; planned service artwork and four real sheet renderers; no horizontal overflow or JavaScript errors. Local isolated DOM preview, no live transactions.');
 }finally{await browser.close();server.close();}

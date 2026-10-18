@@ -161,12 +161,12 @@
       </div>
 
       <div class="admin-grid">
-<button type="button" class="admin-card" data-b2b-manage><span>▣</span><strong>Заявки B2B</strong><small>Оптовые поставки и ответы организациям</small></button>
+<button type="button" class="admin-card" data-brand-direction="b2b" data-b2b-manage><span>▣</span><strong>Заявки B2B</strong><small>Оптовые поставки и ответы организациям</small></button>
 
         <button
           type="button"
           class="admin-card"
-          id="adminUsersButton"
+          data-brand-direction="community" id="adminUsersButton"
         >
           <span>👥</span>
           <strong>Пользователи</strong>
@@ -177,7 +177,7 @@
         <button
           type="button"
           class="admin-card"
-          id="adminKitchenButton"
+          data-brand-direction="cafe" id="adminKitchenButton"
         >
           <span>🍳</span>
           <strong>Заказы кафе</strong>
@@ -187,7 +187,7 @@
         <button
           type="button"
           class="admin-card"
-          id="locationOpenMapButton"
+          data-brand-direction="travel" id="locationOpenMapButton"
         >
           <span>🗺️</span>
           <strong>Локации и карта</strong>
@@ -199,7 +199,7 @@
           type="button"
           class="admin-card"
         >
-          <span>💼</span>
+          <span data-brand-direction="business">💼</span>
           <strong>Предприниматели</strong>
           <small>Бизнесы и владельцы</small>
         </button>
@@ -208,7 +208,7 @@
         <button
           type="button"
           class="admin-card"
-          id="adminStaffButton"
+          data-brand-direction="jobs" id="adminStaffButton"
         >
           <span>🧑‍💼</span>
           <strong>Сотрудники</strong>
@@ -219,7 +219,7 @@
         <button
           type="button"
           class="admin-card"
-          id="adminProductsButton"
+          data-brand-direction="market" id="adminProductsButton"
         >
           <span>📦</span>
           <strong>Товары и инвентарь</strong>
@@ -227,7 +227,7 @@
         </button>
 
 
-        <button type="button" class="admin-card" id="adminAccountingButton">
+        <button type="button" class="admin-card" data-brand-direction="finance" id="adminAccountingButton">
           <span>📊</span>
           <strong>Учёт кафе</strong>
           <small>Закупки, склад, производство, расходы</small>
@@ -237,7 +237,7 @@
           type="button"
           class="admin-card"
         >
-          <span>🧾</span>
+          <span data-brand-direction="trade">🧾</span>
           <strong>Заказы</strong>
           <small>Заказы и статусы</small>
         </button>
@@ -247,8 +247,8 @@
 
       <h2 class="admin-section-title">Управление кафе</h2>
       <details class="cafe-management-tools"><summary>⚙️ Управление кафе</summary>
-      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#176b55;color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
-      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:#eef6f4;color:#176b55;border:1px solid #b8d8cf;border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
+      <button type="button" id="cafeInventoryOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:var(--umma-brand-strong);color:#fff;border:0;border-radius:12px;font-size:15px;font-weight:800;">📦 Товары, цены и остатки</button>
+      <button type="button" id="cafeStaffAdminOpen" style="display:block!important;width:100%;margin:12px 0;padding:14px;background:var(--umma-brand-pale);color:var(--umma-brand-strong);border:1px solid var(--umma-brand-line);border-radius:12px;font-size:15px;font-weight:800;">👥 Сотрудники моего кафе</button>
 
       </details>
 
