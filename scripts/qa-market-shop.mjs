@@ -20,7 +20,7 @@ w.fetch=async(url,opt)=>{const b=JSON.parse(opt.body);calls.push(b);let result={
 };
 const tick=async()=>{for(let i=0;i<15;i++)await new Promise(r=>setTimeout(r,0));};
 try{
- w.eval(readFileSync('js/core/app.js','utf8'));w.eval(readFileSync('js/market/api.js','utf8'));w.ummaMarket={open(){warehouseOpened++;}};w.eval(readFileSync('js/market/customer.js','utf8'));w.eval(readFileSync('js/core/navigation.js','utf8'));w.eval(readFileSync('js/core/native-shell.js','utf8'));
+ w.eval(readFileSync('js/delivery/providers.js','utf8'));w.eval(readFileSync('js/core/app.js','utf8'));w.eval(readFileSync('js/market/api.js','utf8'));w.ummaMarket={open(){warehouseOpened++;}};w.eval(readFileSync('js/market/customer.js','utf8'));w.eval(readFileSync('js/core/navigation.js','utf8'));w.eval(readFileSync('js/core/native-shell.js','utf8'));
  d.querySelector('[data-page=market]').click();await tick();assert.equal(d.getElementById('marketShopPage').hidden,false);assert.equal(d.querySelector('.app>main').style.display,'none');assert.equal(d.querySelector('#marketShopPage script'),null);assert.ok(d.getElementById('marketShopPage').textContent.includes('<script>'));
  const preview=[...d.querySelectorAll('.market-product')].find(e=>e.textContent.includes('Огурцы'));assert.ok(preview.textContent.includes('Цена уточняется'));assert.ok(!preview.textContent.includes('₫'));assert.ok(!preview.querySelector('[data-shop-action=add]'));assert.ok(!preview.textContent.includes('Нет в наличии'),'no invented stock status on an unpriced preview');
  d.querySelector('[data-shop-action=warehouse]').click();assert.equal(warehouseOpened,1);
@@ -28,5 +28,12 @@ try{
  const f=dialog.querySelector('form');f.elements.customer_phone.value='+840000000';f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.match(dialog.querySelector('[data-checkout-status]').textContent,/Response lost/);assert.equal(created,1);
  f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();assert.equal(created,1);const submissions=calls.filter(c=>c.action==='order_create');assert.equal(submissions.length,2);assert.equal(submissions[0].request_id,submissions[1].request_id);assert.equal(submissions[0].data.items[0].unit_id,unit);assert.equal(submissions[0].data.expected_total_vnd,942420);assert.equal(d.querySelector('.market-checkout'),null);assert.ok(d.getElementById('marketShopPage').textContent.includes('№1'));
  const stored=w.sessionStorage.getItem('umma-market-requests');assert.ok(!stored?.includes('customer_phone'),'retry storage does not retain customer payloads');
+ d.querySelector('[data-shop-action=catalog]').click();await tick();d.querySelector('[data-shop-action=add]').click();d.querySelector('[data-shop-action=checkout]').click();await tick();
+ const ext=d.querySelector('.market-checkout'),carrier=ext.querySelector('[name=carrier]'),fulfilment=ext.querySelector('[name=order_type]');
+ fulfilment.value='delivery';fulfilment.dispatchEvent(new w.Event('change'));assert.equal(ext.querySelector('[data-final-total]').textContent.replace(/\D/g,''),'952420');
+ carrier.value='maxim';carrier.dispatchEvent(new w.Event('change'));assert.equal(ext.querySelector('[data-final-total]').textContent.replace(/\D/g,''),'942420');assert.equal(ext.querySelector('[name=payment_method]').value,'qr');assert.equal(fulfilment.disabled,true);
+ const ef=ext.querySelector('form');ef.elements.customer_phone.value='+840000000';ef.elements.delivery_address.value='Nha Trang, Scenia Bay';ef.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
+ const last=calls.filter(c=>c.action==='order_create').at(-1).data;assert.equal(last.order_type,'pickup');assert.equal(last.payment_method,'qr');assert.equal(last.expected_total_vnd,942420);assert.equal(last.delivery_address,'Nha Trang, Scenia Bay');assert.equal(w.ummaDeliveryProviders.provider({order_type:last.order_type,customer_note:last.note}),'maxim');
+ console.log('PASS Market external checkout: carrier persisted, prepaid goods, no UMMA delivery fee, address retained and carrier pickup prevents internal dispatch');
  console.log('PASS Market customer UI: real route, escaped names, exact package and price, checkout, lost-response replay and order display');
 }finally{w.close();}

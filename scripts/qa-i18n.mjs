@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 function setup({telegram,browser='en-GB',saved}={}){
- const dom=new JSDOM(html,{url:'https://umma.example/',runScripts:'outside-only'}),w=dom.window;
+ const dom=new JSDOM(html,{url:'https://umma.example/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
  Object.defineProperty(w.navigator,'languages',{value:[browser]});
  if(telegram)w.Telegram={WebApp:{initDataUnsafe:{user:{id:123,first_name:'Ибрахим',language_code:telegram}}}};
  if(saved)w.localStorage.setItem('umma-language',saved);
