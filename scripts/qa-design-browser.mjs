@@ -29,7 +29,8 @@ for(const lang of ['ru','en','vi']){
 const warehouse={id:'22222222-2222-4222-8222-222222222222',name:'QA',city:'Nha Trang',location_id:'11111111-1111-4111-8111-111111111111',location:{city:'Nha Trang'}};
 await page.route('**/functions/v1/market-stock',async route=>{
  const {action}=route.request().postDataJSON();
- const catalogue={ok:true,warehouses:[warehouse],categories:[],offers:[]};
+ const item={id:'fixture-product',warehouse_id:warehouse.id,name_ru:'Товар с длинным названием',name_en:'A product with a long name',name_vi:'Sản phẩm có tên dài',description_ru:'Только изолированный пример.',description_en:'Isolated fixture only.',description_vi:'Chỉ dùng để kiểm thử.'};
+ const catalogue={ok:true,warehouses:[warehouse],categories:[],products:[item],offers:[{warehouse_id:warehouse.id,variant_id:'fixture-variant',sale_mode:'bulk_weight',measure:'g',price_vnd:90000,fixed_quantity:1000,available_quantity:2000,product:item,units:[]}]};
  const payload=action==='catalog'||action==='b2b_catalog'?catalogue:action==='bootstrap'?{ok:true,isSuperAdmin:true,roles:[],warehouses:[warehouse],locations:[]}:action==='snapshot'?{ok:true,roles:['admin'],financial:true,warehouse,categories:[],variants:[],batches:[],units:[],documents:[],counts:[],suppliers:[]}:null;
  assert.ok(payload,'Only read-only fixture requests are allowed: '+action);
  await route.fulfill({json:payload});

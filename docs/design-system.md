@@ -8,7 +8,7 @@ The approved home, illustrated directions and five-tab navigation define the app
 - Cards: 24px corners, fine turquoise border, subtle shadow. Gold identifies an emphasis, rather than every surface.
 - Controls: 44px minimum action target, 48px text fields, visible keyboard focus, full translated labels.
 - Typography: existing interface fonts. Quran Arabic, translations, reading sizes and line heights remain owned by `quran.css`.
-- Images: approved illustration atlases, cropped through the single `directionArtwork` renderer. Decorative images have empty alt text and SVG fallbacks. No new image downloads or APIs.
+- Images: approved illustration atlases, cropped through the single `directionArtwork` renderer. Decorative images have empty alt text and SVG fallbacks. No new image assets or APIs.
 
 ## Screen coverage
 
@@ -34,3 +34,11 @@ The approved home, illustrated directions and five-tab navigation define the app
 - `scripts/qa-home-browser.mjs`: approved home/catalogue, navigation and reader regression checks.
 - `scripts/qa-design-browser.mjs`: all 15 screens at 320, 360, 375, 390, 414, 430, 768 and 1024px in Russian, English and Vietnamese; isolated read-only fixtures for dynamic Market/B2B views. No live account or writes.
 - Browser captures are local previews. Physical Android/iOS Telegram validation requires real devices.
+
+## Menu and role detail pass
+
+`cafe-cards.css` owns the Cafe product-card layout: original square photographs, title then weight, collapsible descriptions, turquoise add/quantity controls, a neutral cloche fallback for absent/failed images and a single column below 360px. Product prices, stock limits and delegated cart handlers are unchanged. Market and B2B product cards share the same surfaces while preserving their distinct actions and development statuses.
+
+The shared stylesheet also covers staff dish selectors, table/service selectors, nested kitchen actions, staff/product/location forms, accounting tables and purchase/production rows, courier detail surfaces, cash handling and the isolated superadmin sandbox. Legacy inline cash/sandbox colours reference existing brand tokens; error and destructive states keep their distinct colours. All privileged actions retain existing access checks.
+
+`qa-menu-design-browser.mjs` uses an intercepted HTTPS origin and read-only fixture responses to exercise real product renderers and menu interactions, staff quantities, cash change calculation without confirming payment, accounting tabs, and all five sandbox role menus. Fixtures never contact a live backend. The all-screen browser suite also includes populated Market/B2B cards. Physical Telegram device testing remains separate.

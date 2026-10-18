@@ -131,3 +131,73 @@ h1>.umma-page-emblem.direction-emblem{float:inline-start;margin-inline-end:12px;
 .admin-card-emblem>.direction-emblem{width:100%;height:100%}
 .delivery-tracking-dialog .delivery-tracking-header button{color:var(--umma-brand-strong);background:#fff;border-color:var(--umma-brand-line)}
 .delivery-tracking-header .umma-maps-brand{color:var(--gold-dark)}
+/* Shared working menus: guest orders, kitchen, courier, stock and administration. */
+:is(.cafe-staff-assign-form,.staff-table-picker,.staff-active-order,.staff-open-bill,.staff-cash-payment-fields,.courier-shift-card,.courier-evidence,.accounting-empty){border:1px solid var(--umma-brand-line);border-radius:24px;background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card)}
+.cafe-staff-assign-form{padding:18px;gap:16px}
+.cafe-staff-assign-form h2,.cafe-staff-list-heading h2{font:750 20px/1.35 Inter,system-ui,sans-serif;color:var(--umma-brand-ink)}
+.cafe-staff-assign-form label{font-size:14px;line-height:1.5;color:var(--umma-brand-text);gap:7px}
+.cafe-staff-card-head strong{font-size:16px;line-height:1.45}
+.cafe-staff-card-head small,.cafe-staff-card p,.cafe-staff-card-foot{font-size:13px;line-height:1.6}
+.cafe-staff-card-head{flex-wrap:wrap}
+.cafe-staff-card-head>div{min-width:0;flex:1 1 150px;overflow-wrap:anywhere}
+.cafe-staff-card-foot{flex-wrap:wrap;gap:10px}
+.cafe-staff-role{font-size:12px;line-height:1.4;border-radius:10px;background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
+:is(.cafe-staff-quick-nav,.staff-service-options,.cafe-kitchen-filters){display:flex;gap:8px;flex-wrap:wrap}
+:is(.cafe-staff-quick-nav,.staff-service-options,.cafe-kitchen-filters,.staff-workspace-tabs,.courier-navigation-options) button{min-height:44px;border:1px solid var(--umma-brand-line);border-radius:14px;padding:10px 12px;background:#fff;color:var(--umma-brand-strong);font-family:inherit;font-size:13px;line-height:1.4;white-space:normal}
+:is(.staff-service-options button.is-active,.staff-service-options button[aria-pressed=true],.staff-workspace-tab.is-active,.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed=true],.cafe-kitchen-filters button.is-active){border-color:var(--umma-brand-line-strong);background:var(--umma-brand-soft);color:var(--umma-brand-deep);box-shadow:inset 0 1px 0 #fff}
+.staff-table-picker{padding:18px}
+.staff-table-grid button{border-radius:14px;font-size:15px;min-height:52px}
+#staffOrderMenu .cafe-product{border:1px solid var(--umma-brand-line);border-radius:20px;background:var(--umma-surface);box-shadow:var(--umma-shadow-card);padding:14px;gap:10px}
+#staffOrderMenu .cafe-product h3{font:750 15px/1.4 Inter,system-ui,sans-serif;overflow-wrap:break-word;color:var(--umma-brand-ink)}
+#staffOrderMenu .cafe-product-price{color:var(--umma-brand-strong);font-variant-numeric:tabular-nums}
+#staffOrderMenu .staff-product-selected{border-color:var(--gold);background:var(--umma-brand-pale)}
+#staffOrderMenu :is(.staff-product-minus,.staff-product-plus){min-width:44px;min-height:44px;width:44px;height:44px;border-radius:14px;font-size:22px}
+.staff-product-quantity{color:var(--umma-brand-strong)}
+.courier-shift-card{padding:20px}
+.courier-evidence{padding:16px}
+.courier-navigation-options button{background:var(--umma-brand-pale)}
+.tracking-empty{background:var(--umma-brand-pale)}
+.accounting-status{border-radius:10px}
+.accounting-table-wrap{border:1px solid var(--umma-brand-line);border-radius:18px;background:#fff;overflow:auto}
+.accounting-table th{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
+.accounting-list>article{border-color:var(--umma-brand-line);border-radius:18px;background:#fff}
+.accounting-line [data-remove-line]{min-width:44px;min-height:44px;border-radius:14px}
+/* Legacy cash and sandbox panels have inline layout. Only their presentation is shared. */
+#cafeCashPanel{box-shadow:var(--umma-shadow-card)}
+#cashSummary>div{border:1px solid var(--umma-brand-line);border-top:2px solid var(--gold-light)}
+#cashSummary strong{font-variant-numeric:tabular-nums;color:var(--umma-brand-strong)}
+#cafeCashPanel :is(button,input,select),#ummaSandboxPanel :is(button,input,select){min-height:48px;max-width:100%;box-sizing:border-box;font-family:inherit;font-size:16px}
+#cafeCashPanel :is(form,article),#ummaSandboxPanel form{border-color:var(--umma-brand-line)}
+.umma-cash-modal{padding-top:max(16px,var(--umma-safe-top,0px))!important;padding-bottom:max(16px,var(--umma-safe-bottom,0px))!important;background:rgba(var(--umma-brand-ink-rgb),.42)!important}
+.umma-cash-modal>section{max-height:calc(var(--umma-viewport-height,100dvh) - var(--umma-safe-top,0px) - var(--umma-safe-bottom,0px) - 32px);overflow:auto;border:1px solid var(--umma-brand-line);border-radius:24px!important;box-shadow:0 20px 70px rgba(var(--umma-brand-ink-rgb),.18)}
+.umma-cash-modal :is(button,input){min-height:48px;font-family:inherit;line-height:1.5}
+.umma-cash-modal button:focus-visible,#ummaSandboxPanel :is(button,input,select):focus-visible{outline:2px solid var(--umma-brand-strong);outline-offset:3px}
+@media(max-width:480px){
+ .cafe-staff-assign-form{padding:16px}
+ .accounting-line{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:8px;padding:12px;border:1px solid var(--umma-brand-line);border-radius:16px;background:var(--umma-brand-canvas)}
+ .accounting-line>select:first-child{grid-column:1/-1}
+ .accounting-production-line,.accounting-recipe-line{grid-template-columns:minmax(0,1fr) 44px}
+ .cafe-staff-list-heading{flex-wrap:wrap}
+ #cashSummary{grid-template-columns:minmax(0,1fr)!important}
+}
+/* Product catalogues use the same materials as Cafe, with each module's own actions. */
+.market-product{background:var(--umma-surface);border-color:var(--umma-brand-line);border-radius:24px;box-shadow:var(--umma-shadow-card)}
+.market-product h2{font-family:Inter,system-ui,sans-serif;font-weight:750;overflow-wrap:break-word}
+.market-product-price{color:var(--umma-brand-strong);font-variant-numeric:tabular-nums}
+.market-product-content{gap:12px}
+.market-product button{background:var(--umma-action);border-color:var(--umma-brand-strong);color:#fff;min-height:44px;line-height:1.45;white-space:normal}
+.market-product button[aria-pressed=true]{background:var(--umma-brand-soft);border-color:var(--gold);color:var(--umma-brand-deep)}
+.market-product details summary{min-height:44px;align-content:center;color:var(--umma-brand-strong);cursor:pointer}
+.b2b-lines li>div{flex-wrap:wrap}
+.b2b-lines li>div>label{flex:1 1 120px}
+/* Developer menus remain visibly isolated while fitting small employee devices. */
+#ummaSandboxPanel :is(div,form,label){min-width:0;box-sizing:border-box}
+#ummaSandboxPanel h2{font-size:20px;line-height:1.4;overflow-wrap:anywhere}
+#ummaSandboxActions,#ummaSandboxCreate,#ummaSandboxOpenShift{grid-template-columns:minmax(0,1fr)}
+#ummaSandboxPanel button{white-space:normal;overflow-wrap:break-word}
+#ummaSandboxMenu>div{flex-wrap:wrap}
+#ummaSandboxMenu>div>div:first-child{flex:1 1 150px;overflow-wrap:anywhere}
+#ummaSandboxMenu [data-test-step]{min-width:44px;min-height:44px}
+/* Full role titles wrap inside their own flex cell beside language/status controls. */
+.native-app-title{min-width:0}
+#nativeAppTitle{display:block;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.3}

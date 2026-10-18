@@ -441,7 +441,7 @@
   }
  }
  let decorationFrame=0;
- new MutationObserver(records=>{if(!decorationFrame&&records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches('h1,.admin-header-icon')||n.querySelector('h1,.admin-header-icon')))))decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decoratePages();});}).observe(app,{childList:true,subtree:true});
+ new MutationObserver(records=>{if(!decorationFrame&&records.some(r=>(r.target.nodeType===1&&r.target.matches('h1'))||[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches('h1,.admin-header-icon')||n.querySelector('h1,.admin-header-icon')))))decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decoratePages();});}).observe(app,{childList:true,subtree:true});
  decoratePages();
  function card(item,home=false){
   const b=document.createElement('button');b.type='button';b.dataset.service=item.id;b.dataset.page=item.id;b.className=home?'service':'native-directory-card';
