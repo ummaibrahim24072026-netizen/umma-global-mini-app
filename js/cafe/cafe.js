@@ -7,7 +7,6 @@
   const MY_ORDERS_URL = "https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-my-orders";
   const money = value => new Intl.NumberFormat(window.ummaI18n?.locale() || "vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
-  const icons = { "UMMA-CAFE-SHURPA":"🍲", "UMMA-CAFE-PLOV":"🍛", "UMMA-CAFE-MANTI":"🥟", "UMMA-CAFE-FLATBREAD":"🫓", "UMMA-CAFE-SALAD":"🥗", "UMMA-CAFE-SAMSA":"🥮", "UMMA-CAFE-AYRAN":"🥛" };
   let products = [], inventoryRows = [], locations = [], locationId = null, loading = false, locationMode = "nearest", inventoryControlEnabled = false;
   let menuQuery = "", menuCategory = "all";
   // Explicit SKU assignment avoids classifying chicken with salad as a salad.
@@ -138,8 +137,9 @@
       const productId = esc(p.id);
       const photo = productPhoto(p);
       return '<article class="cafe-product' + (photo ? '' : ' cafe-product-no-photo') + (quantity ? ' cafe-product-selected' : '') + '" data-product-card="' + productId + '">' +
-        photo + halalBadge + '<div class="cafe-product-top"><span class="cafe-product-icon">' + (icons[p.sku] || "🍽️") + '</span><span class="cafe-product-weight" dir="ltr">' + esc(weight) + '</span></div>' +
+        photo + '<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>' + halalBadge +
         '<h3 translate="no" dir="auto">' + esc(name(p)) + '</h3>' +
+        '<div class="cafe-product-top"><span class="cafe-product-weight" dir="ltr">' + esc(weight) + '</span></div>' +
         (description(p).trim() ? '<details class="cafe-product-description"><summary>Описание</summary><p translate="no" dir="auto">' + esc(description(p)) + '</p></details>' : '') +
         '<div class="cafe-product-selection' + (quantity ? ' is-visible' : '') + '"' + (quantity ? '' : ' hidden') + '><span>В заказе</span><strong class="cafe-product-quantity">' + quantity + '</strong></div>' +
         '<div class="cafe-product-bottom"><span class="cafe-product-price">' + (p.catalog_preview ? 'Цена уточняется' : money(p.price_vnd)) + '</span>' +
