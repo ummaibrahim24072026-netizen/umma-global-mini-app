@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const rows = `
+Свернуть аят дня|Collapse daily verse|Thu gọn câu kinh trong ngày
 ва рахматуллахи ва баракатуху,|wa rahmatullahi wa barakatuhu,|wa rahmatullahi wa barakatuhu,
 ва рахматуллахи ва баракатуху|wa rahmatullahi wa barakatuhu|wa rahmatullahi wa barakatuhu
 ва рахматуллахи ва баракатуху!|wa rahmatullahi wa barakatuhu!|wa rahmatullahi wa barakatuhu!

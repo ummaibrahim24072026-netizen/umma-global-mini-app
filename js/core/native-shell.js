@@ -455,11 +455,11 @@
   const image=homeHero.querySelector('.brand-art-image'),intro=document.querySelector('.ecosystem-intro'),ayah=document.querySelector('.ayah-card');
   if(!image||!intro||!ayah||!homeMain.clientHeight)return;
   const css=el=>getComputedStyle(el),n=value=>parseFloat(value)||0;
-  const reserve=n(css(homeMain).paddingTop)+intro.offsetHeight+ayah.offsetHeight+n(css(homeHero).marginBottom)+n(css(intro).marginBottom)+8;
+  const reserve=n(css(homeMain).paddingTop)+intro.offsetHeight+ayah.offsetHeight+n(css(homeHero).marginBottom)+n(css(intro).marginBottom)+24;
   const budget=homeMain.clientHeight-reserve,full=homeHero.clientWidth;
   // Image and its overlapping caption contribute 1.5 - .67 = .83 times artwork width.
   const fixed=homeHero.getBoundingClientRect().height-image.getBoundingClientRect().width*.83;
-  const size=Math.min(100,Math.max(68,100*(budget-fixed)/(.83*full)));
+  const size=Math.min(100,Math.max(20,100*(budget-fixed)/(.83*full)));
   const value=size.toFixed(2)+'%';if(homeHero.style.getPropertyValue('--home-art-size')!==value)homeHero.style.setProperty('--home-art-size',value);
   homeHero.classList.toggle('home-fit-art',size<99.5);
  }
