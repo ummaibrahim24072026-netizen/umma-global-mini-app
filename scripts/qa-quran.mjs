@@ -21,6 +21,8 @@ try{
  assert.equal(w.ummaQuran.dateKey(new Date('2026-10-17T16:59:59Z')),'2026-10-17');assert.equal(w.ummaQuran.dateKey(new Date('2026-10-17T17:00:00Z')),'2026-10-18');
  assert.equal(w.ummaQuran.dayIndex(new Date('2026-10-17T17:00:00Z'))-w.ummaQuran.dayIndex(new Date('2026-10-17T16:59:59Z')),1);
  const disclosure=d.querySelector('.daily-ayah'),summary=disclosure.querySelector('summary');assert.equal(disclosure.open,false);assert.ok(summary.querySelector('.daily-ayah-preview').textContent);assert.ok(d.getElementById('quranDirect').closest('.daily-ayah-expanded'));summary.click();assert.equal(disclosure.open,true);summary.click();assert.equal(disclosure.open,false);summary.click();
+ const reference=d.querySelector('.daily-ayah-reference').textContent.match(/(\d+):(\d+)/);assert.ok(reference);
+ d.getElementById('quranDirect').click();await until(()=>d.getElementById('quranAyaNumber'));assert.equal(d.getElementById('quranAyaNumber').value,reference[2]);assert.ok(d.getElementById('quran-verse-'+reference[1]+'-'+reference[2])||d.querySelector('[data-scrolled=true]'));d.getElementById('quranClose').click();
  d.getElementById('dailyAyahUnderstand').click();await until(()=>d.querySelector('#quranTafsir article'));assert.ok(d.querySelector('#quranTafsir').closest('[data-i18n-ignore]'));assert.match(d.getElementById('quranTafsirEdition').textContent,/V1.0.0/);assert.equal(d.querySelector('.quran-source-details').open,false);
  d.getElementById('quranReadSurah').click();await until(()=>d.getElementById('quranMode'));assert.ok(d.querySelector('[data-scrolled=true]'));
  d.getElementById('quranMode').value='arabic';d.getElementById('quranMode').dispatchEvent(new w.Event('change'));assert.equal(d.getElementById('quranBody').dataset.mode,'arabic');

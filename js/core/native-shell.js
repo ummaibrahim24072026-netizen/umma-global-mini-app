@@ -3,7 +3,7 @@
  'use strict';
  const sdk=window.Telegram?.WebApp,app=document.querySelector('.app'),byId=id=>document.getElementById(id);
  if(!app)return;
- const paths={kitchen:'M4 10h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3zm-2 0h20M8 3v3m4-4v4m4-3v3',courier:'M3 7h11v11H3zm11 4h4l3 4v3h-7M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4m10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4',accounting:'M4 21h16M6 17V9h3v8m3 0V3h3v14m3 0v-5h3v5',home:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',cafe:'M4 3v7m3-7v7m-6-4v2a3 3 0 0 0 6 0V3M4 11v10M15 3v8h4V3m0 8v10',orders:'M7 3h10v3H7zM7 5H4v16h16V5h-3M8 11h8M8 15h5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',more:'M5 6h14M5 12h14M5 18h14',expand:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',market:'M3 3h2l3 12h11l2-8H6M10 20h.01M18 20h.01',travel:'m3 13 18-8-8 18-2-10z',hotels:'M4 21V3h16v18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-6h4v6',realestate:'M3 10 12 3l9 7M5 9v12h14V9m-9 12v-7h4v7',community:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 7m5 10v-2a4 4 0 0 0-3-4',business:'M8 7V3h8v4M3 7h18v14H3zM3 12h18M10 12v3h4v-3',education:'m2 9 10-5 10 5-10 5zm4 3v6l6 3 6-3v-6M22 9v7',health:'M20 4c-3-2-6 0-8 3-2-3-5-5-8-3-5 4 2 11 8 17 6-6 13-13 8-17',farm:'M5 21c0-6 3-12 12-16M4 12C1 3 11 2 21 3c-1 10-4 19-13 15'};
+ const paths={globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18',kitchen:'M4 10h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3zm-2 0h20M8 3v3m4-4v4m4-3v3',courier:'M3 7h11v11H3zm11 4h4l3 4v3h-7M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4m10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4',accounting:'M4 21h16M6 17V9h3v8m3 0V3h3v14m3 0v-5h3v5',home:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',cafe:'M4 3v7m3-7v7m-6-4v2a3 3 0 0 0 6 0V3M4 11v10M15 3v8h4V3m0 8v10',orders:'M7 3h10v3H7zM7 5H4v16h16V5h-3M8 11h8M8 15h5',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',more:'M5 6h14M5 12h14M5 18h14',expand:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',market:'M3 3h2l3 12h11l2-8H6M10 20h.01M18 20h.01',travel:'m3 13 18-8-8 18-2-10z',hotels:'M4 21V3h16v18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-6h4v6',realestate:'M3 10 12 3l9 7M5 9v12h14V9m-9 12v-7h4v7',community:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 4a4 4 0 0 1 0 7m5 10v-2a4 4 0 0 0-3-4',business:'M8 7V3h8v4M3 7h18v14H3zM3 12h18M10 12v3h4v-3',education:'m2 9 10-5 10 5-10 5zm4 3v6l6 3 6-3v-6M22 9v7',health:'M20 4c-3-2-6 0-8 3-2-3-5-5-8-3-5 4 2 11 8 17 6-6 13-13 8-17',farm:'M5 21c0-6 3-12 12-16M4 12C1 3 11 2 21 3c-1 10-4 19-13 15'};
  function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','umma-icon');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',paths[name]||(name==='b2b'?paths.business:paths.more));svg.append(p);return svg;}
  document.querySelectorAll('[data-native-icon]').forEach(el=>el.replaceChildren(icon(el.dataset.nativeIcon)));
  for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
@@ -372,7 +372,26 @@
   const h=document.createElement('h2');h.textContent=title;const p=document.createElement('p');p.textContent=text;dialog.append(close,h,p);
   dialog.onclose=()=>syncScene();document.body.append(dialog);dialog.showModal();syncScene();return dialog;
  }
+ function openAbout(){
+  const opener=document.activeElement;
+  const sheet=info('О UMMA GLOBAL','Единая экосистема для жизни, бизнеса и общества.');
+  sheet.classList.add('umma-about');
+  const sections=[
+   ['Кто мы','UMMA GLOBAL — развивающаяся экосистема для нашей семьи, братьев и сестёр. Мы начинаем в Нячанге и стремимся объединять людей в разных странах.'],
+   ['Наша миссия','Объединяем людей. Создаём возможности.'],
+   ['Наши ценности','Вера, гостеприимство, честность, забота о семье и взаимопомощь. Мы кормим людей ради довольства Аллаха.'],
+   ['Наши направления','Кафе, Market, B2B и Коран доступны в приложении. Остальные направления готовятся к запуску.']
+  ];
+  for(const [heading,text] of sections){const h=document.createElement('h3');h.textContent=heading;const p=document.createElement('p');p.textContent=text;sheet.append(h,p);}
+  const list=document.createElement('div');list.className='umma-about-directions';
+  for(const item of directions){const button=document.createElement('button');button.type='button';button.append(icon(item.icon));const name=document.createElement('span');name.textContent=item.title;const status=document.createElement('small');status.textContent=item.available?'В приложении':'Готовится к запуску';button.append(name,status);button.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage(item.id);};list.append(button);}
+  const h=document.createElement('h3');h.textContent='Как присоединиться';const p=document.createElement('p');p.textContent='Знакомьтесь с направлениями, пользуйтесь доступными сервисами и следите за развитием UMMA GLOBAL в приложении.';
+  const all=document.createElement('button');all.type='button';all.className='cafe-submit';all.textContent='Ко всем направлениям';all.onclick=()=>{sheet.close();openService('more');};
+  sheet.append(list,h,p,all);sheet.addEventListener('close',()=>opener?.focus());translate(sheet);
+ }
  function openService(key){
+  if(key==='about'){openAbout();return;}
+
   if(key==='quran'){window.ummaQuran?.open();return;}
   if(key==='b2b'){window.ummaB2B?.open();return;}
   if(key==='market'){window.ummaMarket?.open();return;}
@@ -392,17 +411,18 @@
  }
  function card(item,home=false){
   const b=document.createElement('button');b.type='button';b.dataset.service=item.id;b.dataset.page=item.id;b.className=home?'service':'native-directory-card';
-  const title=document.createElement('strong');title.textContent=item.title;
+  const title=document.createElement('strong');title.textContent=home?({cafe:'Кафе',market:'Маркет',b2b:'B2B',education:'Образование',tours:'Туры',hotels:'Отель'}[item.id]||item.title):item.title;
   const desc=document.createElement('small');desc.textContent=item.description;
-  b.append(icon(item.icon),title,desc);
+  b.append(icon(item.icon),title);if(!home)b.append(desc);
   if(!item.available){const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(status);}
   b.onclick=()=>{if(typeof openPage==='function')openPage(item.id);};return b;
  }
  const homeGrid=document.querySelector('.services-grid');
- if(homeGrid){homeGrid.replaceChildren();for(const group of groups){
-  const heading=document.createElement('h3');heading.className='umma-direction-group';heading.textContent=group.title;homeGrid.append(heading);
-  for(const item of directions.filter(item=>item.group===group.id))homeGrid.append(card(item,true));
- }translate(homeGrid);}
+ if(homeGrid){homeGrid.replaceChildren();
+  for(const id of ['cafe','market','b2b','education','tours','hotels']){
+   const item=catalogue[id];if(item)homeGrid.append(card(item,true));
+  }translate(homeGrid);
+ }
  const grid=byId('nativeDirectory');
  const search=byId('directionSearch'),filter=byId('directionGroup'),empty=byId('directionEmpty');
  if(filter)for(const group of groups){const option=document.createElement('option');option.value=group.id;option.textContent=group.title;filter.append(option);}

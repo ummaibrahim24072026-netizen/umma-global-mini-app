@@ -128,7 +128,11 @@ document
       const page =
         button.getAttribute("data-page");
 
-      openPage(page);
+      if(button.classList.contains('brand-art-action')){
+        if(button.disabled)return;
+        button.disabled=true;button.setAttribute('aria-busy','true');
+        try{openPage(page);}finally{window.setTimeout(()=>{button.disabled=false;button.removeAttribute('aria-busy');},450);}
+      }else openPage(page);
 
     });
 
@@ -229,41 +233,9 @@ function updateTelegramUserInterface(user) {
   if (!user) return;
 
 
-  const firstName =
-    String(user.first_name || "").trim();
-
-
-  const welcomeTitle =
-    document.querySelector(
-      ".welcome-content h2"
-    );
-
-
-  if (!welcomeTitle) {
-
-    console.warn(
-      "UMMA: блок приветствия не найден"
-    );
-
-    return;
-
-  }
-
-
-  if (firstName) {
-
-    welcomeTitle.innerHTML =
-      `Ассаляму алейкум<br>
-       ва рахматуллахи ва баракатух,<br>
-       <strong translate="no" dir="auto">${escapeHtml(firstName)}!</strong>`;
-
-  } else {
-
-    welcomeTitle.innerHTML =
-      `Ассаляму алейкум<br>
-       ва рахматуллахи ва баракатух!`;
-
-  }
+  // The approved greeting is identical for every signed-in user.
+  const title=document.querySelector('.welcome-content h2');
+  if(title){title.innerHTML='Ассаляму алейкум<br>ва рахматуллахи ва баракатух!';window.ummaI18n?.translate(title);}
 
 }
 
