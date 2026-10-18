@@ -71,7 +71,8 @@
     "group": "food",
     "title": "UMMA Market",
     "description": "Продукты и товары для семьи",
-    "available": true
+    "available": true,
+    "launchStatus": "В разработке"
   },
   {
     "id": "b2b",
@@ -79,7 +80,8 @@
     "group": "food",
     "title": "UMMA B2B",
     "description": "Продукты и товары для бизнеса",
-    "available": true
+    "available": true,
+    "launchStatus": "В разработке"
   },
   {
     "id": "trade",
@@ -374,20 +376,18 @@
  }
  function openAbout(){
   const opener=document.activeElement;
-  const sheet=info('О UMMA GLOBAL','Единая экосистема для жизни, бизнеса и общества.');
+  const sheet=info('О UMMA GLOBAL','Объединяем людей. Создаём возможности.');
   sheet.classList.add('umma-about');
-  const sections=[
-   ['Кто мы','UMMA GLOBAL — развивающаяся экосистема для нашей семьи, братьев и сестёр. Мы начинаем в Нячанге и стремимся объединять людей в разных странах.'],
-   ['Наша миссия','Объединяем людей. Создаём возможности.'],
-   ['Наши ценности','Вера, гостеприимство, честность, забота о семье и взаимопомощь. Мы кормим людей ради довольства Аллаха.'],
-   ['Наши направления','Кафе, Market, B2B и Коран доступны в приложении. Остальные направления готовятся к запуску.']
-  ];
-  for(const [heading,text] of sections){const h=document.createElement('h3');h.textContent=heading;const p=document.createElement('p');p.textContent=text;sheet.append(h,p);}
-  const list=document.createElement('div');list.className='umma-about-directions';
-  for(const item of directions){const button=document.createElement('button');button.type='button';button.append(icon(item.icon));const name=document.createElement('span');name.textContent=item.title;const status=document.createElement('small');status.textContent=item.available?'В приложении':'Готовится к запуску';button.append(name,status);button.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage(item.id);};list.append(button);}
-  const h=document.createElement('h3');h.textContent='Как присоединиться';const p=document.createElement('p');p.textContent='Знакомьтесь с направлениями, пользуйтесь доступными сервисами и следите за развитием UMMA GLOBAL в приложении.';
+  const section=(heading,texts)=>{const el=document.createElement('section');const h=document.createElement('h3');h.textContent=heading;el.append(h);for(const text of texts){const p=document.createElement('p');p.textContent=text;el.append(p);}sheet.append(el);return el;};
+  section('Кто мы',["UMMA GLOBAL — развивающаяся международная экосистема для жизни, семьи и бизнеса, основанная на исламских ценностях.", "Наш путь начинается в Нячанге. Мы объединяем полезные сервисы, предпринимательские инициативы и общественные проекты, стремясь приносить пользу людям в разных странах.", "Для нас UMMA — это наша большая семья, в которой важны доверие, уважение и забота друг о друге."]);
+  const mission=section('Наша миссия',["Всё, что мы делаем, мы делаем ради довольства Аллаха.", "Мы стремимся воплощать это намерение в конкретных делах: честно вести бизнес, заботиться о людях, поддерживать семьи, развивать взаимопомощь и создавать возможности для полезного труда и получения знаний."]);mission.querySelector('p').className='umma-about-mission';
+  const values=section('Наши ценности',[]);const valueList=document.createElement('dl');valueList.className='umma-about-values';
+  for(const [title,text] of [["Вера и искренность", "Руководствоваться исламскими ценностями, сохранять искреннее намерение и стремиться к дозволенному в наших делах."], ["Честность и ответственность", "Открыто объяснять условия, выполнять обещания и отвечать за свои решения."], ["Качество и забота", "Внимательно относиться к продуктам и услугам, слышать обратную связь и улучшать нашу работу."], ["Уважение и гостеприимство", "Встречать людей с доброжелательностью, уважать их достоинство и проявлять внимание к их потребностям."], ["Семья и знания", "Беречь семейные ценности, поддерживать получение полезных знаний и заботиться о будущих поколениях."], ["Взаимопомощь и польза обществу", "Поддерживать друг друга и объединять усилия ради полезных дел."]]){const item=document.createElement('div');const dt=document.createElement('dt');dt.textContent=title;const dd=document.createElement('dd');dd.textContent=text;item.append(dt,dd);valueList.append(item);}values.append(valueList);
+  const ventures=section('Наши направления',[]);const list=document.createElement('div');list.className='umma-about-directions';
+  for(const [id,statusText,description] of [["cafe", "Работает", "Наше первое направление — халяльное кафе в Нячанге. Здесь наши ценности воплощаются в ежедневной работе: в приготовлении еды, гостеприимстве и заботе о каждом госте."], ["market", "В разработке", "Направление розничной торговли. Мы работаем над ассортиментом и подготовкой сервиса к запуску."], ["b2b", "В разработке", "Направление для предпринимателей: закупки и поставки товаров для бизнеса."]]){const item=catalogue[id];const card=document.createElement('article');const button=document.createElement('button');button.type='button';button.append(icon(item.icon));const name=document.createElement('span');name.textContent=item.title;const status=document.createElement('small');status.textContent=statusText;button.append(name,status);button.onclick=()=>{sheet.close();if(typeof openPage==='function')openPage(item.id);};const p=document.createElement('p');p.textContent=description;card.append(button,p);list.append(card);}ventures.append(list);const future=document.createElement('p');future.textContent="В дальнейшем мы планируем развивать и другие направления UMMA GLOBAL. Об их готовности и запуске будем сообщать отдельно.";ventures.append(future);
+  section('Как присоединиться',["Начните с того, что близко вам: знакомьтесь с направлениями UMMA GLOBAL, пользуйтесь доступными сервисами и делитесь обратной связью.", "Ваши идеи и участие помогают нашей большой семье развиваться."]);
   const all=document.createElement('button');all.type='button';all.className='cafe-submit';all.textContent='Ко всем направлениям';all.onclick=()=>{sheet.close();openService('more');};
-  sheet.append(list,h,p,all);sheet.addEventListener('close',()=>opener?.focus());translate(sheet);
+  sheet.append(all);sheet.addEventListener('close',()=>opener?.focus());translate(sheet);
  }
  function openService(key){
   if(key==='about'){openAbout();return;}
@@ -414,7 +414,7 @@
   const title=document.createElement('strong');title.textContent=home?({cafe:'Кафе',market:'Маркет',b2b:'B2B',education:'Образование',tours:'Туры',hotels:'Отель'}[item.id]||item.title):item.title;
   const desc=document.createElement('small');desc.textContent=item.description;
   b.append(icon(item.icon),title);if(!home)b.append(desc);
-  if(!item.available){const status=document.createElement('span');status.className='native-coming';status.textContent='Готовится к запуску';b.append(status);}
+  if(item.launchStatus||!item.available){const status=document.createElement('span');status.className='native-coming';status.textContent=item.launchStatus||'Готовится к запуску';b.append(status);}
   b.onclick=()=>{if(typeof openPage==='function')openPage(item.id);};return b;
  }
  const homeGrid=document.querySelector('.services-grid');

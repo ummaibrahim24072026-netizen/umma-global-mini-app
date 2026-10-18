@@ -18,8 +18,11 @@ try{
  d.querySelector('[data-page=about]').click();await tick();
  const about=d.querySelector('.umma-about');assert.equal(about.open,true);
  assert.deepEqual([...about.querySelectorAll('h3')].map(h=>h.textContent),['Кто мы','Наша миссия','Наши ценности','Наши направления','Как присоединиться']);
- assert.equal(about.querySelectorAll('[class=umma-about-directions] button').length,38);
- assert.match(about.textContent,/Готовится к запуску/);nativeBack();assert.equal(about.open,false);
+ assert.equal(about.querySelectorAll('[class=umma-about-directions] button').length,3);
+ assert.equal(about.querySelectorAll('.umma-about-values dt').length,6);
+ assert.equal(about.querySelector('.umma-about-mission').textContent,'Всё, что мы делаем, мы делаем ради довольства Аллаха.');
+ assert.deepEqual([...about.querySelectorAll('.umma-about-directions small')].map(e=>e.textContent),['Работает','В разработке','В разработке']);
+ assert.match(about.textContent,/В разработке/);nativeBack();assert.equal(about.open,false);
  const hero=d.querySelector('.brand-art-action');hero.click();hero.click();await tick();assert.equal(menu,1,'hero repeated tap enters cafe once');
  assert.equal(hero.getAttribute('aria-busy'),'true');nativeBack();await new Promise(r=>setTimeout(r,460));assert.equal(hero.disabled,false);menu=0;
  for(const id of ['education','tours','hotels']){d.querySelector('.services-grid [data-service='+id+']').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);assert.match(d.querySelector('.native-service-dialog').textContent,/Услуги пока недоступны/);nativeBack();}
