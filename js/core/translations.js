@@ -2,6 +2,31 @@
 (() => {
   'use strict';
   const rows = `
+UMMA GLOBAL — развивающаяся международная экосистема для жизни, семьи и бизнеса, основанная на исламских ценностях.|UMMA GLOBAL is a growing international ecosystem for everyday life, family and business, founded on Islamic values.|UMMA GLOBAL là hệ sinh thái quốc tế đang phát triển dành cho cuộc sống, gia đình và kinh doanh, dựa trên các giá trị Hồi giáo.
+Наш путь начинается в Нячанге. Мы объединяем полезные сервисы, предпринимательские инициативы и общественные проекты, стремясь приносить пользу людям в разных странах.|Our journey begins in Nha Trang. We bring together useful services, business initiatives and community projects, seeking to benefit people across countries.|Hành trình của chúng tôi bắt đầu tại Nha Trang. Chúng tôi kết nối các dịch vụ hữu ích, sáng kiến kinh doanh và dự án cộng đồng, hướng tới mang lại lợi ích cho mọi người ở nhiều quốc gia.
+Для нас UMMA — это наша большая семья, в которой важны доверие, уважение и забота друг о друге.|To us, UMMA is our extended family, built on trust, respect and care for one another.|Với chúng tôi, UMMA là đại gia đình, nơi sự tin tưởng, tôn trọng và quan tâm lẫn nhau luôn được coi trọng.
+Всё, что мы делаем, мы делаем ради довольства Аллаха.|Everything we do, we do seeking Allah’s pleasure.|Mọi việc chúng tôi làm đều nhằm tìm kiếm sự hài lòng của Allah.
+Мы стремимся воплощать это намерение в конкретных делах: честно вести бизнес, заботиться о людях, поддерживать семьи, развивать взаимопомощь и создавать возможности для полезного труда и получения знаний.|We strive to put this intention into practice: conducting business honestly, caring for people, supporting families, encouraging mutual help and creating opportunities for beneficial work and learning.|Chúng tôi nỗ lực thể hiện ý định này qua hành động cụ thể: kinh doanh trung thực, quan tâm đến mọi người, hỗ trợ gia đình, khuyến khích tương trợ và tạo cơ hội làm việc có ích cũng như học hỏi.
+Вера и искренность|Faith and sincerity|Đức tin và sự chân thành
+Руководствоваться исламскими ценностями, сохранять искреннее намерение и стремиться к дозволенному в наших делах.|Follow Islamic values, maintain sincere intentions and seek what is permissible in our work.|Lấy các giá trị Hồi giáo làm kim chỉ nam, giữ ý định chân thành và hướng tới những điều được phép trong công việc.
+Честность и ответственность|Honesty and responsibility|Trung thực và trách nhiệm
+Открыто объяснять условия, выполнять обещания и отвечать за свои решения.|Explain terms openly, keep promises and take responsibility for our decisions.|Giải thích rõ ràng các điều kiện, giữ lời hứa và chịu trách nhiệm về quyết định của mình.
+Качество и забота|Quality and care|Chất lượng và sự quan tâm
+Внимательно относиться к продуктам и услугам, слышать обратную связь и улучшать нашу работу.|Pay close attention to our products and services, listen to feedback and improve our work.|Chú trọng sản phẩm và dịch vụ, lắng nghe phản hồi và cải thiện công việc.
+Уважение и гостеприимство|Respect and hospitality|Tôn trọng và hiếu khách
+Встречать людей с доброжелательностью, уважать их достоинство и проявлять внимание к их потребностям.|Welcome people warmly, respect their dignity and be attentive to their needs.|Đón tiếp mọi người bằng sự thân thiện, tôn trọng phẩm giá và quan tâm đến nhu cầu của họ.
+Семья и знания|Family and knowledge|Gia đình và tri thức
+Беречь семейные ценности, поддерживать получение полезных знаний и заботиться о будущих поколениях.|Cherish family values, encourage beneficial learning and care for future generations.|Gìn giữ giá trị gia đình, khuyến khích học hỏi kiến thức hữu ích và quan tâm đến các thế hệ tương lai.
+Взаимопомощь и польза обществу|Mutual support and community benefit|Tương trợ và lợi ích cộng đồng
+Поддерживать друг друга и объединять усилия ради полезных дел.|Support one another and join efforts for beneficial causes.|Hỗ trợ lẫn nhau và chung sức thực hiện những việc có ích.
+Работает|Open|Đang hoạt động
+Наше первое направление — халяльное кафе в Нячанге. Здесь наши ценности воплощаются в ежедневной работе: в приготовлении еды, гостеприимстве и заботе о каждом госте.|Our first venture is a halal cafe in Nha Trang. Here, our values guide our daily work: preparing food, offering hospitality and caring for every guest.|Lĩnh vực đầu tiên của chúng tôi là quán ăn halal tại Nha Trang. Tại đây, các giá trị được thể hiện trong công việc hằng ngày: chế biến món ăn, lòng hiếu khách và sự quan tâm đến từng vị khách.
+В разработке|In development|Đang phát triển
+Направление розничной торговли. Мы работаем над ассортиментом и подготовкой сервиса к запуску.|Our retail venture. We are developing the product range and preparing the service for launch.|Lĩnh vực bán lẻ. Chúng tôi đang xây dựng danh mục sản phẩm và chuẩn bị ra mắt dịch vụ.
+Направление для предпринимателей: закупки и поставки товаров для бизнеса.|A venture for entrepreneurs: purchasing and supplying goods for businesses.|Lĩnh vực dành cho doanh nhân: thu mua và cung ứng hàng hóa cho doanh nghiệp.
+В дальнейшем мы планируем развивать и другие направления UMMA GLOBAL. Об их готовности и запуске будем сообщать отдельно.|We plan to develop other UMMA GLOBAL ventures in the future. We will announce their readiness and launch separately.|Trong tương lai, chúng tôi dự định phát triển thêm các lĩnh vực khác của UMMA GLOBAL. Thông tin về mức độ sẵn sàng và việc ra mắt sẽ được thông báo riêng.
+Начните с того, что близко вам: знакомьтесь с направлениями UMMA GLOBAL, пользуйтесь доступными сервисами и делитесь обратной связью.|Start with what matters to you: explore UMMA GLOBAL’s ventures, use available services and share your feedback.|Hãy bắt đầu từ điều bạn quan tâm: tìm hiểu các lĩnh vực của UMMA GLOBAL, sử dụng dịch vụ hiện có và chia sẻ phản hồi.
+Ваши идеи и участие помогают нашей большой семье развиваться.|Your ideas and involvement help our extended family grow.|Ý tưởng và sự tham gia của bạn giúp đại gia đình chúng ta phát triển.
 Свернуть аят дня|Collapse daily verse|Thu gọn câu kinh trong ngày
 ва рахматуллахи ва баракатуху,|wa rahmatullahi wa barakatuhu,|wa rahmatullahi wa barakatuhu,
 ва рахматуллахи ва баракатуху|wa rahmatullahi wa barakatuhu|wa rahmatullahi wa barakatuhu

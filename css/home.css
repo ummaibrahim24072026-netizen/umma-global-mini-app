@@ -78,3 +78,16 @@
 .brand.brand-art.home-fit-art::before{inset:0;width:auto;height:auto;border:0;border-radius:inherit;background-image:linear-gradient(180deg,#016571 0%,#007b8b 16%,#008898 31%,#006070 46%,#02a0b4 62%,#067483 78%,#006070 100%);filter:none;opacity:1}
 .home-fit-art .brand-art-image{mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
 .brand-art .brand-art-copy{background:linear-gradient(180deg,transparent,rgba(0,96,112,.12) 45%,rgba(0,96,112,.7));text-shadow:0 1px 5px var(--umma-brand-deep)}
+
+/* About: clear mission, individual values and truthful launch statuses. */
+.umma-about{overflow-wrap:anywhere}
+.umma-about section>p{line-height:1.65}
+.umma-about .umma-about-mission{padding:18px;border:1px solid var(--umma-brand-line);border-inline-start:4px solid var(--gold-dark);border-radius:16px;background:var(--umma-brand-pale);color:var(--ink);font-weight:700}
+.umma-about-values{display:grid;gap:10px;margin:12px 0}
+.umma-about-values>div{padding:14px 16px;border:1px solid var(--umma-brand-line);border-radius:14px;background:var(--canvas)}
+.umma-about-values dt{font-weight:700;line-height:1.4}
+.umma-about-values dd{margin:6px 0 0;line-height:1.6;color:var(--muted)}
+.umma-about-directions article{border:1px solid var(--umma-brand-line);border-radius:14px;overflow:hidden;background:var(--canvas)}
+.umma-about-directions article button{border:0;border-radius:0;background:transparent;min-height:48px}
+.umma-about-directions article p{margin:0;padding:0 12px 14px;line-height:1.6;font-size:14px}
+.umma-about-directions small{color:var(--umma-brand-strong)}
