@@ -47,5 +47,15 @@ for(const name of ['Ибрахим','Мухаммад Абдуррахман','<
  assert.equal(await page.locator('.brand-art-copy').evaluate(e=>e.scrollWidth>e.clientWidth+1),false);
 }
 await page.evaluate(()=>window.updateTelegramUserInterface({}));assert.equal(await page.locator('.greeting-name').count(),0);
+// All 38 services share the illustration family without changing catalogue routes.
+await page.locator('.bottom-nav [data-page=more]').click();
+assert.equal(await page.locator('#nativeDirectory .native-directory-card').count(),38);
+assert.equal(await page.locator('#nativeDirectory .umma-direction-group').count(),8);
+const catalogueCards=page.locator('#nativeDirectory .native-directory-card');
+for(let i=0;i<38;i++){const card=catalogueCards.nth(i);await card.scrollIntoViewIfNeeded();await card.locator('.direction-emblem').evaluate(e=>new Promise((resolve,reject)=>{const img=e.querySelector('img');if(img.complete)return img.naturalWidth?resolve():reject(new Error('Missing illustration'));img.addEventListener('load',resolve,{once:true});img.addEventListener('error',()=>reject(new Error('Missing illustration')),{once:true});}));}
+for(const lang of ['ru','en','vi']){await page.evaluate(l=>window.ummaI18n.setLanguage(l),lang);for(const width of [320,360,375,390,414,430,768,1024]){await page.setViewportSize({width,height:844});const layout=await page.locator('#nativeDirectory').evaluate(e=>({overflow:e.scrollWidth>e.clientWidth+1,cards:[...e.querySelectorAll('.native-directory-card')].filter(c=>c.scrollWidth>c.clientWidth+1).length,images:e.querySelectorAll('.artwork-ready').length,text:e.innerText}));assert.equal(layout.overflow,false,'catalogue '+lang+' '+width);assert.equal(layout.cards,0,'card overflow '+lang+' '+width);assert.equal(layout.images,38);if(lang!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(layout.text),'catalogue translations '+lang+': '+layout.text.split('\n').filter(t=>/[А-Яа-яЁё]/.test(t)).join(' / '));}}
+await page.evaluate(()=>window.ummaI18n.setLanguage('ru'));await page.setViewportSize({width:390,height:844});await catalogueCards.nth(0).scrollIntoViewIfNeeded();await page.screenshot({path:output+'/umma-catalogue-mobile.png'});
+await page.setViewportSize({width:1024,height:1000});await catalogueCards.nth(0).scrollIntoViewIfNeeded();await page.screenshot({path:output+'/umma-catalogue-tablet.png'});
+console.log('PASS illustrated catalogue: all 38 images loaded, eight groups, 24 viewport/language combinations, no card overflow or untranslated labels');
 assert.deepEqual(errors,[]);fs.writeFileSync(output+'/home-browser-results.json',JSON.stringify(results,null,2));console.log('PASS browser: 24 size/language combinations, images, no overflow, CTA size, bottom nav, horizontal services, About translations, Quran disclosure and actual reader, zero JavaScript exceptions');console.log(JSON.stringify(results.filter(r=>r.lang==='ru')));
 }finally{await browser.close();server.close();}
