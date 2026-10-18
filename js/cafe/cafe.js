@@ -166,7 +166,8 @@
 
   const countLabel=(amount,one,few,many)=>amount+" "+(amount%100>=11&&amount%100<=14?many:amount%10===1?one:amount%10>=2&&amount%10<=4?few:many);
 
-  function deliveryBlocked() { return orderType?.value === "delivery" && window.ummaDeliveryLocation?.availability?.() !== "available"; }
+  const externalDelivery = () => orderType?.value === "delivery" && window.ummaDeliveryProviders?.external(byId("cafeCarrier")?.value);
+  function deliveryBlocked() { return !externalDelivery() && orderType?.value === "delivery" && window.ummaDeliveryLocation?.availability?.() !== "available"; }
   function renderCart() {
     fillTelegramCustomerName();
     syncCheckoutSummaries();
@@ -425,8 +426,8 @@
     const type=orderType?.value||"pickup", timing=byId("cafePaymentTiming"), method=byId("cafePaymentMethod");
     if(timing){const later=timing.querySelector('option[value="later"]');if(later)later.disabled=type!=="dine_in";if(type!=="dine_in")timing.value="now";}
     const country=byId("cafeTransferCountryLabel");if(country)country.hidden=method?.value!=="bank_transfer";
-    if(method){const cash=method.querySelector('option[value="cash"]');if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
-    const hint=byId("cafePaymentHint");if(hint)hint.textContent=type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
+    if(method){const cash=method.querySelector('option[value="cash"]');if(cash){cash.disabled=!!externalDelivery();if(cash.disabled&&method.value==="cash")method.value="qr";}if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
+    const hint=byId("cafePaymentHint");if(hint)hint.textContent=externalDelivery()?"Товар оплачивается UMMA заранее. Доставку оформляете и оплачиваете отдельно в выбранном сервисе.":type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
   }
   function syncOrderMode() {
     const delivery = orderType?.value === "delivery";
@@ -434,13 +435,17 @@
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
     if (addressLabel) addressLabel.hidden = !delivery;
-    if (addressInput) addressInput.required = false;
-    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent="Квартира, этаж, ориентир (необязательно)";
-    if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
+    if(byId("cafeCarrierLabel"))byId("cafeCarrierLabel").hidden=!delivery;
+    if(byId("cafeCarrierHint"))byId("cafeCarrierHint").textContent=externalDelivery()?"Курьера оформляете в выбранном сервисе после подтверждения оплаты товара. Доставка оплачивается отдельно.":"Курьер UMMA доставит заказ в пределах зоны обслуживания.";
+    if (addressInput) addressInput.required = !!externalDelivery();
+    if(byId("cafeCustomerPhone"))byId("cafeCustomerPhone").required=!!externalDelivery();
+    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent=externalDelivery()?"Полный адрес доставки, квартира и ориентир":"Квартира, этаж, ориентир (необязательно)";
+    if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery || !!externalDelivery();
     syncCustomerPayment();
     renderCart();
   }
   orderType?.addEventListener("change", syncOrderMode);
+  byId("cafeCarrier")?.addEventListener("change",syncOrderMode);
   document.addEventListener("umma:delivery-location-change", syncOrderMode);
   byId("cafePage")?.addEventListener("click", event => {
     const button = event.target.closest("[data-order-mode]");
@@ -463,6 +468,8 @@
     if (!initData) { if (typeof showToast === "function") showToast("Откройте приложение через Telegram"); return; }
     if (deliveryBlocked()) { byId("cafeDeliveryMapOpen")?.focus(); if (typeof showToast === "function") showToast(byId("cafeDeliveryZoneStatus")?.textContent || "Выберите точку доставки на карте, чтобы проверить зону обслуживания."); return; }
 
+    const carrier=externalDelivery()?byId("cafeCarrier").value:"umma";
+    if(carrier!=="umma"&&(!addressInput?.value.trim()||!byId("cafeCustomerPhone")?.value.trim()||byId("cafePaymentMethod")?.value==="cash")){if(typeof showToast==="function")showToast("Укажите полный адрес, телефон и выберите предоплату товара.");return;}
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
     if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
@@ -474,14 +481,14 @@
       const response = await window.ummaCafeRequests.request(ORDER_URL, {
           initData,
           items: Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity })),
-          orderType: orderType?.value || "pickup",
+          orderType: carrier!=="umma"?"pickup":orderType?.value || "pickup",
           paymentTiming,
           paymentMethod: byId("cafePaymentMethod")?.value || "cash",
           locationId,
           customerName: byId("cafeCustomerName")?.value.trim() || "",
           customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
-          deliveryAddress: orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
-          customerNote: byId("cafeCustomerNote")?.value.trim() || ""
+          deliveryAddress: carrier!=="umma"?addressInput.value.trim():orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
+          customerNote: window.ummaDeliveryProviders?.note(carrier,byId("cafeCustomerNote")?.value.trim()||"") || byId("cafeCustomerNote")?.value.trim() || ""
       });
       const result = await response.json();
       if (!response.ok || !result.ok || !result.order) throw new Error(result.error || "Не удалось оформить заказ");
@@ -515,6 +522,7 @@
             }catch(e){if(msg)msg.textContent=e.message||"Ошибка отправки";if(btn)btn.disabled=false;}
           });
         }
+        if(carrier!=="umma")resultEl.innerHTML+='<p>Доставка через '+esc(window.ummaDeliveryProviders.providers[carrier].name)+'. После подтверждения оплаты откройте «Мои заказы», чтобы оформить курьера. Стоимость доставки оплачивается отдельно.</p>';
         resultEl.hidden = false;
         if(byId("cafePaymentMethod")?.value==="qr") window.ummaCafePayment?.show(order.id);
       }
@@ -586,8 +594,9 @@
         const itemsHtml = items.map(item => "<li><span>" + esc(window.ummaI18n?.field(item, "product_name") || item.product_name_ru || item.product_name_en || "Блюдо") + " × " + Number(item.quantity) + "</span><strong>" + money(item.line_total_vnd) + "</strong></li>").join("");
         const historyHtml = events.map(item => "<li><span>" + esc(statusNames[item.to_status] || item.to_status) + "</span><small>" + esc(item.created_at ? new Date(item.created_at).toLocaleString(window.ummaI18n?.locale() || "ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + "</small></li>").join("");
         const paymentLabel = order.payment_status==='paid'?'✓ Оплачено':order.payment_status==='refunded'?'Оплата возвращена':'Ожидается оплата';
-        const orderTypeName = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
-        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString(window.ummaI18n?.locale() || "ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><p class="cafe-payment-status" data-payment-status="'+esc(order.payment_status)+'">'+paymentLabel+'</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (order.order_type==='delivery'?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с курьером</button>':'') + (order.qr_payment_available ? window.ummaCafePayment?.button(order.id) || '' : '') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
+        const externalCarrier=window.ummaDeliveryProviders?.provider(order);
+        const orderTypeName = externalCarrier?"Доставка через "+window.ummaDeliveryProviders.providers[externalCarrier].name:{ pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+        return '<article class="cafe-my-order-card"><div class="cafe-my-order-head"><div><strong>Заказ №' + esc(order.order_number) + '</strong><small>' + esc(order.created_at ? new Date(order.created_at).toLocaleString(window.ummaI18n?.locale() || "ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "") + '</small></div><span class="cafe-my-order-status status-' + esc(order.status) + '">' + esc(statusNames[order.status] || order.status) + '</span></div><p class="cafe-my-order-type">' + esc(orderTypeName) + '</p><p class="cafe-payment-status" data-payment-status="'+esc(order.payment_status)+'">'+paymentLabel+'</p>'+(order.order_type==='delivery'?'<p class="cafe-my-order-delivery">'+esc(statusNames[order.delivery_status]||'Ожидает курьера')+'</p>':'')+'<ul class="cafe-my-order-items">' + itemsHtml + '</ul><div class="cafe-my-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div>' + (order.order_type==='delivery'&&!['completed','cancelled'].includes(order.status)&&order.delivery_status!=='delivered'?'<button type="button" class="kitchen-action" data-tracking-address="'+esc(order.delivery_address||'')+'" data-track-delivery="'+esc(order.id)+'">Где мой курьер</button>':'') + (order.order_type==='delivery'?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с курьером</button>':'') + (window.ummaDeliveryProviders?.card(order,locations.find(l=>String(l.id)===String(order.location_id)))||'') + (order.qr_payment_available ? window.ummaCafePayment?.button(order.id) || '' : '') + (historyHtml ? '<details class="cafe-my-order-history"><summary>История статусов</summary><ul>' + historyHtml + '</ul></details>' : "") + '</article>';
       }).join("");
     } catch (error) {
       if (message) { message.textContent = error instanceof Error ? error.message : "Не удалось загрузить заказы"; message.hidden = false; }

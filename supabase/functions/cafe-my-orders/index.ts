@@ -104,7 +104,7 @@ Deno.serve(async req => {
     }
     const { data: orders, error } = await supabase
       .from("cafe_orders")
-      .select("id,location_id,order_number,order_type,payment_method,payment_status,status,delivery_status,subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,currency,created_at,updated_at,confirmed_at,completed_at,cancelled_at,delivery_address,cafe_order_items(id,product_name_ru,product_name_vi,product_name_en,quantity,unit_price_vnd,line_total_vnd),cafe_order_events(id,from_status,to_status,note,created_at)")
+      .select("id,location_id,order_number,order_type,payment_method,payment_status,status,delivery_status,subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,currency,created_at,updated_at,confirmed_at,completed_at,cancelled_at,delivery_address,customer_note,customer_name,customer_phone,cafe_order_items(id,product_name_ru,product_name_vi,product_name_en,quantity,unit_price_vnd,line_total_vnd),cafe_order_events(id,from_status,to_status,note,created_at)")
       .eq("customer_telegram_id", telegramId)
       .order("created_at", { ascending:false })
       .limit(25);

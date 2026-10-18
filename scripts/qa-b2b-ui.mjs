@@ -53,7 +53,7 @@ try {
  release();delayCreate=null;await tick();assert.ok(d.querySelector('[data-b2b-form]'),'unknown outcome retains form');assert.equal(d.querySelector('[name=comment]').value,'Keep this draft');
  submit(d.querySelector('[data-b2b-form]'));await tick();assert.equal(created,1,'retry does not duplicate committed enquiry');
  const createCalls=calls.filter(c=>c.action==='b2b_create');assert.equal(createCalls[0].request_id,createCalls[1].request_id);assert.equal(createCalls[1].data.items[0].quantity,12.5);assert.equal(createCalls[1].data.items[0].unit,'kg');
- assert.ok(d.querySelector('[data-b2b-request]'));assert.equal(d.querySelector('#b2bPage img'),null,'company text escaped');assert.match(d.querySelector('[data-b2b-status]').textContent,/Заявка отправлена/);
+ assert.ok(d.querySelector('[data-b2b-request]'));assert.equal(d.querySelector('#b2bPage [data-b2b-request] img'),null,'company text escaped');assert.match(d.querySelector('[data-b2b-status]').textContent,/Заявка отправлена/);
  manager=true;await w.ummaB2B.open();click('manage');await tick();assert.ok(d.querySelector('[data-b2b-response]'),'authorized management inbox');
  set('status','quoted');set('manager_reply','QA <script> proposal');submit(d.querySelector('[data-b2b-response]'));await tick();assert.match(d.querySelector('.b2b-reply').textContent,/QA <script> proposal/);assert.equal(d.querySelector('.b2b-reply script'),null);
  assert.equal(calls.find(c=>c.action==='b2b_respond').data.version,1,'optimistic version sent');

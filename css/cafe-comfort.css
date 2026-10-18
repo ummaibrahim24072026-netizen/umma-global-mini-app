@@ -85,3 +85,11 @@
 .cafe-delivery-zone-editor { min-inline-size:0; margin-block:16px; padding:14px; border:1px solid #c6dddd; border-radius:12px; }
 .cafe-delivery-zone-editor p { font-size:14px; line-height:1.5; }
 .cafe-delivery-zone-editor button { margin-block:4px; padding:10px; border:1px solid #a9cece; border-radius:10px; background:#edf8f7; color:#145957; }
+
+/* Separate goods payment from customer-arranged external delivery. */
+#cafeCarrierHint{display:block;margin-top:8px;line-height:1.5;color:var(--umma-brand-strong,#075e65)}
+.external-delivery{display:grid;gap:10px;margin:14px 0;padding:16px;border:1px solid var(--umma-brand-line,#b6d9d8);border-radius:16px;background:var(--umma-brand-pale,#effafa);color:#164d52;overflow-wrap:anywhere}
+.external-delivery p{margin:0;line-height:1.5}.external-delivery small{display:block;line-height:1.5}
+.external-delivery textarea{box-sizing:border-box;width:100%;margin:10px 0;border:1px solid #9cbfbe;border-radius:10px;padding:10px;background:#fff;color:#164d52;font:inherit;resize:vertical}
+.external-delivery a{display:block;text-align:center;text-decoration:none;min-height:44px;padding:12px;border-radius:12px;background:var(--umma-brand-strong,#075e65);color:#fff;font-weight:700}
+.external-delivery button{min-height:44px;border:1px solid #8aafaf;border-radius:10px;padding:8px 12px;background:#fff;color:#164d52;font:inherit}

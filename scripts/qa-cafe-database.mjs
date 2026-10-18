@@ -55,6 +55,13 @@ try {
   const args={p_location_id:cafe,p_items:JSON.parse(items),p_order_type:'pickup',p_customer_name:'Replay test',p_payment_method:'cash'};
   const key='44444444-4444-4444-8444-444444444444';
   const op=(key,action,args,actor=11)=>q('select execute_cafe_order_operation($1,$2,$3,$4::jsonb) result',[actor,key,action,JSON.stringify(args)]);
+  const carrierArgs={...args,p_customer_name:'External courier guest',p_customer_phone:'+84000',p_delivery_address:'Nha Trang, Scenia Bay',p_customer_note:'[UMMA-DELIVERY:grab]\nGrabExpress: курьера оформляет клиент.',p_payment_method:'qr',p_payment_timing:'now'};
+  const carrierKey='44444444-4444-4444-8444-444444444445';
+  const externalOrder=(await op(carrierKey,'customerOrder',carrierArgs,15)).rows[0].result.order;
+  const externalRow=await state(externalOrder.id);
+  assert.equal(externalRow.order_type,'pickup');assert.equal(externalRow.delivery_status,'not_applicable');assert.equal(externalRow.courier_telegram_id,null);assert.equal(externalRow.delivery_fee_vnd,0);assert.equal(externalRow.customer_note,carrierArgs.p_customer_note);assert.equal(externalRow.delivery_address,carrierArgs.p_delivery_address);assert.equal(externalRow.payment_status,'pending');
+  assert.equal((await op(carrierKey,'customerOrder',carrierArgs,15)).rows[0].result.order.id,externalOrder.id);
+  console.log('PASS PostgreSQL external carrier pickup: durable provider/address, no UMMA fee/dispatch, pending prepaid goods, idempotent replay');
   const first=(await op(key,'staffOrder',args)).rows[0].result;
   const replay=(await op(key,'staffOrder',args)).rows[0].result;
   assert.equal(replay.order.id,first.order.id);assert.equal(replay.replayed,true);

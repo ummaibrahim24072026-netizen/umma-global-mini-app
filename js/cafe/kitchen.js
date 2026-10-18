@@ -126,7 +126,7 @@
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
-        '<span>📦 ' + esc(type) + '</span>',
+        '<span>📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
         '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
         order.order_type === "delivery" ? '<span>🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
         order.payment_timing ? '<span>🕒 '+esc({now:"Оплата до передачи заказа",later:"Оплата после трапезы",on_delivery:"Наличные курьеру при получении"}[order.payment_timing]||order.payment_timing)+'</span>' : "",
