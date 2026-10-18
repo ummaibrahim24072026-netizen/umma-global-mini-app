@@ -54,22 +54,49 @@
     const pin=window.ummaMapLinks?.parseAddress(order?.delivery_address);
     return {pickup:{address:[location?.name,location?.address].filter(Boolean).join(', '),...coordinate(location?.latitude,location?.longitude)},dropoff:{address:order?.delivery_address||'',...coordinate(pin?.lat,pin?.lng)}};
   }
+  function handoffFields(order,location) {
+    const details=routeDetails(order,location);
+    const pin=p=>p.latitude!=null&&p.longitude!=null?p.latitude.toFixed(6)+','+p.longitude.toFixed(6):'';
+    const items=(Array.isArray(order.cafe_order_items)?order.cafe_order_items:[]).map(item=>{
+      const name=item.product_name_vi||item.product_name_en||item.product_name_ru;
+      const quantity=Number(item.quantity);
+      return name&&Number.isFinite(quantity)&&quantity>0?`${name} × ${quantity}`:null;
+    }).filter(Boolean);
+    // Remove only our persisted carrier metadata, retaining the customer's instructions.
+    const note=String(order.customer_note||'').replace(/^\[UMMA-DELIVERY:(grab|maxim)\]\n[^\n]*\n/,'').trim();
+    const comment=[`Lấy đơn hàng UMMA #${order.order_number} tại ${details.pickup.address}.`,
+      items.length?`Món hàng: ${items.join('; ')}.`:null,
+      order.customer_name?`Người nhận: ${order.customer_name}.`:null,
+      order.customer_phone?`SĐT người nhận: ${order.customer_phone}.`:null,
+      location?.phone?`SĐT quán: ${location.phone}.`:null,
+      note?`Ghi chú khách hàng: ${note}`:null,
+      order.payment_status==='paid'?'Tiền hàng đã thanh toán cho UMMA. Không thu tiền hàng.':null,
+      'Phí giao hàng thanh toán riêng.'].filter(Boolean).join('\n');
+    return [
+      {key:'pickup',label:t('Откуда забрать','Pickup','Điểm lấy hàng'),value:pin(details.pickup)||details.pickup.address,address:details.pickup.address,rows:2},
+      {key:'dropoff',label:t('Куда доставить','Drop-off','Điểm giao hàng'),value:pin(details.dropoff)||details.dropoff.address,address:details.dropoff.address,rows:2},
+      {key:'comment',label:t('Комментарий для курьера','Courier comment','Ghi chú cho tài xế'),value:comment,rows:6}
+    ];
+  }
+  function copyFields(order,location) {
+    return handoffFields(order,location).map(f=>`<div data-carrier-field="${f.key}"><label><strong>${esc(f.label)}</strong>${f.address&&f.value!==f.address?`<small>${esc(f.address)}</small>`:''}<textarea readonly rows="${f.rows}" aria-label="${esc(f.label)}">${esc(f.value)}</textarea></label><button type="button" data-copy-carrier-field>${esc(t('Скопировать','Copy','Sao chép'))}</button><p role="status" aria-live="polite" data-copy-status></p></div>`).join('');
+  }
   function card(order,location) {
     const id=provider(order);if(!id)return '';
     const p=providers[id],closed=order.status==='cancelled'||order.payment_status==='refunded';
     const details=routeDetails(order,location),pickup=details.pickup.address;
-    const pin=p=>p.latitude!=null&&p.longitude!=null?p.latitude.toFixed(6)+','+p.longitude.toFixed(6):'';
-    const pickupPin=pin(details.pickup),dropoffPin=pin(details.dropoff);
-    const route=[`UMMA #${order.order_number}`,`Pickup: ${pickup}`,pickupPin?`Pickup coordinates: ${pickupPin}`:null,`Drop-off: ${order.delivery_address||''}`,dropoffPin?`Drop-off coordinates: ${dropoffPin}`:null,`Recipient: ${order.customer_name||''}`,`Phone: ${order.customer_phone||''}`,`Store phone: ${location?.phone||''}`,'Goods paid to UMMA. Do not collect payment for goods. Delivery fee paid separately.'].filter(Boolean).join('\n');
-    return `<section class="external-delivery"><strong>${esc(t('Доставка через ','Delivery via ','Giao hàng qua ')+p.name)}</strong><p>${esc(t('Доставку оформляете и оплачиваете отдельно в сервисе. Отслеживание — там же.','Arrange and pay for delivery separately in the service. Track your courier there.','Đặt và trả phí giao hàng riêng trong dịch vụ. Theo dõi tài xế tại đó.'))}</p>${closed?'':order.status==='completed'?`<a class="kitchen-action" href="${esc(link(id))}" target="_blank" rel="noopener noreferrer" data-open-carrier>${esc(t('Открыть ','Open ','Mở ')+p.name)}</a>`:order.payment_status!=='paid'?`<p role="status">${esc(t('После подтверждения оплаты товара здесь появится переход к доставке.','Delivery setup will appear here once payment for goods is confirmed.','Liên kết đặt giao hàng sẽ xuất hiện sau khi xác nhận thanh toán hàng.'))}</p>`:pickup&&order.delivery_address?`${dropoffPin?`<p>${esc(t('Точка доставки','Delivery point','Điểm giao hàng'))}: <b>${esc(dropoffPin)}</b></p><button type="button" data-copy-point="${esc(dropoffPin)}">${esc(t('Скопировать координаты','Copy coordinates','Sao chép tọa độ'))}</button><p role="status" data-point-copy-status></p>`:''}<details><summary>${esc(t('Данные для курьера','Courier details','Thông tin cho tài xế'))}</summary><textarea readonly rows="5" aria-label="${esc(t('Данные для курьера','Courier details','Thông tin cho tài xế'))}">${esc(route)}</textarea><button type="button" data-copy-carrier>${esc(t('Скопировать данные','Copy details','Sao chép thông tin'))}</button><p role="status" data-copy-status></p></details><a class="kitchen-action" href="${esc(link(id,pickup,order.delivery_address))}" target="_blank" rel="noopener noreferrer" data-open-carrier>${esc(t('Открыть ','Open ','Mở ')+p.name)}</a><small>${esc(t('В сервисе выберите доставку и вставьте адреса. Переход не вызывает курьера автоматически.','Choose delivery and paste the addresses in the service. Opening it does not book a courier.','Chọn giao hàng và dán địa chỉ trong dịch vụ. Mở liên kết chưa đặt tài xế.'))}</small>`:`<p>${esc(t('Уточните адрес выдачи и доставки у UMMA.','Confirm pickup and delivery addresses with UMMA.','Xác nhận địa chỉ lấy và giao hàng với UMMA.'))}</p>`}</section>`;
+    return `<section class="external-delivery"><strong>${esc(t('Доставка через ','Delivery via ','Giao hàng qua ')+p.name)}</strong><p>${esc(t('Доставку оформляете и оплачиваете отдельно в сервисе. Отслеживание — там же.','Arrange and pay for delivery separately in the service. Track your courier there.','Đặt và trả phí giao hàng riêng trong dịch vụ. Theo dõi tài xế tại đó.'))}</p>${closed?'':order.status==='completed'?`<a class="kitchen-action" href="${esc(link(id))}" target="_blank" rel="noopener noreferrer" data-open-carrier>${esc(t('Открыть ','Open ','Mở ')+p.name)}</a>`:order.payment_status!=='paid'?`<p role="status">${esc(t('После подтверждения оплаты товара здесь появится переход к доставке.','Delivery setup will appear here once payment for goods is confirmed.','Liên kết đặt giao hàng sẽ xuất hiện sau khi xác nhận thanh toán hàng.'))}</p>`:pickup&&order.delivery_address?`${copyFields(order,location)}<a class="kitchen-action" href="${esc(link(id,pickup,order.delivery_address))}" target="_blank" rel="noopener noreferrer" data-open-carrier>${esc(t('Открыть ','Open ','Mở ')+p.name)}</a><small>${esc(t('В Maxim/Grab выберите доставку и вставьте каждое поле отдельно. Автозаполнение пока недоступно.','Choose delivery in Maxim/Grab and paste each field separately. Autofill is not available yet.','Chọn giao hàng trong Maxim/Grab và dán từng trường riêng. Chưa hỗ trợ tự động điền.'))}</small>`:`<p>${esc(t('Уточните адрес выдачи и доставки у UMMA.','Confirm pickup and delivery addresses with UMMA.','Xác nhận địa chỉ lấy và giao hàng với UMMA.'))}</p>`}</section>`;
   }
   document.addEventListener('click',async event=>{
-    const pointButton=event.target.closest?.('[data-copy-point]');
-    if(pointButton){const root=pointButton.closest('.external-delivery'),status=root.querySelector('[data-point-copy-status]');try{await navigator.clipboard.writeText(pointButton.dataset.copyPoint);status.textContent=t('Скопировано','Copied','Đã sao chép');}catch{const field=root.querySelector('textarea');field?.focus();field?.select();status.textContent=t('Скопируйте координаты из данных для курьера.','Copy coordinates from courier details.','Sao chép tọa độ trong thông tin tài xế.');}return;}
-    const b=event.target.closest?.('[data-copy-carrier]');
-    if(b){const root=b.closest('.external-delivery'),field=root.querySelector('textarea'),status=root.querySelector('[data-copy-status]');try{await navigator.clipboard.writeText(field.value);status.textContent=t('Скопировано','Copied','Đã sao chép');}catch{field.focus();field.select();status.textContent=t('Выделено — скопируйте текст.','Selected — copy the text.','Đã chọn — hãy sao chép.');}return;}
+    const b=event.target.closest?.('[data-copy-carrier-field]');
+    if(b){
+      const root=b.closest('[data-carrier-field]'),field=root.querySelector('textarea'),status=root.querySelector('[data-copy-status]');
+      try{await navigator.clipboard.writeText(field.value);status.textContent=t('Скопировано','Copied','Đã sao chép');}
+      catch{field.focus();field.select();status.textContent=t('Выделено — скопируйте текст.','Selected — copy the text.','Đã chọn — hãy sao chép.');}
+      return;
+    }
     const a=event.target.closest?.('[data-open-carrier]');
     if(a&&window.Telegram?.WebApp?.openLink){event.preventDefault();window.Telegram.WebApp.openLink(a.href);}
   });
-  window.ummaDeliveryProviders={providers,options,external,note,provider,link,routeDetails,card};
+  window.ummaDeliveryProviders={providers,options,external,note,provider,link,routeDetails,handoffFields,card};
 })();

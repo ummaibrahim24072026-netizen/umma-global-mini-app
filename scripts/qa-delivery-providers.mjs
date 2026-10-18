@@ -43,8 +43,27 @@ try{
  assert.ok(!api.card({...example,payment_status:'paid',status:'cancelled'},location).includes('data-open-carrier'));
  let copied;Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async text=>{copied=text;}}});
  const pinCard=d.createElement('div');pinCard.innerHTML=api.card({...example,delivery_address:'Точка доставки: 12.270000,109.210000',payment_status:'paid'},location);d.body.append(pinCard);
- assert.equal(pinCard.querySelector('textarea').value.includes('Pickup coordinates: 12.250000,109.190000'),true);
- pinCard.querySelector('[data-copy-point]').click();await tick();assert.equal(copied,'12.270000,109.210000');pinCard.remove();
+ const field=key=>pinCard.querySelector(`[data-carrier-field="${key}"] textarea`);
+ assert.equal(pinCard.querySelectorAll('textarea').length,3);
+ assert.equal(field('pickup').value,'12.250000,109.190000');
+ assert.equal(field('dropoff').value,'12.270000,109.210000');
+ for(const key of ['pickup','dropoff','comment']){
+   pinCard.querySelector(`[data-carrier-field="${key}"] button`).click();await tick();
+   assert.equal(copied,field(key).value,`copy only the ${key} field`);
+ }
+ w.navigator.clipboard.writeText=async()=>{throw Error('Clipboard denied');};
+ pinCard.querySelector('[data-carrier-field="comment"] button').click();await tick();
+ assert.equal(d.activeElement,field('comment'),'fallback selects the clicked field');
+ assert.equal(field('comment').selectionEnd,field('comment').value.length);
+ assert.match(pinCard.querySelector('[data-carrier-field="comment"] [data-copy-status]').textContent,/Выделено/);
+ const fields=api.handoffFields({...example,customer_note:api.note('maxim','Без лука <test>'),cafe_order_items:[{product_name_vi:'Cơm cừu',quantity:2},{product_name_ru:'Манты',quantity:1}],customer_phone:'+84123',payment_status:'paid'},location);
+ assert.match(fields[2].value,/Cơm cừu × 2; Манты × 1/);
+ assert.match(fields[2].value,/Без лука <test>/);
+ assert.match(fields[2].value,/\+84123/);
+ assert.ok(!fields[2].value.includes('UMMA-DELIVERY'));
+ assert.equal(api.handoffFields({...example,delivery_address:'Hotel ABC'},{} )[1].value,'Hotel ABC','use address if no pin exists');
+ assert.ok(!api.handoffFields(example,location)[2].value.includes('Không thu tiền hàng'),'unpaid goods must not be labelled paid');
+ pinCard.remove();
 
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));await w.ummaCafe.refreshMenu();
  d.querySelector('[data-add-product="soup"]').click();
