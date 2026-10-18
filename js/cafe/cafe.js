@@ -167,7 +167,7 @@
   const countLabel=(amount,one,few,many)=>amount+" "+(amount%100>=11&&amount%100<=14?many:amount%10===1?one:amount%10>=2&&amount%10<=4?few:many);
 
   const externalDelivery = () => orderType?.value === "delivery" && window.ummaDeliveryProviders?.external(byId("cafeCarrier")?.value);
-  function deliveryBlocked() { return !externalDelivery() && orderType?.value === "delivery" && window.ummaDeliveryLocation?.availability?.() !== "available"; }
+  function deliveryBlocked() { return orderType?.value === "delivery" && (externalDelivery()?!window.ummaDeliveryLocation?.hasPoint?.():window.ummaDeliveryLocation?.availability?.() !== "available"); }
   function renderCart() {
     fillTelegramCustomerName();
     syncCheckoutSummaries();
@@ -437,10 +437,11 @@
     if (addressLabel) addressLabel.hidden = !delivery;
     if(byId("cafeCarrierLabel"))byId("cafeCarrierLabel").hidden=!delivery;
     if(byId("cafeCarrierHint"))byId("cafeCarrierHint").textContent=externalDelivery()?"Курьера оформляете в выбранном сервисе после подтверждения оплаты товара. Доставка оплачивается отдельно.":"Курьер UMMA доставит заказ в пределах зоны обслуживания.";
-    if (addressInput) addressInput.required = !!externalDelivery();
+    window.ummaDeliveryLocation?.setCarrierMode?.(!!externalDelivery());
+    if (addressInput) addressInput.required = false;
     if(byId("cafeCustomerPhone"))byId("cafeCustomerPhone").required=!!externalDelivery();
-    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent=externalDelivery()?"Полный адрес доставки, квартира и ориентир":"Квартира, этаж, ориентир (необязательно)";
-    if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery || !!externalDelivery();
+    if(byId("cafeAddressTitle"))byId("cafeAddressTitle").textContent="Квартира, этаж, ориентир (необязательно)";
+    if (byId("cafeDeliveryLocation")) byId("cafeDeliveryLocation").hidden = !delivery;
     syncCustomerPayment();
     renderCart();
   }
@@ -469,7 +470,7 @@
     if (deliveryBlocked()) { byId("cafeDeliveryMapOpen")?.focus(); if (typeof showToast === "function") showToast(byId("cafeDeliveryZoneStatus")?.textContent || "Выберите точку доставки на карте, чтобы проверить зону обслуживания."); return; }
 
     const carrier=externalDelivery()?byId("cafeCarrier").value:"umma";
-    if(carrier!=="umma"&&(!addressInput?.value.trim()||!byId("cafeCustomerPhone")?.value.trim()||byId("cafePaymentMethod")?.value==="cash")){if(typeof showToast==="function")showToast("Укажите полный адрес, телефон и выберите предоплату товара.");return;}
+    if(carrier!=="umma"&&(!window.ummaDeliveryLocation?.hasPoint?.()||!byId("cafeCustomerPhone")?.value.trim()||byId("cafePaymentMethod")?.value==="cash")){if(typeof showToast==="function")showToast("Отметьте точку на карте, укажите телефон и выберите предоплату товара.");return;}
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
     if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
@@ -487,7 +488,7 @@
           locationId,
           customerName: byId("cafeCustomerName")?.value.trim() || "",
           customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
-          deliveryAddress: carrier!=="umma"?addressInput.value.trim():orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
+          deliveryAddress: orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
           customerNote: window.ummaDeliveryProviders?.note(carrier,byId("cafeCustomerNote")?.value.trim()||"") || byId("cafeCustomerNote")?.value.trim() || ""
       });
       const result = await response.json();
