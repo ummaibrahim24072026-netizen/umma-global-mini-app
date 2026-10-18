@@ -30,7 +30,7 @@ for(const width of [320,360,375,390,414,430]){
 }
 for(const name of ['Ибрахим','Мухаммад Абдуррахман','<img src=x onerror=alert(1)>']){
  await page.setViewportSize({width:320,height:844});await page.evaluate(name=>window.updateTelegramUserInterface({first_name:name}),name);
- assert.equal(await page.locator('.greeting-name').textContent(),name+'!');assert.equal(await page.locator('.welcome-content h2 img').count(),0);
+ assert.equal(await page.locator('.greeting-name').textContent(),name);assert.equal(await page.locator('.welcome-content h2 img').count(),0);assert.equal(await page.locator('.welcome-content h2').evaluate(e=>e.lastElementChild.className),'greeting-name');assert.ok(!(await page.locator('.welcome-content h2').textContent()).includes('!'));
  assert.equal(await page.locator('.brand-art-copy').evaluate(e=>e.scrollWidth>e.clientWidth+1),false);
 }
 await page.evaluate(()=>window.updateTelegramUserInterface({}));assert.equal(await page.locator('.greeting-name').count(),0);

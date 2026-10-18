@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const rows = `
+ва рахматуллахи ва баракатуху,|wa rahmatullahi wa barakatuhu,|wa rahmatullahi wa barakatuhu,
+ва рахматуллахи ва баракатуху|wa rahmatullahi wa barakatuhu|wa rahmatullahi wa barakatuhu
 ва рахматуллахи ва баракатуху!|wa rahmatullahi wa barakatuhu!|wa rahmatullahi wa barakatuhu!
 Ассаляму алейкум,|Assalamu alaykum,|Assalamu alaykum,
 Кафе, Market, B2B и Коран доступны в приложении. Остальные направления готовятся к запуску.|Cafe, Market, B2B and Quran are available in the app. Other directions are being prepared.|Cafe, Market, B2B và Kinh Qur’an có trong ứng dụng. Các lĩnh vực khác đang được chuẩn bị.

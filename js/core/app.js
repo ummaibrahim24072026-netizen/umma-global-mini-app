@@ -232,11 +232,11 @@ function updateTelegramUserInterface(user) {
   const title=document.querySelector('.welcome-content h2');
   if(!title)return;
   const name=String(tg?.initDataUnsafe?.user?.first_name||user?.first_name||'').replace(/\s+/gu,' ').trim();
-  const firstLine=document.createElement('span');firstLine.className='greeting-first-line';
-  const greeting=document.createElement('span');greeting.textContent=name?'Ассаляму алейкум,':'Ассаляму алейкум';firstLine.append(greeting);
-  if(name){const personal=document.createElement('strong');personal.className='greeting-name';personal.setAttribute('translate','no');personal.setAttribute('dir','auto');personal.textContent=name+'!';firstLine.append(document.createTextNode(' '),personal);}
-  const blessing=document.createElement('span');blessing.className='greeting-blessing';blessing.textContent='ва рахматуллахи ва баракатуху!';
-  title.replaceChildren(firstLine,blessing);window.ummaI18n?.translate(title);
+  const firstLine=document.createElement('span');firstLine.className='greeting-first-line';firstLine.textContent='Ассаляму алейкум';
+  const blessing=document.createElement('span');blessing.className='greeting-blessing';blessing.textContent=name?'ва рахматуллахи ва баракатуху,':'ва рахматуллахи ва баракатуху';
+  title.replaceChildren(firstLine,blessing);
+  if(name){const personal=document.createElement('strong');personal.className='greeting-name';personal.setAttribute('translate','no');personal.setAttribute('dir','auto');personal.textContent=name;title.append(personal);}
+  window.ummaI18n?.translate(title);
 }
 
 
