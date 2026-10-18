@@ -134,3 +134,43 @@
 .native-directory-card .direction-live{color:var(--umma-brand-strong)}
 .native-directory-card[data-service=cafe]{border-color:var(--gold-dark)}
 @media(prefers-reduced-motion:no-preference){.native-directory-card{transition:transform .18s ease}.native-directory-card:active{transform:scale(.98)}}
+
+/* Brand navigation dock: same five controls, existing viewport and safe-area model. */
+.app>.bottom-nav{position:relative;isolation:isolate;min-height:calc(80px + var(--umma-safe-bottom));padding:10px 14px calc(10px + var(--umma-safe-bottom));gap:2px;border:0;background:var(--canvas)}
+.app>.bottom-nav::before{content:"";position:absolute;z-index:-1;inset:4px 10px calc(4px + var(--umma-safe-bottom));border:1px solid var(--umma-brand-line);border-radius:24px;background:var(--surface);box-shadow:0 -3px 18px rgba(var(--umma-brand-ink-rgb),.045);pointer-events:none}
+.bottom-nav .nav-item{min-height:56px;min-width:0;gap:4px;padding:4px 2px;border:1px solid transparent;border-radius:18px;color:var(--muted);background:transparent;box-shadow:none;transition:none}
+.bottom-nav .nav-item>[data-native-icon]{display:grid;place-items:center;width:32px;height:30px;border-radius:11px;color:inherit;flex:none}
+.bottom-nav .umma-icon{width:25px;height:25px;stroke-width:1.75}
+.bottom-nav .umma-icon-accent{stroke:var(--gold-dark)}
+.bottom-nav .nav-item small{max-width:100%;font-size:10px;font-weight:600;line-height:1.2;white-space:normal;word-break:normal;overflow-wrap:normal;color:inherit}
+.bottom-nav .nav-item.active{background:linear-gradient(155deg,var(--umma-brand-pale),var(--canvas));border-color:var(--umma-brand-line);color:var(--umma-brand-strong)}
+.bottom-nav .nav-item.active::after{content:"";position:absolute;top:0;left:calc(50% - 10px);width:20px;height:2px;border-radius:0 0 3px 3px;background:var(--gold-dark)}
+.bottom-nav .nav-item.active small{font-weight:750}
+.bottom-nav .native-nav-badge{top:0;right:calc(50% - 25px);min-width:17px;max-width:32px;min-height:17px;display:grid;place-items:center;padding:1px 4px;border:2px solid var(--surface);border-radius:12px;font:700 9px/1.2 Inter,system-ui,sans-serif;color:#fff}
+.bottom-nav .native-nav-badge[hidden]{display:none}
+@container umma-shell (min-width:700px){.app>.bottom-nav{padding-inline:calc((100% - 580px)/2)}.app>.bottom-nav::before{inset-inline:calc((100% - 600px)/2)}.bottom-nav .nav-item small{font-size:11px}}
+@media(prefers-reduced-motion:no-preference){.bottom-nav .nav-item{transition:background-color .18s ease,border-color .18s ease,transform .18s ease}.bottom-nav .nav-item:active{transform:scale(.96)}}
+
+/* Compact sculpted symbols match the service illustration materials. */
+.app>.bottom-nav{min-height:calc(84px + var(--umma-safe-bottom))}
+.app>.bottom-nav::before{background:linear-gradient(180deg,var(--surface),var(--canvas));box-shadow:0 -3px 18px rgba(var(--umma-brand-ink-rgb),.045)}
+.bottom-nav .nav-item{min-height:60px;gap:2px}
+.bottom-nav .nav-item>[data-native-icon]{position:relative;width:40px;height:38px;background:transparent;border-radius:0}
+.bottom-nav .brand-nav-icon>.umma-icon{grid-area:1/1}
+.bottom-nav .nav-art-ready>.umma-icon{visibility:hidden}
+.bottom-nav .nav-art{position:absolute;left:0;top:-1px;width:40px;height:40px;overflow:hidden;opacity:0;mix-blend-mode:multiply;pointer-events:none}
+.bottom-nav .nav-art img{position:absolute;display:block;width:300%;height:200%;max-width:none;object-fit:fill}
+.bottom-nav .nav-art-ready .nav-art{opacity:.86}
+.bottom-nav .nav-item.active .nav-art-ready .nav-art{opacity:1}
+.bottom-nav .nav-item.active{border-color:var(--gold-dark);background:linear-gradient(155deg,var(--surface),var(--umma-brand-pale))}
+.bottom-nav .nav-item.active::after{display:none}
+.bottom-nav .nav-item small{font-size:11px;line-height:1.2;font-weight:600}
+.bottom-nav .nav-item.active small{font-weight:750}
+@container umma-shell (max-width:360px){.bottom-nav .nav-item small{font-size:10px}}
+
+/* Final optical balance and quieter finishing. */
+.app>.bottom-nav::before{box-shadow:0 -2px 14px rgba(var(--umma-brand-ink-rgb),.025)}
+.bottom-nav [data-page=cafe] .nav-art{transform:scale(1.1);transform-origin:50% 50%}
+.bottom-nav [data-page=orders] .nav-art{transform:scale(1.05);transform-origin:50% 50%}
+.bottom-nav [data-page=more] .nav-art{transform:scale(1.08);transform-origin:50% 50%}
+.bottom-nav .nav-item.active{border-color:var(--umma-brand-line);border-color:color-mix(in srgb,var(--gold-dark) 50%,var(--umma-brand-line))}
