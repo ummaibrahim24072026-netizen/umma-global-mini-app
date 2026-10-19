@@ -7,7 +7,7 @@
     "test:market": "node scripts/qa-market-stock.mjs && node scripts/qa-market-commerce.mjs && node scripts/qa-market-ui.mjs && node scripts/qa-market-shop.mjs && node scripts/qa-market-edge.mjs && node scripts/qa-market-labels.mjs && node scripts/qa-market-release.mjs && node scripts/qa-market-import.mjs && node scripts/qa-market-import-database.mjs && node scripts/qa-market-import-ui.mjs",
     "test:b2b": "node scripts/qa-b2b-database.mjs && node scripts/qa-b2b-ui.mjs",
     "test:quran": "node scripts/qa-quran.mjs",
-    "test:islam": "node scripts/qa-islam.mjs && node scripts/qa-islam-database.mjs"
+    "test:islam": "node scripts/qa-islam.mjs && node scripts/qa-islam-database.mjs && node scripts/qa-islam-runtime.mjs && node scripts/qa-islam-library.mjs && node scripts/qa-islam-edge.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",

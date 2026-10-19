@@ -47,6 +47,8 @@
   }
   function back(){
     if(window.ummaQuran?.isOpen())return window.ummaQuran.back();
+    if(window.ummaIslamReminders?.isOpen())return window.ummaIslamReminders.back();
+    if(window.ummaIslamLibrary?.isOpen())return window.ummaIslamLibrary.back();
     if(window.ummaIslam?.isOpen())return window.ummaIslam.back();
     if(window.ummaDeliveryChat?.isOpen()){window.ummaDeliveryChat.close();return true;}
     if(window.ummaNativeShell?.isDialogOpen()){window.ummaNativeShell.closeDialog();return true;}

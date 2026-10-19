@@ -24,12 +24,13 @@ try{
  d.querySelector('[data-islam=qibla]').click();assert.match(d.getElementById('islamSensorStatus').textContent,/Статическое/);d.querySelector('[data-islam=start]').click();assert.match(d.getElementById('islamCompassMessage').textContent,/Сверьте/);
  w.DeviceOrientationEvent=function(){};d.getElementById('islamNorthCorrection').value='0';d.querySelector('[data-islam=start]').click();const event=new w.Event('deviceorientationabsolute');Object.assign(event,{alpha:360-C.qibla(s.lat,s.lon),absolute:true,beta:0,gamma:0});w.dispatchEvent(event);assert.ok(d.getElementById('islamCompass').classList.contains('is-aligned'));
  d.querySelector('[data-islam=stop]').click();assert.equal(d.getElementById('islamCompass').classList.contains('is-live'),false);
+ let orientationCallback,stopped=0;w.Telegram={WebApp:{onEvent:(name,fn)=>{orientationCallback=fn;},offEvent:()=>{},DeviceOrientation:{absolute:true,alpha:(360-C.qibla(s.lat,s.lon))*Math.PI/180,beta:0,gamma:0,start:(params,fn)=>{assert.equal(params.need_absolute,true);fn(true);},stop:()=>stopped++}}};d.querySelector('[data-islam=start]').click();orientationCallback();assert.ok(d.getElementById('islamCompass').classList.contains('is-aligned'));d.querySelector('[data-islam=stop]').click();assert.equal(stopped,1);w.Telegram=undefined;
  w.ummaIslam.back();d.querySelector('[data-islam=times]').click();assert.equal(d.querySelectorAll('[data-prayer]').length,6);assert.equal(d.querySelectorAll('#islamCalendar tbody tr').length,31);
  d.getElementById('islamMonth').value='2028-02';d.getElementById('islamMonth').dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#islamCalendar tbody tr').length,29);
  d.querySelector('[data-islam=settings]').click();d.getElementById('islamAsr').value='2';d.getElementById('islamSettings').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(JSON.parse(w.localStorage.getItem('umma-islam-settings')).asr,2);assert.equal(w.localStorage.getItem('umma-islam-settings').includes('lat'),false);
  w.ummaIslam.back();let opened=0;w.ummaQuran={open:()=>opened++};d.querySelector('.islam-grid [data-islam=quran]').click();assert.equal(opened,1);
- d.querySelector('[data-islam=hadith]').click();assert.match(d.getElementById('islamBody').textContent,/Непроверенные материалы не публикуются/);
- w.ummaI18n={language:'vi'};w.dispatchEvent(new w.Event('umma:languagechange'));assert.match(d.getElementById('islamBody').textContent,/Không đăng nội dung/);
+ let category;w.ummaIslamLibrary={open:value=>{category=value;}};d.querySelector('[data-islam=hadith]').click();assert.equal(category,'hadith');
+ w.ummaI18n={language:'vi'};w.dispatchEvent(new w.Event('umma:languagechange'));assert.match(d.getElementById('islamBody').textContent,/Qur’an và Sunnah/);
  w.ummaIslam.back();w.ummaIslam.back();assert.equal(w.ummaIslam.isOpen(),false);
  console.log('PASS Islam: qibla geometry, five prayers plus sunrise, date validation, polar fallback, Asr, adjustments, timezone/DST, next-day prayer, compass permissions/absolute-only/alignment/stop, month/leap year, Quran integration, no stored GPS and localization.');
 }finally{w.close();}

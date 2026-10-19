@@ -1,0 +1,34 @@
+import {PGlite} from '@electric-sql/pglite';
+import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import * as A from '../supabase/functions/islam-worker/adhan.js';
+import {stripTypeScriptTypes} from 'node:module';
+const worker=await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(readFileSync('supabase/functions/islam-worker/queue.ts','utf8'))).toString('base64'));
+const now=new Date('2026-10-18T17:00:00Z'),config={lat:12.2388,lon:109.1967,zone:'Asia/Ho_Chi_Minh',method:'MuslimWorldLeague',asr:1,offsets:{}},p={telegram_id:123,config,enabled:true,version:1,prayers:['fajr','dhuhr','asr','maghrib','isha'],before_minutes:10,at_time:true,language:'ru'};
+const jobs=worker.buildJobs(A,p,now);assert.equal(jobs.length,20);assert.equal(new Set(jobs.map(j=>[j.telegram_id,j.local_date,j.prayer,j.kind,j.config_version].join(':'))).size,20);assert.ok(jobs.every(j=>new Date(j.due_at)>now));assert.match(worker.messageFor(jobs[0],p),/Фаджр/);assert.equal(worker.buildJobs(A,{...p,config:{...config,lat:78.2,lon:15.65,zone:'Arctic/Longyearbyen'}},new Date('2026-06-21T00:00:00Z')).length,0);
+const disabledTypes=worker.buildJobs(A,{...p,before_minutes:0,at_time:false},now);assert.equal(disabledTypes.length,0);
+const db=new PGlite({extensions:{pgcrypto}});
+try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select null::uuid$$;create table public.telegram_users(telegram_id bigint primary key,role text,is_active boolean);insert into telegram_users values(101,'super_admin',true),(102,'customer',true),(103,'customer',true);create schema extensions;create extension pgcrypto with schema extensions;`);
+ for(const path of ['supabase/proposals/islam-foundation.sql','supabase/proposals/islam-runtime.sql','supabase/proposals/islam-editor.sql'])await db.exec(readFileSync(path,'utf8'));
+ await assert.rejects(db.query('select islam_save_preferences($1,$2,$3)',[101,config,{enabled:true}]),/Consent required/);
+ const first=(await db.query('select islam_save_preferences($1,$2,$3) p',[101,config,{enabled:true,consent:true,language:'ru',prayers:p.prayers,before_minutes:10,at_time:true}])).rows[0].p;assert.equal(first.enabled,true);assert.equal(first.version,1);
+ await db.exec(`insert into islam_notification_jobs(telegram_id,local_date,prayer,kind,due_at,prayer_at,config_version) values(101,current_date,'fajr','at_time',now(),now(),1);`);
+ const claim=(await db.query('select * from islam_claim_notifications()')).rows;assert.equal(claim.length,1);assert.equal(claim[0].status,'sending');assert.equal((await db.query('select * from islam_claim_notifications()')).rows.length,0);
+ await db.query('select islam_save_preferences($1,$2,$3)',[101,{}, {enabled:false}]);const disabled=(await db.query('select * from islam_telegram_preferences')).rows[0];assert.equal(disabled.enabled,false);assert.deepEqual(disabled.config,{});assert.equal((await db.query('select status from islam_notification_jobs')).rows[0].status,'cancelled');
+ await db.exec(`insert into hadith_collections values('test','FIXTURE','https://example.test','fixture');insert into islam_content_editors values(102,true,true,'TEST REVIEWER','TEST ONLY','https://example.test',true);`);
+ const document={collection_id:'test',number:'1',book:'test',edition:'fixture',arabic:'اختبار',narrator:'fixture',grade:'fixture',source_url:'https://example.test',license_note:'fixture',translations:[{language:'ru',text:'TEST ONLY',translator:'fixture',source_url:'https://example.test',license_note:'fixture'}]};
+ let record=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[101,'editor_save','hadith',document])).rows[0].r;assert.equal(record.status,'draft');await assert.rejects(db.query('select islam_editor_operation($1,$2,$3,$4)',[103,'editor_publish','hadith',{id:record.id,expected_revision:record.content_revision}]),/Publisher access/);
+ record=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[101,'editor_submit','hadith',{id:record.id,expected_revision:record.content_revision}])).rows[0].r;
+ await assert.rejects(db.query('select islam_editor_operation($1,$2,$3,$4)',[101,'editor_review','hadith',{id:record.id,expected_revision:record.content_revision,decision:'approved'}]),/Qualified reviewer/);
+ const checks={sources:true,arabic:true,translation:true,authenticity_context:true,explanation:true,differences:true,final:true};record=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[102,'editor_review','hadith',{id:record.id,expected_revision:record.content_revision,decision:'approved',checks}])).rows[0].r;assert.equal(record.status,'approved');record=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[101,'editor_publish','hadith',{id:record.id,expected_revision:record.content_revision}])).rows[0].r;assert.equal(record.status,'published');
+ const sourceId=record.id;
+ const lessonDoc={slug:'fixture-lesson',category:'learn',title:'TEST ONLY',language:'ru',source_url:'https://example.test',license_note:'fixture',steps:[{position:1,title:'FIXTURE STEP',explanation:'fixture',evidences:[{hadith_id:sourceId,citation:'fixture',source_url:'https://example.test'}]}]};
+ let lesson=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[101,'editor_save','lesson',lessonDoc])).rows[0].r;
+ for(const [actor,action,extra] of [[101,'editor_submit',{}],[102,'editor_review',{decision:'approved',checks}],[101,'editor_publish',{}]])lesson=(await db.query('select islam_editor_operation($1,$2,$3,$4) r',[actor,action,'lesson',{id:lesson.id,expected_revision:lesson.content_revision,...extra}])).rows[0].r;
+ assert.equal(lesson.status,'published');await db.query('update hadith_records set status=$1 where id=$2',['draft',sourceId]);assert.equal((await db.query('select status from prayer_lessons where id=$1',[lesson.id])).rows[0].status,'draft');
+ await db.exec('set role anon');await assert.rejects(db.query('select * from islam_telegram_preferences'),/permission denied/);await assert.rejects(db.query('select * from islam_content_editors'),/permission denied/);await db.exec('reset role');
+ const token=(await db.query('select umma_islam_internal.issue_worker_token() t')).rows[0].t;assert.equal((await db.query('select islam_authorize_worker($1) ok',[token])).rows[0].ok,true);assert.equal((await db.query('select islam_authorize_worker($1) ok',[token])).rows[0].ok,false);
+ console.log('PASS Islam runtime: queue generation, polar fallback, no retrospective reminders, consent, cancelled leases and coordinate deletion, exclusive claims, role boundaries, independent review and publication, worker token replay rejection (real pgcrypto HMAC).');
+}finally{await db.close();}
