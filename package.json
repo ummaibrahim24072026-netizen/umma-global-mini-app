@@ -20,6 +20,7 @@
     "qrcode": "1.5.4"
   },
   "dependencies": {
-    "adhan": "4.4.3"
+    "adhan": "4.4.3",
+    "geomagnetism": "0.2.0"
   }
 }
