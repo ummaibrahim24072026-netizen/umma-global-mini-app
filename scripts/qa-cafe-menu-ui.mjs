@@ -19,7 +19,20 @@ try{
  assert.equal(d.getElementById('cafeCustomerName').value,'Ибрахим Умма','Telegram full name fills checkout');
  d.getElementById('cafeCustomerName').value='Имя для заказа';
  assert.equal(d.querySelectorAll('[data-product-card]').length,2);
- assert.equal(d.querySelectorAll('.cafe-product-photo').length,1,'unsafe URL omitted');
+ const previews=d.querySelectorAll('[data-dessert-preview]');
+ assert.equal(previews.length,5,'five photo-only desserts appear');
+ for(const card of previews){
+  assert.ok(['Пломбир','Медовик','Красный бархат','Шоколад','Наполеон'].includes(card.textContent),'approved dessert names');
+  assert.equal(card.querySelector('.cafe-product-price'),null,'no price placeholders');
+  assert.equal(card.querySelector('button'),null,'not purchasable');
+  assert.ok(card.querySelector('img').src.includes('assets/cafe/dessert-'));
+ }
+ d.querySelector('[data-menu-category="desserts"]').click();
+ assert.equal(d.querySelectorAll('[data-dessert-preview]').length,5);
+ assert.equal(d.querySelectorAll('[data-product-card]').length,0);
+ d.querySelector('[data-menu-category="all"]').click();
+
+ assert.equal(d.querySelectorAll('[data-product-card] .cafe-product-photo').length,1,'unsafe URL omitted');
  assert.equal(d.querySelectorAll('[data-product-card] .cafe-halal-badge').length,2,'one halal badge per product, including missing photo');
  assert.ok(d.querySelector('[data-product-card="manti"]').classList.contains('cafe-product-no-photo'));
  assert.equal(d.querySelector('.cafe-halal-badge').getAttribute('aria-label'),'Халяль');
@@ -47,7 +60,7 @@ try{
  d.querySelector('[data-add-product="plov"]').click();d.querySelector('[data-add-product="plov"]').click();
  assert.equal(d.querySelector('.cafe-card-quantity strong').textContent,'2','stock limit preserved');
  search('<script>');assert.equal(d.querySelectorAll('[data-product-card]').length,0);assert.match(d.getElementById('cafeProducts').textContent,/Ничего не найдено/);
- assert.match(d.getElementById('cafeMenuCount').textContent,/0 из 2/);
+ assert.match(d.getElementById('cafeMenuCount').textContent,/0 из 7/);
  d.getElementById('cafeMenuSearchClear').click();assert.equal(d.querySelectorAll('[data-product-card]').length,2);assert.equal(d.activeElement.id,'cafeMenuSearch');
  const photo=d.querySelector('.cafe-product-photo');assert.ok(photo.closest('.cafe-product-media'));photo.dispatchEvent(new w.Event('error'));assert.equal(photo.hidden,true);assert.ok(photo.closest('.cafe-product').classList.contains('cafe-product-no-photo'));assert.equal(photo.closest(".cafe-product-media").hidden,true,"failed photo collapses its frame");
  d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();d.querySelector('[data-product-card="plov"] [data-cart-change="-1"]').click();

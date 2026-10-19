@@ -20,7 +20,13 @@
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
     { id: "other", label: "Другое", skus: [] }
   ];
-  const categoryFor = product => menuCategories.find(category => category.skus.some(sku => product.sku === "UMMA-CAFE-" + sku))?.id || "other";
+  const categoryFor = product => product.photo_only ? "desserts" : menuCategories.find(category => category.skus.some(sku => product.sku === "UMMA-CAFE-" + sku))?.id || "other";
+  // Dessert catalogue previews until the owner supplies prices. Never orderable.
+  const dessertPreviews = [["Пломбир", "Plombir cake", "Bánh kem Plombir"], ["Медовик", "Honey cake", "Bánh mật ong"], ["Красный бархат", "Red velvet cake", "Bánh nhung đỏ"], ["Шоколад", "Chocolate cake", "Bánh sô cô la"], ["Наполеон", "Napoleon cake", "Bánh Napoleon"]].map(([name_ru, name_en, name_vi], i) => ({
+    name_ru, name_en, name_vi,
+    id: "dessert-preview-" + (i + 1),
+    image_url: "assets/cafe/dessert-" + (i + 1) + "-white.webp"
+  }));
   const cart = new Map();
   const byId = id => document.getElementById(id);
   const name = p => window.ummaI18n?.field(p, "name") || p.name_ru || p.name_en || p.name_vi || "Блюдо";
@@ -116,7 +122,7 @@
   function renderProducts() {
     const root = byId("cafeProducts");
     if (!root) return;
-    const availableProducts = products.map(p => {
+    const availableProducts = [...products, ...dessertPreviews.map(p => ({ ...p, photo_only: true, catalog_preview: true }))].map(p => {
       if (p.catalog_preview || p.price_vnd == null) return { ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
@@ -131,6 +137,9 @@
     if (availableProducts.length && !visibleProducts.length) { root.innerHTML = '<div class="cafe-message">Ничего не найдено. Измените запрос, выберите другую категорию или нажмите «Показать всё меню».</div>'; return; }
     if (!visibleProducts.length) { root.innerHTML = '<div class="cafe-message">В выбранном кафе пока нет товаров с доступным остатком. Выберите другое кафе или попробуйте позже.</div>'; return; }
     const productCard = p => {
+      if (p.photo_only) return '<article class="cafe-product cafe-dessert-preview" data-dessert-preview="' + esc(p.id) + '" aria-label="' + esc(name(p)) + '">' +
+        '<div class="cafe-product-media"><img class="cafe-product-photo" src="' + esc(p.image_url) + '" alt="' + esc(name(p)) + ' на белой тарелке" loading="lazy" decoding="async"></div><h3 translate="no" dir="auto">' + esc(name(p)) + '</h3></article>';
+
       const weight = p.weight_value ? (p.weight_unit === "ml" ? Number(p.weight_value) + " мл" : "≈ " + Number(p.weight_value) + " г") : "";
       const selected = cart.get(p.id);
       const quantity = selected?.quantity || 0;
