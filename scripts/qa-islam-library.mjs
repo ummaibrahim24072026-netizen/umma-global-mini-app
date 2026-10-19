@@ -1,0 +1,25 @@
+import {JSDOM} from 'jsdom';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const dom=new JSDOM('<!doctype html><body></body>',{url:'https://umma.test/',runScripts:'outside-only'}),w=dom.window,d=w.document;
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+const hadith='10000000-0000-4000-8000-000000000001',lesson='20000000-0000-4000-8000-000000000001';
+let saved=false,withdraw=false,offline=false;const cache=new Map();w.caches={open:async()=>({put:async(k,r)=>cache.set(k,r),match:async k=>cache.get(k)?.clone(),delete:async k=>cache.delete(k?.url||k),keys:async()=>[...cache.keys()].map(url=>({url}))})};w.Response=Response;w.Telegram={WebApp:{initData:'signed-test'}};w.ummaIslam={getSettings:()=>({lat:12.2,lon:109.1,zone:'Asia/Ho_Chi_Minh',method:'MuslimWorldLeague',asr:1})};
+w.fetch=async(url,options)=>{if(offline)throw Error('offline');const b=JSON.parse(options.body),reply=o=>new Response(JSON.stringify(o),{headers:{'Content-Type':'application/json'}});
+ if(b.action==='catalog')return reply({ok:true,hadiths:[{id:hadith,collection_id:'test',number:'1',book:'test',categories:['prayer']}],lessons:[{id:lesson,title:'TEST LESSON',category:'learn',language:'ru'}],fetched_at:new Date().toISOString()});
+ if(b.action==='state')return reply({ok:true,actor:1,bookmarks:saved?[{kind:'hadith',content_id:hadith}]:[],preferences:null,can_edit:false});
+ if(b.action==='bookmark'){saved=b.save;return reply({ok:true,saved});}
+ if(b.action==='preferences')return reply({ok:true,preferences:{enabled:b.options.enabled}});
+ if(b.action==='read'){if(withdraw)return new Response(JSON.stringify({ok:false,withdrawn:true}),{status:404});if(b.kind==='hadith')return reply({ok:true,kind:'hadith',record:{id:hadith,status:'published',arabic:'اختبار',number:'1',collection_id:'test',edition:'FIXTURE',book:'test',narrator:'fixture',grade:'fixture',source_url:'https://example.test'},translations:[{language:'ru',text:'TEST ONLY <script>bad()</script>',translator:'fixture',source_url:'https://example.test'}],collection:{title:'TEST'},verifications:[],fetched_at:new Date().toISOString()});return reply({ok:true,kind:'lesson',record:{id:lesson,title:'TEST LESSON',status:'published',language:'ru',source_url:'https://example.test'},steps:[{id:'s1',title:'Step A',variant:'main',position:1,explanation:'fixture'},{id:'s2',title:'Step B',variant:'main',position:2,explanation:'fixture'},{id:'v1',title:'Variant',variant:'other',position:1,explanation:'fixture'}],evidences:[{step_id:'s1',citation:'4:103',quran_surah:4,quran_ayah:103,source_url:'https://example.test'}],topics:[],opinions:[],fetched_at:new Date().toISOString()});}
+ throw Error(b.action);
+};
+const until=async fn=>{for(let i=0;i<100;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}assert.fail('UI timeout');};
+try{
+ for(const file of ['api','library','reminders'])w.eval(readFileSync(`js/islam/${file}.js`,'utf8'));
+ await w.ummaIslamLibrary.open('hadith');d.querySelector('[data-library=read]').click();await until(()=>d.getElementById('islamLibraryMessage'));assert.equal(d.querySelector('#islamLibraryBody script'),null);assert.match(d.getElementById('islamLibraryBody').textContent,/<script>bad/);
+ d.querySelector('[data-library=bookmark]').click();await until(()=>saved&&d.querySelector('[data-library=bookmark][aria-pressed=true]'));
+ offline=true;const cached=await w.ummaIslamAPI.read('hadith',hadith);assert.equal(cached.offline,true);offline=false;withdraw=true;await assert.rejects(w.ummaIslamAPI.read('hadith',hadith));assert.equal([...cache.keys()].some(k=>k.endsWith('/hadith/'+hadith)),false);withdraw=false;
+ w.ummaIslamLibrary.back();w.ummaIslamLibrary.back();await w.ummaIslamLibrary.open('learn');d.querySelector('[data-library=read]').click();await until(()=>d.querySelector('[data-library=next]'));assert.match(d.getElementById('islamLibraryBody').textContent,/Step A/);d.querySelector('[data-library=next]').click();assert.match(d.getElementById('islamLibraryBody').textContent,/Step B/);d.getElementById('islamLessonVariant').value='other';d.getElementById('islamLessonVariant').dispatchEvent(new w.Event('change'));assert.match(d.getElementById('islamLibraryBody').textContent,/Variant/);
+ w.ummaIslamLibrary.back();w.ummaIslamLibrary.back();await w.ummaIslamReminders.open();d.getElementById('islamReminderEnabled').checked=true;d.getElementById('islamRemindersForm').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.match(d.getElementById('islamReminderStatus').textContent,/Подтвердите согласие/);d.getElementById('islamReminderConsent').checked=true;d.getElementById('islamRemindersForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await until(()=>d.getElementById('islamReminderStatus').textContent.startsWith('Настройки сохранены'));
+ console.log('PASS Islam library/reminders UI: publication-only catalog, XSS-safe Arabic/translation, variants/steps, bookmarks, offline copy, revoked cache purge, explicit notification and location consent.');
+}finally{w.close();}
