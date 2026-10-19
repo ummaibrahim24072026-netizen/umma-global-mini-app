@@ -93,3 +93,16 @@
 .external-delivery textarea{box-sizing:border-box;width:100%;margin:10px 0;border:1px solid #9cbfbe;border-radius:10px;padding:10px;background:#fff;color:#164d52;font:inherit;resize:vertical}
 .external-delivery a{display:block;text-align:center;text-decoration:none;min-height:44px;padding:12px;border-radius:12px;background:var(--umma-brand-strong,#075e65);color:#fff;font-weight:700}
 .external-delivery button{min-height:44px;border:1px solid #8aafaf;border-radius:10px;padding:8px 12px;background:#fff;color:#164d52;font:inherit}
+
+/* Cafe introduction follows the UMMA Market page header and shared surfaces. */
+#cafePage.cafe-page .cafe-banner-header{padding:20px;border:1px solid var(--umma-brand-line);border-radius:var(--umma-radius-card);background:var(--umma-surface);box-shadow:var(--umma-shadow-card)}
+#cafePage .cafe-banner-header::before{display:none}
+#cafePage .cafe-intro-eyebrow{color:var(--gold-dark);font-size:10px;letter-spacing:.16em}
+#cafePage .cafe-intro-title{display:block;position:static;width:auto;height:auto;clip-path:none;overflow:visible;margin:6px 0;color:var(--umma-brand-ink);font:750 clamp(22px,4vw,30px)/1.25 Inter,system-ui,sans-serif;letter-spacing:-.025em}
+#cafePage .cafe-intro-subtitle{margin:0;color:var(--umma-brand-muted);font:400 14px/1.6 Inter,system-ui,sans-serif}
+#cafePage .cafe-banner-services{margin:18px 0 0;padding:12px 0 0;background:transparent;border-top:1px solid var(--umma-brand-line)}
+#cafePage .cafe-dessert-preview{padding:0;gap:0;overflow:hidden;background:#fff}
+#cafePage .cafe-dessert-preview .cafe-product-media{width:100%;margin:0;border-radius:inherit}
+@container umma-shell (max-width:380px){#cafePage .cafe-banner-header{padding:16px;border-radius:22px}}
+
+#cafePage .cafe-dessert-preview h3{min-height:0;padding:12px 12px 16px}
