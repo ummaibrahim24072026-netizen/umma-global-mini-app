@@ -41,6 +41,7 @@
   <link rel="stylesheet" href="css/delivery-chat.css?v=1">
 <link rel="stylesheet" href="css/market.css?v=4">
   <link rel="stylesheet" href="css/quran.css?v=5">
+  <link rel="stylesheet" href="css/islam.css?v=1">
   <link rel="stylesheet" href="css/home.css?v=12">
   <link rel="stylesheet" href="css/design-system.css?v=2">
   <link rel="stylesheet" href="css/cafe-cards.css?v=1">
@@ -81,6 +82,10 @@
     <section class="ayah-card" aria-label="Аят дня">
       <div class="ayah-book" aria-hidden="true">📖</div>
       <div class="ayah-content" id="dailyAyahContent"><span>АЯТ ДНЯ</span><p role="status">Загрузка…</p></div>
+    </section>
+
+    <section class="islam-home-entry" aria-label="Ислам">
+      <button type="button" id="islamHomeOpen"><span aria-hidden="true">✧</span><span><strong id="islamHomeLabel">Ислам</strong><small id="islamHomeSubtitle">Коран и Сунна</small></span><span aria-hidden="true">↗</span></button>
     </section>
 
     <!-- Quick access and directory share the existing module registry. -->
@@ -896,14 +901,17 @@
 <script src="js/b2b/b2b.js?v=1"></script>
 
 <script src="js/quran/quran.js?v=5"></script>
+<script src="js/vendor/adhan-4.4.3.min.js?v=1"></script>
+<script src="js/islam/calculations.js?v=1"></script>
+<script src="js/islam/islam.js?v=1"></script>
 
 <!-- CONSISTENT BACK NAVIGATION -->
-<script src="js/core/navigation.js?v=13"></script>
+<script src="js/core/navigation.js?v=14"></script>
 
 <!-- START -->
 <script src="js/core/start.js?v=3"></script>
 
-<script src="js/core/native-shell.js?v=21"></script>
+<script src="js/core/native-shell.js?v=22"></script>
 <script src="js/cafe/checkout-choices.js?v=1"></script>
 </body>
 </html>
