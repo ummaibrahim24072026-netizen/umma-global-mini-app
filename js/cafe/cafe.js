@@ -213,7 +213,7 @@
     countEl.textContent = countLabel(count(),"позиция","позиции","позиций");
     totalEl.textContent = money(total());
     if (!entries.length) root.innerHTML = '<p class="cafe-empty-cart">Добавьте блюда из меню.</p>';
-    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no" dir="auto">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
+    else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no" dir="auto">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + (item.quantity > 1 ? ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) : '') + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить ' + esc(name(item.product)) + '">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Добавить ещё ' + esc(name(item.product)) + '">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || locating || !entries.length || !locationId || deliveryBlocked();
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
     const success = byId("cafeOrderResult")?.dataset.state === "success";
@@ -326,7 +326,10 @@
     const selected = locations.find(location => String(location.id) === String(locationId));
     window.ummaDeliveryLocation?.setCafeLocation?.(selected);
     const message = text || (selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : locations.length ? "Выберите кафе, чтобы увидеть его меню." : "Приём заказов временно приостановлен.");
-    if (byId("cafeLocationMessage")) byId("cafeLocationMessage").textContent = message;
+    if (byId("cafeLocationMessage")) {
+      byId("cafeLocationMessage").textContent = selected && !locating ? "Кафе: " + selected.name : message;
+      byId("cafeLocationMessage").title = message;
+    }
     if (byId("cafeNearbyStatus")) {
       byId("cafeNearbyStatus").textContent = selected && !locating ? selected.name : message;
       byId("cafeNearbyStatus").title = message;
