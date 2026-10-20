@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const rows = `
+1 шт.|1 piece|1 miếng
+1 порция|1 portion|1 phần
 Выбор ближайшего кафе|Nearest cafe selection|Chọn quán gần nhất
 Определим ближайшее кафе по вашей геолокации.|We will find the nearest cafe using your location.|Chúng tôi sẽ tìm quán gần nhất dựa trên vị trí của bạn.
 Найти ближайшее кафе|Find the nearest cafe|Tìm quán gần nhất

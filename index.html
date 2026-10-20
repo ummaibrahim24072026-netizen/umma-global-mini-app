@@ -24,7 +24,7 @@
 
   <script src="js/core/languages-extra.js?v=4"></script>
   <script src="js/core/languages.js?v=6"></script>
-  <script src="js/core/translations.js?v=19"></script>
+  <script src="js/core/translations.js?v=20"></script>
   <script src="js/core/i18n.js?v=4"></script>
 
 
@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="css/app.css?v=37">
   <link rel="stylesheet" href="css/admin.css?v=10">
   <link rel="stylesheet" href="css/native.css?v=31">
-  <link rel="stylesheet" href="css/cafe-comfort.css?v=10">
+  <link rel="stylesheet" href="css/cafe-comfort.css?v=11">
   <link rel="stylesheet" href="css/brand.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -624,7 +624,7 @@
   <!-- CAFE ORDERING -->
   <section id="cafePage" class="cafe-page" hidden>
     <div class="cafe-page-inner">
-      <button type="button" id="cafeBack" class="cafe-banner-back">← Главная</button>
+      <div class="cafe-menu-toolbar"><button type="button" id="cafeBack" class="cafe-banner-back">← Главная</button><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
       <header class="cafe-banner-header">
         <img class="cafe-banner-art" src="logo/assets/umma-cafe-owner-banner.jpg?v=1" width="1536" height="566" decoding="async" alt="">
         <div class="cafe-intro-copy">
@@ -640,14 +640,14 @@
       </header>
 
       <section id="cafeNearby" class="cafe-nearby" aria-label="Выбор ближайшего кафе">
-        <p id="cafeNearbyStatus" role="status" aria-live="polite">Определим ближайшее кафе по вашей геолокации.</p>
+        <details id="cafeNearbyDetails"><summary><span id="cafeNearbyStatus" role="status" aria-live="polite">Определим ближайшее кафе по вашей геолокации.</span><span class="cafe-nearby-edit">Изменить</span></summary>
         <button type="button" id="cafeNearbyDetect" class="cafe-location-button">Найти ближайшее кафе</button>
         <label id="cafeNearbySelectLabel" hidden>Выбрать кафе вручную<select id="cafeNearbySelect"><option value="">Выберите кафе</option></select></label>
-        <small>При смене кафе корзина очистится.</small>
+        <small>При смене кафе корзина очистится.</small></details>
       </section>
       <p id="cafeMenuLocation" class="cafe-menu-location" aria-live="polite">UMMA Cafe · Нячанг</p>
       <p id="cafeModeHint" class="cafe-order-hint" aria-live="polite">Выберите блюда — заберите заказ в кафе.</p>
-      <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div><button type="button" id="cafeMyOrdersToggle" class="cafe-my-orders-toggle">Мои заказы</button></div>
+      <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div></div>
       <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
       <div class="cafe-menu-search"><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
       <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
@@ -878,7 +878,7 @@
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/cafe/payment.js?v=9"></script>
 <script src="js/delivery/providers.js?v=4"></script>
-<script src="js/cafe/cafe.js?v=77"></script>
+<script src="js/cafe/cafe.js?v=78"></script>
 <script src="js/cafe/notifications.js?v=4"></script>
 <script src="js/cafe/courier-desk.js?v=1"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>
