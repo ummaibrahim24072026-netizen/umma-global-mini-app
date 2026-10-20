@@ -16,7 +16,7 @@
     { id: "mains", label: "Горячее", skus: ["PLOV", "MANTI", "CHICKEN-LEG-SALAD"] },
     { id: "salads", label: "Салаты", skus: ["SALAD", "OLIVIER", "VINAIGRETTE", "CRUNCHY-SALAD"] },
     { id: "bakery", label: "Выпечка", skus: ["FLATBREAD", "SAMSA", "SAMSA-CHICKEN", "CHEESE-KHACHAPURI"] },
-    { id: "desserts", label: "Десерты", skus: ["CROISSANT", "BAKLAVA-ALMOND", "BAKLAVA-WALNUT"] },
+    { id: "desserts", label: "Десерты", skus: ["CROISSANT", "BAKLAVA-ALMOND", "BAKLAVA-WALNUT", "DESSERT-PLOMBIR", "DESSERT-HONEY", "DESSERT-RED-VELVET", "DESSERT-CHOCOLATE", "DESSERT-NAPOLEON"] },
     { id: "drinks", label: "Напитки", skus: ["AYRAN", "AYRAN-500", "TURKISH-AYRAN-1000", "GREEN-TEA-900", "BLACK-TEA-LEMON-900", "BLACKBERRY-COMPOTE-500", "BLACKBERRY-COMPOTE-1000"] },
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
     { id: "other", label: "Другое", skus: [] }
@@ -25,6 +25,7 @@
   // Dessert catalogue previews until the owner supplies prices. Never orderable.
   const dessertPreviews = [["Пломбир", "Plombir cake", "Bánh kem Plombir"], ["Медовик", "Honey cake", "Bánh mật ong"], ["Красный бархат", "Red velvet cake", "Bánh nhung đỏ"], ["Шоколад", "Chocolate cake", "Bánh sô cô la"], ["Наполеон", "Napoleon cake", "Bánh Napoleon"]].map(([name_ru, name_en, name_vi], i) => ({
     name_ru, name_en, name_vi,
+    sku: "UMMA-CAFE-DESSERT-" + ["PLOMBIR", "HONEY", "RED-VELVET", "CHOCOLATE", "NAPOLEON"][i],
     id: "dessert-preview-" + (i + 1),
     image_url: "assets/cafe/dessert-" + (i + 1) + "-white.webp"
   }));
@@ -132,7 +133,7 @@
       if (byId("cafeMenuCount")) byId("cafeMenuCount").textContent = "";
       return;
     }
-    const availableProducts = [...products, ...dessertPreviews.map(p => ({ ...p, photo_only: true, catalog_preview: true }))].map(p => {
+    const availableProducts = [...products, ...dessertPreviews.filter(p => !products.some(product => product.sku === p.sku)).map(p => ({ ...p, photo_only: true, catalog_preview: true }))].map(p => {
       if (p.catalog_preview || p.price_vnd == null) return { ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
@@ -150,7 +151,7 @@
       if (p.photo_only) return '<article class="cafe-product cafe-dessert-preview" data-dessert-preview="' + esc(p.id) + '" aria-label="' + esc(name(p)) + '">' +
         '<div class="cafe-product-media"><img class="cafe-product-photo" src="' + esc(p.image_url) + '" alt="' + esc(name(p)) + ' на белой тарелке" loading="lazy" decoding="async"></div><h3 translate="no" dir="auto">' + esc(name(p)) + '</h3></article>';
 
-      const weight = p.weight_value ? (p.weight_unit === "ml" ? Number(p.weight_value) + " мл" : "≈ " + Number(p.weight_value) + " г") : "";
+      const weight = p.sku?.startsWith("UMMA-CAFE-BAKLAVA-") ? "1 шт." : p.sku?.startsWith("UMMA-CAFE-DESSERT-") ? "1 порция" : p.weight_value ? (p.weight_unit === "ml" ? Number(p.weight_value) + " мл" : "≈ " + Number(p.weight_value) + " г") : "";
       const selected = cart.get(p.id);
       const quantity = selected?.quantity || 0;
       const productId = esc(p.id);
@@ -324,6 +325,7 @@
   const validCoordinates = (lat, lon) => lat !== null && lon !== null && lat !== "" && lon !== "" && lat !== undefined && lon !== undefined && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon)) && Math.abs(Number(lat)) <= 90 && Math.abs(Number(lon)) <= 180;
   function useManualLocation(message) {
     locating = false;
+    if (byId("cafeNearbyDetails")) byId("cafeNearbyDetails").open = true;
     locationMode = "manual";
     if (byId("cafeLocationMode")) byId("cafeLocationMode").value = "manual";
     if (byId("cafeLocationSelectLabel")) byId("cafeLocationSelectLabel").hidden = false;
@@ -378,6 +380,7 @@
     const next = selected?.id || null;
     if (String(next || "") !== String(locationId || "")) cart.clear();
     locationId = next;
+    if (byId("cafeNearbyDetails")) byId("cafeNearbyDetails").open = !next;
     for (const id of ["cafeLocationSelect", "cafeNearbySelect"]) if (byId(id)) {
       byId(id).value = locationId || "";
       for (const option of byId(id).options) option.defaultSelected = option.value === (locationId || "");
