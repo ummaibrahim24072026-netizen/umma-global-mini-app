@@ -51,6 +51,7 @@ for(const [source,values] of Object.entries(w.ummaAdditionalTranslations)){
 assert.equal(d.getElementById('cafeSubmitOrder').textContent.trim(),'Đặt hàng');
 assert.equal(i.t('Найдено: 2 из 5'),'Tìm thấy: 2 / 5');
 assert.equal(i.t('≈ 450 г'),'≈ 450 g');
+assert.equal(i.t('Ближайшее кафе: UMMA · примерно 1.2 км по прямой.'),'Quán gần nhất: UMMA · khoảng 1.2 km theo đường thẳng.');
 assert.equal(i.t('3 позиции'),'3 món');
 assert.equal(i.t('Заказ №UMMA-123'),'Đơn hàng #UMMA-123');
 const search=d.getElementById('cafeMenuSearch');

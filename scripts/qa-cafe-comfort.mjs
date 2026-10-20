@@ -43,7 +43,8 @@ try{
  const style=d.createElement('style');style.textContent=readFileSync('css/cafe-comfort.css','utf8');d.head.append(style);
  assert.equal(w.getComputedStyle(bar).position,'sticky');assert.equal(w.getComputedStyle(bar).top,'0px');assert.equal(w.getComputedStyle(bar).flexWrap,'nowrap');
  locations=[...locations,{id:'two',name:'UMMA Two'}];await w.ummaCafe.refreshMenu();
- assert.equal(gps,0,'multiple cafes wait for explicit nearest-cafe choice');assert.equal($('cafeLocationDetails').hidden,false);assert.equal($('cafeLocationMode').value,'manual');assert.equal($('cafeLocationSelectLabel').hidden,false);
+ assert.equal(gps,0,'refresh retains the existing cafe and cart');assert.equal($('cafeLocationDetails').hidden,false);assert.equal($('cafeNearbySelectLabel').hidden,false);
+ $('cafeLocationMode').value='manual';$('cafeLocationMode').dispatchEvent(new w.Event('change'));assert.equal($('cafeLocationSelectLabel').hidden,false);
  $('cafeLocationDetails').open=true;$('cafeLocationSelect').value='two';$('cafeLocationSelect').dispatchEvent(new w.Event('change'));assert.match($('cafeLocationMessage').textContent,/UMMA Two/);assert.equal($('cafeStickyOrder').hidden,true,'changing cafe clears previous cart');
  locations=[];await w.ummaCafe.refreshMenu();
  assert.equal($('cafeAvailabilityNotice').hidden,false);assert.match($('cafeLocationMessage').textContent,/приостановлен/);

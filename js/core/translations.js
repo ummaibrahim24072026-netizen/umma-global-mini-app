@@ -2,6 +2,14 @@
 (() => {
   'use strict';
   const rows = `
+Выбор ближайшего кафе|Nearest cafe selection|Chọn quán gần nhất
+Определим ближайшее кафе по вашей геолокации.|We will find the nearest cafe using your location.|Chúng tôi sẽ tìm quán gần nhất dựa trên vị trí của bạn.
+Найти ближайшее кафе|Find the nearest cafe|Tìm quán gần nhất
+При смене кафе корзина очистится.|Changing the cafe clears your basket.|Đổi quán sẽ xóa giỏ hàng.
+Выберите кафе|Choose a cafe|Chọn quán
+Выберите кафе, чтобы увидеть его меню.|Choose a cafe to see its menu.|Chọn quán để xem thực đơn.
+Разрешите геолокацию — мы выберем ближайшее кафе.|Allow location access so we can select the nearest cafe.|Cho phép truy cập vị trí để chúng tôi chọn quán gần nhất.
+Не у всех кафе указаны координаты. Выберите кафе вручную.|Some cafes have no coordinates. Please choose a cafe manually.|Một số quán chưa có tọa độ. Vui lòng chọn quán thủ công.
 Стол №1|Table 1|Bàn số 1
 Стол №2|Table 2|Bàn số 2
 Стол №3|Table 3|Bàn số 3

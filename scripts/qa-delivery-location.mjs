@@ -26,6 +26,9 @@ try{
  w.eval(readFileSync('js/delivery/providers.js','utf8'));
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
  await w.ummaCafe.refreshMenu();
+ assert.equal(requests.length,1,'entry requests cafe-selection GPS');
+ requests[0].success({coords:{latitude:12.25,longitude:109.19}});
+ requests.length=0; // Destination GPS is a separate explicit request and still needs confirmation.
  $('cafePage').hidden=false;
  d.querySelector('[data-add-product="food"]').click();
  assert.equal(requests.length,0,'opening menu must not request destination GPS');
