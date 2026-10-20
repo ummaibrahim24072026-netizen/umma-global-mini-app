@@ -38,7 +38,10 @@
   function setError(message) {
     const el = byId("cafeError");
     if (el) { el.textContent = message; el.hidden = !message; }
+    if (byId("cafeMenuRetry")) byId("cafeMenuRetry").hidden = !message;
   }
+
+  byId("cafeMenuRetry")?.addEventListener("click", () => loadMenu());
 
   const productPhotos = new Map([
     ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa-white-v2.webp"],
@@ -189,6 +192,15 @@
     else root.innerHTML = entries.map(item => '<div class="cafe-cart-row"><div><strong translate="no" dir="auto">' + esc(name(item.product)) + '</strong><small>' + money(item.price_vnd) + ' × ' + item.quantity + ' = ' + money(item.price_vnd * item.quantity) + '</small></div><div class="cafe-cart-controls"><button type="button" data-cart-change="-1" data-product-id="' + esc(item.product.id) + '" aria-label="Уменьшить">−</button><strong>' + item.quantity + '</strong><button type="button" data-cart-change="1" data-product-id="' + esc(item.product.id) + '" aria-label="Увеличить">+</button></div></div>').join("");
     if (submit) submit.disabled = loading || !entries.length || !locationId || deliveryBlocked();
     if(byId("cafeOrderForm"))byId("cafeOrderForm").hidden=entries.length===0;
+    const success = byId("cafeOrderResult")?.dataset.state === "success";
+    if (byId("cafeEmptyOrder")) byId("cafeEmptyOrder").hidden = entries.length > 0 || success;
+    if (byId("cafeCheckoutItems")) byId("cafeCheckoutItems").hidden = entries.length === 0;
+    const hint = byId("cafeCheckoutHint");
+    if (hint) {
+      hint.textContent = !locationId ? "Приём заказов временно приостановлен." : deliveryBlocked() ? (byId("cafeDeliveryZoneStatus")?.textContent || "Укажите адрес на карте, чтобы проверить возможность доставки.") : "";
+      hint.hidden = !hint.textContent || !entries.length;
+    }
+    byId("cafeOrderForm")?.setAttribute("aria-busy", String(loading));
     const sticky = byId("cafeStickyOrder");
     const stickyCount = byId("cafeStickyCount");
     const stickyTotal = byId("cafeStickyTotal");
@@ -282,6 +294,7 @@
     if (text) { el.textContent = text; return; }
     const selected = locations.find(location => String(location.id) === String(locationId));
     window.ummaDeliveryLocation?.setCafeLocation(selected);
+    if (byId("cafeMenuLocation")) byId("cafeMenuLocation").textContent = selected ? [selected.name, selected.address, selected.city].filter(Boolean).join(" · ") : "Приём заказов временно приостановлен.";
     el.textContent = selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : "Приём заказов временно приостановлен.";
   }
 
@@ -381,7 +394,7 @@
   }
   function showCheckoutError(message, field) {
     const result = byId("cafeOrderResult");
-    if (result) { result.textContent = message; result.hidden = false; }
+    if (result) { result.dataset.state = "error"; result.textContent = message; result.hidden = false; }
     if (field) {
       const details = field.closest("details");
       if (details) details.open = true;
@@ -393,12 +406,15 @@
   byId("cafeOrderForm")?.addEventListener("invalid", event => {
     event.preventDefault();
     const field = event.target;
-    const message = field.id === "cafeCustomerPhone"
+    const message = field.id === "cafeTable" ? "Выберите номер стола, чтобы мы знали, куда принести заказ." : field.id === "cafeCustomerPhone"
       ? "Укажите телефон для связи с курьером."
       : field.validationMessage || "Проверьте данные заказа.";
     showCheckoutError(message, field);
   }, true);
   byId("cafeCheckoutBack")?.addEventListener("click", closeCheckout);
+  byId("cafeEmptyOrderBack")?.addEventListener("click", closeCheckout);
+  byId("cafeResultMenu")?.addEventListener("click", closeCheckout);
+  byId("cafeResultOrders")?.addEventListener("click", () => { closeCheckout(); byId("cafeMyOrdersToggle")?.click(); });
   byId("cafeStickyGoToOrder")?.addEventListener("click", () => {
     if (loading || !cart.size) return;
     if (checkoutOpen) {
@@ -414,11 +430,13 @@
     if (page) page.scrollTop = 0;
     const inner = page?.querySelector(".cafe-page-inner");
     if (inner) inner.scrollTop = 0;
+    if (byId("cafeCheckoutItems")) byId("cafeCheckoutItems").open = true;
     renderCart();
     byId("cafeCheckoutBack")?.focus({preventScroll:true});
   });
 
   function changeProduct(productId, delta) {
+    if (loading) return;
     const baseProduct = products.find(p => String(p.id) === String(productId));
     const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
     if (!baseProduct || baseProduct.catalog_preview || baseProduct.price_vnd == null) return;
@@ -427,6 +445,9 @@
       ? { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
           stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) }
       : { ...baseProduct, stockAvailable: 99 };
+    const result = byId("cafeOrderResult");
+    if (result) { result.hidden = true; delete result.dataset.state; }
+    if (byId("cafeResultActions")) byId("cafeResultActions").hidden = true;
     const current = cart.get(product.id);
     const quantity = (current?.quantity || 0) + delta;
     if (quantity <= 0) cart.delete(product.id);
@@ -460,10 +481,16 @@
     if(timing){const later=timing.querySelector('option[value="later"]');if(later)later.disabled=type!=="dine_in";if(type!=="dine_in")timing.value="now";}
     const country=byId("cafeTransferCountryLabel");if(country)country.hidden=method?.value!=="bank_transfer";
     if(method){const cash=method.querySelector('option[value="cash"]');if(cash){cash.disabled=!!externalDelivery();if(cash.disabled&&method.value==="cash")method.value="qr";}if(cash)cash.textContent=type==="delivery"?"Оплата курьеру при доставке":"Наличными в кафе";}
-    const hint=byId("cafePaymentHint");if(hint)hint.textContent=externalDelivery()?"Товар оплачивается UMMA заранее. Доставку оформляете и оплачиваете отдельно в выбранном сервисе.":type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Для заказа с собой оплата производится сразу.":"В кафе можно оплатить сразу или после трапезы.";
+    const hint=byId("cafePaymentHint");if(hint)hint.textContent=externalDelivery()?"Товар оплачивается UMMA заранее. Доставку оформляете и оплачиваете отдельно в выбранном сервисе.":type==="delivery"?"QR-оплата заранее либо наличными курьеру при получении.":type==="pickup"?"Наличными при получении в кафе или переводом после оформления.":"Наличными в кафе или переводом после оформления.";
   }
   function syncOrderMode() {
+    if (loading) return;
     const delivery = orderType?.value === "delivery";
+    const dineIn = orderType?.value === "dine_in";
+    if (byId("cafeTableLabel")) byId("cafeTableLabel").hidden = !dineIn;
+    const table = byId("cafeTable");
+    if (table) { table.disabled = !dineIn; table.required = dineIn; }
+    if (byId("cafeModeHint")) byId("cafeModeHint").textContent = delivery ? "Выберите блюда — адрес и доставку уточним при оформлении." : dineIn ? "Выберите блюда — укажите свой стол при оформлении." : "Выберите блюда — заберите заказ в кафе.";
     byId("cafePage")?.querySelectorAll("[data-order-mode]").forEach(button => {
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
@@ -486,7 +513,7 @@
   document.addEventListener("umma:delivery-location-change", syncOrderMode);
   byId("cafePage")?.addEventListener("click", event => {
     const button = event.target.closest("[data-order-mode]");
-    if (!button || !orderType || !["dine_in", "pickup", "delivery"].includes(button.dataset.orderMode)) return;
+    if (loading || !button || !orderType || !["dine_in", "pickup", "delivery"].includes(button.dataset.orderMode)) return;
     orderType.value = button.dataset.orderMode;
     orderType.dispatchEvent(new Event("change", { bubbles: true }));
   });
@@ -508,11 +535,16 @@
     const carrier=externalDelivery()?byId("cafeCarrier").value:"umma";
     if(carrier!=="umma"&&!byId("cafeCustomerPhone")?.value.trim()){showCheckoutError("Укажите телефон для связи с курьером.",byId("cafeCustomerPhone"));return;}
     if(carrier!=="umma"&&(!window.ummaDeliveryLocation?.hasPoint?.()||byId("cafePaymentMethod")?.value==="cash")){showCheckoutError("Отметьте точку на карте и выберите предоплату товара.");return;}
+    const table = byId("cafeTable");
+    if (orderType?.value === "dine_in" && !/^[1-6]$/.test(table?.value || "")) { showCheckoutError("Выберите номер стола, чтобы мы знали, куда принести заказ.", table); return; }
     fillTelegramCustomerName();
     const paymentTiming=orderType?.value==="delivery"&&byId("cafePaymentMethod")?.value==="cash"?"on_delivery":(byId("cafePaymentTiming")?.value||"now");
     if(orderType?.value!=="dine_in"&&paymentTiming==="later"){if(typeof showToast==="function")showToast("Оплата позже возможна только в кафе");return;}
     const submittedItems = Array.from(cart.values()).map(item => ({ productId: item.product.id, quantity: item.quantity }));
     loading = true; renderCart();
+    // Lock only this draft; preserve each control's disabled state for restoration.
+    const lockedControls = Array.from(byId("cafePage").querySelectorAll("input,select,textarea,button[data-order-mode],.cafe-choice-trigger,[data-cart-change],#cafeCheckoutBack")).map(control => [control, control.disabled]);
+    lockedControls.forEach(([control]) => { control.disabled = true; });
     if (resultEl) resultEl.hidden = true;
     if (submit) submit.textContent = "Оформляем заказ…";
     try {
@@ -526,7 +558,7 @@
           customerName: byId("cafeCustomerName")?.value.trim() || "",
           customerPhone: byId("cafeCustomerPhone")?.value.trim() || "",
           deliveryAddress: orderType?.value === "delivery" && window.ummaDeliveryLocation ? window.ummaDeliveryLocation.getAddress(addressInput?.value) : addressInput?.value.trim() || "",
-          customerNote: window.ummaDeliveryProviders?.note(carrier,byId("cafeCustomerNote")?.value.trim()||"") || byId("cafeCustomerNote")?.value.trim() || ""
+          customerNote: [orderType?.value === "dine_in" ? "Стол №" + table.value : "", window.ummaDeliveryProviders?.note(carrier,byId("cafeCustomerNote")?.value.trim()||"") || byId("cafeCustomerNote")?.value.trim() || ""].filter(Boolean).join("\n").slice(0,1000)
       });
       const result = await response.json();
       if (!response.ok || !result.ok || !result.order) throw new Error(result.error || "Не удалось оформить заказ");
@@ -537,6 +569,7 @@
       }
       cart.clear(); renderCart(); renderProducts();
       if (resultEl) {
+        resultEl.dataset.state = "success";
         const selectedCafe = locations.find(location => String(location.id) === String(locationId));
         const notificationLine = Number(result.staffNotified) > 0
           ? "<br>Уведомления сотрудникам кафе: " + Number(result.staffNotified)
@@ -564,13 +597,15 @@
         resultEl.hidden = false;
         if(byId("cafePaymentMethod")?.value==="qr") window.ummaCafePayment?.show(order.id);
       }
+      if (byId("cafeResultActions")) byId("cafeResultActions").hidden = false;
       byId("cafeOrderForm")?.reset();
       if (addressLabel) addressLabel.hidden = true;
       if (addressInput) addressInput.required = false;
     } catch (error) {
-      if (resultEl) { resultEl.textContent = error instanceof Error ? error.message : "Ошибка оформления заказа"; resultEl.hidden = false; }
+      if (resultEl) { resultEl.dataset.state = "error"; resultEl.textContent = error instanceof Error ? error.message : "Ошибка оформления заказа"; resultEl.hidden = false; }
     } finally {
-      loading = false; renderCart();
+      lockedControls.forEach(([control, disabled]) => { control.disabled = disabled; });
+      loading = false; syncOrderMode(); window.ummaCheckoutChoices?.sync();
       if (checkoutOpen && resultEl && !resultEl.hidden) resultEl.scrollIntoView?.({block:"nearest",behavior:"smooth"});
       if (submit) submit.textContent = "Оформить заказ";
     }
@@ -580,7 +615,9 @@
     if(event.detail.payload.staffOrder||event.detail.payload.action)return;
     cart.clear();renderCart();renderProducts();
     const result=byId("cafeOrderResult"),order=event.detail.result.order;
-    if(result){result.hidden=false;result.textContent="Восстановлен заказ №"+order.orderNumber+". Проверьте его во вкладке «Мои заказы».";}
+    if(result){result.dataset.state="success";result.hidden=false;result.textContent="Восстановлен заказ №"+order.orderNumber+". Проверьте его во вкладке «Мои заказы».";}
+    if(byId("cafeResultActions"))byId("cafeResultActions").hidden=false;
+    renderCart();
     loadMyOrders();
   });
   const statusNames = {
