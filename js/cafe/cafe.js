@@ -73,6 +73,22 @@
       event.target.closest(".cafe-product")?.classList.add("cafe-product-no-photo");
     }
   }, true);
+  byId("cafeSearchToggle")?.addEventListener("click", () => {
+    const panel = byId("cafeMenuSearchPanel"), toggle = byId("cafeSearchToggle");
+    if (!panel) return;
+    const open = panel.hidden;
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Закрыть" : "Найти блюдо");
+    if (open) byId("cafeMenuSearch")?.focus();
+    else {
+      menuQuery = "";
+      if (byId("cafeMenuSearch")) byId("cafeMenuSearch").value = "";
+      if (byId("cafeMenuSearchClear")) byId("cafeMenuSearchClear").hidden = true;
+      renderProducts();
+      toggle.focus({preventScroll:true});
+    }
+  });
   byId("cafeMenuSearch")?.addEventListener("input", event => {
     menuQuery = event.target.value;
     const clear = byId("cafeMenuSearchClear");
@@ -310,7 +326,11 @@
     const selected = locations.find(location => String(location.id) === String(locationId));
     window.ummaDeliveryLocation?.setCafeLocation?.(selected);
     const message = text || (selected ? "Кафе: " + selected.name + (selected.address ? " · " + selected.address : "") : locations.length ? "Выберите кафе, чтобы увидеть его меню." : "Приём заказов временно приостановлен.");
-    for (const id of ["cafeLocationMessage", "cafeNearbyStatus"]) if (byId(id)) byId(id).textContent = message;
+    if (byId("cafeLocationMessage")) byId("cafeLocationMessage").textContent = message;
+    if (byId("cafeNearbyStatus")) {
+      byId("cafeNearbyStatus").textContent = selected && !locating ? selected.name : message;
+      byId("cafeNearbyStatus").title = message;
+    }
     if (byId("cafeMenuLocation")) byId("cafeMenuLocation").textContent = selected ? [selected.name, selected.address, selected.city].filter(Boolean).join(" · ") : "";
     if (byId("cafeNearbyDetect")) { byId("cafeNearbyDetect").disabled = locating || loading || !locations.length; byId("cafeNearbyDetect").setAttribute("aria-busy", String(locating)); }
   }

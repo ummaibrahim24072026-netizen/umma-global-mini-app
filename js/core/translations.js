@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const rows = `
+Поиск|Search|Tìm kiếm
 1 шт.|1 piece|1 miếng
 1 порция|1 portion|1 phần
 Выбор ближайшего кафе|Nearest cafe selection|Chọn quán gần nhất

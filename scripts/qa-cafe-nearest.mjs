@@ -25,7 +25,7 @@ function fixture({locations=cafes,geo=true}={}){
   assert.equal($('cafeLocationSelect').value,'');assert.equal($('cafeNearbyDetect').disabled,true);
   gps[0].success({coords:{latitude:12.201,longitude:109.19}});
   assert.equal($('cafeLocationSelect').value,'south','second cafe is closer');assert.equal($('cafeNearbySelect').value,'south');
-  assert.match($('cafeNearbyStatus').textContent,/UMMA South.*км по прямой/);assert.match($('cafeMenuLocation').textContent,/UMMA South/);
+  assert.equal($('cafeNearbyStatus').textContent,'UMMA South');assert.match($('cafeNearbyStatus').title,/UMMA South.*км по прямой/);assert.match($('cafeMenuLocation').textContent,/UMMA South/);
   assert.equal(d.querySelector('[data-product-card]').dataset.productCard,'plov');assert.equal(d.querySelectorAll('[data-product-card]').length,1,'stock scoped to selected cafe');
   d.querySelector('[data-add-product="plov"]').click();assert.match($('cafeStickyTotal').textContent,/110/,'location price is used');
   await w.ummaCafe.refreshMenu();assert.equal(gps.length,1,'refresh does not prompt again or switch an existing order');assert.match($('cafeStickyTotal').textContent,/110/);
