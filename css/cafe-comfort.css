@@ -144,3 +144,10 @@
 #cafePage .cafe-order-form[aria-busy="true"]{opacity:.7}
 #cafePage :is(.cafe-result-actions,.cafe-empty-order,.cafe-checkout-hint)[hidden]{display:none!important}
 @container umma-shell (max-width:359px){#cafePage .cafe-banner-services{gap:6px}#cafePage .cafe-banner-services button{padding:10px 4px;font-size:12px}#cafePage .cafe-sticky-order-info strong{font-size:20px}#cafePage .cafe-cart-row{align-items:flex-start}#cafePage .cafe-cart-row>div:first-child{flex-basis:100%}}
+
+#cafePage .cafe-nearby{display:grid;gap:12px;margin:16px 0;padding:16px;border:1px solid var(--umma-brand-line-strong);border-radius:18px;background:#fff;min-width:0}
+#cafePage .cafe-nearby p{margin:0;color:var(--umma-brand-text);font-size:14px;line-height:1.6}
+#cafePage .cafe-nearby label{display:grid;gap:8px;font-size:13px;color:var(--umma-brand-text)}
+#cafePage .cafe-nearby select{width:100%;background:var(--umma-brand-canvas);border:1px solid var(--umma-brand-line-strong);min-height:48px}
+#cafePage .cafe-nearby small{color:var(--umma-brand-muted);font-size:12px;line-height:1.5}
+#cafePage .cafe-nearby [hidden],#cafePage .cafe-nearby[hidden]{display:none!important}

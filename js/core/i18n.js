@@ -17,6 +17,7 @@
  };
  let language=preference==='auto'?automatic():supportedCode(preference);
  const templates=[
+  ['Ближайшее кафе: {cafe} · примерно {distance} км по прямой.','Nearest cafe: {cafe} · about {distance} km in a straight line.','Quán gần nhất: {cafe} · khoảng {distance} km theo đường thẳng.'],
   ['Найдено: {n} из {m}','Found: {n} of {m}','Tìm thấy: {n} / {m}'],
   ['Доступно в меню: {n}','Available dishes: {n}','Món hiện có: {n}'],
   ['Стол {n}','Table {n}','Bàn {n}'],
