@@ -112,13 +112,16 @@ try{
  assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','form reset updates header');
  w.Telegram={WebApp:{initData:'isolated-qa-only',initDataUnsafe:{user:{id:123,first_name:'Ибрахим',last_name:'Умма'}}}};
  const submitted=[];
+ let releaseOrder;
  w.ummaCafeRequests={request:async(url,payload)=>{
   submitted.push(payload);
+  await new Promise(resolve=>{releaseOrder=resolve;});
   return {ok:true,json:async()=>({ok:true,order:{id:'qa-order',orderNumber:1,totalVnd:50000},staffNotified:1})};
  }};
  for(const [mode,id] of [['delivery','tea'],['pickup','bread'],['dine_in','chicken']]){
   w.Telegram.WebApp.initDataUnsafe.user=mode==='pickup'?{id:777}:{id:123,first_name:'Ибрахим',last_name:'Умма'};
   d.getElementById('cafeCustomerName').value=mode==='dine_in'?'Гость':'';
+  if(mode==='dine_in')d.getElementById('cafeTable').value='2';
   modeButton(mode).click();
   d.querySelector('[data-add-product="'+id+'"]').click();
   assert.equal(orderType.value,mode,'adding food preserves header choice');
@@ -133,7 +136,21 @@ try{
    w.ummaDeliveryLocation={availability:()=> 'available',hasPoint:()=>true,getAddress:details=>details+'\nТочка доставки: 12.24,109.19',reset(){delete w.ummaDeliveryLocation;}};
    d.dispatchEvent(new w.Event('umma:delivery-location-change'));
   }
+  if(mode==='dine_in'){
+   d.getElementById('cafeTable').value='';
+   const before=submitted.length;footer.click();
+   assert.equal(submitted.length,before,'table is required before sending dine-in order');
+   assert.match(d.getElementById('cafeOrderResult').textContent,/номер стола/);
+   d.getElementById('cafeTable').value='6';
+  }
   footer.click();footer.click();assert.equal(footer.disabled,true,'single order submission locks footer');
+  const draft=d.getElementById('cafeCartTotal').textContent;
+  assert.equal(d.getElementById('cafeCustomerNote').disabled,true,'draft fields locked during request');
+  d.querySelector('#cafeCartItems [data-cart-change="1"]').click();
+  modeButton('pickup').click();
+  assert.equal(orderType.value,mode,'mode cannot change while submitting');
+  assert.equal(d.getElementById('cafeCartTotal').textContent,draft,'quantity cannot change while submitting');
+  releaseOrder();
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(submitted.at(-1).orderType,mode,'selected mode reaches actual order handler payload');
   assert.equal(submitted.at(-1).customerName,mode==='pickup'?'Telegram ID: 777':mode==='dine_in'?'Гость':'Ибрахим Умма');
@@ -142,9 +159,31 @@ try{
   assert.equal(submitted.at(-1).paymentTiming,mode==='delivery'?'on_delivery':'now');
   assert.equal(modeButton('pickup').getAttribute('aria-pressed'),'true','successful order resets selection');
   assert.equal(address.required,false);assert.equal(d.getElementById('cafeStickyOrder').hidden,true,'success removes submit footer');
-  d.getElementById('cafeCheckoutBack').click();
+  assert.equal(d.getElementById('cafeOrderResult').dataset.state,'success');
+  assert.equal(d.getElementById('cafeResultActions').hidden,false);
+  assert.equal(d.getElementById('cafeEmptyOrder').hidden,true,'success does not show empty-cart warning');
+  assert.equal(d.getElementById('cafeCustomerNote').disabled,false,'fields restored after request');
+  if(mode==='dine_in')assert.match(submitted.at(-1).customerNote,/Стол №6/,'table reaches kitchen comment');
+  d.getElementById('cafeResultMenu').click();
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
+ // Empty checkout and failed request stay recoverable without losing the draft.
+ d.querySelector('[data-add-product="bread"]').click();footer.click();
+ assert.equal(d.getElementById('cafeOrderResult').hidden,true,'old success cleared for new draft');
+ d.querySelector('#cafeCartItems [data-cart-change="-1"]').click();
+ assert.equal(d.getElementById('cafeEmptyOrder').hidden,false);
+ d.getElementById('cafeEmptyOrderBack').click();assert.equal(w.ummaCafe.isCheckoutOpen(),false);
+ d.querySelector('[data-add-product="bread"]').click();footer.click();
+ w.ummaCafeRequests.request=async()=>{throw new w.Error('Сеть недоступна');};
+ const failedTotal=d.getElementById('cafeCartTotal').textContent;footer.click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(d.getElementById('cafeOrderResult').dataset.state,'error');
+ assert.match(d.getElementById('cafeOrderResult').textContent,/Сеть недоступна/);
+ assert.equal(d.getElementById('cafeCartTotal').textContent,failedTotal,'failure preserves cart');
+ assert.equal(footer.disabled,false,'failure re-enables retry');
+ assert.equal(d.getElementById('cafeCustomerNote').disabled,false);
+ d.querySelector('#cafeCartItems [data-cart-change="-1"]').click();
+ d.getElementById('cafeEmptyOrderBack').click();
  products.push({id:'baklava',sku:'UMMA-CAFE-BAKLAVA-ALMOND',name_ru:'Пахлава с миндалем',price_vnd:null,catalog_preview:true});
  await w.ummaCafe.refreshMenu();
  const previewCard=d.querySelector('[data-product-card="baklava"]');

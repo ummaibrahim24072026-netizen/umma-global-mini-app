@@ -18,7 +18,7 @@ try{
  assert.equal(gps,0,'single cafe needs no GPS');assert.equal($('cafeLocationDetails').hidden,true);
  assert.match($('cafeLocationMessage').textContent,/UMMA Cafe/);
  d.querySelector('[data-add-product="soup"]').click();$('cafeStickyGoToOrder').click();
- assert.equal($('cafeContactDetails').open,false);assert.equal($('cafeNoteDetails').open,false);assert.equal($('cafeCheckoutItems').open,false);
+ assert.equal($('cafeContactDetails').open,false);assert.equal($('cafeNoteDetails').open,false);assert.equal($('cafeCheckoutItems').open,true);
  assert.match($('cafeContactSummary').textContent,/Ибрахим/);
  const mode=value=>$('cafeCheckoutModes').querySelector('[data-order-mode="'+value+'"]').click();
  mode('delivery');assert.equal($('cafeOrderType').value,'delivery');assert.equal($('cafeDeliveryLocation').hidden,false);assert.equal($('cafeDeliveryAddress').required,false);
@@ -30,7 +30,7 @@ try{
  $('cafeCustomerPhone').value='12345';$('cafeCustomerPhone').dispatchEvent(new w.Event('input'));
  assert.match($('cafeContactSummary').textContent,/Гость · 12345/);
  $('cafeNoteDetails').querySelector('summary').click();$('cafeCustomerNote').value='Соус отдельно';$('cafeCustomerNote').dispatchEvent(new w.Event('input'));assert.equal($('cafeNoteSummary').textContent,'Соус отдельно');
- $('cafeCheckoutItems').querySelector('summary').click();assert.equal($('cafeCheckoutItems').open,true);
+ $('cafeCheckoutItems').querySelector('summary').click();assert.equal($('cafeCheckoutItems').open,false);$('cafeCheckoutItems').querySelector('summary').click();assert.equal($('cafeCheckoutItems').open,true);
  $('cafeCartItems').querySelector('[data-cart-change="1"]').click();assert.match($('cafeCartTotal').textContent,/180/);
  $('cafeOrderForm').reset();await tick();assert.equal($('cafeContactDetails').open,false);assert.equal($('cafeNoteDetails').open,false);assert.match($('cafeContactSummary').textContent,/Ибрахим/);assert.equal($('cafeNoteSummary').textContent,'Необязательно');
  $('cafeCheckoutBack').click();

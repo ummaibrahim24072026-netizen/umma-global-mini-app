@@ -2,6 +2,25 @@
 (() => {
   'use strict';
   const rows = `
+Стол №1|Table 1|Bàn số 1
+Стол №2|Table 2|Bàn số 2
+Стол №3|Table 3|Bàn số 3
+Стол №4|Table 4|Bàn số 4
+Стол №5|Table 5|Bàn số 5
+Ваш стол|Your table|Bàn của bạn
+Выберите номер стола|Choose your table number|Chọn số bàn
+Стол №6 · сзади|Table 6 · at the back|Bàn số 6 · phía sau
+Столы 1–5 спереди, стол 6 сзади.|Tables 1–5 at the front, table 6 at the back.|Bàn 1–5 ở phía trước, bàn 6 ở phía sau.
+Выберите номер стола, чтобы мы знали, куда принести заказ.|Choose your table so we know where to serve your order.|Chọn số bàn để chúng tôi biết nơi mang món đến.
+Выберите блюда — заберите заказ в кафе.|Choose your meals and collect your order at the cafe.|Chọn món rồi nhận đơn tại quán.
+Выберите блюда — укажите свой стол при оформлении.|Choose your meals and select your table at checkout.|Chọn món rồi chọn bàn khi đặt hàng.
+Выберите блюда — адрес и доставку уточним при оформлении.|Choose your meals, then set your address and delivery at checkout.|Chọn món rồi điền địa chỉ và hình thức giao hàng khi đặt.
+В заказе пока нет блюд.|Your order is empty.|Đơn hàng chưa có món.
+Выбрать блюда|Choose meals|Chọn món
+Повторить загрузку меню|Reload menu|Tải lại thực đơn
+Наличными при получении в кафе или переводом после оформления.|Pay cash on collection or transfer after placing the order.|Thanh toán tiền mặt khi nhận tại quán hoặc chuyển khoản sau khi đặt.
+Наличными в кафе или переводом после оформления.|Pay cash at the cafe or transfer after placing the order.|Thanh toán tiền mặt tại quán hoặc chuyển khoản sau khi đặt.
+Укажите адрес на карте, чтобы проверить возможность доставки.|Select your address on the map to check delivery availability.|Chọn địa chỉ trên bản đồ để kiểm tra khả năng giao hàng.
 Сейчас работает UMMA Cafe. UMMA Market и B2B — в разработке. Остальные направления готовятся к запуску.|UMMA Cafe is open. UMMA Market and B2B are in development. Other ventures are being prepared for launch.|UMMA Cafe đang hoạt động. UMMA Market và B2B đang được phát triển. Các lĩnh vực khác đang được chuẩn bị ra mắt.
 Арабский оригинал, перевод Кулиева и тафсир ас-Саади|Arabic text, Kuliev’s Russian translation and as-Saadi’s tafsir|Bản gốc Ả Rập, bản dịch tiếng Nga Kuliev và tafsir as-Saadi
 Блюда и напитки|Meals and drinks|Món ăn và đồ uống
