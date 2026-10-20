@@ -10,7 +10,7 @@ const products=[
 ];
 const inventory=products.map((p,i)=>({product_id:p.id,location_id:'cafe',quantity:i===2?0:2,reserved_quantity:0,is_available:true}));
 w.fetch=async()=>({ok:true,json:async()=>({ok:true,products,inventory,inventoryControlEnabled:true,location:{id:'cafe',name:'UMMA'}})});
-const search=query=>{d.getElementById('cafeMenuSearch').value=query;d.getElementById('cafeMenuSearch').dispatchEvent(new w.Event('input'));};
+const search=query=>{if(d.getElementById('cafeMenuSearchPanel').hidden)d.getElementById('cafeSearchToggle').click();d.getElementById('cafeMenuSearch').value=query;d.getElementById('cafeMenuSearch').dispatchEvent(new w.Event('input'));};
 try{
  w.Telegram={WebApp:{initDataUnsafe:{user:{id:123,first_name:'Ибрахим',last_name:'Умма'}}}};
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));
@@ -167,6 +167,8 @@ try{
   d.getElementById('cafeResultMenu').click();
  }
  assert.equal(submitted.length,3,'isolated orders only; no live endpoint called');
+ search('невозможное название');assert.equal(d.getElementById('cafeSearchToggle').getAttribute('aria-expanded'),'true');
+ d.getElementById('cafeSearchToggle').click();assert.equal(d.getElementById('cafeMenuSearchPanel').hidden,true);assert.equal(d.getElementById('cafeMenuSearch').value,'');assert.ok(d.querySelector('[data-add-product="bread"]'),'closing search restores the menu');
  // Empty checkout and failed request stay recoverable without losing the draft.
  d.querySelector('[data-add-product="bread"]').click();footer.click();
  assert.equal(d.getElementById('cafeOrderResult').hidden,true,'old success cleared for new draft');

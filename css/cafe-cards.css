@@ -36,3 +36,17 @@
 #cafePage .cafe-product{scroll-margin-top:82px}
 /* The inline quantity control already communicates selection without a second badge. */
 #cafePage .cafe-product-selection{display:none!important}
+
+@container umma-shell (max-width:699px){
+ #cafePage .cafe-category{min-height:38px;padding:8px 12px;border-radius:12px;font-size:12px}
+ #cafePage .cafe-products{gap:10px}
+ #cafePage .cafe-product{padding:10px;gap:4px;border-radius:20px}
+ #cafePage .cafe-product-media,#cafePage .cafe-product-no-photo .cafe-product-placeholder{width:calc(100% + 20px);margin:-10px -10px 4px;border-radius:19px 19px 0 0}
+ #cafePage .cafe-product h3{font-size:14px;line-height:1.35;min-height:2.7em}
+ #cafePage .cafe-product-top{min-height:16px}
+ #cafePage .cafe-product-weight{font-size:11px}
+ #cafePage .cafe-product-description summary{min-height:36px;padding:6px 0}
+ #cafePage .cafe-product-bottom{gap:6px;padding-top:4px}
+ #cafePage .cafe-product-bottom>.cafe-product-price{font-size:14px}
+ #cafePage .cafe-halal-badge{width:30px;height:30px;top:8px;right:8px}
+}
