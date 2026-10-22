@@ -7,7 +7,7 @@
   const screenIds = [
     "adminPage","adminUsersPage","locationAdminPage","cafeProductsAdminPage",
     "cafeStaffAdminPage","cafeWaiterPage","cafeKitchenPage",
-    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","marketShopPage","b2bPage","servicesPage"
+    "cafeInventoryPage","cafePage","cafeOrdersPage","cafeAccountingPage","marketPage","marketShopPage","b2bPage","rentPage","servicesPage"
   ];
   const backIds = new Set([
     "adminBack","adminUsersBack","locationAdminBack","cafeProductsAdminBack",
@@ -46,6 +46,7 @@
     if(typeof setActiveNav==="function")setActiveNav(state.screen==="home"?"home":state.screen==="servicesPage"?"more":state.screen==="cafeOrdersPage"?"orders":"cafe");
   }
   function back(){
+    if(window.ummaRent?.back())return true;
     if(window.ummaQuran?.isOpen())return window.ummaQuran.back();
     if(window.ummaIslamReminders?.isOpen())return window.ummaIslamReminders.back();
     if(window.ummaIslamLibrary?.isOpen())return window.ummaIslamLibrary.back();
