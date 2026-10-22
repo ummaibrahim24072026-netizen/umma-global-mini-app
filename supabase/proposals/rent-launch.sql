@@ -6,13 +6,13 @@ CREATE TABLE public.rent_staff (
 );
 CREATE TABLE public.rent_vehicles (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL CHECK(length(trim(name)) BETWEEN 2 AND 120),
- plate text NOT NULL UNIQUE CHECK(length(trim(plate)) BETWEEN 2 AND 40),
+ plate text UNIQUE CHECK(length(trim(plate)) BETWEEN 2 AND 40),
  description text NOT NULL DEFAULT '' CHECK(length(description)<=3000),
  specs text NOT NULL DEFAULT '' CHECK(length(specs)<=500),
  pickup text NOT NULL CHECK(length(trim(pickup)) BETWEEN 3 AND 500),
  accessories text NOT NULL DEFAULT '' CHECK(length(accessories)<=500),
  condition text NOT NULL DEFAULT 'ready' CHECK(condition IN ('ready','maintenance','retired')),
- published boolean NOT NULL DEFAULT false, version integer NOT NULL DEFAULT 1,
+ published boolean NOT NULL DEFAULT false CHECK(NOT published OR plate IS NOT NULL), version integer NOT NULL DEFAULT 1,
  created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE public.rent_bookings (
@@ -131,9 +131,9 @@ BEGIN
    SELECT * INTO v FROM public.rent_vehicles WHERE id=(p_data->>'id')::uuid FOR UPDATE;
    IF v.id IS NULL OR v.version IS DISTINCT FROM (p_data->>'version')::integer THEN RAISE EXCEPTION 'RENT_STALE';END IF;
    IF (p_data->>'published')::boolean AND NOT EXISTS(SELECT 1 FROM public.rent_media WHERE vehicle_id=v.id AND uploaded) THEN RAISE EXCEPTION 'RENT_PHOTOS';END IF;
-   UPDATE public.rent_vehicles SET name=trim(p_data->>'name'),plate=upper(trim(p_data->>'plate')),description=coalesce(p_data->>'description',''),specs=coalesce(p_data->>'specs',''),pickup=trim(p_data->>'pickup'),accessories=coalesce(p_data->>'accessories',''),condition=p_data->>'condition',published=(p_data->>'published')::boolean,version=version+1,updated_at=now() WHERE id=v.id RETURNING * INTO v;
+   UPDATE public.rent_vehicles SET name=trim(p_data->>'name'),plate=upper(nullif(trim(p_data->>'plate'),'')),description=coalesce(p_data->>'description',''),specs=coalesce(p_data->>'specs',''),pickup=trim(p_data->>'pickup'),accessories=coalesce(p_data->>'accessories',''),condition=p_data->>'condition',published=(p_data->>'published')::boolean,version=version+1,updated_at=now() WHERE id=v.id RETURNING * INTO v;
   ELSE
-   INSERT INTO public.rent_vehicles(name,plate,description,specs,pickup,accessories)VALUES(trim(p_data->>'name'),upper(trim(p_data->>'plate')),coalesce(p_data->>'description',''),coalesce(p_data->>'specs',''),trim(p_data->>'pickup'),coalesce(p_data->>'accessories',''))RETURNING * INTO v;
+   INSERT INTO public.rent_vehicles(name,plate,description,specs,pickup,accessories)VALUES(trim(p_data->>'name'),upper(nullif(trim(p_data->>'plate'),'')),coalesce(p_data->>'description',''),coalesce(p_data->>'specs',''),trim(p_data->>'pickup'),coalesce(p_data->>'accessories',''))RETURNING * INTO v;
   END IF;
   result_:=jsonb_build_object('ok',true,'vehicle',to_jsonb(v));
  ELSIF p_action IN ('media_start','media_finish','media_order') THEN

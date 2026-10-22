@@ -21,6 +21,9 @@ try{
  await db.exec(readFileSync('supabase/proposals/rent-launch.sql','utf8'));
  let v=(await op(1,'vehicle_save',{name:'QA Honda',plate:'QA-001',pickup:'QA Nha Trang',specs:'125 cc',condition:'ready',published:false})).vehicle;
  ok(!v.published,'starts as draft');
+ const incomplete=(await op(1,'vehicle_save',{name:'QA incomplete',plate:'',pickup:'QA location'})).vehicle;ok(incomplete.plate===null&&!incomplete.published,'missing registration is an explicit draft');
+ await reject(op(1,'vehicle_save',{...incomplete,published:true}),/RENT_PHOTOS/);
+
  await reject(op(2,'vehicle_save',{name:'forged'}),/RENT_ACCESS/);
  await reject(op(1,'vehicle_save',{...v,published:true}),/RENT_PHOTOS/);
  const photo=await media(1,'catalog',v.id);

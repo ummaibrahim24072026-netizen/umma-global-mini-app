@@ -7,7 +7,7 @@ The catalogue intentionally starts empty. No real vehicles, registration numbers
 ## Prepare inventory
 
 1. As super admin, open Manage bikes → Add bike.
-2. Enter model, registration, specifications, pickup/return location and accessories. Save as draft.
+2. Enter model, specifications, pickup/return location and accessories. Registration can remain empty in a draft, but must be entered before publication. Save as draft.
 3. Upload up to 15 JPEG/PNG/WebP photos (10 MB each), choose a cover.
 4. Enable Publish and save. Maintenance and retired bikes remain unavailable for new bookings.
 5. To delegate, open Staff and grant the employee's Telegram ID rental access. The user must have opened the app previously. Café permissions do not grant rental permissions.
