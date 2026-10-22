@@ -30,7 +30,8 @@ CREATE TABLE public.rent_bookings (
  deposit_received boolean NOT NULL DEFAULT false, deposit_returned boolean NOT NULL DEFAULT false,
  status text NOT NULL DEFAULT 'reserved' CHECK(status IN ('reserved','confirmed','active','returned','closed','cancelled','expired')),
  expires_at timestamptz NOT NULL DEFAULT now()+interval '30 minutes',
- vehicle_snapshot jsonb NOT NULL, terms_version text NOT NULL DEFAULT 'rent-v2',
+ vehicle_snapshot jsonb NOT NULL, terms_version text NOT NULL DEFAULT 'rent-v3',
+ terms_snapshot jsonb NOT NULL DEFAULT '{}',payment_method text NOT NULL DEFAULT 'cash' CHECK(payment_method IN ('cash','qr','bank_transfer')),driver_declared boolean NOT NULL DEFAULT false,
  checkout jsonb, checkin jsonb, checkout_accepted boolean NOT NULL DEFAULT false, checkin_accepted boolean NOT NULL DEFAULT false,
  settlement jsonb, settlement_accepted boolean NOT NULL DEFAULT false,
  issued_at timestamptz,returned_at timestamptz, closed_at timestamptz,
@@ -174,7 +175,8 @@ BEGIN
   result_:=jsonb_build_object('ok',true,'media',to_jsonb(m));
  ELSIF p_action='book' THEN
   st:=(p_data->>'starts_at')::timestamptz;en:=(p_data->>'ends_at')::timestamptz;
-  IF st IS NULL OR en IS NULL OR st<now()-interval '5 minutes' OR st>now()+interval '180 days' OR en<=st OR en-st>interval '90 days' OR p_data->>'terms_version' IS DISTINCT FROM 'rent-v2' OR p_data->>'currency' NOT IN ('VND','USD') THEN RAISE EXCEPTION 'RENT_DATES';END IF;
+  IF st IS NULL OR en IS NULL OR st<now()-interval '5 minutes' OR st>now()+interval '180 days' OR en<=st OR en-st>interval '90 days' OR p_data->>'terms_version' IS DISTINCT FROM 'rent-v3' OR p_data->>'currency' NOT IN ('VND','USD') THEN RAISE EXCEPTION 'RENT_DATES';END IF;
+  IF p_data->>'driver_declared' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'RENT_DRIVER';END IF;
   IF (SELECT count(*) FROM public.rent_bookings WHERE customer_id=p_actor AND created_at>now()-interval '1 day')>=10 THEN RAISE EXCEPTION 'RENT_LIMIT';END IF;
   SELECT * INTO v FROM public.rent_vehicles WHERE id=(p_data->>'vehicle_id')::uuid FOR UPDATE;
   IF v.id IS NULL OR NOT v.published OR v.condition<>'ready' THEN RAISE EXCEPTION 'RENT_UNAVAILABLE';END IF;
@@ -183,8 +185,8 @@ BEGIN
   amount_:=CASE p_data->>'currency' WHEN 'USD' THEN v.deposit_usd ELSE v.deposit_vnd END;
   IF amount_ IS NULL OR (p_data->>'expected_daily_vnd')::integer IS DISTINCT FROM v.daily_vnd OR (p_data->>'expected_deposit')::numeric IS DISTINCT FROM amount_ THEN RAISE EXCEPTION 'RENT_PRICE';END IF;
   days_:=ceil(extract(epoch FROM en-st)/86400.0);
-  INSERT INTO public.rent_bookings(vehicle_id,customer_id,customer_name,phone,starts_at,ends_at,days,daily_vnd,total_vnd,currency,deposit_amount,vehicle_snapshot)
-  VALUES(v.id,p_actor,trim(p_data->>'customer_name'),trim(p_data->>'phone'),st,en,days_,v.daily_vnd,days_*v.daily_vnd,p_data->>'currency',amount_,to_jsonb(v)-'published'-'version')RETURNING * INTO b;
+  INSERT INTO public.rent_bookings(vehicle_id,customer_id,customer_name,phone,starts_at,ends_at,days,daily_vnd,total_vnd,currency,deposit_amount,vehicle_snapshot,payment_method,driver_declared,terms_snapshot)
+  VALUES(v.id,p_actor,trim(p_data->>'customer_name'),trim(p_data->>'phone'),st,en,days_,v.daily_vnd,days_*v.daily_vnd,p_data->>'currency',amount_,to_jsonb(v)-'published'-'version',coalesce(p_data->>'payment_method','cash'),true,public.rent_terms())RETURNING * INTO b;
  ELSIF p_action IN ('confirm','cancel','payment','inspection','accept_checkout','accept_checkin','issue','return','settle','accept_settlement','refund','extend','cancel_paid','reset_inspection') THEN
   -- Always lock vehicle before booking. All availability-changing operations share this order.
   SELECT * INTO b FROM public.rent_bookings WHERE id=(p_data->>'id')::uuid;
@@ -196,9 +198,12 @@ BEGIN
    IF b.status<>'reserved' OR b.expires_at<=now() OR NOT v.published OR v.condition<>'ready' OR NOT public.rent_available(v.id,b.starts_at,b.ends_at,b.id) THEN RAISE EXCEPTION 'RENT_UNAVAILABLE';END IF;
    b.status:='confirmed';
   ELSIF p_action='cancel' THEN
+   IF EXISTS(SELECT 1 FROM public.rent_payment_intents WHERE booking_id=b.id AND status='review') THEN RAISE EXCEPTION 'RENT_PAYMENT_PENDING';END IF;
+   UPDATE public.rent_payment_intents SET status='void' WHERE booking_id=b.id AND status='pending';
    IF b.status NOT IN ('reserved','confirmed') OR b.paid_vnd>0 OR b.deposit_received THEN RAISE EXCEPTION 'RENT_STATE';END IF;
    b.status:='cancelled';
   ELSIF p_action='cancel_paid' THEN
+   IF EXISTS(SELECT 1 FROM public.rent_payment_intents WHERE booking_id=b.id AND status IN ('pending','review')) THEN RAISE EXCEPTION 'RENT_PAYMENT_PENDING';END IF;
    IF b.status<>'confirmed' OR (b.paid_vnd=0 AND NOT b.deposit_received) OR length(trim(coalesce(p_data->>'reference','')))<3 OR length(p_data->>'reference')>300 OR p_data->>'fully_refunded' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'RENT_REFUND';END IF;
    b.status:='cancelled';b.deposit_returned:=b.deposit_received;b.closed_at:=now();
   ELSIF p_action='reset_inspection' THEN
@@ -211,6 +216,9 @@ BEGIN
    amount_:=(p_data->>'amount')::numeric;ref_:=trim(p_data->>'reference');
    IF ref_ IS NULL OR length(ref_) NOT BETWEEN 3 AND 300 THEN RAISE EXCEPTION 'RENT_PAYMENT';END IF;
    IF p_data->>'kind'='rental' THEN
+    IF EXISTS(SELECT 1 FROM public.rent_payment_intents WHERE booking_id=b.id AND status IN ('pending','review')) THEN RAISE EXCEPTION 'RENT_PAYMENT_PENDING';END IF;
+    IF coalesce(p_data->>'method','cash')<>'cash' THEN RAISE EXCEPTION 'RENT_PAYMENT';END IF;
+    IF p_data?'cash_received_vnd' AND ((p_data->>'cash_received_vnd')::numeric<(p_data->>'amount')::numeric OR (p_data->>'cash_received_vnd')::numeric<>trunc((p_data->>'cash_received_vnd')::numeric)) THEN RAISE EXCEPTION 'RENT_PAYMENT';END IF;
     IF amount_ IS NULL OR amount_<=0 OR amount_<>trunc(amount_) OR b.paid_vnd+amount_>b.total_vnd THEN RAISE EXCEPTION 'RENT_PAYMENT';END IF;
     b.paid_vnd:=b.paid_vnd+amount_;
    ELSIF p_data->>'kind'='deposit' THEN
@@ -261,7 +269,7 @@ BEGIN
   UPDATE public.rent_bookings SET starts_at=b.starts_at,ends_at=b.ends_at,days=b.days,total_vnd=b.total_vnd,paid_vnd=b.paid_vnd,deposit_received=b.deposit_received,deposit_returned=b.deposit_returned,status=b.status,checkout=b.checkout,checkin=b.checkin,checkout_accepted=b.checkout_accepted,checkin_accepted=b.checkin_accepted,settlement=b.settlement,settlement_accepted=b.settlement_accepted,issued_at=b.issued_at,returned_at=b.returned_at,closed_at=b.closed_at,version=version+1,updated_at=now() WHERE id=b.id RETURNING * INTO b;
  ELSE RAISE EXCEPTION 'RENT_INVALID';END IF;
  IF b.id IS NOT NULL AND p_action NOT IN ('media_start','media_finish','media_order') THEN
-  INSERT INTO public.rent_events(booking_id,actor_id,action,detail)VALUES(b.id,p_actor,p_action,p_data);
+  INSERT INTO public.rent_events(booking_id,actor_id,action,detail)VALUES(b.id,p_actor,p_action,p_data||CASE WHEN p_action='payment' AND p_data->>'kind'='rental' THEN jsonb_build_object('method','cash','change_vnd',coalesce((p_data->>'cash_received_vnd')::numeric,(p_data->>'amount')::numeric)-(p_data->>'amount')::numeric) ELSE '{}'::jsonb END);
   result_:=jsonb_build_object('ok',true,'booking',to_jsonb(b));
  END IF;
  INSERT INTO public.rent_operations(actor_id,request_id,action,payload,result)VALUES(p_actor,p_request,p_action,p_data,result_);

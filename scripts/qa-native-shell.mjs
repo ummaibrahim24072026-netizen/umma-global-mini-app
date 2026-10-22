@@ -33,7 +33,7 @@ try{
  d.querySelector('.nav-item[data-page="more"]').click();await tick();assert.equal(d.getElementById('servicesPage').hidden,false);assert.equal(d.querySelectorAll('#nativeDirectory [data-service]').length,38);assert.equal(d.querySelectorAll('#nativeDirectory [data-service=quran]').length,0);assert.equal(d.querySelectorAll('#nativeDirectory [data-service=islam]').length,1);assert.match(d.getElementById('servicesPage').textContent,/готовятся/);
  d.querySelector('[data-service=travel]').click();await tick();assert.equal(d.querySelector('.native-service-dialog').open,true);nativeBack();assert.equal(d.querySelector('.native-service-dialog').open,false);assert.equal(d.getElementById('servicesPage').hidden,false);
  // Exercise every planned destination, not just the original travel stub.
- assert.deepEqual([...d.querySelectorAll('.services-grid [data-service]')].map(b=>b.dataset.service),['cafe','market','b2b','education','tours','hotels']);
+ assert.deepEqual([...d.querySelectorAll('.services-grid [data-service]')].map(b=>b.dataset.service),['cafe','rent','market','b2b','education','tours','hotels']);
  for(const item of w.ummaDirections.filter(item=>!item.available)){
   d.querySelector('#nativeDirectory [data-service="'+item.id+'"]').click();
   const sheet=d.querySelector('.native-service-dialog');assert.equal(sheet.open,true,item.id+' opens');

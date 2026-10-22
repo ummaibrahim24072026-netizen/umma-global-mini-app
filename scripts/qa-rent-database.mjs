@@ -19,6 +19,7 @@ async function inspect(b,stage,full=true){return(await op(1,'inspection',patch(b
 try{
  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create table telegram_users(telegram_id bigint primary key,role text,is_active boolean default true);insert into telegram_users values(1,'super_admin',true),(2,'user',true),(3,'user',true),(4,'employee',true),(5,'user',false);create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text,metadata jsonb);grant usage on schema public,storage to service_role;grant select on telegram_users,storage.objects to service_role;`);
  await db.exec(readFileSync('supabase/proposals/rent-launch.sql','utf8'));
+ await db.exec(readFileSync('supabase/proposals/rent-payments.sql','utf8'));
  let v=(await op(1,'vehicle_save',{name:'QA Honda',plate:'QA-001',pickup:'QA Nha Trang',specs:'125 cc',condition:'ready',published:false})).vehicle;
  ok(!v.published,'starts as draft');
  const incomplete=(await op(1,'vehicle_save',{name:'QA incomplete',plate:'',pickup:'QA location'})).vehicle;ok(incomplete.plate===null&&!incomplete.published,'missing registration is an explicit draft');
@@ -31,7 +32,7 @@ try{
  const cat=(await q('select rent_catalog() r')).rows[0].r;
  ok(cat.vehicles.length===1&&!('plate' in cat.vehicles[0]),'public catalogue hides plate and customer records');
  const clock=Date.now();const start=new Date(clock+60000).toISOString(),end=new Date(clock+86460000).toISOString();
- const data={vehicle_id:v.id,customer_name:'QA client',phone:'00000000',starts_at:start,ends_at:end,currency:'VND',terms_version:'rent-v2',expected_daily_vnd:400000,expected_deposit:5000000,total_vnd:1};
+ const data={vehicle_id:v.id,customer_name:'QA client',phone:'00000000',starts_at:start,ends_at:end,currency:'VND',terms_version:'rent-v3',driver_declared:true,payment_method:'cash',expected_daily_vnd:400000,expected_deposit:5000000,total_vnd:1};
  const key=randomUUID();let b=(await op(2,'book',data,key)).booking;
  ok(b.total_vnd===400000&&Number(b.deposit_amount)===5000000,'server-owned price and deposit');
  ok((await op(2,'book',data,key)).replayed,'response loss is idempotent');
@@ -107,6 +108,31 @@ try{
  await op(1,'vehicle_save',{...duke,daily_vnd:1300000,deposit_usd:550});
  expensive=(await op(1,'extend',patch(expensive,{ends_at:new Date(new Date(expensive.ends_at).getTime()+86400000).toISOString()}))).booking;
  ok(expensive.total_vnd===2400000&&Number(expensive.deposit_amount)===500,'existing booking and extension retain agreed prices after catalogue change');
+
+ const pay=async(actor,action,d,key=randomUUID())=>(await q('select rent_payment_operation($1,$2,$3,$4) r',[actor,key,action,JSON.stringify(d)])).rows[0].r;
+ const pk=randomUUID(),pd={id:expensive.id,method:'qr'};const invoice=(await pay(3,'pay_prepare',pd,pk)).intent;
+ ok(invoice.amount_vnd===2400000&&invoice.reference.startsWith('UMMAR'),'invoice uses exact outstanding rent and distinct rental reference');
+ ok((await pay(3,'pay_prepare',pd,pk)).replayed,'lost invoice response reuses operation');
+ ok((await pay(3,'pay_prepare',{...pd,method:'bank_transfer'})).intent.id===invoice.id,'one outstanding invoice even if payment method changes');
+ await reject(pay(2,'pay_prepare',pd),/RENT_ACCESS/);await reject(q('select rent_payment_state(2,$1)',[expensive.id]),/RENT_ACCESS/);
+ await reject(op(1,'payment',patch(expensive,{kind:'rental',amount:2400000,reference:'duplicate cash'})),/RENT_PAYMENT_PENDING/);
+ let proof=(await pay(3,'pay_proof_start',{intent_id:invoice.id,mime:'image/jpeg',size_bytes:123})).proof;
+ await reject(pay(3,'pay_proof_finish',{proof_id:proof.id}),/RENT_UPLOAD/);
+ await q('insert into storage.objects(bucket_id,name,metadata)values($1,$2,$3)',['rent-payments',proof.path,JSON.stringify({size:123,mimetype:'image/jpeg'})]);
+ const finishKey=randomUUID();await pay(3,'pay_proof_finish',{proof_id:proof.id},finishKey);ok((await pay(3,'pay_proof_finish',{proof_id:proof.id},finishKey)).replayed,'receipt finalization replay');
+ expensive=(await q('select rent_detail(3,$1) r',[expensive.id])).rows[0].r.booking;
+ ok(expensive.paid_vnd===0,'a screenshot does not credit money');
+ await reject(op(3,'cancel',patch(expensive)),/RENT_PAYMENT_PENDING/);
+ await reject(pay(3,'pay_review',{proof_id:proof.id,version:expensive.version,accepted:true,funds_received:true,reference:'forged'}),/RENT_ACCESS/);
+ await reject(pay(1,'pay_review',{proof_id:proof.id,version:expensive.version,accepted:true,funds_received:false,reference:'not seen'}),/RENT_PAYMENT/);
+ await reject(pay(1,'pay_review',{proof_id:proof.id,version:expensive.version-1,accepted:true,funds_received:true,reference:'QA bank tx'}),/RENT_STALE/);
+ const reviewKey=randomUUID(),reviewData={proof_id:proof.id,version:expensive.version,accepted:true,funds_received:true,reference:'QA verified bank credit'};
+ const received=await pay(1,'pay_review',reviewData,reviewKey);ok(received.booking.paid_vnd===2400000,'verified bank receipt credits exact invoice amount');
+ ok((await pay(1,'pay_review',reviewData,reviewKey)).replayed,'bank confirmation replay is safe');
+ await reject(pay(1,'pay_review',{...reviewData,version:received.booking.version}),/RENT_STATE/);
+ await reject(pay(3,'pay_prepare',pd),/RENT_ALREADY_PAID/);
+ ok((await q("select count(*)::int n from rent_events where booking_id=$1 and action='payment'",[expensive.id])).rows[0].n===1,'one bank ledger event');
+ await q('set role anon');await reject(q('select * from rent_payment_proofs'),/permission denied/);await reject(q('select rent_payment_state(3,$1)',[expensive.id]),/permission denied/);await q('reset role');
 await reject(op(5,'book',data),/RENT_ACCESS/);
  await q("set role anon");await reject(q('select * from rent_bookings'),/permission denied/);await reject(q('select rent_catalog()'),/permission denied/);await q('reset role');
  ok((await q("select bool_and(relrowsecurity) ok from pg_class where relname like 'rent_%' and relkind='r'")).rows[0].ok,'all rental tables have RLS');

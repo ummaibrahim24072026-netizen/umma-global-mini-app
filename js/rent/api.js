@@ -31,5 +31,15 @@
   });
   await execute('media_finish',{media_id:m.id});try{sessionStorage.removeItem(storageKey);}catch{}onProgress(100);return m;
  }
- window.ummaRentApi={call,execute,upload};
+ async function uploadProof(file,intent_id,onProgress=()=>{}){
+  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||!file.size||file.size>5242880)throw Error('RENT_PROOF_SIZE');
+  const storageKey='umma-rent-proof:'+(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||'guest')+':'+[intent_id,file.name,file.size,file.lastModified].join(':');
+  let proof;try{proof=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
+  if(!proof){const r=await execute('pay_proof_start',{intent_id,mime:file.type,size_bytes:file.size});proof=r.proof;try{sessionStorage.setItem(storageKey,JSON.stringify(proof));}catch{}}
+  try{const r=await execute('pay_proof_finish',{proof_id:proof.id});sessionStorage.removeItem(storageKey);return r;}catch(e){if(e.message!=='RENT_UPLOAD'||!e.confirmed)throw e;}
+  const signed=await call('pay_upload_url',{proof_id:proof.id});
+  await new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('PUT',signed.url);xhr.setRequestHeader('Content-Type',file.type);xhr.timeout=120000;xhr.upload.onprogress=e=>{if(e.lengthComputable)onProgress(Math.round(e.loaded/e.total*100));};xhr.onload=()=>xhr.status>=200&&xhr.status<300?resolve():reject(Error('RENT_UPLOAD'));xhr.onerror=()=>reject(Error('RENT_NETWORK'));xhr.ontimeout=()=>reject(Error('RENT_NETWORK'));xhr.send(file);});
+  const r=await execute('pay_proof_finish',{proof_id:proof.id});try{sessionStorage.removeItem(storageKey);}catch{}return r;
+ }
+ window.ummaRentApi={call,execute,upload,uploadProof};
 })();

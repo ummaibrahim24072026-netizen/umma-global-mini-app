@@ -1,6 +1,6 @@
 # UMMA Rent launch
 
-Entry: More → Transport and delivery → Vehicle rental (UMMA Rent).
+Entry: Home → Motorbike rental, immediately after Cafe. Also available in More → Transport and delivery.
 
 The catalogue intentionally starts empty. No real vehicles, registration numbers, photos or customer records are seeded.
 
@@ -35,16 +35,23 @@ Selected files are stored in IndexedDB per Telegram account and inspection on th
 
 ## Notifications and payment limits
 
-Open booking/detail screens refresh every 15 seconds while visible and not being edited. Due/overdue return warnings and all status/payment events are visible in the section. This release does not send proactive Telegram messages when the app is closed, debit a bank account, automatically detect transfers or move/refund money. Staff records actual payments and refunds.
+Open booking/detail screens refresh every 15 seconds while visible and not being edited. Due/overdue return warnings and all status/payment events are visible in the section. Cash at pickup, Vietcombank VietQR and account transfer are implemented for rental payments. The customer selects a method in checkout. After staff confirms the booking, online payment issues one server-priced invoice with a unique UMMAR reference to the existing HALAL UMMA Vietcombank account. Customers upload a private receipt, and rental staff must verify the actual bank credit before confirming it. A receipt or opening a bank never marks rent paid. Pending transfers block duplicate cash collection until the invoice is reviewed or closed with a reason. Refunds and deposits remain actual staff transactions. No automatic bank matching or closed-app Telegram notification is claimed.
 
-Damage disputes must be settled with the customer before accepting settlement; no arbitrary automated deductions. This operational flow is not a claim about legal enforceability or a complete local rental contract.
+Damage disputes must be settled with the customer before accepting settlement; no arbitrary automated deductions. Terms add the 18+ rider declaration, appropriate valid driving licence, staff inspection of registration/insurance, helmets, incident handling and pre-handover cancellation/refund. Each new booking stores its accepted RU/EN/VI text and version. This operational flow is not a claim about legal enforceability or a complete local rental contract. Foreign-currency payment/pricing is restricted under Vietnam Circular 32/2013, consolidated 28/VBHN-NHNN (20 January 2026); the USD deposit settings require local validation or agreed VND deposits. App identifier 1-2-3 is not evidence of vehicle registration.
 
 ## Deployment
 
 - Database: `supabase/proposals/rent-launch.sql`, applied as `umma_rent_launch`.
+- Bank invoice schema: `supabase/proposals/rent-payments.sql`, applied as `rent_customer_checkout_payments`.
 - Edge: `supabase/functions/rent-service`, `verify_jwt=false` because all private actions independently validate Telegram HMAC, auth_date and active-account/role/ownership in SQL.
 - Server requires existing `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`. No secret keys in frontend.
 - Rental tables/RPCs are denied to anon/authenticated; service-role-only functions are SECURITY INVOKER. RLS is enabled with intentionally no direct-client policies.
 - Tests: `npm run test:rent` (database, UI, Edge); full regression suite: `npm test`.
 
 Before adding inventory: verify camera/photo selection, a video upload and customer/staff report acceptance on the actual phones. Production booking/payment data must not be populated with synthetic fixtures.
+
+Current inventory: KTM Duke, app number 1-2-3, 1,200,000 VND/day and 500 USD deposit; Yamaha NVX, 59-P3 165.65, 400,000 VND/day and 200 USD deposit. No synthetic bookings or bank transactions are inserted into production.
+
+Reference sources checked 22 October 2026:
+- https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-28-vbhn-nhnn-469219/63849.htm
+- https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44366/55281-1-2025471-47212-2025-tt-bca.pdf

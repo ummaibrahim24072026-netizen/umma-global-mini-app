@@ -18,10 +18,10 @@ const set=(name,val)=>{const el=d.querySelector('#rentPage [name="'+name+'"]');a
 const submit=()=>d.querySelector('#rentPage [data-form]').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
 try{
  for(const f of ['js/core/app.js','js/rent/api.js','js/rent/rent.js','js/core/navigation.js','js/core/native-shell.js'])w.eval(readFileSync(f,'utf8'));
- d.querySelector('[data-service="rent"]').click();await tick();assert.equal(w.ummaNavigation.current(),'rentPage');
+ assert.equal(d.querySelector('.services-grid [data-service=cafe]').nextElementSibling.dataset.service,'rent','rental follows Cafe on Home');d.querySelector('.services-grid [data-service="rent"]').click();await tick();assert.equal(w.ummaNavigation.current(),'rentPage');
  assert.match(d.querySelector('#rentPage').textContent,/400/);assert.equal(d.querySelector('#rentPage script'),null);assert.equal(d.querySelector('#rentPage a[href^="javascript:"]'),null);assert.ok([...d.querySelectorAll('#rentPage .rent-gallery img')].every(img=>img.src.startsWith('https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/public/rent-catalog/')),'catalogue photos without URL use their storage path');
  assert.equal(d.querySelector('[data-rent="vehicles"]'),null,'customer cannot access inventory');
- click('book');await tick();set('phone','000000000');set('terms',true);submit();submit();await tick();assert.equal(bookCalls,1,'double submit suppressed');assert.ok(d.querySelector('[data-form="book"]'),'unknown outcome retains draft');assert.equal(d.querySelector('[name="phone"]').value,'000000000');
+ click('book');await tick();set('phone','000000000');set('terms',true);set('driver_declared',true);submit();submit();await tick();assert.equal(bookCalls,1,'double submit suppressed');assert.ok(d.querySelector('[data-form="book"]'),'unknown outcome retains draft');assert.equal(d.querySelector('[name="phone"]').value,'000000000');
  submit();await tick();assert.equal(bookCalls,2);const booked=calls.filter(c=>c.action==='book');assert.equal(booked[0].request_id,booked[1].request_id,'same request key after response loss');assert.equal(bookings.length,1);assert.match(d.querySelector('#rentPage').textContent,/№1/);
  click('cancel');await tick();assert.equal(bookings[0].status,'cancelled');
  vehicle.daily_vnd=1200000;vehicle.deposit_usd=500;vehicle.deposit_vnd=null;click('catalog');await tick();click('book');await tick();
