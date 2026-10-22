@@ -10,9 +10,9 @@
   if(nav){el.classList.add('brand-nav-icon');el.setAttribute('aria-hidden','true');const crop=document.createElement('span');crop.className='nav-art';const image=document.createElement('img');image.alt='';image.width=1536;image.height=1024;image.decoding='async';const cell={home:[0,0],cafe:[1,0],orders:[2,0],bell:[0,1],more:[1,1]}[key];if(!cell)return;image.style.left=(-100*cell[0])+'%';image.style.top=(-100*cell[1])+'%';image.onload=()=>el.classList.add('nav-art-ready');image.onerror=()=>el.classList.remove('nav-art-ready');image.src='assets/illustrations/navigation-atlas-v2.webp';crop.append(image);el.append(crop);}
  });
  for(const [id,name] of Object.entries({staffEntryButton:'orders',staffKitchenEntryButton:'kitchen',staffCourierEntryButton:'courier',accountingEntryButton:'accounting'}))byId(id)?.querySelector('.admin-entry-icon')?.replaceChildren(icon(name));
- const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','marketPage','marketShopPage','b2bPage','servicesPage'];
+ const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','marketPage','marketShopPage','b2bPage','rentPage','servicesPage'];
  scenes.forEach(id=>byId(id)?.classList.add('native-screen'));
- const titles={marketPage:'UMMA Stock & Scan',marketShopPage:'UMMA Market',b2bPage:'UMMA B2B',home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Ещё',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
+ const titles={marketPage:'UMMA Stock & Scan',marketShopPage:'UMMA Market',b2bPage:'UMMA B2B',rentPage:'UMMA Rent',home:'UMMA Global',cafePage:'UMMA Cafe',cafeOrdersPage:'Мои заказы',servicesPage:'Ещё',adminPage:'Администрирование',adminUsersPage:'Пользователи',locationAdminPage:'Локации',cafeProductsAdminPage:'Меню кафе',cafeStaffAdminPage:'Сотрудники',cafeWaiterPage:'Приём заказов',cafeKitchenPage:'Работа в кафе',cafeInventoryPage:'Товары и остатки',cafeAccountingPage:'Учёт кафе'};
  const current=()=>scenes.find(id=>byId(id)&&!byId(id).hidden)||'home';
  let active='home',dialog=null;
  function syncScene(records=[]){
@@ -267,7 +267,7 @@
     "group": "transport",
     "title": "Прокат транспорта",
     "description": "Аренда автомобилей, мотоциклов и скутеров",
-    "available": false
+    "available": true
   },
   {
     "id": "logistics",
@@ -397,6 +397,7 @@
 
   if(key==='islam'){window.ummaIslam?.open();return;}
   if(key==='quran'){window.ummaQuran?.open();return;}
+  if(key==='rent'){window.ummaRent?.open();return;}
   if(key==='b2b'){window.ummaB2B?.open();return;}
   if(key==='market'){window.ummaMarket?.open();return;}
   if(key==='services'||key==='more'){
