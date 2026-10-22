@@ -12,7 +12,7 @@
  const date=v=>v?new Intl.DateTimeFormat(lang(),{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'medium',timeStyle:'short'}).format(new Date(v)):'—';
  const local=v=>new Date(new Date(v).getTime()+7*3600000).toISOString().slice(0,16);
  const iso=v=>new Date(v+':00+07:00').toISOString();
- const safe=v=>{try{const u=new URL(v,location.href);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch{return '';}};
+ const safe=v=>{if(typeof v!=='string'||!v.trim())return '';try{const u=new URL(v,location.href);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch{return '';}};
  const catalogURL=p=>'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/public/rent-catalog/'+p.split('/').map(encodeURIComponent).join('/');
  const btn=(action,label,extra='')=>`<button type="button" data-rent="${action}" ${extra}>${esc(label)}</button>`;
  const field=(label,name,value='',attrs='')=>`<label>${esc(label)}<input name="${name}" value="${esc(value)}" ${attrs}></label>`;
