@@ -202,7 +202,7 @@
 
   const countLabel=(amount,one,few,many)=>amount+" "+(amount%100>=11&&amount%100<=14?many:amount%10===1?one:amount%10>=2&&amount%10<=4?few:many);
 
-  const externalDelivery = () => orderType?.value === "delivery" && window.ummaDeliveryProviders?.external(byId("cafeCarrier")?.value);
+  const externalDelivery = () => orderType?.value === "delivery" && window.ummaDeliveryProviders?.external(byId("cafeCarrier")?.value,"cafe");
   function deliveryBlocked() { return orderType?.value === "delivery" && (externalDelivery()?!window.ummaDeliveryLocation?.hasPoint?.():window.ummaDeliveryLocation?.availability?.() !== "available"); }
   function renderCart() {
     fillTelegramCustomerName();
@@ -534,7 +534,8 @@
       button.setAttribute("aria-pressed", String(button.dataset.orderMode === orderType?.value));
     });
     if (addressLabel) addressLabel.hidden = !delivery;
-    if(byId("cafeCarrierLabel"))byId("cafeCarrierLabel").hidden=!delivery;
+    if(byId("cafeCarrier"))byId("cafeCarrier").value="umma";
+    if(byId("cafeCarrierLabel"))byId("cafeCarrierLabel").hidden=true;
     if(byId("cafeCarrierHint"))byId("cafeCarrierHint").textContent=externalDelivery()?"Курьера оформляете в выбранном сервисе после подтверждения оплаты товара. Доставка оплачивается отдельно.":"Курьер UMMA доставит заказ в пределах зоны обслуживания.";
     window.ummaDeliveryLocation?.setCarrierMode?.(!!externalDelivery());
     if (addressInput) addressInput.required = false;

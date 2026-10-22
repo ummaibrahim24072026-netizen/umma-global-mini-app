@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="css/design-system.css?v=2">
   <link rel="stylesheet" href="css/cafe-cards.css?v=2">
   <link rel="stylesheet" href="css/rent.css?v=2">
+  <link rel="stylesheet" href="css/courier-workspace.css?v=1">
 </head>
 
 <body>
@@ -695,7 +696,7 @@
               </label>
             </details>
             <label id="cafeTableLabel" hidden>Ваш стол<select id="cafeTable" name="table" disabled><option value="">Выберите номер стола</option><option value="1">Стол №1</option><option value="2">Стол №2</option><option value="3">Стол №3</option><option value="4">Стол №4</option><option value="5">Стол №5</option><option value="6">Стол №6 · сзади</option></select><small>Столы 1–5 спереди, стол 6 сзади.</small></label>
-            <label id="cafeCarrierLabel" hidden>Кто доставит заказ<select id="cafeCarrier" name="carrier"><option value="umma">Курьер UMMA</option><option value="grab">GrabExpress</option><option value="maxim">Maxim</option><option value="lalamove" disabled>Lalamove · Нячанг: проверяем доступность</option></select><small id="cafeCarrierHint">Курьер UMMA доставит заказ в пределах зоны обслуживания.</small></label>
+            <label id="cafeCarrierLabel" hidden>Кто доставит заказ<select id="cafeCarrier" name="carrier"><option value="umma">Курьер UMMA</option></select><small id="cafeCarrierHint">Курьер UMMA доставит заказ в пределах зоны обслуживания.</small></label>
             <div id="cafeDeliveryLocation" class="cafe-delivery-location" hidden>
               <strong>Куда доставить?</strong>
               <button type="button" id="cafeDeliveryMapOpen" class="cafe-location-button">Указать на карте</button>
@@ -872,20 +873,21 @@
 <script src="js/admin/users-events.js?v=3"></script>
 
 <!-- CAFE -->
+<script src="js/cafe/kiosk-admin.js?v=1"></script>
 <script src="js/cafe/order-requests.js?v=3"></script>
 <script src="js/maps/umma-maps.js?v=3"></script>
 <script src="js/maps/delivery-zone.js?v=1"></script>
 <script src="js/maps/delivery-location.js?v=10"></script>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/cafe/payment.js?v=9"></script>
-<script src="js/delivery/providers.js?v=4"></script>
-<script src="js/cafe/cafe.js?v=80"></script>
+<script src="js/delivery/providers.js?v=5"></script>
+<script src="js/cafe/cafe.js?v=81"></script>
 <script src="js/cafe/notifications.js?v=4"></script>
-<script src="js/cafe/courier-desk.js?v=1"></script>
+<script src="js/cafe/courier-desk.js?v=2"></script>
 <script src="js/cafe/courier-workflow.js?v=7"></script>
 <script src="js/cafe/delivery-tracking.js?v=6"></script>
 <script src="js/cafe/delivery-chat.js?v=4"></script>
-<script src="js/cafe/kitchen.js?v=74"></script>
+<script src="js/cafe/kitchen.js?v=75"></script>
   <script src="js/cafe/kitchen-live.js?v=5"></script>
 <script src="js/maps/courier-route.js?v=9"></script>
 <script src="js/cafe/test-mode.js?v=13"></script>

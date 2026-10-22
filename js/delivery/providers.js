@@ -9,10 +9,10 @@
   });
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const t = (ru,en,vi) => { const l=window.ummaI18n?.locale?.()||'ru'; return l.startsWith('vi')?vi:l.startsWith('en')?en:ru; };
-  function options() {
-    return Object.entries(providers).map(([id,p])=>`<option value="${id}" ${p.enabled?'':'disabled'}>${esc(id==='umma'?t(p.name,'UMMA courier','Tài xế UMMA'):p.name)}${p.enabled?'':esc(t(' · Нячанг: проверяем доступность',' · Nha Trang: checking availability',' · Nha Trang: đang kiểm tra'))}</option>`).join('');
+  function options(scope='market') {
+    return Object.entries(providers).filter(([id])=>scope!=='cafe'||id==='umma').map(([id,p])=>`<option value="${id}" ${p.enabled?'':'disabled'}>${esc(id==='umma'?t(p.name,'UMMA courier','Tài xế UMMA'):p.name)}${p.enabled?'':esc(t(' · Нячанг: проверяем доступность',' · Nha Trang: checking availability',' · Nha Trang: đang kiểm tra'))}</option>`).join('');
   }
-  function external(id) { return id !== 'umma' && providers[id]?.enabled === true; }
+  function external(id,scope='market') { return scope !== 'cafe' && id !== 'umma' && providers[id]?.enabled === true; }
   function note(id, text='', limit=1000) {
     if(!external(id))return text;
     const header=`[UMMA-DELIVERY:${id}]\n${providers[id].name}: курьера оформляет клиент. Доставка оплачивается отдельно; товар оплатить UMMA до выдачи.\n`;
@@ -21,7 +21,7 @@
   function provider(order) {
     if(order?.order_type!=='pickup')return null;
     const id=/^\[UMMA-DELIVERY:(grab|maxim)\]\n/.exec(order.customer_note||'')?.[1];
-    return external(id)?id:null;
+    return id && providers[id] ? id : null;
   }
   function link(id,pickup,dropoff) {
     const p=providers[id];if(!p?.url)throw Error('Unknown delivery provider');

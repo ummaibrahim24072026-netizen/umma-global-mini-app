@@ -6,7 +6,9 @@
  const money=n=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(n)||0);
  let board=null,tab='available',tabChosen=false,watch=null,position=null,lastPositionSent=0,positionSending=false,shiftBusy=false,gpsError='',generation=0,heartbeat=null,heartbeatRequest=null;
  async function api(body){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,initData}),signal:AbortSignal.timeout(12000)});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Не удалось обновить рабочий статус');return data;}
- function notice(text){const el=$('courierDeskMessage');if(el)el.textContent=text;}
+ let lastNotice='';
+ function notice(text){lastNotice=text;const el=$('courierDeskMessage');if(el)el.textContent=text;}
+ function connection(){const el=$('courierConnection');if(el){el.hidden=navigator.onLine!==false;el.textContent='Нет связи. Подключитесь к интернету перед изменением заказа.';}}
  function stopGeo(){generation++;if(watch!==null)navigator.geolocation?.clearWatch(watch);watch=null;position=null;lastPositionSent=0;}
  async function publish(p){
   if(!board?.online||document.hidden||positionSending||Date.now()-lastPositionSent<20000)return;
@@ -62,16 +64,18 @@
   if(!tabChosen)tab=Number(board.activeCount)>0?'work':'available';
   const available=[...(board.available||[])].sort((a,b)=>Number(b.kitchenStatus==='ready')-Number(a.kitchenStatus==='ready')||(a.pickupDistanceM??Infinity)-(b.pickupDistanceM??Infinity));
   const personal=board.offers||offers||[];
-  const html='<section class="courier-shift-card"><div><small>UMMA · КУРЬЕР</small><h2>'+(board.online?(board.busy?'Вы на доставке':'Вы на линии'):'Готовы к доставкам?')+'</h2><p>'+(board.online?'Новые предложения учитывают вашу доступность и GPS.':'Выйдите на линию, чтобы получать и выбирать заказы.')+'</p></div><button type="button" id="courierDeskOnline" '+(!board.eligible||shiftBusy?'disabled':'')+'>'+(board.online?'Уйти с линии':'Выйти на линию')+'</button><small id="courierDeskGps"></small><button type="button" id="courierDeskGpsRetry" class="courier-gps-retry" hidden>Обновить GPS</button><p id="courierDeskMessage" role="status" aria-live="polite"></p></section>'+
+  const html='<p id="courierConnection" class="courier-connection" role="status" hidden></p><section class="courier-shift-card"><div><small>UMMA · КУРЬЕР</small><h2>'+(board.online?(board.busy?'Вы на доставке':'Вы на линии'):'Готовы к доставкам?')+'</h2><p>'+(board.online?'Новые предложения учитывают вашу доступность и GPS.':'Выйдите на линию, чтобы получать и выбирать заказы.')+'</p></div><button type="button" id="courierDeskOnline" '+(!board.eligible||shiftBusy?'disabled':'')+'>'+(board.online?'Уйти с линии':'Выйти на линию')+'</button><small id="courierDeskGps"></small><button type="button" id="courierDeskGpsRetry" class="courier-gps-retry" hidden>Обновить GPS</button><p id="courierDeskMessage" role="status" aria-live="polite"></p></section>'+
    '<div class="courier-desk-stats"><div><strong>'+Number(board.activeCount||0)+'</strong><span>В работе</span></div><div><strong>'+Number(board.completedToday||0)+'</strong><span>Доставлено сегодня</span></div></div>'+
    '<nav class="courier-desk-tabs" role="tablist" aria-label="Доставки курьера"><button type="button" role="tab" data-courier-tab="available">Доступные · '+available.length+'</button><button type="button" role="tab" data-courier-tab="work">В работе · '+Number(board.activeCount||0)+'</button><button type="button" role="tab" data-courier-tab="history">История</button></nav>'+
    (personal.length?'<section class="courier-personal-offers"><h3>Предложено вам</h3>'+personal.map(o=>offerCard(o,true)).join('')+'</section>':'')+
    '<section id="courierAvailablePool"><div class="courier-pool-heading"><h3>Свободные доставки</h3><small>Сначала готовые к выдаче</small></div>'+(available.length?available.map(o=>offerCard(o,false)).join(''):'<div class="courier-desk-empty">'+(!board.eligible?'Подключите кафе в разделе «Кафе и доступ курьера».':!board.online?'Вы пока не на линии.':board.busy?'Завершите текущую доставку — после этого появятся новые заказы.':'Свободных доставок пока нет. Новые появятся автоматически.')+'</div>')+'</section>';
   if(root._deskMarkup!==html){root.innerHTML=html;root._deskMarkup=html;}
-  applyTab();updateGpsLabel();updateDeadlines();
+  applyTab();updateGpsLabel();updateDeadlines();connection();notice(lastNotice);
   if(board.online){startHeartbeat();startGeo();if(!previousOnline)void pulse();}else if(previousOnline)stopGeo();
   const setup=$('courierOwnerSetup');if(setup&&!board.eligible)setup.open=true;
  }
+ window.addEventListener('offline',connection);
+ window.addEventListener('online',connection);
  document.addEventListener('click',e=>{const button=e.target.closest?.('button');if(button?.id==='courierDeskOnline')void setOnline();if(button?.id==='courierDeskGpsRetry'){stopGeo();gpsError='';startGeo();updateGpsLabel();}if(button?.dataset.courierTab)showTab(button.dataset.courierTab);});
  setInterval(()=>{if(!document.hidden)updateDeadlines();},1000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&board?.online){startGeo();void pulse();}});
