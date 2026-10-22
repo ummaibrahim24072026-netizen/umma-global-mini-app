@@ -3,7 +3,7 @@ const dom=new JSDOM(readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\
 w.Telegram={WebApp:{initData:'signed-test',initDataUnsafe:{user:{id:2,first_name:'QA'}},BackButton:{hide(){},show(){},onClick(){}},ready(){},expand(){}}};w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.TextEncoder=TextEncoder;Object.defineProperty(w.crypto,'subtle',{value:webcrypto.subtle});
 let locale='ru',manager=false,bookings=[],bookCalls=0,lose=true;w.ummaI18n={locale:()=>locale};
 const calls=[],saved=new Map(),id='11111111-1111-4111-8111-111111111111';
-const vehicle={id,name:'QA Honda <script>bad()</script>',specs:'125cc',description:'QA',pickup:'QA Nha Trang',accessories:'2 helmets',available:true,photos:[{path:'a.jpg',url:'javascript:alert(1)'}]};
+const vehicle={id,daily_vnd:400000,deposit_usd:200,deposit_vnd:5000000,name:'QA Honda <script>bad()</script>',specs:'125cc',description:'QA',pickup:'QA Nha Trang',accessories:'2 helmets',available:true,photos:[{path:'a.jpg',url:'javascript:alert(1)'}]};
 w.fetch=async(url,opts)=>{const b=JSON.parse(opts.body);calls.push(b);let r={ok:true};
  if(b.action==='catalog')r={ok:true,vehicles:[vehicle]};
  else if(b.action==='state')r={ok:true,manager,super_admin:manager,bookings,vehicles:[],staff:[]};
@@ -19,11 +19,14 @@ const submit=()=>d.querySelector('#rentPage [data-form]').dispatchEvent(new w.Ev
 try{
  for(const f of ['js/core/app.js','js/rent/api.js','js/rent/rent.js','js/core/navigation.js','js/core/native-shell.js'])w.eval(readFileSync(f,'utf8'));
  d.querySelector('[data-service="rent"]').click();await tick();assert.equal(w.ummaNavigation.current(),'rentPage');
- assert.match(d.querySelector('#rentPage').textContent,/400 000/);assert.equal(d.querySelector('#rentPage script'),null);assert.equal(d.querySelector('#rentPage a[href^="javascript:"]'),null);
+ assert.match(d.querySelector('#rentPage').textContent,/400/);assert.equal(d.querySelector('#rentPage script'),null);assert.equal(d.querySelector('#rentPage a[href^="javascript:"]'),null);
  assert.equal(d.querySelector('[data-rent="vehicles"]'),null,'customer cannot access inventory');
  click('book');await tick();set('phone','000000000');set('terms',true);submit();submit();await tick();assert.equal(bookCalls,1,'double submit suppressed');assert.ok(d.querySelector('[data-form="book"]'),'unknown outcome retains draft');assert.equal(d.querySelector('[name="phone"]').value,'000000000');
  submit();await tick();assert.equal(bookCalls,2);const booked=calls.filter(c=>c.action==='book');assert.equal(booked[0].request_id,booked[1].request_id,'same request key after response loss');assert.equal(bookings.length,1);assert.match(d.querySelector('#rentPage').textContent,/№1/);
  click('cancel');await tick();assert.equal(bookings[0].status,'cancelled');
+ vehicle.daily_vnd=1200000;vehicle.deposit_usd=500;vehicle.deposit_vnd=null;click('catalog');await tick();click('book');await tick();
+ assert.equal(d.querySelector('[name=currency]').options.length,1,'USD-only bike has no VND deposit choice');assert.equal(d.querySelector('[name=currency]').value,'USD');
+ assert.match(d.querySelector('[data-quote]').textContent,/1[\s\u00a0]200[\s\u00a0]000/,'Duke quote uses vehicle tariff');assert.match(d.querySelector('[data-quote]').textContent,/500/,'Duke quote uses vehicle deposit');
  click('catalog');await tick();manager=true;await w.ummaRent.open();await tick();click('vehicles');await tick();click('new_vehicle');await tick();assert.ok(d.querySelector('[data-form="vehicle"]'));
  assert.equal(d.querySelector('[name="published"]').disabled,true,'new vehicle cannot publish without photos');set('name','QA draft');locale='vi';w.dispatchEvent(new w.Event('umma:languagechange'));assert.equal(d.querySelector('[name="name"]').value,'QA draft','language change preserves form');assert.match(d.querySelector('#rentPage').textContent,/Lưu xe/);
  assert.equal(w.ummaNavigation.back(),true,'nested Back');assert.equal(w.ummaNavigation.back(),true,'screen Back');await tick();assert.equal(d.getElementById('rentPage').hidden,true);

@@ -9,6 +9,9 @@ CREATE TABLE public.rent_vehicles (
  plate text UNIQUE CHECK(length(trim(plate)) BETWEEN 2 AND 40),
  description text NOT NULL DEFAULT '' CHECK(length(description)<=3000),
  specs text NOT NULL DEFAULT '' CHECK(length(specs)<=500),
+ daily_vnd integer NOT NULL DEFAULT 400000 CHECK(daily_vnd BETWEEN 1 AND 10000000),
+ deposit_usd numeric(14,2) NOT NULL DEFAULT 200 CHECK(deposit_usd>0 AND deposit_usd<=100000),
+ deposit_vnd integer DEFAULT 5000000 CHECK(deposit_vnd>0 AND deposit_vnd<=1000000000),
  pickup text NOT NULL CHECK(length(trim(pickup)) BETWEEN 3 AND 500),
  accessories text NOT NULL DEFAULT '' CHECK(length(accessories)<=500),
  condition text NOT NULL DEFAULT 'ready' CHECK(condition IN ('ready','maintenance','retired')),
@@ -20,14 +23,14 @@ CREATE TABLE public.rent_bookings (
  vehicle_id uuid NOT NULL REFERENCES public.rent_vehicles(id), customer_id bigint NOT NULL REFERENCES public.telegram_users(telegram_id),
  customer_name text NOT NULL CHECK(length(trim(customer_name)) BETWEEN 1 AND 120), phone text NOT NULL CHECK(length(trim(phone)) BETWEEN 5 AND 60),
  starts_at timestamptz NOT NULL, ends_at timestamptz NOT NULL, CHECK(ends_at>starts_at),
- days integer NOT NULL CHECK(days BETWEEN 1 AND 90), daily_vnd integer NOT NULL DEFAULT 400000 CHECK(daily_vnd=400000),
+ days integer NOT NULL CHECK(days BETWEEN 1 AND 90), daily_vnd integer NOT NULL DEFAULT 400000 CHECK(daily_vnd BETWEEN 1 AND 10000000),
  total_vnd integer NOT NULL CHECK(total_vnd=days*daily_vnd), paid_vnd integer NOT NULL DEFAULT 0 CHECK(paid_vnd>=0),
  currency text NOT NULL CHECK(currency IN ('VND','USD')),
- deposit_amount numeric(14,2) NOT NULL CHECK((currency='VND' AND deposit_amount=5000000) OR (currency='USD' AND deposit_amount=200)),
+ deposit_amount numeric(14,2) NOT NULL CHECK(deposit_amount>0 AND deposit_amount<=1000000000),
  deposit_received boolean NOT NULL DEFAULT false, deposit_returned boolean NOT NULL DEFAULT false,
  status text NOT NULL DEFAULT 'reserved' CHECK(status IN ('reserved','confirmed','active','returned','closed','cancelled','expired')),
  expires_at timestamptz NOT NULL DEFAULT now()+interval '30 minutes',
- vehicle_snapshot jsonb NOT NULL, terms_version text NOT NULL DEFAULT 'rent-v1',
+ vehicle_snapshot jsonb NOT NULL, terms_version text NOT NULL DEFAULT 'rent-v2',
  checkout jsonb, checkin jsonb, checkout_accepted boolean NOT NULL DEFAULT false, checkin_accepted boolean NOT NULL DEFAULT false,
  settlement jsonb, settlement_accepted boolean NOT NULL DEFAULT false,
  issued_at timestamptz,returned_at timestamptz, closed_at timestamptz,
@@ -81,8 +84,8 @@ $$;
 CREATE FUNCTION public.rent_catalog(p_start timestamptz DEFAULT NULL,p_end timestamptz DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path=pg_catalog,public AS $$
 BEGIN
  IF (p_start IS NULL)<>(p_end IS NULL) OR p_start IS NOT NULL AND (p_end<=p_start OR p_end-p_start>interval '90 days') THEN RAISE EXCEPTION 'RENT_DATES'; END IF;
- RETURN jsonb_build_object('ok',true,'daily_vnd',400000,'vehicles',coalesce((SELECT jsonb_agg(x ORDER BY x->>'name') FROM (
- SELECT jsonb_build_object('id',v.id,'name',v.name,'description',v.description,'specs',v.specs,'pickup',v.pickup,'accessories',v.accessories,'available',CASE WHEN p_start IS NULL THEN NULL ELSE public.rent_available(v.id,p_start,p_end) END,
+ RETURN jsonb_build_object('ok',true,'vehicles',coalesce((SELECT jsonb_agg(x ORDER BY x->>'name') FROM (
+ SELECT jsonb_build_object('id',v.id,'name',v.name,'daily_vnd',v.daily_vnd,'deposit_usd',v.deposit_usd,'deposit_vnd',v.deposit_vnd,'description',v.description,'specs',v.specs,'pickup',v.pickup,'accessories',v.accessories,'available',CASE WHEN p_start IS NULL THEN NULL ELSE public.rent_available(v.id,p_start,p_end) END,
  'photos',coalesce((SELECT jsonb_agg(jsonb_build_object('id',m.id,'path',m.path) ORDER BY m.position,m.created_at) FROM public.rent_media m WHERE m.vehicle_id=v.id AND m.uploaded),'[]')) x
  FROM public.rent_vehicles v WHERE v.published AND v.condition='ready')q),'[]'));
 END$$;
@@ -131,9 +134,9 @@ BEGIN
    SELECT * INTO v FROM public.rent_vehicles WHERE id=(p_data->>'id')::uuid FOR UPDATE;
    IF v.id IS NULL OR v.version IS DISTINCT FROM (p_data->>'version')::integer THEN RAISE EXCEPTION 'RENT_STALE';END IF;
    IF (p_data->>'published')::boolean AND NOT EXISTS(SELECT 1 FROM public.rent_media WHERE vehicle_id=v.id AND uploaded) THEN RAISE EXCEPTION 'RENT_PHOTOS';END IF;
-   UPDATE public.rent_vehicles SET name=trim(p_data->>'name'),plate=upper(nullif(trim(p_data->>'plate'),'')),description=coalesce(p_data->>'description',''),specs=coalesce(p_data->>'specs',''),pickup=trim(p_data->>'pickup'),accessories=coalesce(p_data->>'accessories',''),condition=p_data->>'condition',published=(p_data->>'published')::boolean,version=version+1,updated_at=now() WHERE id=v.id RETURNING * INTO v;
+   UPDATE public.rent_vehicles SET name=trim(p_data->>'name'),plate=upper(nullif(trim(p_data->>'plate'),'')),description=coalesce(p_data->>'description',''),specs=coalesce(p_data->>'specs',''),pickup=trim(p_data->>'pickup'),accessories=coalesce(p_data->>'accessories',''),condition=p_data->>'condition',published=(p_data->>'published')::boolean,daily_vnd=coalesce((p_data->>'daily_vnd')::integer,v.daily_vnd),deposit_usd=coalesce((p_data->>'deposit_usd')::numeric,v.deposit_usd),deposit_vnd=CASE WHEN p_data?'deposit_vnd' THEN nullif(p_data->>'deposit_vnd','')::integer ELSE v.deposit_vnd END,version=version+1,updated_at=now() WHERE id=v.id RETURNING * INTO v;
   ELSE
-   INSERT INTO public.rent_vehicles(name,plate,description,specs,pickup,accessories)VALUES(trim(p_data->>'name'),upper(nullif(trim(p_data->>'plate'),'')),coalesce(p_data->>'description',''),coalesce(p_data->>'specs',''),trim(p_data->>'pickup'),coalesce(p_data->>'accessories',''))RETURNING * INTO v;
+   INSERT INTO public.rent_vehicles(name,plate,description,specs,pickup,accessories,daily_vnd,deposit_usd,deposit_vnd)VALUES(trim(p_data->>'name'),upper(nullif(trim(p_data->>'plate'),'')),coalesce(p_data->>'description',''),coalesce(p_data->>'specs',''),trim(p_data->>'pickup'),coalesce(p_data->>'accessories',''),coalesce((p_data->>'daily_vnd')::integer,400000),coalesce((p_data->>'deposit_usd')::numeric,200),CASE WHEN p_data?'deposit_vnd' THEN nullif(p_data->>'deposit_vnd','')::integer ELSE 5000000 END)RETURNING * INTO v;
   END IF;
   result_:=jsonb_build_object('ok',true,'vehicle',to_jsonb(v));
  ELSIF p_action IN ('media_start','media_finish','media_order') THEN
@@ -171,15 +174,17 @@ BEGIN
   result_:=jsonb_build_object('ok',true,'media',to_jsonb(m));
  ELSIF p_action='book' THEN
   st:=(p_data->>'starts_at')::timestamptz;en:=(p_data->>'ends_at')::timestamptz;
-  IF st IS NULL OR en IS NULL OR st<now()-interval '5 minutes' OR st>now()+interval '180 days' OR en<=st OR en-st>interval '90 days' OR p_data->>'terms_version' IS DISTINCT FROM 'rent-v1' OR p_data->>'currency' NOT IN ('VND','USD') THEN RAISE EXCEPTION 'RENT_DATES';END IF;
+  IF st IS NULL OR en IS NULL OR st<now()-interval '5 minutes' OR st>now()+interval '180 days' OR en<=st OR en-st>interval '90 days' OR p_data->>'terms_version' IS DISTINCT FROM 'rent-v2' OR p_data->>'currency' NOT IN ('VND','USD') THEN RAISE EXCEPTION 'RENT_DATES';END IF;
   IF (SELECT count(*) FROM public.rent_bookings WHERE customer_id=p_actor AND created_at>now()-interval '1 day')>=10 THEN RAISE EXCEPTION 'RENT_LIMIT';END IF;
   SELECT * INTO v FROM public.rent_vehicles WHERE id=(p_data->>'vehicle_id')::uuid FOR UPDATE;
   IF v.id IS NULL OR NOT v.published OR v.condition<>'ready' THEN RAISE EXCEPTION 'RENT_UNAVAILABLE';END IF;
   UPDATE public.rent_bookings SET status='expired',version=version+1 WHERE vehicle_id=v.id AND status='reserved' AND expires_at<=now();
   IF NOT public.rent_available(v.id,st,en) THEN RAISE EXCEPTION 'RENT_UNAVAILABLE';END IF;
+  amount_:=CASE p_data->>'currency' WHEN 'USD' THEN v.deposit_usd ELSE v.deposit_vnd END;
+  IF amount_ IS NULL OR (p_data->>'expected_daily_vnd')::integer IS DISTINCT FROM v.daily_vnd OR (p_data->>'expected_deposit')::numeric IS DISTINCT FROM amount_ THEN RAISE EXCEPTION 'RENT_PRICE';END IF;
   days_:=ceil(extract(epoch FROM en-st)/86400.0);
-  INSERT INTO public.rent_bookings(vehicle_id,customer_id,customer_name,phone,starts_at,ends_at,days,total_vnd,currency,deposit_amount,vehicle_snapshot)
-  VALUES(v.id,p_actor,trim(p_data->>'customer_name'),trim(p_data->>'phone'),st,en,days_,days_*400000,p_data->>'currency',CASE p_data->>'currency' WHEN 'USD' THEN 200 ELSE 5000000 END,to_jsonb(v)-'published'-'version')RETURNING * INTO b;
+  INSERT INTO public.rent_bookings(vehicle_id,customer_id,customer_name,phone,starts_at,ends_at,days,daily_vnd,total_vnd,currency,deposit_amount,vehicle_snapshot)
+  VALUES(v.id,p_actor,trim(p_data->>'customer_name'),trim(p_data->>'phone'),st,en,days_,v.daily_vnd,days_*v.daily_vnd,p_data->>'currency',amount_,to_jsonb(v)-'published'-'version')RETURNING * INTO b;
  ELSIF p_action IN ('confirm','cancel','payment','inspection','accept_checkout','accept_checkin','issue','return','settle','accept_settlement','refund','extend','cancel_paid','reset_inspection') THEN
   -- Always lock vehicle before booking. All availability-changing operations share this order.
   SELECT * INTO b FROM public.rent_bookings WHERE id=(p_data->>'id')::uuid;

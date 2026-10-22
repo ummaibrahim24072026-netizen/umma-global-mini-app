@@ -31,7 +31,7 @@ try{
  const cat=(await q('select rent_catalog() r')).rows[0].r;
  ok(cat.vehicles.length===1&&!('plate' in cat.vehicles[0]),'public catalogue hides plate and customer records');
  const clock=Date.now();const start=new Date(clock+60000).toISOString(),end=new Date(clock+86460000).toISOString();
- const data={vehicle_id:v.id,customer_name:'QA client',phone:'00000000',starts_at:start,ends_at:end,currency:'VND',terms_version:'rent-v1',total_vnd:1};
+ const data={vehicle_id:v.id,customer_name:'QA client',phone:'00000000',starts_at:start,ends_at:end,currency:'VND',terms_version:'rent-v2',expected_daily_vnd:400000,expected_deposit:5000000,total_vnd:1};
  const key=randomUUID();let b=(await op(2,'book',data,key)).booking;
  ok(b.total_vnd===400000&&Number(b.deposit_amount)===5000000,'server-owned price and deposit');
  ok((await op(2,'book',data,key)).replayed,'response loss is idempotent');
@@ -69,11 +69,11 @@ try{
  await reject(op(1,'refund',patch(b,{reference:'again'})),/RENT_REFUND/);
  await op(1,'staff',{telegram_id:4,is_active:true});ok((await q('select rent_state(4,true) r')).rows[0].r.manager,'explicit rental staff');
  await op(1,'staff',{telegram_id:4,is_active:false});await reject(op(4,'media_order',{media_id:photo.id,position:1}),/RENT_ACCESS/);
- let usd=(await op(3,'book',{...data,currency:'USD'})).booking;
+ let usd=(await op(3,'book',{...data,currency:'USD',expected_deposit:200})).booking;
  ok(Number(usd.deposit_amount)===200,'USD is an independent 200 USD option');
  await q("update rent_bookings set expires_at=now()-interval '1 minute' where id=$1",[usd.id]);
  await reject(op(1,'confirm',patch(usd)),/RENT_UNAVAILABLE/);
- let next=(await op(2,'book',{...data,currency:'USD'})).booking;
+ let next=(await op(2,'book',{...data,currency:'USD',expected_deposit:200})).booking;
  ok(next.id!==usd.id,'expired reserve releases availability');
  next=(await op(1,'confirm',patch(next))).booking;
  await evidence(next.id,'checkout');next=await inspect(next,'checkout');
@@ -94,7 +94,20 @@ try{
  cancelled=(await op(1,'cancel_paid',patch(cancelled,{reference:'QA full rental refund',fully_refunded:true}))).booking;ok(cancelled.status==='cancelled','paid cancellation records full refund');
  await q('set role service_role');ok((await q('select rent_catalog() r')).rows[0].r.ok,'service role can execute production RPC');await q('reset role');
 
- await reject(op(5,'book',data),/RENT_ACCESS/);
+
+ let duke=(await op(1,'vehicle_save',{name:'QA Duke',plate:'QA-DUKE',pickup:'QA location',daily_vnd:1200000,deposit_usd:500,deposit_vnd:null})).vehicle;
+ await media(1,'catalog',duke.id);duke=(await op(1,'vehicle_save',{...duke,published:true})).vehicle;
+ const custom={...data,vehicle_id:duke.id,currency:'USD',expected_daily_vnd:1200000,expected_deposit:500};
+ await reject(op(3,'book',{...custom,expected_daily_vnd:400000}),/RENT_PRICE/);
+ await reject(op(3,'book',{...custom,expected_deposit:200}),/RENT_PRICE/);
+ await reject(op(3,'book',{...custom,currency:'VND',expected_deposit:5000000}),/RENT_PRICE/);
+ let expensive=(await op(3,'book',custom)).booking;
+ ok(expensive.daily_vnd===1200000&&expensive.total_vnd===1200000&&Number(expensive.deposit_amount)===500,'Duke uses its own tariff and 500 USD deposit');
+ expensive=(await op(1,'confirm',patch(expensive))).booking;
+ await op(1,'vehicle_save',{...duke,daily_vnd:1300000,deposit_usd:550});
+ expensive=(await op(1,'extend',patch(expensive,{ends_at:new Date(new Date(expensive.ends_at).getTime()+86400000).toISOString()}))).booking;
+ ok(expensive.total_vnd===2400000&&Number(expensive.deposit_amount)===500,'existing booking and extension retain agreed prices after catalogue change');
+await reject(op(5,'book',data),/RENT_ACCESS/);
  await q("set role anon");await reject(q('select * from rent_bookings'),/permission denied/);await reject(q('select rent_catalog()'),/permission denied/);await q('reset role');
  ok((await q("select bool_and(relrowsecurity) ok from pg_class where relname like 'rent_%' and relkind='r'")).rows[0].ok,'all rental tables have RLS');
  console.log('PASS '+checks+' rental database checks: trusted pricing, availability, idempotency, private records, role revocation, upload verification, handover gates, customer acceptance, fuel receipt and deposit refund.');

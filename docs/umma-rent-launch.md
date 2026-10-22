@@ -14,8 +14,8 @@ The catalogue intentionally starts empty. No real vehicles, registration numbers
 
 ## Rental workflow
 
-- Price is fixed on the server: 400,000 VND per started 24-hour period, maximum 90 days.
-- Deposit is independently 5,000,000 VND or 200 USD. It is not rent revenue.
+- Each bike has its own server-owned daily VND rate and USD deposit, with an optional VND deposit alternative. The quote must match current settings before booking. Maximum 90 days.
+- Price and deposit are snapshotted at booking. Subsequent price changes do not change existing rentals or their extensions. Deposit is not rent revenue.
 - Dates use Vietnam time (UTC+7). A booking holds the vehicle for 30 minutes pending staff confirmation. Availability includes a one-hour turnaround buffer; overlapping reservations, confirmed rentals and overdue active rentals block availability. Returned vehicles remain blocked until settlement closes.
 - Staff confirms booking, records actual rent/deposit receipts, uploads at least four photos and one walk-around video, and saves pickup report (odometer, full tank, equipment, document check, damage notes).
 - Customer reviews and accepts the report in their own Telegram account. Staff cannot accept for the customer.
