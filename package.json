@@ -8,7 +8,7 @@
     "test:b2b": "node scripts/qa-b2b-database.mjs && node scripts/qa-b2b-ui.mjs",
     "test:quran": "node scripts/qa-quran.mjs",
     "test:islam": "node scripts/qa-islam.mjs && node scripts/qa-islam-database.mjs && node scripts/qa-islam-runtime.mjs && node scripts/qa-islam-library.mjs && node scripts/qa-islam-edge.mjs",
-    "test:rent": "node scripts/qa-rent-database.mjs && node scripts/qa-rent-ui.mjs && node scripts/qa-rent-edge.mjs && node scripts/qa-rent-payments-ui.mjs && node scripts/qa-rent-qr.mjs && node scripts/qa-rent-logistics-ui.mjs"
+    "test:rent": "node scripts/qa-rent-database.mjs && node scripts/qa-rent-ui.mjs && node scripts/qa-rent-edge.mjs && node scripts/qa-rent-payments-ui.mjs && node scripts/qa-rent-qr.mjs && node scripts/qa-rent-logistics-ui.mjs && node scripts/qa-rent-flow.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",

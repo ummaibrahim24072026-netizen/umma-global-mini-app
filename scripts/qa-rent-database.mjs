@@ -214,5 +214,23 @@ await reject(op(5,'book',data),/RENT_ACCESS/);
   if(days>=3)ok(b.logistics_accepted,'free delivery needs no extra price consent');
   await op(9,'cancel',patch(b));
  }
+ await db.exec(readFileSync('supabase/proposals/rent-calendar.sql','utf8'));
+ const calStart=new Date(Date.now()+40*86400000),calEnd=new Date(+calStart+86400000);
+ let requestBike=(await op(9,'book',{...deliveryData,handover_mode:'self',return_mode:'self',starts_at:calStart.toISOString(),ends_at:calEnd.toISOString()})).booking;
+ requestBike=(await op(1,'confirm',patch(requestBike))).booking;
+ const month=new Date(+calStart+7*3600000).toISOString().slice(0,7)+'-01';
+ const calendar=(await q('select rent_calendar($1,$2) r',[transport.id,month])).rows[0].r;
+ ok(calendar.days.length>=28&&calendar.days.every(d=>Object.keys(d).sort().join(',')==='available,date'),'calendar reveals dates and availability only');
+ ok(calendar.days.some(d=>!d.available),'calendar reflects existing bookings');
+ await reject(q('select rent_calendar($1,$2)',[transport.id,'2000-01-01']),/RENT_DATES/);
+ const wanted=new Date(+calEnd+86400000).toISOString(),requestKey=randomUUID(),requestData=patch(requestBike,{ends_at:wanted});
+ await reject(q('select rent_extension_request($1,$2,$3)',[8,randomUUID(),JSON.stringify(requestData)]),/RENT_ACCESS/);
+ const requested=(await q('select rent_extension_request($1,$2,$3) r',[9,requestKey,JSON.stringify(requestData)])).rows[0].r.booking;
+ ok(Date.parse(requested.extension_requested_until)===Date.parse(wanted)&&requested.total_vnd===requestBike.total_vnd&&requested.ends_at===requestBike.ends_at,'extension request changes no price or agreed term');
+ const replay=(await q('select rent_extension_request($1,$2,$3) r',[9,requestKey,JSON.stringify(requestData)])).rows[0].r;
+ ok(replay.booking.version===requested.version,'extension retry is idempotent');
+ requestBike=(await op(1,'extend',patch(requested,{ends_at:wanted}))).booking;
+ ok(requestBike.extension_requested_until===null&&requestBike.total_vnd===800000,'manager approval extends and clears request');
+ await op(9,'cancel',patch(requestBike));
  console.log('PASS '+checks+' rental database checks: trusted pricing, availability, idempotency, private records, role revocation, upload verification, handover gates, customer acceptance, fuel receipt and deposit refund.');
 }finally{await db.close();}

@@ -17,6 +17,10 @@ Deno.serve(async(req:Request)=>{
    const r=await db.rpc('rent_catalog',{p_start:data.starts_at||null,p_end:data.ends_at||null});
    if(r.error)return reply({ok:false,error:'RENT_DATES'},400);return reply(r.data);
   }
+  if(action==='calendar'){
+   if(!uuid.test(data.vehicle_id||'')||!/^\d{4}-\d{2}-01$/.test(data.month||''))return reply({ok:false,error:'RENT_DATES'},400);
+   const r=await db.rpc('rent_calendar',{p_vehicle:data.vehicle_id,p_month:data.month});if(r.error)throw r.error;return reply(r.data);
+  }
   let actor:number;try{actor=await verifyTelegramInitData(body.initData||'',bot);}catch{return reply({ok:false,error:'RENT_AUTH'},401);}
   // Every RPC rechecks active account and manager rights, including retries.
   if(action==='state'){
@@ -58,6 +62,7 @@ Deno.serve(async(req:Request)=>{
    return reply({ok:true,url:signed.data.signedUrl});
   }
   if(!uuid.test(body.request_id||''))return reply({ok:false,error:'RENT_INVALID'},400);
+  if(action==='extension_request'){const r=await db.rpc('rent_extension_request',{p_actor:actor,p_request:body.request_id,p_data:data});if(r.error)throw r.error;return reply(r.data);}
   if(['pay_prepare','pay_proof_start','pay_proof_finish','pay_review','pay_void'].includes(action)){
    const r=await db.rpc('rent_payment_operation',{p_actor:actor,p_request:body.request_id,p_action:action,p_data:data});if(r.error)throw r.error;
    if(r.data.intent)r.data.intent=rentalPayment(r.data.intent);return reply(r.data);
