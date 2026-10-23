@@ -133,6 +133,8 @@ try{
  let marketPoint;w.ummaDeliveryLocation.chooseForLocation({latitude:12.25,longitude:109.19},p=>{marketPoint=p;},null,{unrestricted:true});
  maps.at(-1).fire('click',{latlng:{lat:12.46,lng:109.25}});$('cafeDeliveryMapConfirm').click();
  assert.equal(marketPoint.lat,12.46);assert.equal(w.ummaDeliveryLocation.hasPoint(),false,'Market picker restores Cafe without importing its unrestricted point');
+ const originalTitle=$('cafeDeliveryMapTitle').innerHTML,originalConfirm=$('cafeDeliveryMapConfirm').textContent;
+ let rentalPoint;w.ummaDeliveryLocation.chooseForLocation(null,p=>{rentalPoint=p;},null,{unrestricted:true,title:'Откуда забрать байк?',confirmText:'Выбрать точку'});assert.equal($('cafeDeliveryMapTitle').textContent,'Откуда забрать байк?');assert.equal($('cafeDeliveryMapConfirm').textContent,'Выбрать точку');maps.at(-1).fire('click',{latlng:{lat:12.47,lng:109.26}});$('cafeDeliveryMapConfirm').click();assert.equal(rentalPoint.lat,12.47);assert.equal($('cafeDeliveryMapTitle').innerHTML,originalTitle,'rental title does not leak into Cafe');assert.equal($('cafeDeliveryMapConfirm').textContent,originalConfirm);assert.equal(w.ummaDeliveryLocation.hasPoint(),false,'rental point stays isolated from Cafe');
  console.log('PASS disabled carriers cannot bypass own delivery zone; Market remains isolated');
  // Missing map library fails closed: free text cannot establish coverage.
  delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/Без проверки зоны/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();

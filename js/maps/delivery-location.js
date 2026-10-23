@@ -56,7 +56,7 @@
     generation++; disposeBasemap?.(); disposeBasemap = null; stopPending();
     try { map?.remove(); } catch {}
     $("cafeDeliveryMap").replaceChildren(); map = null; marker = null; draft = null; zoneLayer = null;
-    if(external){({zone,cafe,confirmed,unrestricted}=external.previous);external=null;notify();}
+    if(external){if(external.titleHTML!==undefined){$('cafeDeliveryMapTitle').innerHTML=external.titleHTML;confirm.textContent=external.confirmText;}({zone,cafe,confirmed,unrestricted}=external.previous);external=null;notify();}
     opener?.focus({ preventScroll: true });
   }
   function open(source) {
@@ -130,7 +130,7 @@
       if(dialog.open||(!options.unrestricted&&!Array.isArray(location?.delivery_zone)))return;
       external={previous:{zone,cafe,confirmed,unrestricted},onConfirm};zone=location?.delivery_zone;unrestricted=options.unrestricted===true;
       if(location?.latitude!=null&&location?.longitude!=null&&Number.isFinite(Number(location.latitude))&&Number.isFinite(Number(location.longitude)))cafe={lat:Number(location.latitude),lng:Number(location.longitude)};
-      confirmed=valid(options.point)?{...options.point}:null;open(source);
+      confirmed=valid(options.point)?{...options.point}:null;if(options.title){external.titleHTML=$('cafeDeliveryMapTitle').innerHTML;external.confirmText=confirm.textContent;$('cafeDeliveryMapTitle').textContent=options.title;confirm.textContent=options.confirmText||'Выбрать точку';}open(source);
     },
     setCarrierMode: enabled => {const next=enabled===true;if(next===unrestricted)return;if(dialog.open)return;unrestricted=next;notify();},
     hasPoint: () => valid(confirmed) === true,

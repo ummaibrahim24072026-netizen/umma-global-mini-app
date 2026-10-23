@@ -60,3 +60,16 @@ Customer flow: visible date selection → bike → name/phone, payment choice an
 Reference sources checked 22 October 2026:
 - https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-28-vbhn-nhnn-469219/63849.htm
 - https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44366/55281-1-2025471-47212-2025-tt-bca.pdf
+
+
+## Delivery and collection (rent-v5)
+
+Apply `supabase/proposals/rent-logistics.sql` after the VND release. Existing records keep their exact totals, accepted terms and free self pickup/return defaults.
+
+Checkout independently selects self pickup or delivery, and self return or collection. Each remote leg requires a confirmed map point and optional address/landmark. The shared location picker supports current GPS position and manual map selection; denial of GPS permission does not require sharing location. Rental locations are private booking data, never part of the public catalogue.
+
+Self pickup/return is free. Remote service pricing is by agreement: there is no invented public tariff or automatic distance surcharge. When confirming a remote booking, staff must explicitly enter each requested leg fee in VND (0 is allowed for a free trip). The customer reviews and accepts the exact quote before rent/deposit collection, QR issuance or handover. Total due is `days × daily_vnd + delivery_fee_vnd + collection_fee_vnd`; the refundable deposit stays separate. Extensions retain service fees exactly once. Full pre-handover cancellation refunds received rent and service money under the existing cancellation flow.
+
+An active renter originally returning to UMMA can request collection with a new map point. This does not complete the rental. Staff quotes collection, the renter accepts it, and the outstanding-only invoice adds the new fee. An unaccepted collection request can be withdrawn to self return without charging. A pending bank invoice must be resolved before changing the arrangement, avoiding duplicate or stale invoices. Collection ends the rental only after physical handover, inspection and the recorded return. Staff coordinates actual travel/time with the customer; no automatic courier dispatch or background notification is claimed.
+
+Regression checks cover remote points/ownership, manager-only prices, client consent, free services, exact invoice totals, extensions, deposit isolation, later collection, withdrawal and shared map/GPS behavior.
