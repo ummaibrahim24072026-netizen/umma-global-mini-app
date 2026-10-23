@@ -53,6 +53,8 @@ Before adding inventory: verify camera/photo selection, a video upload and custo
 
 Current inventory: KTM Duke, app number 1-2-3, 1,200,000 VND/day and 12,500,000 VND refundable deposit; Yamaha NVX, 59-P3 165.65, 400,000 VND/day and 5,000,000 VND refundable deposit. No synthetic bookings or bank transactions are inserted into production.
 
+Availability and price refresh automatically when dates change, including future dates (pickup within 180 days, duration up to 90 days). Invalid dates and pending/failed checks disable booking; only the newest response may update the catalogue.
+
 Customer flow: visible date selection → bike → name/phone and agreement → request → staff confirmation → QR or cash. Checkout shows rent, refundable deposit and their total separately. The eight numbered clauses cover booking, duration (24 hours, round selected partial days up), payment, pickup, use, return/fuel, deposit settlement, extensions/cancellation. Displayed RU/EN/VI text matches server snapshots in the database regression test.
 
 Reference sources checked 22 October 2026:

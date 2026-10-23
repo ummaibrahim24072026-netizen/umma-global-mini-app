@@ -1,11 +1,12 @@
 import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';
 const dom=new JSDOM(readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
 w.Telegram={WebApp:{initData:'signed-test',initDataUnsafe:{user:{id:2,first_name:'QA'}},BackButton:{hide(){},show(){},onClick(){}},ready(){},expand(){}}};w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.TextEncoder=TextEncoder;Object.defineProperty(w.crypto,'subtle',{value:webcrypto.subtle});
+let catalogResponder=null;
 let locale='ru',manager=false,bookings=[],bookCalls=0,lose=true;w.ummaI18n={locale:()=>locale};
 const calls=[],saved=new Map(),id='11111111-1111-4111-8111-111111111111';
 const vehicle={id,daily_vnd:400000,deposit_usd:200,deposit_vnd:5000000,name:'QA Honda <script>bad()</script>',specs:'125cc',description:'QA',pickup:'QA Nha Trang',accessories:'2 helmets',available:true,photos:[{path:'a.jpg',url:'javascript:alert(1)'},{path:'b.jpg'}]};
 w.fetch=async(url,opts)=>{const b=JSON.parse(opts.body);calls.push(b);let r={ok:true};
- if(b.action==='catalog')r={ok:true,vehicles:[vehicle]};
+ if(b.action==='catalog')r=catalogResponder?await catalogResponder(b):{ok:true,vehicles:[vehicle]};
  else if(b.action==='state')r={ok:true,manager,super_admin:manager,bookings,vehicles:[],staff:[]};
  else if(b.action==='book'){bookCalls++;if(saved.has(b.request_id))r=saved.get(b.request_id);else{const booking={...b.data,id:'22222222-2222-4222-8222-222222222222',number:1,status:'reserved',expires_at:new Date(Date.now()+1800000).toISOString(),customer_id:2,vehicle_snapshot:vehicle,total_vnd:400000,paid_vnd:0,deposit_amount:5000000,version:1};r={ok:true,booking};saved.set(b.request_id,r);bookings=[booking];}if(lose){lose=false;throw Error('Lost response');}}
  else if(b.action==='detail')r={ok:true,booking:bookings[0],media:[],events:[]};
@@ -21,6 +22,24 @@ try{
  assert.equal(d.querySelector('.services-grid [data-service=cafe]').nextElementSibling.dataset.service,'rent','rental follows Cafe on Home');d.querySelector('.services-grid [data-service="rent"]').click();await tick();assert.equal(w.ummaNavigation.current(),'rentPage');
  assert.match(d.querySelector('#rentPage').textContent,/400/);assert.equal(d.querySelector('#rentPage script'),null);assert.equal(d.querySelector('#rentPage a[href^="javascript:"]'),null);assert.ok([...d.querySelectorAll('#rentPage .rent-gallery img')].every(img=>img.src.startsWith('https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/public/rent-catalog/')),'catalogue photos without URL use their storage path');
  assert.equal(d.querySelector('[data-rent="vehicles"]'),null,'customer cannot access inventory');
+
+ assert.equal(d.querySelector('[data-filter] button[type=submit]'),null,'no manual availability button');
+ const input=d.querySelector('[data-filter] [name=starts_at]');
+ const future=new Date(Date.now()+30*86400000),localTime=v=>new Date(v.getTime()+7*3600000).toISOString().slice(0,16);
+ const changeDate=(name,value)=>{const el=d.querySelector('[data-filter] [name='+name+']');el.value=value;el.dispatchEvent(new w.Event('change',{bubbles:true}));};
+ const held=[];catalogResponder=()=>new Promise((resolve,reject)=>held.push({resolve,reject}));
+ changeDate('starts_at',localTime(future));changeDate('ends_at',localTime(new Date(+future+86400000)));await tick();
+ assert.equal(held.length,1,'future dates checked automatically');assert.equal(d.querySelector('[data-rent=book]').disabled,true,'stale availability cannot be booked');
+ changeDate('ends_at',localTime(new Date(+future+2*86400000)));await tick();assert.equal(held.length,2);
+ held[1].resolve({ok:true,vehicles:[{...vehicle,available:false}]});await tick();assert.match(d.querySelector('[data-rent=book]').textContent,/Занят/);
+ assert.equal(d.querySelector('[data-filter] [name=starts_at]'),input,'native date input remains mounted');
+ held[0].resolve({ok:true,vehicles:[{...vehicle,available:true}]});await tick();assert.equal(d.querySelector('[data-rent=book]').disabled,true,'late response cannot overwrite newer unavailable dates');
+ changeDate('ends_at',localTime(new Date(+future+3*86400000)));await tick();held[2].reject(Error('offline'));await tick();assert.equal(d.querySelector('[data-rent=book]').disabled,true,'network failure cannot expose stale book action');
+ catalogResponder=null;click('refresh');await tick();assert.equal(d.querySelector('[data-rent=book]').disabled,false,'refresh retries failed check');
+ const catalogCount=calls.filter(c=>c.action==='catalog').length;
+ changeDate('ends_at',localTime(new Date(+future-86400000)));await tick();assert.equal(calls.filter(c=>c.action==='catalog').length,catalogCount,'invalid range sends no request');assert.equal(d.querySelector('[data-rent=book]').disabled,true);
+ changeDate('ends_at',localTime(new Date(+future+86400000)));await tick();assert.equal(d.querySelector('[data-rent=book]').disabled,false);
+ const lastCatalog=calls.filter(c=>c.action==='catalog').at(-1);assert.ok(new Date(lastCatalog.data.starts_at)>new Date(Date.now()+29*86400000),'future month is sent to server');
  click('book');await tick();set('phone','000000000');set('terms',true);set('driver_declared',true);submit();submit();await tick();assert.equal(bookCalls,1,'double submit suppressed');assert.ok(d.querySelector('[data-form="book"]'),'unknown outcome retains draft');assert.equal(d.querySelector('[name="phone"]').value,'000000000');
  submit();await tick();assert.equal(bookCalls,2);const booked=calls.filter(c=>c.action==='book');assert.equal(booked[0].request_id,booked[1].request_id,'same request key after response loss');assert.equal(bookings.length,1);assert.equal(booked[1].data.currency,'VND');assert.equal(booked[1].data.terms_version,'rent-v4');assert.match(d.querySelector('#rentPage').textContent,/№1/);
  click('cancel');await tick();assert.equal(bookings[0].status,'cancelled');

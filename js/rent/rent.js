@@ -21,6 +21,7 @@
  const actor=()=>window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
  const signed=()=>!!window.Telegram?.WebApp?.initData;
  let mode='catalog',catalog=[],state={bookings:[],vehicles:[],staff:[]},detail=null,vehicle=null,busy=false,manager=false,superAdmin=false,formMode='',error='',bad=false,more=false,generation=0;
+ let availabilityRequest=0,availabilityTimer=null,catalogReady=false;
  let filters={starts_at:local(Date.now()+3600000),ends_at:local(Date.now()+25*3600000)};
  let queue=[],queueTarget='',fileDb=null,proofFile=null,proofTarget='',paymentBusy=false;
  const methodName=m=>({cash:t('Наличные при получении','Cash at pickup','Tiền mặt khi nhận xe'),qr:t('QR · Vietcombank','QR · Vietcombank','QR · Vietcombank'),bank_transfer:t('Банковский перевод','Bank transfer','Chuyển khoản ngân hàng')})[m]||m;
@@ -48,7 +49,7 @@
   restoreForm();setBusy(busy);
  }
  function renderCatalog(body){
-  body.innerHTML=`<div class="rent-banner"><strong>${esc(t('Посуточная аренда байков','Daily motorbike rental','Thuê xe máy theo ngày'))}</strong><br>${esc(t('Выберите даты и байк → дождитесь подтверждения → оплатите. Все суммы в донгах.','Choose dates and a bike → get confirmation → pay. All amounts in VND.','Chọn ngày và xe → chờ xác nhận → thanh toán. Mọi khoản tiền bằng VND.'))}</div><details open class="rent-date-picker rent-panel"><summary>${esc(t('Выбрать даты','Choose dates','Chọn ngày'))}<small>${date(iso(filters.starts_at))} → ${date(iso(filters.ends_at))}</small></summary><form data-filter class="rent-form rent-pair rent-dates">${field(t('Получение · время Вьетнама','Pickup · Vietnam time','Nhận xe · giờ Việt Nam'),'starts_at',filters.starts_at,'type="datetime-local" required')}${field(t('Возврат · время Вьетнама','Return · Vietnam time','Trả xe · giờ Việt Nam'),'ends_at',filters.ends_at,'type="datetime-local" required')}<button type="submit">${esc(t('Проверить доступность','Check availability','Kiểm tra xe trống'))}</button></form></details><div class="rent-grid">${catalog.map(v=>`<article class="rent-card">${gallery(v.photos||[])}<h2>${esc(v.name)}</h2><p class="rent-muted">${esc(v.specs)}</p>${v.description?`<details><summary>${esc(t('О байке','About this bike','Thông tin xe'))}</summary><p>${esc(v.description)}</p></details>`:''}<p class="rent-price">${money(v.daily_vnd)} <small>/ ${esc(t('сутки','day','ngày'))}</small></p><p>${esc(t('Депозит','Deposit','Cọc'))}: ${esc(depositText(v))}</p><p class="rent-trip-total">${esc(t('За выбранный срок','Selected dates total','Tổng cho thời gian đã chọn'))}: <strong>${money(Math.max(1,Math.ceil((new Date(iso(filters.ends_at))-new Date(iso(filters.starts_at)))/86400000))*v.daily_vnd)}</strong></p><p class="rent-muted">${esc(v.pickup)}</p><p class="rent-muted">${esc(v.accessories)}</p>${btn('book',v.available===false?t('Занят на эти даты','Unavailable on these dates','Đã kín lịch'):t('Забронировать','Book','Đặt xe'),`data-id="${v.id}" ${v.available===false?'disabled':''}`)}</article>`).join('')||`<div class="rent-panel rent-empty"><h2>${esc(t('Готовим байки к аренде','Bikes are being prepared','Đang chuẩn bị xe cho thuê'))}</h2><p>${esc(t('Фотографии и доступные байки появятся здесь после публикации.','Photos and available bikes will appear here when published.','Ảnh và xe có sẵn sẽ xuất hiện sau khi đăng.'))}</p></div>`}</div><details class="rent-panel"><summary>${esc(t('Простой договор аренды','Simple rental agreement','Thỏa thuận thuê xe'))}</summary><p class="rent-terms">${esc(terms())}</p></details>`;
+  body.innerHTML=`<div class="rent-banner"><strong>${esc(t('Посуточная аренда байков','Daily motorbike rental','Thuê xe máy theo ngày'))}</strong><br>${esc(t('Выберите даты и байк → дождитесь подтверждения → оплатите. Все суммы в донгах.','Choose dates and a bike → get confirmation → pay. All amounts in VND.','Chọn ngày và xe → chờ xác nhận → thanh toán. Mọi khoản tiền bằng VND.'))}</div><details open class="rent-date-picker rent-panel"><summary>${esc(t('Выбрать даты','Choose dates','Chọn ngày'))}<small>${date(iso(filters.starts_at))} → ${date(iso(filters.ends_at))}</small></summary><form data-filter class="rent-form rent-pair rent-dates">${field(t('Получение · время Вьетнама','Pickup · Vietnam time','Nhận xe · giờ Việt Nam'),'starts_at',filters.starts_at,'type="datetime-local" required')}${field(t('Возврат · время Вьетнама','Return · Vietnam time','Trả xe · giờ Việt Nam'),'ends_at',filters.ends_at,'type="datetime-local" required')}<p class="rent-muted">${esc(t('Доступность и стоимость обновляются автоматически для выбранных дат.','Availability and price update automatically for your dates.','Tình trạng xe và giá tự cập nhật theo ngày đã chọn.'))}</p></form></details><div class="rent-grid">${catalog.map(v=>`<article class="rent-card">${gallery(v.photos||[])}<h2>${esc(v.name)}</h2><p class="rent-muted">${esc(v.specs)}</p>${v.description?`<details><summary>${esc(t('О байке','About this bike','Thông tin xe'))}</summary><p>${esc(v.description)}</p></details>`:''}<p class="rent-price">${money(v.daily_vnd)} <small>/ ${esc(t('сутки','day','ngày'))}</small></p><p>${esc(t('Депозит','Deposit','Cọc'))}: ${esc(depositText(v))}</p><p class="rent-trip-total">${esc(t('За выбранный срок','Selected dates total','Tổng cho thời gian đã chọn'))}: <strong>${money(Math.max(1,Math.ceil((new Date(iso(filters.ends_at))-new Date(iso(filters.starts_at)))/86400000))*v.daily_vnd)}</strong></p><p class="rent-muted">${esc(v.pickup)}</p><p class="rent-muted">${esc(v.accessories)}</p>${btn('book',!catalogReady?t('Проверяем даты…','Checking dates…','Đang kiểm tra ngày…'):v.available===false?t('Занят на эти даты','Unavailable on these dates','Đã kín lịch'):t('Забронировать','Book','Đặt xe'),`data-id="${v.id}" ${!catalogReady||v.available===false?'disabled':''}`)}</article>`).join('')||`<div class="rent-panel rent-empty"><h2>${esc(t('Готовим байки к аренде','Bikes are being prepared','Đang chuẩn bị xe cho thuê'))}</h2><p>${esc(t('Фотографии и доступные байки появятся здесь после публикации.','Photos and available bikes will appear here when published.','Ảnh và xe có sẵn sẽ xuất hiện sau khi đăng.'))}</p></div>`}</div><details class="rent-panel"><summary>${esc(t('Простой договор аренды','Simple rental agreement','Thỏa thuận thuê xe'))}</summary><p class="rent-terms">${esc(terms())}</p></details>`;
  }
  function gallery(media){return media.length?`<div class="rent-gallery">${media.map(m=>m.kind==='video'?`<video controls playsinline preload="metadata" src="${esc(safe(m.url))}"></video>`:`<a href="${esc(safe(m.url)||catalogURL(m.path))}" target="_blank" rel="noopener"><img src="${esc(safe(m.url)||catalogURL(m.path))}" alt="${esc(t('Фото байка','Bike photo','Ảnh xe'))}" loading="lazy"></a>`).join('')}</div>`:'';}
  function renderBook(body){
@@ -120,16 +121,50 @@
  else if(formMode==='refund')content=`<p class="rent-price">${money(b.settlement.refund,b.currency)}</p>${field(t('Подтверждение возврата: наличные / номер перевода','Refund proof: cash / transfer reference','Xác nhận hoàn cọc: tiền mặt / mã chuyển khoản'),'reference','','required minlength="3" maxlength="300"')}${check(t('Указанный остаток депозита фактически возвращён','The stated deposit balance was actually refunded','Đã thực hoàn số tiền cọc còn lại'),'refunded')}`;
  body.innerHTML=`<form class="rent-form rent-panel" data-form="${formMode}"><h2>${esc(t('Оформление','Complete details','Nhập thông tin'))}</h2>${content}<div class="rent-actions"><button type="submit">${esc(t('Сохранить','Save','Lưu'))}</button>${btn('close_form',t('Свернуть','Close form','Đóng biểu mẫu'))}</div></form>`;restoreForm();
  }
- function setBusy(value){busy=value;root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(value){el.dataset.wasDisabled=el.disabled?'1':'0';el.disabled=true;}else if(el.dataset.wasDisabled!==undefined){el.disabled=el.dataset.wasDisabled==='1';delete el.dataset.wasDisabled;}});}
+ function setBusy(value){busy=value;root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(value){el.dataset.wasDisabled=el.disabled?'1':'0';el.disabled=true;}else if(el.dataset.wasDisabled!==undefined){el.disabled=el.dataset.wasDisabled==='1';delete el.dataset.wasDisabled;}});if(!value&&mode==='catalog'&&!catalogReady)lockCatalog();}
  async function run(fn){if(busy)return;saveForm();setBusy(true);notify(t('Сохраняем…','Saving…','Đang lưu…'));try{await fn();notify(t('Готово','Done','Hoàn tất'));}catch(e){notify(errors()[e.message]||t('Не удалось завершить действие. Черновик сохранён. Повторите попытку.','Could not finish. Draft saved. Try again.','Chưa hoàn tất. Đã giữ bản nháp. Hãy thử lại.'),true);}finally{setBusy(false);}}
  async function loadState(staff=false,append=false){if(!signed())throw Error('RENT_AUTH');const r=await api.call('state',{staff,...(append?{before:state.bookings.at(-1)?.number}:{})});manager=r.manager;superAdmin=r.super_admin;more=r.bookings.length===100;state={...r,bookings:append?[...state.bookings,...r.bookings]:r.bookings};}
- async function loadCatalog(){const r=await api.call('catalog',{starts_at:iso(filters.starts_at),ends_at:iso(filters.ends_at)});catalog=r.vehicles;}
+ function validDates(d){
+  if(!d.starts_at||!d.ends_at)return false;
+  const start=Date.parse(d.starts_at+':00+07:00'),end=Date.parse(d.ends_at+':00+07:00');
+  return Number.isFinite(start)&&Number.isFinite(end)&&start>=Date.now()-300000&&start<=Date.now()+180*86400000&&end>start&&end-start<=90*86400000;
+ }
+ function lockCatalog(){catalogReady=false;root.querySelectorAll('[data-rent="book"]').forEach(b=>{b.disabled=true;b.textContent=t('Проверяем даты…','Checking dates…','Đang kiểm tra ngày…');});}
+ async function loadCatalog(){
+  const request=++availabilityRequest,g=generation,selection={...filters};lockCatalog();
+  if(!validDates(selection))throw Error('RENT_DATES');
+  const r=await api.call('catalog',{starts_at:iso(selection.starts_at),ends_at:iso(selection.ends_at)});
+  if(request!==availabilityRequest||g!==generation||mode!=='catalog'||page.hidden)return false;
+  catalog=r.vehicles;catalogReady=true;return true;
+ }
+ function scheduleAvailability(delay=300){
+  if(mode!=='catalog')return;
+  const f=root.querySelector('[data-filter]');if(!f)return;
+  filters=Object.fromEntries(new FormData(f));++availabilityRequest;clearTimeout(availabilityTimer);lockCatalog();
+  if(!validDates(filters)){notify(t('Выберите дату возврата позже получения. Срок — до 90 суток, получение — в ближайшие 180 дней.','Choose a return after pickup. Rent up to 90 days, pickup within 180 days.','Chọn giờ trả sau giờ nhận. Thuê tối đa 90 ngày, nhận trong 180 ngày tới.'),true);return;}
+  notify(t('Проверяем выбранные даты…','Checking selected dates…','Đang kiểm tra ngày đã chọn…'));
+  availabilityTimer=setTimeout(async()=>{
+   if(mode!=='catalog'||page.hidden)return;
+   const g=generation;let request;
+   try{const pending=loadCatalog();request=availabilityRequest;const loaded=await pending;
+    if(!loaded)return;
+    // Keep the date inputs mounted so the native picker and keyboard stay open.
+    const holder=document.createElement('div');renderCatalog(holder);
+    root.querySelector('.rent-grid')?.replaceWith(holder.querySelector('.rent-grid'));
+    const label=root.querySelector('.rent-date-picker summary small');if(label)label.textContent=date(iso(filters.starts_at))+' → '+date(iso(filters.ends_at));
+    notify(t('Доступность обновлена для выбранных дат','Availability updated for selected dates','Đã cập nhật tình trạng xe theo ngày đã chọn'));
+   }catch(e){if(g!==generation||mode!=='catalog'||page.hidden||request!==availabilityRequest)return;
+    notify(errors()[e.message]||t('Не удалось проверить даты. Нажмите «Обновить», чтобы повторить.','Could not check dates. Press Refresh to retry.','Chưa kiểm tra được ngày. Nhấn Làm mới để thử lại.'),true);
+   }
+  },delay);
+ }
+
  async function loadDetail(id){const r=await api.call('detail',{id});r.payments=await api.call('pay_state',{id});detail=r;}
  async function target(stage,id){queueTarget=stage+':'+id;queue=await filesStore()||[];}
- async function open(){const g=++generation;mode='catalog';formMode='';error='';document.querySelectorAll('.native-screen').forEach(el=>el.hidden=true);page.hidden=false;const main=document.querySelector('.app>main');if(main)main.style.display='none';render();notify(t('Загружаем…','Loading…','Đang tải…'));try{const r=await api.call('catalog',{starts_at:iso(filters.starts_at),ends_at:iso(filters.ends_at)});if(g!==generation)return;catalog=r.vehicles;if(signed())await loadState();if(g!==generation)return;error='';render();}catch(e){if(g===generation)notify(errors()[e.message]||t('Не удалось загрузить раздел. Нажмите «Обновить».','Could not load. Press Refresh.','Chưa tải được. Nhấn Làm mới.'),true);}}
+ async function open(){clearTimeout(availabilityTimer);catalogReady=false;const g=++generation;mode='catalog';formMode='';error='';document.querySelectorAll('.native-screen').forEach(el=>el.hidden=true);page.hidden=false;const main=document.querySelector('.app>main');if(main)main.style.display='none';render();notify(t('Загружаем…','Loading…','Đang tải…'));try{await loadCatalog();if(g!==generation)return;if(signed())await loadState();if(g!==generation)return;error='';render();}catch(e){if(g===generation)notify(errors()[e.message]||t('Не удалось загрузить раздел. Нажмите «Обновить».','Could not load. Press Refresh.','Chưa tải được. Nhấn Làm mới.'),true);}}
  async function refresh(){saveForm();if(mode==='catalog')await loadCatalog();else if(mode==='detail')await loadDetail(detail.booking.id);else if(['vehicles','manage','staff'].includes(mode))await loadState(true);else if(mode==='mine')await loadState();else if(mode==='vehicle'){await loadState(true);vehicle={...state.vehicles.find(v=>v.id===vehicle?.id)||vehicle};if(vehicle?.id){const r=await api.call('vehicle_media',{id:vehicle.id});vehicle.media=r.media;}}render();}
- page.addEventListener('input',e=>{if(e.target.closest('form[data-form]')){saveForm();if(mode==='book')try{quote();}catch{}const f=e.target.closest('[data-form=rental]');if(f){const change=Number(f.elements.cash_received_vnd?.value)-Number(f.elements.amount?.value);const out=f.querySelector('[data-change]');if(out)out.textContent=t('Сдача','Change','Tiền thừa')+': '+money(Math.max(0,change));}}});
- page.addEventListener('change',async e=>{if(e.target.matches('[data-proof-file]')){proofFile=e.target.files?.[0]||null;proofTarget=e.target.dataset.proofFile;return;}if(!e.target.matches('[data-files]'))return;for(const f of e.target.files||[]){if(!queue.some(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified))queue.push(f);}await filesStore(true);root.querySelector('[data-queue]').textContent=queue.map(f=>f.name).join(' · ');});
+ page.addEventListener('input',e=>{if(e.target.closest('[data-filter]')){scheduleAvailability();return;}if(e.target.closest('form[data-form]')){saveForm();if(mode==='book')try{quote();}catch{}const f=e.target.closest('[data-form=rental]');if(f){const change=Number(f.elements.cash_received_vnd?.value)-Number(f.elements.amount?.value);const out=f.querySelector('[data-change]');if(out)out.textContent=t('Сдача','Change','Tiền thừa')+': '+money(Math.max(0,change));}}});
+ page.addEventListener('change',async e=>{if(e.target.closest('[data-filter]')){scheduleAvailability(0);return;}if(e.target.matches('[data-proof-file]')){proofFile=e.target.files?.[0]||null;proofTarget=e.target.dataset.proofFile;return;}if(!e.target.matches('[data-files]'))return;for(const f of e.target.files||[]){if(!queue.some(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified))queue.push(f);}await filesStore(true);root.querySelector('[data-queue]').textContent=queue.map(f=>f.name).join(' · ');});
  page.addEventListener('click',async e=>{const el=e.target.closest('[data-rent]');if(!el||busy)return;const a=el.dataset.rent,id=el.dataset.id;
  if(a==='back'){if(!back())window.ummaNavigation?.back()||window.ummaNativeShell?.openService?.('more');return;}
  if(a==='close_form'){saveForm();formMode='';render();return;}
@@ -145,7 +180,7 @@
   if(a==='catalog'){formMode='';mode=a;await loadCatalog();render();return;}
   if(['mine','manage','vehicles','staff'].includes(a)){await loadState(a!=='mine');mode=a;formMode='';render();return;}
   if(a==='more'){await loadState(mode==='manage',true);render();return;}
-  if(a==='book'){vehicle=catalog.find(v=>v.id===id);mode='book';formMode='book';render();return;}
+  if(a==='book'){if(!catalogReady)return;vehicle=catalog.find(v=>v.id===id);mode='book';formMode='book';render();return;}
   if(a==='detail'){await loadDetail(id);mode='detail';formMode='';render();return;}
   if(a==='new_vehicle'){vehicle=null;mode='vehicle';formMode='vehicle';render();return;}
   if(a==='edit_vehicle'){vehicle={...state.vehicles.find(v=>v.id===id)};vehicle.media=(await api.call('vehicle_media',{id})).media;await target('catalog',id);mode='vehicle';formMode='vehicle';render();return;}
@@ -161,7 +196,7 @@
   if(a.startsWith('form_')){saveForm();formMode=a.slice(5);if(['review','reject','void'].includes(formMode)){proofTarget=id;} if(['checkout','checkin','settle'].includes(formMode))await target(formMode==='settle'?'fuel':formMode,detail.booking.id);render();return;}
   const b=detail.booking;const out=await api.execute(a,{id:b.id,version:b.version});await loadDetail(out.booking.id);formMode='';render();
  });});
- page.addEventListener('submit',e=>{e.preventDefault();if(busy)return;const form=e.target;if(form.matches('[data-filter]')){filters=Object.fromEntries(new FormData(form));run(async()=>{await loadCatalog();render();});return;}
+ page.addEventListener('submit',e=>{e.preventDefault();if(busy)return;const form=e.target;if(form.matches('[data-filter]')){scheduleAvailability(0);return;}
  if(!form.matches('[data-form]')||!form.reportValidity())return;
  const type=form.dataset.form,d=Object.fromEntries(new FormData(form)),key=formKey();
  run(async()=>{let out;
