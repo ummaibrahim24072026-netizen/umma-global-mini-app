@@ -136,5 +136,35 @@ try{
 await reject(op(5,'book',data),/RENT_ACCESS/);
  await q("set role anon");await reject(q('select * from rent_bookings'),/permission denied/);await reject(q('select rent_catalog()'),/permission denied/);await q('reset role');
  ok((await q("select bool_and(relrowsecurity) ok from pg_class where relname like 'rent_%' and relkind='r'")).rows[0].ok,'all rental tables have RLS');
+
+ // Upgrade populated data, then test the VND-only release through the real SQL functions.
+ const pendingData={...data,starts_at:new Date(clock+3*86400000).toISOString(),ends_at:new Date(clock+4*86400000).toISOString(),currency:'USD',expected_deposit:200};
+ let pending=(await op(3,'book',pendingData)).booking;
+ pending=(await op(1,'confirm',patch(pending))).booking;
+ await db.exec(readFileSync('supabase/proposals/rent-vnd-simple.sql','utf8'));
+ const currentTerms=(await q('select rent_terms() t')).rows[0].t;
+ const uiSource=readFileSync('js/rent/rent.js','utf8');
+ const uiTerms=JSON.parse(uiSource.match(/ const rentalTerms=(.*);/)[1]);
+ assert.deepEqual(currentTerms,uiTerms,'accepted SQL snapshots equal displayed terms in all languages');checks++;
+ ok(!JSON.stringify(currentTerms).includes('USD'),'new agreement has no USD');
+ pending=(await q('select rent_detail(3,$1) r',[pending.id])).rows[0].r.booking;
+ ok(pending.currency==='VND'&&Number(pending.deposit_amount)===5000000&&pending.terms_version==='rent-v4-pending','unpaid legacy booking is VND and requires acceptance');
+ ok(pending.terms_snapshot.ru.includes('USD'),'previous accepted text preserved until explicit acceptance');
+ await reject(pay(3,'pay_prepare',{id:pending.id,method:'qr'}),/RENT_TERMS/);
+ await reject(op(1,'payment',patch(pending,{kind:'deposit',amount:5000000,reference:'QA no consent'})),/RENT_TERMS/);
+ await reject(op(1,'accept_terms',patch(pending)),/RENT_CUSTOMER_CONFIRM/);
+ pending=(await op(3,'accept_terms',patch(pending))).booking;
+ ok(pending.terms_version==='rent-v4'&&pending.terms_snapshot.ru===currentTerms.ru,'customer explicitly accepts new VND terms');
+ await op(3,'cancel',patch(pending));
+ const vndData={...pendingData,currency:'VND',terms_version:'rent-v4',expected_deposit:5000000};
+ await reject(op(3,'book',{...vndData,currency:'USD'}),/RENT_DATES/);
+ await reject(op(3,'book',{...vndData,currency:null}),/RENT_DATES/);
+ await reject(op(3,'book',{...vndData,terms_version:'rent-v3'}),/RENT_DATES/);
+ let fresh=(await op(3,'book',vndData)).booking;
+ ok(fresh.currency==='VND'&&fresh.terms_version==='rent-v4'&&Number(fresh.deposit_amount)===5000000,'new VND booking snapshots exact deposit and agreement');
+ const upgradedCatalog=(await q('select rent_catalog() r')).rows[0].r.vehicles;
+ ok(upgradedCatalog.every(v=>v.deposit_vnd>0&&!('deposit_usd' in v)),'public catalogue offers only VND');
+ const preserved=(await q('select rent_detail(3,$1) r',[expensive.id])).rows[0].r.booking;
+ ok(preserved.currency==='USD'&&preserved.paid_vnd===2400000,'already paid historical contract not silently rewritten');
  console.log('PASS '+checks+' rental database checks: trusted pricing, availability, idempotency, private records, role revocation, upload verification, handover gates, customer acceptance, fuel receipt and deposit refund.');
 }finally{await db.close();}
