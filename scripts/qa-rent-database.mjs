@@ -160,7 +160,7 @@ await reject(op(5,'book',data),/RENT_ACCESS/);
  await reject(op(3,'book',{...vndData,currency:'USD'}),/RENT_DATES/);
  await reject(op(3,'book',{...vndData,currency:null}),/RENT_DATES/);
  await reject(op(3,'book',{...vndData,terms_version:'rent-v3'}),/RENT_DATES/);
- let fresh=(await op(3,'book',vndData)).booking;
+ let fresh=(await op(3,'book',{...vndData,payment_method:'qr'})).booking;ok(fresh.payment_method==='qr','server saves customer payment preference');
  ok(fresh.currency==='VND'&&fresh.terms_version==='rent-v4'&&Number(fresh.deposit_amount)===5000000,'new VND booking snapshots exact deposit and agreement');
  const upgradedCatalog=(await q('select rent_catalog() r')).rows[0].r.vehicles;
  ok(upgradedCatalog.every(v=>v.deposit_vnd>0&&!('deposit_usd' in v)),'public catalogue offers only VND');
