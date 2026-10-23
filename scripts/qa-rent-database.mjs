@@ -168,7 +168,7 @@ await reject(op(5,'book',data),/RENT_ACCESS/);
  ok(preserved.currency==='USD'&&preserved.paid_vnd===2400000,'already paid historical contract not silently rewritten');
 
  await db.exec(readFileSync('supabase/proposals/rent-logistics.sql','utf8'));
- const deliveryTerms=(await q('select rent_terms() t')).rows[0].t;assert.deepEqual(deliveryTerms,uiTerms,'v5 delivery terms match the displayed agreement in all languages');checks++;
+ const deliveryTerms=(await q('select rent_terms() t')).rows[0].t;ok(Object.keys(deliveryTerms).length===3,'historical delivery agreement has all languages');
  const existing=(await q('select rent_detail(3,$1) r',[fresh.id])).rows[0].r.booking;ok(existing.handover_mode==='self'&&existing.return_mode==='self'&&existing.logistics_accepted&&existing.total_vnd===400000,'upgrade preserves existing bookings and totals');await op(3,'cancel',patch(existing));
  await q("insert into telegram_users values(7,'user',true),(8,'user',true)");
  let transport=(await op(1,'vehicle_save',{name:'QA delivery bike',plate:'QA-DELIVERY',pickup:'QA location',daily_vnd:400000,deposit_vnd:5000000})).vehicle;await media(1,'catalog',transport.id);transport=(await op(1,'vehicle_save',{...transport,published:true})).vehicle;
@@ -202,5 +202,17 @@ await reject(op(5,'book',data),/RENT_ACCESS/);
  await reject(pay(8,'pay_prepare',{id:later.id,method:'qr'}),/RENT_ALREADY_PAID/);await reject(op(8,'logistics_quote',patch(later,{collection_fee_vnd:50000})),/RENT_ACCESS/);
  later=(await op(1,'logistics_quote',patch(later,{collection_fee_vnd:50000}))).booking;ok(later.total_vnd===450000&&later.paid_vnd===400000,'later quote only adds collection to paid rent');await reject(pay(8,'pay_prepare',{id:later.id,method:'qr'}),/RENT_LOGISTICS/);later=(await op(8,'logistics_accept',patch(later))).booking;const extraInvoice=(await pay(8,'pay_prepare',{id:later.id,method:'qr'})).intent;ok(extraInvoice.amount_vnd===50000,'only additional collection fee is invoiced');
  ok((await q('select rent_catalog() r')).rows[0].r.vehicles.every(v=>!('handover_point' in v)&&!('return_point' in v)),'public catalogue never exposes customer locations');
+ await db.exec(readFileSync('supabase/proposals/rent-free-delivery.sql','utf8'));
+ assert.deepEqual((await q('select rent_terms() t')).rows[0].t,uiTerms);checks++;
+ await q("insert into telegram_users values(9,'user',true)");
+ const freeStart=Date.now()+30*86400000;
+ for(const days of [2,3,4]){
+  let b=(await op(9,'book',{...deliveryData,return_mode:'self',starts_at:new Date(freeStart).toISOString(),ends_at:new Date(freeStart+days*86400000).toISOString()})).booking;
+  ok(b.delivery_free===(days>=3),'free delivery threshold '+days);
+  b=(await op(1,'confirm',patch(b,{delivery_fee_vnd:60000}))).booking;
+  ok(b.delivery_fee_vnd===(days>=3?0:60000)&&b.total_vnd===days*400000+(days>=3?0:60000),'server enforces exact delivery total '+days);
+  if(days>=3)ok(b.logistics_accepted,'free delivery needs no extra price consent');
+  await op(9,'cancel',patch(b));
+ }
  console.log('PASS '+checks+' rental database checks: trusted pricing, availability, idempotency, private records, role revocation, upload verification, handover gates, customer acceptance, fuel receipt and deposit refund.');
 }finally{await db.close();}

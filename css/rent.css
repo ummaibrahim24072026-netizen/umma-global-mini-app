@@ -7,3 +7,5 @@
 .rent-payment-choice{border:1px solid #bfd9d6;border-radius:14px;padding:14px;display:grid;gap:10px;margin:0;min-width:0}.rent-payment-choice legend{font-weight:700;padding:0 5px}.rent-payment-choice .rent-check{border:1px solid #d9e7e4;border-radius:10px;padding:14px;margin:0;cursor:pointer;align-items:center}.rent-payment-choice input[type=radio]{padding:0;width:20px;height:20px;flex:0 0 20px;accent-color:#087f82}.rent-payment-choice label:has(input:checked){background:#e6f5f0;border-color:#087f82}
 
 #rentPage [data-rent-point][hidden]{display:none!important}.rent-logistics-leg{border:1px solid #d9e7e4;border-radius:12px;padding:12px;overflow-wrap:anywhere}.rent-logistics-leg h3{margin-top:0}
+
+.rent-book-steps{display:grid;gap:10px}.rent-book-steps button{text-align:left;min-height:52px}#rentPage [data-book-step][hidden]{display:none!important}[data-book-step]{display:grid;gap:14px}
