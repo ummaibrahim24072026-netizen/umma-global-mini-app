@@ -47,12 +47,26 @@ Deno.serve(async(req:Request)=>{
     if(be)throw be;
     catalog.push({id:item.id,sku:item.sku,name_ru:item.name_ru,category:item.category,unit:item.unit,minimum_quantity:item.minimum_quantity,price_vnd:item.price_vnd,available:Math.max(0,Number(balance?.quantity_on_hand||0)-Number(balance?.quantity_reserved||0))});
    }
-   const {data:upcoming,error:pe}=await db.from('b2b_catalog').select('id,sku,name_ru,category,unit').eq('active',false).not('source_product_id','is',null).order('category').order('name_ru');
+   const {data:upcoming,error:pe}=await db.from('b2b_catalog').select('id,sku,name_ru,category,unit,cost_vnd,price_vnd,recommended_retail_vnd,minimum_quantity,stock_item_id,location_id,lead_time_days,shelf_life_days,storage_instructions').eq('active',false).not('source_product_id','is',null).order('category').order('name_ru');
    if(pe)throw pe;
    let orgQuery=db.from('b2b_organizations').select('id,legal_name,business_type,address').eq('status','approved').order('legal_name');
    if(!manager&&!warehouse)orgQuery=orgQuery.in('id',orgIds);
    const {data:organizations,error:oe}=await orgQuery;if(oe)throw oe;
-   return reply({ok:true,manager,warehouse,organizations,catalog,upcoming:upcoming||[]});
+   return reply({ok:true,manager,warehouse,admin,organizations,catalog,upcoming:upcoming||[]});
+  }
+  if(action==='configure_product'){
+   if(!admin)return reply({ok:false,error:'Only B2B administrator can configure pricing'},403);
+   const id=String(body.product_id||'');if(!uuid.test(id))return reply({ok:false,error:'Invalid product'},400);
+   const {data:current,error:ce}=await db.from('b2b_catalog').select('id,source_product_id,stock_item_id,location_id').eq('id',id).maybeSingle();
+   if(ce)throw ce;if(!current?.source_product_id)return reply({ok:false,error:'Product not in synced catalog'},404);
+   const numeric=(v:unknown,required=false)=>{if(v===''||v===null||v===undefined){if(required)throw Error('Required number missing');return null}const n=Number(v);if(!Number.isFinite(n)||n<0||n>1e12)throw Error('Invalid number');return n};
+   const cost=numeric(body.cost_vnd),price=numeric(body.price_vnd),retail=numeric(body.recommended_retail_vnd),minimum=numeric(body.minimum_quantity,true);
+   if(minimum===0||price!==null&&cost!==null&&price<cost||retail!==null&&price!==null&&retail<price)return reply({ok:false,error:'Check cost, wholesale price, recommended retail and minimum quantity'},400);
+   const days=numeric(body.lead_time_days,true),shelf=numeric(body.shelf_life_days);
+   if(!Number.isInteger(days)||days>90||shelf!==null&&(!Number.isInteger(shelf)||shelf>3650))return reply({ok:false,error:'Invalid lead time or shelf life'},400);
+   const {error:up}=await db.from('b2b_catalog').update({cost_vnd:cost,price_vnd:price,recommended_retail_vnd:retail,minimum_quantity:minimum,lead_time_days:days,shelf_life_days:shelf,storage_instructions:String(body.storage_instructions||'').slice(0,500)}).eq('id',id);
+   if(up)return reply({ok:false,error:up.message},400);
+   return reply({ok:true});
   }
   if(action==='create'){
    const org=String(body.organization_id||''),request=String(body.request_id||'');
