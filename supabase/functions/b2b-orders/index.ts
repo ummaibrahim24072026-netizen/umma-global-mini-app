@@ -4,14 +4,22 @@ const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function verify(initData:string,token:string):Promise<number>{
  const p=new URLSearchParams(initData),hash=p.get('hash'),date=Number(p.get('auth_date'));
- if(!hash||!/^[0-9a-f]{64}$/i.test(hash)||!Number.isFinite(date)||Math.abs(Date.now()/1000-date)>3600)throw Error('Invalid or expired Telegram authentication');
+ if(!hash||!/^[0-9a-f]{64}$/i.test(hash)||!Number.isFinite(date)||date>Date.now()/1000+30||Date.now()/1000-date>86400)throw Error('Invalid or expired Telegram authentication');
  const check=[...p.entries()].filter(([k])=>k!=='hash'&&k!=='signature').sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');
  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode('WebAppData'),{name:'HMAC',hash:'SHA-256'},false,['sign']);
  const secret=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(token));
  const hmac=await crypto.subtle.importKey('raw',secret,{name:'HMAC',hash:'SHA-256'},false,['sign']);
  const digest=new Uint8Array(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(check)));
  const expected=Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');
- if(expected.length!==hash.length||!Array.from(expected).every((v,i)=>v===hash.toLowerCase()[i]))throw Error('Invalid Telegram signature');
+ if(expected.length!==hash.length||!Array.from(expected).every((v,i)=>v===hash.toLowerCase()[i])){
+  // Older UMMA Telegram authentication includes the optional signature field in the HMAC input.
+  // Validate that format with the same bot secret; never trust unverified initData.
+  if(!p.has('signature'))throw Error('Invalid Telegram signature');
+  const legacy=[...p.entries()].filter(([k])=>k!=='hash').sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\\n');
+  const legacyBytes=new Uint8Array(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(legacy)));
+  const legacyHash=Array.from(legacyBytes,b=>b.toString(16).padStart(2,'0')).join('');
+  if(legacyHash.length!==hash.length||!Array.from(legacyHash).every((v,i)=>v===hash.toLowerCase()[i]))throw Error('Invalid Telegram signature');
+ }
  const user=JSON.parse(p.get('user')||'{}');if(!Number.isSafeInteger(user.id))throw Error('Invalid Telegram user');
  return user.id;
 }
@@ -93,5 +101,5 @@ Deno.serve(async(req:Request)=>{
    return reply({ok:true});
   }
   return reply({ok:false,error:'Unknown action'},400);
- }catch(err){const m=String(err instanceof Error?err.message:err);return reply({ok:false,error:m.includes('Telegram')?'Telegram authentication failed':'B2B request failed'},m.includes('Telegram')?401:500);}
+ }catch(err){const m=String(err instanceof Error?err.message:err);return reply({ok:false,error:m.includes('expired')?'Telegram session expired':m.includes('signature')?'Telegram signature verification failed':m.includes('Telegram')?'Telegram authentication failed':'B2B request failed'},m.includes('Telegram')?401:500);}
 });
