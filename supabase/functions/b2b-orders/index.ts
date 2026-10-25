@@ -47,10 +47,12 @@ Deno.serve(async(req:Request)=>{
     if(be)throw be;
     catalog.push({id:item.id,sku:item.sku,name_ru:item.name_ru,category:item.category,unit:item.unit,minimum_quantity:item.minimum_quantity,price_vnd:item.price_vnd,available:Math.max(0,Number(balance?.quantity_on_hand||0)-Number(balance?.quantity_reserved||0))});
    }
+   const {data:upcoming,error:pe}=await db.from('b2b_catalog').select('id,sku,name_ru,category,unit').eq('active',false).not('source_product_id','is',null).order('category').order('name_ru');
+   if(pe)throw pe;
    let orgQuery=db.from('b2b_organizations').select('id,legal_name,business_type,address').eq('status','approved').order('legal_name');
    if(!manager&&!warehouse)orgQuery=orgQuery.in('id',orgIds);
    const {data:organizations,error:oe}=await orgQuery;if(oe)throw oe;
-   return reply({ok:true,manager,warehouse,organizations,catalog});
+   return reply({ok:true,manager,warehouse,organizations,catalog,upcoming:upcoming||[]});
   }
   if(action==='create'){
    const org=String(body.organization_id||''),request=String(body.request_id||'');
