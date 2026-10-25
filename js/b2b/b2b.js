@@ -147,7 +147,8 @@
     if(event.target.closest('#b2bBack')) { if(backToCatalog())return;if(!window.ummaNavigation?.back())window.openPage?.('home');return; }
     const b=event.target.closest('[data-b2b]');if(!b||b.disabled||busy)return;
     const action=b.dataset.b2b;saveDraft();
-    if(action==='wholesale'){window.ummaB2BManager?.open();return;}\n    if(action==='manager_orders'){window.ummaB2BManager?.open();return;}
+    if(action==='wholesale'){window.ummaB2BManager?.open();return;}
+    if(action==='manager_orders'){window.ummaB2BManager?.open();return;}
     if(action==='toggle'){
       const p=catalog.products.find(p=>p.id===b.dataset.product&&p.warehouse_id===warehouse);if(!p)return;
       if(selected.has(p.id))selected.delete(p.id);else if(selected.size<50)selected.set(p.id,{product:p,quantity:'1',unit:p.weight_value?'pack':'kg'});
