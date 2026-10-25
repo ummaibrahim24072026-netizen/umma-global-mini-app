@@ -47,7 +47,7 @@
   function render() {
     page.innerHTML = `<header class="market-shop-header"><button type="button" id="b2bBack" aria-label="${esc(t('Назад','Back','Quay lại'))}">←</button><div><small>UMMA GLOBAL · BUSINESS</small><h1>UMMA B2B</h1><p>${esc(t('Продукты и товары для бизнеса','Food and supplies for businesses','Thực phẩm và hàng hóa cho doanh nghiệp'))}</p></div></header>
       <div data-b2b-status role="status" aria-live="polite"></div>
-      <nav class="b2b-tabs" aria-label="UMMA B2B">${button('catalog',t('Каталог','Catalogue','Danh mục'),`aria-pressed="${mode==='catalog'}"`)}${button('mine',t('Мои заявки','My requests','Yêu cầu của tôi'),`aria-pressed="${mode==='mine'}"`)}${manager?button('manage',t('Заявки бизнеса','Business requests','Yêu cầu doanh nghiệp'),`aria-pressed="${mode==='manage'}"`):''}${button('refresh',t('Обновить','Refresh','Làm mới'))}</nav><div data-b2b-body></div>`;
+      <nav class="b2b-tabs" aria-label="UMMA B2B">${button('catalog',t('Каталог','Catalogue','Danh mục'),`aria-pressed="${mode==='catalog'}"`)}${button('mine',t('Мои заявки','My requests','Yêu cầu của tôi'),`aria-pressed="${mode==='mine'}"`)}${manager?button('manage',t('Заявки бизнеса','Business requests','Yêu cầu doanh nghiệp'),`aria-pressed="${mode==='manage'}"`):''}${button('wholesale',t('Оптовые заказы и склад','Wholesale orders & warehouse','Đơn hàng và kho'))}${button('refresh',t('Обновить','Refresh','Làm mới'))}</nav><div data-b2b-body></div>`;
     const body = page.querySelector('[data-b2b-body]');
     if (mode === 'form') { renderForm(body); return; }
     if (mode === 'mine' || mode === 'manage') { renderRequests(body); return; }
@@ -147,7 +147,7 @@
     if(event.target.closest('#b2bBack')) { if(backToCatalog())return;if(!window.ummaNavigation?.back())window.openPage?.('home');return; }
     const b=event.target.closest('[data-b2b]');if(!b||b.disabled||busy)return;
     const action=b.dataset.b2b;saveDraft();
-    if(action==='toggle'){
+    if(action==='wholesale'){window.ummaB2BManager?.open();return;}\n    if(action==='toggle'){
       const p=catalog.products.find(p=>p.id===b.dataset.product&&p.warehouse_id===warehouse);if(!p)return;
       if(selected.has(p.id))selected.delete(p.id);else if(selected.size<50)selected.set(p.id,{product:p,quantity:'1',unit:p.weight_value?'pack':'kg'});
       render();return;
