@@ -15,7 +15,7 @@ async function verify(initData:string,token:string):Promise<number>{
   // Older UMMA Telegram authentication includes the optional signature field in the HMAC input.
   // Validate that format with the same bot secret; never trust unverified initData.
   if(!p.has('signature'))throw Error('Invalid Telegram signature');
-  const legacy=[...p.entries()].filter(([k])=>k!=='hash').sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\\n');
+  const legacy=[...p.entries()].filter(([k])=>k!=='hash').sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');
   const legacyBytes=new Uint8Array(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(legacy)));
   const legacyHash=Array.from(legacyBytes,b=>b.toString(16).padStart(2,'0')).join('');
   if(legacyHash.length!==hash.length||!Array.from(legacyHash).every((v,i)=>v===hash.toLowerCase()[i]))throw Error('Invalid Telegram signature');
