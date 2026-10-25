@@ -1,0 +1,34 @@
+/* UMMA B2B: server-backed field manager, buyer and warehouse interface. */
+(()=>{
+'use strict';
+const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/b2b-orders';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const page=document.createElement('section');page.id='b2bManagerPage';page.className='market-shop b2b-page native-screen';page.hidden=true;document.querySelector('.app')?.append(page);
+let data=null,mode='catalog',busy=false,cart={},orders=[];
+const fmt=v=>new Intl.NumberFormat('ru-RU').format(Number(v||0))+' ₫';
+async function call(action,extra={}){
+ const initData=window.Telegram?.WebApp?.initData;
+ if(!initData)throw Error('Откройте приложение через Telegram.');
+ const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,initData,...extra}),cache:'no-store'});
+ const x=await r.json();if(!r.ok||!x.ok)throw Error(x.error||'Ошибка сервера');return x;
+}
+function message(text,bad=false){const el=page.querySelector('[data-msg]');if(el){el.textContent=text;el.style.color=bad?'#b42318':'#087d7c';}}
+function render(){
+ const orgOptions=(data?.organizations||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.legal_name)+'</option>').join('');
+ const nav='<nav class="b2b-tabs"><button type="button" data-action="catalog">Каталог и заказ</button><button type="button" data-action="orders">Заказы</button><button type="button" data-action="refresh">Обновить</button></nav>';
+ page.innerHTML='<header class="market-shop-header"><button type="button" data-action="back">←</button><div><small>UMMA GLOBAL · B2B</small><h1>'+(data?.manager?'Менеджер поставок':data?.warehouse?'Склад готовой продукции':'Оптовые заказы')+'</h1><p>Фактические остатки · Заказы организаций</p></div></header><div data-msg role="status"></div>'+nav+'<div data-body></div>';
+ const body=page.querySelector('[data-body]');
+ if(mode==='orders'){
+  body.innerHTML=orders.map(o=>'<article class="market-product" style="display:block;padding:14px;margin:10px 0"><h2>Заказ '+esc(o.id.slice(0,8))+' · '+esc(o.status)+'</h2><p>Организация: '+esc((data?.organizations||[]).find(x=>x.id===o.organization_id)?.legal_name||o.organization_id)+'</p><p>Оплата: '+esc(o.payment_method)+' · '+esc(o.payment_status)+'</p>'+((o.b2b_order_lines||[]).map(l=>'<p>'+esc(l.b2b_catalog?.name_ru)+' — '+esc(l.quantity)+' '+esc(l.b2b_catalog?.unit)+'</p>').join(''))+((data?.warehouse||data?.manager)&&['reserved','picking'].includes(o.status)?'<button type="button" data-action="dispatch" data-id="'+esc(o.id)+'">Подтвердить выдачу</button> <button type="button" data-action="cancel" data-id="'+esc(o.id)+'">Отменить заказ</button>':'')+'</article>').join('')||'<p class="market-empty">Заказов пока нет</p>';
+  return;
+ }
+ const rows=data?.catalog||[];
+ body.innerHTML='<div class="b2b-intro"><strong>Оформление поставки</strong><p>Выберите организацию, товары и количество. Отправка заказа резервирует доступный остаток на складе.</p></div><form data-order class="b2b-form"><label>Организация<select name="organization_id" required>'+orgOptions+'</select></label><label>Адрес поставки<input name="address" maxlength="500" placeholder="Адрес"></label><label>Дата поставки<input name="delivery_date" type="date"></label><label>Способ оплаты<select name="payment_method"><option value="cash_on_delivery">Наличными при получении</option><option value="online">Онлайн (ожидает подтверждения)</option>'+(data?.manager?'<option value="manager_cash">Наличными менеджеру</option>':'')+'</select></label><div class="market-shop-grid">'+rows.map(p=>'<article class="market-product"><div class="market-product-placeholder">Фото скоро</div><div class="market-product-content"><h2>'+esc(p.name_ru)+'</h2><p>Цена: '+fmt(p.price_vnd)+' / '+esc(p.unit)+'</p><p>Доступно: '+esc(p.available)+' '+esc(p.unit)+'</p><label>Количество<input type="number" data-qty="'+esc(p.id)+'" min="0" max="'+esc(p.available)+'" step="'+(p.unit==='kg'?'0.001':'1')+'" value="'+esc(cart[p.id]||0)+'"></label></div></article>').join('')+'</div><button type="submit" '+(!orgOptions||!rows.length?'disabled':'')+'>Отправить заказ на склад</button></form>'+(!rows.length?'<p class="market-empty">Пока нет активных товаров с настроенной ценой и складским остатком. Администратор должен настроить каталог.</p>':'');
+}
+async function open(){page.hidden=false;document.querySelectorAll('.native-screen').forEach(el=>{if(el!==page)el.hidden=true;});const main=document.querySelector('.app>main');if(main)main.style.display='none';page.innerHTML='<p class="market-status">Загрузка B2B…</p>';try{data=await call('bootstrap');render()}catch(e){page.innerHTML='<header class="market-shop-header"><button type="button" data-action="back">←</button><h1>UMMA B2B</h1></header><p class="market-error">'+esc(e.message)+'</p>'}}
+function close(){page.hidden=true;window.ummaB2B?.open?.('catalog')}
+page.addEventListener('input',e=>{if(e.target.matches('[data-qty]'))cart[e.target.dataset.qty]=e.target.value});
+page.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b||busy)return;const action=b.dataset.action;if(action==='back'){close();return}busy=true;try{if(action==='catalog'){mode='catalog';render()}else if(action==='refresh'){data=await call('bootstrap');if(mode==='orders')orders=(await call('orders')).orders;render()}else if(action==='orders'){orders=(await call('orders')).orders;mode='orders';render()}else if(['dispatch','cancel'].includes(action)){if(!confirm(action==='dispatch'?'Подтвердить фактическую выдачу со склада?':'Отменить заказ и вернуть резерв?'))return;await call(action,{order_id:b.dataset.id});orders=(await call('orders')).orders;data=await call('bootstrap');render();message('Операция выполнена')} }catch(err){message(err.message,true)}finally{busy=false}});
+page.addEventListener('submit',async e=>{if(!e.target.matches('[data-order]'))return;e.preventDefault();if(busy)return;const f=e.target,values=Object.fromEntries(new FormData(f));const items=Object.entries(cart).filter(([,v])=>Number(v)>0).map(([id,quantity])=>({id,quantity:Number(quantity)}));if(!items.length){message('Выберите хотя бы один товар',true);return}if(!confirm('Отправить заказ на склад и зарезервировать товар?'))return;busy=true;const submit=f.querySelector('[type=submit]');submit.disabled=true;try{const result=await call('create',{request_id:crypto.randomUUID(),organization_id:values.organization_id,items,payment_method:values.payment_method,address:values.address,delivery_date:values.delivery_date||null});cart={};orders=(await call('orders')).orders;data=await call('bootstrap');mode='orders';render();message('Заказ '+result.order_id.slice(0,8)+' отправлен на склад')}catch(err){message(err.message,true);submit.disabled=false}finally{busy=false}});
+window.ummaB2BManager={open,isOpen:()=>!page.hidden};
+})();
