@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {JSDOM} from 'jsdom';
+const read=p=>readFileSync(p,'utf8');const html=read('public-app.html');const js=read('js/public-app.js');const manifest=JSON.parse(read('umma.webmanifest'));
+assert.match(html,/umma.webmanifest/);assert.match(html,/js\/public-app.js/);assert.doesNotMatch(html,/telegram\.org|telegram-web-app/i);
+assert.equal(manifest.display,'standalone');assert.ok(manifest.start_url.includes('public-app.html'));
+assert.doesNotMatch(js,/service_role|TELEGRAM_BOT_TOKEN|initDataUnsafe/);
+const dom=new JSDOM(html,{url:'https://umma.example/public-app.html?point=neighbor-cafe',runScripts:'outside-only'});const w=dom.window;w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:[{id:'1',name_ru:'Плов',name_en:'Pilaf',name_vi:'Cơm',price_vnd:120000}]})});w.navigator.serviceWorker=undefined;w.eval(js);
+await new Promise(r=>setTimeout(r,50));const d=w.document;assert.match(d.getElementById('point').textContent,/neighbor-cafe/);assert.equal(d.querySelectorAll('.product').length,1);assert.equal(d.getElementById('checkout').disabled,true);d.querySelector('.product button').click();assert.match(d.getElementById('total').textContent,/120/);d.getElementById('lang').value='en';d.getElementById('lang').dispatchEvent(new w.Event('change'));assert.match(d.querySelector('.product h3').textContent,/Pilaf/);assert.equal(d.getElementById('checkout').disabled,true);console.log('PASS public PWA: no Telegram, menu, basket, localization, checkout safely disabled');
