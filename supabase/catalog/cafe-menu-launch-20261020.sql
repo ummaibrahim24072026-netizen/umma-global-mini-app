@@ -43,9 +43,9 @@ BEGIN
  IF EXISTS(SELECT 1 FROM public.products WHERE sku=item.sku AND product_type<>'cafe') THEN RAISE EXCEPTION 'SKU belongs to another product type'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.products WHERE sku=item.sku) THEN
   INSERT INTO public.products(category_id,sku,name_ru,name_en,name_vi,description_ru,description_en,description_vi,price_vnd,product_type,catalog_preview,image_url,sort_order,is_active)
-  VALUES(category,item.sku,item.ru,item.en,item.vi,item.dru,item.den,item.dvi,40000,'cafe',false,item.image,item.sort_order,true);
+  VALUES(category,item.sku,item.ru,item.en,item.vi,item.dru,item.den,item.dvi,50000,'cafe',false,item.image,item.sort_order,true);
  ELSE
-  UPDATE public.products SET name_ru=item.ru,name_en=item.en,name_vi=item.vi,description_ru=item.dru,description_en=item.den,description_vi=item.dvi,price_vnd=40000,catalog_preview=false,image_url=item.image,is_active=true,updated_at=now() WHERE sku=item.sku AND product_type='cafe';
+  UPDATE public.products SET name_ru=item.ru,name_en=item.en,name_vi=item.vi,description_ru=item.dru,description_en=item.den,description_vi=item.dvi,price_vnd=50000,catalog_preview=false,image_url=item.image,is_active=true,updated_at=now() WHERE sku=item.sku AND product_type='cafe';
  END IF;
  END LOOP;
 END $catalog$;

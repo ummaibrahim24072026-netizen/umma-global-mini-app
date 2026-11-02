@@ -20,7 +20,7 @@ try{
  const rows=(await db.query("select * from products where product_type='cafe' order by sort_order")).rows;
  const desserts=rows.filter(p=>p.sku.startsWith('UMMA-CAFE-DESSERT-'));
  assert.equal(desserts.length,5);
- for(const p of desserts){assert.equal(p.price_vnd,40000);assert.equal(p.catalog_preview,false);assert.ok(p.description_ru&&p.description_en&&p.description_vi);assert.match(p.image_url,/dessert-[1-5]-white.webp$/);}
+ for(const p of desserts){assert.equal(p.price_vnd,50000);assert.equal(p.catalog_preview,false);assert.ok(p.description_ru&&p.description_en&&p.description_vi);assert.match(p.image_url,/dessert-[1-5]-white.webp$/);}
  for(const p of rows.filter(p=>p.sku.includes('BAKLAVA'))){assert.equal(p.price_vnd,25000);assert.equal(p.catalog_preview,false);assert.match(p.description_ru,/1 штуку/);}
  assert.deepEqual((await db.query('select price_vnd,quantity,reserved_quantity from inventory')).rows,[{price_vnd:25000,quantity:'7',reserved_quantity:'2'}]);
  assert.equal((await db.query("select price_vnd from products where sku='UNRELATED'")).rows[0].price_vnd,12345);
@@ -29,12 +29,12 @@ try{
  dom=new JSDOM(html,{url:'https://umma.example/',runScripts:'outside-only'});const w=dom.window,d=w.document;
  w.Telegram={WebApp:{initData:'isolated',initDataUnsafe:{user:{id:1,first_name:'QA'}}}};
  w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:rows,locations:[{id:'cafe',name:'Cafe'}],inventoryControlEnabled:false})});
- const orders=[];w.ummaCafeRequests={request:async(url,payload)=>{orders.push(payload);return {ok:true,json:async()=>({ok:true,order:{id:'qa',orderNumber:1,totalVnd:65000},staffNotified:1})};}};
+ const orders=[];w.ummaCafeRequests={request:async(url,payload)=>{orders.push(payload);return {ok:true,json:async()=>({ok:true,order:{id:'qa',orderNumber:1,totalVnd:75000},staffNotified:1})};}};
  w.eval(readFileSync('js/cafe/cafe.js','utf8'));await w.ummaCafe.refreshMenu();d.getElementById('cafePage').hidden=false;
  assert.equal(d.querySelectorAll('[data-dessert-preview]').length,0,'real priced desserts replace previews without duplicate photographs');
  const cake=desserts[0],baklava=rows.find(p=>p.sku==='UMMA-CAFE-BAKLAVA-ALMOND');
  for(const p of [cake,baklava]){const card=d.querySelector('[data-product-card="'+p.id+'"]');assert.ok(card.querySelector('.cafe-product-description'));assert.equal(card.querySelector('.cafe-product-description').open,false);card.querySelector('[data-add-product]').click();}
- assert.match(d.getElementById('cafeStickyTotal').textContent,/65/);
+ assert.match(d.getElementById('cafeStickyTotal').textContent,/75/);
  d.getElementById('cafeStickyGoToOrder').click();d.getElementById('cafeStickyGoToOrder').click();await new Promise(r=>setImmediate(r));
  assert.equal(orders.length,1);assert.deepEqual(Array.from(orders[0].items,x=>x.productId).sort(),[cake.id,baklava.id].sort());
  assert.equal(d.getElementById('cafeNearbyDetails').open,false,'cafe controls stay collapsed after selection');
