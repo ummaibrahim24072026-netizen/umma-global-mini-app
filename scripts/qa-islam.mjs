@@ -49,7 +49,9 @@ try{
  let resolvePermission;w.DeviceOrientationEvent.requestPermission=()=>new Promise(resolve=>{resolvePermission=resolve;});d.querySelector('[data-islam=start]').click();d.querySelector('[data-islam=stop]').click();resolvePermission('granted');await new Promise(resolve=>setImmediate(resolve));dispatch(0);assert.equal(d.getElementById('islamCompass').classList.contains('is-live'),false);delete w.DeviceOrientationEvent.requestPermission;
  // Expired/absent model gives explicit fallback; it never silently assumes zero declination.
  const model=w.ummaGeomagnetism;w.ummaGeomagnetism=undefined;d.getElementById('islamNorthCorrection').value='';d.querySelector('[data-islam=start]').click();assert.match(d.getElementById('islamCompassMessage').textContent,/недоступна/);w.ummaGeomagnetism=model;
- w.ummaIslam.back();d.querySelector('[data-islam=times]').click();assert.equal(d.querySelectorAll('[data-prayer]').length,6);assert.equal(d.querySelectorAll('#islamCalendar tbody tr').length,31);
+ w.ummaIslam.back();d.querySelector('[data-islam=times]').click();assert.equal(d.querySelectorAll('[data-prayer]').length,6);
+ // Pin the 31-day calendar case instead of assuming the current month has 31 days.
+ d.getElementById('islamMonth').value='2026-10';d.getElementById('islamMonth').dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#islamCalendar tbody tr').length,31);
  d.getElementById('islamMonth').value='2028-02';d.getElementById('islamMonth').dispatchEvent(new w.Event('change'));assert.equal(d.querySelectorAll('#islamCalendar tbody tr').length,29);
  d.querySelector('[data-islam=settings]').click();d.getElementById('islamAsr').value='2';d.getElementById('islamSettings').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(JSON.parse(w.localStorage.getItem('umma-islam-settings')).asr,2);assert.equal(w.localStorage.getItem('umma-islam-settings').includes('lat'),false);
  w.ummaIslam.back();let opened=0;w.ummaQuran={open:()=>opened++};d.querySelector('.islam-grid [data-islam=quran]').click();assert.equal(opened,1);
