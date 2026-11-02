@@ -27,11 +27,11 @@ Deno.serve(async req=>{
    if(typeof b.token!=='string'||!/^[a-f0-9]{64}$/.test(b.token))return reply({ok:false},404);
    const {data:grant}=await db.from('umma_guest_delivery_grants').select('order_id').eq('token_hash',await sha(b.token)).is('revoked_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
    if(!grant)return reply({ok:false},404);
-   const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status').eq('id',grant.order_id).maybeSingle();
+   const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id').eq('id',grant.order_id).maybeSingle();
    if(!o||o.order_type!=='delivery')return reply({ok:false},404);
    const data:any={ok:true,number:o.order_number,state:['completed','cancelled'].includes(o.status)?o.status:o.delivery_status||o.status,paymentStatus:o.payment_status,orderStatus:o.status};
-   if(!['delivered','completed','cancelled'].includes(String(data.state))){
-    const {data:p}=await db.from('cafe_delivery_tracking').select('latitude,longitude,position_at,enabled').eq('order_id',grant.order_id).eq('enabled',true).maybeSingle();
+   if(o.courier_telegram_id&&['courier_assigned','picked_up'].includes(String(data.state))&&!['completed','cancelled'].includes(o.status)){
+    const {data:p}=await db.from('cafe_delivery_tracking').select('latitude,longitude,position_at,enabled').eq('order_id',grant.order_id).eq('courier_telegram_id',o.courier_telegram_id).eq('enabled',true).maybeSingle();
     if(p&&p.latitude!=null&&p.longitude!=null&&p.position_at&&Date.now()-Date.parse(p.position_at)<60000&&Date.now()-Date.parse(p.position_at)>=-10000){
       data.latitude=p.latitude;data.longitude=p.longitude;data.updatedAt=p.position_at;
     }
