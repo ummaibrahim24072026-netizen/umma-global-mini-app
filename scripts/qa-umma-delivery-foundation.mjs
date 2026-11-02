@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { canOfferDelivery, canTransitionDelivery } from "../src/delivery/dispatch-policy.mjs";
+const cafe = { id: "umma-1", sharedDispatchEnabled: false };
+const order = { cafeId: "umma-1", status: "ready_for_dispatch" };
+const own = { kind: "umma", cafeId: "umma-1", status: "available" };
+const partner = { kind: "partner", cafeId: "partner-2", status: "available", crossCafeOptIn: true, partnerCafeSharedDispatchEnabled: true };
+assert.equal(canOfferDelivery({ cafe, order, courier: own }), true);
+assert.equal(canOfferDelivery({ cafe, order, courier: partner }), false);
+assert.equal(canOfferDelivery({ cafe: { ...cafe, sharedDispatchEnabled: true }, order, courier: partner }), true);
+assert.equal(canOfferDelivery({ cafe, order: { ...order, cafeId: "other" }, courier: own }), false);
+assert.equal(canOfferDelivery({ cafe, order, courier: { ...own, status: "busy" } }), false);
+assert.equal(canTransitionDelivery("accepted", "picked_up"), true);
+assert.equal(canTransitionDelivery("delivered", "picked_up"), false);
+console.log("UMMA Delivery foundation policy tests passed");

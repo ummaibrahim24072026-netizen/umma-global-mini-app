@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { eligibleCouriers, nearestCafe } from '../src/delivery/network-dispatch.mjs';
+const cafes=[{id:'a',is_active:true,shared_dispatch_enabled:false,latitude:12.25,longitude:109.19},{id:'b',is_active:true,shared_dispatch_enabled:true,latitude:12.30,longitude:109.25}];
+const couriers=[{id:'own',kind:'umma',available:true},{id:'partner',kind:'partner',available:true,network_opt_in:true},{id:'shared',kind:'shared',available:true,network_opt_in:true}];
+const memberships=[{courier_id:'own',location_id:'a',is_active:true},{courier_id:'partner',location_id:'b',is_active:true,allow_network_dispatch:true}];
+const order={location_id:'a',order_type:'delivery'};
+assert.deepEqual(eligibleCouriers({order,cafes,couriers,memberships}).map(x=>x.id),['own']);
+assert.deepEqual(eligibleCouriers({order,cafes:cafes.map(c=>({...c,shared_dispatch_enabled:true})),couriers,memberships}).map(x=>x.id),['own','partner','shared']);
+assert.deepEqual(eligibleCouriers({order:{...order,order_type:'pickup'},cafes,couriers,memberships}),[]);
+assert.equal(nearestCafe({latitude:12.251,longitude:109.191,cafes}).id,'a');
+assert.equal(nearestCafe({latitude:999,longitude:109,cafes}),null);
+console.log('UMMA Delivery network policy tests passed');
