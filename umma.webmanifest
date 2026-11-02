@@ -1,0 +1,17 @@
+{
+  "name": "UMMA Global",
+  "short_name": "UMMA",
+  "start_url": "./public-app.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#087e7b",
+  "icons": [
+    {
+      "src": "logo/assets/umma-logo.webp",
+      "sizes": "any",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
