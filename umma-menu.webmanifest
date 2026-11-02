@@ -3,11 +3,11 @@
   "name": "UMMA Cafe",
   "short_name": "UMMA",
   "lang": "ru",
-  "start_url": "./order.html",
+  "start_url": "./menu/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f8f7",
-  "theme_color": "#087e7b",
+  "theme_color": "#03A2A5",
   "icons": [
     {
       "src": "logo/assets/umma-logo.png",
