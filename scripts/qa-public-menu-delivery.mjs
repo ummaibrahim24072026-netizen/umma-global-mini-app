@@ -16,11 +16,13 @@ for(const method of ['cash','qr']){
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/maps/delivery-zone.js'));w.eval(read('js/cafe/public-menu-extras.js'));
+  w.L={map:()=>({setView(){return this;},fitBounds(){},on(){},invalidateSize(){}}),polygon:()=>({addTo(){}}),marker:()=>({addTo(){return this;},setLatLng(){},remove(){}})};w.UmmaMaps={basemap(map,element,callback){callback('Включена запасная карта.');}};
   Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(fn){gps=fn;}}});
   w.fetch=async(url,o)=>{if(!o?.body)return new Response(JSON.stringify({ok:true,products:[product],locations:[cafe]}));const b=JSON.parse(o.body);calls.push(b);if(b.action==='status')return new Response(JSON.stringify({ok:true,order:{status:'preparing',paymentStatus:'pending'}}));if(lost){lost=false;throw Error('response lost');}return new Response(JSON.stringify({ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:90000,status:'pending',paymentMethod:method,paymentStatus:'pending'},trackingToken:'a'.repeat(64),payment:method==='qr'?paymentFor({id:'a',order_number:321,total_vnd:90000,location_id:cafe.id,payment_method:'qr',payment_status:'pending',status:'pending',currency:'VND'}):null}));};
  }});
  const w=dom.window,d=w.document;await tick();d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.getElementById('orderType').value='delivery';d.getElementById('orderType').dispatchEvent(new w.Event('change'));
  assert.equal(gps,undefined,'never prompts for GPS silently');assert.equal(d.getElementById('deliveryFields').hidden,false);
+ d.getElementById('deliveryMapOpen').click();await tick();assert.equal(d.getElementById('deliveryMap').hidden,false);assert.doesNotMatch(d.getElementById('deliveryPointState').textContent,/недоступна/,'raster fallback stays usable');
  d.getElementById('deliveryAddress').value='Scenia Bay apartment 123';d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await tick();assert.equal(calls.length,0,'point required');
  d.getElementById('deliveryLocate').click();gps({coords:{latitude:21,longitude:105}});submit();await tick();assert.equal(calls.length,0,'outside zone blocked');
