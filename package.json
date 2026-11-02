@@ -9,7 +9,7 @@
     "test:quran": "node scripts/qa-quran.mjs",
     "test:islam": "node scripts/qa-islam.mjs && node scripts/qa-islam-database.mjs && node scripts/qa-islam-runtime.mjs && node scripts/qa-islam-library.mjs && node scripts/qa-islam-edge.mjs",
     "test:rent": "node scripts/qa-rent-database.mjs && node scripts/qa-rent-ui.mjs && node scripts/qa-rent-edge.mjs && node scripts/qa-rent-payments-ui.mjs && node scripts/qa-rent-qr.mjs && node scripts/qa-rent-logistics-ui.mjs && node scripts/qa-rent-flow.mjs",
-    "test:public-menu": "node scripts/qa-public-menu-i18n.mjs && node scripts/qa-public-menu-payment.mjs"
+    "test:public-menu": "node scripts/qa-public-menu-language-detection.mjs && node scripts/qa-public-menu-i18n.mjs && node scripts/qa-public-menu-payment.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",
