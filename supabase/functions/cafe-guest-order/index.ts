@@ -21,6 +21,9 @@ Deno.serve(async req=>{
    const o=data.order;
    return reply({ok:true,order:{id:o.id,orderNumber:o.orderNumber,totalVnd:o.totalVnd,paymentMethod:o.payment_method,paymentStatus:o.payment_status,status:o.status},payment:paymentFor({...o,order_number:o.orderNumber,total_vnd:o.totalVnd})});
   }
+  if(b.orderType!=null&&!['pickup','delivery'].includes(b.orderType))return reply({ok:false,error:'Invalid order type'},400);
+  const delivery=b.orderType==='delivery';
+  if(delivery&&(typeof b.address!=='string'||b.address.trim().length<8||b.address.length>250||typeof b.latitude!=='number'||typeof b.longitude!=='number'||!Number.isFinite(b.latitude)||!Number.isFinite(b.longitude)))return reply({ok:false,error:'Invalid delivery point'},400);
   if(b.paymentMethod!=null&&!['cash','qr'].includes(b.paymentMethod))return reply({ok:false,error:'Invalid payment method'},400);
   if(b.tableNumber!=null&&(typeof b.tableNumber!=='string'||(b.tableNumber!==''&&!/^[1-6]$/.test(b.tableNumber))))return reply({ok:false,error:'Invalid table'},400);
   if(b.action!=='create'||typeof b.requestKey!=='string'||!/^[0-9a-f-]{36}$/i.test(b.requestKey))return reply({ok:false,error:'Invalid request'},400);
@@ -29,8 +32,11 @@ Deno.serve(async req=>{
   const salt=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');if(!salt)return reply({ok:false,error:'Service unavailable'},503);
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+ip));
   const ipHash=Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
-  const {data,error}=await db.rpc('submit_cafe_guest_order_v3',{p_payment_method:b.paymentMethod||'cash',p_request_key:b.requestKey,p_ip_hash:ipHash,p_location_id:b.locationId,p_items:b.items,p_customer_name:typeof b.name==='string'?b.name:'',p_customer_phone:typeof b.phone==='string'?b.phone:'',p_table_number:typeof b.tableNumber==='string'?b.tableNumber:null,p_source:typeof b.point==='string'?b.point.slice(0,80):''});
+  const trackingToken=delivery?Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',new TextEncoder().encode(salt),{name:'HMAC',hash:'SHA-256'},false,['sign']),new TextEncoder().encode('guest-delivery:'+b.requestKey))),v=>v.toString(16).padStart(2,'0')).join(''):null;
+  const trackingHash=trackingToken?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(trackingToken))),v=>v.toString(16).padStart(2,'0')).join(''):null;
+  const {data,error}=await db.rpc(delivery?'submit_cafe_guest_delivery_v4':'submit_cafe_guest_order_v3',{...(delivery?{p_address:b.address,p_lat:b.latitude,p_lng:b.longitude,p_token_hash:trackingHash}:{}),p_payment_method:b.paymentMethod||'cash',p_request_key:b.requestKey,p_ip_hash:ipHash,p_location_id:b.locationId,p_items:b.items,p_customer_name:typeof b.name==='string'?b.name:'',p_customer_phone:typeof b.phone==='string'?b.phone:'',p_table_number:typeof b.tableNumber==='string'?b.tableNumber:null,p_source:typeof b.point==='string'?b.point.slice(0,80):''});
   if(error){console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
+  if(delivery&&data?.order){data.trackingToken=trackingToken;data.order.orderType='delivery';}
   if(data?.order){const o=data.order;data.payment=paymentFor({id:o.id,order_number:o.orderNumber,total_vnd:o.totalVnd,location_id:b.locationId,payment_method:o.paymentMethod,payment_status:o.paymentStatus,status:o.status,currency:'VND'});}
   return reply(data,201);
  }catch(e){console.error('Guest checkout error',e);return reply({ok:false,error:'Сервис временно недоступен'},500)}
