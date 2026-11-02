@@ -10,7 +10,14 @@
   "theme_color": "#03A2A5",
   "icons": [
     {
-      "src": "logo/assets/umma-logo.png",
+      "src": "logo/assets/umma-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo/assets/umma-icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
