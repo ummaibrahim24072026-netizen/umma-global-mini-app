@@ -1,3 +1,4 @@
+import {verifySelfService} from './qa-self-service-database.mjs';
 import {verifyCourierDispatchDesk} from './qa-courier-dispatch-desk.mjs';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
@@ -145,5 +146,6 @@ try {
   await verifyCafeNotifications(db,cafe,product);
   await verifyCourierPhotoCompletion(db,cafe,product);
   await verifyCourierDispatchDesk(db,cafe,other,product);
+  await verifySelfService(db,cafe,other,product);
   console.log('LIMIT: PGlite serializes queries; this does not prove multi-connection PostgreSQL locking or real device behavior.');
 } finally { await db.close(); }
