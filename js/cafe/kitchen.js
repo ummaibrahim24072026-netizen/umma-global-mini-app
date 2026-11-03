@@ -822,10 +822,12 @@
     const root=byId("staffOpenBills");
     if(root)root.innerHTML="";
   }
+  const selfServiceEnabled=()=>locations.some(l=>String(l.id)===selectedStaffCafeId()&&l.self_service_enabled===true);
   function syncSelfServiceCheckout(){
-    const enabled=locations.some(l=>String(l.id)===selectedStaffCafeId()&&l.self_service_enabled===true);
+    const enabled=selfServiceEnabled();
     const picker=byId('staffTablePicker'),type=byId('staffOrderType'),timing=byId('staffPaymentTiming');
     if(picker)picker.hidden=enabled;
+    if(enabled){const label=byId('staffOrderGuestLabel'),hint=byId('staffPaymentTimingHint');if(label?.firstChild)label.firstChild.textContent='Имя гостя (необязательно)';if(hint)hint.textContent=type?.value==='delivery'?'Выберите способ оплаты доставки.':'Приготовление после подтверждения оплаты. Выдача по номеру заказа.';}
     const dine=type?.querySelector('option[value="dine_in"]'),later=timing?.querySelector('option[value="later"]');
     if(dine){dine.hidden=enabled;dine.disabled=enabled&&!editingBillId;}
     if(later)later.hidden=enabled;
@@ -930,7 +932,7 @@
     const initData=window.Telegram?.WebApp?.initData;
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
-    const guestName=byId("staffOrderCustomerName")?.value.trim()||"";
+    const guestName=byId("staffOrderCustomerName")?.value.trim()||(selfServiceEnabled()&&type==="pickup"?"Гость":"");
     if(!editingBillId&&!guestName){
       if(message){message.textContent=type==="dine_in"?"Выберите стол 1–6.":"Укажите имя гостя для заказа с собой или доставки.";message.hidden=false;}
       byId("staffOrderCustomerName")?.focus();return;

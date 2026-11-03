@@ -12,4 +12,4 @@ Rollout order:
 
 Verification completed locally: full `npm test`, real PostgreSQL engine via PGlite with authorization, cash/change, retry, preparation/issue, QR, cancellation and legacy/delivery checks; browser-DOM cashier → paid → ready → issued flow; existing courier/payment/public-menu regressions.
 
-Production verification: the migration was applied successfully, the rollback cash/order test passed against the production schema without committed QA orders or receipts, and cafe-kitchen version 36 was deployed. Publish the reviewed frontend next.
+Production verification: the migration was applied successfully, the rollback cash/order test passed against the production schema without committed QA orders or receipts, and cafe-kitchen version 36 was deployed. The matching frontend is released with this change.
