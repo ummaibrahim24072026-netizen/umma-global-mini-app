@@ -10,7 +10,7 @@
     "test:islam": "node scripts/qa-islam.mjs && node scripts/qa-islam-database.mjs && node scripts/qa-islam-runtime.mjs && node scripts/qa-islam-library.mjs && node scripts/qa-islam-edge.mjs",
     "test:rent": "node scripts/qa-rent-database.mjs && node scripts/qa-rent-ui.mjs && node scripts/qa-rent-edge.mjs && node scripts/qa-rent-payments-ui.mjs && node scripts/qa-rent-qr.mjs && node scripts/qa-rent-logistics-ui.mjs && node scripts/qa-rent-flow.mjs",
     "test:public-menu": "node scripts/qa-public-menu-language-detection.mjs && node scripts/qa-public-menu-i18n.mjs && node scripts/qa-public-menu-payment.mjs && node scripts/qa-public-menu-delivery.mjs && node scripts/qa-guest-tracking-edge.mjs && node scripts/qa-public-address-autofill.mjs && node scripts/qa-self-service-ui.mjs",
-    "test:web-operations": "node scripts/qa-web-auth.mjs && node scripts/qa-web-operations.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-full-ui.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-desk-ui.mjs"
+    "test:web-operations": "node scripts/qa-web-email-login.mjs && node scripts/qa-web-auth.mjs && node scripts/qa-web-operations.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-full-ui.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-desk-ui.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",

@@ -17,8 +17,9 @@ Deno.serve(async req=>{
  if(['login','activate'].includes(b.action)){
   const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
   const login=String(b.login||'').trim().toLowerCase();
+  if(!(/^[a-z0-9_.-]{3,60}$/.test(login)||(/^[a-z0-9][a-z0-9._%+-]{0,63}@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,63}$/.test(login)&&login.length<=254)))return reply({ok:false,error:'Укажите email или логин: 3–60 латинских букв, цифр, точек, дефисов или подчёркиваний.'},400);
+  if(typeof b.password!=='string'||b.password.length<10||b.password.length>128)return reply({ok:false,error:'Пароль должен содержать от 10 до 128 символов.'},400);
   for(const identity of ['ip:'+ip,'login:'+login]){const {data,error}=await db.rpc('cafe_web_rate_allow',{p_identity:await sha256(identity)});if(error)throw error;if(!data)return reply({ok:false,error:'Слишком много попыток. Повторите через 15 минут.'},429);}
-  if(!/^[a-z0-9_.-]{3,60}$/.test(login)||typeof b.password!=='string'||b.password.length<10||b.password.length>128)return reply({ok:false,error:'Логин: от 3 латинских символов. Пароль: от 10 символов.'},400);
   let actor;
   if(b.action==='activate'){
    if(!validSecret(b.invite))return reply({ok:false,error:'Недействительная ссылка приглашения'},400);
