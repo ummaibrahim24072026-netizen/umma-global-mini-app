@@ -66,6 +66,16 @@
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
     shown=shown.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+    if (filter === "payment") shown=shown.filter(awaitingCounterPayment);
+    if (filter === "preparing") shown=shown.filter(o=>["pending","confirmed","preparing"].includes(o.status)&&!awaitingCounterPayment(o));
+    if (filter === "ready") shown=shown.filter(o=>o.status==="ready");
+    const webSummary=byId("webOrderSummary");
+    if(webSummary){
+      webSummary.hidden=courierWorkspace;
+      const visible=orders.filter(o=>!finished(o)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+      const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>["pending","confirmed","preparing"].includes(o.status)&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
+      webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
+    }
     shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
     if (!shown.length) {
       root.innerHTML = "";
@@ -132,16 +142,16 @@
       const courierStage=orderStaffRole!=="courier"?"":'<div class="courier-order-stage">'+esc({courier_assigned:"Забрать из кафе",picked_up:"Доставить клиенту",delivered:order.payment_status==="paid"?"Доставка завершена":"Получить оплату"}[order.delivery_status]||"Доставка")+'</div>';
       const details = [
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
-        order.customer_phone ? '<span>☎ ' + esc(order.customer_phone) + '</span>' : "",
-        '<span>📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
-        '<span>💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
-        order.order_type === "delivery" ? '<span>🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
-        order.payment_timing ? '<span>🕒 '+esc({now:"Оплата до передачи заказа",later:"Оплата после трапезы",on_delivery:"Наличные курьеру при получении"}[order.payment_timing]||order.payment_timing)+'</span>' : "",
-        order.delivery_address ? '<span>📍 ' + esc(order.delivery_address) + '</span>' : "",
-        order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
+        order.customer_phone ? '<span class="order-phone">☎ ' + esc(order.customer_phone) + '</span>' : "",
+        '<span class="order-type">📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
+        '<span class="order-payment">💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
+        order.order_type === "delivery" ? '<span class="order-delivery-state">🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
+        order.payment_timing ? '<span class="order-payment-timing">🕒 '+esc({now:"Оплата до передачи заказа",later:"Оплата после трапезы",on_delivery:"Наличные курьеру при получении"}[order.payment_timing]||order.payment_timing)+'</span>' : "",
+        order.delivery_address ? '<span class="order-address">📍 ' + esc(order.delivery_address) + '</span>' : "",
+        order.accepted_by_telegram_id ? '<span class="kitchen-order-actor">✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + counterPaymentButton(order) + (awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + counterPaymentButton(order) + (awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
     const template = document.createElement("template");
@@ -293,6 +303,7 @@
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
+    const hint=byId("workBoardHint");if(hint)hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":"Номер заказа → блюда → следующее действие";
     const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":"Кухня · Заказы";
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
