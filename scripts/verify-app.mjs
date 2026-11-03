@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=76/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=77/, "Telegram must load updated checkout JS");
 assert.ok(Number(html.match(/css\/app\.css\?v=(\d+)/)?.[1]) >= 37, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -88,7 +88,7 @@ console.log("PASS closed order tab and statuses");
 const kitchenLive=read("js/cafe/kitchen-live.js");
 new vm.Script(kitchenLive,{filename:"kitchen-live.js"});
 assert.match(html,/js\/cafe\/kitchen-live\.js\?v=5/,"kitchen live module missing");
-assert.match(kitchen,/ummaKitchenLive\?\.update\(orders\)/,"kitchen list must update alerts");
+assert.match(kitchen,/ummaKitchenLive\?\.update\(/,"kitchen list must update alerts");
 assert.match(kitchen,/ummaKitchenLive\?\.start\(\)/,"kitchen must start polling");
 assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledgement");
 assert.match(kitchenLive,/\},2000\);/,"kitchen must poll every 2 seconds");

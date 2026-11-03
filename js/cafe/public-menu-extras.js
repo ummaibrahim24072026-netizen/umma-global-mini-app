@@ -13,8 +13,8 @@ function bankLink(){if(!order?.payment)return;const p=order.payment,selected=$('
 $('openBank').hidden=selected==='vcb';}
 function receipt(value,ctx){order=value;context=ctx;const {t}=ctx;
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
-$('orderState').removeAttribute('data-i18n');$('orderState').textContent=t(statuses[value.status]||'Заказ отправлен');
-$('paymentState').textContent=t(value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплата наличными при получении.');
+$('orderState').removeAttribute('data-i18n');$('orderState').textContent=t(value.orderType!=='delivery'&&value.status==='pending'&&value.paymentStatus!=='paid'?(value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Ожидает оплаты у кассира'):statuses[value.status]||'Заказ отправлен');
+$('paymentState').textContent=t(value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.paymentMethod==='qr'?'Ожидаем оплату по QR':value.orderType==='delivery'?'Оплата наличными при получении.':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.');
 const p=value.payment,show=value.paymentMethod==='qr'&&value.paymentStatus!=='paid'&&value.paymentStatus!=='refunded'&&!['cancelled','completed'].includes(value.status)&&p;
 $('guestPayment').hidden=!show;
 if(show){

@@ -58,11 +58,15 @@
     }
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
+  const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
+  const counterPaymentButton=o=>o.canAcceptPayments===true&&awaitingCounterPayment(o)?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">'+(o.payment_method==="cash"?"Принять наличные · Оплачено":"Подтвердить поступление оплаты")+'</button>':"";
   function render() {
     const root = byId("cafeKitchenOrders");
     if (!root) return;
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
-    const shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
+    let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
+    shown=shown.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+    shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
     if (!shown.length) {
       root.innerHTML = "";
       showMessage(filter === "active" ? "Активных заказов пока нет." : "Заказов пока нет.");
@@ -77,7 +81,7 @@
       const orderStaffRole = order.staffRole || staffRole;
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
-      const action = next && allowedForRole && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
+      const action = next && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
       const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
@@ -120,7 +124,7 @@
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
       const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
-      const secondary = paymentProofButton(order) + cancel + (orderStaffRole === "courier" ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
+      const secondary = paymentProofButton(order) + cancel + (orderStaffRole === "courier" || awaitingCounterPayment(order) ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
       const courierHelp=orderStaffRole!=="courier"||["completed","cancelled"].includes(order.status)?"":'<section class="courier-task-guide"><ol aria-label="Этапы доставки">'+["Принять","Забрать","Доставить"].map((label,i)=>'<li '+(i===({courier_assigned:1,picked_up:2,delivered:3}[order.delivery_status]||0)?'aria-current="step"':'')+'>'+label+'</li>').join("")+'</ol><strong>'+esc(goingToCafe?"Забрать: "+(pickup?.name||"Кафе UMMA"):"Доставить: "+(order.delivery_address||"Уточните адрес у клиента"))+'</strong>'+(goingToCafe?'<p>'+esc(pickup?.address||"")+'</p><p>'+(order.status==="ready"?"Заказ готов. Сверьте блюда и сделайте фото при получении.":"Заказ ещё готовится. Дождитесь статуса «Готов».")+'</p>':'')+'<p class="courier-cash-guide">'+esc(order.payment_status==="paid"?"Оплачено · деньги за заказ получать не нужно":order.payment_timing==="on_delivery"?"Получить наличными: "+money(order.total_vnd):"Оплата через кафе · уточните оплату перед передачей")+'</p></section>';
       const safePhone=String(order.customer_phone||"").replace(/[^+0-9]/g,"");
@@ -137,7 +141,7 @@
         order.accepted_by_telegram_id ? '<span>✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + counterPaymentButton(order) + (awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
     const template = document.createElement("template");
@@ -205,7 +209,7 @@
       orders = incomingOrders;
       if (changed) {
         lastOrdersFingerprint = fingerprint;
-        window.ummaKitchenLive?.update(orders);
+        window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)));
     window.ummaCourierTracking?.syncOrders(orders);
         render();
         renderOpenBills();
@@ -266,7 +270,7 @@
     locations = Array.isArray(result.locations) ? result.locations : [];
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
-    window.ummaKitchenLive?.update(orders);
+    window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)));
     window.ummaCourierTracking?.syncOrders(orders);
     render();
     renderOpenBills();
@@ -445,7 +449,7 @@
     if(!modal){
       modal=document.createElement("div"); modal.id="cashPaymentModal"; modal.className="umma-cash-modal";
       modal.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
-      modal.innerHTML='<section style="width:min(100%,420px);background:var(--umma-brand-white);color:var(--umma-brand-ink);border-radius:18px;padding:20px"><h2 style="margin:0 0 8px">Приём наличных</h2><p id="cashPayDue" style="margin:0 0 14px"></p><label style="display:block;font-weight:600">Сколько денег дал клиент? (VND)<input id="cashPayTendered" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:20px;border:1px solid var(--umma-brand-line);border-radius:10px;margin-top:6px"></label><div style="margin:14px 0;padding:14px;background:var(--umma-brand-pale);border-radius:12px"><small>Сдача клиенту</small><div id="cashPayChange" style="font-size:26px;font-weight:800">—</div><small id="cashPayHint"></small></div><div style="display:flex;gap:8px"><button id="cashPayCancel" type="button" style="flex:1;padding:12px;border:1px solid var(--umma-brand-line);border-radius:10px;background:var(--umma-brand-white)">Отмена</button><button id="cashPayConfirm" type="button" disabled style="flex:1;padding:12px;border:0;border-radius:10px;background:var(--umma-brand-strong);color:var(--umma-brand-white);font-weight:700">Подтвердить оплату</button></div></section>';
+      modal.innerHTML='<section style="width:min(100%,420px);background:var(--umma-brand-white);color:var(--umma-brand-ink);border-radius:18px;padding:20px"><h2 style="margin:0 0 8px">Приём наличных</h2><p id="cashPayDue" style="margin:0 0 14px"></p><label style="display:block;font-weight:600">Сколько денег дал клиент? (VND)<input id="cashPayTendered" type="number" min="0" step="1000" inputmode="numeric" placeholder="Например, 200000" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:20px;border:1px solid var(--umma-brand-line);border-radius:10px;margin-top:6px"></label><div style="margin:14px 0;padding:14px;background:var(--umma-brand-pale);border-radius:12px"><small>Сдача клиенту</small><div id="cashPayChange" style="font-size:26px;font-weight:800">—</div><small id="cashPayHint"></small></div><div style="display:flex;gap:8px"><button id="cashPayCancel" type="button" style="flex:1;padding:12px;border:1px solid var(--umma-brand-line);border-radius:10px;background:var(--umma-brand-white)">Отмена</button><button id="cashPayConfirm" type="button" disabled style="flex:1;padding:12px;border:0;border-radius:10px;background:var(--umma-brand-strong);color:var(--umma-brand-white);font-weight:700">Деньги получены · Оплачено</button></div></section>';
       document.body.appendChild(modal);
     }
     const due=Number(order.total_vnd)||0, input=byId("cashPayTendered"), change=byId("cashPayChange"), hint=byId("cashPayHint"), confirm=byId("cashPayConfirm");
@@ -818,9 +822,21 @@
     const root=byId("staffOpenBills");
     if(root)root.innerHTML="";
   }
+  const selfServiceEnabled=()=>locations.some(l=>String(l.id)===selectedStaffCafeId()&&l.self_service_enabled===true);
+  function syncSelfServiceCheckout(){
+    const enabled=selfServiceEnabled();
+    const picker=byId('staffTablePicker'),type=byId('staffOrderType'),timing=byId('staffPaymentTiming');
+    if(picker)picker.hidden=enabled;
+    if(enabled){const label=byId('staffOrderGuestLabel'),hint=byId('staffPaymentTimingHint');if(label?.firstChild)label.firstChild.textContent='Имя гостя (необязательно)';if(hint)hint.textContent=type?.value==='delivery'?'Выберите способ оплаты доставки.':'Приготовление после подтверждения оплаты. Выдача по номеру заказа.';}
+    const dine=type?.querySelector('option[value="dine_in"]'),later=timing?.querySelector('option[value="later"]');
+    if(dine){dine.hidden=enabled;dine.disabled=enabled&&!editingBillId;}
+    if(later)later.hidden=enabled;
+    if(enabled&&!editingBillId){if(type?.value==='dine_in')type.value='pickup';if(timing?.value==='later')timing.value='now';}
+  }
   function renderStaffActiveOrders() {
     const root=byId("staffActiveOrders");if(!root)return;
-    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    syncSelfServiceCheckout();
     updateTableAvailability();
     root.innerHTML=active.length?active.map(o=>{
       const items=Array.isArray(o.cafe_order_items)?o.cafe_order_items:[];
@@ -828,11 +844,11 @@
       const payment=o.payment_status==="paid"?"Оплачено":"Ожидает оплаты";
       const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type;
       const next=nextStep[o.status],role=o.staffRole||staffRole;
-      const canAdvance=next&&["manager","waiter","cashier","kitchen"].includes(role)&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
+      const canAdvance=next&&!awaitingCounterPayment(o)&&["manager","waiter","cashier","kitchen"].includes(role)&&(next.status!=="completed"||(o.payment_status==="paid"&&(o.order_type!=="delivery"||o.delivery_status==="delivered")));
       const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+paymentProofButton(o)+add+settle+step+'</div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(awaitingCounterPayment(o)?"Ожидает оплаты у кассира":statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+counterPaymentButton(o)+paymentProofButton(o)+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function renderStaffClosedOrders() {
@@ -916,7 +932,7 @@
     const initData=window.Telegram?.WebApp?.initData;
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
-    const guestName=byId("staffOrderCustomerName")?.value.trim()||"";
+    const guestName=byId("staffOrderCustomerName")?.value.trim()||(selfServiceEnabled()&&type==="pickup"?"Гость":"");
     if(!editingBillId&&!guestName){
       if(message){message.textContent=type==="dine_in"?"Выберите стол 1–6.":"Укажите имя гостя для заказа с собой или доставки.";message.hidden=false;}
       byId("staffOrderCustomerName")?.focus();return;

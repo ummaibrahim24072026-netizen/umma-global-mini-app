@@ -403,7 +403,7 @@ Deno.serve(async req => {
         return response({ ok: false, error: "Не удалось загрузить заказы" }, 500);
       }
       const {data:mapLocations,error:mapLocationsError}=await supabase.from("locations")
-        .select("id,name,location_type,address,city,country,latitude,longitude,is_active")
+        .select("id,name,location_type,address,city,country,latitude,longitude,is_active,self_service_enabled")
         .eq("is_active",true).order("name",{ascending:true});
       if(mapLocationsError) console.error("Location map lookup failed",mapLocationsError.message);
       const roleByLocation = new Map(
@@ -550,8 +550,8 @@ Deno.serve(async req => {
         p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
       });
       if (error) {
-        const clientError = /Paid order requires recorded refund before cancellation|Staff role cannot perform this order status transition|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
-        return response({ ok: false, error: clientError ? error.message : "Не удалось обновить статус" }, clientError ? 400 : 500);
+        const clientError = /Paid order requires recorded refund before cancellation|Staff role cannot perform this order status transition|SELF_SERVICE_PAYMENT_REQUIRED|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);
+        return response({ ok: false, error: clientError ? (error.message.includes("SELF_SERVICE_PAYMENT_REQUIRED")?"Сначала примите и подтвердите оплату заказа":error.message) : "Не удалось обновить статус" }, clientError ? 400 : 500);
       }
       // Notify the customer and all other staff after the database commits the transition.
       try {

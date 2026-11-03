@@ -1,0 +1,33 @@
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+export async function verifySelfService(db,cafe,other,product){
+ const q=(sql,args=[])=>db.query(sql,args);
+ await db.exec("ALTER TABLE public.cafe_orders ADD COLUMN IF NOT EXISTS source_module text NOT NULL DEFAULT 'cafe';");
+ await db.exec(readFileSync('supabase/proposals/cafe-self-service-prepayment.sql','utf8'));
+ const create=async(method='cash')=>{const r=await q("select create_cafe_staff_order(11,$1,$2::jsonb,'pickup','QA self-service',null,null,$3) result",[cafe,JSON.stringify([{productId:product,quantity:1}]),method]);return r.rows[0].result.order;};
+ await q("update telegram_users set is_active=true,role='employee' where telegram_id in (11,12,13)");
+ await q("update cafe_staff set is_active=true,staff_role=case telegram_id when 11 then 'waiter' when 12 then 'kitchen' else 'cashier' end,can_accept_payments=(telegram_id=13) where location_id=$1 and telegram_id in (11,12,13)",[cafe]);
+ const legacy=await create();
+ await q('update locations set self_service_enabled=true where id=$1',[cafe]);
+ const cash=await create();const state=async id=>(await q('select * from cafe_orders where id=$1',[id])).rows[0];
+ assert.equal((await state(cash.id)).requires_prepayment,true);assert.equal((await state(cash.id)).status,'pending');
+ await assert.rejects(q("select update_cafe_order_status($1,12,'confirmed')",[cash.id]),/SELF_SERVICE_PAYMENT_REQUIRED/);
+ await assert.rejects(q("update cafe_orders set status='ready',requires_prepayment=false where id=$1",[cash.id]),/SELF_SERVICE_PAYMENT_REQUIRED/);
+ await assert.rejects(q("select update_cafe_order_payment_cash($1,12,'paid',null,120000,0)",[cash.id]),/permission|access/i);
+ const open=(await q("select id from cafe_staff_shifts where location_id=$1 and staff_telegram_id=13 and shift_status='open'",[cafe])).rows[0];
+ if(!open)await q('select open_cafe_staff_shift($1,13,13,0)',[cafe]);
+ await assert.rejects(q("select update_cafe_order_payment_cash($1,13,'paid',null,100000,0)",[cash.id]),/Invalid cash/);
+ await q("select update_cafe_order_payment_cash($1,13,'paid',null,150000,30000)",[cash.id]);
+ assert.equal((await state(cash.id)).status,'preparing');assert.equal((await state(cash.id)).accepted_by_telegram_id,13);const paidAt=(await state(cash.id)).paid_at;
+ await q("select update_cafe_order_payment_cash($1,13,'paid',null,150000,30000)",[cash.id]);
+ assert.equal((await q('select count(*)::int n from cafe_payment_receipts where order_id=$1',[cash.id])).rows[0].n,1);
+ assert.equal((await q("select count(*)::int n from cafe_order_events where order_id=$1 and from_status='pending' and to_status='preparing'",[cash.id])).rows[0].n,1);
+ assert.deepEqual((await state(cash.id)).paid_at,paidAt);
+ await q("select update_cafe_order_status($1,12,'ready')",[cash.id]);await q("select update_cafe_order_status($1,13,'completed')",[cash.id]);
+ const qr=await create('qr');await q("select update_cafe_order_payment_cash($1,13,'paid')",[qr.id]);assert.equal((await state(qr.id)).status,'preparing');
+ await q("select update_cafe_order_status($1,12,'confirmed')",[legacy.id]);await q("select update_cafe_order_status($1,12,'preparing')",[legacy.id]);assert.equal((await state(legacy.id)).requires_prepayment,false,'existing orders preserved');
+ const delivery=(await q("insert into cafe_orders(location_id,order_type,delivery_address) values($1,'delivery','QA delivery address') returning id",[cafe])).rows[0];assert.equal((await state(delivery.id)).requires_prepayment,false);
+ await q("select update_cafe_order_status($1,12,'confirmed')",[delivery.id]);await q("select update_cafe_order_status($1,12,'preparing')",[delivery.id]);
+ const cancelled=await create();await q("select update_cafe_order_status($1,12,'cancelled')",[cancelled.id]);assert.equal((await state(cancelled.id)).status,'cancelled');
+ console.log('PASS self-service database: cashier queue, unpaid status/direct bypass denied, payment permission, insufficient cash, atomic paid→preparing, one receipt/event on retry, QR, ready→issued, cancellation and legacy/delivery compatibility.');
+}
