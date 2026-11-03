@@ -52,3 +52,71 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 .web-work-app .courier-workspace .kitchen-order-card>.kitchen-order-actions{order:1;margin:8px 0 16px}
 .web-work-app .courier-workspace .kitchen-order-card>.kitchen-order-items{order:2}
 .web-work-app .courier-workspace .kitchen-order-card>.kitchen-order-total{order:3}
+
+/* Phone-first navigation; the same four sections remain across device sizes. */
+.web-work-app .web-tabs button{display:flex;align-items:center;justify-content:center;gap:9px}
+.web-work-app .work-nav-icon{display:block;width:22px;height:22px;flex:0 0 22px}
+.web-work-app .staff-section-links{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.web-work-app .staff-section-links a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px 16px;border:1px solid var(--work-line);border-radius:12px;background:white;text-decoration:none;font-size:14px;font-weight:700}
+.web-work-app #webStaffHeading{margin-top:28px;scroll-margin-top:90px}
+.web-work-app #webInviteForm{scroll-margin-top:90px}
+.web-work-app #webInviteCopy{margin-top:12px;min-height:48px;background:var(--work-accent);color:#fff;border-color:var(--work-accent)}
+@media(max-width:1100px){
+ .web-work-app :where(input,select,textarea){font-size:16px!important}
+ .web-work-app .web-tabs button{max-width:none;min-height:52px}
+ .web-work-app .cafe-kitchen-filters button{min-height:48px}
+ .web-work-app .kitchen-order-actions>.kitchen-action,.web-work-app .kitchen-order-actions>.kitchen-cancel{min-height:52px}
+ .web-work-app .pos-row button{min-height:48px;min-width:48px}
+ .web-work-app .courier-desk-tabs button{min-height:52px}
+}
+@media(min-width:900px) and (max-width:1100px){
+ .web-work-app .web-pos-grid{grid-template-columns:minmax(0,1fr) 320px;gap:18px}
+ .web-work-app .pos-basket{position:sticky;top:90px;max-height:calc(100dvh - 110px);overflow:auto}
+ .web-work-app #posCartJump,.web-work-app #posBackToProducts{display:none!important}
+ .web-work-app .pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .web-work-app{--work-bottom-nav:calc(72px + env(safe-area-inset-bottom,0px));padding-bottom:var(--work-bottom-nav)}
+ .web-work-app .web-header{min-height:64px;padding:10px 14px}
+ .web-work-app .web-tabs{position:fixed;inset:auto 0 0;z-index:40;min-height:var(--work-bottom-nav);padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));gap:4px;border:0;border-top:1px solid var(--work-line);border-radius:18px 18px 0 0;background:#fffffffa;box-shadow:0 -4px 20px #173d3b0d;align-items:stretch}
+ .web-work-app .web-tabs button{flex:1 1 0;display:flex;flex-direction:column;gap:4px;min-height:56px;padding:6px 2px;font-size:11px;line-height:1.2;border:1px solid transparent;border-radius:11px;background:transparent;color:#526d64}
+ .web-work-app .web-tabs button span{max-width:100%;overflow-wrap:normal;white-space:nowrap}
+ .web-work-app .web-tabs button[aria-current=true]{background:#e5f4ed;color:var(--work-accent);border-color:#b7dace}
+ .web-work-app .web-tabs .work-nav-icon{width:22px;height:22px;flex-basis:22px}
+ .web-work-app .web-panel,.web-work-app .cafe-kitchen-inner{padding:20px 14px 28px}
+ .web-work-app .web-pos-heading h1,.web-work-app .work-board-title h1{font-size:26px}
+ .web-work-app .web-pos-heading .eyebrow{margin-bottom:8px}
+ .web-work-app .web-pos-heading label{margin-top:16px}
+ .web-work-app #posCartJump:not([hidden]){bottom:calc(var(--work-bottom-nav) + 12px);min-height:54px;left:14px;right:14px;width:calc(100% - 28px);z-index:35}
+ .web-work-app[data-workspace=pos] .web-panel{padding-bottom:90px}
+ .web-work-app .pos-basket,.web-work-app #posSearch,.web-work-app #webInviteForm,.web-work-app #webStaffHeading{scroll-margin-top:16px}
+ .web-work-app .work-order-summary{gap:7px}.web-work-app .work-order-summary span{font-size:12px}
+ .web-work-app .cafe-kitchen-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .web-work-app .cafe-kitchen-filters button{min-height:48px;font-size:13px;padding:10px 8px}
+ .web-work-app .cafe-kitchen-filters button:first-child{grid-column:1/-1}
+ .web-work-app .kitchen-order-actions>[data-new-status],.web-work-app .kitchen-order-actions>[data-payment-status],.web-work-app .kitchen-order-actions>[data-delivery-photo],.web-work-app .kitchen-order-actions>[data-delivery-status]{min-height:56px;font-size:15px}
+ .web-work-app .courier-shift-card{padding:16px}.web-work-app .courier-shift-card h2{font-size:21px}.web-work-app .courier-shift-card p{font-size:13px}
+ .web-work-app .courier-desk-stats>div{padding:12px}.web-work-app .courier-desk-stats strong{font-size:24px}
+ .web-work-app .courier-desk-tabs button{font-size:12px;padding:10px 6px}
+ .web-work-app .staff-section-links{display:grid;grid-template-columns:1fr;gap:8px}
+ .web-work-app #webInviteForm{max-width:none;padding:18px}
+ .web-work-app #webInviteForm>button,.web-work-app #webInviteCopy{width:100%;min-height:54px}
+ .web-work-app .staff-account{display:grid;grid-template-columns:1fr;gap:12px;padding:16px}
+ .web-work-app .staff-account button{width:100%;min-height:48px}
+ .web-work-app .staff-account>span{font-size:16px}
+ .web-work-app.work-keyboard-open .web-tabs,.web-work-app.work-keyboard-open #posCartJump{display:none!important}
+ .web-work-app.work-keyboard-open{padding-bottom:20px}
+ .web-work-app #cashSummary{grid-template-columns:minmax(0,1fr)!important}
+ .web-work-app #cashPayConfirm{min-height:56px!important}
+}
+@media(max-width:350px){.web-work-app .web-tabs button{font-size:10px}.web-work-app #webIdentity{max-width:22vw}.web-work-app .web-pos-heading p{font-size:12px}}
+@media(max-width:1100px){
+ .web-work-app :where(.web-account-menu,.kitchen-board-tools,.screen-tools,.kitchen-secondary-actions)>summary{min-height:44px;display:flex;align-items:center;gap:8px}
+ .web-work-app #posBackToProducts{min-height:44px}
+}
+@media(max-width:1100px){
+ .web-work-app :where(.web-account-menu,.kitchen-board-tools,.screen-tools,.kitchen-secondary-actions)>summary::after{content:'⌄';margin-left:auto;font-size:18px;line-height:1;flex:0 0 auto}
+ .web-work-app :where(.web-account-menu,.kitchen-board-tools,.screen-tools,.kitchen-secondary-actions)[open]>summary::after{transform:rotate(180deg)}
+}
+.web-work-app{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+@media(max-width:650px){.web-work-app .web-header{padding-top:max(10px,env(safe-area-inset-top,0px))}.web-work-app .web-tabs{padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}}
