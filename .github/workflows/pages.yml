@@ -21,7 +21,7 @@ jobs:
           mkdir -p _site
           cp *.html _site/
           cp -R css js assets logo menu _site/
-          cp umma-menu.webmanifest umma-menu-sw.js _site/
+          cp umma-menu.webmanifest umma-staff.webmanifest umma-menu-sw.js _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

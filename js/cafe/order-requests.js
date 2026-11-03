@@ -5,7 +5,7 @@
   const allowed=new Set([base+'create-cafe-order',base+'cafe-kitchen']);
   let inFlight=false;
   const storageKey=()=>{
-    const id=window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    const id=(window.ummaStaffAuth?.actorId()||window.Telegram?.WebApp?.initDataUnsafe?.user?.id);
     if(!id)throw new Error('Откройте приложение через Telegram.');
     return 'umma:cafe-operation:'+id;
   };
@@ -43,7 +43,7 @@
   function render(){
     let operation;
     try{operation=pending();}catch{return;}
-    for(const [id,staff] of [['cafePage',false],['staffOrderFormWrap',true],['cafeKitchenPage',true]]){
+    for(const [id,staff] of [['cafePage',false],['webPos',true],['staffOrderFormWrap',true],['cafeKitchenPage',true]]){
       const root=document.getElementById(id);if(!root)continue;
       let panel=root.querySelector('[data-cafe-recovery]');
       if(!panel){
@@ -54,7 +54,7 @@
         button.addEventListener('click',async()=>{
           try{
             const saved=pending();if(!saved)return;
-            const response=await request(saved.url,{...saved.payload,initData:window.Telegram?.WebApp?.initData});
+            const response=await request(saved.url,{...saved.payload,initData:(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData)});
             const result=await response.json();
             if(!response.ok||!result.ok)throw new Error(result.error||'Результат заказа пока неизвестен.');
             document.dispatchEvent(new CustomEvent('umma:cafe-operation-recovered',{detail:{result,payload:saved.payload}}));

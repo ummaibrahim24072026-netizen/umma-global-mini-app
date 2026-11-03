@@ -5,7 +5,7 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
  const money=n=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(n)||0);
  let board=null,tab='available',tabChosen=false,watch=null,position=null,lastPositionSent=0,positionSending=false,shiftBusy=false,gpsError='',generation=0,heartbeat=null,heartbeatRequest=null;
- async function api(body){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,initData}),signal:AbortSignal.timeout(12000)});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Не удалось обновить рабочий статус');return data;}
+ async function api(body){const initData=(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);if(!initData)throw Error('Откройте приложение через Telegram');const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,initData}),signal:AbortSignal.timeout(12000)});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Не удалось обновить рабочий статус');return data;}
  let lastNotice='';
  function notice(text){lastNotice=text;const el=$('courierDeskMessage');if(el)el.textContent=text;}
  function connection(){const el=$('courierConnection');if(el){el.hidden=navigator.onLine!==false;el.textContent='Нет связи. Подключитесь к интернету перед изменением заказа.';}}

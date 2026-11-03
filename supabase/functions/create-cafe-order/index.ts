@@ -1,3 +1,4 @@
+import {verifyWebStaffSession} from "../_shared/web-staff-auth.ts";
 import { dispatchCourierQueue } from "../_shared/courier-workflow.ts";
 import { submitCafeOperation } from "../_shared/order-operation.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -91,7 +92,10 @@ Deno.serve(async (req) => {
       return response({ ok: false, error: "Server configuration error" }, 500);
     }
 
-    const { telegramId } = await verifyTelegramInitData(body.initData, botToken);
+    const telegramId = body.initData.startsWith("web:")
+      ? await verifyWebStaffSession(createClient(supabaseUrl,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}}),body.initData)
+      : (await verifyTelegramInitData(body.initData, botToken)).telegramId;
+    if(body.initData.startsWith("web:") && body.staffOrder!==true)return response({ok:false,error:"Staff orders only"},403);
 
     const items = body.items;
     if (!Array.isArray(items) || items.length < 1 || items.length > 50) {
@@ -267,7 +271,7 @@ Deno.serve(async (req) => {
     return response({ ok: true, ...data, staffNotified, staffNotificationFailures }, 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed";
-    const authError = /Telegram|signature|initData/i.test(message);
+    const authError = /Telegram|signature|initData|Web session|Web access/i.test(message);
     return response(
       { ok: false, error: authError ? "Telegram authentication failed" : "Invalid request" },
       authError ? 401 : 400,

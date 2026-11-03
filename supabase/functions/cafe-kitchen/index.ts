@@ -1,3 +1,4 @@
+import {verifyWebStaffSession} from "../_shared/web-staff-auth.ts";
 import {dispatchCustomerNotifications} from "../_shared/customer-notifications.ts";
 import {dispatchCourierQueue,uploadDeliveryProof} from "../_shared/courier-workflow.ts";
 import { sandboxCanAdvance } from "./sandbox-policy.ts";
@@ -76,7 +77,9 @@ Deno.serve(async req => {
       return response({ ok: false, error: "Server configuration error" }, 500);
     }
 
-    const telegramId = await verifyInitData(body.initData, botToken);
+    const telegramId = body.initData.startsWith("web:")
+      ? await verifyWebStaffSession(createClient(supabaseUrl,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}}),body.initData)
+      : await verifyInitData(body.initData, botToken);
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -596,7 +599,7 @@ Deno.serve(async req => {
     return response({ ok: false, error: "Неизвестное действие" }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed";
-    const authError = /Telegram|signature/i.test(message);
-    return response({ ok: false, error: authError ? "Ошибка проверки Telegram" : "Некорректный запрос" }, authError ? 401 : 400);
+    const authError = /Telegram|signature|Web session|Web access/i.test(message);
+    return response({ ok: false, error: authError ? "Войдите в рабочее приложение" : "Некорректный запрос" }, authError ? 401 : 400);
   }
 });

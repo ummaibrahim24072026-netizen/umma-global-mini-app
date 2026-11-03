@@ -1,0 +1,51 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#007c80"><title>UMMA · Работа кафе</title><link rel="manifest" href="umma-staff.webmanifest"><link rel="stylesheet" href="css/app.css?v=37"><link rel="stylesheet" href="css/cafe-comfort.css?v=13"><link rel="stylesheet" href="css/cafe-payment.css?v=7"><link rel="stylesheet" href="css/courier-workspace.css?v=1"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><link rel="stylesheet" href="css/web-operations.css?v=1"></head><body>
+<header class="web-header"><a href="menu/" class="web-brand"><img src="logo/assets/umma-logo.webp" alt="UMMA">Работа кафе</a><span id="webIdentity"></span><button id="webLogout" hidden>Выйти</button></header>
+<main id="webLogin" class="web-login"><p class="eyebrow">UMMA FAMILY</p><h1 id="loginTitle">Вход для сотрудников</h1><p id="loginHint">Касса, кухня и доставка в одном приложении.</p><form id="webLoginForm"><label>Логин<input id="webLoginName" autocomplete="username" pattern="[A-Za-z0-9_.-]{3,60}" required></label><label>Пароль<input id="webPassword" type="password" autocomplete="current-password" minlength="10" maxlength="128" required></label><button class="primary" id="webLoginSubmit">Войти</button><p id="webLoginError" role="alert"></p></form></main>
+<div id="webWorkspace" hidden><nav class="web-tabs" aria-label="Рабочее место"><button data-web-tab="pos">Касса · Продажа</button><button data-web-tab="orders">Заказы · Кухня</button><button data-web-tab="courier">Курьер</button><button data-web-tab="admin" hidden>Сотрудники</button><button id="webInstall">На главный экран</button></nav><p id="webNotice" role="status" aria-live="polite"></p>
+<section id="webPos" class="web-panel"><div class="web-pos-heading"><div><p class="eyebrow">КАССА · БЫСТРАЯ ПРОДАЖА</p><h1>Что покупает гость?</h1><p>Выберите товар, примите оплату и выдайте заказ по номеру.</p></div><label>Кафе<select id="posLocation"></select></label></div>
+<div class="web-pos-grid"><section><label>Найти товар<input id="posSearch" type="search" placeholder="Например, лепёшка"></label><div id="posProducts" class="pos-products"></div></section><aside class="pos-basket"><h2>Новая продажа</h2><div id="posCart"></div><div class="pos-total"><span>Итого</span><strong id="posTotal">0 ₫</strong></div><form id="posForm"><label>Оплата<select id="posMethod"><option value="cash">Наличные</option><option value="qr">QR-код · банк клиента</option></select></label><label id="posCashLabel">Получено наличными, VND<input id="posCash" type="number" min="0" step="1000" inputmode="numeric" placeholder="Введите полученную сумму"></label><p id="posChange"></p><button class="primary" id="posSubmit" disabled>Пробить и отметить оплату</button><p id="posResult" role="status"></p></form><div id="posReceipt" hidden><h2 id="posOrderNumber"></h2><div id="posQr"></div><p id="posPaymentHint"></p><button id="posConfirmQr" hidden>Деньги поступили · Оплачено</button><button id="posShowScreen" hidden>Показать на планшете</button></div>
+<details class="screen-tools"><summary>Экран оплаты для клиента</summary><p>Подключите отдельный планшет или монитор. На нём будет только заказ и QR с готовой суммой.</p><button id="screenPair" type="button">Подключить планшет</button><div id="screenPairQr"></div><a id="screenPairLink" target="_blank" rel="noopener noreferrer" hidden>Открыть клиентский экран</a><button id="screenUnpair" hidden>Отключить планшет</button><p id="screenPairState" role="status"></p></details></aside></div></section>
+<section id="webAdmin" class="web-panel" hidden><h1>Сотрудники · Веб-доступ</h1><p>Создайте приглашение. Сотрудник сам задаст логин и пароль; Telegram ему не нужен.</p><form id="webInviteForm"><label>Имя<input id="webStaffName" required maxlength="100"></label><label>Кафе<select id="webStaffLocation"></select></label><label>Должность<select id="webStaffRole"><option value="cashier">Кассир</option><option value="kitchen">Кухня</option><option value="courier">Курьер</option><option value="manager">Менеджер</option></select></label><button class="primary">Создать приглашение</button></form><p id="webInviteResult" role="status"></p><a id="webInviteLink" hidden></a><div id="webStaffList"></div></section>
+  <!-- COURIER MAP AND ROUTE -->
+  <section id="courierMapModal" hidden style="position:fixed;inset:0;z-index:11000;background:#fff;overflow:auto;padding:14px;box-sizing:border-box">
+    <div style="max-width:900px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
+        <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
+      </div>
+      <div class="umma-maps-brand">UMMA MAPS</div>
+      <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
+      <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <a id="courierMapApple" target="_blank" rel="noopener noreferrer" hidden>Открыть маршрут в Картах Apple</a>
+      <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Начать навигацию в Google Maps</a>
+      <small style="color:#68737d">Голосовые подсказки доступны в приложении Google Maps. При переключении из приложения передача позиции клиенту может приостановиться.</small>
+    </div>
+  </section>
+
+  <!-- CAFE KITCHEN -->
+  <section id="cafeKitchenPage" class="cafe-kitchen-page" hidden>
+    <div class="cafe-kitchen-inner">
+      <div class="cafe-kitchen-header">
+        <button type="button" id="cafeKitchenBack" class="cafe-back">← Назад</button>
+        <details class="kitchen-board-tools"><summary>Настройки кухни</summary>
+        <button type="button" id="cafeKitchenRefresh" class="cafe-kitchen-refresh">↻ Обновить</button>
+        <button type="button" id="kitchenTabletToggle" class="cafe-kitchen-refresh" aria-pressed="false">▣ Режим планшета</button>
+        <button type="button" id="cafeCashToggle" class="cafe-kitchen-refresh" aria-expanded="false">💰 Касса и смена</button>
+        </details>
+        <h1>Кухня · Заказы</h1>
+        <p>HALAL UMMA · Нячанг</p>
+      </div>
+      <div class="cafe-kitchen-shortcuts">
+        
+      </div>
+      <details id="courierOwnerSetup" hidden><summary>Кафе и доступ курьера</summary><section id="selfCourierControls" class="cafe-message" hidden><h2>Я — курьер</h2><label>Кафе<select id="selfCourierLocation"></select></label><p id="selfCourierStatus" role="status"></p><button type="button" id="selfCourierEnable" class="kitchen-action">Я доступен как курьер</button><button type="button" id="selfCourierDisable" class="kitchen-cancel">Завершить работу курьером</button><p>Принимайте доставку ниже. Фото и GPS включаются после назначения заказа.</p></section></details><section id="courierOffers" hidden></section><div class="cafe-kitchen-filters">
+        <button type="button" class="is-active" data-kitchen-filter="active">Активные</button>
+        <button type="button" data-kitchen-filter="all">Все</button>
+        <button type="button" id="courierClosedFilter" data-kitchen-filter="closed" hidden>Закрытые</button>
+      </div>
+      <div id="cafeKitchenMessage" class="cafe-message">Загружаем заказы…</div>
+      <div id="cafeKitchenOrders" class="cafe-kitchen-orders"></div>
+    </div>
+  </section>
+
+</div><script src="js/cafe/web-session.js?v=1"></script><script src="js/vendor/qrcode-generator.js?v=1"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="js/maps/umma-maps.js?v=3"></script><script src="js/cafe/order-requests.js?v=4"></script><script src="js/cafe/courier-desk.js?v=3"></script><script src="js/cafe/courier-workflow.js?v=8"></script><script src="js/cafe/delivery-tracking.js?v=7"></script><script src="js/cafe/kitchen.js?v=78"></script><script src="js/cafe/kitchen-live.js?v=5"></script><script src="js/maps/courier-route.js?v=9"></script><script src="js/cafe/web-operations.js?v=1"></script></body></html>

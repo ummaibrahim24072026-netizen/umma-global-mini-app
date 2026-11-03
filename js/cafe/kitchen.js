@@ -163,7 +163,7 @@
   }
 
   async function api(payload) {
-    const initData = window.Telegram?.WebApp?.initData;
+    const initData = (window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);
     if (!initData) throw new Error("Откройте приложение через Telegram");
     if(["addItems","refundOrder"].includes(payload.action)){
       const response=await window.ummaCafeRequests.request(API,{...payload,initData});
@@ -701,7 +701,7 @@
     if(proofButton){
       const orderId=proofButton.getAttribute("data-proof-order");
       const order=orders.find(o=>String(o.id)===String(orderId));
-      const initData=window.Telegram?.WebApp?.initData;
+      const initData=(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);
       if(!initData){showMessage("Откройте приложение через Telegram");return;}
       proofButton.disabled=true;
       try{
@@ -929,7 +929,7 @@
     if(!staffCart.size){if(message){message.textContent="Добавьте хотя бы одно блюдо.";message.hidden=false;}return;}
     const selectedLocation=window.ummaRole==="super_admin"?(byId("staffOrderLocation")?.value||""):staffLocationIds[0];
     if(!selectedLocation){if(message){message.textContent=window.ummaRole==="super_admin"?"Выберите кафе / филиал.":"Не удалось определить кафе сотрудника. Обновите заказы.";message.hidden=false;}return;}
-    const initData=window.Telegram?.WebApp?.initData;
+    const initData=(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);
     if(!initData){if(message){message.textContent="Откройте приложение через Telegram.";message.hidden=false;}return;}
     const type=byId("staffOrderType").value;
     const guestName=byId("staffOrderCustomerName")?.value.trim()||(selfServiceEnabled()&&type==="pickup"?"Гость":"");
@@ -980,7 +980,7 @@
         });
         const result=await response.json(); if(!response.ok||!result.ok||!result.order)throw new Error(result.error||"Не удалось оформить заказ");
         const order=result.order;
-        if(paymentTiming==="now"&&paymentMethod!=="courier"&&paymentMethod!=="bank_transfer"){
+        if(paymentTiming==="now"&&paymentMethod!=="courier"&&paymentMethod!=="bank_transfer"&&paymentMethod!=="qr"){
           try {
             await api({action:"updatePayment",orderId:order.id,paymentStatus:"paid",tenderedAmountVnd:paymentMethod==="cash"?tendered:orderTotal,changeGivenVnd:changeAmount,paymentMethod});
           } catch(paymentError) {
@@ -990,6 +990,8 @@
             await loadOrders(); return;
           }
           if(message){message.textContent="Оплата подтверждена. Заказ №"+order.orderNumber+" передан на кухню. Сумма: "+staffMoney(order.totalVnd)+(paymentMethod==="cash"?" · Получено: "+staffMoney(tendered)+" · Сдача: "+staffMoney(changeAmount):" · Оплата: "+({qr:"QR-код",bank_transfer:"перевод на карту",cash:"наличные"}[paymentMethod]||paymentMethod));message.hidden=false;}
+        } else if(paymentMethod==="qr"){
+          if(message){message.textContent="Заказ №"+order.orderNumber+" создан. Покажите QR на клиентском экране и подтвердите оплату после поступления денег.";message.hidden=false;}
         } else if(paymentMethod==="bank_transfer"){
           if(message){message.textContent="Заказ №"+order.orderNumber+" создан. Перевод на карту ожидает скриншот и подтверждение поступления средств. Не отмечайте заказ оплаченным заранее.";message.hidden=false;}
         } else if(paymentMethod==="courier"){

@@ -1,10 +1,12 @@
 import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
-const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+const web=process.env.UMMA_QA_WEB_STAFF==='1';
+const html=readFileSync(web?'staff.html':'index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{pretendToBeVisual:true,runScripts:'outside-only',url:'https://synthetic-qa.invalid'}),w=dom.window,d=w.document;
 const tick=()=>new Promise(r=>setTimeout(r,10));const until=async fn=>{for(let n=0;n<150;n++){if(fn())return;await tick();}assert.fail('Courier UI did not settle');};
 let order={id:'delivery',order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_method:'cash',payment_status:'pending',total_vnd:120000,delivery_address:'Точка доставки: 12.25,109.18',deliveryProofs:[],cafe_order_items:[]},sharing=false,starts=0,stops=0,uploads=0,updates=0;
 let navigationLink;
 w.Telegram={WebApp:{openLink:link=>{navigationLink=link;},initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.ummaRole='employee';w.AbortSignal=AbortSignal;w.scrollTo=()=>{};
+if(web){delete w.Telegram;w.ummaStaffAuth={credential:()=>"web:"+"a".repeat(64),actorId:()=>20};w.HTMLAnchorElement.prototype.click=function(){navigationLink=this.href;};}
 w.ummaCourierTracking={start:async()=>{sharing=true;starts++;},stop:async()=>{sharing=false;stops++;},isSharing:()=>sharing,syncOrders:orders=>{if(sharing&&!orders.some(o=>o.delivery_status==='picked_up')){sharing=false;stops++;}}};
 const snapshot=()=>({id:order.id,status:order.status,deliveryStatus:order.delivery_status,paymentStatus:order.payment_status});
 const close=()=>{if(order.delivery_status==='delivered'&&order.payment_status==='paid')order.status='completed';};

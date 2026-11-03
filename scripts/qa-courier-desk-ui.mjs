@@ -1,5 +1,6 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync} from 'node:fs';import assert from 'node:assert/strict';
-const html=readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+const web=process.env.UMMA_QA_WEB_STAFF==='1';
+const html=readFileSync(web?'staff.html':'index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{pretendToBeVisual:true,runScripts:'outside-only',url:'https://synthetic-qa.invalid'}),w=dom.window,d=w.document;
 const tick=()=>new Promise(r=>setTimeout(r,10));const until=async fn=>{for(let n=0;n<150;n++){if(fn())return;await tick();}assert.fail('Courier desk did not settle');};
 const personal={orderId:'near',orderNumber:71,locationName:'UMMA · Scenia Bay',pickupAddress:'Киоск №13 · север Нячанга',deliveryAddress:'Nguyễn Biểu, Нячанг',pickupDistanceM:350,kitchenStatus:'ready',totalVnd:150000,paymentTiming:'on_delivery',paymentStatus:'pending',expiresAt:new Date(Date.now()+60000).toISOString(),scope:'exclusive'};
@@ -7,6 +8,7 @@ const pool={...personal,orderId:'pool',orderNumber:72,pickupDistanceM:1200,deliv
 let heartbeatPulse;
 let board={eligible:true,online:false,busy:false,gpsFresh:false,activeCount:0,completedToday:3,offers:[],available:[]},orders=[],watchCount=0,clears=0,position,releaseShift=null,holdShift=true,calls=[];
 w.Telegram={WebApp:{initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.ummaRole='employee';w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaCourierTracking={syncOrders(){},isSharing:()=>true};
+if(web){delete w.Telegram;w.ummaStaffAuth={credential:()=>"web:"+"a".repeat(64),actorId:()=>20};}
 w.setInterval=(fn,ms)=>{if(ms===30000)heartbeatPulse=fn;return 1;};w.clearInterval=()=>{};
 Object.defineProperty(w.navigator,'geolocation',{value:{watchPosition:fn=>{watchCount++;position=fn;return 1;},clearWatch:()=>clears++}});
 const accepted=id=>{const chosen=id==='near'?personal:pool;orders=[{id,order_number:chosen.orderNumber,location_id:'cafe',order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_status:'pending',payment_method:'cash',total_vnd:150000,delivery_address:'Точка доставки: 12.3,109.2',cafe_order_items:[]}];board={...board,activeCount:1,busy:true,offers:[],available:[]};};

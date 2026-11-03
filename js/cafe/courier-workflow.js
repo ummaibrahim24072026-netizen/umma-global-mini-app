@@ -3,11 +3,11 @@
  'use strict';
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-kitchen';
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
- async function api(payload){const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData}),signal:AbortSignal.timeout(15000)});const result=await response.json();if(!response.ok||!result.ok){const error=Error(result.error||'Операция доставки не выполнена');error.status=response.status;throw error;}return result;}
+ async function api(payload){const initData=(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);if(!initData)throw Error('Откройте приложение через Telegram');const response=payload.action==='uploadDeliveryProof'?await window.ummaCafeRequests.request(endpoint,{...payload,initData}):await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,initData}),signal:AbortSignal.timeout(15000)});const result=await response.json();if(!response.ok||!result.ok){const error=Error(result.error||'Операция доставки не выполнена');error.status=response.status;throw error;}return result;}
  let busy=false,lastOfferSignature='';
  const completing=new Map();
  let retryTimer=null, transitionQueue=null;
- const transitionKey=()=> 'umma:courier-photo-transition:'+String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id||'');
+ const transitionKey=()=> 'umma:courier-photo-transition:'+String((window.ummaStaffAuth?.actorId()||window.Telegram?.WebApp?.initDataUnsafe?.user?.id)||'');
  function pendingTransitions(){
   if(transitionQueue!==null)return transitionQueue;
   try { const value=JSON.parse(sessionStorage.getItem(transitionKey())||'[]');transitionQueue=Array.isArray(value)?value.filter(x=>typeof x.orderId==='string'&&['pickup','handover'].includes(x.kind)):[]; } catch { transitionQueue=[]; }
