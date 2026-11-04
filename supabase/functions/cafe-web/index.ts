@@ -74,7 +74,18 @@ Deno.serve(async req=>{
  }
  if(b.action==='staffList'){
   if(!isOwner)return reply({ok:false},403);
-  const {data:accounts}=await db.from('cafe_web_accounts').select('actor_id,login,active');return reply({ok:true,accounts:accounts||[]});
+  const initial=await Promise.all([db.from('cafe_web_accounts').select('actor_id,login,active'),db.from('cafe_staff').select('telegram_id,location_id,staff_role').eq('is_active',true)]);for(const r of initial)if(r.error)throw r.error;
+  const [accounts,staff]=initial.map(r=>r.data||[]),ids=new Set([...accounts.map(a=>String(a.actor_id)),...staff.map(s=>String(s.telegram_id))]);
+  if(!ids.size)return reply({ok:true,accounts,employees:[]});
+  const results=await Promise.all([
+   db.from('telegram_users').select('telegram_id,first_name,role,is_active').in('telegram_id',[...ids]),
+   db.from('locations').select('id,name').in('id',[...new Set(staff.map(s=>s.location_id))]),
+   db.from('cafe_web_invites').select('actor_id,expires_at,used_at').in('actor_id',[...ids]).is('used_at',null)
+  ]);for(const r of results)if(r.error)throw r.error;
+  const [users,locations,invites]=results.map(r=>r.data||[]);
+  const employees=[...ids].map(id=>{const account=accounts.find(a=>String(a.actor_id)===id),user=users.find(u=>String(u.telegram_id)===id),assignments=staff.filter(s=>String(s.telegram_id)===id).map(s=>({...s,locationName:locations.find(l=>l.id===s.location_id)?.name||'Кафе'})),pending=invites.filter(i=>String(i.actor_id)===id).sort((a,b)=>Date.parse(b.expires_at)-Date.parse(a.expires_at))[0];
+   return {actor_id:Number(id),name:user?.first_name||account?.login||'Сотрудник',login:account?.login||null,assignments,status:!user?.is_active||account?.active===false?'disabled':account?.active?'active':pending?(Date.parse(pending.expires_at)>Date.now()?'invited':'expired'):'not_created',inviteExpiresAt:pending?.expires_at||null};});
+  return reply({ok:true,accounts,employees});
  }
  if(b.action==='staffDisable'){
   if(!isOwner||Number(b.actorId)===actor)return reply({ok:false},403);
