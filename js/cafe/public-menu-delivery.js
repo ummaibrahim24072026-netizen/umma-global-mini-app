@@ -49,6 +49,7 @@ function mode(){generation++;cancelAddress();const delivery=$('orderType').value
 $('orderType').onchange=mode;mode();
 window.ummaPublicDelivery={
  setCafe(value){cafe=value;},
+ point:()=>point?{...point}:null,
  fields(){if($('orderType').value!=='delivery')return {};if(!point)throw Error(t('Выберите точку доставки на карте.'));return {orderType:'delivery',address:$('deliveryAddress').value.trim(),...point};},
  reset(){cancelAddress();autoAddress='';point=null;generation++;if(marker){marker.remove();marker=null;}mode();text('Выберите точку доставки на карте.');},
  receipt(order){const show=order.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(order.trackingToken||'');$('deliveryReceipt').hidden=!show;if(!show)return;const url=new URL('delivery-tracking.html',document.baseURI);url.hash='token='+order.trackingToken;$('trackingLink').href=url.href;$('trackingLink').textContent=t('Отследить доставку');$('trackingCopy').textContent=t('Скопировать ссылку');$('trackingCopy').onclick=async()=>{try{await navigator.clipboard.writeText(url.href);$('trackingCopy').textContent=t('Ссылка скопирована');}catch{$('trackingLink').focus();}};}

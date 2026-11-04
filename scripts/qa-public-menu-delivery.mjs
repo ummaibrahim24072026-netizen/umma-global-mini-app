@@ -5,7 +5,7 @@ import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {paymentFor} from '../supabase/functions/cafe-my-orders/payment.ts';
-const read=p=>readFileSync(p,'utf8'),html=read('menu/index.html').replace('<script src="js/cafe/public-menu-delivery.js?v=4"></script>',()=>'<script>'+read('js/cafe/public-menu-delivery.js')+'</script>');
+const read=p=>readFileSync(p,'utf8'),html=read('menu/index.html').replace(/<script src="js\/cafe\/public-menu-delivery\.js\?v=\d+"><\/script>/,()=>'<script>'+read('js/cafe/public-menu-delivery.js')+'</script>');
 const product={id:'def936dc-6c57-4b06-ac32-cdf6a736c238',sku:'UMMA-CAFE-SHURPA',name_ru:'Шурпа',price_vnd:90000};
 const cafe={id:'e22788bd-4734-4b3a-911e-ba103d52617a',latitude:12.28,longitude:109.20,delivery_zone:[[12.2,109.1],[12.3,109.1],[12.3,109.3],[12.2,109.3]]};
 const tick=()=>new Promise(r=>setTimeout(r,25));

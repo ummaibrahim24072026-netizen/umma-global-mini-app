@@ -12,7 +12,7 @@ function setup({blocked = false, hidden = false} = {}) {
   const remove = w.document.removeEventListener.bind(w.document);
   w.document.addEventListener = (type, fn, opts) => { if (['click','touchend','keydown'].includes(type)) gestures.set(type, fn); add(type, fn, opts); };
   w.document.removeEventListener = (type, fn, opts) => { if (gestures.get(type) === fn) gestures.delete(type); remove(type, fn, opts); };
-  Object.defineProperty(w.document, 'currentScript', {value: {src: 'https://qa.invalid/umma/js/core/welcome-audio.js?v=1'}});
+  Object.defineProperty(w.document, 'currentScript', {value: {src: 'https://qa.invalid/umma/js/core/welcome-audio.js?v=2'}});
   Object.defineProperty(w.document, 'visibilityState', {get: () => hidden ? 'hidden' : 'visible'});
   let calls = 0, pauses = 0;
   w.Audio = class { constructor(url) { assert.equal(url, 'https://qa.invalid/umma/assets/audio/welcome-ru.mp3'); } play() { calls++; return blocked ? Promise.reject(new w.DOMException('Gesture required','NotAllowedError')) : Promise.resolve(); } pause() { pauses++; } };
@@ -45,9 +45,9 @@ function setup({blocked = false, hidden = false} = {}) {
 }
 for (const path of ['index.html', 'staff.html', 'menu/index.html']) {
   const html = readFileSync(path, 'utf8');
-  assert.equal((html.match(/src="js\/core\/welcome-audio\.js\?v=1"/g) || []).length, 1);
+  assert.equal((html.match(/src="js\/core\/welcome-audio\.js\?v=2"/g) || []).length, 1);
   const doc = new JSDOM(html, {url: `https://qa.invalid/umma/${path}`});
-  assert.equal(doc.window.document.querySelector('script[src*="welcome-audio"]').src, 'https://qa.invalid/umma/js/core/welcome-audio.js?v=1');
+  assert.equal(doc.window.document.querySelector('script[src*="welcome-audio"]').src, 'https://qa.invalid/umma/js/core/welcome-audio.js?v=2');
   doc.window.close();
 }
 assert.ok(readFileSync('assets/audio/welcome-ru.mp3').length > 1000);

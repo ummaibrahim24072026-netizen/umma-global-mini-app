@@ -46,7 +46,7 @@
     removeGestures();
     document.removeEventListener('visibilitychange', onVisibility);
   }
-  window.ummaWelcomeAudio = { play };
+  window.ummaWelcomeAudio = { play, pause: () => audio.pause() };
   gestures.forEach(type => document.addEventListener(type, onGesture, {capture: true, passive: true}));
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('pagehide', dispose, {once: true});

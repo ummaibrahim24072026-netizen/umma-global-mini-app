@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="css/cafe-cards.css?v=2">
   <link rel="stylesheet" href="css/rent.css?v=8">
   <link rel="stylesheet" href="css/courier-workspace.css?v=1">
-<script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=1"></script></head>
+<script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=2"></script><link rel="stylesheet" href="css/voice-order.css?v=1"></head>
 
 <body>
 
@@ -651,7 +651,7 @@
       <p id="cafeModeHint" class="cafe-order-hint" aria-live="polite">Выберите блюда — заберите заказ в кафе.</p>
       <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div></div>
       <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
-      <div id="cafeMenuSearchPanel" class="cafe-menu-search" hidden><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
+      <div id="cafeVoiceHost"></div><div id="cafeMenuSearchPanel" class="cafe-menu-search" hidden><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
       <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
       <button type="button" id="cafeMenuReset" class="cafe-menu-reset" hidden>Показать всё меню</button>
       <p id="cafeMenuCount" class="cafe-menu-count" role="status" aria-live="polite"></p>
@@ -725,7 +725,7 @@
             <summary><span>Пожелания к заказу<small id="cafeNoteSummary">Необязательно</small></span><span class="cafe-disclosure-action">Добавить</span></summary>
             <div class="cafe-disclosure-fields"><label>Комментарий к заказу (необязательно)<textarea id="cafeCustomerNote" name="customerNote" maxlength="1000" rows="2" placeholder="Например, соус отдельно"></textarea></label></div>
           </details>
-          <button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
+          <div id="cafeVoiceReviewHost"></div><button id="cafeSubmitOrder" type="submit" class="cafe-submit">Оформить заказ</button>
           <p class="cafe-order-hint cafe-checkout-footnote">Проверьте заказ перед подтверждением. Деньги автоматически не списываются.</p>
         </form>
         <p id="cafeCheckoutHint" class="cafe-checkout-hint" role="status" aria-live="polite" hidden></p>
@@ -881,7 +881,7 @@
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/cafe/payment.js?v=9"></script>
 <script src="js/delivery/providers.js?v=5"></script>
-<script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/cafe.js?v=82"></script>
+<script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/voice-order.js?v=1"></script><script src="js/cafe/cafe.js?v=83"></script>
 <script src="js/cafe/notifications.js?v=4"></script>
 <script src="js/cafe/courier-desk.js?v=3"></script>
 <script src="js/cafe/courier-workflow.js?v=8"></script>

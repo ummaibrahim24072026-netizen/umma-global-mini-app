@@ -747,5 +747,30 @@
     myOrdersFingerprint="";
     if(byId("cafeOrdersPage")?.hidden===false)loadMyOrders();
   });
+  function voiceProducts(){
+    if(loading||locating||!locationId)return [];
+    const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;
+    return products.flatMap(p=>{
+      if(p.catalog_preview||p.price_vnd==null)return [];
+      const stock=inventoryRows.find(i=>String(i.product_id)===String(p.id)&&String(i.location_id)===String(locationId));
+      if(ready&&(!stock?.ready_stock_confirmed||stock.ready_stock_state!=='ready'||stock.is_available===false))return [];
+      if(inventoryControlEnabled&&(!stock||stock.is_available===false))return [];
+      const quantity=ready||inventoryControlEnabled?Number(stock?.quantity)-Number(stock?.reserved_quantity||0):99;
+      return quantity>0?[{...p,price_vnd:inventoryControlEnabled&&!ready&&stock?.price_vnd!=null?stock.price_vnd:p.price_vnd}]:[];
+    });
+  }
+  const voiceForm=byId("cafeOrderForm");
+  if(byId("cafeVoiceHost")&&window.UmmaVoiceOrder)window.ummaCafeVoice=window.UmmaVoiceOrder.create({
+    id:"cafeVoice",host:byId("cafeVoiceHost"),reviewHost:byId("cafeVoiceReviewHost"),
+    language:()=>window.ummaI18n?.language||"ru",name,money,total,image:productPhoto,products:voiceProducts,
+    items:()=>Array.from(cart.values()).map(x=>({product:{...x.product,price_vnd:x.price_vnd},quantity:x.quantity})),
+    detail:p=>p.weight_value?String(p.weight_value)+" "+(p.weight_unit||""):"",
+    context:()=>({locationId,fields:voiceForm?Array.from(voiceForm.elements).filter(x=>x.name&&!x.disabled).map(x=>[x.name,x.value]):[],point:byId("cafeDeliveryPointSummary")?.textContent}),
+    summary:()=>[byId("cafeOrderType")?.selectedOptions[0]?.textContent,byId("cafePaymentMethod")?.selectedOptions[0]?.textContent,byId("cafeLocationMessage")?.textContent,orderType?.value==="dine_in"?byId("cafeTable")?.selectedOptions[0]?.textContent:"",orderType?.value==="delivery"?byId("cafeDeliveryPointSummary")?.textContent:""].filter(Boolean).join(". "),
+    locked:()=>loading||locating,change:changeProduct,
+    checkout:()=>{if(!checkoutOpen)byId("cafeStickyGoToOrder")?.click();},
+    validate:()=>!!locationId&&!deliveryBlocked()&&!!voiceForm?.reportValidity(),
+    notice:message=>showCheckoutError(message),submit:()=>voiceForm?.requestSubmit(byId("cafeSubmitOrder"))
+  });
   renderCart();
 })();
