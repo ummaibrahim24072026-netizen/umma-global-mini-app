@@ -1,0 +1,50 @@
+-- Owner-authorized reset of test Cafe sales. Private backup is retained; identities/catalogue stay.
+BEGIN;
+LOCK TABLE public.cafe_orders IN ACCESS EXCLUSIVE MODE;
+DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.cafe_orders WHERE source_module<>'cafe') THEN RAISE EXCEPTION 'Non-Cafe orders require a scoped reset';END IF;END $$;
+ALTER TABLE public.umma_runtime_settings ADD COLUMN IF NOT EXISTS cafe_reset_epoch uuid;
+CREATE TABLE IF NOT EXISTS umma_private.cafe_reset_backups(batch_id uuid NOT NULL,table_name text NOT NULL,rows jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(batch_id,table_name));
+ALTER TABLE umma_private.cafe_reset_backups ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON umma_private.cafe_reset_backups FROM PUBLIC,anon,authenticated;
+DO $$
+DECLARE batch uuid:=gen_random_uuid(); name text;
+BEGIN
+ FOREACH name IN ARRAY ARRAY['public.cafe_orders','public.cafe_order_items','public.cafe_order_events','public.cafe_payment_receipts','public.cafe_order_refunds','public.cafe_cash_handovers','public.cafe_staff_shifts','public.cafe_financial_entries','public.cafe_inventory_movements','public.cafe_courier_notifications','public.cafe_courier_offers','public.cafe_delivery_proofs','public.cafe_transfer_proofs','public.cafe_delivery_tracking','public.cafe_kiosk_orders','public.cafe_test_orders','public.cafe_test_events','public.cafe_test_shifts','umma_private.cafe_notifications','umma_private.cafe_order_requests','umma_private.public_guest_requests','umma_private.cafe_counter_requests','umma_private.pay_events','umma_private.delivery_chat_translations','umma_private.delivery_chat_messages','public.umma_guest_checkout_requests','public.umma_guest_delivery_grants','umma_private.cafe_push_subscriptions','umma_private.cafe_push_jobs','public.inventory','public.stock_balances','public.stock_movements','public.cafe_payment_screens'] LOOP
+  IF to_regclass(name) IS NOT NULL THEN EXECUTE format('INSERT INTO umma_private.cafe_reset_backups(batch_id,table_name,rows) SELECT $1,$2,coalesce(jsonb_agg(to_jsonb(t)),''[]''::jsonb) FROM %s t',name) USING batch,name; END IF;
+ END LOOP;
+END $$;
+UPDATE public.cafe_payment_screens SET order_id=NULL;
+DELETE FROM umma_private.cafe_push_jobs;
+DELETE FROM umma_private.cafe_push_subscriptions;
+DELETE FROM umma_private.pay_events;
+DELETE FROM umma_private.delivery_chat_translations;
+DELETE FROM umma_private.delivery_chat_messages;
+DELETE FROM umma_private.cafe_notifications;
+DELETE FROM umma_private.cafe_order_requests;
+DELETE FROM umma_private.public_guest_requests;
+DELETE FROM umma_private.cafe_counter_requests;
+DELETE FROM public.umma_guest_checkout_requests;
+DELETE FROM public.umma_guest_delivery_grants;
+DELETE FROM public.cafe_kiosk_orders;
+DELETE FROM public.cafe_courier_notifications;
+DELETE FROM public.cafe_courier_offers;
+DELETE FROM public.cafe_delivery_tracking;
+DELETE FROM public.cafe_delivery_proofs;
+DELETE FROM public.cafe_transfer_proofs;
+DELETE FROM public.cafe_order_refunds;
+DELETE FROM public.cafe_payment_receipts;
+DELETE FROM public.cafe_cash_handovers;
+DELETE FROM public.cafe_financial_entries;
+DELETE FROM public.cafe_inventory_movements;
+DELETE FROM public.stock_movements WHERE source_type='order' AND source_id IN(SELECT id FROM public.cafe_orders);
+DELETE FROM public.cafe_order_items;
+DELETE FROM public.cafe_order_events;
+DELETE FROM public.cafe_orders;
+DELETE FROM public.cafe_staff_shifts;
+DELETE FROM public.cafe_test_events;
+DELETE FROM public.cafe_test_orders;
+DELETE FROM public.cafe_test_shifts;
+UPDATE public.inventory i SET quantity=0,reserved_quantity=0,updated_at=now() FROM public.products p WHERE p.id=i.product_id AND p.product_type='cafe';
+UPDATE public.stock_balances b SET quantity_reserved=0,updated_at=now() FROM public.stock_items s JOIN public.products p ON p.id=s.linked_product_id WHERE b.stock_item_id=s.id AND p.product_type='cafe';
+UPDATE public.umma_runtime_settings SET cafe_reset_epoch=gen_random_uuid(),updated_at=now() WHERE id=true;
+COMMIT;

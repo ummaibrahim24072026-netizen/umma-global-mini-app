@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         .order("sort_order", { ascending: true }),
       supabase
         .from("locations")
-        .select("id, name, address, city, country, latitude, longitude, delivery_zone")
+        .select("id, name, address, city, country, latitude, longitude, delivery_zone, ready_stock_enabled")
         .eq("location_type", "cafe")
         .eq("is_active", true)
         .order("name", { ascending: true }),
@@ -48,10 +48,10 @@ Deno.serve(async (req) => {
         .eq("is_active", true),
       supabase
         .from("inventory")
-        .select("product_id,location_id,quantity,reserved_quantity,price_vnd,is_available"),
+        .select("product_id,location_id,quantity,reserved_quantity,price_vnd,is_available,ready_stock_confirmed,ready_stock_state"),
       supabase
         .from("umma_runtime_settings")
-        .select("inventory_control_enabled")
+        .select("inventory_control_enabled,cafe_reset_epoch")
         .eq("id", true)
         .maybeSingle(),
     ]);
@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
     return respond({
       ok: true,
       currency: "VND",
+      cafeResetEpoch: runtimeSettings?.cafe_reset_epoch,
       products: products ?? [],
       inventory: inventory ?? [],
       inventoryControlEnabled: runtimeSettings?.inventory_control_enabled === true,

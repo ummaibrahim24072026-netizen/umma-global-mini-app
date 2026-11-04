@@ -1,7 +1,7 @@
 /* Permission is requested only by a tap. Secrets and order capabilities never enter push URLs. */
 (()=>{'use strict';
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-push',key='umma:order-alerts:v1';
-let enabled=false,audio=null,order=null,subscribed='',busy=false;
+let resetEpoch='';let ignoreHistory=false;try{resetEpoch=localStorage.getItem('umma:cafe-data-epoch')||'';ignoreHistory=!!resetEpoch&&localStorage.getItem('umma:push-data-epoch')!==resetEpoch;}catch{}let enabled=false,audio=null,order=null,subscribed='',busy=false;
 try{enabled=localStorage.getItem(key)==='on';}catch{}
 const ru=()=>document.documentElement.lang==='ru',vi=()=>document.documentElement.lang==='vi';
 const text=(r,e,v)=>ru()?r:vi()?v:e;
@@ -25,9 +25,9 @@ else hint.textContent=result==='denied'?text('Разрешите уведомл�
 document.addEventListener('pointerdown',()=>{if(enabled)void unlock();},{passive:true});
 function workerMessage(type,payload={}){navigator.serviceWorker?.controller?.postMessage({type,...payload});}
 function badge(count){try{const p=count?navigator.setAppBadge?.(count):navigator.clearAppBadge?.();p?.catch(()=>{});}catch{}workerMessage('UMMA_BADGE',{count});}
-function ingest(messages){for(const m of messages||[])if(m.order)window.ummaOrderInbox?.publish(m.order);}
-navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='UMMA_ORDER_PUSH'){ingest([event.data.payload]);}else if(event.data?.type==='UMMA_PUSH_HISTORY'){ingest(event.data.messages);if(new URL(location.href).searchParams.has('messages'))window.ummaOrderInbox?.open();}else if(event.data?.type==='UMMA_OPEN_INBOX')window.ummaOrderInbox?.open();});
-if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(()=>{workerMessage('UMMA_GET_HISTORY');}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>workerMessage('UMMA_GET_HISTORY'));}
+function ingest(messages){if(ignoreHistory)return;for(const m of messages||[])if(m.order)window.ummaOrderInbox?.publish(m.order);}
+navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='UMMA_PUSH_RESET'){try{localStorage.setItem('umma:push-data-epoch',resetEpoch);}catch{}ignoreHistory=false;window.ummaOrderInbox?.reset();}else if(event.data?.type==='UMMA_ORDER_PUSH'){ingest([event.data.payload]);}else if(event.data?.type==='UMMA_PUSH_HISTORY'){ingest(event.data.messages);if(new URL(location.href).searchParams.has('messages'))window.ummaOrderInbox?.open();}else if(event.data?.type==='UMMA_OPEN_INBOX')window.ummaOrderInbox?.open();});
+if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(()=>{workerMessage(ignoreHistory?'UMMA_RESET':'UMMA_GET_HISTORY');}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>workerMessage(ignoreHistory?'UMMA_RESET':'UMMA_GET_HISTORY'));}
 window.addEventListener('umma-menu:languagechange',render);
-window.ummaOrderAlerts={setOrder(value){order=value;void register();},sound,badge,controls:root};render();
+window.ummaOrderAlerts={reset(){ignoreHistory=true;try{resetEpoch=localStorage.getItem('umma:cafe-data-epoch')||'';}catch{}order=null;subscribed='';workerMessage('UMMA_RESET');},setOrder(value){order=value;void register();},sound,badge,controls:root};render();
 })();

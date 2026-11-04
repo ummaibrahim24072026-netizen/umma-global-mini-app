@@ -43,16 +43,23 @@ Deno.serve(async req=>{
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
- if(b.action==='inviteExisting'&&typeof b.initData==='string'&&!b.initData.startsWith('web:'))actor=await verifyTelegramInitData(b.initData,Deno.env.get('TELEGRAM_BOT_TOKEN')!);
+ if(['inviteExisting','stockList','stockAdjust'].includes(b.action)&&typeof b.initData==='string'&&!b.initData.startsWith('web:'))actor=await verifyTelegramInitData(b.initData,Deno.env.get('TELEGRAM_BOT_TOKEN')!);
  else actor=await verifyWebStaffSession(db,String(b.initData||''));
  const {data:u,error:ue}=await db.from('telegram_users').select('telegram_id,first_name,role,is_active').eq('telegram_id',actor).maybeSingle();if(ue)throw ue;if(!u?.is_active)return reply({ok:false,error:'Доступ отключён'},403);
  const {data:assignments,error:ae}=await db.from('cafe_staff').select('location_id,staff_role,can_accept_payments').eq('telegram_id',actor).eq('is_active',true);if(ae)throw ae;
  const isOwner=u.role==='super_admin';
  if(!isOwner&&(!['employee','admin'].includes(u.role)||!assignments?.length))return reply({ok:false,error:'Нет назначений в кафе'},403);
  const canSell=(id:string)=>isOwner||assignments?.some(a=>a.location_id===id&&['cashier','manager'].includes(a.staff_role)&&a.can_accept_payments);
+ if(['stockList','stockAdjust'].includes(b.action)){
+  const canRead=isOwner||assignments?.some(a=>a.location_id===b.locationId&&['kitchen','manager','cashier'].includes(a.staff_role));
+  const canEdit=isOwner||assignments?.some(a=>a.location_id===b.locationId&&['kitchen','manager'].includes(a.staff_role));
+  if(!canRead||b.action==='stockAdjust'&&!canEdit)return reply({ok:false,error:'Нет прав на изменение наличия'},403);
+  const {data,error}=await db.rpc(b.action==='stockList'?'cafe_ready_list':'cafe_ready_adjust',{p_actor:actor,p_location:b.locationId,...(b.action==='stockAdjust'?{p_key:b.requestKey,p_mode:b.mode,p_items:b.items}:{})});
+  if(error)return reply({ok:false,error:/меньше резерва/.test(error.message)?error.message:'Не удалось сохранить наличие. Проверьте количество и повторите.'},400);return reply(data);
+ }
  if(b.action==='me'){
-  let q=db.from('locations').select('id,name,location_type,is_active,address,latitude,longitude').eq('location_type','cafe').eq('is_active',true);if(!isOwner)q=q.in('id',(assignments||[]).map(a=>a.location_id));const {data:locations,error}=await q;if(error)throw error;
-  return reply({ok:true,user:{id:actor,name:u.first_name,role:u.role},assignments,locations});
+  let q=db.from('locations').select('id,name,location_type,is_active,address,latitude,longitude,ready_stock_enabled').eq('location_type','cafe').eq('is_active',true);if(!isOwner)q=q.in('id',(assignments||[]).map(a=>a.location_id));const {data:locations,error}=await q;if(error)throw error;
+  const {data:settings}=await db.from('umma_runtime_settings').select('cafe_reset_epoch').eq('id',true).maybeSingle();return reply({ok:true,cafeResetEpoch:settings?.cafe_reset_epoch,user:{id:actor,name:u.first_name,role:u.role},assignments,locations});
  }
  if(b.action==='logout'){await db.from('cafe_web_sessions').update({revoked_at:new Date().toISOString()}).eq('token_hash',await sha256(String(b.initData).slice(4)));return reply({ok:true});}
  if(b.action==='inviteExisting'){

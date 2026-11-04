@@ -150,8 +150,9 @@
       return;
     }
     const availableProducts = [...products, ...dessertPreviews.filter(p => !products.some(product => product.sku === p.sku)).map(p => ({ ...p, photo_only: true, catalog_preview: true }))].map(p => {
-      if (p.catalog_preview || p.price_vnd == null) return { ...p, catalog_preview: true };
+      if (p.catalog_preview || p.price_vnd == null) return locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled?null:{ ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
+      const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;if(ready)return stock?{...p,stockAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false?Number(stock.quantity)-Number(stock.reserved_quantity||0):0,stockIsAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false}:null;
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
@@ -277,6 +278,7 @@
       const result = await response.json();
       if (revision !== menuRevision || loading) return;
       if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось загрузить меню");
+      if(window.ummaCafeEpoch?.apply(result.cafeResetEpoch))cart.clear();
       products = Array.isArray(result.products) ? result.products : [];
       inventoryRows = Array.isArray(result.inventory) ? result.inventory : [];
       inventoryControlEnabled = result.inventoryControlEnabled === true;
@@ -479,9 +481,10 @@
     const baseProduct = products.find(p => String(p.id) === String(productId));
     const stock = inventoryRows.find(i => String(i.product_id) === String(productId) && String(i.location_id) === String(locationId));
     if (!baseProduct || baseProduct.catalog_preview || baseProduct.price_vnd == null) return;
+    const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;if(ready&&(!stock?.ready_stock_confirmed||stock.ready_stock_state!=='ready'||stock.is_available===false))return;
     if (inventoryControlEnabled && (!stock || stock.is_available === false)) return;
-    const product = inventoryControlEnabled
-      ? { ...baseProduct, price_vnd: stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
+    const product = (inventoryControlEnabled||ready)
+      ? { ...baseProduct, price_vnd: ready||stock.price_vnd == null ? baseProduct.price_vnd : stock.price_vnd,
           stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0) }
       : { ...baseProduct, stockAvailable: 99 };
     const result = byId("cafeOrderResult");

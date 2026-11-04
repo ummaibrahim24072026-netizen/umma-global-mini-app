@@ -1,0 +1,3 @@
+/* A server reset clears only Cafe drafts/history; staff credentials and preferences survive. */
+(()=>{'use strict';window.ummaCafeEpoch={apply(epoch){if(!epoch)return false;let changed=false;try{changed=localStorage.getItem('umma:cafe-data-epoch')!==epoch;if(!changed)return false;
+for(const storage of [localStorage,sessionStorage])for(const key of Object.keys(storage)){if(['umma-menu-receipt','umma-menu-pending','umma:order-inbox:v1'].includes(key)||/^(umma:cafe-operation:|umma:ready-stock-pending:)/.test(key))storage.removeItem(key);}localStorage.setItem('umma:cafe-data-epoch',epoch);}catch{}if(changed){window.ummaOrderInbox?.reset();window.ummaOrderAlerts?.reset();}return changed;}};})();
