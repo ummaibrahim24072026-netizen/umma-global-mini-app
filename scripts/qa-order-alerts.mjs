@@ -17,7 +17,8 @@ w.ummaOrderInbox.publish({...o,orderNumber:91,status:'completed',eventId:'done',
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt:new Date(Date.now()-60000).toISOString(),changes:{status:'preparing'}});
 let stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.states['91'].status,'completed');const length=stored.messages.length;
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt,changes:{status:'preparing'}});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.length,length);
-w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog li').length,5);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));w.close();
+w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog li').length,5);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
+w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:true});w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:false});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.at(-1).value,'batch_ready_unpaid');w.close();
 }
 // Supported browser: one explicit permission tap, subscription bound to the exact receipt.
 {
@@ -46,16 +47,16 @@ const keys=webpush.generateVAPIDKeys(),receiver=webpush.generateVAPIDKeys();cons
 const encrypted=webpush.generateRequestDetails(subscription,'{"test":true}',{vapidDetails:{subject:'https://qa.invalid',...keys}});assert.ok(encrypted.body.length>16);assert.match(encrypted.headers.Authorization,/vapid/);
 // Edge: private key never public; receipt binding; SSRF denial; dispatch authentication/retries.
 {
-let handler,registered=0,finished=[],sent=0;const config={...keys,dispatchKey:'server-only'},job={id:'j',lease:'lease',payload:{orderNumber:8,status:'ready',changes:{status:'ready'}},subscription,language:'ru'};let gone=false;
+let handler,registered=0,finished=[],sent=0,payloads=[];const config={...keys,dispatchKey:'server-only'},job={id:'j',lease:'lease',payload:{orderNumber:8,status:'ready',changes:{status:'ready'}},subscription,language:'ru'};let gone=false;
 const db={async rpc(name,args){if(name==='cafe_push_config')return{data:config};if(name==='cafe_push_subscribe'){if(args.p_key!=='b'.repeat(8)+'-bbbb-4bbb-8bbb-'+ 'b'.repeat(12))return{error:{}};registered++;return{data:null};}if(name==='cafe_push_lease')return{data:[job]};if(name==='cafe_push_finish'){finished.push(args);return{data:null};}throw Error(name);}};
-vm.runInNewContext(stripTypeScriptTypes(source('supabase/functions/cafe-push/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{serve:f=>handler=f,env:{get:()=> 'synthetic'}},createClient:()=>db,webpush:{async sendNotification(s,p,o){sent++;assert.ok(o.vapidDetails.privateKey);if(gone)throw{statusCode:410};}},crypto:webcrypto,URL,Response,console,Set});
+vm.runInNewContext(stripTypeScriptTypes(source('supabase/functions/cafe-push/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{serve:f=>handler=f,env:{get:()=> 'synthetic'}},createClient:()=>db,webpush:{async sendNotification(s,p,o){sent++;payloads.push(JSON.parse(p));assert.ok(o.vapidDetails.privateKey);if(gone)throw{statusCode:410};}},crypto:webcrypto,URL,Response,console,Set});
 const call=async(b,secret)=>{const r=await handler(new Request('https://qa.invalid',{method:'POST',headers:secret?{'x-umma-push-key':secret}:{},body:JSON.stringify(b)}));return{status:r.status,data:await r.json()};};
 let r=await call({action:'config'});assert.equal(r.data.publicKey,keys.publicKey);assert.equal(r.data.privateKey,undefined);assert.equal(r.data.dispatchKey,undefined);
 r=await call({action:'dispatch'});assert.equal(r.status,403);assert.equal(sent,0);
 const request={action:'subscribe',orderId:'a'.repeat(8)+'-aaaa-4aaa-8aaa-'+ 'a'.repeat(12),requestKey:'b'.repeat(8)+'-bbbb-4bbb-8bbb-'+ 'b'.repeat(12),subscription};
 assert.equal((await call(request)).status,200);assert.equal(registered,1);assert.equal((await call({...request,subscription:{...subscription,endpoint:'https://127.0.0.1/private'}})).status,400);
 assert.equal((await call({...request,requestKey:'c'.repeat(8)+'-cccc-4ccc-8ccc-'+ 'c'.repeat(12)})).status,400);
-await call({action:'dispatch'},'server-only');assert.equal(finished[0].p_success,true);gone=true;await call({action:'dispatch'},'server-only');assert.equal(finished[1].p_gone,true);
+await call({action:'dispatch'},'server-only');assert.equal(finished[0].p_success,true);gone=true;await call({action:'dispatch'},'server-only');assert.equal(finished[1].p_gone,true);gone=false;job.payload={orderNumber:8,status:'pending',paymentStatus:'pending',changes:{preorder:'batch_ready'}};await call({action:'dispatch'},'server-only');assert.match(payloads.at(-1).body,/оплатите предзаказ/);job.payload={orderNumber:8,status:'preparing',paymentStatus:'paid',changes:{status:'preparing',preorder:'batch_ready'}};await call({action:'dispatch'},'server-only');assert.equal(payloads.at(-1).body,'Блюда приготовились — собираем ваш предзаказ');
 }
 // Real PostgreSQL engine: guest ownership, trigger/no-op/rollback, leases, stale ack, RLS.
 {
