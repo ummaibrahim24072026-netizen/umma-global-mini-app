@@ -56,7 +56,7 @@ Deno.serve(async req=>{
   if(!canRead||b.action!=='stockList'&&!canEdit)return reply({ok:false,error:'Нет прав на изменение наличия'},403);
   const name=b.action==='stockList'?'cafe_ready_list':b.action==='stockPlan'?'cafe_ready_plan':'cafe_ready_adjust';
   const {data,error}=await db.rpc(name,{p_actor:actor,p_location:b.locationId,...(b.action!=='stockList'?{p_key:b.requestKey,p_items:b.items,...(b.action==='stockPlan'?{p_action:b.mode}:{p_mode:b.mode})}:{})});
-  if(error)return reply({ok:false,error:/меньше резерва|^План |^Партия |^Укажите |^Время готовности/.test(error.message)?error.message:'Не удалось сохранить наличие. Проверьте количество и повторите.'},400);return reply(data);
+  if(error)return reply({ok:false,error:/меньше резерва|^План |^Партия |^Укажите |^Время готовности|^Выберите /.test(error.message)?error.message:'Не удалось сохранить наличие. Проверьте количество и повторите.'},400);return reply(data);
  }
  if(b.action==='me'){
   let q=db.from('locations').select('id,name,location_type,is_active,address,latitude,longitude,ready_stock_enabled').eq('location_type','cafe').eq('is_active',true);if(!isOwner)q=q.in('id',(assignments||[]).map(a=>a.location_id));const {data:locations,error}=await q;if(error)throw error;

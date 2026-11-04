@@ -58,6 +58,7 @@
     }
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
+  const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
   const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const counterPaymentButton=o=>o.canAcceptPayments===true&&awaitingCounterPayment(o)?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">'+(o.payment_method==="cash"?"Принять наличные · Оплачено":"Подтвердить поступление оплаты")+'</button>':"";
   function render() {
@@ -86,12 +87,12 @@
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
-      const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
+      const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + (item.ready_stock_state==='planned'?' · готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(item.preorder_ready_at))):'') + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
       const orderStaffRole = order.staffRole || staffRole;
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || order.delivery_status === "delivered");
-      const action = next && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
+      const action = next && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + next.label + '</button>' : "";
       const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
@@ -102,7 +103,7 @@
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
       const canManageDelivery = ["manager","cashier","waiter"].includes(orderStaffRole) ||
         (orderStaffRole === "courier" && ["courier_assigned","picked_up"].includes(order.delivery_status));
-      let deliveryAction = order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
+      let deliveryAction = !waitingBatch(order) && order.order_type === "delivery" && canManageDelivery && deliveryNext[order.delivery_status] &&
         !(["manager","cashier","waiter"].includes(orderStaffRole) && order.delivery_status === "waiting_courier")
         && !(orderStaffRole === "courier" && Number(order.courier_telegram_id) !== Number(actorTelegramId))
         && (order.delivery_status !== "courier_assigned" || order.status === "ready")
@@ -125,7 +126,7 @@
         && ["courier_assigned", "picked_up"].includes(order.delivery_status) && !["completed", "cancelled"].includes(order.status)
         && order.order_type === "delivery" && routeAddress
         ? '<button type="button" class="kitchen-action" data-show-route="true" data-navigation-provider="google" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">Построить маршрут</button>' : "";
-      const courierAssignAction = order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
+      const courierAssignAction = !waitingBatch(order) && order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
         && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
@@ -141,6 +142,7 @@
       const callCustomer=orderStaffRole==="courier"&&safePhone&&!["completed","cancelled"].includes(order.status)?'<a class="kitchen-action courier-call" href="tel:'+esc(safePhone)+'">Позвонить клиенту</a>':"";
       const courierStage=orderStaffRole!=="courier"?"":'<div class="courier-order-stage">'+esc({courier_assigned:"Забрать из кафе",picked_up:"Доставить клиенту",delivered:order.payment_status==="paid"?"Доставка завершена":"Получить оплату"}[order.delivery_status]||"Доставка")+'</div>';
       const details = [
+        waitingBatch(order)?'<strong class="ready-plan-summary">Предзаказ · партия готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(order.preorder_expected_at)))+' · Нячанг. Сначала примите партию в плане готовки.</strong>':'',
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span class="order-phone">☎ ' + esc(order.customer_phone) + '</span>' : "",
         '<span class="order-type">📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
@@ -151,7 +153,7 @@
         order.accepted_by_telegram_id ? '<span class="kitchen-order-actor">✅ Принял сотрудник ID ' + esc(order.accepted_by_telegram_id) + (order.accepted_at ? ' · ' + esc(formatDate(order.accepted_at)) : '') + '</span>' : "",
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
-      return '<article data-kitchen-order="' + esc(order.id) + '" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + counterPaymentButton(order) + (awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
+      return '<article data-kitchen-order="' + esc(order.id) + '" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(waitingBatch(order)?"Предзаказ · ждёт партию":awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + counterPaymentButton(order) + (waitingBatch(order)?'<small>Сборка после приёма готовой партии. Оплата доступна заранее.</small>':awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + action + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
     const template = document.createElement("template");

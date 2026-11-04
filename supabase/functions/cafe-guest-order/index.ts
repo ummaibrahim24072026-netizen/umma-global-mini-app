@@ -19,7 +19,7 @@ Deno.serve(async req=>{
    const {data,error}=await db.rpc('cafe_guest_order_status',{p_request_key:b.requestKey,p_order_id:b.orderId});
    if(error||!data?.order)return reply({ok:false,error:'Order unavailable'},404);
    const o=data.order;
-   return reply({ok:true,order:{id:o.id,orderNumber:o.orderNumber,totalVnd:o.totalVnd,paymentMethod:o.payment_method,paymentStatus:o.payment_status,status:o.status,stockReservedUntil:o.stockReservedUntil},payment:paymentFor({...o,order_number:o.orderNumber,total_vnd:o.totalVnd})});
+   return reply({ok:true,order:{id:o.id,orderNumber:o.orderNumber,totalVnd:o.totalVnd,paymentMethod:o.payment_method,paymentStatus:o.payment_status,status:o.status,stockReservedUntil:o.stockReservedUntil,preorderWaiting:o.preorderWaiting,preorderExpectedAt:o.preorderExpectedAt},payment:paymentFor({...o,order_number:o.orderNumber,total_vnd:o.totalVnd})});
   }
   if(b.orderType!=null&&!['pickup','delivery'].includes(b.orderType))return reply({ok:false,error:'Invalid order type'},400);
   const delivery=b.orderType==='delivery';
