@@ -1,3 +1,4 @@
+import {verifyKitchenPlans} from './qa-kitchen-plans.mjs';
 import {PGlite} from '@electric-sql/pglite';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 const native=process.env.UMMA_QA_READY_NATIVE==='1';const db=native?await(await import('./qa/ready-native-db.mjs')).readyNativeDb():new PGlite();const cafe='11111111-1111-4111-8111-111111111111',product='33333333-3333-4333-8333-333333333333';
 const q=(s,a=[])=>db.query(s,a),result=async(s,a=[])=>(await q(s,a)).rows[0].result;
@@ -25,6 +26,6 @@ await edit('paused',0);assert.equal(await available(),0);await assert.rejects(cr
 const held=await create(2);await q("update cafe_orders set stock_reserved_until=now()-interval '1 minute' where id=$1",[held.id]);await db.exec('select cafe_ready_expire();select cafe_ready_expire();');assert.equal(await available(),13);assert.equal((await q('select status from cafe_orders where id=$1',[held.id])).rows[0].status,'cancelled');
 await assert.rejects(q('delete from cafe_order_items where order_id=$1',[old.id]),/cannot be edited/);
 const privileges=(await q("select has_function_privilege('anon','cafe_ready_adjust(bigint,uuid,uuid,text,jsonb)','execute') a")).rows[0];assert.equal(privileges.a,false);
-if(native)await db.concurrent(cafe,product);console.log('PASS ready portions: no fictional stock, existing reservations, add/set, permissions, idempotency, reserve/cancel/sale, pause/resume, expiry, immutable lines and private RPC.');
+await verifyKitchenPlans(db,cafe,product);if(native)await db.concurrent(cafe,product);console.log('PASS ready portions: no fictional stock, existing reservations, add/set, permissions, idempotency, reserve/cancel/sale, pause/resume, expiry, immutable lines and private RPC.');
 
 }finally{await db.close();}

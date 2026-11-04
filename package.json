@@ -13,7 +13,7 @@
     "test:web-operations": "node scripts/qa-web-email-login.mjs && node scripts/qa-web-auth.mjs && node scripts/qa-web-operations.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-full-ui.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-desk-ui.mjs",
     "test:workspace-layout": "node scripts/build-workspace-preview.mjs",
     "test:order-alerts": "node scripts/qa-order-alerts.mjs",
-    "test:ready-stock": "node scripts/qa-ready-stock.mjs && node scripts/qa-stock-ui.mjs && node scripts/qa-screen-awake.mjs"
+    "test:ready-stock": "node scripts/qa-ready-stock.mjs && node scripts/qa-stock-ui.mjs && node scripts/qa-screen-awake.mjs && node scripts/qa-inbox-placement.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",
