@@ -1,0 +1,33 @@
+/* Permission is requested only by a tap. Secrets and order capabilities never enter push URLs. */
+(()=>{'use strict';
+const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-push',key='umma:order-alerts:v1';
+let enabled=false,audio=null,order=null,subscribed='',busy=false;
+try{enabled=localStorage.getItem(key)==='on';}catch{}
+const ru=()=>document.documentElement.lang==='ru',vi=()=>document.documentElement.lang==='vi';
+const text=(r,e,v)=>ru()?r:vi()?v:e;
+const root=document.createElement('div');root.className='umma-order-alerts';root.style.cssText='padding:14px 0;display:grid;gap:10px';
+const enable=document.createElement('button');enable.type='button';enable.style.cssText='min-height:48px;padding:12px;border:1px solid #007c80;border-radius:12px;background:#e7f5f3;color:#075e65;font:700 15px system-ui;white-space:normal';
+const hint=document.createElement('p');hint.setAttribute('role','status');hint.style.cssText='font:13px/1.5 system-ui;margin:0';root.append(enable,hint);
+(document.getElementById('syncState')?.parentNode||document.body).append(root);
+function render(){enable.textContent=enabled?text('Проверить звук и уведомления','Test sound and notifications','Kiểm tra âm thanh và thông báo'):text('Включить звук и уведомления','Enable sound and notifications','Bật âm thanh và thông báo');}
+async function unlock(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;audio=audio||new C();if(audio.state==='suspended')await audio.resume();}catch{}}
+function sound(){try{if(!enabled||!audio||audio.state!=='running')return;const now=audio.currentTime;for(const [offset,freq]of [[0,660],[.18,880]]){const oscillator=audio.createOscillator(),gain=audio.createGain();oscillator.frequency.value=freq;gain.gain.setValueAtTime(0,now+offset);gain.gain.linearRampToValueAtTime(.14,now+offset+.02);gain.gain.exponentialRampToValueAtTime(.001,now+offset+.16);oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(now+offset);oscillator.stop(now+offset+.17);}}catch{}}
+async function api(body){const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(12000)});const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Push unavailable');return data;}
+function bytes(s){const raw=atob(s.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0));}
+async function register(){if(busy||!enabled||!order?.requestKey||!order?.id||subscribed===order.id||!('serviceWorker'in navigator)||!('PushManager'in window)||window.Notification?.permission!=='granted')return;busy=true;const current=order;try{const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Worker timeout')),12000))]);const config=await api({action:'config'});const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes(config.publicKey)});
+await api({action:'subscribe',orderId:current.id,requestKey:current.requestKey,subscription:subscription.toJSON(),language:document.documentElement.lang});if(order===current)subscribed=current.id;
+hint.textContent=text('Уведомления включены. Звук и значок зависят от настроек телефона.','Notifications enabled. Sound and badge follow your phone settings.','Đã bật thông báo. Âm thanh và huy hiệu theo cài đặt điện thoại.');
+}catch{hint.textContent=text('Не удалось включить фоновые уведомления. Нажмите ещё раз. Обновления в открытом приложении работают.','Could not enable background notifications. Tap to retry. Updates still work while the app is open.','Chưa bật được thông báo nền. Nhấn để thử lại.');}finally{busy=false;}}
+enable.onclick=async()=>{enable.disabled=true;try{enabled=true;try{localStorage.setItem(key,'on');}catch{}const permission=('Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator)?window.Notification.requestPermission():Promise.resolve('unsupported');await unlock();sound();render();const result=await permission;
+if(result==='granted'){subscribed='';await register();if(!order)hint.textContent=text('Звук включён. После заказа включатся уведомления о его статусе.','Sound enabled. Order alerts will be linked after checkout.','Đã bật âm thanh. Thông báo sẽ được liên kết sau khi đặt hàng.');}
+else hint.textContent=result==='denied'?text('Разрешите уведомления в настройках сайта. Звук в открытом приложении включён.','Allow notifications in site settings. In-app sound is enabled.','Cho phép thông báo trong cài đặt trang.'):text('Звук включён для открытого приложения. Для фоновых уведомлений на iPhone добавьте приложение на экран «Домой» и откройте оттуда.','In-app sound enabled. On iPhone, add the app to the Home Screen and open it there for background alerts.','Đã bật âm thanh trong ứng dụng. Trên iPhone, thêm ứng dụng vào Màn hình chính.');
+}finally{enable.disabled=false;}};
+document.addEventListener('pointerdown',()=>{if(enabled)void unlock();},{passive:true});
+function workerMessage(type,payload={}){navigator.serviceWorker?.controller?.postMessage({type,...payload});}
+function badge(count){try{const p=count?navigator.setAppBadge?.(count):navigator.clearAppBadge?.();p?.catch(()=>{});}catch{}workerMessage('UMMA_BADGE',{count});}
+function ingest(messages){for(const m of messages||[])if(m.order)window.ummaOrderInbox?.publish(m.order);}
+navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='UMMA_ORDER_PUSH'){ingest([event.data.payload]);}else if(event.data?.type==='UMMA_PUSH_HISTORY'){ingest(event.data.messages);if(new URL(location.href).searchParams.has('messages'))window.ummaOrderInbox?.open();}else if(event.data?.type==='UMMA_OPEN_INBOX')window.ummaOrderInbox?.open();});
+if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(()=>{workerMessage('UMMA_GET_HISTORY');}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>workerMessage('UMMA_GET_HISTORY'));}
+window.addEventListener('umma-menu:languagechange',render);
+window.ummaOrderAlerts={setOrder(value){order=value;void register();},sound,badge,controls:root};render();
+})();

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/verify-app.mjs && node scripts/qa-delivery-providers.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs && node scripts/qa-delivery-tracking-ui.mjs && node scripts/qa-notifications-ui.mjs && node scripts/qa-native-shell.mjs && node scripts/qa-courier-controls.mjs && node scripts/qa-kitchen-responsiveness.mjs && node scripts/qa-courier-photo-ui.mjs && node scripts/qa-courier-full-ui.mjs && node scripts/qa-courier-desk-ui.mjs && node scripts/qa-cafe-menu-ui.mjs && node scripts/qa-delivery-location.mjs && node scripts/qa-delivery-zone.mjs && node scripts/qa-delivery-chat.mjs && node scripts/qa-delivery-chat-ui.mjs && node scripts/qa-umma-maps.mjs && node scripts/qa-checkout-choices.mjs && node scripts/qa-cafe-comfort.mjs && node scripts/qa-cafe-nearest.mjs && node scripts/qa-cafe-catalog-launch.mjs && node scripts/qa-cafe-payment.mjs && node scripts/qa-payment-proof.mjs && node scripts/qa-umma-pay.mjs && node scripts/qa-umma-pay-ui.mjs && node scripts/qa-qr-download.mjs && node scripts/qa-i18n.mjs && npm run test:market && npm run test:b2b && npm run test:quran && npm run test:islam && npm run test:rent && node scripts/qa-kiosk-ui.mjs && node scripts/qa-kiosk-database.mjs && node scripts/qa-kiosk-edge.mjs && npm run test:public-menu && npm run test:web-operations && npm run test:workspace-layout",
+    "test": "node scripts/verify-app.mjs && node scripts/qa-delivery-providers.mjs && node scripts/qa-cafe-launch.mjs && node scripts/qa-cafe-requests.mjs && node scripts/qa-cafe-database.mjs && node scripts/qa-release-bundle.mjs && node scripts/qa-ui-fixture.mjs && node scripts/qa-courier-worker.mjs && node scripts/qa-delivery-tracking-ui.mjs && node scripts/qa-notifications-ui.mjs && node scripts/qa-native-shell.mjs && node scripts/qa-courier-controls.mjs && node scripts/qa-kitchen-responsiveness.mjs && node scripts/qa-courier-photo-ui.mjs && node scripts/qa-courier-full-ui.mjs && node scripts/qa-courier-desk-ui.mjs && node scripts/qa-cafe-menu-ui.mjs && node scripts/qa-delivery-location.mjs && node scripts/qa-delivery-zone.mjs && node scripts/qa-delivery-chat.mjs && node scripts/qa-delivery-chat-ui.mjs && node scripts/qa-umma-maps.mjs && node scripts/qa-checkout-choices.mjs && node scripts/qa-cafe-comfort.mjs && node scripts/qa-cafe-nearest.mjs && node scripts/qa-cafe-catalog-launch.mjs && node scripts/qa-cafe-payment.mjs && node scripts/qa-payment-proof.mjs && node scripts/qa-umma-pay.mjs && node scripts/qa-umma-pay-ui.mjs && node scripts/qa-qr-download.mjs && node scripts/qa-i18n.mjs && npm run test:market && npm run test:b2b && npm run test:quran && npm run test:islam && npm run test:rent && node scripts/qa-kiosk-ui.mjs && node scripts/qa-kiosk-database.mjs && node scripts/qa-kiosk-edge.mjs && npm run test:public-menu && npm run test:web-operations && npm run test:workspace-layout && npm run test:order-alerts",
     "test:market": "node scripts/qa-market-stock.mjs && node scripts/qa-market-commerce.mjs && node scripts/qa-market-ui.mjs && node scripts/qa-market-shop.mjs && node scripts/qa-market-edge.mjs && node scripts/qa-market-labels.mjs && node scripts/qa-market-release.mjs && node scripts/qa-market-import.mjs && node scripts/qa-market-import-database.mjs && node scripts/qa-market-import-ui.mjs",
     "test:b2b": "node scripts/qa-b2b-database.mjs && node scripts/qa-b2b-ui.mjs",
     "test:quran": "node scripts/qa-quran.mjs",
@@ -11,7 +11,8 @@
     "test:rent": "node scripts/qa-rent-database.mjs && node scripts/qa-rent-ui.mjs && node scripts/qa-rent-edge.mjs && node scripts/qa-rent-payments-ui.mjs && node scripts/qa-rent-qr.mjs && node scripts/qa-rent-logistics-ui.mjs && node scripts/qa-rent-flow.mjs",
     "test:public-menu": "node scripts/qa-public-menu-language-detection.mjs && node scripts/qa-public-menu-i18n.mjs && node scripts/qa-public-menu-payment.mjs && node scripts/qa-public-menu-delivery.mjs && node scripts/qa-guest-tracking-edge.mjs && node scripts/qa-public-address-autofill.mjs && node scripts/qa-self-service-ui.mjs",
     "test:web-operations": "node scripts/qa-web-email-login.mjs && node scripts/qa-web-auth.mjs && node scripts/qa-web-operations.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-full-ui.mjs && UMMA_QA_WEB_STAFF=1 node scripts/qa-courier-desk-ui.mjs",
-    "test:workspace-layout": "node scripts/build-workspace-preview.mjs"
+    "test:workspace-layout": "node scripts/build-workspace-preview.mjs",
+    "test:order-alerts": "node scripts/qa-order-alerts.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.9",
@@ -21,7 +22,8 @@
     "parse5": "8.0.0",
     "pg": "8.23.1",
     "pngjs": "7.0.0",
-    "qrcode": "1.5.4"
+    "qrcode": "1.5.4",
+    "web-push": "3.6.7"
   },
   "dependencies": {
     "adhan": "4.4.3",

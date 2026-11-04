@@ -11,7 +11,7 @@ BEGIN
  IF cafe_web_activate(repeat('7',64),'qa_web_cashier',repeat('a',64),repeat('b',64))<>cashier_id THEN RAISE EXCEPTION 'Activation mismatch'; END IF;
  denied:=false;BEGIN PERFORM cafe_web_activate(repeat('7',64),'qa_second',repeat('a',64),repeat('b',64));EXCEPTION WHEN OTHERS THEN denied:=true;END;
  IF NOT denied THEN RAISE EXCEPTION 'Invitation reused'; END IF;
- IF NOT EXISTS(SELECT 1 FROM cafe_staff WHERE telegram_id=courier_id AND staff_role='courier' AND courier_available AND NOT can_accept_payments) THEN RAISE EXCEPTION 'Courier permissions invalid'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM cafe_staff WHERE telegram_id=courier_id AND staff_role='courier' AND courier_available AND can_accept_payments) THEN RAISE EXCEPTION 'Courier permissions invalid'; END IF;
  SELECT id,price_vnd INTO product,price FROM products WHERE sku='UMMA-CAFE-FLATBREAD' AND is_active;
  args:=jsonb_build_object('p_location_id',loc,'p_items',jsonb_build_array(jsonb_build_object('productId',product,'quantity',1)),'p_order_type','pickup','p_customer_name','Гость','p_payment_method','qr','p_payment_timing','now','p_dispatch_mode','nearest');
  r:=execute_cafe_order_operation(cashier_id,key,'staffOrder',args);oid:=(r->'order'->>'id')::uuid;
