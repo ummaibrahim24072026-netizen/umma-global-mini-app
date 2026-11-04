@@ -17,7 +17,7 @@ w.ummaOrderInbox.publish({...o,orderNumber:91,status:'completed',eventId:'done',
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt:new Date(Date.now()-60000).toISOString(),changes:{status:'preparing'}});
 let stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.states['91'].status,'completed');const length=stored.messages.length;
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt,changes:{status:'preparing'}});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.length,length);
-w.ummaOrderInbox.open();assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog li').length,5);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));w.close();
+w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog li').length,5);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));w.close();
 }
 // Supported browser: one explicit permission tap, subscription bound to the exact receipt.
 {
