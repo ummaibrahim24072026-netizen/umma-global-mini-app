@@ -61,6 +61,13 @@ jobs:
           PGPASSWORD: isolated-ci-only
           UMMA_QA_READY_NATIVE: '1'
         run: node scripts/qa-ready-stock.mjs
+      - name: Verify universal kitchen and concurrent ingredient receipts
+        env:
+          PGHOST: 127.0.0.1
+          PGDATABASE: umma_qa
+          PGPASSWORD: isolated-ci-only
+          UMMA_QA_UNIVERSAL_NATIVE: '1'
+        run: node scripts/qa-universal-kitchen.mjs
       - name: Verify Market commerce and independent stock races
         env:
           PGHOST: 127.0.0.1

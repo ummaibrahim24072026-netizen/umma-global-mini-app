@@ -49,7 +49,7 @@ Deno.serve(async req=>{
  const {data:assignments,error:ae}=await db.from('cafe_staff').select('location_id,staff_role,can_accept_payments').eq('telegram_id',actor).eq('is_active',true);if(ae)throw ae;
  const isOwner=u.role==='super_admin';
  if(!isOwner&&(!['employee','admin'].includes(u.role)||!assignments?.length))return reply({ok:false,error:'Нет назначений в кафе'},403);
- const canSell=(id:string)=>isOwner||assignments?.some(a=>a.location_id===id&&['cashier','manager'].includes(a.staff_role)&&a.can_accept_payments);
+ const canSell=(id:string)=>isOwner||assignments?.some(a=>a.location_id===id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments);
  if(['stockList','stockAdjust','stockPlan'].includes(b.action)){
   const canRead=isOwner||assignments?.some(a=>a.location_id===b.locationId&&['kitchen','manager','cashier'].includes(a.staff_role));
   const canEdit=isOwner||assignments?.some(a=>a.location_id===b.locationId&&['kitchen','manager'].includes(a.staff_role));
@@ -57,6 +57,15 @@ Deno.serve(async req=>{
   const name=b.action==='stockList'?'cafe_ready_list':b.action==='stockPlan'?'cafe_ready_plan':'cafe_ready_adjust';
   const {data,error}=await db.rpc(name,{p_actor:actor,p_location:b.locationId,...(b.action!=='stockList'?{p_key:b.requestKey,p_items:b.items,...(b.action==='stockPlan'?{p_action:b.mode}:{p_mode:b.mode})}:{})});
   if(error)return reply({ok:false,error:/меньше резерва|^План |^Партия |^Укажите |^Время готовности|^Выберите /.test(error.message)?error.message:'Не удалось сохранить наличие. Проверьте количество и повторите.'},400);return reply(data);
+ }
+ if(['ingredientList','ingredientReceive'].includes(b.action)){
+  const name=b.action==='ingredientList'?'cafe_ingredients_list':'cafe_ingredients_receive';
+  const {data,error}=await db.rpc(name,{p_actor:actor,p_location:b.locationId,p_day:b.date,...(b.action==='ingredientReceive'?{p_key:b.requestKey,p_supplier:b.supplier||'',p_items:b.items}:{})});
+  if(error)return reply({ok:false,error:/access denied/i.test(error.message)?'Нет доступа к ингредиентам':/^(Проверьте|Укажите)/.test(error.message)?error.message:'Не удалось сохранить закупку. Проверьте данные и повторите.'},/access denied/i.test(error.message)?403:error.code==='P0001'||error.code?.startsWith('22')?400:503);return reply(data);
+ }
+ if(b.action==='staffRoleUpdate'){
+  if(!isOwner)return reply({ok:false,error:'Только владелец'},403);
+  const {data,error}=await db.rpc('cafe_web_change_staff_role',{p_actor:actor,p_target:b.actorId,p_location:b.locationId,p_role:b.role});if(error)return reply({ok:false,error:/^(Сначала|Сотрудник|Укажите)/.test(error.message)?error.message:'Не удалось изменить роль'},400);return reply(data);
  }
  if(b.action==='me'){
   let q=db.from('locations').select('id,name,location_type,is_active,address,latitude,longitude,ready_stock_enabled').eq('location_type','cafe').eq('is_active',true);if(!isOwner)q=q.in('id',(assignments||[]).map(a=>a.location_id));const {data:locations,error}=await q;if(error)throw error;
@@ -74,7 +83,7 @@ Deno.serve(async req=>{
  }
  if(b.action==='staffList'){
   if(!isOwner)return reply({ok:false},403);
-  const initial=await Promise.all([db.from('cafe_web_accounts').select('actor_id,login,active'),db.from('cafe_staff').select('telegram_id,location_id,staff_role').eq('is_active',true)]);for(const r of initial)if(r.error)throw r.error;
+  const initial=await Promise.all([db.from('cafe_web_accounts').select('actor_id,login,active'),db.from('cafe_staff').select('telegram_id,location_id,staff_role,can_accept_payments').eq('is_active',true)]);for(const r of initial)if(r.error)throw r.error;
   const [accounts,staff]=initial.map(r=>r.data||[]),ids=new Set([...accounts.map(a=>String(a.actor_id)),...staff.map(s=>String(s.telegram_id))]);
   if(!ids.size)return reply({ok:true,accounts,employees:[]});
   const results=await Promise.all([
