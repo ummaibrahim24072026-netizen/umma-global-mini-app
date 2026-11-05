@@ -1,0 +1,7 @@
+# Cafe menu readiness — 5 November 2026
+
+At the owner’s request, the Nha Trang HALAL UMMA location was set to ten available ready portions for each of the 29 active, priced cafe products: 290 available portions total. Existing reservations remain included in physical stock. Each product received an audited `stock_set` inventory movement attributed to the owner. Inactive duplicates, future batches and the separate Phu Quoc location were left unchanged. This was a one-time stock operation; deployment does not refill sold portions.
+
+The customer menu, Telegram cafe, voice-order review and staff pages now share a final interface stylesheet. Menu actions have equal widths and heights; product images, titles, prices and quantity controls align; touch controls are at least 44 px; checkout payment choices and staff stock actions use equal columns. Client-menu access is available in the staff account menu. The order inbox title, close action and empty state cover all twelve public-menu languages.
+
+Validation: database verification returned 29 ready products with exactly ten available portions each. Browser checks at 320, 390 and 768 px showed 29 menu cards, equal toolbar button dimensions and no horizontal overflow. The 320 px checkout showed the actual plov price, correct total, 44 px quantity buttons and matching payment choices. No live customer order or payment was created. Existing menu, voice-order, checkout, inventory, inbox and staff-workflow checks were run.

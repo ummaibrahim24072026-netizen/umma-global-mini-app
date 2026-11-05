@@ -1,0 +1,93 @@
+/* Shared finishing pass for customer ordering and daily cafe work. */
+:root{--umma-control-height:48px;--umma-control-radius:14px}
+button{ -webkit-tap-highlight-color:transparent }
+:where(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--umma-brand-primary,#03a2a5);outline-offset:3px}
+/* Equal menu actions stay in one predictable row, including unread updates. */
+#cafePage .menu-tools{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+#cafePage .menu-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;min-width:0}
+#cafePage .menu-actions>div,#cafePage .menu-actions>span{display:flex;min-width:0}
+#cafePage .menu-actions :is(.umma-inbox-button,.uv-launch,.search-toggle){display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;min-height:52px!important;padding:10px 12px!important;border-radius:var(--umma-control-radius)!important;text-align:center;white-space:normal;overflow-wrap:anywhere;font-size:14px!important;line-height:1.4!important}
+#cafePage .menu-tools h1{margin:0}
+/* The main app uses the same paired voice/search controls. */
+#cafePage .cafe-menu-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:10px}
+#cafePage .cafe-menu-tools .cafe-nearby{grid-column:1/-1;min-width:0}
+#cafePage #cafeVoiceHost{display:flex;margin:0;min-width:0}
+#cafePage #cafeVoiceHost .uv-launch,#cafePage #cafeSearchToggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border:1px solid var(--umma-brand-line-strong);border-radius:var(--umma-control-radius);padding:10px 12px;background:white;color:var(--umma-brand-strong);font:650 14px/1.4 Inter,system-ui,sans-serif;white-space:normal;text-align:center}
+#cafePage #cafeSearchToggle svg{width:20px;height:20px;flex-shrink:0}
+/* Cards have a shared image ratio and aligned price/quantity area. */
+#cafePage .cafe-products{align-items:stretch}
+#cafePage .cafe-product{display:flex;flex-direction:column;min-width:0;height:100%}
+#cafePage .cafe-product-media,#cafePage .cafe-product-no-photo .cafe-product-placeholder{aspect-ratio:4/3;max-height:none;flex-shrink:0}
+#cafePage .cafe-product-photo{object-fit:contain}
+#cafePage .cafe-product h3{min-height:2.7em;line-height:1.35}
+#cafePage .cafe-product-bottom{margin-top:auto;min-width:0;align-items:center}
+#cafePage .cafe-card-quantity{display:grid;grid-template-columns:44px minmax(16px,1fr) 44px;align-items:center;gap:0;width:100%;flex:1 1 100%;padding:2px;min-width:0}
+#cafePage .cafe-card-quantity strong{text-align:center}
+#cafePage :is(.cafe-add,.cafe-qty-btn,.cafe-qty-btn[data-add-product]){width:44px;min-width:44px;min-height:44px;height:44px;border-radius:13px;padding:0;display:grid;place-items:center;flex:0 0 44px;line-height:1}
+#cafePage .cafe-category{min-height:44px}
+#cafePage .cafe-product-description summary{min-height:44px}
+:is(#cafePage,#checkout) :is(.cart-controls,.cafe-cart-controls){display:grid;grid-template-columns:44px minmax(20px,auto) 44px;gap:6px;align-items:center;text-align:center}
+:is(#cafePage,#checkout) :is(.cart-controls,.cafe-cart-controls) button{height:44px;min-height:44px;width:44px;min-width:44px;padding:0;border-radius:12px;line-height:1}
+#checkout .cart-row{align-items:center}
+#checkout .cart-copy{overflow-wrap:anywhere}
+#checkout .payment-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#checkout .payment-choice legend{grid-column:1/-1}
+#checkout .payment-choice label{margin:0;min-width:0;min-height:52px;justify-content:center;border-radius:var(--umma-control-radius);text-align:center}
+#checkout :is(.plain-btn,.primary),#cafeVoiceReviewHost .uv-launch{min-height:var(--umma-control-height);border-radius:var(--umma-control-radius)}
+#voiceReviewHost .uv-launch,#cafeVoiceReviewHost .uv-launch{width:100%;margin-block:8px 12px}
+#checkout input:not([type=radio]):not([type=checkbox]),#checkout select{min-height:var(--umma-control-height);border-radius:var(--umma-control-radius)}
+#checkout .checkout-header{gap:12px}
+#checkout .checkout-header .close{width:44px;height:44px;min-width:44px;flex-shrink:0}
+/* A clear primary confirmation beneath two equal voice controls. */
+.uv-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.uv-actions>.uv-button{min-width:0;min-height:50px;border-radius:var(--umma-control-radius);white-space:normal}
+.uv-actions>.uv-button:nth-child(3){grid-column:1/-1}
+.uv-head{align-items:start}.uv-head h2{overflow-wrap:anywhere;line-height:1.35}.uv-head>.uv-button{flex-shrink:0}
+.uv-entry .uv-button{min-height:48px}.uv-input{min-height:48px}
+.uv-row{flex-wrap:wrap}.uv-row>strong{margin-inline-start:auto}
+.uv-choices .uv-button{min-height:52px;white-space:normal;overflow-wrap:anywhere}
+/* Staff actions use equal columns; quantities retain generous touch targets. */
+.web-work-app .staff-section-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.web-work-app .staff-section-links>a{min-width:0;text-align:center;justify-content:center}
+.web-work-app .ready-stock-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}
+.web-work-app .ready-stock-actions>button{width:100%;min-width:0;min-height:48px;white-space:normal;overflow-wrap:anywhere}
+.web-work-app .ready-stock-actions>small{grid-column:1/-1}
+.web-work-app .ready-stock-row label{margin:0;min-width:0}
+.web-work-app .ready-stock-row{align-items:center}
+.web-work-app .ready-stock-panel :is(select,input){min-width:0}
+.web-work-app .pos-products{align-items:stretch}
+.web-work-app .pos-product{height:100%;min-width:0;border-radius:var(--umma-control-radius)}
+.web-work-app .pos-row button{min-height:44px;min-width:44px;border-radius:12px}
+.web-work-app .web-account-menu>div>a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px 16px;text-align:center;border:1px solid var(--umma-brand-line,#c8dbd8);border-radius:12px;text-decoration:none;background:white;color:var(--umma-brand-strong,#007c80)}
+@media(max-width:600px){
+ #cafePage .menu-actions{gap:6px}
+ #cafePage .menu-actions :is(.umma-inbox-button,.uv-launch,.search-toggle){min-height:56px!important;padding:9px 7px!important;font-size:12px!important}
+ #cafePage .menu-tools h1{font-size:22px}
+ #orderBar{gap:12px;padding-inline:16px}
+ #orderBar .primary{min-height:50px;border-radius:var(--umma-control-radius)}
+ #checkout .cart-row{gap:8px}
+ #checkout .cart-controls{gap:4px}
+ #checkout .cart-copy strong{font-size:13px}
+ #checkout .cart-copy small{font-size:11px}
+ .web-work-app .staff-section-links>a{padding:10px;font-size:13px}
+}
+@container umma-shell (max-width:699px){
+ #cafePage .cafe-products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ #cafePage .cafe-product h3{font-size:14px;min-height:2.7em}
+ #cafePage .cafe-product-media,#cafePage .cafe-product-no-photo .cafe-product-placeholder{width:calc(100% + 20px);margin:-10px -10px 4px;border-radius:19px 19px 0 0}
+ #cafePage .cafe-card-quantity{width:100%;flex:1 1 100%}
+ #cafePage .cafe-product-bottom>.cafe-product-price{flex:1 1 100%;font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){:where(button,a,input,select,textarea){scroll-behavior:auto!important}}
+
+@media(max-width:359px){
+ #cafePage .topbar{flex-wrap:nowrap;gap:8px}
+ #cafePage .brand{gap:6px;font-size:12px;white-space:nowrap}
+ #cafePage .brand img{width:28px;height:28px}
+ #cafePage .language-control{gap:4px;flex-wrap:nowrap;min-width:0}
+ #cafePage .language-control label{font-size:10px}
+ #cafePage .language-control select{font-size:12px;max-width:112px;min-width:0;padding-inline:6px}
+}
+.web-work-app .web-account-menu>div :is(button,a){display:flex;align-items:center;justify-content:center;min-height:60px;padding:10px 12px;font-size:14px;line-height:1.35;text-align:center}
+.web-work-app .cafe-kitchen-filters{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:thin;scroll-snap-type:x proximity;padding-bottom:4px}
+.web-work-app .cafe-kitchen-filters>button{flex:1 0 116px;min-width:0;min-height:52px;white-space:normal;text-align:center;line-height:1.35;scroll-snap-align:start}

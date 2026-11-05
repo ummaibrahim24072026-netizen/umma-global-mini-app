@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="css/cafe-cards.css?v=2">
   <link rel="stylesheet" href="css/rent.css?v=8">
   <link rel="stylesheet" href="css/courier-workspace.css?v=1">
-<script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=2"></script><link rel="stylesheet" href="css/voice-order.css?v=1"></head>
+<script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=2"></script><link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/interface-polish.css?v=1"></head>
 
 <body>
 
@@ -646,12 +646,12 @@
         <button type="button" id="cafeNearbyDetect" class="cafe-location-button">Найти ближайшее кафе</button>
         <label id="cafeNearbySelectLabel" hidden>Выбрать кафе вручную<select id="cafeNearbySelect"><option value="">Выберите кафе</option></select></label>
         <small>При смене кафе корзина очистится.</small></details>
-      </section><button type="button" id="cafeSearchToggle" class="cafe-search-toggle" aria-label="Найти блюдо" aria-expanded="false" aria-controls="cafeMenuSearchPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Поиск</span></button></div>
+      </section><div id="cafeVoiceHost"></div><button type="button" id="cafeSearchToggle" class="cafe-search-toggle" aria-label="Найти блюдо" aria-expanded="false" aria-controls="cafeMenuSearchPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Поиск</span></button></div>
       <p id="cafeMenuLocation" class="cafe-menu-location" aria-live="polite">UMMA Cafe · Нячанг</p>
       <p id="cafeModeHint" class="cafe-order-hint" aria-live="polite">Выберите блюда — заберите заказ в кафе.</p>
       <div class="cafe-menu-heading"><div><span class="cafe-section-eyebrow">ПРИГОТОВЛЕНО С ЗАБОТОЙ</span><h2>Наше меню</h2></div></div>
       <p id="cafeAvailabilityNotice" class="cafe-availability-notice" role="status" hidden>Приём заказов временно приостановлен. Меню доступно для просмотра.</p>
-      <div id="cafeVoiceHost"></div><div id="cafeMenuSearchPanel" class="cafe-menu-search" hidden><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
+      <div id="cafeMenuSearchPanel" class="cafe-menu-search" hidden><label for="cafeMenuSearch">Найти блюдо</label><div><input type="search" id="cafeMenuSearch" placeholder="Название или ингредиент" autocomplete="off" aria-controls="cafeProducts"><button type="button" id="cafeMenuSearchClear" hidden>Сбросить</button></div></div>
       <div id="cafeMenuCategories" class="cafe-menu-categories" role="group" aria-label="Категории меню"></div>
       <button type="button" id="cafeMenuReset" class="cafe-menu-reset" hidden>Показать всё меню</button>
       <p id="cafeMenuCount" class="cafe-menu-count" role="status" aria-live="polite"></p>
