@@ -15,3 +15,8 @@
 .cafe-menu-news h3{font-size:1rem}
 .cafe-menu-news article{margin-top:12px;padding-top:12px;border-top:1px solid #dbe8e6;overflow-wrap:anywhere}
 .cafe-menu-news article p{margin:0;white-space:pre-wrap}
+
+.connect-media-tools{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.connect-media-preview:not(:empty){display:grid;justify-items:start;gap:8px;margin:8px 0}
+.connect-media{display:block;max-width:100%;max-height:42dvh;margin:6px 0;border-radius:8px}
+audio.connect-media{width:min(100%,300px)}

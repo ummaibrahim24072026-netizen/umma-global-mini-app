@@ -93,16 +93,18 @@ async function run(fn,feedback=status){
  finally{busy=false;buttons.forEach(b=>b.disabled=false);}
 }
 function showMessages(data){
- messages.replaceChildren();
- for(const m of data.messages||[]){
+ const labels={photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое'};
+ window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
-  li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'),node('div',m.body),node('small',dateTime.format(new Date(m.created_at))));
-  if(m.direction!=='customer'){
-   const receipt=m.read_at?'Прочитано клиентом · '+dateTime.format(new Date(m.read_at)):'Отправлено';
-   li.append(node('small',receipt,'connect-receipt'));
-  }
-  messages.append(li);
- }
+  li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
+  if(m.body)li.append(node('div',m.body));
+  if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,labels[m.media_kind],
+   async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url,
+   'Не удалось открыть вложение. Попробуйте ещё раз.'));
+  li.append(node('small',dateTime.format(new Date(m.created_at))));
+  if(m.direction!=='customer')li.append(node('small',null,'connect-receipt'));
+  return li;
+ },m=>m.read_at?'Прочитано клиентом · '+dateTime.format(new Date(m.read_at)):'Отправлено');
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
  replyForm.hidden=false;

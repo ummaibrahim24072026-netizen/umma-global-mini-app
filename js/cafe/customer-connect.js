@@ -49,21 +49,28 @@ function refresh(){
 }
 const status=el('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let list,name,promotions,push;
+const mediaCopy={
+ ru:{photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
+ en:{photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
+ vi:{photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
+};
 function renderThread(){
  if(!list)return;
  const receipt=receiptCopy[lang()]||receiptCopy.en;
  const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
- list.replaceChildren();
- for(const m of state?.messages||[]){
+ const media=mediaCopy[lang()]||mediaCopy.en;
+ window.ummaConnectMedia.render(list,state?.messages||[],m=>{
   const li=el('li');
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
-  li.append(el('strong',outgoing?t(18):m.title||t(19)),el('div',m.body),el('small',dateTime.format(new Date(m.created_at))));
-  if(outgoing){
-   li.append(el('small',m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0],'connect-receipt'));
-  }
-  list.append(li);
- }
+  li.append(el('strong',outgoing?t(18):m.title||t(19)));
+  if(m.body)li.append(el('div',m.body));
+  if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,media[m.media_kind],
+   async()=> (await api('mediaGet',{messageId:m.id})).url,media.error));
+  li.append(el('small',dateTime.format(new Date(m.created_at))));
+  if(outgoing)li.append(el('small',null,'connect-receipt'));
+  return li;
+ },m=>m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0]);
  if(!list.children.length)list.append(el('li',t(12)));
  badge();
 }
@@ -173,16 +180,47 @@ function build(){
  push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(status);
  const off=el('button',t(8));off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',t(0));
- const form=el('form'),body=el('textarea');body.required=true;body.maxLength=2000;const send=el('button',t(10),'primary');send.type='submit';
+ const form=el('form'),body=el('textarea');body.maxLength=2000;const send=el('button',t(10),'primary');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});form.append(label(t(9),body),send);
- form.onsubmit=e=>{e.preventDefault();if(!body.value.trim())return;pending=pending||{requestKey:crypto.randomUUID(),body:body.value.trim()};void run(async()=>{state=await api('send',pending);body.value='';pending=null;status.textContent=push.hidden?t(13):notice(1);renderThread();await markRead();});};
- content.append(label(t(4),name),check,save,off,el('hr'),list,form);dialog.append(join,push,content,status);document.body.append(dialog);dialog.addEventListener('close',()=>button.focus());
+ const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,onChange:()=>{pending=null;}});
+ form.onsubmit=e=>{
+  e.preventDefault();
+  if(busy||composer.recording||(!body.value.trim()&&!composer.draft))return;
+  pending=pending||{requestKey:crypto.randomUUID(),body:body.value.trim()};
+  const draft=composer.draft;
+  composer.busy(true);
+  void run(async()=>{
+   if(draft){
+    const response=await fetch(API,{method:'POST',cache:'no-store',signal:AbortSignal.timeout(120000),
+     headers:{'Content-Type':draft.file.type,'X-Umma-Token':token,'X-Umma-Request':pending.requestKey},
+     body:new Blob([JSON.stringify(pending.body),'\n',draft.file])});
+    const result=await response.json();
+    if(!response.ok||!result.ok)throw Error(result.error||composer.error(result.code,draft.kind));
+   }else state=await api('send',pending);
+   body.value='';
+   composer.clear();
+   pending=null;
+   status.textContent=push.hidden?t(13):notice(1);
+   if(draft){
+    try{state=await api('list');}catch{setTimeout(refresh,0);}
+   }
+   renderThread();
+   await markRead();
+  }).finally(()=>composer.busy(false));
+ };
+ content.append(label(t(4),name),check,save,off,el('hr'),list,form);dialog.append(join,push,content,status);document.body.append(dialog);
+ dialog.addEventListener('close',()=>{
+  composer.close();
+  list.querySelectorAll('audio,video').forEach(media=>media.pause());
+  button.focus();
+ });
  function update(){join.hidden=!!token;content.hidden=!token;name.value=state?.client.name||'';promotions.checked=state?.client.promotions===true;const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';off.hidden=!state?.client.pushEnabled;push.hidden=subscribed;renderThread();}
  dialog.update=update;
+ dialog.releaseDraft=()=>composer.clear();
 }
 async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.remove();dialog=null;}badge();renderSetup();});
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();

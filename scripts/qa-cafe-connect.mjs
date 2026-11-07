@@ -6,6 +6,11 @@ import {webcrypto,randomUUID} from 'node:crypto';
 import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 const source=p=>readFileSync(p,'utf8');
+const loadConnect=(window,entry)=>{
+ window.eval(source('js/cafe/connect-media.js'));
+ if(entry==='customer-connect')window.eval(source('js/cafe/connect-composer.js'));
+ window.eval(source('js/cafe/'+entry+'.js'));
+};
 const db=new PGlite();
 await db.exec(`create role anon;create role authenticated;create role service_role;create schema umma_private;create schema net;create schema cron;
 create function net.http_post(url text,headers jsonb,body jsonb,timeout_milliseconds integer) returns bigint language sql as $$select 1::bigint$$;
@@ -111,6 +116,28 @@ await rpc('staffCampaign','',1,{...news,requestKey:randomUUID(),language:'vi',ti
 await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
 await rpc('staffCampaign','',1,{...news,requestKey:randomUUID(),installedOnly:true,title:'Private installed campaign'});
 assert.deepEqual((await rpc('news')).news.map(item=>item.title),['New dish']);
+await db.exec(`
+ create schema storage;
+ create table storage.buckets(id text,name text,public bool,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(bucket_id text);
+ alter table storage.objects enable row level security;
+`);
+await db.exec(source('supabase/proposals/cafe-connect-media.sql'));
+const mediaKey=randomUUID(),mediaPath=ca+'/'+randomUUID();
+assert.equal((await rpc('mediaPrepare',a,null,{requestKey:mediaKey})).clientId,ca);
+await assert.rejects(rpc('mediaSend',a,null,{requestKey:mediaKey,body:'',kind:'voice',path:cb+'/'+randomUUID()}),/Invalid attachment/);
+const attachment=await rpc('mediaSend',a,null,{requestKey:mediaKey,body:'',kind:'voice',path:mediaPath});
+assert.equal((await rpc('mediaPrepare',a,null,{requestKey:mediaKey})).id,attachment.id);
+assert.equal((await rpc('mediaSend',a,null,{requestKey:mediaKey,body:'',kind:'voice',path:ca+'/'+randomUUID()})).path,mediaPath);
+const mediaMessage=(await rpc('list',a)).messages.find(m=>m.id===attachment.id);
+assert.equal(mediaMessage.media_kind,'voice');
+assert.ok(!('object_path' in mediaMessage));
+assert.equal((await rpc('staffList','',1)).clients.find(c=>c.id===ca).last_message,'Голосовое сообщение');
+await assert.rejects(rpc('mediaGet',b,null,{messageId:attachment.id}),/Access denied/);
+await assert.rejects(rpc('staffMediaGet','',2,{clientId:ca,messageId:attachment.id}),/Access denied/);
+await assert.rejects(rpc('staffMediaGet','',1,{clientId:cb,messageId:attachment.id}),/Access denied/);
+assert.equal((await rpc('mediaGet',a,null,{messageId:attachment.id})).path,mediaPath);
+assert.equal((await rpc('staffMediaGet','',1,{clientId:ca,messageId:attachment.id})).path,mediaPath);
 await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);await assert.rejects(rpc('news'),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
@@ -118,7 +145,7 @@ const dom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url
 w.AbortSignal=AbortSignal;Object.defineProperty(w.crypto,'getRandomValues',{value:a=>webcrypto.getRandomValues(a)});w.crypto.randomUUID=randomUUID;
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};w.Notification={requestPermission(){prompts++;return Promise.resolve('denied');}};
 w.fetch=async(url,init)=>{const data=JSON.parse(init.body);calls.push(data);return new Response(JSON.stringify({ok:true,client:{id:ca,name:'',promotions:false,pushEnabled:false},messages:data.action==='send'?[{id:'m',body:data.body,direction:'customer',created_at:new Date().toISOString()}]:[]}));};
-w.eval(source('js/cafe/customer-connect.js'));assert.equal(prompts,0);assert.equal(calls.length,0);w.document.querySelector('button').click();
+loadConnect(w,'customer-connect');assert.equal(prompts,0);assert.equal(calls.length,0);w.document.querySelector('button').click();
 w.document.querySelector('dialog .primary').click();await new Promise(r=>setTimeout(r,40));assert.equal(calls[0].action,'join');assert.equal(calls[0].token.length,64);assert.equal(w.document.querySelector('input[type=checkbox]').checked,false);
 w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,40));assert.ok(w.document.querySelector('li').textContent.includes('<img'));assert.equal(w.document.querySelector('li img'),null);assert.ok(calls.some(c=>c.action==='send'&&c.requestKey));assert.equal(prompts,0);w.close();
 // Installed client: a reply is visible without push and remains unread until the chat opens.
@@ -149,7 +176,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled},messages:[sent,reply]}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
- client.eval(source('js/cafe/customer-connect.js'));
+ loadConnect(client,'customer-connect');
  await tick();
  assert.equal(prompts,0);
  assert.equal(badgeUpdates.at(-1).count,1);
@@ -170,6 +197,71 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(enable.hidden,true);
  app.window.close();
 }
+// The guest records first and uploads only on a separate Send tap.
+{
+ const app=new JSDOM('<html lang="ru"><body><header></header></body></html>',{
+  url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const guest=app.window,credential='a'.repeat(64);
+ const writes=[],tracks=[];
+ guest.AbortSignal=AbortSignal;
+ guest.crypto.randomUUID=randomUUID;
+ guest.Blob=Blob;
+ guest.URL.createObjectURL=()=> 'blob:https://qa.invalid/preview';
+ guest.URL.revokeObjectURL=()=>{};
+ guest.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ guest.MediaRecorder=class{
+  static isTypeSupported(type){return type==='audio/webm';}
+  mimeType='audio/webm';
+  state='inactive';
+  start(){this.state='recording';}
+  stop(){
+   this.state='inactive';
+   this.ondataavailable({data:new Blob([Uint8Array.of(26,69,223,163)])});
+   queueMicrotask(()=>this.onstop());
+  }
+ };
+ Object.defineProperty(guest.navigator,'mediaDevices',{value:{getUserMedia:async()=>({
+  getTracks:()=>[{stop:()=>tracks.push('stopped')}]
+ })}});
+ guest.localStorage.setItem('umma:connect:token:v1',credential);
+ guest.fetch=async(url,init)=>{
+  if(init.body instanceof Blob){
+   writes.push(init);
+   if(writes.length===1)return new Response('{"ok":false,"code":"MEDIA_UPLOAD"}',{status:502});
+   return new Response('{"ok":true,"id":"recording"}');
+  }
+  const messages=writes.length===2?[{id:'recording',direction:'customer',body:'Голос',
+   created_at:'2026-11-07T12:00:00Z',media_kind:'voice'}]:[];
+  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled:false},messages}));
+ };
+ loadConnect(guest,'customer-connect');
+ await guest.ummaCustomerConnect.open();
+ const mic=[...guest.document.querySelectorAll('form button')].find(b=>b.textContent==='Записать голосовое');
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
+ mic.click();
+ await tick();
+ assert.equal(mic.textContent,'Остановить запись');
+ mic.click();
+ await tick();
+ assert.ok(tracks.length);
+ assert.ok(guest.document.querySelector('.connect-media-preview audio'));
+ assert.equal(writes.length,0);
+ guest.document.querySelector('textarea').value='Голос';
+ const submit=()=>guest.document.querySelector('form').dispatchEvent(new guest.Event('submit',{cancelable:true}));
+ submit();
+ await tick();
+ assert.ok(guest.document.querySelector('.connect-media-preview audio'));
+ submit();
+ await tick();
+ assert.equal(writes[0].headers['X-Umma-Request'],writes[1].headers['X-Umma-Request']);
+ assert.equal(writes[1].headers['X-Umma-Token'],credential);
+ assert.equal(writes[1].headers['Content-Type'],'audio/webm');
+ assert.ok((await writes[1].body.text()).startsWith('"Голос"\n'));
+ assert.equal(guest.document.querySelector('.connect-media-preview audio'),null);
+ assert.match(guest.document.querySelector('.connect-thread').textContent,/Прослушать голосовое/);
+ guest.close();
+}
 // Staff inbox updates the receipt while the current conversation stays open.
 {
  const app=new JSDOM('<header></header><main><section id="webMessages"></section></main>',{
@@ -182,26 +274,36 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  let poll;
  staff.setInterval=callback=>{poll=callback;};
  const messages=[
-  {direction:'customer',body:'Вопрос',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
-  {direction:'staff',title:'UMMA',body:'Ответ',created_at:'2026-11-07T12:02:00Z',read_at:null}
+  {id:'staff-view-question',direction:'customer',body:'Вопрос',media_kind:'voice',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
+  {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',created_at:'2026-11-07T12:02:00Z',read_at:null}
  ];
  staff.fetch=async(url,init)=>{
   const request=JSON.parse(init.body);
   assert.equal(request.initData,'web:test');
   const client={id:ca,name:'Клиент',unread:0,last_message:'Ответ'};
+  if(request.action==='staffMediaGet'){
+   assert.equal(request.clientId,ca);
+   assert.equal(request.messageId,'staff-view-question');
+   return new Response(JSON.stringify({ok:true,url:'https://qa.invalid/signed'}));
+  }
   return new Response(JSON.stringify(request.action==='staffList'?
    {ok:true,clients:[client],subscribers:0,pushDevices:0}:{ok:true,client,messages}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
- staff.eval(source('js/cafe/connect-admin.js'));
+ loadConnect(staff,'connect-admin');
  staff.document.dispatchEvent(new staff.CustomEvent('umma:staff-tab',{detail:'messages'}));
  await tick();
  staff.document.querySelector('[data-client-thread]').click();
  await tick();
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
+ [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Прослушать голосовое').click();
+ await tick();
+ const audio=staff.document.querySelector('.connect-thread audio');
+ assert.equal(audio.src,'https://qa.invalid/signed');
  messages[1].read_at='2026-11-07T12:03:00Z';
  await poll();
  await tick();
+ assert.equal(staff.document.querySelector('.connect-thread audio'),audio);
  assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
  staff.close();
 }
@@ -237,7 +339,7 @@ for(const scenario of ['browser','default','granted','denied','existing','dismis
   return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled:subscriptions>0},messages:[]}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
- client.eval(source('js/cafe/customer-connect.js'));
+ loadConnect(client,'customer-connect');
  await tick();
  assert.equal(prompts,0,scenario);
  assert.equal(subscriptions,scenario==='granted'?1:0,scenario);
@@ -301,8 +403,19 @@ menu.close();
  app.window.close();
 }
 // Edge: forged operator payloads never choose an actor; malformed subscriptions/URLs fail closed.
-let handler;const edgeDb={rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:{ok:true}})};
-vm.runInNewContext(stripTypeScriptTypes(source('supabase/functions/cafe-connect/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async()=>{throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date});
+let handler;
+const uploaded=[];
+const edgeDb={
+ rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:
+  args.p_action==='mediaPrepare'?{clientId:ca}:
+  args.p_action==='mediaSend'?{id:'media-message',path:args.p_data.path}:
+  {ok:true}}),
+ storage:{from:()=>({upload:async(...args)=>{uploaded.push(args);return {};}})}
+};
+const mediaSources=['supabase/functions/delivery-chat/translation.ts','supabase/functions/cafe-connect/media.ts',
+ 'supabase/functions/cafe-connect/index.ts'];
+
+vm.runInNewContext(stripTypeScriptTypes(mediaSources.map(source).join('\n').replace(/^import .*;\n/gm,'').replace(/^export /gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async()=>{throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date,TextDecoder,Uint8Array});
 const call=data=>handler(new Request('https://qa.invalid',{method:'POST',body:JSON.stringify(data)}));
 assert.equal((await call({action:'staffList',initData:'web:forged',actor:1})).status,403);
 assert.equal((await call({action:'preferences',token:a,subscription:{endpoint:'https://127.0.0.1/internal'}})).status,400);
@@ -313,4 +426,22 @@ assert.equal((await call({action:'staffAudience',initData:'web:forged',segment:'
 assert.equal((await call({action:'visit',token:a,point:'<invalid>',installed:false})).status,400);
 assert.equal((await call({action:'visit',token:a,point:'',installed:false,orderId:firstOrder})).status,400);
 assert.equal((await call({action:'visit',token:a,point:'neighbor-cafe-01',installed:false})).status,200);
-console.log('PASS customer channel: isolation, owner authorization, idempotent replies/campaigns, consent withdrawal, leased retry/stale ack, private credentials/RLS, explicit browser opt-in, feedback XSS safety and edge validation.');
+const sendAttachment=(mime,file)=>handler(new Request('https://qa.invalid',{method:'POST',
+ headers:{'content-type':mime,'x-umma-token':a,'x-umma-request':randomUUID()},
+ body:Buffer.concat([Buffer.from(JSON.stringify('Подпись 🌿')+'\n'),Buffer.from(file)])
+}));
+for(const [mime,file] of [
+ ['image/jpeg',[255,216,255,224]],
+ ['video/mp4',[0,0,0,12,102,116,121,112]],
+ ['audio/webm',[26,69,223,163]]
+]){
+ const result=await sendAttachment(mime,file);
+ assert.equal(result.status,200);
+ assert.equal((await result.json()).id,'media-message');
+ assert.equal(uploaded.at(-1)[2].contentType,mime);
+ assert.deepEqual(Array.from(uploaded.at(-1)[1]),file);
+}
+assert.equal((await sendAttachment('image/jpeg',Buffer.from('<svg/>'))).status,415);
+assert.equal((await sendAttachment('image/jpeg',Buffer.alloc(8*1024*1024+1))).status,413);
+assert.equal(uploaded.length,3);
+console.log('PASS customer channel: isolation, owner authorization, idempotent replies/campaigns, consent withdrawal, leased retry/stale ack, private credentials/RLS, explicit browser opt-in, feedback XSS safety, media ownership and idempotency, audio draft/retry, and edge MIME/size validation.');

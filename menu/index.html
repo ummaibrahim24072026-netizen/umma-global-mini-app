@@ -36,7 +36,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
  .cafe-stock-count{display:block;font-size:11px;font-weight:500;color:#57716b;margin-top:5px}.menu-actions{display:flex;gap:8px;align-items:stretch}.menu-actions #orderInboxHost{display:flex}.umma-inbox-button{width:100%}@media(max-width:600px){.menu-tools{flex-wrap:wrap}.menu-actions{flex-basis:100%}.menu-actions #orderInboxHost{flex:1;min-width:0}.menu-actions .search-toggle{flex-shrink:0}}
 
 .cafe-preorder-label{display:block;margin:8px 0;padding:8px 10px;background:#fff3d0;border:1px solid #d7b454;border-radius:10px;font-size:13px;line-height:1.5;color:#654a13;overflow-wrap:anywhere}#cafePage .cafe-product .cafe-preorder-label{margin:2px 0;padding:6px 8px;font-size:12px}#cafePage .cafe-products{align-items:stretch}.cafe-product-bottom{flex-wrap:wrap}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=2"></script><link rel="stylesheet" href="css/interface-polish.css?v=1"><link rel="stylesheet" href="css/cafe-connect.css?v=3"></head><body>
+</style><script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=2"></script><link rel="stylesheet" href="css/interface-polish.css?v=1"><link rel="stylesheet" href="css/cafe-connect.css?v=4"></head><body>
 <main id="cafePage">
 <div class="topbar"><div class="brand"><img src="logo/assets/umma-logo.webp" alt="" width="34" height="34">UMMA CAFE</div><div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div></div>
 <div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10v10h14V10M3 11l9-8 9 8M12 10v7m-3-3 3 3 3-3"/></svg></span><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
@@ -153,4 +153,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 });
 window.ummaMenuAudience?.start(source);
 load();if('serviceWorker' in navigator)navigator.serviceWorker.register('umma-menu-sw.js').catch(console.error);
-</script><script src="js/cafe/customer-connect.js?v=6"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
+</script><script src="js/cafe/connect-media.js?v=1"></script><script src="js/cafe/connect-composer.js?v=1"></script><script src="js/cafe/customer-connect.js?v=7"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
