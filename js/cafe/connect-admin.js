@@ -2,9 +2,17 @@
 (()=>{'use strict';
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
-let dialog=null,busy=false,thread=null,replyKey=null,campaign=null;
-const button=node('button','Клиенты и рассылки','umma-connect-button');button.type='button';button.hidden=true;button.setAttribute('aria-haspopup','dialog');
-(document.querySelector('.web-account-menu > div')||document.querySelector('header')||document.body).append(button);
+let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
+let panels,viewButtons,clientSnapshot='';
+const workspace=document.getElementById('webMessages');
+const badge=document.getElementById('webInboxCount');
+const button=workspace?null:node('button','Сообщения клиентов','umma-connect-button');
+if(button){
+ button.type='button';button.hidden=true;button.setAttribute('aria-haspopup','dialog');
+ (document.querySelector('header')||document.body).append(button);
+}
+const root=()=>workspace||dialog;
+const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!workspace.parentElement.hidden:!!dialog?.open;
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -36,7 +44,7 @@ async function refreshAudience(){
    ' · Последний '+dateTime.format(new Date(guest.last_seen_at))+' · '+(guest.point||'Прямой вход')));
   if(guest.client_id){
    const contact=node('button','Открыть переписку');contact.type='button';
-   contact.onclick=()=>run(async()=>{await openThread(guest.client_id);threadTitle.scrollIntoView({block:'start'});});
+   contact.onclick=()=>run(()=>openThread(guest.client_id));
    row.append(contact);
   }
   audienceList.append(row);
@@ -72,15 +80,90 @@ function buildAudience(){
  return section;
 }
 function label(text,input){const l=node('label',text);l.append(input);return l;}
-async function run(fn){if(busy)return;busy=true;dialog?.querySelectorAll('button').forEach(b=>b.disabled=true);status.textContent='Загрузка…';try{await fn();}catch(e){status.textContent=e.message;}finally{busy=false;dialog?.querySelectorAll('button').forEach(b=>b.disabled=false);}}
-function showMessages(data){messages.replaceChildren();for(const m of data.messages||[]){const li=node('li');li.dataset.direction=m.direction;li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'),node('div',m.body),node('small',new Date(m.created_at).toLocaleString('ru-RU')));messages.append(li);}threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);replyForm.hidden=false;}
-async function openThread(id){thread=id;replyKey=null;replyBody.value='';const d=await api('staffThread',{clientId:id});showMessages(d);const latest=d.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);if(latest)await api('staffRead',{clientId:id,before:latest.created_at});status.textContent='';}
-async function refresh(){const d=await api('staffList');stats.textContent='Открыли связь с кафе: '+d.total+' · Подписаны на новости: '+d.subscribers+' · Подписчики с push: '+d.pushDevices;clients.replaceChildren();let unread=0;for(const c of d.clients){unread+=Number(c.unread)||0;const li=node('li'),b=node('button',(c.name||'Клиент '+c.id.slice(0,8))+' · '+c.language+(c.unread?' · новых: '+c.unread:''));b.type='button';b.onclick=()=>run(()=>openThread(c.id));li.append(b,node('small',c.last_message||'Переписка ещё не началась'));clients.append(li);}if(!d.clients.length)clients.append(node('li','Подписавшиеся клиенты появятся здесь.'));button.textContent='Клиенты и рассылки'+(unread?' · '+unread:'');status.textContent='';}
-async function refreshDashboard(){await refresh();await refreshAudience();status.textContent='';}
+function selectView(name){
+ view=name;
+ for(const [key,panel] of Object.entries(panels))panel.hidden=key!==name;
+ for(const [key,control] of Object.entries(viewButtons))control.setAttribute('aria-pressed',String(key===name));
+}
+async function run(fn){
+ if(busy)return;
+ busy=true;const buttons=[...root().querySelectorAll('button:not([disabled])')];
+ buttons.forEach(b=>b.disabled=true);status.textContent='Загрузка…';
+ try{await fn();}catch(e){status.textContent=e.message;}
+ finally{busy=false;buttons.forEach(b=>b.disabled=false);}
+}
+function showMessages(data){
+ messages.replaceChildren();
+ for(const m of data.messages||[]){
+  const li=node('li');li.dataset.direction=m.direction;
+  li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'),node('div',m.body),node('small',dateTime.format(new Date(m.created_at))));
+  messages.append(li);
+ }
+ if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
+ threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
+ replyForm.hidden=false;
+}
+async function readThread(id,background=false){
+ const d=await api('staffThread',{clientId:id});
+ if(thread!==id||!visible()||view!=='inbox'||(background&&busy))return;
+ showMessages(d);
+ const latest=d.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);
+ if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
+}
+async function openThread(id){
+ if(thread!==id){thread=id;replyKey=null;replyBody.value='';}
+ selectView('inbox');
+ await readThread(id);
+ threadTitle.focus({preventScroll:true});
+ threadTitle.scrollIntoView?.({block:'start'});
+ status.textContent='';
+}
+async function refresh(){
+ const d=await api('staffList');
+ if(!owner())return;
+ const unread=d.clients.reduce((total,c)=>total+(Number(c.unread)||0),0);
+ if(badge){badge.hidden=!unread;badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label','Непрочитанных: '+unread);}
+ if(button)button.textContent='Сообщения клиентов'+(unread?' · '+unread:'');
+ if(!clients)return;
+ stats.textContent='Подписаны на новости: '+d.subscribers+' · Подписчики с push: '+d.pushDevices;
+ const snapshot=JSON.stringify([thread,d.clients]);
+ if(snapshot===clientSnapshot)return;
+ const focused=document.activeElement?.dataset.clientThread;
+ clientSnapshot=snapshot;clients.replaceChildren();
+ const sorted=[...d.clients].sort((a,b)=>Number(!!b.unread)-Number(!!a.unread)||Number(!!b.last_message)-Number(!!a.last_message));
+ for(const c of sorted){
+  const li=node('li'),b=node('button',null,'work-thread-choice');
+  b.type='button';b.dataset.clientThread=c.id;b.setAttribute('aria-pressed',String(thread===c.id));
+  b.append(node('strong',c.name||'Клиент '+c.id.slice(0,8)),node('small',c.last_message||'Переписка ещё не началась'));
+  if(c.unread){b.dataset.unread='true';b.append(node('span','Новых: '+c.unread,'work-thread-unread'));}
+  b.onclick=()=>run(()=>openThread(c.id));li.append(b);clients.append(li);
+  if(c.id===focused)b.focus({preventScroll:true});
+ }
+ if(!d.clients.length)clients.append(node('li','Здесь появятся обращения из меню «Связь с UMMA».'));
+}
+async function refreshView(){
+ if(view==='audience')await refreshAudience();
+ else await refresh();
+ status.textContent='';
+}
 function build(){
- dialog=node('dialog',null,'umma-connect');dialog.setAttribute('aria-label','Клиенты и рассылки');
- const close=node('button','Закрыть','connect-close');close.type='button';close.onclick=()=>dialog.close();stats=node('p');clients=node('ol');
- const refreshButton=node('button','Обновить данные');refreshButton.type='button';refreshButton.onclick=()=>run(refreshDashboard);
+ if(workspace){workspace.classList.add('umma-connect','work-messages');}
+ else{dialog=node('dialog',null,'umma-connect');dialog.setAttribute('aria-label','Сообщения клиентов');}
+ const section=root(),header=node('header',null,'work-messages-heading');
+ if(dialog){
+  const close=node('button','Закрыть','connect-close');close.type='button';close.onclick=()=>dialog.close();header.append(close);
+ }
+ const heading=node(workspace?'h1':'h2','Сообщения клиентов');
+ const refreshButton=node('button','Обновить');refreshButton.type='button';refreshButton.onclick=()=>run(refreshView);
+ header.append(heading,refreshButton);
+ const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
+ panels={inbox:node('section',null,'work-inbox'),audience:buildAudience(),campaign:node('section',null,'work-campaign')};
+ viewButtons={};
+ for(const [key,label] of [['inbox','Входящие'],['audience','Посетители'],['campaign','Рассылки']]){
+  const tab=node('button',label);tab.type='button';tab.onclick=()=>run(async()=>{selectView(key);await refreshView();});
+  viewButtons[key]=tab;nav.append(tab);
+ }
+ stats=node('p');clients=node('ol',null,'work-inbox-list');
  const form=node('form'),title=node('input'),body=node('textarea'),language=node('select');title.required=true;title.maxLength=100;body.required=true;body.maxLength=2000;
  for(const [v,t]of [['ru','Русский'],['en','English'],['vi','Tiếng Việt'],['ko','한국어'],['zh','中文'],['de','Deutsch'],['fr','Français'],['th','ไทย'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['ar','العربية'],['pt','Português'],['all','Все подписчики']]){const o=node('option',t);o.value=v;language.append(o);}
  const installedOnly=node('input');installedOnly.type='checkbox';
@@ -91,13 +174,36 @@ function build(){
  const resetPreview=()=>{preview.hidden=true;submit.hidden=false;campaign=null;};form.addEventListener('input',resetPreview);cancel.onclick=resetPreview;
  form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked};previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent='Получатели: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
  confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent='Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();});
- threadTitle=node('h3','Переписка с клиентом');messages=node('ol',null,'connect-thread');replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.required=true;replyBody.maxLength=2000;replyBody.addEventListener('input',()=>replyKey=null);const send=node('button','Отправить сообщение','primary');send.type='submit';replyForm.append(label('Ответ',replyBody),send);
- replyForm.onsubmit=e=>{e.preventDefault();if(!thread||!replyBody.value.trim())return;replyKey=replyKey||crypto.randomUUID();void run(async()=>{const d=await api('staffReply',{clientId:thread,requestKey:replyKey,body:replyBody.value.trim()});replyBody.value='';replyKey=null;showMessages(d);status.textContent='Ответ сохранён и поставлен в очередь уведомлений, если они включены у клиента.';});};
- dialog.append(close,node('h2','Клиенты и рассылки'),buildAudience(),node('hr'),stats,refreshButton,clients,threadTitle,messages,replyForm,node('hr'),form,status);document.body.append(dialog);dialog.addEventListener('close',()=>button.focus());
+ threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.required=true;replyBody.maxLength=2000;replyBody.addEventListener('input',()=>replyKey=null);const send=node('button','Отправить сообщение','primary');send.type='submit';replyForm.append(label('Ответ',replyBody),send);
+ replyForm.onsubmit=e=>{e.preventDefault();if(!thread||!replyBody.value.trim())return;replyKey=replyKey||crypto.randomUUID();void run(async()=>{const d=await api('staffReply',{clientId:thread,requestKey:replyKey,body:replyBody.value.trim()});replyBody.value='';replyKey=null;showMessages(d);await refresh();status.textContent='Ответ сохранён и поставлен в очередь уведомлений, если они включены у клиента.';});};
+ const threadPanel=node('section',null,'work-thread');threadPanel.append(threadTitle,messages,replyForm);
+ const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
+ panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
+ section.append(header,nav,status,...Object.values(panels));selectView('inbox');
+ if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>button.focus());}
 }
-button.onclick=()=>{if(!dialog)build();if(!dialog.open)dialog.showModal();void run(refreshDashboard);};
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
-function visibility(){button.hidden=!owner()||!!document.getElementById('webWorkspace')?.hidden;if(button.hidden&&dialog?.open)dialog.close();}
-setInterval(()=>{visibility();if(dialog?.open&&!busy&&!document.hidden)void run(async()=>{await refresh();if(thread){const d=await api('staffThread',{clientId:thread});showMessages(d);}});},15000);
-document.addEventListener('umma:staff-tab',visibility);visibility();const workspace=document.getElementById('webWorkspace');if(workspace)new MutationObserver(visibility).observe(workspace,{attributes:true,attributeFilter:['hidden']});
+function openInbox(){
+ if(!panels)build();
+ if(workspace)selectView('inbox');
+ if(dialog&&!dialog.open)dialog.showModal();
+ void run(refreshView);
+}
+if(button)button.onclick=openInbox;
+function syncVisibility(){
+ if(button){button.hidden=!owner();if(button.hidden&&dialog?.open)dialog.close();}
+}
+async function poll(){
+ if(!owner()||polling||busy||document.hidden||(!workspace&&!visible()))return;
+ polling=true;
+ try{
+  await refresh();
+  if(visible()&&view==='inbox'&&thread&&!busy)await readThread(thread,true);
+ }catch{}finally{polling=false;}
+}
+document.addEventListener('umma:staff-tab',e=>{if(e.detail==='messages'&&owner())openInbox();});
+document.addEventListener('umma:staff-ready',()=>{syncVisibility();void poll();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
+setInterval(()=>{syncVisibility();void poll();},15000);
+syncVisibility();
 })();

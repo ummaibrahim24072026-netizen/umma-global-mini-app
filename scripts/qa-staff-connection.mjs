@@ -2,11 +2,38 @@ import {readFileSync} from 'node:fs';import {stripTypeScriptTypes} from 'node:mo
 const read=p=>readFileSync(p,'utf8'),tick=()=>new Promise(r=>setTimeout(r,20));
 const employees=[{actor_id:21,name:'QA Kitchen',login:null,assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'invited'},{actor_id:22,name:'QA Active',login:'qa-kitchen',assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'active'}];
 for(const owner of [true,false]){
- const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];let board=0;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(){board++;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
- w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);const out=url.endsWith('cafe-menu')?{ok:true,products:[],inventory:[]}:b.action==='me'?{ok:true,user:{id:10,name:'QA',role:owner?'super_admin':'employee'},assignments:owner?[]:[{staff_role:'kitchen',location_id:'cafe',can_accept_payments:false}],locations:[{id:'cafe',name:'HALAL UMMA'}]}:b.action==='staffList'?{ok:true,accounts:[],employees}:b.action==='inviteExisting'?{ok:true,invite:'b'.repeat(64)}:{ok:true};return new Response(JSON.stringify(out));};
- w.eval(read('js/cafe/web-operations.js'));await tick();await tick();assert.equal(d.getElementById('webWorkspace').hidden,false);
- if(owner){d.querySelector('[data-web-tab=admin]').click();await tick();assert.equal(d.querySelectorAll('.staff-account').length,2);assert.match(d.querySelector('[data-staff-status=invited]').textContent,/Ожидает регистрации/);assert.match(d.querySelector('[data-staff-status=active]').textContent,/qa-kitchen/);assert.equal(d.querySelectorAll('[data-reinvite-staff]').length,1);d.querySelector('[data-reinvite-staff]').click();await tick();assert.equal(calls.find(b=>b.action==='inviteExisting').actorId,21);assert.match(d.getElementById('webInviteLink').href,/#invite=b{64}$/);assert.equal(d.getElementById('webInviteCopy').hidden,false);d.getElementById('webStaffRefresh').click();await tick();assert.ok(calls.filter(b=>b.action==='staffList').length>=3);
- }else{assert.equal(d.body.dataset.workspace,'orders');assert.equal(board,1);assert.equal(d.querySelector('[data-web-tab=orders]').hidden,false);for(const tab of ['admin','pos','courier'])assert.equal(d.querySelector('[data-web-tab='+tab+']').hidden,true);assert.equal(calls.some(b=>b.action==='staffList'),false);}
+ const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=true;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+ w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
+ if(url.endsWith('cafe-connect')){
+  const msg={direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
+  if(b.action==='staffRead')unread=false;
+  const result=b.action==='staffList'?{clients:[{id:'customer-id',name:'Гость QA',unread:unread?1:0,last_message:msg.body}],total:1,subscribers:0,pushDevices:0}:b.action==='staffThread'?{client:{id:'customer-id',name:'Гость QA'},messages:[msg]}:{};
+  return new Response(JSON.stringify({ok:true,...result}));
+ }
+ const out=url.endsWith('cafe-menu')?{ok:true,products:[],inventory:[]}:b.action==='me'?{ok:true,user:{id:10,name:'QA',role:owner?'super_admin':'employee'},assignments:owner?[]:[{staff_role:'kitchen',location_id:'cafe',can_accept_payments:false}],locations:[{id:'cafe',name:'HALAL UMMA'}]}:b.action==='staffList'?{ok:true,accounts:[],employees}:b.action==='inviteExisting'?{ok:true,invite:'b'.repeat(64)}:{ok:true};return new Response(JSON.stringify(out));};
+ w.eval(read('js/cafe/web-operations.js'));w.eval(read('js/cafe/connect-admin.js'));await tick();await tick();assert.equal(d.getElementById('webWorkspace').hidden,false);
+ if(owner){
+  assert.equal(d.body.dataset.workspace,'messages');
+  assert.equal(d.querySelector('#webInboxCount').textContent,'1');
+  assert.equal(d.querySelector('#webMessages .work-inbox').hidden,false);
+  assert.equal(calls.some(b=>b.action==='staffRead'),false);
+  d.querySelector('[data-client-thread]').click();await tick();
+  assert.match(d.querySelector('.work-thread').textContent,/Проверка связи/);
+  assert.equal(calls.find(b=>b.action==='staffRead').clientId,'customer-id');
+  assert.equal(d.querySelector('#webInboxCount').hidden,true);
+  d.querySelector('[data-web-tab=pos]').click();
+  assert.equal(d.querySelector('#webCashViews').hidden,false);
+  d.querySelector('[data-cash-view=cashOrders]').click();
+  assert.equal(d.body.dataset.workspace,'cashOrders');
+  assert.equal(d.querySelector('[data-web-tab=pos]').getAttribute('aria-current'),'true');
+  assert.deepEqual(boardMode,[false,'payment']);
+  d.querySelector('[data-web-tab=orders]').click();
+  assert.deepEqual(boardMode,[false,'active']);
+  d.querySelector('[data-web-tab=admin]').click();await tick();assert.equal(d.querySelectorAll('.staff-account').length,2);
+  const search=d.getElementById('webStaffSearch');search.value='qa-kitchen';search.dispatchEvent(new w.Event('input'));
+  assert.equal(d.querySelectorAll('.staff-account:not([hidden])').length,1);
+  search.value='';search.dispatchEvent(new w.Event('input'));assert.match(d.querySelector('[data-staff-status=invited]').textContent,/Ожидает регистрации/);assert.match(d.querySelector('[data-staff-status=active]').textContent,/qa-kitchen/);assert.equal(d.querySelectorAll('[data-reinvite-staff]').length,1);d.querySelector('[data-reinvite-staff]').click();await tick();assert.equal(calls.find(b=>b.action==='inviteExisting').actorId,21);assert.match(d.getElementById('webInviteLink').href,/#invite=b{64}$/);assert.equal(d.getElementById('webInviteCopy').hidden,false);d.getElementById('webStaffRefresh').click();await tick();assert.ok(calls.filter(b=>b.action==='staffList').length>=3);
+ }else{assert.equal(d.body.dataset.workspace,'orders');assert.equal(board,1);assert.equal(d.querySelector('[data-web-tab=orders]').hidden,false);for(const tab of ['admin','pos','courier','messages'])assert.equal(d.querySelector('[data-web-tab='+tab+']').hidden,true);assert.equal(calls.some(b=>b.action==='staffList'),false);}
  w.close();
 }
 // Actual Edge handler: active/pending/expired staff are visible only to the owner; no auth secrets returned.

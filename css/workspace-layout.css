@@ -135,3 +135,55 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 .web-work-app .staff-role-editor{flex:1 1 230px;min-width:0}.web-work-app #webIngredients{max-width:1000px}.web-work-app #webIngredients fieldset{border:0;padding:0;min-width:0}.ingredient-toolbar,.ingredient-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ingredient-line{padding:16px;margin:12px 0;background:#fff;border:1px solid #cbded9;border-radius:16px}.ingredient-line label{margin:0}.ingredient-line .ingredient-name{grid-column:1/-1}.ingredient-ledger-card{background:white;padding:16px;border:1px solid #cbded9;border-radius:14px;margin:10px 0;overflow-wrap:anywhere}.ingredient-ledger-card p{margin:6px 0}.ingredient-ledger-card ul{padding-left:20px;line-height:1.7}@media(max-width:480px){.ingredient-toolbar{grid-template-columns:1fr}.ingredient-line{padding:12px;gap:10px}.ingredient-line input,.ingredient-line select{min-width:0}.web-work-app #ingredientSave{width:100%;white-space:normal}}
 
 .web-work-app .work-nav-short{display:none}@media(max-width:650px){.web-work-app .web-tabs .work-nav-long{display:none}.web-work-app .web-tabs .work-nav-short{display:block}}
+
+/* Work areas share the same section switch, cards and touch targets. */
+.web-work-app #webNotice:empty,.web-work-app .work-messages [role=status]:empty{display:none}
+.web-work-app .work-section-switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.web-work-app .work-section-switch button[aria-pressed=true]{background:var(--work-accent);border-color:var(--work-accent);color:#fff}
+.web-work-app #webCashViews{padding-top:16px;padding-bottom:0;margin-bottom:0}
+.web-work-app #webCashViews button{flex:1 1 130px}
+.web-work-app .web-tabs button{position:relative}
+.web-work-app .work-inbox-count{position:absolute;inset:2px 3px auto auto;min-width:20px;padding:2px 4px;border-radius:20px;background:#f4d177;color:#403017;font-size:11px;font-weight:800;line-height:16px;text-align:center}
+.web-work-app .work-messages{max-width:1320px;width:100%;max-height:none;overflow:visible;border:0;border-radius:0;background:transparent;color:inherit}
+.work-messages-heading,.work-roster-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.work-messages-heading h1,.work-roster-heading h2,.web-work-app #webStaffRefresh,.web-work-app #webStaffHeading{margin:0}
+.work-messages-heading h1{margin-block:0}
+.web-work-app .work-inbox{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);gap:14px;align-items:start}
+.web-work-app :is(.work-inbox-sidebar,.work-thread,.work-campaign,#webInvitePanel){min-width:0;border:1px solid var(--work-line);border-radius:16px;background:#fff;padding:16px}
+.web-work-app .work-inbox-list{margin:0;display:grid;gap:8px}
+.web-work-app .work-inbox-list li{margin:0;padding:0;background:transparent}
+.web-work-app .work-thread-choice{display:grid;gap:4px;text-align:start;width:100%;background:#f6faf8}
+.web-work-app .work-thread-choice small{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+.web-work-app .work-thread-choice[data-unread=true]{border-color:#b6862f;background:#fff9ea}
+.web-work-app .work-thread-choice[aria-pressed=true]{border-color:var(--work-accent);box-shadow:inset 3px 0 var(--work-accent)}
+.web-work-app .work-thread-unread{color:#654b18;font-size:12px}
+.web-work-app .work-thread h2{scroll-margin-top:88px}
+.web-work-app .work-thread .connect-thread:empty{display:none}
+.web-work-app .work-thread .connect-thread{max-height:min(45dvh,480px)}
+.web-work-app .work-thread form .primary,.web-work-app .work-campaign .primary{min-height:48px}
+.web-work-app .work-campaign{max-width:720px}
+.web-work-app #webInvitePanel{margin-bottom:22px}
+.web-work-app #webInvitePanel>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;color:var(--work-accent)}
+.web-work-app #webInviteForm{max-width:none;padding:0;border:0;margin:12px 0}
+.web-work-app .work-roster-search{max-width:480px}
+.web-work-app #webStaffStatus:not(:empty){color:var(--work-muted);font-size:14px}
+.web-work-app .pos-products>p{grid-column:1/-1}
+.web-work-app .cafe-kitchen-filters{margin-block:14px}
+@media (max-width:760px){
+ .web-work-app .work-inbox{grid-template-columns:1fr}
+ .web-work-app .work-inbox-list{max-height: min(34dvh,300px);overflow:auto}
+}
+@media (max-width:650px){
+ .web-work-app.work-owner{--work-bottom-nav:calc(126px + env(safe-area-inset-bottom,0px))}
+ .web-work-app.work-owner .web-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .web-work-app.work-owner .web-tabs button{flex-direction:row;gap:6px;min-height:52px;font-size:12px}
+ .web-work-app.work-owner .web-tabs .work-nav-icon{width:18px;height:18px;flex-basis:18px}
+ .web-work-app.work-owner .work-inbox-count{inset:0 1px auto auto}
+ .web-work-app #webCashViews{gap:5px;flex-wrap:nowrap}
+ .web-work-app #webCashViews button{min-width:0;flex:1 1 0;padding:8px 5px;font-size:12px}
+ .web-work-app .work-section-switch:not(#webCashViews)>button{flex:1 1 0;padding-inline:7px;font-size:13px}
+ .web-work-app .work-messages-heading h1{font-size:24px}
+ .web-work-app .work-thread h2{scroll-margin-top:16px}
+ .web-work-app .work-thread form .primary{width:100%}
+ .web-work-app .cafe-kitchen-filters button:first-child{grid-column:auto}
+}
