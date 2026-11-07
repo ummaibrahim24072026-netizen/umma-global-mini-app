@@ -9,3 +9,9 @@
 .reply-notifications-setup p:last-child{margin:8px 0 0}
 .reply-notifications-setup p:empty{display:none}
 .reply-notifications-setup button+button{margin-inline-start:8px}
+.cafe-menu-news{margin:0 0 14px;padding:12px 14px;border:1px solid #b6cecd;border-radius:12px;background:#edf7f5;color:#163d3e}
+.cafe-menu-news h2,.cafe-menu-news h3{margin:0 0 8px}
+.cafe-menu-news h2{font-size:1.1rem}
+.cafe-menu-news h3{font-size:1rem}
+.cafe-menu-news article{margin-top:12px;padding-top:12px;border-top:1px solid #dbe8e6;overflow-wrap:anywhere}
+.cafe-menu-news article p{margin:0;white-space:pre-wrap}

@@ -97,7 +97,21 @@ const installedCampaign={...campaign,requestKey:randomUUID(),installedOnly:true}
 assert.equal((await rpc('staffCampaign','',1,installedCampaign)).recipients,1);
 assert.equal((await rpc('staffCampaign','',1,installedCampaign)).recipients,1);
 assert.equal((await audience('push')).matched,1);
-await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);
+// Public news only includes intentionally published all-customer campaigns.
+await db.exec(source('supabase/proposals/cafe-menu-news.sql'));
+await db.exec(source('supabase/proposals/cafe-menu-news.sql'));
+assert.deepEqual((await rpc('news')).news,[]);
+await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
+const news={requestKey:randomUUID(),title:'New dish',body:'Today',language:'all',publicNews:true};
+assert.equal((await rpc('staffCampaign','',1,news)).recipients,2);
+assert.equal((await rpc('staffCampaign','',1,news)).recipients,2);
+assert.equal((await rpc('news')).news[0].title,'New dish');
+await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
+await rpc('staffCampaign','',1,{...news,requestKey:randomUUID(),language:'vi',title:'Private language campaign'});
+await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
+await rpc('staffCampaign','',1,{...news,requestKey:randomUUID(),installedOnly:true,title:'Private installed campaign'});
+assert.deepEqual((await rpc('news')).news.map(item=>item.title),['New dish']);
+await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);await assert.rejects(rpc('news'),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
 const dom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url:'https://qa.invalid/app/menu/',runScripts:'outside-only'}),w=dom.window;let prompts=0,calls=[];
@@ -260,6 +274,32 @@ assert.equal(visitCalls[2].orderId,firstOrder);
 assert.ok(visitCalls.every(v=>v.token===visitCalls[0].token));
 assert.equal(menu.localStorage.getItem('umma:connect:token:v1'),null);
 menu.close();
+// The menu shows public news without a chat token, and remembers the local opt-out.
+{
+ const app=new JSDOM('<html lang="ru"><body><section id="cafeMenuNews" hidden></section></body></html>',{
+  url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const w=app.window,host=w.document.querySelector('section');
+ w.AbortSignal=AbortSignal;
+ w.fetch=async(url,init)=>{
+  assert.deepEqual(JSON.parse(init.body),{action:'news'});
+  return new Response(JSON.stringify({ok:true,news:[{title:'Новое блюдо',body:'<img src=x>'}]}));
+ };
+ w.eval(source('js/cafe/menu-news.js'));
+ await new Promise(resolve=>setTimeout(resolve,30));
+ assert.equal(host.hidden,false);
+ assert.equal(host.querySelector('article').textContent,'Новое блюдо<img src=x>');
+ assert.equal(host.querySelector('img'),null);
+ const toggle=host.querySelector('button');
+ toggle.click();
+ assert.equal(host.querySelector('article'),null);
+ assert.equal(toggle.getAttribute('aria-expanded'),'false');
+ assert.equal(w.localStorage.getItem('umma:menu-news:hidden'),'1');
+ toggle.click();
+ assert.ok(host.querySelector('article'));
+ assert.equal(w.localStorage.getItem('umma:menu-news:hidden'),'0');
+ app.window.close();
+}
 // Edge: forged operator payloads never choose an actor; malformed subscriptions/URLs fail closed.
 let handler;const edgeDb={rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:{ok:true}})};
 vm.runInNewContext(stripTypeScriptTypes(source('supabase/functions/cafe-connect/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async()=>{throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date});
@@ -268,6 +308,7 @@ assert.equal((await call({action:'staffList',initData:'web:forged',actor:1})).st
 assert.equal((await call({action:'preferences',token:a,subscription:{endpoint:'https://127.0.0.1/internal'}})).status,400);
 assert.equal((await call({action:'send',token:a,body:'hi',requestKey:'bad'})).status,400);
 assert.equal((await call({action:'join',token:a})).status,200);
+assert.equal((await call({action:'news'})).status,200);
 assert.equal((await call({action:'staffAudience',initData:'web:forged',segment:'all',offset:0})).status,403);
 assert.equal((await call({action:'visit',token:a,point:'<invalid>',installed:false})).status,400);
 assert.equal((await call({action:'visit',token:a,point:'',installed:false,orderId:firstOrder})).status,400);

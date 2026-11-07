@@ -10,9 +10,10 @@ Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});if(req.method!=='POST')return reply({ok:false},405);
  try{
   const raw=await req.text();if(raw.length>14000)return reply({ok:false},413);const b=JSON.parse(raw);
-  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch'].includes(b.action))return reply({ok:false},400);
+  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news'].includes(b.action))return reply({ok:false},400);
   const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
   const rpc=async(name:string,args:any={})=>{const r=await db.rpc(name,args);if(r.error)throw Error(r.error.message);return r.data;};
+  if(b.action==='news')return reply(await rpc('cafe_connect',{p_action:'news'}));
   if(b.action==='dispatch'){
    const config=await rpc('cafe_push_config');if(!config||req.headers.get('x-umma-push-key')!==config.dispatchKey)return reply({ok:false},403);
    const jobs=await rpc('cafe_connect',{p_action:'lease'});let sent=0;
@@ -49,7 +50,7 @@ Deno.serve(async(req:Request)=>{
   }
   if(b.action==='staffCampaign'){
    if(typeof b.title!=='string'||!b.title.trim()||b.title.length>100||typeof b.language!=='string'||!/^(all|[a-z]{2})$/.test(b.language))return reply({ok:false},400);
-   data.title=b.title.trim();data.language=b.language;data.installedOnly=b.installedOnly===true;
+   data.title=b.title.trim();data.language=b.language;data.installedOnly=b.installedOnly===true;data.publicNews=b.publicNews===true;
   }
   if(['read','staffRead'].includes(b.action)){
    if(typeof b.before!=='string'||!Number.isFinite(Date.parse(b.before)))return reply({ok:false},400);data.before=new Date(b.before).toISOString();
