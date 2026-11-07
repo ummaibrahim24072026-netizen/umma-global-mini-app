@@ -10,7 +10,7 @@ Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});if(req.method!=='POST')return reply({ok:false},405);
  try{
   const raw=await req.text();if(raw.length>14000)return reply({ok:false},413);const b=JSON.parse(raw);
-  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','dispatch'].includes(b.action))return reply({ok:false},400);
+  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch'].includes(b.action))return reply({ok:false},400);
   const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
   const rpc=async(name:string,args:any={})=>{const r=await db.rpc(name,args);if(r.error)throw Error(r.error.message);return r.data;};
   if(b.action==='dispatch'){
@@ -32,6 +32,15 @@ Deno.serve(async(req:Request)=>{
     if(!await rpc('cafe_web_rate_allow',{p_identity:await sha256('connect-join:'+ip)}))return reply({ok:false,error:'Слишком много попыток. Повторите позже.'},429);
    }
   }
+  if(b.action==='visit'){
+   if(typeof b.point!=='string'||!/^[a-zA-Z0-9_-]{0,80}$/.test(b.point)||typeof b.installed!=='boolean')return reply({ok:false},400);
+   if(('orderId'in b||'requestKey'in b)&&(!uuid(b.orderId)||!uuid(b.requestKey)))return reply({ok:false},400);
+   return reply(await rpc('cafe_menu_visit',{p_hash:hash,p_point:b.point,p_installed:b.installed,p_order_id:b.orderId??null,p_request_key:b.requestKey??null}));
+  }
+  if(b.action==='staffAudience'){
+   if(!['all','new','returning','regular','viewed','push'].includes(b.segment)||!Number.isInteger(b.offset)||b.offset<0||b.offset>100000)return reply({ok:false},400);
+   return reply(await rpc('cafe_menu_audience',{p_actor:actor,p_segment:b.segment,p_offset:b.offset}));
+  }
   const data:any={};
   if(['staffThread','staffRead','staffReply'].includes(b.action)){if(!uuid(b.clientId))return reply({ok:false},400);data.clientId=b.clientId;}
   if(['send','staffReply','staffCampaign'].includes(b.action)){
@@ -40,7 +49,7 @@ Deno.serve(async(req:Request)=>{
   }
   if(b.action==='staffCampaign'){
    if(typeof b.title!=='string'||!b.title.trim()||b.title.length>100||typeof b.language!=='string'||!/^(all|[a-z]{2})$/.test(b.language))return reply({ok:false},400);
-   data.title=b.title.trim();data.language=b.language;
+   data.title=b.title.trim();data.language=b.language;data.installedOnly=b.installedOnly===true;
   }
   if(['read','staffRead'].includes(b.action)){
    if(typeof b.before!=='string'||!Number.isFinite(Date.parse(b.before)))return reply({ok:false},400);data.before=new Date(b.before).toISOString();

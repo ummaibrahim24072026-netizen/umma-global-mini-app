@@ -37,6 +37,51 @@ assert.equal((await rpc('lease')).length,0);await rpc('finish','',null,{id:jobs[
 assert.equal((await db.query('select count(*)::int n from umma_private.cafe_connect_jobs where sent_at is not null')).rows[0].n,0);
 await rpc('finish','',null,{id:jobs[0].id,lease:jobs[0].lease,success:false,gone:true,subscription:sub});assert.equal((await rpc('list',a)).client.pushEnabled,false);
 const p=(await db.query("select has_function_privilege('anon','cafe_connect(text,text,bigint,jsonb)','execute') a,has_table_privilege('authenticated','umma_private.cafe_connect_clients','select') b")).rows[0];assert.equal(p.a,false);assert.equal(p.b,false);
+// Audience counts actual sessions separately from contact-channel opt-ins.
+await db.exec(`
+ create table public.cafe_orders(id uuid primary key);
+ create table umma_private.public_guest_requests(order_id uuid,request_key uuid);
+`);
+await db.exec(source('supabase/proposals/cafe-audience.sql'));
+const visit=async(hash,point='',installed=false,id=null,request=null)=>(await db.query(
+ 'select cafe_menu_visit($1,$2,$3,$4,$5) result',[hash,point,installed,id,request])).rows[0].result;
+const audience=async(segment='all',actor=1)=>(await db.query(
+ 'select cafe_menu_audience($1,$2,0) result',[actor,segment])).rows[0].result;
+const guest='c'.repeat(64);
+await visit(guest,'neighbor-cafe-01');
+await visit(guest,'neighbor-cafe-01');
+await visit(a,'',true);
+let overview=await audience();
+assert.equal(overview.devices,2);
+assert.equal(overview.visits,2);
+assert.equal(overview.firstTimers,2);
+assert.equal(overview.installed,1);
+assert.equal(overview.points.find(p=>p.point==='neighbor-cafe-01').devices,1);
+assert.equal(overview.guests.find(g=>g.installed).client_id,ca);
+assert.equal((await rpc('staffList','',1)).total,2); // anonymous visitor didn't join
+await assert.rejects(audience('all',2),/Access denied/);
+assert.equal((await db.query("select has_function_privilege('anon','cafe_menu_audience(bigint,text,integer)','execute') allowed")).rows[0].allowed,false);
+await db.exec("update umma_private.cafe_menu_visits set last_seen_at=now()-interval '31 minutes'");
+assert.equal((await audience('viewed')).matched,2);
+assert.equal((await audience()).withoutOrder,2);
+await visit(guest,'neighbor-cafe-01');
+assert.equal((await audience('returning')).matched,1);
+const firstOrder=randomUUID(),secondOrder=randomUUID(),firstProof=randomUUID(),secondProof=randomUUID();
+await db.query('insert into public.cafe_orders(id) values($1),($2)',[firstOrder,secondOrder]);
+await db.query('insert into umma_private.public_guest_requests values($1,$2),($3,$4)',[firstOrder,firstProof,secondOrder,secondProof]);
+await assert.rejects(visit(guest,'neighbor-cafe-01',false,firstOrder,secondProof),/Order unavailable/);
+await visit(guest,'neighbor-cafe-01',false,firstOrder,firstProof);
+await visit(guest,'neighbor-cafe-01',false,firstOrder,firstProof);
+assert.equal((await audience('regular')).matched,0);
+await visit(guest,'neighbor-cafe-01',false,secondOrder,secondProof);
+assert.equal((await audience('regular')).guests[0].orders,2);
+await rpc('preferences',a,null,{promotions:true,subscription:sub});
+await rpc('preferences',b,null,{promotions:true,subscription:sub});
+await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
+const installedCampaign={...campaign,requestKey:randomUUID(),installedOnly:true};
+assert.equal((await rpc('staffCampaign','',1,installedCampaign)).recipients,1);
+assert.equal((await rpc('staffCampaign','',1,installedCampaign)).recipients,1);
+assert.equal((await audience('push')).matched,1);
 await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
@@ -47,6 +92,24 @@ w.fetch=async(url,init)=>{const data=JSON.parse(init.body);calls.push(data);retu
 w.eval(source('js/cafe/customer-connect.js'));assert.equal(prompts,0);assert.equal(calls.length,0);w.document.querySelector('button').click();
 w.document.querySelector('dialog .primary').click();await new Promise(r=>setTimeout(r,40));assert.equal(calls[0].action,'join');assert.equal(calls[0].token.length,64);assert.equal(w.document.querySelector('input[type=checkbox]').checked,false);
 w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,40));assert.ok(w.document.querySelector('li').textContent.includes('<img'));assert.equal(w.document.querySelector('li img'),null);assert.ok(calls.some(c=>c.action==='send'&&c.requestKey));assert.equal(prompts,0);w.close();
+const menuDom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true});
+const menu=menuDom.window;
+menu.AbortSignal=AbortSignal;
+let visitCalls=[];
+menu.fetch=async(url,init)=>{visitCalls.push(JSON.parse(init.body));return new Response('{"ok":true}');};
+menu.eval(source('js/cafe/menu-audience.js'));
+menu.ummaMenuAudience.start('neighbor-cafe-01');
+menu.dispatchEvent(new menu.Event('pageshow'));
+assert.equal(visitCalls.length,1);
+assert.equal(visitCalls[0].point,'neighbor-cafe-01');
+assert.equal(visitCalls[0].installed,false);
+menu.dispatchEvent(new menu.Event('appinstalled'));
+assert.equal(visitCalls[1].installed,true);
+menu.ummaMenuAudience.orderPlaced(firstOrder,firstProof);
+assert.equal(visitCalls[2].orderId,firstOrder);
+assert.ok(visitCalls.every(v=>v.token===visitCalls[0].token));
+assert.equal(menu.localStorage.getItem('umma:connect:token:v1'),null);
+menu.close();
 // Edge: forged operator payloads never choose an actor; malformed subscriptions/URLs fail closed.
 let handler;const edgeDb={rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:{ok:true}})};
 vm.runInNewContext(stripTypeScriptTypes(source('supabase/functions/cafe-connect/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async()=>{throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date});
@@ -55,4 +118,8 @@ assert.equal((await call({action:'staffList',initData:'web:forged',actor:1})).st
 assert.equal((await call({action:'preferences',token:a,subscription:{endpoint:'https://127.0.0.1/internal'}})).status,400);
 assert.equal((await call({action:'send',token:a,body:'hi',requestKey:'bad'})).status,400);
 assert.equal((await call({action:'join',token:a})).status,200);
+assert.equal((await call({action:'staffAudience',initData:'web:forged',segment:'all',offset:0})).status,403);
+assert.equal((await call({action:'visit',token:a,point:'<invalid>',installed:false})).status,400);
+assert.equal((await call({action:'visit',token:a,point:'',installed:false,orderId:firstOrder})).status,400);
+assert.equal((await call({action:'visit',token:a,point:'neighbor-cafe-01',installed:false})).status,200);
 console.log('PASS customer channel: isolation, owner authorization, idempotent replies/campaigns, consent withdrawal, leased retry/stale ack, private credentials/RLS, explicit browser opt-in, feedback XSS safety and edge validation.');
