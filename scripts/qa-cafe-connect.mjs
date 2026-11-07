@@ -26,9 +26,24 @@ await assert.rejects(rpc('list','c'.repeat(64)),/Channel unavailable/);
 const key=randomUUID();await rpc('send',a,null,{requestKey:key,body:'<script>feedback</script>'});await rpc('send',a,null,{requestKey:key,body:'retry'});
 assert.equal((await rpc('list',a)).messages.length,1);assert.equal((await rpc('list',b)).messages.length,0);
 let staff=await rpc('staffList','',1);assert.equal(staff.total,2);assert.equal(staff.subscribers,1);assert.equal(staff.clients.find(c=>c.id===ca).unread,1);
-await rpc('staffRead','',1,{clientId:ca,before:new Date(Date.now()+1000).toISOString()});assert.equal((await rpc('staffList','',1)).clients.find(c=>c.id===ca).unread,0);
+const customerMessage=(await rpc('list',a)).messages[0];
+assert.equal(customerMessage.read_at,null);
+await rpc('staffRead','',1,{clientId:ca,before:customerMessage.created_at});
+const customerReadAt=(await rpc('list',a)).messages[0].read_at;
+assert.ok(customerReadAt);
+assert.equal((await rpc('staffList','',1)).clients.find(c=>c.id===ca).unread,0);
 const reply=randomUUID();await rpc('staffReply','',1,{clientId:ca,requestKey:reply,body:'Reply'});await rpc('staffReply','',1,{clientId:ca,requestKey:reply,body:'Reply'});
 assert.equal((await rpc('list',a)).messages.length,2);assert.equal((await rpc('list',b)).messages.length,0);
+const staffThread=()=>rpc('staffThread','',1,{clientId:ca});
+const staffReply=(await staffThread()).messages[1];
+assert.equal(staffReply.read_at,null);
+await rpc('read',b,null,{before:staffReply.created_at});
+assert.equal((await staffThread()).messages[1].read_at,null);
+await rpc('read',a,null,{before:staffReply.created_at});
+const staffReadAt=(await staffThread()).messages[1].read_at;
+assert.ok(staffReadAt);
+await rpc('read',a,null,{before:staffReply.created_at});
+assert.deepEqual((await staffThread()).messages.map(message=>message.read_at),[customerReadAt,staffReadAt]);
 const campaign={requestKey:randomUUID(),title:'New menu',body:'New dish',language:'all'};
 assert.equal((await rpc('staffCampaign','',1,campaign)).recipients,1);assert.equal((await rpc('staffCampaign','',1,campaign)).recipients,1);
 assert.equal((await rpc('list',a)).messages.length,3);assert.equal((await rpc('list',b)).messages.length,0);
@@ -99,6 +114,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  });
  const client=app.window,worker=new client.EventTarget(),badgeUpdates=[];
  const credential='a'.repeat(64),reply={id:'staff-reply',direction:'staff',title:'UMMA',body:'Ответ кафе',created_at:'2026-11-07T12:00:00Z',read_at:null};
+ const sent={...reply,id:'customer-message',direction:'customer',body:'Вопрос',created_at:'2026-11-07T11:59:00Z'};
  let pushEnabled=false,prompts=0;
  client.localStorage.setItem('umma:connect:token:v1',credential);
  client.AbortSignal=AbortSignal;
@@ -116,7 +132,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   assert.equal(request.token,credential);
   if(request.action==='read'){assert.equal(request.before,reply.created_at);reply.read_at=reply.created_at;}
   if(request.action==='preferences'){assert.deepEqual(request.subscription,sub);pushEnabled=true;}
-  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled},messages:[reply]}));
+  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled},messages:[sent,reply]}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
  client.eval(source('js/cafe/customer-connect.js'));
@@ -127,6 +143,11 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await client.ummaCustomerConnect.open();
  assert.match(client.document.querySelector('.connect-thread').textContent,/Ответ кафе/);
  assert.equal(badgeUpdates.at(-1).count,0);
+ assert.deepEqual([...client.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
+ sent.read_at='2026-11-07T12:01:00Z';
+ client.dispatchEvent(new client.Event('online'));
+ await tick();
+ assert.match(client.document.querySelector('.connect-receipt').textContent,/^Прочитано сотрудником · .+$/);
  const enable=[...client.document.querySelectorAll('dialog button')].find(button=>button.textContent==='Включить уведомления об ответах');
  enable.click();
  await tick();
@@ -134,6 +155,41 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(pushEnabled,true);
  assert.equal(enable.hidden,true);
  app.window.close();
+}
+// Staff inbox updates the receipt while the current conversation stays open.
+{
+ const app=new JSDOM('<header></header><main><section id="webMessages"></section></main>',{
+  url:'https://qa.invalid/app/staff.html',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const staff=app.window;
+ staff.AbortSignal=AbortSignal;
+ staff.ummaRole='super_admin';
+ staff.ummaStaffAuth={credential:()=> 'web:test'};
+ let poll;
+ staff.setInterval=callback=>{poll=callback;};
+ const messages=[
+  {direction:'customer',body:'Вопрос',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
+  {direction:'staff',title:'UMMA',body:'Ответ',created_at:'2026-11-07T12:02:00Z',read_at:null}
+ ];
+ staff.fetch=async(url,init)=>{
+  const request=JSON.parse(init.body);
+  assert.equal(request.initData,'web:test');
+  const client={id:ca,name:'Клиент',unread:0,last_message:'Ответ'};
+  return new Response(JSON.stringify(request.action==='staffList'?
+   {ok:true,clients:[client],subscribers:0,pushDevices:0}:{ok:true,client,messages}));
+ };
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
+ staff.eval(source('js/cafe/connect-admin.js'));
+ staff.document.dispatchEvent(new staff.CustomEvent('umma:staff-tab',{detail:'messages'}));
+ await tick();
+ staff.document.querySelector('[data-client-thread]').click();
+ await tick();
+ assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
+ messages[1].read_at='2026-11-07T12:03:00Z';
+ await poll();
+ await tick();
+ assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
+ staff.close();
 }
 const menuDom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true});
 const menu=menuDom.window;

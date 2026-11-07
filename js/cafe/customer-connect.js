@@ -9,6 +9,11 @@ const notificationCopy={
  en:['Enable reply notifications','Message sent. Enable notifications to get replies even when UMMA is closed.','Replies appear in this chat. Your phone controls sound, vibration and the app icon badge.'],
  vi:['Bật thông báo phản hồi','Đã gửi tin nhắn. Bật thông báo để nhận phản hồi ngay cả khi đã đóng UMMA.','Phản hồi xuất hiện trong cuộc trò chuyện. Âm thanh, rung và huy hiệu theo cài đặt điện thoại.']
 };
+const receiptCopy={
+ ru:['Отправлено','Прочитано сотрудником'],
+ en:['Sent','Read by staff'],
+ vi:['Đã gửi','Nhân viên đã đọc']
+};
 const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||copy.en)[i];
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
@@ -38,7 +43,24 @@ function refresh(){
 }
 const status=el('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let list,name,promotions,push;
-function renderThread(){if(!list)return;list.replaceChildren();for(const m of state?.messages||[]){const li=el('li');li.dataset.direction=m.direction;li.append(el('strong',m.direction==='customer'?t(18):m.title||t(19)),el('div',m.body),el('small',new Date(m.created_at).toLocaleString()));list.append(li);}if(!list.children.length)list.append(el('li',t(12)));badge();}
+function renderThread(){
+ if(!list)return;
+ const receipt=receiptCopy[lang()]||receiptCopy.en;
+ const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
+ list.replaceChildren();
+ for(const m of state?.messages||[]){
+  const li=el('li');
+  const outgoing=m.direction==='customer';
+  li.dataset.direction=m.direction;
+  li.append(el('strong',outgoing?t(18):m.title||t(19)),el('div',m.body),el('small',dateTime.format(new Date(m.created_at))));
+  if(outgoing){
+   li.append(el('small',m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0],'connect-receipt'));
+  }
+  list.append(li);
+ }
+ if(!list.children.length)list.append(el('li',t(12)));
+ badge();
+}
 async function markRead(){
  const latest=unread().at(-1);
  if(reading||!latest||!dialog?.open||document.hidden)return;

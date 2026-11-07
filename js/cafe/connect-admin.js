@@ -97,6 +97,10 @@ function showMessages(data){
  for(const m of data.messages||[]){
   const li=node('li');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'),node('div',m.body),node('small',dateTime.format(new Date(m.created_at))));
+  if(m.direction!=='customer'){
+   const receipt=m.read_at?'Прочитано клиентом · '+dateTime.format(new Date(m.read_at)):'Отправлено';
+   li.append(node('small',receipt,'connect-receipt'));
+  }
   messages.append(li);
  }
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
@@ -105,7 +109,7 @@ function showMessages(data){
 }
 async function readThread(id,background=false){
  const d=await api('staffThread',{clientId:id});
- if(thread!==id||!visible()||view!=='inbox'||(background&&busy))return;
+ if(thread!==id||document.hidden||!visible()||view!=='inbox'||(background&&busy))return;
  showMessages(d);
  const latest=d.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
