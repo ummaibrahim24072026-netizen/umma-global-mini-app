@@ -191,6 +191,57 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
  staff.close();
 }
+// Installed app: reuse an existing browser grant for a new chat, prompt only on a tap,
+// and respect the previous choice for an existing chat or a dismissed setup.
+for(const scenario of ['browser','default','granted','denied','existing','dismissed']){
+ const app=new JSDOM('<html lang="ru"><body><div id="replyNotificationsSetup" hidden></div></body></html>',{
+  url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const client=app.window,host=client.document.getElementById('replyNotificationsSetup');
+ client.AbortSignal=AbortSignal;
+ client.matchMedia=()=>({matches:scenario!=='browser'});
+ client.PushManager=class{};
+ let prompts=0,subscriptions=0;
+ client.Notification={
+  permission:['granted','existing','dismissed'].includes(scenario)?'granted':scenario==='denied'?'denied':'default',
+  async requestPermission(){prompts++;this.permission='granted';return this.permission;}
+ };
+ if(scenario==='existing')client.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
+ if(scenario==='dismissed')client.localStorage.setItem('umma:reply-notifications:setup-dismissed','1');
+ const registration={pushManager:{async getSubscription(){return {toJSON:()=>sub};}}};
+ const worker=new client.EventTarget();
+ worker.ready=Promise.resolve(registration);worker.register=async()=>registration;
+ Object.defineProperty(client.navigator,'serviceWorker',{value:worker});
+ client.fetch=async(url,init)=>{
+  const request=JSON.parse(init.body);
+  if(request.action==='config')return new Response(JSON.stringify({ok:true,publicKey:Buffer.alloc(65).toString('base64url')}));
+  if(request.action==='preferences'){
+   assert.deepEqual(request.subscription,sub);
+   assert.equal('promotions'in request,false);
+   subscriptions++;
+  }
+  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled:subscriptions>0},messages:[]}));
+ };
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
+ client.eval(source('js/cafe/customer-connect.js'));
+ await tick();
+ assert.equal(prompts,0,scenario);
+ assert.equal(subscriptions,scenario==='granted'?1:0,scenario);
+ assert.equal(host.hidden,!['default','existing'].includes(scenario),scenario);
+ if(scenario==='default'){
+  host.querySelector('button').click();
+  await tick();
+  assert.equal(prompts,1);
+  assert.equal(subscriptions,1);
+  assert.equal(host.hidden,true);
+ }
+ if(scenario==='existing'){
+  host.querySelectorAll('button')[1].click();
+  assert.equal(host.hidden,true);
+  assert.equal(client.localStorage.getItem('umma:reply-notifications:setup-dismissed'),'1');
+ }
+ app.window.close();
+}
 const menuDom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true});
 const menu=menuDom.window;
 menu.AbortSignal=AbortSignal;

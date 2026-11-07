@@ -9,6 +9,11 @@ const notificationCopy={
  en:['Enable reply notifications','Message sent. Enable notifications to get replies even when UMMA is closed.','Replies appear in this chat. Your phone controls sound, vibration and the app icon badge.'],
  vi:['Bật thông báo phản hồi','Đã gửi tin nhắn. Bật thông báo để nhận phản hồi ngay cả khi đã đóng UMMA.','Phản hồi xuất hiện trong cuộc trò chuyện. Âm thanh, rung và huy hiệu theo cài đặt điện thoại.']
 };
+const setupCopy={
+ ru:['Получайте ответы UMMA, даже когда приложение закрыто.','Позже'],
+ en:['Get replies from UMMA even when the app is closed.','Later'],
+ vi:['Nhận phản hồi từ UMMA ngay cả khi đã đóng ứng dụng.','Để sau']
+};
 const receiptCopy={
  ru:['Отправлено','Прочитано сотрудником'],
  en:['Sent','Read by staff'],
@@ -34,6 +39,7 @@ function refresh(){
    const next=await api('list');
    if(busy||document.hidden)return;
    state=next;
+   renderSetup();
    if(dialog?.open){renderThread();await markRead();}
    else badge();
   }catch{if(dialog?.open)status.textContent=t(16);}
@@ -70,48 +76,101 @@ async function markRead(){
   if(dialog.open&&!document.hidden)renderThread();else badge();
  }catch{}finally{reading=false;}
 }
-async function run(fn){if(busy)return;busy=true;await refreshing;dialog?.querySelectorAll('button').forEach(b=>b.disabled=true);status.textContent=t(17);try{await fn();}catch(e){status.textContent=e.message||t(16);}finally{busy=false;dialog?.querySelectorAll('button').forEach(b=>b.disabled=false);}}
+const setupHost=document.getElementById('replyNotificationsSetup');
+const setupButton=el('button',notice(0),'umma-connect-button'),later=el('button',null,'plain-btn');
+const setupHint=el('p'),setupStatus=el('p');setupStatus.setAttribute('role','status');
+const setupKey='umma:reply-notifications:setup-dismissed';
+let installed=navigator.standalone===true||window.matchMedia?.('(display-mode: standalone)').matches===true;
+let dismissed=false;
+try{dismissed=localStorage.getItem(setupKey)==='1';}catch{}
+const pushSupported=()=> 'Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator;
+function dismissSetup(){
+ dismissed=true;
+ try{localStorage.setItem(setupKey,'1');}catch{}
+ renderSetup();
+}
+function renderSetup(){
+ if(!setupHost)return;
+ const copy=setupCopy[lang()]||setupCopy.en;
+ setupButton.textContent=notice(0);
+ setupHint.textContent=copy[0];
+ later.textContent=copy[1];
+ setupHost.hidden=!installed||dismissed||!pushSupported()||(!!token&&!state)||state?.client?.pushEnabled===true||
+  (Notification.permission==='denied'&&!setupStatus.textContent);
+}
+async function run(fn,feedback=status){
+ if(busy)return;
+ busy=true;await refreshing;
+ const buttons=[...(dialog?.querySelectorAll('button')||[]),setupButton,later];
+ buttons.forEach(b=>b.disabled=true);feedback.textContent=t(17);
+ try{await fn();}catch(e){feedback.textContent=e.message||t(16);}
+ finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
+}
+async function connect(){
+ if(token)return;
+ token=window.ummaMenuAudience?.identity()||
+  Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
+ try{
+  state=await api('join');
+  try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
+ }catch(error){token='';throw error;}
+}
+function enablePush(feedback){
+ if(busy)return;
+ // Only a direct tap can ask for a new browser permission.
+ const permission=pushSupported()?(Notification.permission==='granted'?'granted':Notification.requestPermission()):'unsupported';
+ void run(async()=>{
+  if(await permission!=='granted')throw Error(t(15));
+  await navigator.serviceWorker.register(new URL('umma-menu-sw.js',document.baseURI));
+  const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error(t(16))),12000))]);
+  const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-push',{method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(12000),body:JSON.stringify({action:'config'})});
+  const config=await r.json();if(!r.ok||!config.publicKey)throw Error(t(16));
+  const bytes=Uint8Array.from(atob(config.publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+  const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
+  await connect();
+  state=await api('preferences',{subscription:subscription.toJSON(),language:lang()});
+  if(feedback===status)window.ummaOrderAlerts?.enableGranted?.();
+  feedback.textContent=t(14)+' '+notice(2);
+  if(dialog)dialog.update?.();else badge();
+ },feedback);
+}
+function installedSetup(){
+ if(!setupHost||!installed)return;
+ renderSetup();
+ // A new installation can reuse an existing browser grant. Existing chats may have opted out.
+ if(!dismissed&&!token&&pushSupported()&&Notification.permission==='granted'&&!document.hidden)enablePush(setupStatus);
+}
+if(setupHost){
+ setupButton.type=later.type='button';
+ setupButton.onclick=()=>enablePush(setupStatus);
+ later.onclick=dismissSetup;
+ setupHost.append(setupHint,setupButton,later,setupStatus);
+ window.addEventListener('appinstalled',()=>{installed=true;installedSetup();});
+ window.addEventListener('pageshow',installedSetup);
+}
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,'umma-connect');dialog.setAttribute('aria-label',t(0));
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();dialog.append(close,el('h2',t(0)),el('p',t(2)),el('small',t(11)));
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
- async function connect(){
-  if(token)return;
-  const candidate=window.ummaMenuAudience?.identity()||
-   Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
-  token=candidate;
-  try{
-   state=await api('join');
-   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
-  }catch(error){token='';throw error;}
-  join.hidden=true;content.hidden=false;update();
- }
- join.onclick=()=>run(async()=>{await connect();state=await api('preferences',{language:lang()});status.textContent='';});
+ join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
  name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
  const save=el('button',t(6));save.type='button';save.onclick=()=>run(async()=>{state=await api('preferences',{name:name.value,promotions:promotions.checked,language:lang()});status.textContent=t(13);update();});
- push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>{
-  // Permission must be requested synchronously within the user's tap.
-  const permission=('Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator)?Notification.requestPermission():Promise.resolve('unsupported');
-  void run(async()=>{if(await permission!=='granted')throw Error(t(15));await connect();await navigator.serviceWorker.register(new URL('umma-menu-sw.js',document.baseURI));const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error(t(16))),12000))]);
-   const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-push',{method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(12000),body:JSON.stringify({action:'config'})});const config=await r.json();if(!r.ok||!config.publicKey)throw Error(t(16));
-   const bytes=Uint8Array.from(atob(config.publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
-   state=await api('preferences',{subscription:subscription.toJSON(),name:name.value,promotions:promotions.checked,language:lang()});window.ummaOrderAlerts?.enableGranted?.();status.textContent=t(14)+' '+notice(2);update();});
- };
- const off=el('button',t(8));off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});status.textContent=t(20);update();});
+ push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(status);
+ const off=el('button',t(8));off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',t(0));
  const form=el('form'),body=el('textarea');body.required=true;body.maxLength=2000;const send=el('button',t(10),'primary');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});form.append(label(t(9),body),send);
  form.onsubmit=e=>{e.preventDefault();if(!body.value.trim())return;pending=pending||{requestKey:crypto.randomUUID(),body:body.value.trim()};void run(async()=>{state=await api('send',pending);body.value='';pending=null;status.textContent=push.hidden?t(13):notice(1);renderThread();await markRead();});};
  content.append(label(t(4),name),check,save,off,el('hr'),list,form);dialog.append(join,push,content,status);document.body.append(dialog);dialog.addEventListener('close',()=>button.focus());
- function update(){name.value=state?.client.name||'';promotions.checked=state?.client.promotions===true;const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';off.hidden=!state?.client.pushEnabled;push.hidden=subscribed;renderThread();}
+ function update(){join.hidden=!!token;content.hidden=!token;name.value=state?.client.name||'';promotions.checked=state?.client.promotions===true;const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';off.hidden=!state?.client.pushEnabled;push.hidden=subscribed;renderThread();}
  dialog.update=update;
 }
 async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.remove();dialog=null;}badge();});
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.remove();dialog=null;}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
-window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();
+window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();
 if(new URL(location.href).searchParams.has('connect'))void open();
 })();

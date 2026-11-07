@@ -3,3 +3,9 @@
 .umma-connect::backdrop{background:#153d3e88}.umma-connect h2{margin:4px 0 16px}.umma-connect label{display:grid;gap:6px;margin:12px 0}.umma-connect input:not([type=checkbox]),.umma-connect textarea,.umma-connect select{box-sizing:border-box;width:100%;border:1px solid #b6cecd;border-radius:10px;padding:12px;font:inherit;background:white;color:#163d3e}.umma-connect textarea{min-height:100px;resize:vertical}.umma-connect button{min-height:44px;cursor:pointer;border:1px solid #8bb7b5;border-radius:10px;padding:10px 14px;font:inherit;background:#edf8f6;color:#135d60}.umma-connect button:disabled{opacity:.5;cursor:wait}.umma-connect button.primary{background:#007c80;color:white}.umma-connect .connect-close{float:inline-end}.umma-connect .connect-check{display:flex;align-items:center;gap:10px}.umma-connect input[type=checkbox]{width:22px;height:22px}.umma-connect [role=status]{white-space:pre-wrap}.umma-connect ol{padding:0;list-style:none}.umma-connect li{padding:12px;border-radius:12px;margin:10px 0;background:#edf7f5;white-space:pre-wrap;overflow-wrap:anywhere}.umma-connect li[data-direction=customer]{margin-inline-start:24px;background:#fff8e8}.umma-connect small{display:block;color:#526e6d}.umma-connect .connect-thread{max-height:40dvh;overflow:auto}.umma-connect :focus-visible{outline:3px solid #c4a356;outline-offset:3px}.umma-connect hr{border:0;border-top:1px solid #dbe8e6;margin:20px 0}
 
 .menu-tools>.umma-connect-button{width:100%;min-height:48px}
+
+.reply-notifications-setup{margin:0 0 14px;padding:12px 14px;border:1px solid #b6cecd;border-radius:12px;background:#edf7f5;color:#163d3e}
+.reply-notifications-setup p{margin:0 0 8px}
+.reply-notifications-setup p:last-child{margin:8px 0 0}
+.reply-notifications-setup p:empty{display:none}
+.reply-notifications-setup button+button{margin-inline-start:8px}
