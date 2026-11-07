@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';import {stripTypeScriptTypes} from 'node:mo
 const read=p=>readFileSync(p,'utf8'),tick=()=>new Promise(r=>setTimeout(r,20));
 const employees=[{actor_id:21,name:'QA Kitchen',login:null,assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'invited'},{actor_id:22,name:'QA Active',login:'qa-kitchen',assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'active'}];
 for(const owner of [true,false]){
- const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=true;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+ const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=true;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
  w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
  if(url.endsWith('cafe-connect')){
   const msg={id:'qa-message',direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
