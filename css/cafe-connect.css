@@ -22,3 +22,10 @@
 audio.connect-media{width:min(100%,300px)}
 .connect-voice-translation{margin-block:8px;padding:8px 10px;border-inline-start:2px solid #8bb7b5}
 .connect-voice-translation small:not(:empty){margin-block:4px}
+
+.umma-connect{padding:clamp(12px,4vw,22px);overscroll-behavior:contain}
+.umma-connect :is(button,a,p,small){overflow-wrap:anywhere}
+.umma-connect .connect-close{min-inline-size:44px}
+.umma-connect :is(textarea,select,input:not([type=checkbox])){min-inline-size:0;font-size:16px}
+.umma-connect .connect-thread{min-inline-size:0}
+.connect-media-preview:not(:empty){grid-template-columns:minmax(0,1fr)}

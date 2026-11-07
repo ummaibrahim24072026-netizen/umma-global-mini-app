@@ -10,7 +10,7 @@ await page.goto(base);await page.locator('.daily-ayah-reference').waitFor();
 
 // Display the real screen DOM in an isolated local browser. No account or writes.
 const scenes=['adminPage','adminUsersPage','locationAdminPage','cafeProductsAdminPage','cafeStaffAdminPage','cafeWaiterPage','cafeKitchenPage','cafeInventoryPage','cafePage','cafeOrdersPage','cafeAccountingPage','servicesPage'];
-const widths=[320,360,375,390,414,430,768,1024];
+const widths=[320,360,375,390,414,430,768,1024,1440,1920];
 for(const lang of ['ru','en','vi']){
  await page.evaluate(l=>window.ummaI18n.setLanguage(l),lang);
  for(const id of scenes){
@@ -67,5 +67,5 @@ for(const sheet of ['language','notifications','chat','tracking']){
 }
 
 assert.deepEqual(errors,[]);fs.writeFileSync(output+'/all-pages-results.json',JSON.stringify(results,null,2));
-console.log('PASS 15 application screens x 8 widths x 3 languages; planned service artwork and four real sheet renderers; no horizontal overflow or JavaScript errors. Local isolated DOM preview, no live transactions.');
+console.log('PASS 15 application screens x 10 widths x 3 languages; planned service artwork and four real sheet renderers; no horizontal overflow or JavaScript errors. Local isolated DOM preview, no live transactions.');
 }finally{await browser.close();server.close();}

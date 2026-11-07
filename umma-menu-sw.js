@@ -1,8 +1,30 @@
-// Orders and the live catalogue always require a network.
-const CACHE='umma-menu-shell-v15';
-self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.add('./menu/')));});
-self.addEventListener('activate',event=>{event.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('umma-menu-shell-')&&k!==CACHE).map(k=>caches.delete(k))))]));});
-self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin||!(url.pathname.endsWith('/menu/')||url.pathname.endsWith('/menu/index.html')))return;event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put('./menu/',copy)));}return response;}).catch(()=>caches.match('./menu/')));});
+// Keep live documents and transaction data out of Cache Storage.
+const base = new URL(self.registration.scope);
+const shellPaths = new Set(['menu/', 'menu/index.html', 'staff.html'].map(path => new URL(path, base).pathname));
+self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate', event => {
+  event.waitUntil(Promise.all([
+    self.clients.claim(),
+    caches.keys().then(keys => Promise.all(keys
+      .filter(key => key.startsWith('umma-menu-shell-'))
+      .map(key => caches.delete(key))))
+  ]));
+});
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || request.mode !== 'navigate' ||
+      url.origin !== base.origin || !shellPaths.has(url.pathname)) return;
+
+  event.respondWith(fetch(request, { cache: 'no-cache' }).catch(() => new Response(
+    '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>UMMA · Offline</title><main><h1>UMMA</h1><p lang="ru">Нет связи. Проверьте интернет и обновите страницу.</p>' +
+    '<p>Offline. Check your connection and reload.</p><p lang="vi">Mất kết nối. Hãy kiểm tra mạng và tải lại trang.</p>' +
+    '<button type="button" onclick="location.reload()">Обновить · Reload · Tải lại</button></main>' +
+    '<style>body{margin:0;background:#f1fafa;color:#163d3e;font:16px system-ui}main{max-width:32rem;margin:8vh auto;padding:24px}button{min-height:48px;padding:8px 16px;border:0;border-radius:12px;background:#02787a;color:white;font:inherit}</style>',
+    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
+  )));
+});
 // Push history is separate from the offline shell and survives shell version updates.
 const PUSH_CACHE='umma-order-events-v1';
 const historyURL=new URL('./__umma_push_history',self.registration.scope).href;

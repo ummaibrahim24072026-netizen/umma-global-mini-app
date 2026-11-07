@@ -91,3 +91,45 @@ button{ -webkit-tap-highlight-color:transparent }
 .web-work-app .web-account-menu>div :is(button,a){display:flex;align-items:center;justify-content:center;min-height:60px;padding:10px 12px;font-size:14px;line-height:1.35;text-align:center}
 .web-work-app .cafe-kitchen-filters{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:thin;scroll-snap-type:x proximity;padding-bottom:4px}
 .web-work-app .cafe-kitchen-filters>button{flex:1 0 116px;min-width:0;min-height:52px;white-space:normal;text-align:center;line-height:1.35;scroll-snap-align:start}
+
+/* Keep translated labels, totals and editable controls inside their own columns. */
+#cafePage :is(.topbar,.location,.cart-row,.cart-total,.payment-choice) > *,
+.order-bar > *,
+.web-work-app :is(.web-header,.pos-row,.staff-account) > *{
+  min-inline-size:0;
+  overflow-wrap:anywhere;
+}
+#cafePage .topbar,.web-work-app .web-header{
+  padding-block-start:max(12px,env(safe-area-inset-top));
+}
+#cafePage .location{flex-wrap:wrap}
+#cafePage .topbar select{min-block-size:44px}
+#cafePage .cafe-product :is(h3,summary,.cafe-product-weight,.cafe-product-price){
+  overflow-wrap:anywhere;
+}
+.order-bar{
+  padding-inline-start:max(14px,env(safe-area-inset-left));
+  padding-inline-end:max(14px,env(safe-area-inset-right));
+}
+.order-bar .primary{max-inline-size:64%;white-space:normal}
+#checkout .cart-row{display:grid;grid-template-columns:minmax(0,1fr) auto}
+#checkout :is(.cart-copy,.payment-choice label){overflow-wrap:anywhere}
+#checkout :is(.cart-controls button,.close){min-inline-size:44px;min-block-size:44px}
+#checkout .field input:not([type=radio]):not([type=checkbox]),
+#checkout .field select,.web-work-app #webLogin input{font-size:16px}
+.web-work-app .web-tabs button span{white-space:normal;overflow-wrap:anywhere}
+.web-work-app .pos-row{grid-template-columns:minmax(0,1fr) auto}
+.web-work-app .pos-row div{grid-column:1/-1;justify-self:end}
+
+@media (min-width:1100px){
+  .public-cafe-menu #cafePage,.public-cafe-menu .order-bar{max-width:1160px}
+  .public-cafe-menu #cafePage .cafe-products{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:380px){
+  .web-work-app .web-header{flex-wrap:wrap}
+  .web-work-app #webIdentity:not(:empty){order:1;flex-basis:100%;max-width:none}
+  .web-work-app .web-account-menu{margin-inline-start:auto}
+}
+@media (max-height:500px){
+  .public-cafe-menu .menu-sticky{position:static}
+}
