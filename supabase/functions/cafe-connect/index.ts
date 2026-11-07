@@ -3,7 +3,8 @@ import webpush from 'npm:web-push@3.6.7';
 import {sha256,verifyWebStaffSession} from '../_shared/web-staff-auth.ts';
 import {verifyTelegramInitData} from '../cafe-kiosk/auth.ts';
 import {connectMedia} from './media.ts';
-const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'content-type,x-umma-push-key,x-umma-token,x-umma-request','Content-Type':'application/json','Cache-Control':'no-store'};
+import {languageNames,transcribeMessage,translateMessage,speakMessage} from '../delivery-chat/translation.ts';
+const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'content-type,x-umma-push-key,x-umma-token,x-umma-request,x-umma-staff,x-umma-client','Content-Type':'application/json','Cache-Control':'no-store'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 function subscriptionValid(s:any){try{const u=new URL(s.endpoint);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&['fcm.googleapis.com','updates.push.services.mozilla.com','web.push.apple.com','wns2-par02p.wns.windows.com'].includes(u.hostname)&&u.href.length<4096&&/^[A-Za-z0-9_-]{87}$/.test(s.keys?.p256dh||'')&&/^[A-Za-z0-9_-]{22}$/.test(s.keys?.auth||'');}catch{return false;}}
@@ -14,24 +15,30 @@ Deno.serve(async(req:Request)=>{
   const rpc=async(name:string,args:any={})=>{const r=await db.rpc(name,args);if(r.error)throw Error(r.error.message);return r.data;};
   const bucket=db.storage.from('cafe-connect-media');
   const mime=(req.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
-  if(req.headers.has('x-umma-token')){
+  const staffActor=(credential:string)=>credential.startsWith('web:')?verifyWebStaffSession(db,credential):
+   verifyTelegramInitData(credential,Deno.env.get('TELEGRAM_BOT_TOKEN')!);
+  const voiceKey=Deno.env.get('OPENAI_API_KEY')||'';
+  if(req.headers.has('x-umma-request')){
    const token=req.headers.get('x-umma-token')||'',requestKey=req.headers.get('x-umma-request');
-   if(!/^[a-f0-9]{64}$/.test(token)||!uuid(requestKey))return reply({ok:false},400);
-   const hash=await sha256(token);
-   const prepare=await rpc('cafe_connect',{p_action:'mediaPrepare',p_hash:hash,p_data:{requestKey}});
+   const staff=req.headers.get('x-umma-staff'),clientId=req.headers.get('x-umma-client');
+   if(!uuid(requestKey)||(staff?!uuid(clientId):!/^[a-f0-9]{64}$/.test(token)))return reply({ok:false},400);
+   const identity=staff?{p_actor:await staffActor(staff)}:{p_hash:await sha256(token)};
+   const mediaData={requestKey,clientId};
+   const prepare=await rpc('cafe_connect',{p_action:staff?'staffMediaPrepare':'mediaPrepare',...identity,p_data:mediaData});
    if(prepare.id)return reply({ok:true,id:prepare.id});
    const {bytes,kind,body}=await connectMedia(req,mime);
+   if(staff&&kind==='photo')return reply({ok:false,code:'MEDIA_FORMAT'},415);
    const path=prepare.clientId+'/'+crypto.randomUUID();
    const upload=await bucket.upload(path,bytes,{contentType:mime,cacheControl:'0',upsert:false});
    if(upload.error)throw Error('MEDIA_UPLOAD');
-   const saved=await db.rpc('cafe_connect',{p_action:'mediaSend',p_hash:hash,p_data:{requestKey,body,kind,path}});
+   const saved=await db.rpc('cafe_connect',{p_action:staff?'staffMediaSend':'mediaSend',...identity,p_data:{...mediaData,body,kind,path}});
    // Delete only after a definitive rejection or when a concurrent request already sent it.
    if((saved.error?.code==='P0001')||(!saved.error&&saved.data.path!==path))await bucket.remove([path]);
    if(saved.error)throw Error(saved.error.message);
    return reply({ok:true,id:saved.data.id});
   }
   const raw=await req.text();if(raw.length>14000)return reply({ok:false},413);const b=JSON.parse(raw);
-  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet'].includes(b.action))return reply({ok:false},400);
+  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
 
   if(b.action==='news')return reply(await rpc('cafe_connect',{p_action:'news'}));
   if(b.action==='dispatch'){
@@ -44,7 +51,7 @@ Deno.serve(async(req:Request)=>{
   let actor:null|number=null,hash='';
   if(b.action.startsWith('staff')){
    if(typeof b.initData!=='string')return reply({ok:false},401);
-   actor=b.initData.startsWith('web:')?await verifyWebStaffSession(db,b.initData):await verifyTelegramInitData(b.initData,Deno.env.get('TELEGRAM_BOT_TOKEN')!);
+   actor=await staffActor(b.initData);
   }else{
    if(typeof b.token!=='string'||!/^[a-f0-9]{64}$/.test(b.token))return reply({ok:false},401);
    hash=await sha256(b.token);
@@ -63,7 +70,7 @@ Deno.serve(async(req:Request)=>{
    return reply(await rpc('cafe_menu_audience',{p_actor:actor,p_segment:b.segment,p_offset:b.offset}));
   }
   const data:any={};
-  if(['staffThread','staffRead','staffReply','staffMediaGet'].includes(b.action)){if(!uuid(b.clientId))return reply({ok:false},400);data.clientId=b.clientId;}
+  if(['staffThread','staffRead','staffReply','staffMediaGet','staffVoice'].includes(b.action)){if(!uuid(b.clientId))return reply({ok:false},400);data.clientId=b.clientId;}
   if(['send','staffReply','staffCampaign'].includes(b.action)){
    if(typeof b.body!=='string'||!b.body.trim()||b.body.length>2000||!uuid(b.requestKey))return reply({ok:false,error:'Введите сообщение до 2000 символов.'},400);
    data.body=b.body.trim();data.requestKey=b.requestKey;
@@ -89,7 +96,46 @@ Deno.serve(async(req:Request)=>{
    if(signed.error)throw Error('MEDIA_UPLOAD');
    return reply({ok:true,url:signed.data.signedUrl});
   }
-  return reply(await rpc('cafe_connect',{p_action:b.action,p_hash:hash,p_actor:actor,p_data:data}));
+  if(b.action==='voice'||b.action==='staffVoice'){
+   if(!uuid(b.messageId)||typeof b.language!=='string'||!Object.hasOwn(languageNames,b.language))return reply({ok:false},400);
+   if(!voiceKey)return reply({ok:true,status:'unavailable'});
+   const prefix=b.action==='staffVoice'?'staffVoice':'voice';
+   const voiceData={...data,messageId:b.messageId,language:b.language};
+   const voiceRpc=(suffix:string,extra={})=>rpc('cafe_connect',{
+    p_action:prefix+suffix,p_hash:hash,p_actor:actor,p_data:{...voiceData,...extra}
+   });
+   const claim=await voiceRpc('Claim');
+   let result=claim;
+   if(claim.status==='claimed'){
+    let audioPath:string|null=null;
+    try{
+     const original=await bucket.download(claim.path);
+     if(original.error)throw Error('Voice unavailable');
+     const extension=({'audio/webm':'webm','audio/mp4':'m4a','audio/ogg':'ogg'} as Record<string,string>)[original.data.type.split(';')[0]];
+     if(!extension)throw Error('Voice format');
+     const transcript=await transcribeMessage(voiceKey,original.data,'voice.'+extension,fetch,'gpt-transcribe');
+     const translation=await translateMessage(voiceKey,transcript,b.language);
+     if(translation.trim()!==transcript.trim()){
+      const audio=await speakMessage(voiceKey,translation,b.language);
+      audioPath=claim.path+'/translated-'+b.language+'-'+claim.lease+'.mp3';
+      const saved=await bucket.upload(audioPath,audio,{contentType:'audio/mpeg',cacheControl:'0',upsert:false});
+      if(saved.error)throw Error('Voice playback unavailable');
+     }
+     await voiceRpc('Complete',{lease:claim.lease,text:translation,audioPath});
+     result={status:'ready',text:translation,audioPath};
+    }catch(error){
+     console.warn('Connect voice translation failed',String(error).replace(/[^a-zA-Z0-9 _-]/g,'').slice(0,120));
+     return reply({ok:true,status:'failed'});
+    }
+   }
+   if(result.status!=='ready')return reply({ok:true,status:result.status});
+   if(!result.audioPath)return reply({ok:true,status:'ready',text:result.text,url:null});
+   const signed=await bucket.createSignedUrl(result.audioPath,900);
+   return reply({ok:true,status:'ready',text:result.text,url:signed.data?.signedUrl||null});
+  }
+  const result=await rpc('cafe_connect',{p_action:b.action,p_hash:hash,p_actor:actor,p_data:data});
+  if(result?.messages)result.voiceTranslation=!!voiceKey;
+  return reply(result);
  }catch(e){const msg=String(e);
   const mediaCode=msg.match(/MEDIA_(FORMAT|SIZE|UPLOAD)/)?.[0];
   if(mediaCode)return reply({ok:false,code:mediaCode},mediaCode==='MEDIA_SIZE'?413:mediaCode==='MEDIA_FORMAT'?415:502);

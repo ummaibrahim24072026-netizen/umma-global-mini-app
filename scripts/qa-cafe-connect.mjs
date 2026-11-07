@@ -8,7 +8,7 @@ import vm from 'node:vm';
 const source=p=>readFileSync(p,'utf8');
 const loadConnect=(window,entry)=>{
  window.eval(source('js/cafe/connect-media.js'));
- if(entry==='customer-connect')window.eval(source('js/cafe/connect-composer.js'));
+ window.eval(source('js/cafe/connect-composer.js'));
  window.eval(source('js/cafe/'+entry+'.js'));
 };
 const db=new PGlite();
@@ -138,6 +138,28 @@ await assert.rejects(rpc('staffMediaGet','',2,{clientId:ca,messageId:attachment.
 await assert.rejects(rpc('staffMediaGet','',1,{clientId:cb,messageId:attachment.id}),/Access denied/);
 assert.equal((await rpc('mediaGet',a,null,{messageId:attachment.id})).path,mediaPath);
 assert.equal((await rpc('staffMediaGet','',1,{clientId:ca,messageId:attachment.id})).path,mediaPath);
+await db.exec(source('supabase/proposals/cafe-connect-replies.sql'));
+const staffAttachmentKey=randomUUID(),staffPath=ca+'/'+randomUUID();
+const staffArgs={clientId:ca,requestKey:staffAttachmentKey,body:'',kind:'voice',path:staffPath};
+await assert.rejects(rpc('staffMediaPrepare','',2,staffArgs),/Access denied/);
+assert.equal((await rpc('staffMediaPrepare','',1,staffArgs)).clientId,ca);
+const staffAttachment=await rpc('staffMediaSend','',1,staffArgs);
+assert.equal((await rpc('staffMediaSend','',1,staffArgs)).id,staffAttachment.id);
+assert.equal((await rpc('list',a)).messages.find(m=>m.id===staffAttachment.id).direction,'staff');
+assert.equal((await rpc('mediaGet',a,null,{messageId:staffAttachment.id})).path,staffPath);
+assert.equal((await rpc('lease')).find(j=>j.messageId===staffAttachment.id).body,'Голосовое сообщение');
+const viVoice={messageId:staffAttachment.id,language:'vi'};
+await assert.rejects(rpc('voiceClaim',b,null,viVoice),/Access denied/);
+await assert.rejects(rpc('staffVoiceClaim','',1,{...viVoice,clientId:ca}),/Access denied/);
+const viClaim=await rpc('voiceClaim',a,null,viVoice);
+assert.equal(viClaim.status,'claimed');
+assert.equal(viClaim.path,staffPath);
+assert.equal((await rpc('voiceClaim',a,null,viVoice)).status,'pending');
+await assert.rejects(rpc('voiceComplete',a,null,{...viVoice,lease:randomUUID(),text:'Bad'}),/lease expired/);
+await rpc('voiceComplete',a,null,{...viVoice,lease:viClaim.lease,text:'Xin chào',audioPath:'translated.mp3'});
+assert.deepEqual(await rpc('voiceClaim',a,null,viVoice),{ok:true,status:'ready',text:'Xin chào',audioPath:'translated.mp3'});
+assert.equal((await rpc('voiceClaim',a,null,{...viVoice,language:'en'})).status,'claimed');
+assert.equal((await rpc('staffVoiceClaim','',1,{clientId:ca,messageId:attachment.id,language:'ru'})).path,mediaPath);
 await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);await assert.rejects(rpc('news'),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
@@ -270,6 +292,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  const staff=app.window;
  staff.AbortSignal=AbortSignal;
  staff.ummaRole='super_admin';
+ Object.defineProperty(staff.navigator,'language',{value:'vi-VN'});
  staff.ummaStaffAuth={credential:()=> 'web:test'};
  let poll;
  staff.setInterval=callback=>{poll=callback;};
@@ -281,13 +304,19 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   const request=JSON.parse(init.body);
   assert.equal(request.initData,'web:test');
   const client={id:ca,name:'Клиент',unread:0,last_message:'Ответ'};
+  if(request.action==='staffVoice'){
+   assert.equal(request.language,'vi');
+   assert.equal(request.clientId,ca);
+   assert.equal(request.messageId,'staff-view-question');
+   return new Response(JSON.stringify({ok:true,status:'ready',text:'Bản dịch',url:'https://qa.invalid/translated.mp3'}));
+  }
   if(request.action==='staffMediaGet'){
    assert.equal(request.clientId,ca);
    assert.equal(request.messageId,'staff-view-question');
    return new Response(JSON.stringify({ok:true,url:'https://qa.invalid/signed'}));
   }
   return new Response(JSON.stringify(request.action==='staffList'?
-   {ok:true,clients:[client],subscribers:0,pushDevices:0}:{ok:true,client,messages}));
+   {ok:true,clients:[client],subscribers:0,pushDevices:0}:{ok:true,client,messages,voiceTranslation:true}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
  loadConnect(staff,'connect-admin');
@@ -298,8 +327,14 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Прослушать голосовое').click();
  await tick();
+ [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Перевод голоса').click();
+ await tick();
+ assert.equal(staff.document.querySelector('.connect-voice-translation [lang=vi]').textContent,'Bản dịch');
+ assert.equal(staff.document.querySelector('.connect-voice-translation audio').src,'https://qa.invalid/translated.mp3');
  const audio=staff.document.querySelector('.connect-thread audio');
  assert.equal(audio.src,'https://qa.invalid/signed');
+ assert.ok(staff.document.querySelector('input[type=file][accept^="video/"]'));
+ assert.ok([...staff.document.querySelectorAll('.work-thread form button')].some(b=>b.textContent==='Записать голосовое'));
  messages[1].read_at='2026-11-07T12:03:00Z';
  await poll();
  await tick();
@@ -444,4 +479,51 @@ for(const [mime,file] of [
 assert.equal((await sendAttachment('image/jpeg',Buffer.from('<svg/>'))).status,415);
 assert.equal((await sendAttachment('image/jpeg',Buffer.alloc(8*1024*1024+1))).status,413);
 assert.equal(uploaded.length,3);
-console.log('PASS customer channel: isolation, owner authorization, idempotent replies/campaigns, consent withdrawal, leased retry/stale ack, private credentials/RLS, explicit browser opt-in, feedback XSS safety, media ownership and idempotency, audio draft/retry, and edge MIME/size validation.');
+// The deployed handler chooses the recipient language, translates and caches private AI audio.
+const mediaId=randomUUID(),translationLease=randomUUID(),providerCalls=[],voiceRpcs=[];
+const translatedKey='qa/translations/vi.mp3';
+let completed=false;
+const voiceBucket={
+ download:async()=>({data:new Blob([Uint8Array.of(26,69,223,163)],{type:'audio/webm'})}),
+ upload:async(path,blob,options)=>{assert.match(path,/translated-vi-.*\.mp3$/);assert.equal(options.contentType,'audio/mpeg');return {};},
+ createSignedUrl:async path=>({data:{signedUrl:'https://qa.invalid/'+path}})
+};
+const voiceDb={storage:{from:()=>voiceBucket},rpc:async(name,args)=>{
+ voiceRpcs.push(args);
+ switch(args.p_action){
+ case 'voiceClaim':return {data:completed?{status:'ready',text:'Xin chào',audioPath:translatedKey}:
+  {status:'claimed',path:'qa/original',lease:translationLease}};
+ case 'voiceComplete':
+  assert.equal(args.p_data.text,'Xin chào');assert.equal(args.p_data.lease,translationLease);
+  completed=true;return {data:{ok:true}};
+ }
+ throw Error('Unexpected action '+args.p_action);
+}};
+vm.runInNewContext(stripTypeScriptTypes(mediaSources.map(source).join('\n').replace(/^import .*;\n/gm,'').replace(/^export /gm,'')),{
+ Deno:{env:{get:name=>name==='OPENAI_API_KEY'?'test-secret':''},serve:f=>handler=f},
+ createClient:()=>voiceDb,webpush:{},verifyWebStaffSession:async(db,value)=>{assert.equal(value,'web:valid');return 1;},
+ sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date,TextDecoder,Uint8Array,FormData,AbortSignal,
+ fetch:async(url,init)=>{
+  providerCalls.push(url);
+  assert.equal(init.headers.Authorization,'Bearer test-secret');
+  if(url.endsWith('/transcriptions')){
+   assert.equal(init.body.get('model'),'gpt-transcribe');
+   assert.equal(init.body.get('file').name,'voice.webm');
+   return Response.json({text:'Привет'});
+  }
+  const request=JSON.parse(init.body);
+  if(url.endsWith('/responses')){
+   assert.match(request.instructions,/Vietnamese/);
+   assert.equal(request.input,'Привет');
+   return Response.json({status:'completed',output:[{content:[{type:'output_text',text:'{"translatedText":"Xin chào"}'}]}]});
+  }
+  assert.equal(request.input,'Xin chào');
+  return new Response(new Blob(['audio'],{type:'audio/mpeg'}));
+ }
+});
+const voiceRequest={action:'voice',token:a,messageId:mediaId,language:'vi'};
+assert.equal((await (await call(voiceRequest)).json()).text,'Xin chào');
+assert.equal((await (await call(voiceRequest)).json()).url,'https://qa.invalid/'+translatedKey);
+assert.equal(providerCalls.length,3);
+assert.equal(voiceRpcs[0].p_data.language,'vi');
+console.log('PASS customer channel: isolation, owner authorization, idempotent replies/campaigns, consent withdrawal, leased retry/stale ack, private credentials/RLS, explicit browser opt-in, feedback XSS safety, media ownership and idempotency, audio draft/retry, edge MIME/size validation, staff media pushes, and private voice translation in the recipient language.');

@@ -12,7 +12,7 @@
   en:['Photo','Video','Record voice message','Stop recording','Remove attachment','Recording, up to 60 seconds.','Allow microphone access.','Microphone unavailable.','Listen to the recording before sending.','File exceeds the size limit of','Unsupported file format.','Could not send attachment. Try again.'],
   vi:['Ảnh','Video','Ghi âm tin nhắn','Dừng ghi âm','Xóa tệp đính kèm','Đang ghi âm, tối đa 60 giây.','Cho phép truy cập micrô.','Micrô không khả dụng.','Nghe lại bản ghi trước khi gửi.','Tệp vượt quá giới hạn','Định dạng tệp không được hỗ trợ.','Không gửi được tệp. Hãy thử lại.']
  };
- window.ummaConnectComposer=({lang,el,form,body,send,status,onChange})=>{
+ window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video']})=>{
   const labels=copy[lang]||copy.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
@@ -43,7 +43,8 @@
     preview.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),remove);
    }
   }
-  for(const [kind,label] of [['photo',labels[0]],['video',labels[1]]]){
+  for(const kind of kinds){
+   const label=labels[kind==='photo'?0:1];
    const input=el('input');
    input.type='file';
    input.hidden=true;

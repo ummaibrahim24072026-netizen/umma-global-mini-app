@@ -24,7 +24,7 @@ const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const button=el('button',t(0),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
-async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
+async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='voice'?115000:15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
 function unread(){return (state?.messages||[]).filter(m=>m.direction!=='customer'&&!m.read_at);}
 function badge(){
  const count=unread().length;
@@ -59,6 +59,7 @@ function renderThread(){
  const receipt=receiptCopy[lang()]||receiptCopy.en;
  const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
  const media=mediaCopy[lang()]||mediaCopy.en;
+ const target=window.ummaConnectMedia.language(lang());
  window.ummaConnectMedia.render(list,state?.messages||[],m=>{
   const li=el('li');
   const outgoing=m.direction==='customer';
@@ -67,6 +68,10 @@ function renderThread(){
   if(m.body)li.append(el('div',m.body));
   if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,media[m.media_kind],
    async()=> (await api('mediaGet',{messageId:m.id})).url,media.error));
+  if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
+   li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
+    ()=>api('voice',{messageId:m.id,language:target}),state.voiceTranslation));
+  }
   li.append(el('small',dateTime.format(new Date(m.created_at))));
   if(outgoing)li.append(el('small',null,'connect-receipt'));
   return li;
@@ -191,11 +196,7 @@ function build(){
   composer.busy(true);
   void run(async()=>{
    if(draft){
-    const response=await fetch(API,{method:'POST',cache:'no-store',signal:AbortSignal.timeout(120000),
-     headers:{'Content-Type':draft.file.type,'X-Umma-Token':token,'X-Umma-Request':pending.requestKey},
-     body:new Blob([JSON.stringify(pending.body),'\n',draft.file])});
-    const result=await response.json();
-    if(!response.ok||!result.ok)throw Error(result.error||composer.error(result.code,draft.kind));
+    await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},draft,pending.requestKey,pending.body,composer.error);
    }else state=await api('send',pending);
    body.value='';
    composer.clear();
@@ -220,7 +221,7 @@ function build(){
 }
 async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;}badge();renderSetup();});
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;}else if(dialog){list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();

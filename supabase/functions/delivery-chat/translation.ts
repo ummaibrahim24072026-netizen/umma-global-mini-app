@@ -1,5 +1,5 @@
 // Only the message text/audio is sent to the translation provider, never participant or order IDs.
-export const languageNames: Record<string,string>={ru:'Russian',en:'English',vi:'Vietnamese',ar:'Arabic',id:'Indonesian',th:'Thai',zh:'Simplified Chinese',ko:'Korean',fr:'French',de:'German',pt:'Portuguese',tr:'Turkish',tk:'Turkmen',tg:'Tajik',uz:'Uzbek (Latin)',ja:'Japanese',ug:'Uyghur (Arabic script)'};
+export const languageNames: Record<string,string>={ru:'Russian',en:'English',vi:'Vietnamese',ar:'Arabic',ms:'Malay',id:'Indonesian',th:'Thai',zh:'Simplified Chinese',ko:'Korean',fr:'French',de:'German',pt:'Portuguese',tr:'Turkish',tk:'Turkmen',tg:'Tajik',uz:'Uzbek (Latin)',ja:'Japanese',ug:'Uyghur (Arabic script)'};
 async function providerFailure(response:Response,stage:string):Promise<never>{
  let code='';try{const data=await response.json();code=String(data.error?.code||data.error?.type||'').replace(/[^a-z_]/gi,'').slice(0,60);}catch{}
  throw Error(stage+' provider '+response.status+(code?' '+code:''));
@@ -48,8 +48,8 @@ export async function translateMessage(key:string,text:string,language:string,se
  if(!key)throw Error('Translation unavailable');
  return openaiTranslation(key,text,language,send);
 }
-export async function transcribeMessage(key:string,blob:Blob,filename:string,send:typeof fetch=fetch){
- if(blob.size>5242880)throw Error('Voice too large');const form=new FormData();form.append('file',blob,filename);form.append('model','gpt-4o-mini-transcribe');form.append('response_format','json');
+export async function transcribeMessage(key:string,blob:Blob,filename:string,send:typeof fetch=fetch,model='gpt-4o-mini-transcribe'){
+ if(blob.size>5242880)throw Error('Voice too large');const form=new FormData();form.append('file',blob,filename);form.append('model',model);form.append('response_format','json');
  const r=await send('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:form,signal:AbortSignal.timeout(30000)});
  if(!r.ok)await providerFailure(r,'Transcription');const text=(await r.json()).text;if(typeof text!=='string'||!text.trim()||text.length>4000)throw Error('Voice not understood');return text;
 }

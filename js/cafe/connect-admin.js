@@ -14,9 +14,9 @@ if(button){
 const root=()=>workspace||dialog;
 const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!workspace.parentElement.hidden:!!dialog?.open;
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
-async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
+async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='staffVoice'?115000:20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle;
+let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,composer;
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
 const dateTime=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
 
@@ -81,6 +81,7 @@ function buildAudience(){
 }
 function label(text,input){const l=node('label',text);l.append(input);return l;}
 function selectView(name){
+ if(name!=='inbox')composer?.close();
  view=name;
  for(const [key,panel] of Object.entries(panels))panel.hidden=key!==name;
  for(const [key,control] of Object.entries(viewButtons))control.setAttribute('aria-pressed',String(key===name));
@@ -93,6 +94,7 @@ async function run(fn,feedback=status){
  finally{busy=false;buttons.forEach(b=>b.disabled=false);}
 }
 function showMessages(data){
+ const target=window.ummaConnectMedia.language(navigator.language);
  const labels={photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое'};
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
@@ -101,6 +103,10 @@ function showMessages(data){
   if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,labels[m.media_kind],
    async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url,
    'Не удалось открыть вложение. Попробуйте ещё раз.'));
+  if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
+   li.append(window.ummaConnectMedia.voiceTranslation('ru',target,
+    ()=>api('staffVoice',{clientId:data.client.id,messageId:m.id,language:target}),data.voiceTranslation));
+  }
   li.append(node('small',dateTime.format(new Date(m.created_at))));
   if(m.direction!=='customer')li.append(node('small',null,'connect-receipt'));
   return li;
@@ -117,7 +123,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
+ if(thread!==id){composer.close();composer.clear();messages.replaceChildren();thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  await readThread(id);
  threadTitle.focus({preventScroll:true});
@@ -186,29 +192,42 @@ function build(){
  form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked,publicNews:publicNews.checked&&!installedOnly.checked&&language.value==='all'};confirm.textContent=campaign.publicNews?'Опубликовать и отправить подписчикам':'Отправить подписчикам';previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent=(campaign.publicNews?'В меню увидят все. ':'')+'Получатели рассылки: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
  confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent=(campaign.publicNews?'Опубликовано в меню. ':'')+'Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();language.value='all';updatePublic();});
  threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');
- replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.required=true;replyBody.maxLength=2000;
+ replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.maxLength=2000;
  replyBody.addEventListener('input',()=>{replyKey=null;replyStatus.textContent='';});
  const send=node('button','Отправить ответ','primary');send.type='submit';
  replyStatus=node('p');replyStatus.setAttribute('role','status');
  replyForm.append(label('Ответ',replyBody),send,replyStatus);
+ composer=window.ummaConnectComposer({lang:'ru',el:node,form:replyForm,body:replyBody,send,status:replyStatus,
+  onChange:()=>{replyKey=null;},kinds:['video']});
  replyForm.onsubmit=e=>{
   e.preventDefault();
-  const body=replyBody.value.trim();
-  if(!thread||!body)return;
+  const body=replyBody.value.trim(),draft=composer.draft;
+  if(busy||composer.recording||!thread||(!body&&!draft))return;
   replyKey=replyKey||crypto.randomUUID();
+  const clientId=thread;
+  composer.busy(true);
   void run(async()=>{
-   const d=await api('staffReply',{clientId:thread,requestKey:replyKey,body});
-   if(replyBody.value.trim()===body){replyBody.value='';replyKey=null;}
-   showMessages(d);
-   replyStatus.textContent=d.client.pushEnabled?'Ответ отправлен в чат. Уведомление поставлено в очередь.':'Ответ отправлен в чат. У клиента выключены уведомления об ответах.';
+   let data;
+   if(draft){
+    await window.ummaConnectMedia.upload(API,{'X-Umma-Staff':credential(),'X-Umma-Client':clientId},
+     draft,replyKey,body,composer.error);
+   }else data=await api('staffReply',{clientId,requestKey:replyKey,body});
+   replyBody.value='';
+   composer.clear();
+   replyKey=null;
+   if(draft){
+    try{data=await api('staffThread',{clientId});}catch{}
+   }
+   if(data)showMessages(data);
+   replyStatus.textContent=data?.client.pushEnabled?'Ответ отправлен в чат. Уведомление поставлено в очередь.':'Ответ отправлен в чат.';
    void refresh().catch(()=>{});
-  },replyStatus);
+  },replyStatus).finally(()=>composer.busy(false));
  };
  const threadPanel=node('section',null,'work-thread');threadPanel.append(threadTitle,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
  section.append(header,nav,status,...Object.values(panels));selectView('inbox');
- if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>button.focus());}
+ if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
 function openInbox(){
@@ -229,7 +248,10 @@ async function poll(){
   if(visible()&&view==='inbox'&&thread&&!busy)await readThread(thread,true);
  }catch{}finally{polling=false;}
 }
-document.addEventListener('umma:staff-tab',e=>{if(e.detail==='messages'&&owner())openInbox();});
+document.addEventListener('umma:staff-tab',e=>{
+ if(e.detail==='messages'&&owner())openInbox();
+ else composer?.close();
+});
 document.addEventListener('umma:staff-ready',()=>{syncVisibility();void poll();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
 setInterval(()=>{syncVisibility();void poll();},15000);
