@@ -32,15 +32,22 @@ w.document.querySelector('.umma-order-alerts button').click();await tick();await
 }
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
 {
-const callbacks={},values=new Map(),shown=[],out=[];let badge=0,closed=0;const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
-const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});},async getNotifications(){return[{data:{umma:true},close(){closed++;}}];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return[];},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
+const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0;const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
+const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});const previous=notifications.findIndex(n=>n.tag===o.tag);if(previous>=0)notifications.splice(previous,1);const active={tag:o.tag,data:o.data,close(){notifications.splice(notifications.indexOf(active),1);closed++;}};notifications.push(active);},async getNotifications(){return [...notifications];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return[];},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
 vm.runInNewContext(source('umma-menu-sw.js'),{self,caches:{async open(){return cache;}},URL,Response,Promise,JSON,Math,Number});
 async function event(type,obj){let task;callbacks[type]({...obj,waitUntil(p){task=p;}});await task;}
 const payload={eventId:'one',title:'Ready',body:'Collect',order:{id:'o',orderNumber:12,status:'ready'}};
 await event('push',{data:{json:()=>payload}});assert.equal(shown.length,1);assert.equal(shown[0].o.silent,false);assert.equal(badge,1);await event('push',{data:{json:()=>payload}});assert.equal(shown.length,2);assert.equal(shown[1].o.silent,true);assert.equal(badge,1);
 let history;await event('message',{data:{type:'UMMA_GET_HISTORY'},source:{postMessage(m){history=m;}}});assert.equal(history.messages.length,1);
-await event('message',{data:{type:'UMMA_BADGE',count:0}});assert.equal(badge,0);assert.equal(closed,1);
-await event('notificationclick',{notification:{close(){}}});assert.equal(out[0],'https://qa.invalid/app/menu/?messages=1');
+const connect={eventId:'reply',kind:'connect',title:'UMMA',body:'Reply'};
+await event('push',{data:{json:()=>connect}});assert.equal(badge,2);
+assert.equal(shown.at(-1).o.silent,false);assert.deepEqual(Array.from(shown.at(-1).o.vibrate),[200,100,200]);
+await event('push',{data:{json:()=>connect}});assert.equal(badge,2);assert.equal(shown.at(-1).o.vibrate,undefined);
+await event('message',{data:{type:'UMMA_BADGE',count:0}});assert.equal(badge,1);assert.equal(closed,1);
+assert.equal(notifications[0].data.kind,'connect');
+await event('notificationclick',{notification:{data:{kind:'connect'},close(){}}});assert.equal(out[0],'https://qa.invalid/app/menu/?connect=1');
+await event('message',{data:{type:'UMMA_CONNECT_BADGE',count:0}});assert.equal(badge,0);assert.equal(closed,2);
+await event('notificationclick',{notification:{close(){}}});assert.equal(out[1],'https://qa.invalid/app/menu/?messages=1');
 }
 // Actual library generates encrypted Web Push request and VAPID signature; no network send.
 const keys=webpush.generateVAPIDKeys(),receiver=webpush.generateVAPIDKeys();const subscription={endpoint:'https://fcm.googleapis.com/fcm/send/synthetic',keys:{p256dh:receiver.publicKey,auth:Buffer.alloc(16,9).toString('base64url')}};

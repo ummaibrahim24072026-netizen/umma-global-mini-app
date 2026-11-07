@@ -16,7 +16,7 @@ const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!works
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-let clients,stats,messages,replyForm,replyBody,threadTitle;
+let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle;
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
 const dateTime=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
 
@@ -85,11 +85,11 @@ function selectView(name){
  for(const [key,panel] of Object.entries(panels))panel.hidden=key!==name;
  for(const [key,control] of Object.entries(viewButtons))control.setAttribute('aria-pressed',String(key===name));
 }
-async function run(fn){
+async function run(fn,feedback=status){
  if(busy)return;
  busy=true;const buttons=[...root().querySelectorAll('button:not([disabled])')];
- buttons.forEach(b=>b.disabled=true);status.textContent='Загрузка…';
- try{await fn();}catch(e){status.textContent=e.message;}
+ buttons.forEach(b=>b.disabled=true);feedback.textContent='Загрузка…';
+ try{await fn();}catch(e){feedback.textContent=e.message;}
  finally{busy=false;buttons.forEach(b=>b.disabled=false);}
 }
 function showMessages(data){
@@ -111,7 +111,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){thread=id;replyKey=null;replyBody.value='';}
+ if(thread!==id){thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  await readThread(id);
  threadTitle.focus({preventScroll:true});
@@ -174,8 +174,25 @@ function build(){
  const resetPreview=()=>{preview.hidden=true;submit.hidden=false;campaign=null;};form.addEventListener('input',resetPreview);cancel.onclick=resetPreview;
  form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked};previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent='Получатели: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
  confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent='Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();});
- threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.required=true;replyBody.maxLength=2000;replyBody.addEventListener('input',()=>replyKey=null);const send=node('button','Отправить сообщение','primary');send.type='submit';replyForm.append(label('Ответ',replyBody),send);
- replyForm.onsubmit=e=>{e.preventDefault();if(!thread||!replyBody.value.trim())return;replyKey=replyKey||crypto.randomUUID();void run(async()=>{const d=await api('staffReply',{clientId:thread,requestKey:replyKey,body:replyBody.value.trim()});replyBody.value='';replyKey=null;showMessages(d);await refresh();status.textContent='Ответ сохранён и поставлен в очередь уведомлений, если они включены у клиента.';});};
+ threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');
+ replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.required=true;replyBody.maxLength=2000;
+ replyBody.addEventListener('input',()=>{replyKey=null;replyStatus.textContent='';});
+ const send=node('button','Отправить ответ','primary');send.type='submit';
+ replyStatus=node('p');replyStatus.setAttribute('role','status');
+ replyForm.append(label('Ответ',replyBody),send,replyStatus);
+ replyForm.onsubmit=e=>{
+  e.preventDefault();
+  const body=replyBody.value.trim();
+  if(!thread||!body)return;
+  replyKey=replyKey||crypto.randomUUID();
+  void run(async()=>{
+   const d=await api('staffReply',{clientId:thread,requestKey:replyKey,body});
+   if(replyBody.value.trim()===body){replyBody.value='';replyKey=null;}
+   showMessages(d);
+   replyStatus.textContent=d.client.pushEnabled?'Ответ отправлен в чат. Уведомление поставлено в очередь.':'Ответ отправлен в чат. У клиента выключены уведомления об ответах.';
+   void refresh().catch(()=>{});
+  },replyStatus);
+ };
  const threadPanel=node('section',null,'work-thread');threadPanel.append(threadTitle,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);

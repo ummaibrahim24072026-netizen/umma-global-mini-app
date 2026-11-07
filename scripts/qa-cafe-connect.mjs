@@ -92,6 +92,49 @@ w.fetch=async(url,init)=>{const data=JSON.parse(init.body);calls.push(data);retu
 w.eval(source('js/cafe/customer-connect.js'));assert.equal(prompts,0);assert.equal(calls.length,0);w.document.querySelector('button').click();
 w.document.querySelector('dialog .primary').click();await new Promise(r=>setTimeout(r,40));assert.equal(calls[0].action,'join');assert.equal(calls[0].token.length,64);assert.equal(w.document.querySelector('input[type=checkbox]').checked,false);
 w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,40));assert.ok(w.document.querySelector('li').textContent.includes('<img'));assert.equal(w.document.querySelector('li img'),null);assert.ok(calls.some(c=>c.action==='send'&&c.requestKey));assert.equal(prompts,0);w.close();
+// Installed client: a reply is visible without push and remains unread until the chat opens.
+{
+ const app=new JSDOM('<html lang="ru"><body><header></header></body></html>',{
+  url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const client=app.window,worker=new client.EventTarget(),badgeUpdates=[];
+ const credential='a'.repeat(64),reply={id:'staff-reply',direction:'staff',title:'UMMA',body:'Ответ кафе',created_at:'2026-11-07T12:00:00Z',read_at:null};
+ let pushEnabled=false,prompts=0;
+ client.localStorage.setItem('umma:connect:token:v1',credential);
+ client.AbortSignal=AbortSignal;
+ client.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ client.PushManager=class{};
+ client.Notification={permission:'default',async requestPermission(){prompts++;this.permission='granted';return this.permission;}};
+ const registration={pushManager:{async getSubscription(){return {toJSON:()=>sub};}}};
+ worker.ready=Promise.resolve(registration);
+ worker.register=async()=>registration;
+ worker.controller={postMessage:m=>badgeUpdates.push(m)};
+ Object.defineProperty(client.navigator,'serviceWorker',{value:worker});
+ client.fetch=async(url,init)=>{
+  const request=JSON.parse(init.body);
+  if(request.action==='config')return new Response(JSON.stringify({ok:true,publicKey:Buffer.alloc(65).toString('base64url')}));
+  assert.equal(request.token,credential);
+  if(request.action==='read'){assert.equal(request.before,reply.created_at);reply.read_at=reply.created_at;}
+  if(request.action==='preferences'){assert.deepEqual(request.subscription,sub);pushEnabled=true;}
+  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled},messages:[reply]}));
+ };
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
+ client.eval(source('js/cafe/customer-connect.js'));
+ await tick();
+ assert.equal(prompts,0);
+ assert.equal(badgeUpdates.at(-1).count,1);
+ assert.match(client.document.querySelector('.umma-connect-button').textContent,/1$/);
+ await client.ummaCustomerConnect.open();
+ assert.match(client.document.querySelector('.connect-thread').textContent,/Ответ кафе/);
+ assert.equal(badgeUpdates.at(-1).count,0);
+ const enable=[...client.document.querySelectorAll('dialog button')].find(button=>button.textContent==='Включить уведомления об ответах');
+ enable.click();
+ await tick();
+ assert.equal(prompts,1);
+ assert.equal(pushEnabled,true);
+ assert.equal(enable.hidden,true);
+ app.window.close();
+}
 const menuDom=new JSDOM('<html lang="ru"><body><header></header></body></html>',{url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true});
 const menu=menuDom.window;
 menu.AbortSignal=AbortSignal;
