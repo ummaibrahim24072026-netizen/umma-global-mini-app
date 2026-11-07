@@ -5,13 +5,13 @@ for(const owner of [true,false]){
  const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=true;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
  w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
  if(url.endsWith('cafe-connect')){
-  const msg={direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
+  const msg={id:'qa-message',direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
   if(b.action==='staffRead')unread=false;
   const result=b.action==='staffList'?{clients:[{id:'customer-id',name:'Гость QA',unread:unread?1:0,last_message:msg.body}],total:1,subscribers:0,pushDevices:0}:b.action==='staffThread'?{client:{id:'customer-id',name:'Гость QA'},messages:[msg]}:{};
   return new Response(JSON.stringify({ok:true,...result}));
  }
  const out=url.endsWith('cafe-menu')?{ok:true,products:[],inventory:[]}:b.action==='me'?{ok:true,user:{id:10,name:'QA',role:owner?'super_admin':'employee'},assignments:owner?[]:[{staff_role:'kitchen',location_id:'cafe',can_accept_payments:false}],locations:[{id:'cafe',name:'HALAL UMMA'}]}:b.action==='staffList'?{ok:true,accounts:[],employees}:b.action==='inviteExisting'?{ok:true,invite:'b'.repeat(64)}:{ok:true};return new Response(JSON.stringify(out));};
- w.eval(read('js/cafe/web-operations.js'));w.eval(read('js/cafe/connect-admin.js'));await tick();await tick();assert.equal(d.getElementById('webWorkspace').hidden,false);
+ w.eval(read('js/cafe/web-operations.js'));w.eval(read('js/cafe/connect-media.js'));w.eval(read('js/cafe/connect-admin.js'));await tick();await tick();assert.equal(d.getElementById('webWorkspace').hidden,false);
  if(owner){
   assert.equal(d.body.dataset.workspace,'messages');
   assert.equal(d.querySelector('#webInboxCount').textContent,'1');
