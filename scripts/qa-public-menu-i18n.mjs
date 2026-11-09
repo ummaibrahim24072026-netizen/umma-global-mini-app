@@ -12,10 +12,57 @@ const prices=new Map();
 for(const code of ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt']){
  const selector=d.getElementById('menuLanguage');selector.value=code;selector.dispatchEvent(new w.Event('change'));
  assert.equal(d.documentElement.lang,code);assert.equal(d.documentElement.dir,code==='ar'?'rtl':'ltr');assert.equal(w.localStorage.getItem('umma-menu-language'),code);assert.equal(d.getElementById('customerName').value,'Ibrahim');assert.equal(d.getElementById('customerPhone'),null);assert.equal(d.getElementById('tableNumber').value,'3');assert.equal(d.getElementById('checkout').open,true);assert.equal(d.getElementById('barCount').textContent,w.ummaMenuI18n.number(1));assert.equal(d.getElementById('pickupAddress').textContent,'15 Nguyễn Biểu, Nha Trang');assert.equal(d.querySelectorAll('#customerName').length,1);assert.equal(d.getElementById('deliveryFields').hidden,true);prices.set(code,d.getElementById('barTotal').textContent);
- for(const key of ['Наше меню','Супы','Корзина','Оформить заказ','Описание','Выбрать язык']){const value=w.ummaMenuI18n.t(key);assert.ok(value);if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(value),`${code}: untranslated ${key}`);}
+ for(const key of ['Наше меню','Супы','Корзина','Оформить заказ','Описание','Выбрать язык','Поделиться','Ссылка на приложение','Скопировать ссылку','Ссылка скопирована','Скопируйте выделенную ссылку.']){const value=w.ummaMenuI18n.t(key);assert.ok(value);if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(value),`${code}: untranslated ${key}`);}
  for(const p of products)for(const field of ['name','description']){const text=w.ummaMenuI18n.field(p,field);assert.ok(text);if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(text),`${code}: untranslated ${field} ${p.sku}`);}
  assert.equal(d.getElementById('submit').textContent,w.ummaMenuI18n.t('Оформить заказ'));
 }
 assert.equal(networkCalls,2,'language changes must not fetch translations or send customer data');
 w.ummaMenuI18n.setLanguage('ar');d.getElementById('closeCart').click();d.getElementById('searchToggle').click();d.getElementById('search').value='شوربا';d.getElementById('search').dispatchEvent(new w.Event('input'));assert.equal(d.querySelectorAll('[data-card]').length,1);assert.equal(d.querySelector('[data-card]').dataset.card,products[0].id);assert.equal(d.getElementById('barCount').textContent,w.ummaMenuI18n.number(1));
-const saved=w.localStorage.getItem('umma-menu-language');const clean=new JSDOM('',{url:'https://example.com/',runScripts:'outside-only'});clean.window.localStorage.setItem('umma-menu-language',saved);clean.window.eval(languageScript);w.eval(readFileSync(new URL('../js/cafe/public-menu-extras.js',import.meta.url),'utf8'));assert.equal(clean.window.ummaMenuI18n.language,'ar');clean.window.close();dom.window.close();console.log('PASS 12 public-menu languages: UI/dish descriptions, live selector, RTL, localized money, saved preference, translated search, address/cart/form preservation and no translation requests.');
+const saved=w.localStorage.getItem('umma-menu-language');const clean=new JSDOM('',{url:'https://example.com/',runScripts:'outside-only'});clean.window.localStorage.setItem('umma-menu-language',saved);clean.window.eval(languageScript);assert.equal(clean.window.ummaMenuI18n.language,'ar');clean.window.close();
+
+const share=d.getElementById('shareApp');
+const shareDialog=d.getElementById('shareDialog');
+const shareUrl=d.getElementById('shareUrl');
+const shareStatus=d.getElementById('shareStatus');
+const copyLink=d.getElementById('copyShareLink');
+const publicMenu='https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/menu/';
+w.history.replaceState(null,'','/menu/?point=partner-01#private-test-token');
+Object.defineProperty(w.navigator,'standalone',{value:true});
+w.ummaMenuI18n.setLanguage('en');
+assert.equal(d.getElementById('installApp').hidden,true);
+assert.equal(share.hidden,false,'sharing remains available in the installed app');
+assert.equal(share.textContent,'Share');
+let shared;
+w.navigator.share=async data=>{shared=data;};
+await share.onclick();
+assert.equal(shared.url,publicMenu);
+assert.equal(shared.title,'UMMA Cafe');
+assert.match(shared.text,/add the app to your home screen/);
+assert.equal(shareDialog.open,false);
+w.navigator.share=async()=>{throw new w.DOMException('cancelled','AbortError');};
+await share.onclick();
+assert.equal(shareDialog.open,false,'closing the system share sheet opens no fallback');
+w.navigator.share=undefined;
+await share.onclick();
+assert.equal(shareDialog.open,true);
+assert.equal(shareUrl.value,publicMenu);
+assert.ok(new URL(d.getElementById('shareWhatsApp').href).searchParams.get('text').endsWith('\n'+publicMenu));
+assert.equal(new URL(d.getElementById('shareTelegram').href).searchParams.get('url'),publicMenu);
+let copied;
+w.navigator.clipboard={writeText:async value=>{copied=value;}};
+await copyLink.onclick();
+assert.equal(copied,publicMenu);
+assert.equal(shareStatus.textContent,'Link copied');
+w.navigator.clipboard.writeText=async()=>{throw new Error('clipboard denied');};
+await copyLink.onclick();
+assert.equal(d.activeElement,shareUrl);
+assert.equal(shareUrl.selectionEnd,publicMenu.length);
+assert.equal(shareStatus.textContent,'Copy the selected link.');
+shareDialog.close();
+w.navigator.share=async()=>{throw new w.DOMException('blocked','NotAllowedError');};
+await share.onclick();
+assert.equal(shareDialog.open,true);
+assert.equal(shareStatus.hidden,true);
+assert.equal(networkCalls,2,'sharing makes no requests until the guest chooses a destination');
+dom.window.close();
+console.log('PASS 12 public-menu languages, native and fallback sharing, public link privacy, standalone access, clipboard recovery, and no translation or sharing requests.');
