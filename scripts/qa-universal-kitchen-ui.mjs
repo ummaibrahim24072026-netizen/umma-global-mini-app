@@ -25,6 +25,18 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  {
  const w=staff.window,d=w.document;
  assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ assert.equal(d.getElementById('readyStockPanel').hidden,true,'order and counter views exclude planning');
+ assert.equal(d.querySelector('[data-web-tab=kitchen]').hidden,role==='cashier');
+ if(role!=='cashier'){
+  d.querySelector('[data-web-tab=kitchen]').click();
+  assert.equal(d.body.dataset.workspace,'kitchen');
+  assert.equal(d.getElementById('readyStockPanel').hidden,false);
+  assert.equal(d.getElementById('cafeKitchenPage').hidden,true);
+  assert.equal(d.getElementById('webPos').hidden,true);
+  d.querySelector('[data-web-tab=orders]').click();
+  assert.equal(d.getElementById('readyStockPanel').hidden,true);
+  d.querySelector('[data-web-tab=pos]').click();
+ }
  assert.equal(d.getElementById('webIngredients').hidden,true);
  assert.equal(d.getElementById('webStockLink').hidden,role==='cashier');
  assert.equal(d.getElementById('webStockLink').getAttribute('href'),'staff.html?work=stock');

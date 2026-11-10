@@ -150,7 +150,7 @@ if(openKitchen){
   document.querySelector('[data-web-tab="orders"] span').firstChild.textContent='Заказы ';
   $('posHeading').textContent='Новый заказ со стойки';
 }
-for(const [name,allowed]of [['pos',sell],['orders',kitchen],['courier',courier],['admin',owner],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
+for(const [name,allowed]of [['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',owner],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
 document.body.classList.toggle('work-owner',owner);
 document.dispatchEvent(new CustomEvent('umma:staff-ready',{detail:me}));
