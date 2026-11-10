@@ -33,7 +33,8 @@ for(const method of ['cash','qr']){
 }
 console.log('PASS delivery UI: cash/QR shared cart, optional identity, explicit GPS, zone guard, missing point, lost response, stable retry, saved pending request, automatic private link and reset.');
 let handler,rpcCalls=[];
-const db={rpc:async(name,args)=>{rpcCalls.push({name,args});return {data:{ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:90000,status:'pending',paymentMethod:args.p_payment_method,paymentStatus:'pending'}}};}};
+const receiptQuery={select(){return this;},eq(){return this;},order(){return this;},limit(){return this;},async maybeSingle(){return {data:null,error:{code:'FIXTURE_UNAVAILABLE'}};}};
+const db={from:()=>receiptQuery,rpc:async(name,args)=>{rpcCalls.push({name,args});return {data:{ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:90000,status:'pending',paymentMethod:args.p_payment_method,paymentStatus:'pending'}}};}};
 vm.runInNewContext(stripTypeScriptTypes(read('supabase/functions/cafe-guest-order/index.ts').replace(/^import .*;\n/gm,'')),{Deno:{serve:fn=>handler=fn,env:{get:()=> 'qa-secret'}},createClient:()=>db,paymentFor,crypto:webcrypto,TextEncoder,URL,Response,console});
 const payload={action:'create',orderType:'delivery',requestKey:'12345678-1234-4123-8123-123456789abc',locationId:cafe.id,items:[{productId:product.id,quantity:1}],address:'Scenia Bay apartment',latitude:12.28,longitude:109.2,paymentMethod:'qr',amount:1,paymentStatus:'paid'};
 const req=b=>handler(new Request('https://qa.invalid',{method:'POST',body:JSON.stringify(b)}));

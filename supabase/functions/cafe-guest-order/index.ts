@@ -2,6 +2,30 @@ import {paymentFor} from '../cafe-my-orders/payment.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.95.3';
 const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'content-type','Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'};
 const reply=(v:unknown,status=200)=>new Response(JSON.stringify(v),{status,headers});
+async function receiptFor(db: ReturnType<typeof createClient>, orderId: string) {
+ const {data,error}=await db.from('cafe_orders')
+  .select('subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,payment_method,payment_status,status,cafe_order_items(product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd),cafe_payment_receipts(tendered_amount_vnd,change_given_vnd)')
+  .eq('id',orderId)
+  .eq('cafe_payment_receipts.payment_method','cash')
+  .eq('cafe_payment_receipts.receipt_status','confirmed')
+  .order('collected_at',{referencedTable:'cafe_payment_receipts',ascending:false})
+  .limit(1,{referencedTable:'cafe_payment_receipts'})
+  .maybeSingle();
+ if(error||!data){
+  console.error('Guest receipt unavailable',error?.code);
+  return {};
+ }
+ const cash=data.cafe_payment_receipts[0];
+ return {
+  totalVnd:data.total_vnd,paymentMethod:data.payment_method,paymentStatus:data.payment_status,status:data.status,
+  items:data.cafe_order_items.map(({product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd})=>({
+   name_ru:product_name_ru,name_en:product_name_en,name_vi:product_name_vi,quantity,unitPriceVnd:unit_price_vnd,lineTotalVnd:line_total_vnd,
+  })),
+  subtotalVnd:data.subtotal_vnd,deliveryFeeVnd:data.delivery_fee_vnd,discountVnd:data.discount_vnd,
+  cashReceipt:data.payment_method==='cash'&&data.payment_status==='paid'&&cash?.tendered_amount_vnd!=null&&cash.change_given_vnd!=null
+   ?{tenderedVnd:cash.tendered_amount_vnd,changeVnd:cash.change_given_vnd}:null,
+ };
+}
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});
  if(req.method!=='GET'&&req.method!=='POST')return reply({ok:false,error:'Method not allowed'},405);
@@ -19,7 +43,8 @@ Deno.serve(async req=>{
    const {data,error}=await db.rpc('cafe_guest_order_status',{p_request_key:b.requestKey,p_order_id:b.orderId});
    if(error||!data?.order)return reply({ok:false,error:'Order unavailable'},404);
    const o=data.order;
-   return reply({ok:true,order:{id:o.id,orderNumber:o.orderNumber,totalVnd:o.totalVnd,paymentMethod:o.payment_method,paymentStatus:o.payment_status,status:o.status,stockReservedUntil:o.stockReservedUntil,preorderWaiting:o.preorderWaiting,preorderExpectedAt:o.preorderExpectedAt},payment:paymentFor({...o,order_number:o.orderNumber,total_vnd:o.totalVnd})});
+   const order={id:o.id,orderNumber:o.orderNumber,totalVnd:o.totalVnd,paymentMethod:o.payment_method,paymentStatus:o.payment_status,status:o.status,stockReservedUntil:o.stockReservedUntil,preorderWaiting:o.preorderWaiting,preorderExpectedAt:o.preorderExpectedAt,...await receiptFor(db,o.id)};
+   return reply({ok:true,order,payment:paymentFor({...o,order_number:o.orderNumber,total_vnd:order.totalVnd,payment_method:order.paymentMethod,payment_status:order.paymentStatus,status:order.status})});
   }
   if(b.orderType!=null&&!['pickup','delivery'].includes(b.orderType))return reply({ok:false,error:'Invalid order type'},400);
   const delivery=b.orderType==='delivery';
@@ -37,7 +62,11 @@ Deno.serve(async req=>{
   const {data,error}=await db.rpc(delivery?'submit_cafe_guest_delivery_v4':'submit_cafe_guest_order_v3',{...(delivery?{p_address:b.address,p_lat:b.latitude,p_lng:b.longitude,p_token_hash:trackingHash}:{}),p_payment_method:b.paymentMethod||'cash',p_request_key:b.requestKey,p_ip_hash:ipHash,p_location_id:b.locationId,p_items:b.items,p_customer_name:typeof b.name==='string'?b.name:'',p_customer_phone:typeof b.phone==='string'?b.phone:'',p_table_number:typeof b.tableNumber==='string'?b.tableNumber:null,p_source:typeof b.point==='string'?b.point.slice(0,80):''});
   if(error){if(error.message?.includes('READY_STOCK_UNAVAILABLE'))return reply({ok:false,code:'STOCK_UNAVAILABLE',error:'Часть блюд уже закончилась. Обновите корзину.'},409);console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
   if(delivery&&data?.order){data.trackingToken=trackingToken;data.order.orderType='delivery';}
-  if(data?.order){const o=data.order;data.payment=paymentFor({id:o.id,order_number:o.orderNumber,total_vnd:o.totalVnd,location_id:b.locationId,payment_method:o.paymentMethod,payment_status:o.paymentStatus,status:o.status,currency:'VND'});}
+  if(data?.order){
+   const o=data.order;
+   Object.assign(o,await receiptFor(db,o.id));
+   data.payment=paymentFor({id:o.id,order_number:o.orderNumber,total_vnd:o.totalVnd,location_id:b.locationId,payment_method:o.paymentMethod,payment_status:o.paymentStatus,status:o.status,currency:'VND'});
+  }
   return reply(data,201);
  }catch(e){console.error('Guest checkout error',e);return reply({ok:false,error:'Сервис временно недоступен'},500)}
 });

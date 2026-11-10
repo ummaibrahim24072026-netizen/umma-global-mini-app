@@ -11,7 +11,38 @@ function install(t){installText(t);window.addEventListener('beforeinstallprompt'
 function bankLink(){if(!order?.payment)return;const p=order.payment,selected=$('paymentBank').value;try{localStorage.setItem('umma-payment-bank',selected);}catch{}const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:p.account+'@vcb',am:String(p.amount),tn:p.reference,app:selected,url:location.origin+location.pathname});$('openBank').href=url.href;
 // Vietcombank's existing flow uses a saved QR rather than a bank deep link.
 $('openBank').hidden=selected==='vcb';}
+function receiptDetails(value,{t,money}){
+ const details=$('receiptDetails');
+ details.hidden=!value.items?.length;
+ const rows=[];
+ const addRow=(label,amount,quantityPrice)=>{
+  const row=document.createElement('div'),copy=document.createElement('span'),sum=document.createElement('strong');
+  copy.textContent=label;
+  if(quantityPrice){
+   const quantity=document.createElement('small');
+   quantity.textContent=quantityPrice;
+   copy.append(quantity);
+  }
+  sum.textContent=money(amount);
+  row.append(copy,sum);
+  rows.push(row);
+ };
+ for(const item of value.items||[]){
+  addRow(window.ummaMenuI18n.field(item,'name'),item.lineTotalVnd,item.quantity+' × '+money(item.unitPriceVnd));
+ }
+ if(value.deliveryFeeVnd||value.discountVnd)addRow(t('Стоимость блюд'),value.subtotalVnd);
+ if(value.deliveryFeeVnd)addRow(t('Стоимость доставки'),value.deliveryFeeVnd);
+ if(value.discountVnd)addRow(t('Скидка'),-value.discountVnd);
+ details.replaceChildren(...rows);
+ const cash=$('receiptCash'),receipt=value.cashReceipt;
+ cash.hidden=!(value.paymentMethod==='cash'&&value.paymentStatus==='paid'&&receipt);
+ if(!cash.hidden){
+  $('receiptTendered').textContent=money(receipt.tenderedVnd);
+  $('receiptChange').textContent=money(receipt.changeVnd);
+ }
+}
 function receipt(value,ctx){order=value;context=ctx;const {t}=ctx;
+receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
 $('orderState').removeAttribute('data-i18n');$('orderState').textContent=value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга'):value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ'):t(value.orderType!=='delivery'&&value.status==='pending'&&value.paymentStatus!=='paid'?(value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Ожидает оплаты у кассира'):statuses[value.status]||'Заказ отправлен');

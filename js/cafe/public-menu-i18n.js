@@ -38,6 +38,16 @@ const checkoutCopy={
 for(const [key,translations] of Object.entries(checkoutCopy)){
  for(const [index,locale] of checkoutLocales.entries())copy[key][locale]=translations[index];
 }
+const receiptCopy={
+ 'Стоимость блюд':['Items subtotal','Tạm tính món ăn','음식 소계','菜品小计','Zwischensumme','Sous-total des plats','ค่าอาหาร','Jumlah makanan','Subtotal makanan','المجموع الفرعي للأطباق','Subtotal dos pratos'],
+ 'Стоимость доставки':['Delivery fee','Phí giao hàng','배달비','配送费','Liefergebühr','Frais de livraison','ค่าจัดส่ง','Caj penghantaran','Ongkos kirim','رسوم التوصيل','Taxa de entrega'],
+ 'Скидка':['Discount','Giảm giá','할인','折扣','Rabatt','Remise','ส่วนลด','Diskaun','Diskon','الخصم','Desconto'],
+ 'Получено наличными':['Cash received','Tiền mặt đã nhận','받은 현금','实收现金','Bar erhalten','Espèces reçues','เงินสดที่ได้รับ','Tunai diterima','Uang tunai diterima','النقد المستلم','Dinheiro recebido'],
+ 'Сдача':['Change','Tiền thối lại','거스름돈','找零','Rückgeld','Monnaie rendue','เงินทอน','Wang baki','Uang kembalian','الباقي','Troco'],
+};
+for(const [key,translations] of Object.entries(receiptCopy)){
+ copy[key]=Object.fromEntries(['en','vi',...checkoutLocales].map((locale,index)=>[locale,translations[index]]));
+}
 const normalise=v=>{const code=String(v||'').trim().toLowerCase().replace(/_/g,'-').split('-')[0];return code==='in'?'id':code;};
 const preferred=[...(navigator.languages||[]),navigator.language].map(normalise);
 let language=preferred.find(code=>Object.hasOwn(languages,code))||'en';
