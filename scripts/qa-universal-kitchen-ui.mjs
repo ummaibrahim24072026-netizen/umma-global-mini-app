@@ -1,9 +1,9 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync,mkdirSync,cpSync} from 'node:fs';import assert from 'node:assert/strict';
 const read=p=>readFileSync(p,'utf8'),html=read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),tick=()=>new Promise(r=>setTimeout(r,20));
 for(const role of ['kitchen','cashier','kitchen_cashier']){
- const dom=new JSDOM(html,{url:'https://qa.invalid/staff.html',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,requests=[],receipts=new Map();let qty=0,lost=true,orders=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.HTMLElement.prototype.scrollIntoView=()=>{};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+ const requests=[],receipts=new Map();let qty=0,lost=true,orders=[];
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
- w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
+ const fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
  else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders};
  else if(b.action==='updateStatus')orders=orders.map(order=>order.id===b.orderId?{...order,status:b.status}:order);
@@ -12,8 +12,23 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  else if(b.action==='ingredientList')out={ok:true,stock:[{id:'raw',name:'Мука',unit:'kg',quantity:qty,averageCostVnd:20000}],purchases:qty?[{id:'receipt',date:b.date,note:'QA store',totalVnd:40000,items:[{name:'Мука',unit:'kg',quantity:2,unitCostVnd:20000,totalVnd:40000}]}]:[],dayTotalVnd:qty?40000:0};
  else if(b.action==='ingredientReceive'){if(!receipts.has(b.requestKey)){qty+=b.items[0].quantity;receipts.set(b.requestKey,{ok:true,subtotalVnd:40000});}if(lost){lost=false;throw Error('Lost response after commit');}out=receipts.get(b.requestKey);}
  return new Response(JSON.stringify(out));};
- w.eval(read('js/cafe/order-requests.js'));w.eval(read('js/cafe/ingredients.js'));w.eval(read('js/cafe/ready-stock.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/cafe/web-operations.js'));await tick();await tick();
- assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]').hidden,role==='cashier');assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ async function openWorkspace(path){
+  const dom=new JSDOM(html,{url:'https://qa.invalid/'+path,runScripts:'outside-only',pretendToBeVisual:true});
+  const w=dom.window;
+  w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.HTMLElement.prototype.scrollIntoView=()=>{};w.fetch=fetch;
+  w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+  for(const script of ['order-requests','ingredients','ready-stock','product-photo','web-operations'])w.eval(read('js/cafe/'+script+'.js'));
+  await tick();await tick();
+  return dom;
+ }
+ const staff=await openWorkspace('staff.html');
+ {
+ const w=staff.window,d=w.document;
+ assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ assert.equal(d.getElementById('webIngredients').hidden,true);
+ assert.equal(d.getElementById('webStockLink').hidden,role==='cashier');
+ assert.equal(d.getElementById('webStockLink').getAttribute('href'),'staff.html?work=stock');
+ assert.equal(requests.some(b=>b.action==='ingredientList'),false);
  if(role==='kitchen_cashier'){
   const tones=[],speech=[];
   w.AudioContext=class {
@@ -111,7 +126,14 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   assert.equal(badge.hidden,true);
 
 d.getElementById('posCash').value='50000';d.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(requests.filter(b=>b.staffOrder).length,1);assert.equal(requests.find(b=>b.action==='updatePayment').paymentStatus,'paid');}
- if(assigned==='kitchen'){d.querySelector('[data-web-tab=ingredients]').click();await tick();const set=(field,v)=>{const input=d.querySelector('[data-ingredient='+field+']');input.value=v;input.dispatchEvent(new w.Event('input',{bubbles:true}));};set('name','Мука');set('quantity','2');set('unitCostVnd','20000');d.getElementById('ingredientSupplier').value='QA store';const submit=()=>d.getElementById('ingredientForm').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await tick();assert.match(d.getElementById('ingredientNotice').textContent,/не продублируется/);assert.equal(d.getElementById('ingredientFields').disabled,true);submit();await tick();await tick();const calls=requests.filter(b=>b.action==='ingredientReceive');assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(qty,2);assert.equal(d.getElementById('ingredientFields').disabled,false);assert.match(d.getElementById('ingredientHistory').textContent,/Мука/);assert.match(d.getElementById('ingredientDayTotal').textContent,/40/);
+ }
+ staff.window.close();
+ const dom=await openWorkspace('staff.html?work=stock'),w=dom.window,d=w.document;
+ assert.equal(d.getElementById('webWorkspace').hidden,true);
+ assert.equal(d.getElementById('webIngredients').hidden,role==='cashier');
+ assert.equal(d.getElementById('webStockDenied').hidden,role!=='cashier');
+ assert.equal(requests.some(b=>b.action==='ingredientList'),role!=='cashier');
+ if(assigned==='kitchen'){const set=(field,v)=>{const input=d.querySelector('[data-ingredient='+field+']');input.value=v;input.dispatchEvent(new w.Event('input',{bubbles:true}));};set('name','Мука');set('quantity','2');set('unitCostVnd','20000');d.getElementById('ingredientSupplier').value='QA store';const submit=()=>d.getElementById('ingredientForm').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await tick();assert.match(d.getElementById('ingredientNotice').textContent,/не продублируется/);assert.equal(d.getElementById('ingredientFields').disabled,true);submit();await tick();await tick();const calls=requests.filter(b=>b.action==='ingredientReceive');assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(qty,2);assert.equal(d.getElementById('ingredientFields').disabled,false);assert.match(d.getElementById('ingredientHistory').textContent,/Мука/);assert.match(d.getElementById('ingredientDayTotal').textContent,/40/);
  if(role==='kitchen_cashier'){d.querySelectorAll('input').forEach(i=>i.setAttribute('value',i.value));mkdirSync('preview-dist',{recursive:true});writeFileSync('preview-dist/ingredients.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});}
  }
  w.close();

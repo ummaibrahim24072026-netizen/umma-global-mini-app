@@ -2,7 +2,13 @@
 (()=>{'use strict';const $=id=>document.getElementById(id),base='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/',auth=window.ummaStaffAuth;
 const money=v=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(v)||0),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let me=null,products=[],inventory=[],stockControl=false,cart=new Map(),sale=null,busy=false,installPrompt=null,currentTab='pos',refreshing=false,basketInView=false,openKitchen=false;
+const requested=new URLSearchParams(location.search).get('work');
 const invite=new URLSearchParams(location.hash.slice(1)).get('invite');
+if(requested==='stock'){
+ document.title='UMMA · Склад';
+ $('loginTitle').textContent='Вход на склад';
+ $('loginHint').textContent='Закупки и остатки ингредиентов кафе.';
+}
 if(invite){$('webExistingLogin').hidden=false;$('loginTitle').textContent='Создайте веб-доступ';$('loginHint').textContent='Укажите email или придумайте логин и пароль. После этого входите на кухню, в кассу или доставку напрямую из браузера.';$('webLoginSubmit').textContent='Создать доступ';$('webPassword').autocomplete='new-password';}
 function notice(s){$('webNotice').textContent=s;}
 async function api(action,extra={},endpoint='cafe-web'){const response=await fetch(base+endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,initData:auth.credential(),...extra}),cache:'no-store',signal:AbortSignal.timeout(20000)});const data=await response.json();if(!response.ok||!data.ok){const e=Error(data.error||'Нет связи с кафе');e.status=response.status;throw e;}return data;}
@@ -91,12 +97,12 @@ function tab(name){
  const counter=name==='pos'&&openKitchen;
  const nav=document.querySelector('[data-web-tab="'+(cash?'pos':name)+'"]');
  if(!nav||nav.hidden)return;
- currentTab=name;notice('');$('webNotice').hidden=name==='ingredients';
+ currentTab=name;notice('');
  document.body.dataset.workspace=name;
  $('posCartJump').hidden=name!=='pos'||!cart.size||basketInView;
  document.querySelector('.web-account-menu')?.removeAttribute('open');
  $('webPos').hidden=name!=='pos';$('webAdmin').hidden=name!=='admin';
- $('webIngredients').hidden=name!=='ingredients';$('webMessages').hidden=name!=='messages';
+ $('webMessages').hidden=name!=='messages';
  $('webCashViews').hidden=!cash;
  $('cafeKitchenPage').hidden=!counter&&!['cashOrders','orders','courier'].includes(name);
  document.querySelectorAll('[data-web-tab]').forEach(b=>b.setAttribute('aria-current',String(b===nav)));
@@ -123,8 +129,20 @@ $('posCartJump')?.addEventListener('click',()=>$('posBasket').scrollIntoView({be
 $('posBackToProducts')?.addEventListener('click',()=>{$('posSearch').scrollIntoView({behavior:'smooth',block:'start'});$('posSearch').focus({preventScroll:true});});
 $('webLogout').onclick=async()=>{try{await api('logout');}catch{}auth.clear();location.replace(new URL('staff.html',location.href));};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});$('webInstall').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}else notice('В меню браузера выберите «Установить приложение» или «Добавить на главный экран». В Safari: «Поделиться» → «На экран Домой».');};
-async function boot(){me=await api('me');window.ummaCafeEpoch?.apply(me.cafeResetEpoch);auth.setActor(Number(me.user.id));window.ummaRole=me.user.role;window.ummaUser=me.user;$('webIdentity').textContent=me.user.name||'Сотрудник';$('webLogin').hidden=true;$('webWorkspace').hidden=false;$('webLogout').hidden=false;
+async function boot(){me=await api('me');window.ummaCafeEpoch?.apply(me.cafeResetEpoch);auth.setActor(Number(me.user.id));window.ummaRole=me.user.role;window.ummaUser=me.user;$('webIdentity').textContent=me.user.name||'Сотрудник';$('webLogin').hidden=true;$('webLogout').hidden=false;
 const owner=me.user.role==='super_admin',roles=me.assignments||[],sell=owner||roles.some(a=>['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments),courier=owner||roles.some(a=>a.staff_role==='courier'),kitchen=owner||roles.some(a=>a.staff_role!=='courier');
+const stockLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&['kitchen','manager'].includes(a.staff_role)));
+$('webStockLink').hidden=requested==='stock'||!stockLocations.length;
+if(requested==='stock'){
+ currentTab='stock';
+ document.body.dataset.workspace='stock';
+ $('webWorkspace').hidden=true;
+ $('webIngredients').hidden=!stockLocations.length;
+ $('webStockDenied').hidden=!!stockLocations.length;
+ if(stockLocations.length)document.dispatchEvent(new CustomEvent('umma:ingredient-stock-open',{detail:stockLocations}));
+ return;
+}
+$('webWorkspace').hidden=false;
 openKitchen=owner||roles.some(a=>['kitchen','manager'].includes(a.staff_role)&&a.can_accept_payments);
 $('counterIncoming').hidden=!openKitchen;
 if(openKitchen){
@@ -132,11 +150,10 @@ if(openKitchen){
   document.querySelector('[data-web-tab="orders"] span').firstChild.textContent='Заказы ';
   $('posHeading').textContent='Новый заказ со стойки';
 }
-for(const [name,allowed]of [['pos',sell],['orders',kitchen],['courier',courier],['admin',owner],['messages',owner],['ingredients',owner||roles.some(a=>['kitchen','manager'].includes(a.staff_role))]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
+for(const [name,allowed]of [['pos',sell],['orders',kitchen],['courier',courier],['admin',owner],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
 document.body.classList.toggle('work-owner',owner);
 document.dispatchEvent(new CustomEvent('umma:staff-ready',{detail:me}));
-const requested=new URLSearchParams(location.search).get('work');
 tab(owner&&requested==='messages'?'messages':openKitchen?'pos':!owner&&roles.some(a=>a.staff_role==='kitchen')?'orders':sell?'pos':courier?'courier':'orders');
 if(sell){
  try{
