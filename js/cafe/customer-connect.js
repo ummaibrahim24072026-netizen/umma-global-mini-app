@@ -163,7 +163,7 @@ if(setupHost){
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,'umma-connect');dialog.setAttribute('aria-label',t(0));
- const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();dialog.append(close,el('h2',t(0)),el('p',t(2)),el('small',t(11)));
+ const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',t(0)),el('p',t(2)));hero.append(heroIcon,heroText,close);dialog.append(hero,el('small',t(11)));
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
  join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
  name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
@@ -181,11 +181,11 @@ function build(){
    }
   });
  };
- const save=el('button',t(6));save.type='button';save.onclick=()=>run(async()=>{state=await api('preferences',{name:name.value,language:lang()});status.textContent=t(13);update();});
+ const save=el('button',t(6),'connect-save');save.type='button';save.onclick=()=>run(async()=>{state=await api('preferences',{name:name.value,language:lang()});status.textContent=t(13);update();});
  push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(status);
- const off=el('button',t(8));off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
+ const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',t(0));
- const form=el('form'),body=el('textarea');body.maxLength=2000;const send=el('button',t(10),'primary');send.type='submit';
+ const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});form.append(label(t(9),body),send);
  const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,onChange:()=>{pending=null;}});
  form.onsubmit=e=>{
@@ -209,7 +209,7 @@ function build(){
    await markRead();
   }).finally(()=>composer.busy(false));
  };
- content.append(label(t(4),name),check,save,off,el('hr'),list,form);dialog.append(join,push,content,status);document.body.append(dialog);
+ const settings=el('section',null,'connect-settings');settings.append(label(t(4),name),check);const actions=el('div',null,'connect-actions');actions.append(save,off);settings.append(actions);const messagesHeading=el('h3',lang()==='ru'?'Ваши сообщения':lang()==='vi'?'Tin nhắn của bạn':'Your messages','connect-messages-heading');content.append(settings,messagesHeading,list,form);dialog.append(join,push,content,status);document.body.append(dialog);
  dialog.addEventListener('close',()=>{
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
