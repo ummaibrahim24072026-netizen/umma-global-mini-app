@@ -226,3 +226,12 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 }
 .web-work-app .pos-product-bottom b{margin:0;padding:0;overflow-wrap:anywhere}
 .web-work-app .pos-product-add{flex:0 0 48px;min-width:48px;padding:0;font-size:24px}
+
+.web-work-app .work-order-item-name{display:flex;align-items:center;gap:8px;min-width:0}
+.web-work-app .work-order-item-photo{
+  flex:0 0 44px;width:44px;height:44px;object-fit:contain;
+  border-radius:8px;background:#edf4f0;
+}
+.web-work-app .work-order-item-photo[hidden]{display:none}
+.web-work-app #counterIncomingItems .work-order-item-name{margin:4px 0}
+.web-work-app .kitchen-order-items li{align-items:center}

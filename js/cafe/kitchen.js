@@ -61,6 +61,18 @@
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
   const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const counterPaymentButton=o=>o.canAcceptPayments===true&&awaitingCounterPayment(o)?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">'+(o.payment_method==="cash"?"Принять наличные · Оплачено":"Подтвердить поступление оплаты")+'</button>':"";
+  function orderItemPhoto(item) {
+    const photo = item.product && window.ummaCafeProductPhoto?.(item.product);
+    return photo ? '<img class="work-order-item-photo" src="' + esc(photo) +
+      '" width="44" height="44" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : "";
+  }
+
+  for (const id of ["counterIncomingItems", "cafeKitchenOrders"]) {
+    byId(id)?.addEventListener("error", event => {
+      if (event.target.matches(".work-order-item-photo")) event.target.hidden = true;
+    }, true);
+  }
+
   function renderCounterIncoming(activeOrders) {
     const panel = byId("counterIncoming");
     if (!panel || panel.hidden || document.body.dataset.workspace !== "pos") return;
@@ -72,13 +84,14 @@
     badge.hidden = online.length === 0;
     if (badge.textContent !== String(online.length)) badge.textContent = String(online.length);
     const title = latest ? "Из приложения · " + online.length + " · №" + latest.order_number : "Заказы из приложения";
-    const items = latest?.cafe_order_items?.map(item => item.product_name_ru + " × " + item.quantity).join(" · ");
+    const items = latest?.cafe_order_items?.map(item => '<span class="work-order-item-name">' +
+      orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span></span>').join("");
     const status = latest && (waitingBatch(latest) ? "Ждёт партию" :
       awaitingCounterPayment(latest) ? "Ждёт оплаты" : statusNames[latest.status]);
-    const text = latest ? [items, status].filter(Boolean).join(" · ") : "Активных заказов пока нет";
+    const markup = latest ? (items || "") + (status ? "<span>" + esc(status) + "</span>" : "") : "Активных заказов пока нет";
     const heading = byId("counterIncomingTitle"), content = byId("counterIncomingItems");
     if (heading.textContent !== title) heading.textContent = title;
-    if (content.textContent !== text) content.textContent = text;
+    if (content.innerHTML !== markup) content.innerHTML = markup;
   }
 
   function render() {
@@ -117,7 +130,7 @@
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
-      const itemHtml = items.map(item => '<li><span>' + esc(item.product_name_ru) + (item.ready_stock_state==='planned'?' · готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(item.preorder_ready_at))):'') + ' × ' + Number(item.quantity) + '</span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
+      const itemHtml = items.map(item => '<li><span class="work-order-item-name">' + orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + (item.ready_stock_state==='planned'?' · готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(item.preorder_ready_at))):'') + ' × ' + Number(item.quantity) + '</span></span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
       const orderStaffRole = order.staffRole || staffRole;
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);

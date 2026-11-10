@@ -14,7 +14,7 @@ function client(fail=false) { return { from(table) {
   assert.equal(table,'cafe_orders');
   let data=[...rows], ordering=[], max=Infinity;
   const q={
-    select(columns){assert.match(columns,/\bcreated_via\b/);return q;},
+    select(columns){assert.match(columns,/\bcreated_via\b/);assert.ok(columns.includes("product:products!cafe_order_items_product_id_fkey(sku, image_url)"));return q;},
     in(key,values){data=data.filter(r=>values.includes(r[key]));return q;},
     eq(key,value){data=data.filter(r=>r[key]===value);return q;},
     gt(key,value){data=data.filter(r=>r[key]>value);return q;},
