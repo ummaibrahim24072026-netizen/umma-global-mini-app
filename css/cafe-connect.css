@@ -29,3 +29,79 @@ audio.connect-media{width:min(100%,300px)}
 .umma-connect :is(textarea,select,input:not([type=checkbox])){min-inline-size:0;font-size:16px}
 .umma-connect .connect-thread{min-inline-size:0}
 .connect-media-preview:not(:empty){grid-template-columns:minmax(0,1fr)}
+
+/* UMMA Connect — customer-first conversation sheet */
+.umma-connect{
+  width:min(100% - 24px,560px);max-width:560px;max-height:min(92dvh,900px);
+  margin:auto;padding:0;overflow-x:hidden;overflow-y:auto;
+  border:1px solid rgba(191,157,77,.32);border-radius:26px;
+  background:linear-gradient(180deg,#ffffff 0%,#fbfdfc 100%);
+  color:#173b3b;box-shadow:0 24px 80px rgba(0,43,45,.22);
+  font:400 15px/1.55 system-ui,-apple-system,sans-serif;
+  scrollbar-width:thin;scrollbar-color:#c7dcd9 transparent;
+}
+.umma-connect::backdrop{background:rgba(7,37,40,.58);backdrop-filter:blur(7px)}
+.umma-connect h2{margin:0 0 6px;font-size:clamp(21px,5vw,27px);font-weight:750;letter-spacing:-.035em;line-height:1.2;color:#0b5658}
+.umma-connect .connect-close{
+  float:right;margin:0 0 12px 12px;min-height:40px;
+  padding:8px 14px;border:1px solid #d9e8e5;border-radius:999px;
+  background:#f3f8f7;color:#285d5c;font-size:14px
+}
+.umma-connect> :not(.connect-thread){margin-inline:clamp(16px,4vw,28px)}
+.umma-connect> :first-child{margin-top:clamp(18px,4vw,28px)}
+.umma-connect> :last-child{margin-bottom:24px}
+.umma-connect p{line-height:1.5}
+.umma-connect small{font-size:12px;line-height:1.5;color:#718583}
+.umma-connect label{gap:8px;margin-block:16px;font-weight:550;color:#305452}
+.umma-connect input:not([type=checkbox]),.umma-connect textarea,.umma-connect select{
+  min-height:48px;border:1px solid #d2e2df;border-radius:14px;
+  padding:12px 14px;background:#f8fbfa;color:#163d3e;
+  box-shadow:0 1px 2px rgba(8,61,61,.03);transition:border-color .2s,box-shadow .2s
+}
+.umma-connect :is(input:not([type=checkbox]),textarea,select):focus{
+  outline:none;border-color:#079b9a;box-shadow:0 0 0 3px rgba(0,150,150,.12)
+}
+.umma-connect button{
+  min-height:44px;border:1px solid #d2e5e1;border-radius:13px;
+  padding:10px 15px;background:#f0f8f6;color:#126468;
+  font-weight:600;transition:background .18s,transform .18s
+}
+.umma-connect button:active{transform:scale(.985)}
+.umma-connect button.primary{border-color:#008f91;background:#008f91;color:#fff;box-shadow:0 5px 14px rgba(0,130,130,.17)}
+.umma-connect .connect-check{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;font-weight:500}
+.umma-connect input[type=checkbox]{flex:none;width:22px;height:22px;accent-color:#008f91}
+.umma-connect hr{margin-block:22px;border-top-color:#e7eeec}
+.umma-connect .connect-thread{
+  max-height:none;overflow:visible;padding:4px clamp(16px,4vw,28px) 16px;
+  display:flex;flex-direction:column;gap:12px
+}
+.umma-connect ol{padding:0;margin:0;list-style:none}
+.umma-connect li{
+  max-width:90%;width:fit-content;min-width:0;margin:0 0 12px;
+  padding:12px 15px;border:1px solid #e1eeeb;border-radius:18px 18px 18px 5px;
+  background:#f1f8f6;box-shadow:0 2px 9px rgba(12,55,55,.035);
+  white-space:pre-wrap;overflow-wrap:anywhere
+}
+.umma-connect li[data-direction=customer]{
+  margin-left:auto;margin-right:0;border-color:#f0e6cf;
+  border-radius:18px 18px 5px 18px;background:#fff8e9
+}
+.umma-connect li small{margin-top:6px;font-size:11px;color:#738481}
+.umma-connect .connect-media{border-radius:12px}
+@media(max-width:600px){
+  .umma-connect{
+    position:fixed;inset:auto 0 0!important;
+    width:100%;max-width:none;max-height:calc(100dvh - env(safe-area-inset-top) - 12px);
+    margin:0;border-radius:24px 24px 0 0;border-bottom:0;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .umma-connect::before{
+    content:"";display:block;width:38px;height:4px;margin:10px auto 6px;
+    border-radius:999px;background:#d6e3e0
+  }
+  .umma-connect> :first-child{margin-top:12px}
+  .umma-connect .connect-close{font-size:13px}
+  .umma-connect li{max-width:94%}
+  .umma-connect button{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){.umma-connect button,.umma-connect input{transition:none}}
