@@ -105,3 +105,42 @@ audio.connect-media{width:min(100%,300px)}
   .umma-connect button{max-width:100%}
 }
 @media(prefers-reduced-motion:reduce){.umma-connect button,.umma-connect input{transition:none}}
+
+/* Customer-facing UMMA Connect v8: first concept, real existing controls */
+.umma-connect{background:#f8fbfa;border-radius:26px;overflow-y:auto}
+.umma-connect .connect-hero{
+  display:flex;align-items:center;gap:12px;padding:24px 24px 16px;
+  background:linear-gradient(130deg,#007f83,#00a5a3);color:white;
+  border-radius:24px 24px 18px 18px
+}
+.umma-connect .connect-hero-icon{display:grid;place-items:center;flex:0 0 52px;height:52px;border-radius:17px;background:rgba(255,255,255,.19);font-size:30px;color:#ffe0a1}
+.umma-connect .connect-hero-copy{flex:1;min-width:0}
+.umma-connect .connect-hero h2{margin:0 0 3px;color:white;font-size:clamp(20px,4.5vw,26px)}
+.umma-connect .connect-hero p{margin:0;font-size:13px;color:#e6fffd;line-height:1.4}
+.umma-connect .connect-hero .connect-close{float:none;flex:none;margin:0;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.15);color:white}
+.umma-connect>small{display:block;margin-top:16px;margin-bottom:10px;padding:0 4px}
+.umma-connect .connect-settings{margin:16px clamp(16px,4vw,28px) 20px;padding:18px;border:1px solid #e2efec;border-radius:20px;background:white;box-shadow:0 6px 22px rgba(11,72,73,.05)}
+.umma-connect .connect-settings label:first-child{margin-top:0}
+.umma-connect .connect-settings .connect-check{margin:12px 0}
+.umma-connect .connect-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.umma-connect .connect-actions button{font-size:13px;min-width:0;line-height:1.3}
+.umma-connect .connect-save{background:#e9f8f5;border-color:#b8e5df;color:#007b7d}
+.umma-connect .connect-off{background:#fff9f0;border-color:#f1e1c7;color:#77613b}
+.umma-connect .connect-messages-heading{margin:22px clamp(16px,4vw,28px) 12px;font-size:18px;letter-spacing:-.02em;color:#164f50}
+.umma-connect .connect-thread{padding-top:0}
+.umma-connect .connect-thread li{max-width:86%;border-radius:17px 17px 17px 5px;background:#e9f6f3;border-color:#d5ebe6}
+.umma-connect .connect-thread li[data-direction=customer]{border-radius:17px 17px 5px 17px;background:#fff6e6;border-color:#f4e7cb}
+.umma-connect .connect-compose{display:flex;align-items:end;gap:9px;margin:8px clamp(16px,4vw,28px) 22px;padding:10px;border:1px solid #dcebe8;border-radius:18px;background:white}
+.umma-connect .connect-compose label{flex:1;min-width:0;margin:0}
+.umma-connect .connect-compose textarea{min-height:48px;max-height:140px;border:0;background:#f6faf9;resize:vertical}
+.umma-connect .connect-compose .connect-send{min-width:74px;align-self:end;border-radius:14px}
+.umma-connect .connect-compose .connect-media-tools{flex-wrap:wrap}
+@media(max-width:600px){
+ .umma-connect .connect-hero{padding:16px 16px 18px;gap:10px;border-radius:18px 18px 16px 16px}
+ .umma-connect .connect-hero-icon{flex-basis:42px;height:42px;font-size:24px}
+ .umma-connect .connect-hero .connect-close{padding:8px;font-size:12px}
+ .umma-connect .connect-settings{padding:14px}
+ .umma-connect .connect-actions{grid-template-columns:1fr}
+ .umma-connect .connect-compose{flex-wrap:wrap}
+ .umma-connect .connect-compose label{flex-basis:calc(100% - 90px)}
+}
