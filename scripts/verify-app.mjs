@@ -75,7 +75,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=81/, "Telegram must load updated checkout JS");
+assert.match(html, /js\/cafe\/kitchen\.js\?v=82/, "Telegram must load updated checkout JS");
 assert.ok(Number(html.match(/css\/app\.css\?v=(\d+)/)?.[1]) >= 37, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -87,7 +87,7 @@ console.log("PASS closed order tab and statuses");
 
 const kitchenLive=read("js/cafe/kitchen-live.js");
 new vm.Script(kitchenLive,{filename:"kitchen-live.js"});
-assert.match(html,/js\/cafe\/kitchen-live\.js\?v=5/,"kitchen live module missing");
+assert.match(html,/js\/cafe\/kitchen-live\.js\?v=6/,"kitchen live module missing");
 assert.match(kitchen,/ummaKitchenLive\?\.update\(/,"kitchen list must update alerts");
 assert.match(kitchen,/ummaKitchenLive\?\.start\(\)/,"kitchen must start polling");
 assert.match(kitchenLive,/data-kitchen-ack/,"new dishes need explicit acknowledgement");
@@ -174,17 +174,17 @@ console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender
 assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
 console.log("PASS kitchen is management-free, superadmin controls retained in admin");
 
-assert.ok(html.includes("js/cafe/kitchen-live.js?v=5"),"kitchen live cache version must be updated");
+assert.ok(html.includes("js/cafe/kitchen-live.js?v=6"),"kitchen live cache version must be updated");
 assert.ok(!kitchenLive.includes('Увидел новые блюда'),"misleading acknowledgement label must be removed");
 assert.match(kitchenLive,/order\.status==="pending"/,"pending order must be treated as new order");
 assert.match(kitchenLive,/seen\[id\]=ids;\s*continue;/,"initial order items must become baseline");
 assert.match(kitchenLive,/Принять дозаказ к приготовлению/,"real add-on acknowledgement must be meaningful");
 const fakeStorage=new Map();
 const listeners={};
-const fakePage={hidden:false,classList:{toggle:()=>false}};
+const fakePage={hidden:false,classList:{toggle:()=>false,contains:()=>false}};
 const kitchenContext={
   localStorage:{getItem:k=>fakeStorage.get(k)||null,setItem:(k,v)=>fakeStorage.set(k,v)},
-  document:{getElementById:id=>id==="cafeKitchenPage"?fakePage:null,addEventListener:(name,fn)=>listeners[name]=fn},
+  document:{body:{dataset:{}},getElementById:id=>id==="cafeKitchenPage"?fakePage:null,addEventListener:(name,fn)=>listeners[name]=fn},
   window:{addEventListener:()=>{},setInterval:()=>1,ummaKitchen:{rerender(){}},AudioContext:null},
   console
 };

@@ -268,7 +268,7 @@
       orders = incomingOrders;
       if (changed) {
         lastOrdersFingerprint = fingerprint;
-        window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)));
+        window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)), courierWorkspace);
     window.ummaCourierTracking?.syncOrders(orders);
         render();
         renderOpenBills();
@@ -329,7 +329,7 @@
     locations = Array.isArray(result.locations) ? result.locations : [];
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
-    window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)));
+    window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)), courierWorkspace);
     window.ummaCourierTracking?.syncOrders(orders);
     render();
     renderOpenBills();
@@ -353,6 +353,7 @@
     if(byId("courierOwnerSetup"))byId("courierOwnerSetup").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace||(cashBoard&&id!=="cafeCashToggle");
+    if(byId("kitchenOrderAudio"))byId("kitchenOrderAudio").hidden=courierWorkspace;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
     const cashToggle=byId("cafeCashToggle");
     if(cashToggle){cashToggle.setAttribute("aria-expanded","false");cashToggle.textContent="💰 Касса и смена";}
