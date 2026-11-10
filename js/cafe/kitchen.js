@@ -75,14 +75,15 @@
 
   function renderCounterIncoming(activeOrders) {
     const panel = byId("counterIncoming");
-    if (!panel || panel.hidden || document.body.dataset.workspace !== "pos") return;
+    if (!panel || panel.hidden || courierWorkspace) return;
     const locationId = byId("posLocation").value;
     const online = activeOrders.filter(order => order.location_id === locationId && order.created_via === "customer");
-    const latest = online.reduce((newest, order) =>
-      !newest || Date.parse(order.created_at) > Date.parse(newest.created_at) ? order : newest, null);
     const badge = byId("counterOrderCount");
     badge.hidden = online.length === 0;
     if (badge.textContent !== String(online.length)) badge.textContent = String(online.length);
+    if (document.body.dataset.workspace !== "pos") return;
+    const latest = online.reduce((newest, order) =>
+      !newest || Date.parse(order.created_at) > Date.parse(newest.created_at) ? order : newest, null);
     const title = latest ? "Из приложения · " + online.length + " · №" + latest.order_number : "Заказы из приложения";
     const items = latest?.cafe_order_items?.map(item => '<span class="work-order-item-name">' +
       orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span></span>').join("");
@@ -104,8 +105,8 @@
     if(counter){
       const locationId=byId("posLocation").value;
       shown=shown.filter(order=>order.location_id===locationId);
-      renderCounterIncoming(orders.filter(order=>!finished(order)));
     }
+    renderCounterIncoming(orders.filter(order=>!finished(order)));
     const cashBoard=document.body.dataset.workspace==="cashOrders";
     if (filter === "payment") shown=shown.filter(cashBoard
       ? o=>o.canAcceptPayments===true&&o.payment_status==="pending"&&!finished(o)&&o.payment_timing!=="on_delivery"
