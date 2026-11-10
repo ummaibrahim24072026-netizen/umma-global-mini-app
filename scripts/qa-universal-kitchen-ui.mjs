@@ -39,11 +39,21 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.querySelector('[data-pos-add]').click();
   const online={id:'online',location_id:'cafe',created_via:'customer',order_number:165,order_type:'pickup',
     status:'pending',payment_status:'pending',payment_method:'cash',requires_prepayment:true,canAcceptPayments:true,
-    created_at:'2026-11-10T10:00:00Z',total_vnd:50000,cafe_order_items:[{product_name_ru:'Плов',quantity:2,line_total_vnd:50000}]};
+    created_at:'2026-11-10T10:00:00Z',total_vnd:50000,cafe_order_items:[{product_name_ru:'Плов',quantity:2,line_total_vnd:50000,product:{sku:'UMMA-CAFE-PLOV'}},{product_name_ru:'Архивное блюдо',quantity:1,line_total_vnd:0,product:null}]};
   orders=[online,{...online,id:'other-location',location_id:'other',order_number:166},{...online,id:'staff-sale',created_via:'staff',order_number:167}];
   await new Promise(resolve=>setTimeout(resolve,2100));
   assert.match(d.getElementById('counterIncomingTitle').textContent,/№165/);
-  assert.match(d.getElementById('counterIncomingItems').textContent,/Плов × 2 · Ждёт оплаты/);
+  const preview=d.getElementById('counterIncomingItems');
+  assert.match(preview.textContent,/Плов × 2/);
+  assert.match(preview.textContent,/Ждёт оплаты/);
+  assert.match(preview.querySelector('img').src,/logo\/assets\/menu\/plov-white-v2.webp$/);
+  const orderItems=d.querySelector('[data-kitchen-order="online"] .kitchen-order-items');
+  assert.equal(orderItems.querySelector('img').src,preview.querySelector('img').src);
+  assert.equal(orderItems.querySelectorAll('img').length,1);
+  assert.match(orderItems.textContent,/Архивное блюдо × 1/);
+  const orderPhoto=orderItems.querySelector('img');
+  orderPhoto.dispatchEvent(new w.Event('error'));
+  assert.equal(orderPhoto.hidden,true);
   assert.equal(d.getElementById('counterOrderCount').textContent,'1');
   assert.ok(d.querySelector('[data-kitchen-order="online"] [data-payment-status="paid"]'));
   assert.equal(d.querySelector('[data-kitchen-order="other-location"]'),null);
