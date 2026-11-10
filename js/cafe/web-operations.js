@@ -17,12 +17,14 @@ function menu(){
   const query=$('posSearch').value.trim().toLocaleLowerCase();
   const cards=available().filter(p=>(p.name_ru+' '+p.name_vi+' '+p.name_en).toLocaleLowerCase().includes(query)).map(p=>{
     const photo=window.ummaCafeProductPhoto?.(p);
+    const description=p.description_ru||p.description_en||p.description_vi;
     return '<button type="button" class="pos-product" data-pos-add="'+esc(p.id)+'">'+
       '<span class="pos-product-media">'+
       (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
       '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
       '<strong>'+esc(p.name_ru||p.name_en||p.name_vi)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+
-      '</span><b>'+money(p.price_vnd)+' · ＋</b></button>';
+      '</span>'+(description?'<span class="pos-product-description">'+esc(description)+'</span>':'')+
+      '<b>'+money(p.price_vnd)+' · ＋</b></button>';
   });
   const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
   if(markup!==lastMenuMarkup){
