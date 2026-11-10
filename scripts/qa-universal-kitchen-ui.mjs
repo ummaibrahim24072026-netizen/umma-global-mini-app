@@ -3,7 +3,7 @@ const read=p=>readFileSync(p,'utf8'),html=read('staff.html').replace(/<script\b[
 for(const role of ['kitchen','cashier','kitchen_cashier']){
  const dom=new JSDOM(html,{url:'https://qa.invalid/staff.html',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,requests=[],receipts=new Map();let qty=0,lost=true,orders=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.HTMLElement.prototype.scrollIntoView=()=>{};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
- w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',price_vnd:25000}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
+ w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',price_vnd:25000},{id:'dessert',name_ru:'Медовик',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
  else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders};
  else if(b.action==='stockList')out={ok:true,products:[{id:'bread',name:'Лепёшка',quantity:2,reserved:0,available:2,confirmed:true,state:'ready'}]};
@@ -11,7 +11,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  else if(b.action==='ingredientList')out={ok:true,stock:[{id:'raw',name:'Мука',unit:'kg',quantity:qty,averageCostVnd:20000}],purchases:qty?[{id:'receipt',date:b.date,note:'QA store',totalVnd:40000,items:[{name:'Мука',unit:'kg',quantity:2,unitCostVnd:20000,totalVnd:40000}]}]:[],dayTotalVnd:qty?40000:0};
  else if(b.action==='ingredientReceive'){if(!receipts.has(b.requestKey)){qty+=b.items[0].quantity;receipts.set(b.requestKey,{ok:true,subtotalVnd:40000});}if(lost){lost=false;throw Error('Lost response after commit');}out=receipts.get(b.requestKey);}
  return new Response(JSON.stringify(out));};
- w.eval(read('js/cafe/order-requests.js'));w.eval(read('js/cafe/ingredients.js'));w.eval(read('js/cafe/ready-stock.js'));w.eval(read('js/cafe/web-operations.js'));await tick();await tick();
+ w.eval(read('js/cafe/order-requests.js'));w.eval(read('js/cafe/ingredients.js'));w.eval(read('js/cafe/ready-stock.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/cafe/web-operations.js'));await tick();await tick();
  assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]').hidden,role==='cashier');assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
  if(role==='kitchen_cashier'){
   w.eval(read('js/cafe/kitchen.js'));
@@ -19,6 +19,12 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.querySelector('[data-web-tab=pos]').click();
   await tick();
   assert.equal(d.getElementById('counterIncoming').hidden,false);
+  const breadPhoto=d.querySelector('[data-pos-add="bread"] img');
+  assert.match(breadPhoto.src,/logo\/assets\/menu\/flatbread-white-v2.webp$/);
+  assert.match(d.querySelector('[data-pos-add="dessert"] img').src,/assets\/cafe\/dessert-2-white.webp$/);
+  assert.equal(w.ummaCafeProductPhoto({image_url:'javascript:alert(1)'}),'');
+  breadPhoto.dispatchEvent(new w.Event('error'));
+  assert.equal(breadPhoto.hidden,true);
   assert.equal(d.getElementById('cafeKitchenPage').hidden,false);
   d.querySelector('[data-pos-add]').click();
   const online={id:'online',location_id:'cafe',created_via:'customer',order_number:165,order_type:'pickup',

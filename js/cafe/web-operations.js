@@ -12,7 +12,27 @@ function showPair(value){$('screenUnpair').hidden=!value;$('screenPairLink').hid
 function drawQr(root,payload){const qr=qrcode(0,'M');qr.addData(payload);qr.make();root.innerHTML=qr.createSvgTag({cellSize:5,margin:20,scalable:true});}
 async function displayOrder(orderId){const s=screen();if(!s){notice('Заказ создан. Для отдельного планшета откройте «Экран оплаты для клиента» и подключите его.');return;}await api('screenSelect',{screenId:s.id,orderId});}
 function available(){const id=$('posLocation').value,ready=me?.locations?.find(l=>l.id===id)?.ready_stock_enabled===true;return products.map(p=>{const i=inventory.find(i=>i.location_id===id&&i.product_id===p.id);return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),available:ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Number(i.quantity)-Number(i.reserved_quantity||0))):stockControl?(i?.is_available===false?0:Number(i?.quantity||0)-Number(i?.reserved_quantity||0)):99};}).filter(p=>p.available>0);}
-function menu(){const query=$('posSearch').value.trim().toLocaleLowerCase();$('posProducts').innerHTML=available().filter(p=>(p.name_ru+' '+p.name_vi+' '+p.name_en).toLocaleLowerCase().includes(query)).map(p=>'<button type="button" class="pos-product" data-pos-add="'+esc(p.id)+'"><strong>'+esc(p.name_ru||p.name_en||p.name_vi)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+'</span><b>'+money(p.price_vnd)+' · ＋</b></button>').join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');}
+let lastMenuMarkup;
+function menu(){
+  const query=$('posSearch').value.trim().toLocaleLowerCase();
+  const cards=available().filter(p=>(p.name_ru+' '+p.name_vi+' '+p.name_en).toLocaleLowerCase().includes(query)).map(p=>{
+    const photo=window.ummaCafeProductPhoto?.(p);
+    return '<button type="button" class="pos-product" data-pos-add="'+esc(p.id)+'">'+
+      '<span class="pos-product-media">'+
+      (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
+      '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
+      '<strong>'+esc(p.name_ru||p.name_en||p.name_vi)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+
+      '</span><b>'+money(p.price_vnd)+' · ＋</b></button>';
+  });
+  const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
+  if(markup!==lastMenuMarkup){
+    $('posProducts').innerHTML=markup;
+    lastMenuMarkup=markup;
+  }
+}
+$('posProducts').addEventListener('error',event=>{
+  if(event.target.matches('.pos-product-media img'))event.target.hidden=true;
+},true);
 const amount=()=>[...cart.values()].reduce((s,x)=>s+x.quantity*x.product.price_vnd,0);
 function renderCart(){$('posCart').innerHTML=cart.size?[...cart].map(([id,x])=>'<div class="pos-row"><strong>'+esc(x.product.name_ru||x.product.name_en)+'</strong><span>'+money(x.product.price_vnd*x.quantity)+'</span><div><button type="button" data-pos-delta="-1" data-id="'+esc(id)+'" aria-label="Уменьшить">−</button><b>'+x.quantity+'</b><button type="button" data-pos-delta="1" data-id="'+esc(id)+'" aria-label="Добавить">＋</button></div></div>').join(''):'<p>Добавьте хотя бы один товар.</p>';$('posTotal').textContent=money(amount());const jump=$('posCartJump');if(jump){jump.hidden=!cart.size||currentTab!=='pos'||basketInView;jump.textContent='К оплате · '+[...cart.values()].reduce((n,x)=>n+x.quantity,0)+' шт. · '+money(amount());}paymentFields();}
 function paymentFields(){const cash=$('posMethod').value==='cash',received=Number($('posCash').value);$('posCashLabel').hidden=!cash;$('posCash').required=cash;$('posSubmit').disabled=busy||!cart.size||[...cart].some(([id,x])=>x.quantity>(available().find(p=>p.id===id)?.available||0));$('posSubmit').textContent=cash?'Пробить и отметить оплату':'Создать заказ · Показать QR';$('posChange').textContent=cash&&$('posCash').value?(received<amount()?'Недостаточно: '+money(amount()-received):'Сдача: '+money(received-amount())):'';}

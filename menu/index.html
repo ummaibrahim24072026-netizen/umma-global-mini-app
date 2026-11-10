@@ -63,6 +63,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js"></script><script src="js/cafe/public-menu-delivery.js?v=5"></script><script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/order-alerts.js?v=5"></script><script src="js/cafe/order-inbox.js?v=7"></script><script src="js/cafe/public-menu-extras.js?v=8"></script>
+<script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/voice-order.js?v=1"></script>
 <script src="js/cafe/menu-audience.js?v=1"></script>
 <script>
@@ -77,16 +78,6 @@ const menuCategories = [
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
     { id: "other", label: "Другое", skus: [] }
   ];
-const productPhotos = new Map([
-    ["UMMA-CAFE-SHURPA", "logo/assets/menu/shurpa-white-v2.webp"],
-    ["UMMA-CAFE-PLOV", "logo/assets/menu/plov-white-v2.webp"],
-    ["UMMA-CAFE-FLATBREAD", "logo/assets/menu/flatbread-white-v2.webp"],
-    ["UMMA-CAFE-MANTI", "logo/assets/menu/manti.png"],
-    ["UMMA-CAFE-SALAD", "logo/assets/menu/salad.png"],
-    ["UMMA-CAFE-AYRAN", "logo/assets/menu/ayran-300.png"],
-    ["UMMA-CAFE-SAMSA", "logo/assets/menu/samsa-white.webp"],
-    ["UMMA-CAFE-SAMSA-CHICKEN", "logo/assets/menu/samsa-white.webp"]
-  ]);
 const halalBadge = '<svg class="cafe-halal-badge" viewBox="0 0 100 100" role="img" aria-label="Халяль" focusable="false"><path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z" fill="#fffdf5" stroke="#bd963e" stroke-width="3" stroke-linejoin="round"/><path d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z" fill="none" stroke="#bd963e" stroke-width="1.4"/><text x="50" y="48" text-anchor="middle" fill="#075e65" font-family="Times New Roman,serif" font-size="28" lang="ar">حلال</text><text x="50" y="70" text-anchor="middle" fill="#075e65" font-family="Arial,sans-serif" font-size="11" font-weight="700">HALAL</text></svg>';
 
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/', $=id=>document.getElementById(id);
@@ -102,7 +93,7 @@ const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+
 const qty=id=>cart.get(id)||0;
 const count=()=>[...cart.values()].reduce((a,b)=>a+b,0);
 const total=()=>products.reduce((a,p)=>a+qty(p.id)*Number(p.price_vnd),0);
-function safeImage(p){try{const source=productPhotos.get(p.sku)||p.image_url;if(!source)return '';const u=new URL(source,document.baseURI);return (u.protocol==='https:'||u.origin===location.origin)&&!u.username&&!u.password?u.href:'';}catch{return '';}}
+const safeImage=p=>window.ummaCafeProductPhoto?.(p)||'';
 function weight(p){return p.sku?.startsWith('UMMA-CAFE-BAKLAVA-')?t('1 шт.'):p.sku?.startsWith('UMMA-CAFE-DESSERT-')?t('1 порция'):p.weight_value?(p.weight_unit==='ml'?num(p.weight_value)+' '+t('мл'):'≈ '+num(p.weight_value)+' '+t('г')):'';}
 function batchTime(value){return new Intl.DateTimeFormat(I.locale(),{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
 function batchLabel(p){return t('Готовится · к {time}',{time:batchTime(p.plannedReadyAt)})+' · '+t('Время Нячанга');}
