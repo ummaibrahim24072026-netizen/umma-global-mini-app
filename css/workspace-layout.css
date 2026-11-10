@@ -187,3 +187,17 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
  .web-work-app .work-thread form .primary{width:100%}
  .web-work-app .cafe-kitchen-filters button:first-child{grid-column:auto}
 }
+
+/* Keep incoming orders visible while staff enters a sale on a phone. */
+.web-work-app .counter-incoming:not([hidden]){
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;
+  margin:0 0 18px;padding:12px;border:1px solid var(--work-line);
+  border-radius:14px;background:#edf7f4;
+}
+.web-work-app .counter-incoming p{margin:3px 0 0;color:#345d4e;font-size:13px}
+.web-work-app .counter-incoming button{padding-inline:10px}
+.web-work-app .order-origin{font-weight:750;color:var(--work-accent)}
+@media(max-width:600px){
+  .web-work-app[data-workspace=pos]:has(#counterIncoming:not([hidden])) #webPos{padding-bottom:32px}
+}
+.web-work-app .counter-order-count{display:inline-block;border-radius:999px;padding:1px 6px;background:#e7b952;color:#163c39;font-size:11px;line-height:1.5}

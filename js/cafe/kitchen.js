@@ -61,12 +61,38 @@
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
   const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const counterPaymentButton=o=>o.canAcceptPayments===true&&awaitingCounterPayment(o)?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">'+(o.payment_method==="cash"?"Принять наличные · Оплачено":"Подтвердить поступление оплаты")+'</button>':"";
+  function renderCounterIncoming(activeOrders) {
+    const panel = byId("counterIncoming");
+    if (!panel || panel.hidden || document.body.dataset.workspace !== "pos") return;
+    const locationId = byId("posLocation").value;
+    const online = activeOrders.filter(order => order.location_id === locationId && order.created_via === "customer");
+    const latest = online.reduce((newest, order) =>
+      !newest || Date.parse(order.created_at) > Date.parse(newest.created_at) ? order : newest, null);
+    const badge = byId("counterOrderCount");
+    badge.hidden = online.length === 0;
+    if (badge.textContent !== String(online.length)) badge.textContent = String(online.length);
+    const title = latest ? "Из приложения · " + online.length + " · №" + latest.order_number : "Заказы из приложения";
+    const items = latest?.cafe_order_items?.map(item => item.product_name_ru + " × " + item.quantity).join(" · ");
+    const status = latest && (waitingBatch(latest) ? "Ждёт партию" :
+      awaitingCounterPayment(latest) ? "Ждёт оплаты" : statusNames[latest.status]);
+    const text = latest ? [items, status].filter(Boolean).join(" · ") : "Активных заказов пока нет";
+    const heading = byId("counterIncomingTitle"), content = byId("counterIncomingItems");
+    if (heading.textContent !== title) heading.textContent = title;
+    if (content.textContent !== text) content.textContent = text;
+  }
+
   function render() {
     const root = byId("cafeKitchenOrders");
     if (!root) return;
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
     shown=shown.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+    const counter=document.body.dataset.workspace==="pos" && byId("counterIncoming")?.hidden===false;
+    if(counter){
+      const locationId=byId("posLocation").value;
+      shown=shown.filter(order=>order.location_id===locationId);
+      renderCounterIncoming(orders.filter(order=>!finished(order)));
+    }
     const cashBoard=document.body.dataset.workspace==="cashOrders";
     if (filter === "payment") shown=shown.filter(cashBoard
       ? o=>o.canAcceptPayments===true&&o.payment_status==="pending"&&!finished(o)&&o.payment_timing!=="on_delivery"
@@ -77,7 +103,7 @@
     const webSummary=byId("webOrderSummary");
     if(webSummary){
       webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";
-      const visible=orders.filter(o=>!finished(o)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+      const visible=orders.filter(o=>(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
       const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
@@ -149,6 +175,8 @@
         waitingBatch(order)?'<strong class="ready-plan-summary">Предзаказ · партия готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(order.preorder_expected_at)))+' · Нячанг. Сначала примите партию в плане готовки.</strong>':'',
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span class="order-phone">☎ ' + esc(order.customer_phone) + '</span>' : "",
+        byId("counterIncoming") && ["staff","customer"].includes(order.created_via)
+          ? '<span class="order-origin">' + (order.created_via==="staff" ? "У стойки" : "Из приложения") + '</span>' : "",
         '<span class="order-type">📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
         '<span class="order-payment">💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
         order.order_type === "delivery" ? '<span class="order-delivery-state">🛵 ' + esc(deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
