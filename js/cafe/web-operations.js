@@ -1,7 +1,7 @@
 /* POS and account control for the standalone web staff app. Server prices are authoritative. */
 (()=>{'use strict';const $=id=>document.getElementById(id),base='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/',auth=window.ummaStaffAuth;
 const money=v=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(v)||0),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let me=null,products=[],inventory=[],stockControl=false,cart=new Map(),sale=null,busy=false,installPrompt=null,currentTab='pos',refreshing=false,basketInView=false,openKitchen=false;
+let catalog=null,catalogLocation='',me=null,products=[],inventory=[],stockControl=false,cart=new Map(),sale=null,busy=false,installPrompt=null,currentTab='pos',refreshing=false,basketInView=false,openKitchen=false;
 const requested=new URLSearchParams(location.search).get('work');
 const invite=new URLSearchParams(location.hash.slice(1)).get('invite');
 if(requested==='stock'){
@@ -17,11 +17,32 @@ function screen(){try{return JSON.parse(localStorage.getItem(screenKey())||'null
 function showPair(value){$('screenUnpair').hidden=!value;$('screenPairLink').hidden=!value;$('screenPairQr').replaceChildren();if(!value)return;const url=new URL('payment-screen.html',location.href);url.hash=new URLSearchParams({screen:value.token});$('screenPairLink').href=url.href;drawQr($('screenPairQr'),url.href);$('screenPairState').textContent='Откройте эту ссылку на планшете или отсканируйте QR. Экран привязан к выбранному кафе.';}
 function drawQr(root,payload){const qr=qrcode(0,'M');qr.addData(payload);qr.make();root.innerHTML=qr.createSvgTag({cellSize:5,margin:20,scalable:true});}
 async function displayOrder(orderId){const s=screen();if(!s){notice('Заказ создан. Для отдельного планшета откройте «Экран оплаты для клиента» и подключите его.');return;}await api('screenSelect',{screenId:s.id,orderId});}
-function available(){const id=$('posLocation').value,ready=me?.locations?.find(l=>l.id===id)?.ready_stock_enabled===true;return products.map(p=>{const i=inventory.find(i=>i.location_id===id&&i.product_id===p.id);return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),available:ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Number(i.quantity)-Number(i.reserved_quantity||0))):stockControl?(i?.is_available===false?0:Number(i?.quantity||0)-Number(i?.reserved_quantity||0)):99};}).filter(p=>p.available>0);}
+async function loadAvailability(){
+ const id=$('posLocation').value;
+ if(!me?.locations?.find(l=>l.id===id)?.ready_stock_enabled){catalog=null;catalogLocation='';return;}
+ const r=await fetch(base+'cafe-guest-order?catalog=1&location='+encodeURIComponent(id),{cache:'no-store',signal:AbortSignal.timeout(12000)}),d=await r.json();
+ if(!r.ok||!d.ok||!Array.isArray(d.products))throw Error('Не удалось обновить наличие и план готовки');
+ if(id!==$('posLocation').value)return;
+ catalog=new Map(d.products.map(p=>[p.id,p]));catalogLocation=id;
+}
+function available(){
+ const id=$('posLocation').value,ready=me?.locations?.find(l=>l.id===id)?.ready_stock_enabled===true;
+ return products.map(p=>{
+  const i=inventory.find(i=>i.location_id===id&&i.product_id===p.id),c=catalogLocation===id?catalog?.get(p.id):null;
+  const quantity=ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Number(i.quantity)-Number(i.reserved_quantity||0))):stockControl?(i?.is_available===false?0:Math.max(0,Number(i?.quantity||0)-Number(i?.reserved_quantity||0))):99;
+  return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),stockManaged:ready||stockControl,available:c?Math.max(0,Number(c.available)||0):quantity,plannedQuantity:c?.plannedQuantity||0,plannedAvailable:Math.max(0,Number(c?.plannedAvailable)||0),plannedReadyAt:c?.plannedReadyAt,planRevision:c?.planRevision};
+ });
+}
+function stockLabel(p){
+ const ready=p.stockManaged?'<small class="pos-stock-ready">В наличии: '+p.available+'</small>':'';
+ const planned=p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt));
+ const time=planned?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(p.plannedReadyAt)):'';
+ return '<div class="pos-stock-info">'+ready+(planned?'<small class="pos-stock-plan">Следующая партия: '+p.plannedAvailable+' · '+esc(time)+' · время Нячанга</small>':'')+'</div>';
+}
 let lastMenuMarkup;
 function menu(){
   const query=$('posSearch').value.trim().toLocaleLowerCase();
-  const cards=available().filter(p=>(p.name_ru+' '+p.name_vi+' '+p.name_en).toLocaleLowerCase().includes(query)).map(p=>{
+  const cards=available().filter(p=>p.available>0||p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))).filter(p=>(p.name_ru+' '+p.name_vi+' '+p.name_en).toLocaleLowerCase().includes(query)).map(p=>{
     const photo=window.ummaCafeProductPhoto?.(p);
     const description=p.description_ru||p.description_en||p.description_vi;
     const name=p.name_ru||p.name_en||p.name_vi;
@@ -31,8 +52,8 @@ function menu(){
       '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
       '<strong>'+esc(name)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+'</span>'+
       (description?'<details class="pos-product-description"><summary>Описание</summary><p>'+esc(description)+'</p></details>':'')+
-      '<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
-      '<button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'" aria-label="Добавить '+esc(name)+'">+</button></div></article>';
+      stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
+      '<button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0?' disabled':'')+' aria-label="Добавить '+esc(name)+'">+</button></div></article>';
   });
   const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
   if(markup!==lastMenuMarkup){
@@ -59,9 +80,9 @@ try{if(screen())await displayOrder(created.id);}catch{notice('Продажа с�
 }catch(e){$('posResult').textContent=(created?'Заказ №'+created.orderNumber+' уже создан. Не пробивайте повторно. ':'')+e.message;}
 finally{busy=false;paymentFields();}}
 $('posForm').onsubmit=sell;$('posMethod').onchange=paymentFields;$('posCash').oninput=paymentFields;$('posSearch').oninput=menu;
-$('posLocation').onchange=()=>{cart.clear();sale=null;$('posReceipt').hidden=true;renderCart();menu();showPair(screen());if(openKitchen)window.ummaKitchen.rerender?.();};
+$('posLocation').onchange=()=>{cart.clear();sale=null;$('posReceipt').hidden=true;renderCart();menu();showPair(screen());void loadAvailability().then(menu).catch(e=>notice(e.message));if(openKitchen)window.ummaKitchen.rerender?.();};
 $('posProducts').onclick=e=>{const b=e.target.closest('[data-pos-add]');if(!b||busy)return;const p=available().find(x=>x.id===b.dataset.posAdd);if(!p)return;const x=cart.get(p.id)||{product:p,quantity:0};if(x.quantity>=Math.min(99,p.available))return;x.quantity++;cart.set(p.id,x);renderCart();};
-$('posCart').onclick=e=>{const b=e.target.closest('[data-pos-delta]');if(!b||busy)return;const x=cart.get(b.dataset.id);if(!x)return;const qty=x.quantity+Number(b.dataset.posDelta);if(qty>Math.min(99,x.product.available))return;if(qty<=0)cart.delete(b.dataset.id);else x.quantity=qty;renderCart();};
+$('posCart').onclick=e=>{const b=e.target.closest('[data-pos-delta]');if(!b||busy)return;const x=cart.get(b.dataset.id);if(!x)return;const qty=x.quantity+Number(b.dataset.posDelta);if(qty>x.quantity&&qty>Math.min(99,available().find(p=>p.id===b.dataset.id)?.available||0))return;if(qty<=0)cart.delete(b.dataset.id);else x.quantity=qty;renderCart();};
 $('posConfirmQr').onclick=async()=>{if(busy||!sale)return;busy=true;$('posConfirmQr').disabled=true;try{await api('updatePayment',{orderId:sale.id,paymentStatus:'paid',paymentMethod:'qr'},'cafe-kitchen');sale.paymentStatus='paid';showSale(sale);$('posResult').textContent='Оплата подтверждена. Заказ передан на сборку.';}catch(e){$('posResult').textContent=e.message;}finally{busy=false;$('posConfirmQr').disabled=false;}};
 $('posShowScreen').onclick=()=>displayOrder(sale?.id).catch(e=>notice(e.message));
 $('screenPair').onclick=async()=>{if(busy)return;busy=true;$('screenPair').disabled=true;try{const old=screen();if(old)await api('screenRevoke',{screenId:old.id});const d=await api('screenCreate',{locationId:$('posLocation').value});const value={id:d.id,token:d.screenToken};localStorage.setItem(screenKey(),JSON.stringify(value));showPair(value);if(sale)await displayOrder(sale.id);}catch(e){$('screenPairState').textContent=e.message;}finally{busy=false;$('screenPair').disabled=false;}};
@@ -160,14 +181,14 @@ if(sell){
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();
   if(!r.ok||!d.ok)throw Error('Не удалось загрузить меню');
   products=(d.products||[]).filter(p=>p.is_active!==false&&p.price_vnd!=null&&!p.catalog_preview&&!p.photo_only);
-  inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;renderCart();menu();showPair(screen());
+  inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;try{await loadAvailability();}catch(error){notice(error.message);}renderCart();menu();showPair(screen());
  }catch(error){$('posProducts').textContent=error.message+'. Обновите страницу для повторной загрузки.';}
 }
 }
 $('webLoginForm').onsubmit=async e=>{e.preventDefault();$('webLoginSubmit').disabled=true;$('webLoginSubmit').textContent=invite?'Создаём доступ…':'Входим…';$('webLoginError').textContent='';try{const d=await api(invite?'activate':'login',{login:$('webLoginName').value,password:$('webPassword').value,...(invite?{invite}:{})});auth.save(d.token);history.replaceState(null,'',location.pathname+location.search);$('webPassword').value='';await boot();}catch(err){$('webLoginError').textContent=err.message;}finally{$('webLoginSubmit').disabled=false;$('webLoginSubmit').textContent=invite?'Создать доступ':'Войти';}};
 // Recovered creation is shown as pending; a cashier still needs to confirm the actual payment.
 document.addEventListener('umma:cafe-operation-recovered',async e=>{if(!e.detail.payload.staffOrder)return;for(const x of cart.values()){const row=inventory.find(i=>i.product_id===x.product.id&&i.location_id===$('posLocation').value);if(row)row.reserved_quantity=Number(row.reserved_quantity||0)+x.quantity;}cart.clear();renderCart();const o={...e.detail.result.order,paymentMethod:e.detail.payload.paymentMethod,paymentStatus:'pending'};showSale(o);if(o.paymentMethod==='qr'){const d=await api('payment',{orderId:o.id});showSale(o,d.payment);}notice('Прежний заказ восстановлен. Проверьте оплату в разделе «Касса → Ждут оплаты».');});
-let stockRefreshing=false;async function refreshStock(){if(!me||stockRefreshing||busy||document.hidden||currentTab!=='pos')return;stockRefreshing=true;try{const r=await fetch(base+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(12000)}),d=await r.json();if(r.ok&&d.ok){inventory=d.inventory||[];menu();paymentFields();}}catch{}finally{stockRefreshing=false;}}document.addEventListener('umma:stock-changed',()=>void refreshStock());setInterval(()=>void refreshStock(),5000);
+let stockRefreshing=false;async function refreshStock(){if(!me||stockRefreshing||busy||document.hidden||currentTab!=='pos')return;stockRefreshing=true;try{const r=await fetch(base+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(12000)}),d=await r.json();if(r.ok&&d.ok){inventory=d.inventory||[];await loadAvailability();menu();paymentFields();}}catch{}finally{stockRefreshing=false;}}document.addEventListener('umma:stock-changed',()=>void refreshStock());setInterval(()=>void refreshStock(),5000);
 async function reconcile(){if(!me||refreshing||busy||document.hidden||currentTab!=='pos'||!sale)return;refreshing=true;try{const d=await api('list',{},'cafe-kitchen');const o=d.orders.find(o=>o.id===sale.id);if(o&&(o.payment_status!==sale.paymentStatus||o.status!==sale.status)){const next={...sale,paymentStatus:o.payment_status,status:o.status};let payment=null;if(next.paymentStatus==='pending'&&next.paymentMethod==='qr'&&!['cancelled','completed'].includes(next.status)){payment=(await api('payment',{orderId:next.id})).payment;}showSale(next,payment);}}catch{}finally{refreshing=false;}}
 setInterval(()=>void reconcile(),5000);if(auth.credential()&&!invite)void boot().catch(e=>{$('webLoginError').textContent=e.message;notice(e.message);if(e.status===401)auth.clear();});
 })();

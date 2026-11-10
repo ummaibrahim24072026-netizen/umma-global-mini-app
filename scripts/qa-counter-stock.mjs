@@ -1,0 +1,42 @@
+import {JSDOM} from 'jsdom';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const read=p=>readFileSync(p,'utf8'),tick=()=>new Promise(r=>setTimeout(r,25));
+const html=read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html',pretendToBeVisual:true});
+const w=dom.window,d=w.document;
+w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};
+let refresh;
+w.setInterval=fn=>{if(String(fn).includes('refreshStock'))refresh=fn;return 1;};
+const dishes=[{id:'plov',name_ru:'Плов',price_vnd:120000},{id:'manti',name_ru:'Манты',price_vnd:150000}];
+let stock=[{id:'plov',available:3,plannedQuantity:12,plannedAvailable:7,plannedReadyAt:'2026-11-11T11:30:00Z',planRevision:'batch-1'},
+ {id:'manti',available:0,plannedQuantity:8,plannedAvailable:6,plannedReadyAt:'2026-11-11T12:00:00Z',planRevision:'batch-2'}];
+let catalogCalls=0;
+w.fetch=async(url,o)=>{
+ const b=JSON.parse(o?.body||'{}');let out={ok:true};
+ if(url.includes('cafe-guest-order?catalog=1')){catalogCalls++;assert.match(url,/location=cafe/);out={ok:true,products:stock};}
+ else if(url.endsWith('cafe-menu'))out={ok:true,products:dishes,inventory:[],inventoryControlEnabled:true};
+ else if(b.action==='me')out={ok:true,user:{id:100,role:'employee',name:'Кассир'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}]};
+ return new Response(JSON.stringify(out));
+};
+w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));w.eval(read('js/cafe/web-operations.js'));
+await tick();await tick();
+const card=id=>d.querySelector('[data-pos-product="'+id+'"]');
+assert.match(card('plov').textContent,/В наличии: 3/);
+assert.match(card('plov').textContent,/Следующая партия: 7/);
+assert.match(card('plov').textContent,/18:30/);
+assert.match(card('plov').textContent,/11\.11/);
+assert.match(card('manti').textContent,/В наличии: 0/);
+assert.match(card('manti').textContent,/Следующая партия: 6/);
+assert.equal(card('manti').querySelector('[data-pos-add]').disabled,true,'planned portions cannot be sold as ready');
+card('plov').querySelector('[data-pos-add]').click();
+assert.match(d.getElementById('posCart').textContent,/Плов/);
+stock=[{id:'plov',available:1,plannedQuantity:0,plannedAvailable:0,plannedReadyAt:null,planRevision:null},{...stock[1],plannedAvailable:4}];
+refresh();await tick();await tick();
+assert.equal(catalogCalls,2);
+assert.match(card('plov').textContent,/В наличии: 1/);
+assert.doesNotMatch(card('plov').textContent,/Следующая партия/);
+assert.match(card('manti').textContent,/Следующая партия: 4/);
+assert.match(d.getElementById('posCart').textContent,/Плов/,'refresh preserves the current order');
+w.close();
+console.log('PASS counter stock: same public availability, reserved future capacity, Nha Trang date/time, plan-only cards without ready sales, live refresh, cancelled plan removal and cart preservation.');

@@ -234,3 +234,5 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 .web-work-app .work-order-item-photo[hidden]{display:none}
 .web-work-app #counterIncomingItems .work-order-item-name{margin:4px 0}
 .web-work-app .kitchen-order-items li{align-items:center}
+
+.pos-stock-info{display:grid;gap:5px;font-size:13px;line-height:1.5}.pos-stock-ready{color:#075e65;font-weight:700}.pos-stock-plan{color:#775516}.pos-product-add:disabled{opacity:.4;cursor:default}
