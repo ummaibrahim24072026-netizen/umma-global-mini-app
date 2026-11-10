@@ -8,13 +8,13 @@ import { sandboxCanAdvance } from '../supabase/functions/cafe-kitchen/sandbox-po
 const rows = Array.from({length:335}, (_,i)=>({
   id:String(i).padStart(4,'0'), status:i<130?'completed':'pending',
   created_at:new Date(2026,0,1,0,i).toISOString(), location_id:i===334?'other':'cafe',
-  courier_telegram_id:7, order_type:'delivery',
+  courier_telegram_id:7, order_type:'delivery', created_via:'customer',
 }));
 function client(fail=false) { return { from(table) {
   assert.equal(table,'cafe_orders');
   let data=[...rows], ordering=[], max=Infinity;
   const q={
-    select(){return q;},
+    select(columns){assert.match(columns,/\bcreated_via\b/);return q;},
     in(key,values){data=data.filter(r=>values.includes(r[key]));return q;},
     eq(key,value){data=data.filter(r=>r[key]===value);return q;},
     gt(key,value){data=data.filter(r=>r[key]>value);return q;},
@@ -27,7 +27,7 @@ function client(fail=false) { return { from(table) {
 const listed=await loadCafeOrders(client(),{locationIds:['cafe'],courierId:7});
 assert.equal(listed.data.filter(r=>r.status==='pending').length,204);
 assert.equal(listed.data.filter(r=>r.status==='completed').length,100);
-assert.ok(listed.data.some(r=>r.id==='0333'));
+assert.ok(listed.data.some(r=>r.id==='0333'&&r.created_via==='customer'));
 assert.ok(!listed.data.some(r=>r.location_id==='other'));
 const empty=await loadCafeOrders(client(),{locationIds:[],courierId:null});
 assert.deepEqual(empty.data,[]);
