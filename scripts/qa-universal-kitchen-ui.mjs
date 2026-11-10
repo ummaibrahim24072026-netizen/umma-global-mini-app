@@ -3,7 +3,7 @@ const read=p=>readFileSync(p,'utf8'),html=read('staff.html').replace(/<script\b[
 for(const role of ['kitchen','cashier','kitchen_cashier']){
  const dom=new JSDOM(html,{url:'https://qa.invalid/staff.html',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,requests=[],receipts=new Map();let qty=0,lost=true,orders=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.HTMLElement.prototype.scrollIntoView=()=>{};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
- w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',price_vnd:25000},{id:'dessert',name_ru:'Медовик',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
+ w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
  else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders};
  else if(b.action==='stockList')out={ok:true,products:[{id:'bread',name:'Лепёшка',quantity:2,reserved:0,available:2,confirmed:true,state:'ready'}]};
@@ -22,6 +22,8 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   const breadPhoto=d.querySelector('[data-pos-add="bread"] img');
   assert.match(breadPhoto.src,/logo\/assets\/menu\/flatbread-white-v2.webp$/);
   assert.match(d.querySelector('[data-pos-add="dessert"] img').src,/assets\/cafe\/dessert-2-white.webp$/);
+  assert.equal(d.querySelector('[data-pos-add="bread"] .pos-product-description').textContent,'Лепёшка <из печи>');
+  assert.equal(d.querySelector('[data-pos-add="dessert"] .pos-product-description').textContent,'Honey cake');
   assert.equal(w.ummaCafeProductPhoto({image_url:'javascript:alert(1)'}),'');
   breadPhoto.dispatchEvent(new w.Event('error'));
   assert.equal(breadPhoto.hidden,true);
