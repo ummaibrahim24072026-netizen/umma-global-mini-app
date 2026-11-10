@@ -3,7 +3,7 @@
   'use strict';
   if (window.ummaWelcomeAudio || typeof Audio !== 'function') return;
   const script = document.currentScript;
-  const source = new URL('../../assets/audio/welcome-ru.mp3', script.src).href;
+  const source = new URL('../../assets/audio/welcome-ru.mp3?v=3', script.src).href;
   const audio = new Audio(source);
   audio.preload = 'auto';
   let started = false;
