@@ -89,12 +89,34 @@ Deno.serve(async req=>{
   const results=await Promise.all([
    db.from('telegram_users').select('telegram_id,first_name,role,is_active').in('telegram_id',[...ids]),
    db.from('locations').select('id,name').in('id',[...new Set(staff.map(s=>s.location_id))]),
-   db.from('cafe_web_invites').select('actor_id,expires_at,used_at').in('actor_id',[...ids]).is('used_at',null)
+   db.from('cafe_web_invites').select('actor_id,expires_at,dismissed_at').in('actor_id',[...ids]).is('used_at',null)
   ]);for(const r of results)if(r.error)throw r.error;
   const [users,locations,invites]=results.map(r=>r.data||[]);
   const employees=[...ids].map(id=>{const account=accounts.find(a=>String(a.actor_id)===id),user=users.find(u=>String(u.telegram_id)===id),assignments=staff.filter(s=>String(s.telegram_id)===id).map(s=>({...s,locationName:locations.find(l=>l.id===s.location_id)?.name||'Кафе'})),pending=invites.filter(i=>String(i.actor_id)===id).sort((a,b)=>Date.parse(b.expires_at)-Date.parse(a.expires_at))[0];
-   return {actor_id:Number(id),name:user?.first_name||account?.login||'Сотрудник',login:account?.login||null,assignments,status:!user?.is_active||account?.active===false?'disabled':account?.active?'active':pending?(Date.parse(pending.expires_at)>Date.now()?'invited':'expired'):'not_created',inviteExpiresAt:pending?.expires_at||null};});
-  return reply({ok:true,accounts,employees});
+   const status=!user?.is_active||account?.active===false?'disabled':account?.active?'active':pending?(Date.parse(pending.expires_at)>Date.now()?'invited':'expired'):'not_created';
+   return {actor_id:Number(id),name:user?.first_name||account?.login||'Сотрудник',login:account?.login||null,assignments,status,inviteExpiresAt:pending?.expires_at||null,dismissed:status==='expired'&&Boolean(pending?.dismissed_at)};});
+  return reply({ok:true,accounts,employees:employees.filter(({dismissed})=>!dismissed).map(({dismissed,...employee})=>employee)});
+ }
+ if(b.action==='staffDismissExpiredInvite'){
+  if(!isOwner)return reply({ok:false,error:'Только владелец'},403);
+  const target=b.actorId;
+  if(!Number.isSafeInteger(target)||target<=0||target===actor)return reply({ok:false,error:'Сотрудник не найден'},400);
+  const results=await Promise.all([
+   db.from('telegram_users').select('is_active').eq('telegram_id',target).maybeSingle(),
+   db.from('cafe_web_accounts').select('actor_id').eq('actor_id',target).maybeSingle(),
+   db.from('cafe_web_invites').select('expires_at').eq('actor_id',target).is('used_at',null)
+  ]);
+  for(const result of results)if(result.error)throw result.error;
+  const [user,account,invites]=results;
+  const latest=invites.data?.sort((a,b)=>Date.parse(b.expires_at)-Date.parse(a.expires_at))[0];
+  const now=new Date();
+  if(!user.data?.is_active||account.data||!latest||latest.expires_at!==b.inviteExpiresAt||Date.parse(latest.expires_at)>now.getTime()){
+   return reply({ok:false,error:'Статус приглашения изменился. Обновите список сотрудников.'},409);
+  }
+  const {error}=await db.from('cafe_web_invites').update({dismissed_at:now.toISOString()})
+   .eq('actor_id',target).eq('expires_at',latest.expires_at).is('used_at',null).is('dismissed_at',null);
+  if(error)throw error;
+  return reply({ok:true});
  }
  if(b.action==='staffDisable'){
   if(!isOwner||Number(b.actorId)===actor)return reply({ok:false},403);
