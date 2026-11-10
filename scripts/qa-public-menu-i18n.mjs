@@ -7,6 +7,10 @@ let networkCalls=0;
 const dom=new JSDOM(html,{url:'https://example.com/menu/?point=partner-01',runScripts:'dangerously',beforeParse(w){w.localStorage.setItem('umma-menu-language','ru');w.eval(languageScript);w.eval(readFileSync(new URL('../js/cafe/product-photo.js',import.meta.url),'utf8'));w.eval(readFileSync(new URL('../js/cafe/public-menu-extras.js',import.meta.url),'utf8'));w.AbortSignal=AbortSignal;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};w.fetch=async url=>{networkCalls++;return {ok:true,json:async()=>({ok:true,products,locations:[{id:'e22788bd-4734-4b3a-911e-ba103d52617a',name:'HALAL UMMA',address:'15 Nguyễn Biểu, Nha Trang'}]})};};}});
 const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,10));
 assert.equal(d.getElementById('menuLanguage').options.length,12);
+const googleReview=d.getElementById('googleReviewLink');
+assert.equal(googleReview.href,'https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY');
+assert.equal(googleReview.target,'_blank');
+assert.equal(googleReview.textContent,'Оставить отзыв в Google Maps');
 assert.match(d.querySelector('img.cafe-product-photo').src,/logo\/assets\/menu\/shurpa-white-v2.webp$/);
 d.querySelector('[data-id="'+products[0].id+'"][data-change="1"]').click();d.getElementById('openCart').click();d.getElementById('customerName').value='Ibrahim';d.getElementById('tableNumber').value='3';
 const prices=new Map();
@@ -16,6 +20,9 @@ for(const code of ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'])
  for(const key of ['Наше меню','Супы','Корзина','Оформить заказ','Описание','Выбрать язык']){const value=w.ummaMenuI18n.t(key);assert.ok(value);if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(value),`${code}: untranslated ${key}`);}
  for(const p of products)for(const field of ['name','description']){const text=w.ummaMenuI18n.field(p,field);assert.ok(text);if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(text),`${code}: untranslated ${field} ${p.sku}`);}
  assert.equal(d.getElementById('submit').textContent,w.ummaMenuI18n.t('Оформить заказ'));
+ assert.equal(googleReview.textContent,w.ummaMenuI18n.t('Оставить отзыв в Google Maps'));
+ if(code!=='ru')assert.doesNotMatch(googleReview.textContent,/[А-Яа-яЁё]/);
+ if(code==='vi')assert.equal(googleReview.textContent,'Viết đánh giá trên Google Maps');
 }
 assert.equal(networkCalls,2,'language changes must not fetch translations or send customer data');
 w.ummaMenuI18n.setLanguage('ar');d.getElementById('closeCart').click();d.getElementById('searchToggle').click();d.getElementById('search').value='شوربا';d.getElementById('search').dispatchEvent(new w.Event('input'));assert.equal(d.querySelectorAll('[data-card]').length,1);assert.equal(d.querySelector('[data-card]').dataset.card,products[0].id);assert.equal(d.getElementById('barCount').textContent,w.ummaMenuI18n.number(1));
