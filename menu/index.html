@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#03A2A5"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=14"></script>
+<script src="js/cafe/public-menu-i18n.js?v=15"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -37,7 +37,12 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 
 .cafe-preorder-label{display:block;margin:8px 0;padding:8px 10px;background:#fff3d0;border:1px solid #d7b454;border-radius:10px;font-size:13px;line-height:1.5;color:#654a13;overflow-wrap:anywhere}#cafePage .cafe-product .cafe-preorder-label{margin:2px 0;padding:6px 8px;font-size:12px}#cafePage .cafe-products{align-items:stretch}.cafe-product-bottom{flex-wrap:wrap}
 
-.cafe-availability{display:grid;gap:5px;margin:10px 0;line-height:1.5;font-size:12px}.cafe-availability .cafe-stock-count{color:var(--umma-brand-strong);font-weight:750}.cafe-next-batch{display:block;color:#775516;font-weight:650;overflow-wrap:anywhere}
+.cafe-availability{margin-top:4px}.cafe-availability .cafe-stock-count{color:var(--umma-brand-strong);font-weight:750;font-size:12px}
+.cafe-preorder-card{display:grid;gap:5px;margin-top:4px;padding:10px;border:1px solid #e6d3a2;border-radius:12px;background:#fff8e7;color:#644716;overflow-wrap:anywhere}
+.cafe-preorder-card strong{font-size:13px;line-height:1.35}.cafe-preorder-card small{font-size:11px;line-height:1.35}
+#cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
+#cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
+#cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=3"></script><link rel="stylesheet" href="css/interface-polish.css?v=2"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar"><div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="34" height="34">UMMA CAFE</div><div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div></div>
@@ -105,12 +110,17 @@ function visibleDish(p){return stockLeft(p)>0||p.isPreorder&&p.plannedQuantity>0
 function stockLeft(p){return p.stockManaged?Math.max(0,Number(p.available)||0):99;}function shortages(){return [...cart].some(([id,n])=>n>stockLeft(products.find(p=>p.id===id)||{stockManaged:true}));}
 function stockSummary(p){
  if(!p.stockManaged)return '';
- const ready=stockLeft(p);
- const plan=p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt));
- return '<div class="cafe-availability"><small class="cafe-stock-count">'+t('В наличии: {count}',{count:num(ready)})+'</small>'+(plan?'<small class="cafe-next-batch">'+esc(t('Следующая партия: {count} · {time}',{count:num(Math.max(0,Number(p.plannedAvailable)||0)),time:batchTime(p.plannedReadyAt)}))+' · '+esc(t('Время Нячанга'))+'</small>':'')+'</div>';
+ return '<div class="cafe-availability"><small class="cafe-stock-count">'+esc(t('В наличии: {count}',{count:num(stockLeft(p))}))+'</small></div>';
 }
-function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<div class="cafe-product-media"><img class="cafe-product-photo" src="'+esc(img)+'" alt="'+esc(n)+'" loading="lazy" decoding="async"></div>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+halalBadge.replace('aria-label="Халяль"','aria-label="'+esc(t('Халяль'))+'"')+'<h3>'+esc(n)+'</h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+(description(p)?'<details class="cafe-product-description"><summary>'+t('Описание')+'</summary><p>'+esc(description(p))+'</p></details>':'')+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?'<div class="cafe-product-bottom"><span>'+esc(t('Предзаказ: {count}',{count:num(stockLeft(future))}))+'</span>'+cardQuantity(future,n)+'</div>':'')+'</article>';}
-function cardQuantity(p,n){const q=qty(p.id);if(p.isPreorder)n+=' · '+batchLabel(p);return (q?'<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+p.id+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>':'<button type="button" class="cafe-add" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'">+</button>');}
+function preorderCard(p,n){
+ const readyAt=new Date(p.plannedReadyAt),timeZone='Asia/Ho_Chi_Minh';
+ const day=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'});
+ const today=day.format(readyAt)===day.format(Date.now());
+ const time=new Intl.DateTimeFormat(I.locale(),{timeZone,hour:'2-digit',minute:'2-digit',...(today?{}:{day:'numeric',month:'short'})}).format(readyAt);
+ return '<div class="cafe-preorder-card"><strong>'+esc(t(today?'Будет готово сегодня к {time}':'Будет готово к {time}',{time}))+'</strong><small>'+esc(t('Порций для предзаказа: {count}',{count:num(stockLeft(p))}))+'</small>'+cardQuantity(p,n)+'</div>';
+}
+function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<div class="cafe-product-media"><img class="cafe-product-photo" src="'+esc(img)+'" alt="'+esc(n)+'" loading="lazy" decoding="async"></div>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+halalBadge.replace('aria-label="Халяль"','aria-label="'+esc(t('Халяль'))+'"')+'<h3>'+esc(n)+'</h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+(description(p)?'<details class="cafe-product-description"><summary>'+t('Описание')+'</summary><p>'+esc(description(p))+'</p></details>':'')+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+function cardQuantity(p,n){const q=qty(p.id);if(p.isPreorder)n+=' · '+batchLabel(p);return (q?'<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+p.id+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>':'<button type="button" class="'+(p.isPreorder?'cafe-preorder-action':'cafe-add')+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'">'+(p.isPreorder?esc(t('Предзаказать')):'+')+'</button>');}
 function menuDishes(){
  const batches=new Map(products.filter(p=>p.isPreorder&&visibleDish(p)).map(p=>[p.productId,p]));
  return products.filter(p=>!p.isPreorder&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
