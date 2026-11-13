@@ -485,6 +485,31 @@
  document.querySelector('.farm-button')?.addEventListener('click',()=>openService('farm'));
  byId('nativeHomeShortcut')?.addEventListener('click',()=>{try{sdk?.addToHomeScreen?.();}catch{if(typeof showToast==='function')showToast('Добавление ярлыка недоступно в этой версии Telegram');}});
  if(byId('nativeHomeShortcut'))byId('nativeHomeShortcut').hidden=typeof sdk?.addToHomeScreen!=='function'||!sdk?.initData;
+ const shareButton=document.createElement('button');
+ shareButton.type='button';shareButton.id='shareAppButton';shareButton.className='cafe-back';
+ const shareLabels={ru:'Поделиться приложением',en:'Share the app',vi:'Chia sẻ ứng dụng'};
+ const shareMessages={ru:'Откройте приложение UMMA GLOBAL — полезные сервисы, кафе и сообщество.',en:'Explore the UMMA GLOBAL app — useful services, our cafe and community.',vi:'Khám phá ứng dụng UMMA GLOBAL — các dịch vụ hữu ích, quán cà phê và cộng đồng.'};
+ function updateShareLabel(){shareButton.textContent=shareLabels[window.ummaI18n?.language]||shareLabels.en;}
+ updateShareLabel();
+ const cafeShortcut=byId('servicesPage')?.querySelector('.native-directory > button[data-page="cafe"]');
+ if(cafeShortcut)cafeShortcut.insertAdjacentElement('afterend',shareButton);
+ shareButton.addEventListener('click',async()=>{
+  const language=window.ummaI18n?.language||'en';
+  const url=new URL(window.location.href);url.search='';url.hash='';
+  const shareUrl=url.toString(),message=shareMessages[language]||shareMessages.en;
+  if(sdk?.initData&&typeof sdk.openTelegramLink==='function'){
+   sdk.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(shareUrl)+'&text='+encodeURIComponent(message));
+   return;
+  }
+  if(typeof navigator.share==='function'){
+   try{await navigator.share({title:'UMMA GLOBAL',text:message,url:shareUrl});}catch(error){if(error?.name!=='AbortError'&&typeof showToast==='function')showToast('Не удалось открыть меню отправки');}
+   return;
+  }
+  try{await navigator.clipboard.writeText(shareUrl);if(typeof showToast==='function')showToast(language==='ru'?'Ссылка скопирована':language==='vi'?'Đã sao chép liên kết':'Link copied');}
+  catch{if(typeof showToast==='function')showToast(shareUrl);else window.prompt('Скопируйте ссылку на приложение',shareUrl);}
+ });
+ window.addEventListener('umma:languagechange',updateShareLabel);
+
  // Fit the introductory stack to Telegram's actual available height. Text remains unscaled.
  const homeMain=document.querySelector('.app>main'),homeHero=document.querySelector('.brand-art');
  let homeFitFrame=0;
