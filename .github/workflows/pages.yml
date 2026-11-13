@@ -1,6 +1,9 @@
-name: Publish UMMA on GitHub Pages (manual)
+name: Publish UMMA on GitHub Pages
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/share-app
 permissions:
   contents: read
   pages: write
