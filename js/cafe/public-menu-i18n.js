@@ -24,6 +24,11 @@ copy['Оставить отзыв в Google Maps']={
 };
 
 // Keep the checkout and delivery controls in the selected language.
+copy['История заказов']={
+ en:'Order history',vi:'Lịch sử đơn hàng',ko:'주문 내역',zh:'订单历史',de:'Bestellverlauf',
+ fr:'Historique des commandes',th:'ประวัติคำสั่งซื้อ',ms:'Sejarah pesanan',id:'Riwayat pesanan',
+ ar:'سجل الطلبات',pt:'Histórico de pedidos'
+};
 const checkoutLocales=['ko','zh','de','fr','th','ms','id','ar','pt'];
 const checkoutCopy={
  'Как получить заказ?':['주문을 어떻게 받으시겠어요?','您希望如何取餐？','Wie möchten Sie Ihre Bestellung erhalten?','Comment souhaitez-vous recevoir votre commande ?','คุณต้องการรับอาหารแบบไหน','Bagaimana anda mahu menerima pesanan?','Bagaimana Anda ingin menerima pesanan?','كيف تريد استلام طلبك؟','Como quer receber o seu pedido?'],

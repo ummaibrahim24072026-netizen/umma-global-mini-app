@@ -6,7 +6,7 @@ const read=p=>readFileSync(p,'utf8'),html=read('menu/index.html');
 const product={id:'def936dc-6c57-4b06-ac32-cdf6a736c238',sku:'UMMA-CAFE-SHURPA',name_ru:'Шурпа',name_en:'Shurpa',price_vnd:90000};
 const item={name_ru:'Шурпа',name_en:'Shurpa',quantity:2,unitPriceVnd:45000,lineTotalVnd:90000};
 for(const method of ['cash','qr']){
- let created=0,calls=[],lost=true,paid=false;
+ let created=0,calls=[],lost=true,paid=false,terminal=null;
  const base={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:98765,totalVnd:90000,paymentMethod:method,paymentStatus:'pending',status:'pending',items:[item]};
  const payment=paymentFor({id:base.id,order_number:98765,total_vnd:90000,location_id:'e22788bd-4734-4b3a-911e-ba103d52617a',payment_method:'qr',payment_status:'pending',currency:'VND',status:'pending'});
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
@@ -14,7 +14,7 @@ for(const method of ['cash','qr']){
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
-  w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:paid?'ready':'preparing',paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
+  w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
  }});
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
  d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
@@ -33,6 +33,21 @@ for(const method of ['cash','qr']){
   assert.match(d.getElementById('receiptChange').textContent,/10\D?000/);
   assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipt')).cashReceipt.changeVnd,10000);
  }
+ terminal=method==='cash'?'completed':'cancelled';
+ assert.equal(d.getElementById('receiptButton').hidden,false);
+ d.dispatchEvent(new w.Event('visibilitychange'));
+ await new Promise(r=>setTimeout(r,20));
+ assert.equal(d.getElementById('receiptButton').hidden,true);
+ assert.equal(d.getElementById('receiptButton').textContent,'');
+ assert.equal(d.getElementById('orderHistoryButton').hidden,false);
+ assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipts'))[0].status,terminal);
+ d.getElementById('newOrder').click();
+ d.getElementById('orderHistoryButton').click();
+ assert.match(d.getElementById('orderHistoryList').textContent,method==='cash'?/Заказ выдан/:/Заказ отменён/);
+ d.querySelector('#orderHistoryList button').click();
+ assert.equal(d.getElementById('success').hidden,false);
+ assert.equal(d.getElementById('guestPayment').hidden,true);
+ assert.match(d.getElementById('receiptDetails').textContent,/Шурпа/);
  d.getElementById('newOrder').click();d.getElementById('installApp').click();assert.equal(d.getElementById('installHelp').hidden,false);dom.window.close();
 }
 console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status, receipt recovery and install guidance.');

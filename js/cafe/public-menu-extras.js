@@ -46,7 +46,7 @@ receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
 $('orderState').removeAttribute('data-i18n');$('orderState').textContent=value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга'):value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ'):t(value.orderType!=='delivery'&&value.status==='pending'&&value.paymentStatus!=='paid'?(value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Ожидает оплаты у кассира'):statuses[value.status]||'Заказ отправлен');
-$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.paymentMethod==='qr'?'Ожидаем оплату по QR':value.orderType==='delivery'?'Оплата наличными при получении.':value.preorderWaiting?'Оплатите предзаказ у кассира. Сборка — после готовности блюд.':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.');
+$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='qr'?'Ожидаем оплату по QR':value.orderType==='delivery'?'Оплата наличными при получении.':value.preorderWaiting?'Оплатите предзаказ у кассира. Сборка — после готовности блюд.':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.');
 const p=value.payment,show=value.paymentMethod==='qr'&&value.paymentStatus!=='paid'&&value.paymentStatus!=='refunded'&&!['cancelled','completed'].includes(value.status)&&p;
 $('guestPayment').hidden=!show;
 if(show){
@@ -56,10 +56,39 @@ if(show){
  if(p.qrPayload!==lastQr){const qr=window.qrcode(0,'M');qr.addData(p.qrPayload);qr.make();const n=qr.getModuleCount(),scale=8,pad=4,canvas=document.createElement('canvas');canvas.width=canvas.height=(n+pad*2)*scale;const c=canvas.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.fillStyle='#000';for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(qr.isDark(y,x))c.fillRect((x+pad)*scale,(y+pad)*scale,scale,scale);const data=canvas.toDataURL('image/png');$('paymentQr').src=data;$('saveQr').href=data;$('saveQr').download='UMMA-'+value.orderNumber+'.png';lastQr=p.qrPayload;}
  $('paymentAccount').textContent=p.bankName+' · '+p.account+' · '+p.reference;
 }
-if(value.requestKey&&value.id&&Date.now()-lastPoll>2500)void poll();
+if(Date.now()-lastPoll>2500)void poll();
 }
-async function poll(){if(inFlight||!order?.requestKey||!order?.id||!context)return;const current=order,ctx=context;inFlight=true;lastPoll=Date.now();try{const r=await fetch(ctx.API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'status',requestKey:current.requestKey,orderId:current.id}),cache:'no-store',signal:AbortSignal.timeout(15000)});const d=await r.json();if(!r.ok||!d.ok)throw Error();if(order!==current)return;Object.assign(current,d.order,{payment:d.payment});if(current.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(current.trackingToken||'')){try{const tr=await fetch(ctx.API+'umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token:current.trackingToken}),cache:'no-store',signal:AbortSignal.timeout(8000)});const state=await tr.json();if(tr.ok&&state.ok)current.deliveryStatus=state.state;}catch{}}ctx.save();$('syncState').textContent='';ctx.refresh();}catch{if(order===current)$('syncState').textContent=ctx.t('Не удалось обновить статус. Не оплачивайте повторно; уточните у сотрудника.');}finally{inFlight=false;}}
-window.setInterval(()=>{if(!document.hidden&&order&&!['completed','cancelled'].includes(order?.status))void poll();},3000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&order)void poll();});
-window.ummaGuestExtras={install,installText,receipt};
+async function poll(){
+ if(inFlight||!context)return;
+ const ctx=context;
+ const active=ctx.activeReceipts().filter(receipt=>receipt.requestKey&&receipt.id);
+ if(!active.length)return;
+ inFlight=true;
+ lastPoll=Date.now();
+ try{
+  await Promise.all(active.map(async current=>{
+   try{
+    const r=await fetch(ctx.API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'status',requestKey:current.requestKey,orderId:current.id}),cache:'no-store',signal:AbortSignal.timeout(15000)});
+    const d=await r.json();
+    if(!r.ok||!d.ok)throw Error();
+    const update={...d.order,payment:d.payment};
+    if(current.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(current.trackingToken||'')){
+     try{
+      const tr=await fetch(ctx.API+'umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token:current.trackingToken}),cache:'no-store',signal:AbortSignal.timeout(8000)});
+      const state=await tr.json();
+      if(tr.ok&&state.ok)update.deliveryStatus=state.state;
+     }catch{}
+    }
+    if(!context?.activeReceipts().includes(current))return;
+    Object.assign(current,update);
+    ctx.updated(current);
+   }catch{
+    if(order===current)$('syncState').textContent=ctx.t('Не удалось обновить статус. Не оплачивайте повторно; уточните у сотрудника.');
+   }
+  }));
+ }finally{inFlight=false;}
+}
+window.setInterval(()=>{if(!document.hidden)void poll();},3000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
+window.ummaGuestExtras={install,installText,receipt,clearReceipt(){order=null;context=null;}};
 })();
