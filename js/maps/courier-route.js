@@ -1,73 +1,111 @@
-/* UMMA courier in-app map: live GPS, destination and optional external turn-by-turn. */
+/* Courier navigation stays in the UMMA workspace. */
 (() => {
  'use strict';
  const $ = id => document.getElementById(id);
- let opener=null,map=null,watch=null,marker=null,line=null,session=0;
- const valid=p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180;
- function destination(button){
-  const address=button.dataset.routeAddress||'';
-  const point=window.ummaMapLinks?.parseAddress(address);
-  return {address,point,text:point?window.ummaMapLinks.coords(point):address+', Vietnam'};
+ const status = message => { $('courierMapMessage').textContent = message; };
+ let active;
+ function close() {
+  const view=active;
+  active=null;
+  if(view?.watch!=null)navigator.geolocation.clearWatch(view.watch);
+  clearTimeout(view?.staleTimer);
+  view?.map?.remove();
+  if($('courierMapModal'))$('courierMapModal').hidden=true;
+  view?.opener.focus();
  }
- function url(button,provider=button.dataset.navigationProvider){
-  const d=destination(button).text;
-  if(provider==='apple')return 'https://maps.apple.com/directions?destination='+encodeURIComponent(d)+'&mode=driving';
-  return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination='+encodeURIComponent(d);
+ async function update(view){
+  if(!view.position||view.pending)return;
+  const origin=view.position;
+  view.pending=true;
+  view.requestedAt=Date.now();
+  $('courierRouteRefresh').disabled=true;
+  if(!view.line)status('Строим маршрут по дорогам…');
+  try{
+   const route=await window.UmmaNhaTrangRouter.route(origin,view.destination).catch(()=>{throw Error('Не удалось загрузить дорожные данные UMMA. Обновите маршрут.');});
+   if(active!==view||!view.position)return;
+   if(!route)throw Error('Дорожный маршрут не найден. Проверьте точки на карте.');
+   const path=route.path.map(p=>[p.lat,p.lng]);
+   if(!view.line){
+    view.line=L.polyline(path,{color:'#007c80',weight:6}).addTo(view.map);
+    view.map.fitBounds([...path,[view.destination.lat,view.destination.lng]],{padding:[36,36],maxZoom:17});
+   }else view.line.setLatLngs(path);
+   view.routedFrom=origin;
+   const km=(route.meters/1000).toLocaleString('ru',{maximumFractionDigits:1});
+   status(km+' км · около '+Math.max(1,Math.ceil(route.seconds/60))+' мин');
+   $('courierRouteWarnings').textContent=[
+    route.startGap>35?'До начала маршрута '+Math.round(route.startGap)+' м.':'',
+    route.endGap>25?'От конца маршрута до точки назначения '+Math.round(route.endGap)+' м.':''
+   ].filter(Boolean).join(' ');
+   $('courierRouteSteps').replaceChildren(...route.streets.map(name=>{
+    const row=document.createElement('li');row.textContent=name;return row;
+   }));
+   $('courierRouteDirections').hidden=!route.streets.length;
+  }catch(error){
+   if(active===view&&view.position)clearRoute(view,error.message);
+  }finally{
+   view.pending=false;
+   if(active===view)$('courierRouteRefresh').disabled=!view.position;
+  }
  }
- function status(message){const el=$('courierMapMessage');if(el)el.textContent=message;}
- function close(){
-  session++;
-  if(watch!==null){navigator.geolocation?.clearWatch(watch);watch=null;}
-  try{map?.remove();}catch{}
-  map=null;marker=null;line=null;
-  const modal=$('courierMapModal');if(modal){modal.hidden=true;modal.style.display='none';}
-  $('courierRouteMap')?.replaceChildren();opener?.focus?.();
+ function clearRoute(view,message){
+  view.line?.remove();
+  view.line=null;
+  view.routedFrom=null;
+  $('courierRouteDirections').hidden=true;
+  $('courierRouteWarnings').textContent='';
+  status(message);
+ }
+ function gpsUnavailable(view,message){
+  if(active!==view)return;
+  view.position=null;
+  view.marker?.remove();view.marker=null;
+  clearRoute(view,message);
+  $('courierRouteRefresh').disabled=true;
  }
  function open(button){
-  close();opener=button;const generation=session;
-  const modal=$('courierMapModal');if(!modal)return;
-  const d=destination(button);modal.hidden=false;modal.style.display='block';
-  $('courierMapTitle').textContent='Доставка · Заказ №'+(button.dataset.routeOrderNumber||'');
-  $('courierMapExternal').href=url(button,'google');
-  $('courierMapApple').hidden=false;
-  $('courierMapApple').href=url(button,'apple');
-  status('Открываем карту UMMA. Разрешите доступ к GPS.');
-  if(!valid(d.point)){status('Для встроенной карты необходима точка доставки. Используйте Google Maps для адреса.');return;}
+  close();
+  if(!$('courierMapModal'))return;
+  const destination=window.ummaMapLinks?.parseAddress(button.dataset.routeAddress);
+  const view={destination,opener:button};
+  active=view;
+  $('courierMapModal').hidden=false;
+  $('courierMapTitle').textContent='Маршрут · Заказ №'+(button.dataset.routeOrderNumber||'');
+  $('courierRouteDirections').hidden=true;
+  $('courierRouteDirections').open=false;
+  $('courierRouteWarnings').textContent='';
+  $('courierRouteRefresh').disabled=true;
+  $('courierMapClose').focus();
+  if(!destination){status('В заказе нет точки на карте. Уточните её у кафе.');return;}
   try{
-   map=window.UmmaMaps.create($('courierRouteMap'),d.point,status);
-   window.UmmaMaps.marker(map,d.point);
-   map.invalidateSize?.();
-  }catch(e){status(e.message||'Карта недоступна. Используйте Google Maps.');return;}
-  if(!navigator.geolocation?.watchPosition){status('GPS недоступен. Можно открыть маршрут в Google Maps.');return;}
-  try{
-   watch=navigator.geolocation.watchPosition(position=>{
-    if(generation!==session||!map)return;
-    const p={lat:position.coords.latitude,lng:position.coords.longitude};
-    if(!valid(p))return;
-    if(!marker)marker=window.UmmaMaps.marker(map,p,'courier');
-    else marker.setLatLng([p.lat,p.lng]);
-    // A straight connector is orientation only, never presented as a road route.
-    if(window.L?.polyline){
-     if(!line)line=window.L.polyline([[p.lat,p.lng],[d.point.lat,d.point.lng]],{color:'#087b80',weight:2,dashArray:'5 9',opacity:0.65}).addTo(map);
-     else line.setLatLngs([[p.lat,p.lng],[d.point.lat,d.point.lng]]);
-    }
-    if(window.L?.latLngBounds)map.fitBounds(window.L.latLngBounds([[p.lat,p.lng],[d.point.lat,d.point.lng]]),{padding:[48,48],maxZoom:17});
-    status('GPS активен · точность около '+Math.round(position.coords.accuracy||0)+' м. Пунктир показывает направление, не дорожный маршрут. Для поворотов используйте Google Maps.');
-   },error=>{
-    if(generation!==session)return;
-    status(error.code===1?'Доступ к GPS запрещён. Разрешите геолокацию в настройках.':'Ожидаем GPS. Для навигации по дорогам доступен Google Maps.');
-   },{enableHighAccuracy:true,maximumAge:5000,timeout:12000});
-  }catch{status('GPS недоступен. Используйте Google Maps.');}
-  $('courierMapClose')?.focus();
+   view.map=window.UmmaMaps.create($('courierRouteMap'),destination,()=>{});
+   window.UmmaMaps.marker(view.map,destination);
+   status('Ожидаем GPS. Разрешите геолокацию.');
+   if(!navigator.geolocation?.watchPosition)throw Error('GPS недоступен в этом браузере.');
+   view.watch=navigator.geolocation.watchPosition(fix=>{
+    if(active!==view)return;
+    const {latitude:lat,longitude:lng,accuracy}=fix.coords;
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180||
+      !Number.isFinite(accuracy)||accuracy>100||Date.now()-fix.timestamp>15000)return;
+    const point={lat,lng};
+    view.position=point;
+    clearTimeout(view.staleTimer);
+    view.staleTimer=setTimeout(()=>gpsUnavailable(view,'Нет свежей позиции GPS. Ожидаем сигнал…'),30000);
+    if(view.marker)view.marker.setLatLng([lat,lng]);
+    else view.marker=window.UmmaMaps.marker(view.map,point,'courier');
+    if(!view.map.getBounds().pad(-0.15).contains([lat,lng]))view.map.panTo([lat,lng]);
+    const moved=!view.routedFrom||Math.hypot(lat-view.routedFrom.lat,lng-view.routedFrom.lng)>0.00065;
+    if(!view.requestedAt||(moved&&Date.now()-view.requestedAt>=12000))void update(view);
+   },error=>gpsUnavailable(view,error.code===1?'Разрешите геолокацию в настройках браузера.':'Ожидаем сигнал GPS…'),
+   {enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+  }catch(error){status(error.message||'Карта недоступна.');}
  }
  document.addEventListener('click',event=>{
   const button=event.target.closest?.('[data-show-route="true"]');
-  if(!button)return;
-  event.preventDefault();
-  open(button);
+  if(button){event.preventDefault();open(button);}
  });
  $('courierMapClose')?.addEventListener('click',close);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('courierMapModal')?.hidden)close();});
+ $('courierRouteRefresh')?.addEventListener('click',()=>{if(active)void update(active);});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&active)close();});
  window.addEventListener('pagehide',close);
- window.UmmaCourierMap={open,close,navigationUrl:url};
+ window.UmmaCourierMap={open,close};
 })();
