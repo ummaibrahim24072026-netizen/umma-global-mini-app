@@ -1,6 +1,6 @@
 .public-cafe-menu {
   --cafe-header: var(--umma-brand-primary);
-  --cafe-banner-gold: #FFE7A3;
+  --cafe-banner-gold: #FFE586;
   --umma-action: var(--umma-brand-primary);
   --umma-surface: #fff;
   min-height: 100dvh;
@@ -21,7 +21,7 @@
 .public-cafe-menu #cafePage .brand small,
 .public-cafe-menu .cafe-intro-copy {
   color: var(--cafe-banner-gold);
-  text-shadow: 0 1px 2px var(--umma-brand-on-primary);
+  text-shadow: 0 1px 1px var(--umma-brand-on-primary), 0 2px 4px #002d2e66;
   -webkit-text-stroke: 1px var(--umma-brand-on-primary);
   paint-order: stroke fill;
 }
