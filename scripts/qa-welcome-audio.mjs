@@ -45,10 +45,9 @@ function setup({blocked = false, hidden = false} = {}) {
 }
 for (const path of ['index.html', 'staff.html', 'menu/index.html']) {
   const html = readFileSync(path, 'utf8');
-  assert.equal((html.match(/src="js\/core\/welcome-audio\.js\?v=3"/g) || []).length, 1);
   const doc = new JSDOM(html, {url: `https://qa.invalid/umma/${path}`});
-  assert.equal(doc.window.document.querySelector('script[src*="welcome-audio"]').src, 'https://qa.invalid/umma/js/core/welcome-audio.js?v=3');
+  assert.equal(doc.window.document.querySelector('script[src*="welcome-audio"]'), null, `${path} must open without the greeting`);
   doc.window.close();
 }
 assert.ok(readFileSync('assets/audio/welcome-ru.mp3').length > 1000);
-console.log('PASS welcome audio: autoplay, trusted gesture fallback, single playback, hidden-page handling, all entry URLs and bundled MP3.');
+console.log('PASS welcome audio: autoplay, trusted gesture fallback, single playback, hidden-page handling, greeting disabled on all entry pages and MP3 retained.');
