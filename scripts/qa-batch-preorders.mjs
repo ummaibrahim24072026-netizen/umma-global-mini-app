@@ -43,5 +43,38 @@ export async function verifyBatchPreorders(db,cafe,product){
  const mixed=await create(1,{rows:[{productId:product,quantity:1,planRevision:one.plan_revision},{productId:other,quantity:1,planRevision:two.plan_revision}]});await q("update cafe_orders set payment_status='paid' where id=$1",[mixed.order.id]);assert.equal(Date.parse(mixed.order.preorderExpectedAt),Date.parse(at2));await plan('finish',2,one.plan_revision);assert.equal((await q('select preorder_waiting from cafe_orders where id=$1',[mixed.order.id])).rows[0].preorder_waiting,true);
  await r("select cafe_ready_plan(12,$1,$2,'finish',$3::jsonb) result",[cafe,randomUUID(),JSON.stringify([{productId:other,quantity:2,revision:two.plan_revision}])]);assert.equal((await q('select status from cafe_orders where id=$1',[mixed.order.id])).rows[0].status,'preparing');await q("update cafe_orders set status='cancelled' where id=$1",[mixed.order.id]);
  if(db.preorderConcurrent)await db.preorderConcurrent(cafe,product);
+ // The clock releases due batches and their orders once, even when no client is open.
+ await db.exec(source('supabase/proposals/cafe-auto-complete-batches.sql'));
+ await plan('plan',10);
+ const scheduled=await stock();
+ const scheduledOrder=await create(2,{rows:[{productId:product,quantity:2,planRevision:scheduled.plan_revision}]});
+ await q("update cafe_orders set payment_status='paid' where id=$1",[scheduledOrder.order.id]);
+ await r("select cafe_ready_plan(12,$1,$2,'plan',$3::jsonb) result",[cafe,randomUUID(),JSON.stringify([{productId:other,quantity:4,revision:null,readyAt:at2}])]);
+ assert.equal(await r('select umma_private.cafe_finish_due_batches() result'),0);
+ await q("update inventory set planned_ready_at=now()-interval '1 second' where id=$1",[scheduled.id]);
+ assert.equal(await r('select umma_private.cafe_finish_due_batches() result'),1);
+ assert.equal(await r('select umma_private.cafe_finish_due_batches() result'),0);
+ const received=await stock();
+ assert.equal(Number(received.quantity),Number(scheduled.quantity)+10);
+ assert.equal(Number(received.reserved_quantity),Number(scheduled.reserved_quantity)+2);
+ assert.equal(received.planned_quantity,0);
+ assert.equal(received.planned_reserved_quantity,0);
+ assert.equal(received.planned_ready_at,null);
+ assert.equal(received.plan_revision,null);
+ const catalog=(await r('select cafe_ready_catalog($1) result',[cafe])).products;
+ assert.equal(catalog.find(p=>p.id===product).plannedAvailable,0);
+ assert.equal(catalog.find(p=>p.id===product).available,Number(received.quantity)-Number(received.reserved_quantity));
+ assert.equal(catalog.find(p=>p.id===other).plannedQuantity,4);
+ assert.equal((await q('select status from cafe_orders where id=$1',[scheduledOrder.order.id])).rows[0].status,'preparing');
+ assert.equal((await q('select ready_stock_state from cafe_order_items where order_id=$1',[scheduledOrder.order.id])).rows[0].ready_stock_state,'reserved');
+ await assert.rejects(plan('finish',10,scheduled.plan_revision),/План уже изменён/);
+ assert.equal((await q("select count(*)::int n from cafe_inventory_movements where product_id=$1 and actor_telegram_id is null and movement_type='stock_set'",[product])).rows[0].n,1);
+ assert.equal((await q("select has_function_privilege('anon','umma_private.cafe_finish_due_batches()','execute') allowed")).rows[0].allowed,false);
+ await q("update cafe_orders set status='cancelled' where id=$1",[scheduledOrder.order.id]);
+ await plan('plan',3);
+ const manual=await stock();
+ await plan('finish',3,manual.plan_revision);
+ assert.equal(Number((await stock()).quantity),Number(manual.quantity)+3);
+
  console.log('PASS batch preorders: separate availability, exact revision, atomic capacity, replay, cash/QR, paid waiting, expiry, cancellation, protected batch yield, conversion, dispatch deferral, release/assembled push events.');
 }
