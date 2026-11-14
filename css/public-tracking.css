@@ -24,3 +24,32 @@ body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
 .tracking:not([data-map]) .tracking-map-area{min-height:76px;flex:0}
 .tracking:not([data-map]) .tracking-sheet{margin-top:0;flex:1}
 [hidden]{display:none!important}
+
+.tracking-toolbar { align-items: start; }
+.tracking-toolbar a {
+  display: inline-flex; align-items: center; min-width: 0;
+  overflow-wrap: anywhere; font-weight: 650; line-height: 1.25;
+}
+.tracking-toolbar select { max-width: 38%; }
+#center { inset-inline: auto 14px; }
+.tracking-sheet {
+  padding-inline: clamp(16px, 4vw, 28px);
+  border: 1px solid #d8e8e4;
+}
+#orderNumber:empty, #connection:empty { display: none; }
+#connection { font-size: .9rem; line-height: 1.5; }
+#progress summary { min-height: 44px; align-content: center; }
+#notify {
+  padding-inline: 12px; margin-top: 8px;
+  border: 1px solid #d8e8e4; border-radius: 12px; background: #f3f8f7;
+  font-weight: 650;
+}
+.tracking:not([data-map]) .tracking-toolbar {
+  position: static;
+  padding: max(12px, env(safe-area-inset-top)) 14px 12px;
+}
+.tracking:not([data-map]) .tracking-map-area { display: none; }
+@media (min-width: 850px) {
+  body { padding: 16px; }
+  .tracking { min-height: calc(100dvh - 32px); overflow: hidden; border-radius: 24px; }
+}
