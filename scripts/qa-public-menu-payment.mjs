@@ -10,7 +10,7 @@ for(const method of ['cash','qr']){
  const base={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:98765,totalVnd:90000,paymentMethod:method,paymentStatus:'pending',status:'pending',items:[item]};
  const payment=paymentFor({id:base.id,order_number:98765,total_vnd:90000,location_id:'e22788bd-4734-4b3a-911e-ba103d52617a',payment_method:'qr',payment_status:'pending',currency:'VND',status:'pending'});
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
-  w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
+  w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
@@ -22,7 +22,21 @@ for(const method of ['cash','qr']){
  assert.ok(receiptButton.closest('.customer-actions'));
  assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('orderInboxHost').closest('.customer-actions'));
  assert.equal(receiptButton.previousElementSibling.id,'orderHistoryButton');
- d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
+ d.querySelector('[data-dish]').click();
+ assert.equal(d.getElementById('dishDetails').open,true);
+ assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
+ d.querySelector('#dishDetails [data-change="1"]').click();
+ assert.equal(d.querySelector('#dishDetails .cafe-card-quantity strong').textContent,'1');
+ d.getElementById('dishDetails').close();
+ d.getElementById('openCart').click();
+ assert.equal(d.getElementById('cartStep').hidden,false);
+ assert.equal(d.getElementById('checkoutStep').hidden,true);
+ d.getElementById('continueCheckout').click();
+ assert.equal(d.getElementById('checkoutStep').hidden,false);
+ d.getElementById('backToCart').click();
+ assert.equal(d.getElementById('cartStep').hidden,false);
+ d.getElementById('continueCheckout').click();
+ d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await new Promise(r=>setTimeout(r,20));assert.ok(d.getElementById('result').textContent.includes('Не удалось'));submit();await new Promise(r=>setTimeout(r,30));
  assert.equal(created,2);assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(calls[0].paymentMethod,method);assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('guestPayment').hidden,method!=='qr');assert.ok(d.getElementById('paymentState').textContent.includes(method==='qr'?'QR':'наличными'));
  const receiptLines=d.getElementById('receiptDetails');

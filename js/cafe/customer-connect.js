@@ -23,7 +23,7 @@ const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||c
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const button=el('button',t(0),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
-(document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
+(document.getElementById('customerConnectHost')||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='voice'?115000:15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
 function unread(){return (state?.messages||[]).filter(m=>m.direction!=='customer'&&!m.read_at);}
 function badge(){
@@ -163,7 +163,7 @@ if(setupHost){
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,'umma-connect');dialog.setAttribute('aria-label',t(0));
- const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',t(0)),el('p',t(2)));hero.append(heroIcon,heroText,close);dialog.append(hero,el('small',t(11)));
+ const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(document.getElementById('customerConnectHost')){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',t(0)),el('p',t(2)));hero.append(heroIcon,heroText,close);dialog.append(hero,el('small',t(11)));
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
  join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
  name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';

@@ -24,3 +24,23 @@ body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
 .tracking:not([data-map]) .tracking-map-area{min-height:76px;flex:0}
 .tracking:not([data-map]) .tracking-sheet{margin-top:0;flex:1}
 [hidden]{display:none!important}
+.tracking-toolbar {
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #063e43, #006f72);
+  box-shadow: 0 5px 18px #00343638;
+}
+.tracking-toolbar a, .tracking-toolbar select {
+  min-width: 0;
+  border-color: #ffffff55;
+  background: #ffffff20;
+  color: white;
+  font-size: 13px;
+}
+.tracking-toolbar a { overflow-wrap: anywhere; }
+.tracking-toolbar option { background: #fff; color: #163d3e; }
+.tracking-brand { display: block; flex: none; margin-inline-start: auto; }
+#eta { background: #d9f3ef; color: #00595b; }
+.tracking:not([data-map]) .tracking-map-area { min-height: 115px; }
