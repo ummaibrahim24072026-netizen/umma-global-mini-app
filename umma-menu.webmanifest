@@ -7,7 +7,7 @@
   "scope": "./",
   "display": "standalone",
   "background_color": "#F1FAFA",
-  "theme_color": "#03A2A5",
+  "theme_color": "#FCFFFF",
   "icons": [
     {
       "src": "logo/assets/umma-icon-192.png",
