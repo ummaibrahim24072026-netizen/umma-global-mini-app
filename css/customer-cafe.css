@@ -1,5 +1,6 @@
 .public-cafe-menu {
   --cafe-header: var(--umma-brand-primary);
+  --cafe-banner-gold: #FFE7A3;
   --umma-action: var(--umma-brand-primary);
   --umma-surface: #fff;
   min-height: 100dvh;
@@ -15,8 +16,15 @@
   background: var(--cafe-header);
   color: var(--umma-brand-on-primary);
 }
-.public-cafe-menu #cafePage .brand { flex: 1 1 auto; color: var(--umma-brand-on-primary); }
-.public-cafe-menu #cafePage .brand small { color: var(--umma-brand-on-primary); }
+.public-cafe-menu #cafePage .brand { flex: 1 1 auto; }
+.public-cafe-menu #cafePage .brand span,
+.public-cafe-menu #cafePage .brand small,
+.public-cafe-menu .cafe-intro-copy {
+  color: var(--cafe-banner-gold);
+  text-shadow: 0 1px 2px var(--umma-brand-on-primary);
+  -webkit-text-stroke: 1px var(--umma-brand-on-primary);
+  paint-order: stroke fill;
+}
 .public-cafe-menu #cafePage .topbar-actions {
   flex: 0 0 auto;
   flex-wrap: nowrap;
@@ -48,7 +56,7 @@
   color: var(--umma-brand-on-primary);
 }
 .cafe-intro-copy { padding: 20px; max-width: 60%; }
-.cafe-intro-copy p { margin: 0 0 7px; font-size: .85rem; color: var(--umma-brand-on-primary); font-weight: 650; }
+.cafe-intro-copy p { margin: 0 0 7px; font-size: .85rem; font-weight: 650; }
 .cafe-intro-copy strong { display: block; font-size: clamp(1.45rem, 6vw, 3rem); line-height: 1.02; }
 .cafe-intro-copy span { display: block; margin-top: 8px; font-size: .85rem; }
 .cafe-intro img {
