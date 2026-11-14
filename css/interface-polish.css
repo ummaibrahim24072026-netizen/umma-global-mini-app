@@ -138,3 +138,32 @@ button{ -webkit-tap-highlight-color:transparent }
 @media (max-height:500px){
   .public-cafe-menu .menu-sticky{position:static}
 }
+
+/* Mobile viewport containment and refreshed surfaces — 2026-11-14 */
+html{max-inline-size:100%;overflow-x:clip}
+body{max-inline-size:100%;overflow-x:clip}
+:where(#cafePage,.web-work-app){max-inline-size:100%;min-inline-size:0}
+:where(#cafePage,.web-work-app) :where(img,video,canvas,svg){max-inline-size:100%}
+:where(#cafePage,.web-work-app) :where(input,select,textarea){max-inline-size:100%;min-inline-size:0}
+:where(#cafePage,.web-work-app) :where(.card,.panel,.cafe-product,.pos-product){min-inline-size:0;overflow-wrap:anywhere}
+.public-cafe-menu #cafePage{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
+.public-cafe-menu :is(.cafe-product,.location,.checkout-note){border-radius:18px;box-shadow:0 5px 22px #153c3d0a}
+.public-cafe-menu :is(.plain-btn,.search-toggle,.primary){transition:transform .15s ease,box-shadow .15s ease}
+@media(hover:hover){.public-cafe-menu :is(.plain-btn,.search-toggle,.primary):not(:disabled):hover{transform:translateY(-1px);box-shadow:0 5px 15px #123b3b18}}
+.public-cafe-menu dialog{box-sizing:border-box;max-inline-size:min(520px,calc(100vw - 16px));max-block-size:min(90dvh,calc(100dvh - 16px));overflow:auto;overscroll-behavior:contain}
+.public-cafe-menu dialog .checkout-body{min-inline-size:0}
+.public-cafe-menu :is(.menu-actions,.topbar-actions,.service-row,.cart-row,.cart-total)>*{min-inline-size:0}
+.public-cafe-menu .menu-actions :is(button,span){overflow-wrap:anywhere}
+.public-cafe-menu #deliveryMap{max-inline-size:100%;overflow:hidden}
+.public-cafe-menu .order-bar{box-sizing:border-box;max-inline-size:100vw}
+@media(max-width:380px){
+ .public-cafe-menu #cafePage .topbar{flex-wrap:wrap}
+ .public-cafe-menu #cafePage .topbar-actions{min-inline-size:0;max-inline-size:100%}
+ .public-cafe-menu #cafePage .menu-actions{gap:5px}
+ .public-cafe-menu #cafePage .menu-actions :is(.umma-inbox-button,#orderHistoryButton,#receiptButton,.search-toggle){padding-inline:4px!important;font-size:11px!important}
+ .public-cafe-menu #checkout .cart-row{grid-template-columns:minmax(0,1fr);gap:8px}
+ .public-cafe-menu #checkout .cart-controls{justify-self:end}
+ .public-cafe-menu .order-bar{gap:8px;padding-inline:12px}
+ .public-cafe-menu .order-bar strong{font-size:clamp(15px,5vw,21px)}
+}
+@media(prefers-reduced-motion:reduce){.public-cafe-menu :is(.plain-btn,.search-toggle,.primary){transition:none}}
