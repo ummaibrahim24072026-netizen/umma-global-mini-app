@@ -1,6 +1,6 @@
 /* Standalone staff app: one document scroll, one navigation bar, shared controls. */
-html.web-work-root{height:auto;min-height:100%;overflow-x:clip;overflow-y:auto;background:#f2f7f6}
-body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relative;background:#f2f7f6;color:#173d3b;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;--work-line:#d8e5e1;--work-muted:#627b74;--work-accent:#02787a;--work-gold:#cfac52}
+html.web-work-root{height:auto;min-height:100%;overflow-x:clip;overflow-y:auto;background:var(--umma-brand-canvas)}
+body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relative;background:var(--umma-brand-canvas);color:#173d3b;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;--work-line:#d8e5e1;--work-muted:#627b74;--work-accent:var(--umma-brand-strong);--work-gold:#cfac52}
 .web-work-app :where(button,a,input,select,textarea,summary){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .web-work-app :where(button,input,select,textarea){font:inherit;max-width:100%;min-width:0;box-sizing:border-box}
 .web-work-app :where(button,.kitchen-action,.kitchen-cancel){position:static;float:none;min-height:48px;height:auto;padding:12px 16px;margin:0;border:1px solid #c6dad3;border-radius:12px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;font-weight:750;color:#145354;background:#fff;box-shadow:none;transition:background .15s,border-color .15s}
@@ -11,13 +11,13 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 .web-work-app :where(h1,h2,h3,p){overflow-wrap:anywhere}
 .web-work-app h1{font:800 clamp(25px,3vw,34px)/1.2 system-ui;margin:8px 0 10px;color:#123f3c;letter-spacing:-.025em}
 .web-work-app h2{font:750 21px/1.3 system-ui;color:#173d3b;margin:0 0 14px}.web-work-app h3{font-size:17px;line-height:1.35}
-.web-work-app .primary,.web-work-app .kitchen-action[data-new-status],.web-work-app .kitchen-action[data-delivery-photo],.web-work-app .kitchen-action[data-delivery-status]{background:var(--work-accent);color:#fff;border:1px solid var(--work-accent)}
+.web-work-app .primary,.web-work-app .kitchen-action[data-new-status],.web-work-app .kitchen-action[data-delivery-photo],.web-work-app .kitchen-action[data-delivery-status]{background:var(--umma-brand-primary);color:var(--umma-brand-on-primary);border:1px solid var(--umma-brand-primary)}
 .web-work-app .web-header{max-width:none;min-height:76px;padding:14px max(20px,calc((100vw - 1320px)/2));gap:16px;position:relative;z-index:40;box-shadow:none;border-bottom:1px solid var(--work-line)}
 .web-work-app .web-brand{flex:0 0 auto;gap:10px;color:#115c5a;line-height:1.2}.web-brand small{display:block;font-size:12px;font-weight:550;color:var(--work-muted);margin-top:3px}
 .web-work-app .web-brand img{width:44px;height:44px}.web-work-app #webIdentity{margin-left:auto;min-width:0;max-width:35vw;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:var(--work-muted);font-size:13px}
 .web-account-menu{position:relative;flex:0 0 auto}.web-account-menu>summary{min-height:44px;padding:11px 16px;background:#f1f7f4;border:1px solid var(--work-line);border-radius:12px;cursor:pointer;font-size:14px;font-weight:750;list-style:none}.web-account-menu>summary::-webkit-details-marker{display:none}.web-account-menu>div{position:absolute;right:0;top:calc(100% + 8px);width:min(270px,calc(100vw - 32px));padding:8px;border:1px solid var(--work-line);border-radius:16px;background:white;box-shadow:0 10px 32px #163c3924;display:grid;gap:8px}.web-account-menu>div button{text-align:left;width:100%}
 .web-work-app .web-tabs{position:sticky;top:0;z-index:30;display:flex;align-items:stretch;gap:8px;padding:10px max(20px,calc((100vw - 1320px)/2));overflow:visible;border-bottom:1px solid var(--work-line);box-shadow:0 3px 12px #143c3b06;background:#fffffffa;backdrop-filter:blur(12px)}
-.web-work-app .web-tabs button{flex:1 1 0;min-width:0;max-width:240px;font-size:14px;min-height:48px;background:#f5f9f7;border-color:transparent}.web-work-app .web-tabs button[aria-current=true]{color:#fff;background:var(--work-accent);border-color:var(--work-gold)}
+.web-work-app .web-tabs button{flex:1 1 0;min-width:0;max-width:240px;font-size:14px;min-height:48px;background:#f5f9f7;border-color:transparent}.web-work-app .web-tabs button[aria-current=true]{color:var(--umma-brand-on-primary);background:var(--umma-brand-primary);border-color:var(--umma-brand-primary)}
 .web-work-app .web-panel,.web-work-app .cafe-kitchen-inner{width:100%;max-width:1320px;margin:0 auto;padding:26px 20px 40px;min-width:0}
 .web-work-app #webNotice{padding:12px max(20px,calc((100vw - 1280px)/2));border-bottom:1px solid #eeddb8;color:#654b18;overflow-wrap:anywhere}
 .web-work-app .web-pos-heading{margin-bottom:22px;align-items:flex-end}.web-work-app .web-pos-heading p{margin:0;color:var(--work-muted)}.web-work-app .web-pos-heading .eyebrow{margin-bottom:10px;font-size:11px;letter-spacing:.12em}.web-work-app .web-pos-heading label{margin:0;min-width:260px}
@@ -81,7 +81,7 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
  .web-work-app .web-tabs{position:fixed;inset:auto 0 0;z-index:40;min-height:var(--work-bottom-nav);padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));gap:4px;border:0;border-top:1px solid var(--work-line);border-radius:18px 18px 0 0;background:#fffffffa;box-shadow:0 -4px 20px #173d3b0d;align-items:stretch}
  .web-work-app .web-tabs button{flex:1 1 0;display:flex;flex-direction:column;gap:4px;min-height:56px;padding:6px 2px;font-size:11px;line-height:1.2;border:1px solid transparent;border-radius:11px;background:transparent;color:#526d64}
  .web-work-app .web-tabs button span{max-width:100%;overflow-wrap:normal;white-space:nowrap}
- .web-work-app .web-tabs button[aria-current=true]{background:#e5f4ed;color:var(--work-accent);border-color:#b7dace}
+ .web-work-app .web-tabs button[aria-current=true]{background:var(--umma-brand-soft);color:var(--umma-brand-deep);border-color:var(--umma-brand-primary)}
  .web-work-app .web-tabs .work-nav-icon{width:22px;height:22px;flex-basis:22px}
  .web-work-app .web-panel,.web-work-app .cafe-kitchen-inner{padding:20px 14px 28px}
  .web-work-app .web-pos-heading h1,.web-work-app .work-board-title h1{font-size:26px}

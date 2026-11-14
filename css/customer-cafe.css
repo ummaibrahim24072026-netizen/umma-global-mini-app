@@ -1,9 +1,9 @@
 .public-cafe-menu {
-  --cafe-header: linear-gradient(145deg, #063e43, #006f72);
-  --umma-action: linear-gradient(145deg, #007e79, #00494f);
+  --cafe-header: linear-gradient(145deg, var(--umma-brand-deep), var(--umma-brand-strong));
+  --umma-action: var(--umma-brand-primary);
   --umma-surface: #fff;
   min-height: 100dvh;
-  background: radial-gradient(ellipse at top, #d6efee, #f1fafa 550px);
+  background: radial-gradient(ellipse at top, var(--umma-brand-soft), var(--umma-brand-canvas) 550px);
 }
 .public-cafe-menu #cafePage {
   max-width: 1060px;
@@ -42,7 +42,7 @@
   min-height: clamp(153px, 35vw, 220px);
   border-radius: 22px;
   overflow: hidden;
-  background: radial-gradient(ellipse at 88% 86%, #20b4a3, transparent 66%), var(--cafe-header);
+  background: radial-gradient(ellipse at 88% 86%, var(--umma-brand-primary), transparent 66%), var(--cafe-header);
   color: white;
 }
 .cafe-intro-copy { padding: 20px; max-width: 60%; }
@@ -69,7 +69,7 @@
 }
 .public-cafe-menu #cafePage .cafe-category[aria-pressed=true] {
   background: var(--umma-action);
-  color: white;
+  color: var(--umma-brand-on-primary);
   box-shadow: none;
 }
 .public-cafe-menu #cafePage .cafe-category span { display: none; }
@@ -186,11 +186,12 @@
 }
 
 .public-cafe-menu .customer-actions .dock-menu {
-  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17h18M5 17v-1a7 7 0 0 1 14 0v1M12 9V6m-1 0h2'/%3E%3C/svg%3E");
-  --dock-icon-surface: #d8f3ee;
+  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 6.5A3.5 3.5 0 0 0 8.5 3H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4.5a3.5 3.5 0 0 1 3.5 3.5A3.5 3.5 0 0 1 15.5 18H20a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-4.5A3.5 3.5 0 0 0 12 6.5v15M6 8h3m-3 4h3m6-4h3m-3 4h3'/%3E%3C/svg%3E");
+  --dock-icon-surface: var(--umma-brand-primary);
   color: var(--umma-brand-deep);
   text-decoration: none;
 }
+.public-cafe-menu .customer-actions .dock-menu::after { background: var(--umma-brand-white); }
 .public-cafe-menu .customer-actions .umma-inbox-button {
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 16H5c1.2-1.3 2-2.6 2-5V9a5 5 0 0 1 10 0v2c0 2.4.8 3.7 2 5Zm-9 3a2 2 0 0 0 4 0'/%3E%3C/svg%3E");
 }
@@ -207,12 +208,12 @@
   background: transparent;
   color: var(--umma-brand-deep);
 }
-.public-cafe-menu .customer-actions :is(a, button):active,
-.public-cafe-menu .customer-actions :is(a, button):focus-visible {
-  --dock-icon-surface: #c4ebe6;
+.public-cafe-menu .customer-actions :is(a, button):not(.dock-menu):active,
+.public-cafe-menu .customer-actions :is(a, button):not(.dock-menu):focus-visible {
+  --dock-icon-surface: var(--umma-brand-tint);
 }
 @media (hover: hover) {
-  .public-cafe-menu .customer-actions :is(a, button):hover { --dock-icon-surface: #c4ebe6; }
+  .public-cafe-menu .customer-actions :is(a, button):not(.dock-menu):hover { --dock-icon-surface: var(--umma-brand-tint); }
 }
 .public-cafe-menu dialog {
   background: #f5fbfa;
@@ -289,7 +290,7 @@
 #dishDetails .cafe-add, #dishDetails [data-change="1"].cafe-qty-btn {
   border: 0;
   background: var(--umma-action);
-  color: white;
+  color: var(--umma-brand-on-primary);
   font-size: 22px;
 }
 #activeOrdersList button, #orderHistoryList button { width: 100%; margin-block-end: 8px; text-align: start; }
