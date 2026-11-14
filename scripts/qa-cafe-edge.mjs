@@ -117,7 +117,7 @@ export async function verifyCafeEdges(db,cafe,product){
   const customer={...body,staffOrder:false,initData:auth(15),requestKey:randomUUID()};
   const newCustomer=await post(create,customer);assert.equal(newCustomer.status,201);
   // The older lifecycle fixture has yet to load the self-service and preorder columns.
-  await db.exec(`
+  await db.query(`
     ALTER TABLE cafe_orders ADD COLUMN requires_prepayment boolean NOT NULL DEFAULT false,
       ADD COLUMN preorder_waiting boolean NOT NULL DEFAULT false, ADD COLUMN preorder_expected_at timestamptz;
     ALTER TABLE locations ADD COLUMN self_service_enabled boolean NOT NULL DEFAULT false;
@@ -130,7 +130,7 @@ export async function verifyCafeEdges(db,cafe,product){
     console.log('PASS new customer order remains visible when courier offers and evidence fail');
   } finally {
     deliveryLookupsOffline=false;
-    await db.exec(`
+    await db.query(`
       ALTER TABLE cafe_orders DROP COLUMN requires_prepayment, DROP COLUMN preorder_waiting, DROP COLUMN preorder_expected_at;
       ALTER TABLE locations DROP COLUMN self_service_enabled;
     `);
