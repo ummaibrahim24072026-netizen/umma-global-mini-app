@@ -272,3 +272,70 @@ body{max-inline-size:100%;overflow-x:clip}
 .web-work-app :is(.web-panel, .web-login) :is(button, input, select, textarea) {
   max-inline-size: 100%;
 }
+
+/* Standalone web menu and UMMA Work use the same branded surfaces. */
+.public-cafe-menu #cafePage .topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-block-end: 12px;
+  padding: max(12px, env(safe-area-inset-top)) 12px 12px;
+  border: 1px solid #b29450;
+  border-block-start: 0;
+  border-radius: 0 0 20px 20px;
+  background: linear-gradient(130deg, #074449, #08666a);
+  box-shadow: 0 6px 20px #12454822;
+}
+.public-cafe-menu #cafePage .brand {
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.2;
+  white-space: normal;
+}
+.public-cafe-menu #cafePage .brand img {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+}
+.public-cafe-menu #cafePage .brand small {
+  display: block;
+  margin-block-start: 3px;
+  color: #f2d793;
+}
+.public-cafe-menu .topbar-actions {
+  margin-inline-start: auto;
+  justify-content: space-between;
+}
+.public-cafe-menu #cafePage .language-control label { color: #fff; }
+.public-cafe-menu #cafePage .cafe-menu-categories {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.public-cafe-menu #cafePage .cafe-category {
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.public-cafe-menu .customer-dock {
+  border-radius: 18px 18px 0 0;
+  background: #f2fafa;
+}
+.customer-actions #orderHistoryButton {
+  border-color: #b8d8d6;
+}
+.web-work-root .web-work-app #webLogin {
+  border: 1px solid #bfdcda;
+  border-block-start: 3px solid #b29450;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 12px 36px #12454814;
+}
+.web-work-root .web-work-app #webLogin :is(h1, p, label) {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 620px) {
+  .public-cafe-menu .menu-sticky { position: static; }
+}
+@media (max-width: 490px) {
+  .public-cafe-menu .topbar-actions { flex: 1 1 100%; }
+}
