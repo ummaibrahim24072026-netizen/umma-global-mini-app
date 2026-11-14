@@ -1,73 +1,206 @@
-/* UMMA courier in-app map: live GPS, destination and optional external turn-by-turn. */
+/* Google Maps and road directions inside the courier workspace. */
 (() => {
  'use strict';
  const $ = id => document.getElementById(id);
- let opener=null,map=null,watch=null,marker=null,line=null,session=0;
- const valid=p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180;
- function destination(button){
-  const address=button.dataset.routeAddress||'';
-  const point=window.ummaMapLinks?.parseAddress(address);
-  return {address,point,text:point?window.ummaMapLinks.coords(point):address+', Vietnam'};
- }
- function url(button,provider=button.dataset.navigationProvider){
-  const d=destination(button).text;
-  if(provider==='apple')return 'https://maps.apple.com/directions?destination='+encodeURIComponent(d)+'&mode=driving';
-  return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination='+encodeURIComponent(d);
- }
- function status(message){const el=$('courierMapMessage');if(el)el.textContent=message;}
- function close(){
-  session++;
-  if(watch!==null){navigator.geolocation?.clearWatch(watch);watch=null;}
-  try{map?.remove();}catch{}
-  map=null;marker=null;line=null;
-  const modal=$('courierMapModal');if(modal){modal.hidden=true;modal.style.display='none';}
-  $('courierRouteMap')?.replaceChildren();opener?.focus?.();
- }
- function open(button){
-  close();opener=button;const generation=session;
-  const modal=$('courierMapModal');if(!modal)return;
-  const d=destination(button);modal.hidden=false;modal.style.display='block';
-  $('courierMapTitle').textContent='Доставка · Заказ №'+(button.dataset.routeOrderNumber||'');
-  $('courierMapExternal').href=url(button,'google');
-  $('courierMapApple').hidden=false;
-  $('courierMapApple').href=url(button,'apple');
-  status('Открываем карту UMMA. Разрешите доступ к GPS.');
-  if(!valid(d.point)){status('Для встроенной карты необходима точка доставки. Используйте Google Maps для адреса.');return;}
-  try{
-   map=window.UmmaMaps.create($('courierRouteMap'),d.point,status);
-   window.UmmaMaps.marker(map,d.point);
-   map.invalidateSize?.();
-  }catch(e){status(e.message||'Карта недоступна. Используйте Google Maps.');return;}
-  if(!navigator.geolocation?.watchPosition){status('GPS недоступен. Можно открыть маршрут в Google Maps.');return;}
-  try{
-   watch=navigator.geolocation.watchPosition(position=>{
-    if(generation!==session||!map)return;
-    const p={lat:position.coords.latitude,lng:position.coords.longitude};
-    if(!valid(p))return;
-    if(!marker)marker=window.UmmaMaps.marker(map,p,'courier');
-    else marker.setLatLng([p.lat,p.lng]);
-    // A straight connector is orientation only, never presented as a road route.
-    if(window.L?.polyline){
-     if(!line)line=window.L.polyline([[p.lat,p.lng],[d.point.lat,d.point.lng]],{color:'#087b80',weight:2,dashArray:'5 9',opacity:0.65}).addTo(map);
-     else line.setLatLngs([[p.lat,p.lng],[d.point.lat,d.point.lng]]);
+ const config = document.querySelector('meta[name="umma-google-maps-key"]');
+ let api, active;
+ const status = message => { $('courierMapMessage').textContent = message; };
+
+ function loadGoogle() {
+  if (window.google?.maps?.importLibrary) return Promise.resolve(window.google.maps);
+  const key = config?.content.trim();
+  if (!key) return Promise.reject(new Error('Google Maps ещё не подключён. Нужен ключ для веб-кабинета UMMA.'));
+  if (!api) {
+   api = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const timer = setTimeout(fail, 15000);
+    function cleanup() {
+     clearTimeout(timer);
+     delete window.ummaCourierGoogleReady;
+     delete window.gm_authFailure;
     }
-    if(window.L?.latLngBounds)map.fitBounds(window.L.latLngBounds([[p.lat,p.lng],[d.point.lat,d.point.lng]]),{padding:[48,48],maxZoom:17});
-    status('GPS активен · точность около '+Math.round(position.coords.accuracy||0)+' м. Пунктир показывает направление, не дорожный маршрут. Для поворотов используйте Google Maps.');
-   },error=>{
-    if(generation!==session)return;
-    status(error.code===1?'Доступ к GPS запрещён. Разрешите геолокацию в настройках.':'Ожидаем GPS. Для навигации по дорогам доступен Google Maps.');
-   },{enableHighAccuracy:true,maximumAge:5000,timeout:12000});
-  }catch{status('GPS недоступен. Используйте Google Maps.');}
-  $('courierMapClose')?.focus();
+    function fail() {
+     cleanup();
+     script.remove();
+     reject(new Error('Google Maps недоступен. Проверьте подключение и настройки ключа.'));
+    }
+    window.gm_authFailure = fail;
+    window.ummaCourierGoogleReady = () => {
+     cleanup();
+     window.gm_authFailure = () => {
+      if (active) {
+       const view = active;
+       if (view.watch != null) navigator.geolocation.clearWatch(view.watch);
+       view.watch = null;
+       clearTimeout(view.staleTimer);
+       gpsUnavailable(view, 'Google Maps отклонил ключ. Проверьте разрешённый домен и доступ к API.');
+      }
+     };
+     resolve(window.google.maps);
+    };
+    script.onerror = fail;
+    script.referrerPolicy = 'strict-origin-when-cross-origin';
+    script.src = 'https://maps.googleapis.com/maps/api/js?' + new URLSearchParams({
+     key, v: 'quarterly', loading: 'async', callback: 'ummaCourierGoogleReady',
+     auth_referrer_policy: 'origin', language: 'ru', region: 'VN'
+    });
+    document.head.append(script);
+   }).catch(error => { api = null; throw error; });
+  }
+  return api;
  }
- document.addEventListener('click',event=>{
-  const button=event.target.closest?.('[data-show-route="true"]');
-  if(!button)return;
-  event.preventDefault();
-  open(button);
+
+ function close() {
+  const view = active;
+  active = null;
+  if (view?.watch != null) navigator.geolocation.clearWatch(view.watch);
+  if (view?.staleTimer) clearTimeout(view.staleTimer);
+  view?.courier?.setMap(null);
+  view?.pin?.setMap(null);
+  view?.line?.setMap(null);
+  $('courierRouteMap')?.replaceChildren();
+  if ($('courierMapModal')) $('courierMapModal').hidden = true;
+  view?.opener.focus();
+ }
+
+ async function route(view, origin) {
+  if (view.pending) return;
+  view.pending = true;
+  view.requestedAt = Date.now();
+  if (!view.line) status('Строим маршрут по дорогам…');
+  try {
+   const { routes } = await view.Route.computeRoutes({
+    origin, destination: view.destination, travelMode: 'TWO_WHEELER',
+    language: 'ru', region: 'VN',
+    fields: ['path', 'viewport', 'distanceMeters', 'durationMillis', 'legs', 'warnings']
+   });
+   if (active !== view || !view.position) return;
+   const result = routes?.[0];
+   if (!result?.path?.length) throw new Error('No route');
+   const firstRoute = !view.line;
+   if (firstRoute) {
+    view.line = new view.maps.Polyline({map: view.map, strokeColor: '#087b80', strokeWeight: 6});
+   }
+   view.line.setPath(result.path);
+   view.line.setVisible(true);
+   if (firstRoute && result.viewport) view.map.fitBounds(result.viewport, 42);
+   view.routedFrom = origin;
+   const minutes = Math.max(1, Math.ceil(result.durationMillis / 60000));
+   const distance = (result.distanceMeters / 1000).toLocaleString('ru', {maximumFractionDigits: 1});
+   status(Number.isFinite(minutes) && Number.isFinite(result.distanceMeters)
+    ? `${distance} км · около ${minutes} мин от точки расчёта`
+    : 'Маршрут построен');
+   const rows = (result.legs ?? []).flatMap(leg => leg.steps ?? []).filter(step => step.instructions).map(step => {
+    const row = document.createElement('li');
+    row.textContent = step.instructions;
+    return row;
+   });
+   $('courierRouteSteps').replaceChildren(...rows);
+   $('courierRouteDirections').hidden = !rows.length;
+   $('courierRouteWarnings').textContent = (result.warnings ?? []).join(' ');
+  } catch {
+   if (active === view && view.position) {
+    view.line?.setVisible(false);
+    $('courierRouteDirections').hidden = true;
+    $('courierRouteWarnings').textContent = '';
+    status('Google Maps не построил маршрут. Проверьте адрес или обновите маршрут.');
+   }
+  } finally {
+   view.pending = false;
+   if (active === view) $('courierRouteRefresh').disabled = !view.position;
+  }
+ }
+
+ function gpsUnavailable(view, message) {
+  if (active !== view) return;
+  view.position = null;
+  view.courier?.setVisible(false);
+  view.line?.setVisible(false);
+  view.routedFrom = null;
+  $('courierRouteDirections').hidden = true;
+  $('courierRouteWarnings').textContent = '';
+  $('courierRouteRefresh').disabled = true;
+  status(message);
+ }
+
+ async function open(button) {
+  close();
+  if (!$('courierMapModal')) return;
+  const address = button.dataset.routeAddress?.trim();
+  const pin = window.ummaMapLinks?.parseAddress(address);
+  const street = address?.split(/\r?\n/).filter(line => !line.startsWith('Точка доставки:')).join(', ').trim();
+  const view = {opener: button, destination: pin || (street ? street + ', Vietnam' : '')};
+  active = view;
+  $('courierMapModal').hidden = false;
+  $('courierMapTitle').textContent = 'Маршрут · Заказ №' + (button.dataset.routeOrderNumber || '');
+  $('courierRouteDirections').hidden = true;
+  $('courierRouteDirections').open = false;
+  $('courierRouteWarnings').textContent = '';
+  $('courierRouteRefresh').disabled = true;
+  $('courierMapClose').focus();
+  if (!view.destination) { status('В заказе нет адреса назначения.'); return; }
+  status('Загружаем Google Maps…');
+  try {
+   const maps = await loadGoogle();
+   const [{Map}, {Route}, {Marker}] = await Promise.all(
+    ['maps', 'routes', 'marker'].map(library => maps.importLibrary(library))
+   );
+   if (active !== view) return;
+   view.maps = maps;
+   view.Route = Route;
+   view.map = new Map($('courierRouteMap'), {
+    center: pin || {lat: 12.2388, lng: 109.1967}, zoom: pin ? 16 : 13,
+    mapTypeControl: false, streetViewControl: false, fullscreenControl: false
+   });
+   if (pin) view.pin = new Marker({map: view.map, position: pin, title: 'Точка назначения'});
+   if (!navigator.geolocation?.watchPosition) {
+    gpsUnavailable(view, 'GPS недоступен. Откройте веб-кабинет по HTTPS и разрешите геолокацию.');
+    return;
+   }
+   status('Ожидаем GPS. Разрешите доступ к геолокации.');
+   view.watch = navigator.geolocation.watchPosition(fix => {
+    if (active !== view) return;
+    const {latitude: lat, longitude: lng, accuracy} = fix.coords;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 ||
+        Math.abs(lng) > 180 || !Number.isFinite(accuracy) || accuracy > 100 ||
+        Date.now() - fix.timestamp > 15000) return;
+    const point = {lat, lng};
+    view.position = point;
+    clearTimeout(view.staleTimer);
+    view.staleTimer = setTimeout(() => gpsUnavailable(view, 'Нет свежей позиции GPS. Ожидаем сигнал…'), 30000);
+    if (!view.courier) {
+     view.courier = new Marker({map: view.map, position: point, title: 'Курьер', zIndex: 10,
+      icon: {path: maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#1684fc', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3}});
+    } else {
+     view.courier.setPosition(point);
+     view.courier.setVisible(true);
+    }
+    if (!view.map.getBounds()?.contains(point)) view.map.panTo(point);
+    const moved = view.routedFrom && Math.hypot(point.lat - view.routedFrom.lat, point.lng - view.routedFrom.lng) > 0.0015;
+    if (!view.requestedAt || (Date.now() - view.requestedAt >= 45000 && (!view.routedFrom || moved))) {
+     $('courierRouteRefresh').disabled = true;
+     void route(view, point);
+    }
+   }, error => gpsUnavailable(view, error.code === 1
+    ? 'Разрешите геолокацию в настройках браузера и снова откройте маршрут.'
+    : 'Нет свежей позиции GPS. Ожидаем сигнал…'),
+   {enableHighAccuracy: true, maximumAge: 5000, timeout: 15000});
+  } catch (error) {
+   if (active === view) status(error.message || 'Не удалось загрузить карту.');
+  }
+ }
+
+ document.addEventListener('click', event => {
+  const button = event.target.closest?.('[data-show-route="true"]');
+  if (button) { event.preventDefault(); void open(button); }
  });
- $('courierMapClose')?.addEventListener('click',close);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('courierMapModal')?.hidden)close();});
- window.addEventListener('pagehide',close);
- window.UmmaCourierMap={open,close,navigationUrl:url};
+ $('courierMapClose')?.addEventListener('click', close);
+ $('courierRouteRefresh')?.addEventListener('click', () => {
+  if (!active?.position || active.pending) return;
+  $('courierRouteRefresh').disabled = true;
+  void route(active, active.position);
+ });
+ document.addEventListener('keydown', event => { if (event.key === 'Escape' && active) close(); });
+ window.addEventListener('pagehide', close);
+ window.UmmaCourierMap = {open, close};
 })();

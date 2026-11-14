@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<meta name="umma-google-maps-key" content="">
   <meta charset="UTF-8">
 
   <meta
@@ -552,12 +553,11 @@
         <h2 id="courierMapTitle" style="margin:8px 0">Маршрут доставки</h2>
         <button id="courierMapClose" type="button" class="courier-route-back">← Назад к заказу</button>
       </div>
-      <div class="umma-maps-brand">UMMA MAPS</div>
-      <p id="courierMapMessage" style="color:#456;line-height:1.5">Подготовка карты…</p>
-      <div id="courierRouteMap" style="height:65vh;min-height:360px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
-      <a id="courierMapApple" target="_blank" rel="noopener noreferrer" hidden>Открыть маршрут в Картах Apple</a>
-      <a id="courierMapExternal" href="https://www.google.com/maps" target="_blank" rel="noopener" style="display:block;margin:12px 0;padding:14px;text-align:center;background:#0fa3a8;color:#fff;text-decoration:none;border-radius:12px;font-weight:800">Начать навигацию в Google Maps</a>
-      <small style="color:#68737d">Голосовые подсказки доступны в приложении Google Maps. При переключении из Telegram передача позиции клиенту может приостановиться.</small>
+      <p id="courierMapMessage" role="status">Подготовка карты…</p>
+      <div id="courierRouteMap" aria-label="Карта маршрута" style="height:62dvh;min-height:260px;border-radius:14px;overflow:hidden;border:1px solid #dce7e7"></div>
+      <button id="courierRouteRefresh" type="button" class="courier-route-back" disabled>Обновить маршрут</button>
+      <p id="courierRouteWarnings"></p>
+      <details id="courierRouteDirections" hidden><summary>Повороты по маршруту</summary><ol id="courierRouteSteps"></ol></details>
     </div>
   </section>
 
@@ -892,9 +892,9 @@
 <script src="js/cafe/courier-workflow.js?v=8"></script>
 <script src="js/cafe/delivery-tracking.js?v=7"></script>
 <script src="js/cafe/delivery-chat.js?v=4"></script>
-<script src="js/cafe/kitchen.js?v=82"></script>
+<script src="js/cafe/kitchen.js?v=86"></script>
   <script src="js/cafe/kitchen-live.js?v=6"></script>
-<script src="js/maps/courier-route.js?v=9"></script>
+<script src="js/maps/courier-route.js?v=10"></script>
 <script src="js/cafe/test-mode.js?v=13"></script>
 <script src="js/cafe/staff-admin.js?v=6"></script>
 <script src="js/admin/location-admin.js?v=10"></script>

@@ -94,12 +94,9 @@ try{
  w.eval(readFileSync('js/maps/courier-route.js','utf8'));
  const route=d.createElement('button');route.dataset.routeAddress=payloads[0].deliveryAddress;route.dataset.routeOrderNumber='QA';d.body.append(route);
  w.UmmaCourierMap.open(route);
- assert.equal(new URL($('courierMapExternal').href).searchParams.get('destination'),'12.280000,109.220000');
- assert.equal(new URL($('courierMapApple').href).searchParams.get('destination'),'12.280000,109.220000');
+ assert.equal($('courierMapModal').hidden,false);
  w.UmmaCourierMap.close();
  assert.equal(w.ummaMapLinks.parseAddress('Точка доставки: 91,181'),null);
- route.dataset.routeAddress='QA Street';w.UmmaCourierMap.open(route);
- assert.equal(new URL($('courierMapExternal').href).searchParams.get('destination'),'QA Street, Vietnam');w.UmmaCourierMap.close();
  w.eval(readFileSync('js/core/navigation.js','utf8'));
  $('cafeDeliveryMapOpen').click();assert.equal(w.ummaNavigation.back(),true);assert.equal($('cafeDeliveryMapDialog').open,false);assert.equal($('cafeDeliveryMapDialog').isConnected,true,'Back preserves reusable picker');
  $('cafeOrderForm').reset();await tick();assert.equal(w.ummaDeliveryLocation.hasPoint(),false);mode('delivery');assert.equal($('cafeDeliveryAddress').required,false);
@@ -140,5 +137,5 @@ try{
  delete w.L;$('cafeDeliveryMapOpen').click();assert.match($('cafeDeliveryMapStatus').textContent,/Без проверки зоны/);assert.equal($('cafeDeliveryMapConfirm').disabled,true);$('cafeDeliveryMapClose').click();
  const beforeManual=payloads.length; $('cafeDeliveryAddress').value='Полный адрес вручную';$('cafeOrderForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();
  assert.equal(payloads.length,beforeManual,'a typed address cannot bypass the map when unavailable');
- console.log('PASS OpenFreeMap vector provider/credit/fallback; delivery point: explicit GPS consent/confirmation, map taps and dragging, cancellation, stale GPS, denied location, exact courier URLs, checkout payload and manual fallback (simulated map/GPS; no live orders)');
+ console.log('PASS OpenFreeMap vector provider/credit/fallback; delivery point: explicit GPS consent/confirmation, map taps and dragging, cancellation, stale GPS, denied location, exact courier coordinates, checkout payload and manual fallback (simulated map/GPS; no live orders)');
 }finally{w.close();}

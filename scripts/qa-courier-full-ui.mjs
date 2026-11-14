@@ -23,7 +23,7 @@ try {
  assert.equal(card().querySelector('[data-share-delivery]'),null,'automatic GPS has no manual stop button');assert.equal(card().querySelector('[data-tracking-status]'),null,'no redundant GPS status row');
  const payment=card().querySelector('[data-payment-status="paid"]');assert.match(payment.textContent,/120/);assert.equal(payment.closest('.kitchen-secondary-actions'),null,'courier cash button is a primary action');
  const route=card().querySelector('.kitchen-order-actions > [data-show-route]');
- assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Построить маршрут');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(new URL(navigationLink).searchParams.get('destination'),order.delivery_address+', Vietnam');
+ assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Маршрут к клиенту');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.equal(navigationLink,undefined);d.getElementById('courierMapClose').click();
  payment.click();const amount=d.getElementById('cashPayTendered');amount.value='150000';amount.dispatchEvent(new w.Event('input'));d.getElementById('cashPayConfirm').click();await until(()=>!card().querySelector('[data-payment-status="paid"]'));
  assert.ok(card().querySelector('.kitchen-order-actions > [data-show-route]'),'navigation remains visible after payment');
  assert.ok(btn('handover'),'paid order still requires handover photo');assert.equal(sharing,true);
