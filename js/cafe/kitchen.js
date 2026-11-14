@@ -164,12 +164,12 @@
       const pickup=locations.find(l=>String(l.id)===String(order.location_id));
       const goingToCafe=orderStaffRole==="courier"&&order.delivery_status==="courier_assigned";
       const routeAddress=goingToCafe?(pickup?.latitude!=null&&pickup?.longitude!=null?"Точка доставки: "+pickup.latitude+","+pickup.longitude:pickup?.address||pickup?.name||""):order.delivery_address;
-      const routeAction = order.order_type === "delivery" && routeAddress
-        ? '<div class="courier-navigation-options"><small>'+ (goingToCafe?'Маршрут к кафе:':'Маршрут к клиенту:') +'</small>' + [["google","Google Maps"],["apple","Карты Apple"]].map(([provider,label]) => '<button type="button" class="kitchen-action" data-show-route="true" data-navigation-provider="' + provider + '" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">' + label + '</button>').join("") + '</div>' : "";
+      const routeAction = orderStaffRole !== "courier" && order.order_type === "delivery" && routeAddress
+        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">Маршрут к клиенту</button>' : "";
       const courierRoute = orderStaffRole === "courier" && Number(order.courier_telegram_id) === Number(actorTelegramId)
         && ["courier_assigned", "picked_up"].includes(order.delivery_status) && !["completed", "cancelled"].includes(order.status)
         && order.order_type === "delivery" && routeAddress
-        ? '<button type="button" class="kitchen-action" data-show-route="true" data-navigation-provider="google" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">Построить маршрут</button>' : "";
+        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">' + (goingToCafe?'Маршрут к кафе':'Маршрут к клиенту') + '</button>' : "";
       const courierAssignAction = !waitingBatch(order) && order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
