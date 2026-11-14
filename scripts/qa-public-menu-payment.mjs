@@ -13,7 +13,7 @@ for(const method of ['cash','qr']){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
-  w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
+  w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
   w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
  }});
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
@@ -22,7 +22,7 @@ for(const method of ['cash','qr']){
  assert.ok(receiptButton.closest('.customer-actions'));
  assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('orderInboxHost').closest('.customer-actions'));
  assert.equal(receiptButton.previousElementSibling.id,'orderHistoryButton');
- d.querySelector('[data-dish]').click();
+ d.querySelector(method==='cash'?'.cafe-product-photo':'.dish-link').click();
  assert.equal(d.getElementById('dishDetails').open,true);
  assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
  d.querySelector('#dishDetails [data-change="1"]').click();

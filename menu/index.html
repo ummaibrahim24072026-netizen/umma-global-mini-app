@@ -47,7 +47,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
 #cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=1"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -182,7 +182,7 @@ function preorderCard(p,n){
  const time=new Intl.DateTimeFormat(I.locale(),{timeZone,hour:'2-digit',minute:'2-digit',...(today?{}:{day:'numeric',month:'short'})}).format(readyAt);
  return '<div class="cafe-preorder-card"><strong>'+esc(t(today?'Будет готово сегодня к {time}':'Будет готово к {time}',{time}))+'</strong><small>'+esc(t('Порций для предзаказа: {count}',{count:num(stockLeft(p))}))+'</small>'+cardQuantity(p,n)+'</div>';
 }
-function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<div class="cafe-product-media"><img class="cafe-product-photo" src="'+esc(img)+'" alt="'+esc(n)+'" loading="lazy" decoding="async"></div>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+'<h3><button type="button" class="dish-link" data-dish="'+esc(p.id)+'" aria-haspopup="dialog">'+esc(n)+'</button></h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<button type="button" class="cafe-product-media" data-dish="'+esc(p.id)+'" aria-label="'+esc(n)+'" aria-haspopup="dialog" tabindex="-1"><img class="cafe-product-photo" src="'+esc(img)+'" alt="" loading="lazy" decoding="async"></button>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+'<h3><button type="button" class="dish-link" data-dish="'+esc(p.id)+'" aria-haspopup="dialog">'+esc(n)+'</button></h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
 function showDish(p, focusSelector){
   const image=safeImage(p);
   const n=name(p);
@@ -226,13 +226,13 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');
   }
   return;
 }const dish=e.target.closest('[data-dish]');if(dish){const p=products.find(item=>item.id===dish.dataset.dish);if(p)showDish(p);return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(document.querySelector('.menu-sticky').getBoundingClientRect().bottom<=0)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){category='all';query='';$('search').value='';renderCategories();renderProducts();}});
-$('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<div class="message" style="border:0">UMMA · Halal</div>';}},true);
+$('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<span>UMMA · Halal</span>';}},true);
 $('searchToggle').onclick=()=>{const open=$('searchPanel').hidden;$('searchPanel').hidden=!open;$('searchToggle').setAttribute('aria-expanded',String(open));if(open)$('search').focus();else{query='';$('search').value='';renderProducts();}};
 $('search').oninput=e=>{query=e.target.value;renderProducts();};$('clearSearch').onclick=()=>{query='';$('search').value='';renderProducts();$('search').focus();};
 // Reserve the dock's actual height, including translated labels and the basket.
 $('dishDetails').addEventListener('close',()=>{
   const id=$('dishDetails').dataset.productId;
-  if(id&&!$('checkout').open)document.querySelector('[data-dish="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
+  if(id&&!$('checkout').open)document.querySelector('.dish-link[data-dish="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
 });
 const customerDock = $('customerDock');
 function syncDockHeight() {
@@ -374,7 +374,7 @@ async function refreshAvailability(){
     }
     const replacement=[...document.querySelectorAll('[data-change],[data-category],[data-dish]')].find(node=>{
       if(focusData.category)return node.dataset.category===focusData.category;
-      if(focusData.dish)return node.dataset.dish===focusData.dish;
+      if(focusData.dish)return node.dataset.dish===focusData.dish&&node.matches('.dish-link');
       return focusData.change&&node.dataset.change===focusData.change&&node.dataset.id===focusData.id&&
         node.closest('dialog')===focused?.closest('dialog');
     });
