@@ -42,12 +42,29 @@ let response=await req(payload),body=await response.json();assert.equal(response
 response=await req({...payload,latitude:undefined});assert.equal(response.status,400);response=await req({...payload,orderType:'bogus'});assert.equal(response.status,400);
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
-for(const ending of ['delivered','cancelled','network','stale']){
- let queue=[],removed=0,turn=0;
+for(const ending of ['delivered','cancelled','network','stale','moving']){
+ let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted;
  const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only'}),w=dom.window,d=w.document;
  w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===5000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
- w.eval(read('js/cafe/public-menu-i18n.js'));w.L={};w.UmmaMaps={create:()=>({remove(){removed++;},invalidateSize(){},panTo(){}}),marker:()=>({setLatLng(){}})};
- w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',...(turn===2&&ending==='stale'?{}:{latitude:12.28,longitude:109.2,updatedAt:new Date().toISOString()})}));};
- w.eval(read('js/cafe/public-tracking.js'));await tick();assert.equal(d.getElementById('map').hidden,false);await queue.shift()();await tick();assert.equal(d.getElementById('map').hidden,true,ending+' hides previous coordinates');assert.equal(removed,1);assert.equal(w.Notification,undefined);w.close();
+ w.eval(read('js/cafe/public-menu-i18n.js'));w.L={polyline(initial){points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};}};w.UmmaMaps={create:()=>({remove(){removed++;},fitBounds(bounds){fitted=bounds;},getBounds:()=>({pad:()=>({contains:()=>true})})}),marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
+ w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',...(turn===2&&ending==='stale'?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,destination:{latitude:12.31,longitude:109.2},updatedAt:new Date().toISOString()})}));};
+ w.eval(read('js/cafe/public-tracking.js'));await tick();
+ assert.equal(d.getElementById('map').hidden,false);
+ const eta=d.getElementById('eta'),initialEta=eta.textContent;
+ assert.equal(eta.hidden,false);
+ assert.ok(fitted);
+ assert.equal(d.querySelector('#stages [aria-current]').textContent,w.ummaMenuI18n.t('Курьер в пути'));
+ await queue.shift()();await tick();
+ if(ending==='moving'){
+  assert.equal(d.getElementById('map').hidden,false);
+  assert.equal(markerMoves.length,1);
+  assert.equal(points.length,2);
+  assert.notEqual(eta.textContent,initialEta);
+ }else{
+  assert.equal(d.getElementById('map').hidden,true,ending+' hides previous coordinates');
+  assert.equal(eta.hidden,true);
+  assert.equal(removed,1);
+ }
+ assert.equal(w.Notification,undefined);w.close();
 }
 console.log('PASS tracking page: live map, terminal delivery/cancellation, stale/missing positions and lost connection clear map; unsupported Notification API does not crash.');

@@ -2,6 +2,12 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.99.1';
 const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,apikey,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json','Cache-Control':'no-store'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const sha=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
+function deliveryPoint(address: unknown) {
+ const match = typeof address === 'string' && address.match(/(?:^|\n)Точка доставки: (-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\s*$/);
+ if (!match) return;
+ const latitude = Number(match[1]), longitude = Number(match[2]);
+ if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) return {latitude, longitude};
+}
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});
@@ -27,10 +33,11 @@ Deno.serve(async req=>{
    if(typeof b.token!=='string'||!/^[a-f0-9]{64}$/.test(b.token))return reply({ok:false},404);
    const {data:grant}=await db.from('umma_guest_delivery_grants').select('order_id').eq('token_hash',await sha(b.token)).is('revoked_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
    if(!grant)return reply({ok:false},404);
-   const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id').eq('id',grant.order_id).maybeSingle();
+   const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id,delivery_address').eq('id',grant.order_id).maybeSingle();
    if(!o||o.order_type!=='delivery')return reply({ok:false},404);
    const data:any={ok:true,number:o.order_number,state:['completed','cancelled'].includes(o.status)?o.status:o.delivery_status||o.status,paymentStatus:o.payment_status,orderStatus:o.status};
-   if(o.courier_telegram_id&&['courier_assigned','picked_up'].includes(String(data.state))&&!['completed','cancelled'].includes(o.status)){
+   if(o.courier_telegram_id&&data.state==='picked_up'){
+    data.destination=deliveryPoint(o.delivery_address);
     const {data:p}=await db.from('cafe_delivery_tracking').select('latitude,longitude,position_at,enabled').eq('order_id',grant.order_id).eq('courier_telegram_id',o.courier_telegram_id).eq('enabled',true).maybeSingle();
     if(p&&p.latitude!=null&&p.longitude!=null&&p.position_at&&Date.now()-Date.parse(p.position_at)<60000&&Date.now()-Date.parse(p.position_at)>=-10000){
       data.latitude=p.latitude;data.longitude=p.longitude;data.updatedAt=p.position_at;
