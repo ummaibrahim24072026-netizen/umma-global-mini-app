@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ru" translate="no" class="notranslate"><head>
 <meta charset="utf-8"><meta name="google" content="notranslate"><base href="../"><link rel="canonical" href="https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/menu/"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#03A2A5"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
+<meta name="theme-color" content="#06494d"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=19"></script>
+<script src="js/cafe/public-menu-i18n.js?v=20"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -47,7 +47,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
 #cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -56,13 +56,32 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></svg>
       <span data-i18n="Поделиться">Поделиться</span>
     </button>
-    <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
+    <button id="openProfile" class="plain-btn" type="button" aria-haspopup="dialog" aria-label="Профиль" data-i18n-label="Профиль">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>
+    </button>
   </div>
 </div>
 <p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
-<div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10v10h14V10M3 11l9-8 9 8M12 10v7m-3-3 3 3 3-3"/></svg></span><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
+<section class="cafe-intro" aria-label="UMMA Cafe">
+  <div class="cafe-intro-copy"><p data-i18n="Халяльная кухня">Халяльная кухня</p><strong>UMMA CAFE</strong><span data-i18n="Нячанг">Нячанг</span></div>
+  <img src="logo/assets/menu/plov-white-v2.webp" alt="" width="240" height="240" fetchpriority="high">
+</section>
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
+<dialog id="customerProfile" aria-labelledby="profileTitle">
+  <div class="checkout-header"><h2 id="profileTitle" data-i18n="Профиль">Профиль</h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-body">
+    <div class="profile-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="68" height="68"><strong>UMMA CAFE</strong></div>
+    <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
+    <div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
+    <div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
+    <a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
+  </div>
+</dialog>
+<dialog id="dishDetails" aria-labelledby="dishTitle">
+  <div class="checkout-header"><h2 id="dishTitle"></h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-body" id="dishDetailsBody"></div>
+</dialog>
 <dialog id="activeOrders" aria-labelledby="activeOrdersTitle">
   <div class="checkout-header"><h2 id="activeOrdersTitle" data-i18n="Мои заказы">Мои заказы</h2><button class="close" type="button" id="closeActiveOrders" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></div>
   <div class="checkout-body" id="activeOrdersList"></div>
@@ -71,8 +90,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div class="checkout-header"><h2 id="orderHistoryTitle" data-i18n="История заказов">История заказов</h2><button class="close" type="button" id="closeOrderHistory" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></div>
   <div class="checkout-body" id="orderHistoryList"></div>
 </dialog>
-<div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
-<a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
 <section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
 <div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
@@ -81,16 +98,16 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <div class="customer-dock" id="customerDock">
 <div id="orderBar" class="order-bar" hidden><div><small id="barLabel" data-i18n="Ваш заказ">Ваш заказ</small><strong id="barTotal">0 ₫</strong></div><button type="button" id="openCart" class="primary"><span data-i18n="Корзина">Корзина</span> <span id="barCount" class="bar-count">0</span></button></div>
-<nav class="customer-actions" aria-labelledby="orderHistoryButton"><div id="orderInboxHost"></div><button type="button" id="orderHistoryButton" class="plain-btn" data-i18n="История заказов">История заказов</button><button type="button" id="receiptButton" class="plain-btn" data-i18n="Мои заказы" aria-haspopup="dialog" hidden>Мои заказы</button></nav>
+<nav class="customer-actions" aria-labelledby="orderHistoryButton"><a class="plain-btn dock-menu" href="menu/#products" data-i18n="Наше меню">Наше меню</a><div id="orderInboxHost"></div><div id="customerConnectHost"></div><button type="button" id="orderHistoryButton" class="plain-btn" data-i18n="История заказов">История заказов</button><button type="button" id="receiptButton" class="plain-btn" data-i18n="Мои заказы" aria-haspopup="dialog" hidden>Мои заказы</button></nav>
 </div>
 <dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><h2 id="checkoutTitle" data-i18n="Ваш заказ">Ваш заказ</h2><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
-<div id="checkoutContent"><div id="cartItems"></div><div class="cart-total"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div>
+<div id="checkoutContent"><section id="cartStep"><div id="cartItems"></div><div class="cart-total"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary" data-i18n="Оформить заказ">Оформить заказ</button></section><section id="checkoutStep" hidden>
 <div class="checkout-note"><span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span></div>
 <div id="voiceReviewHost"></div><form id="form"><fieldset id="customerFields">
 <label class="field"><span data-i18n="Как получить заказ?">Как получить заказ?</span><select id="orderType"><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select></label><section id="deliveryFields" hidden><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><button type="button" id="deliveryMapOpen" class="plain-btn" data-i18n="Указать на карте">Указать на карте</button> <button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><small class="guest-hint"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a></small><div id="deliveryMap" hidden style="height:280px;border-radius:12px"></div><p class="guest-hint" data-i18n="Стоимость доставки уточняется кафе до отправки. QR оплачивает блюда.">Стоимость доставки уточняется кафе до отправки. QR оплачивает блюда.</p></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><label><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label></fieldset>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
 <details class="optional-name"><summary data-i18n="Добавить имя (необязательно)">Добавить имя (необязательно)</summary><label class="field"><span data-i18n="Имя — необязательно">Имя — необязательно</span><input id="customerName" autocomplete="given-name" maxlength="100" placeholder="Как к вам обращаться" data-i18n-placeholder="Как к вам обращаться"></label></details>
-</fieldset><button class="primary" id="submit" type="submit" data-i18n="Оформить заказ">Оформить заказ</button></form></div>
+</fieldset><button class="primary" id="submit" type="submit" data-i18n="Оформить заказ">Оформить заказ</button></form><button type="button" id="backToCart" class="plain-btn" data-i18n="Корзина">Корзина</button></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden><div class="success-mark" aria-hidden="true">✓</div><h3 id="orderState" data-i18n="Заказ отправлен">Заказ отправлен</h3><div id="successNumber" class="success-number"></div><div id="receiptDetails" class="receipt-lines" hidden></div><p id="successTotal"></p><div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><p id="receiptHint"></p><p id="paymentState" role="status"></p><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p></section><section id="deliveryReceipt" hidden><a id="trackingLink" class="primary bank-link" rel="noreferrer">Отследить доставку</a><button type="button" id="trackingCopy" class="plain-btn">Скопировать ссылку</button></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
@@ -110,11 +127,14 @@ const menuCategories = [
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
     { id: "other", label: "Другое", skus: [] }
   ];
-const halalBadge = '<svg class="cafe-halal-badge" viewBox="0 0 100 100" role="img" aria-label="Халяль" focusable="false"><path d="M50 3 64 17 83 17 83 36 97 50 83 64 83 83 64 83 50 97 36 83 17 83 17 64 3 50 17 36 17 17 36 17Z" fill="#fffdf5" stroke="#bd963e" stroke-width="3" stroke-linejoin="round"/><path d="M50 13 62 25 75 25 75 38 87 50 75 62 75 75 62 75 50 87 38 75 25 75 25 62 13 50 25 38 25 25 38 25Z" fill="none" stroke="#bd963e" stroke-width="1.4"/><text x="50" y="48" text-anchor="middle" fill="#075e65" font-family="Times New Roman,serif" font-size="28" lang="ar">حلال</text><text x="50" y="70" text-anchor="middle" fill="#075e65" font-family="Arial,sans-serif" font-size="11" font-weight="700">HALAL</text></svg>';
-
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/', $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const I=window.ummaMenuI18n,t=I.t,num=I.number;
+$('openProfile').onclick=()=>$('customerProfile').showModal();
+document.querySelector('.dock-menu').onclick=event=>{
+  event.preventDefault();
+  $('products').scrollIntoView({block:'start'});
+};
 $('shareMenu').addEventListener('click',async()=>{
  const feedback=$('shareMenuStatus');
  feedback.hidden=true;
@@ -162,7 +182,26 @@ function preorderCard(p,n){
  const time=new Intl.DateTimeFormat(I.locale(),{timeZone,hour:'2-digit',minute:'2-digit',...(today?{}:{day:'numeric',month:'short'})}).format(readyAt);
  return '<div class="cafe-preorder-card"><strong>'+esc(t(today?'Будет готово сегодня к {time}':'Будет готово к {time}',{time}))+'</strong><small>'+esc(t('Порций для предзаказа: {count}',{count:num(stockLeft(p))}))+'</small>'+cardQuantity(p,n)+'</div>';
 }
-function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<div class="cafe-product-media"><img class="cafe-product-photo" src="'+esc(img)+'" alt="'+esc(n)+'" loading="lazy" decoding="async"></div>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+halalBadge.replace('aria-label="Халяль"','aria-label="'+esc(t('Халяль'))+'"')+'<h3>'+esc(n)+'</h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+(description(p)?'<details class="cafe-product-description"><summary>'+t('Описание')+'</summary><p>'+esc(description(p))+'</p></details>':'')+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<div class="cafe-product-media"><img class="cafe-product-photo" src="'+esc(img)+'" alt="'+esc(n)+'" loading="lazy" decoding="async"></div>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+'<h3><button type="button" class="dish-link" data-dish="'+esc(p.id)+'" aria-haspopup="dialog">'+esc(n)+'</button></h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+money(p.price_vnd)+'</span>'+((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+function showDish(p, focusSelector){
+  const image=safeImage(p);
+  const n=name(p);
+  const future=menuDishes().find(({dish})=>dish===p)?.batch;
+  $('dishTitle').textContent=n;
+  $('dishDetailsBody').innerHTML=(image?'<img class="dish-detail-photo" src="'+esc(image)+'" alt="">':'')+
+    '<div class="dish-detail-facts"><strong>'+money(p.price_vnd)+'</strong><span>'+esc(weight(p))+'</span></div>'+
+    (description(p)?'<p>'+esc(description(p))+'</p>':'')+stockSummary(p)+
+    ((stockLeft(p)>0||qty(p.id))?'<div class="dish-detail-order">'+cardQuantity(p,n)+'</div>':'')+
+    (future?preorderCard(future,n):'');
+  $('dishDetails').dataset.productId=p.id;
+  if(!$('dishDetails').open)$('dishDetails').showModal();
+  lock();
+  if(focusSelector){
+    const restored=$('dishDetailsBody').querySelector(focusSelector+':not(:disabled)');
+    const target=restored||$('dishDetailsBody').querySelector('button:not(:disabled)')||$('dishDetails').querySelector('.close');
+    target.focus({preventScroll:true});
+  }
+}
 function cardQuantity(p,n){const q=qty(p.id);if(p.isPreorder)n+=' · '+batchLabel(p);return (q?'<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+p.id+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>':'<button type="button" class="'+(p.isPreorder?'cafe-preorder-action':'cafe-add')+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'">'+(p.isPreorder?esc(t('Предзаказать')):'+')+'</button>');}
 function menuDishes(){
  const batches=new Map(products.filter(p=>p.isPreorder&&visibleDish(p)).map(p=>[p.productId,p]));
@@ -171,14 +210,30 @@ function menuDishes(){
 
 function renderCategories(){const dishes=menuDishes().map(row=>row.dish);const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];$('categories').innerHTML=cats.map(c=>'<button type="button" class="cafe-category" data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products">'+esc(t(c.label))+'<span aria-hidden="true">'+num(c.id==='all'?dishes.length:dishes.filter(p=>categoryFor(p)===c.id).length)+'</span></button>').join('');}
 function renderProducts(){const visible=menuDishes().filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&[name(p),description(p),p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en].join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
-function renderCart(){ $('submit').textContent=t(pending?'Повторить отправку':'Оформить заказ');const amount=total(),n=count();$('orderBar').hidden=!n;$('barTotal').textContent=money(amount);$('barCount').textContent=num(n);$('barLabel').textContent=t('Ваш заказ')+' · '+num(n)+' '+t('шт.');$('cartTotal').textContent=money(amount);let batchHint=$('cartBatchHint');if(!batchHint){batchHint=document.createElement('p');batchHint.id='cartBatchHint';batchHint.className='cafe-preorder-label';$('cartItems').before(batchHint);}const future=products.filter(p=>p.isPreorder&&qty(p.id));batchHint.hidden=!future.length;if(future.length)batchHint.textContent=t('Весь заказ соберём после готовности блюд, не раньше {time}.',{time:batchTime(Math.max(...future.map(p=>Date.parse(p.plannedReadyAt))))})+' '+t('Время Нячанга');$('cartItems').innerHTML=products.filter(p=>qty(p.id)).map(p=>'<div class="cart-row"><div class="cart-copy"><strong>'+esc(name(p))+'</strong>'+(p.isPreorder?'<small class="cafe-preorder-label">'+esc(batchLabel(p))+'</small>':'')+'<small>'+money(p.price_vnd)+' × '+num(qty(p.id))+' · '+money(p.price_vnd*qty(p.id))+'</small></div><div class="cart-controls"><button type="button" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:name(p)}))+'">−</button><b>'+num(qty(p.id))+'</b><button type="button" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:name(p)}))+'">+</button></div></div>').join('')||'<p>'+t('В заказе пока нет блюд.')+'</p>';$('submit').disabled=!n||busy||(!pending&&shortages());lock();}
+function renderCart(){ $('submit').textContent=t(pending?'Повторить отправку':'Оформить заказ');const amount=total(),n=count();$('orderBar').hidden=!n;$('barTotal').textContent=money(amount);$('barCount').textContent=num(n);$('barLabel').textContent=t('Ваш заказ')+' · '+num(n)+' '+t('шт.');$('cartTotal').textContent=money(amount);let batchHint=$('cartBatchHint');if(!batchHint){batchHint=document.createElement('p');batchHint.id='cartBatchHint';batchHint.className='cafe-preorder-label';$('cartItems').before(batchHint);}const future=products.filter(p=>p.isPreorder&&qty(p.id));batchHint.hidden=!future.length;if(future.length)batchHint.textContent=t('Весь заказ соберём после готовности блюд, не раньше {time}.',{time:batchTime(Math.max(...future.map(p=>Date.parse(p.plannedReadyAt))))})+' '+t('Время Нячанга');$('cartItems').innerHTML=products.filter(p=>qty(p.id)).map(p=>{const photo=safeImage(p);return '<div class="cart-row">'+(photo?'<img class="cart-photo" src="'+esc(photo)+'" alt="" width="56" height="56">':'')+'<div class="cart-copy"><strong>'+esc(name(p))+'</strong>'+(p.isPreorder?'<small class="cafe-preorder-label">'+esc(batchLabel(p))+'</small>':'')+'<small>'+money(p.price_vnd)+' × '+num(qty(p.id))+' · '+money(p.price_vnd*qty(p.id))+'</small></div><div class="cart-controls"><button type="button" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:name(p)}))+'">−</button><b>'+num(qty(p.id))+'</b><button type="button" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:name(p)}))+'">+</button></div></div>';}).join('')||'<p>'+t('В заказе пока нет блюд.')+'</p>';$('continueCheckout').disabled=!n; $('submit').disabled=!n||busy||(!pending&&shortages());lock();}
 function lock(){$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
-function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){status('Для одного блюда выберите готовые порции или одну будущую партию.',true);$('openCart').click();return;}if(!qty(id)&&next&&cart.size>=25)return;if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const opened=article?.querySelector('details')?.open;if(article){article.outerHTML=card(p);if(opened)document.querySelector('[data-card="'+id+'"] details')?.setAttribute('open','');}renderCart();}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');if(b){change(b.dataset.id,Number(b.dataset.change));return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(window.scrollY>document.querySelector('.menu-sticky').offsetTop)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){category='all';query='';$('search').value='';renderCategories();renderProducts();}});
+function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
+if(row){
+  const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
+  if(cardNode)cardNode.outerHTML=card(row.dish,row.batch);
+}renderCart();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');if(b){
+  const details=$('dishDetails');
+  change(b.dataset.id,Number(b.dataset.change));
+  if(details.open&&details.contains(b)){
+    const p=products.find(item=>item.id===details.dataset.productId);
+    if(p)showDish(p,'[data-change="'+b.dataset.change+'"][data-id="'+CSS.escape(b.dataset.id)+'"]');
+  }
+  return;
+}const dish=e.target.closest('[data-dish]');if(dish){const p=products.find(item=>item.id===dish.dataset.dish);if(p)showDish(p);return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(document.querySelector('.menu-sticky').getBoundingClientRect().bottom<=0)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){category='all';query='';$('search').value='';renderCategories();renderProducts();}});
 $('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<div class="message" style="border:0">UMMA · Halal</div>';}},true);
 $('searchToggle').onclick=()=>{const open=$('searchPanel').hidden;$('searchPanel').hidden=!open;$('searchToggle').setAttribute('aria-expanded',String(open));if(open)$('search').focus();else{query='';$('search').value='';renderProducts();}};
 $('search').oninput=e=>{query=e.target.value;renderProducts();};$('clearSearch').onclick=()=>{query='';$('search').value='';renderProducts();$('search').focus();};
 // Reserve the dock's actual height, including translated labels and the basket.
+$('dishDetails').addEventListener('close',()=>{
+  const id=$('dishDetails').dataset.productId;
+  if(id&&!$('checkout').open)document.querySelector('[data-dish="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
+});
 const customerDock = $('customerDock');
 function syncDockHeight() {
   document.body.style.setProperty('--customer-dock-height', customerDock.offsetHeight + 'px');
@@ -196,11 +251,21 @@ if (window.visualViewport) {
   viewport.addEventListener('scroll', syncDialogViewport);
   syncDialogViewport();
 }
+function checkoutStage(stage){
+  $('cartStep').hidden=stage!=='cart';
+  $('checkoutStep').hidden=stage!=='checkout';
+  const title=stage==='cart'?'Корзина':stage==='checkout'?'Оформить заказ':'Ваш заказ';
+  $('checkoutTitle').dataset.i18n=title;
+  $('checkoutTitle').textContent=t(title);
+  $('checkout').scrollTop=0;
+}
+$('continueCheckout').onclick=()=>{checkoutStage('checkout');$('orderType').focus();};
+$('backToCart').onclick=()=>{checkoutStage('cart');$('continueCheckout').focus();};
 function closeCart(){if(!busy)$('checkout').close();}
 $('checkout').addEventListener('close',()=>{document.body.style.overflow='';});
-$('openCart').onclick=()=>{$('checkoutContent').hidden=false;$('success').hidden=true;renderCart();$('checkout').showModal();document.body.style.overflow='hidden';};$('closeCart').onclick=closeCart;$('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();else document.body.style.overflow='';});$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();$('result').hidden=true;};
+$('openCart').onclick=()=>{$('checkoutContent').hidden=false;$('success').hidden=true;checkoutStage(pending?'checkout':'cart');renderCart();$('checkout').showModal();document.body.style.overflow='hidden';};$('closeCart').onclick=closeCart;$('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();else document.body.style.overflow='';});$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
-$('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Отправляем заказ…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error('checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,pending?'Повторите отправку — заказ не продублируется.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};
+$('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Отправляем заказ…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error('checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,pending?'Повторите отправку — заказ не продублируется.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};
 const terminal = order => ['cancelled','completed'].includes(order?.status);
 const receiptKey = order => order.id || String(order.orderNumber);
 const activeReceipts = () => [...receipts.values()].reverse().filter(order => !terminal(order));
@@ -257,6 +322,7 @@ function openReceipt(order){
   $('result').hidden=true;
   $('success').hidden=false;
   renderSuccess();
+  checkoutStage('receipt');
   $('checkout').showModal();
   document.body.style.overflow='hidden';
 }
@@ -292,23 +358,26 @@ async function refreshAvailability(){
     const reset=window.ummaCafeEpoch?.apply(d.cafeResetEpoch);
     if(!reset&&JSON.stringify(next)===JSON.stringify(products))return;
     if(reset){resetReceipts();pending=null;cart.clear();}
-    const opened=[...$('products').querySelectorAll('details[open]')].map(node=>node.closest('[data-card]').dataset.card);
     const focused=document.activeElement;
     const focusData={...focused?.dataset};
-    const hadSummaryFocus=focused?.matches('#products summary');
-    const summaryCard=hadSummaryFocus?focused.closest('[data-card]').dataset.card:null;
     products=next;
     menuState=products.some(visibleDish)?'ready':'empty';
     if(category!=='all'&&!products.some(p=>visibleDish(p)&&categoryFor(p)===category))category='all';
     renderCategories();renderProducts();renderCart();
     if(menuState==='empty')renderLoadState();
-    for(const id of opened)document.querySelector('[data-card="'+CSS.escape(id)+'"] details')?.setAttribute('open','');
-    const replacement=summaryCard
-      ?document.querySelector('[data-card="'+CSS.escape(summaryCard)+'"] summary')
-      :[...document.querySelectorAll('[data-change],[data-category]')].find(node=>
-        focusData.category?node.dataset.category===focusData.category:
-        focusData.change&&node.dataset.change===focusData.change&&node.dataset.id===focusData.id&&
-        (node.closest('#checkout')!==null)===(focused?.closest('#checkout')!==null));
+    const details=$('dishDetails');
+    if(details.open){
+      const selected=products.find(p=>p.id===details.dataset.productId);
+      if(selected)showDish(selected,details.contains(focused)&&focusData.change
+        ?'[data-change="'+focusData.change+'"][data-id="'+CSS.escape(focusData.id)+'"]':undefined);
+      else details.close();
+    }
+    const replacement=[...document.querySelectorAll('[data-change],[data-category],[data-dish]')].find(node=>{
+      if(focusData.category)return node.dataset.category===focusData.category;
+      if(focusData.dish)return node.dataset.dish===focusData.dish;
+      return focusData.change&&node.dataset.change===focusData.change&&node.dataset.id===focusData.id&&
+        node.closest('dialog')===focused?.closest('dialog');
+    });
     replacement?.focus({preventScroll:true});
     if(!pending&&shortages())status('Часть блюд уже закончилась. Измените корзину.',true);
   }catch{}finally{availabilityBusy=false;}
@@ -333,7 +402,7 @@ for(const [code,[label]] of Object.entries(I.languages)){const option=document.c
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
-window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);const opened=[...document.querySelectorAll('[data-card] details[open]')].map(n=>n.closest('[data-card]').dataset.card);if(menuState==='ready'){renderCategories();renderProducts();for(const id of opened)document.querySelector('[data-card="'+id+'"] details')?.setAttribute('open','');}else renderLoadState();renderTables();renderCart();renderSuccess();$('submit').textContent=t(pending?'Повторить отправку':'Оформить заказ');if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
+window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderSuccess();$('submit').textContent=t(pending?'Повторить отправку':'Оформить заказ');if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
 I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();
 const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent,name:$('customerName').value});
 window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
@@ -349,4 +418,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 });
 window.ummaMenuAudience?.start(source);
 load();
-</script><script src="js/cafe/connect-media.js?v=2"></script><script src="js/cafe/connect-composer.js?v=2"></script><script src="js/cafe/customer-connect.js?v=9"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
+</script><script src="js/cafe/connect-media.js?v=2"></script><script src="js/cafe/connect-composer.js?v=2"></script><script src="js/cafe/customer-connect.js?v=10"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
