@@ -1,0 +1,26 @@
+body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
+.tracking{position:relative;max-width:850px;min-height:100dvh;margin:auto;display:flex;flex-direction:column;background:#e8f1ed}
+.tracking-toolbar{position:absolute;inset:max(12px,env(safe-area-inset-top)) 14px auto;z-index:500;display:flex;justify-content:space-between;gap:12px;pointer-events:none}
+.tracking-toolbar>*{pointer-events:auto}
+.tracking-toolbar a,.tracking-toolbar select,#center{box-sizing:border-box;min-height:44px;padding:10px 13px;border:1px solid #dce9e4;border-radius:14px;background:#fff;color:#13483e;font:inherit;text-decoration:none;box-shadow:0 3px 14px #153d3220}
+.tracking-map-area{position:relative;flex:1;min-height:clamp(260px,57dvh,640px);background:#dfece5}
+#map{position:absolute;inset:0 0 18px}
+#center{position:absolute;z-index:500;inset:auto 14px 32px auto;cursor:pointer}
+.tracking-sheet{position:relative;z-index:501;margin-top:-18px;padding:20px 20px max(20px,env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -5px 24px #173c381c;overflow-wrap:anywhere}
+#orderNumber{margin:0;color:#49675e;font-size:.875rem}
+#status{margin:5px 0 8px;font-size:clamp(1.35rem,6vw,2rem);line-height:1.15}
+#eta{display:inline-block;margin:2px 0 8px;padding:8px 12px;border-radius:10px;background:#e1f4eb;color:#075b45;font-weight:700}
+#connection{margin:8px 0;color:#4e665f}
+#progress{padding:10px 0;border-top:1px solid #e6eeea}
+#progress summary{cursor:pointer;font-weight:650}
+#stages{margin:12px 0 0;padding:0;list-style:none}
+#stages li{display:flex;align-items:center;gap:10px;min-height:34px;color:#516961}
+#stages li::before{content:"";width:10px;height:10px;border:2px solid #9bb4ac;border-radius:50%;flex:none}
+#stages li[data-done]::before{background:#00836e;border-color:#00836e}
+#stages li[aria-current]{font-weight:700;color:#075b45}
+#notify{min-height:44px;padding:8px 0;border:0;background:none;color:#075b45;font:inherit;text-align:start;cursor:pointer}
+.umma-map-marker{display:grid;place-items:center;border-radius:50%;background:#087b80;color:white;border:2px solid white;box-sizing:border-box;box-shadow:0 2px 8px #18382e55}
+.umma-map-marker-destination{background:#17473c}
+.tracking:not([data-map]) .tracking-map-area{min-height:76px;flex:0}
+.tracking:not([data-map]) .tracking-sheet{margin-top:0;flex:1}
+[hidden]{display:none!important}

@@ -42,18 +42,21 @@ let response=await req(payload),body=await response.json();assert.equal(response
 response=await req({...payload,latitude:undefined});assert.equal(response.status,400);response=await req({...payload,orderType:'bogus'});assert.equal(response.status,400);
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
-for(const ending of ['delivered','cancelled','network','stale','moving']){
- let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted;
+for(const ending of ['delivered','cancelled','network','stale','moving','road']){
+ let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,centered;
  const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only'}),w=dom.window,d=w.document;
  w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===5000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
- w.eval(read('js/cafe/public-menu-i18n.js'));w.L={polyline(initial){points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};}};w.UmmaMaps={create:()=>({remove(){removed++;},fitBounds(bounds){fitted=bounds;},getBounds:()=>({pad:()=>({contains:()=>true})})}),marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
+ w.eval(read('js/cafe/public-menu-i18n.js'));w.L={polyline(initial,style){if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};}};w.UmmaMaps={create:()=>({remove(){removed++;},fitBounds(bounds){fitted=bounds;},panTo(point){centered=point;},getBounds:()=>({pad:()=>({contains:()=>true})})}),marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
  w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',...(turn===2&&ending==='stale'?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,destination:{latitude:12.31,longitude:109.2},updatedAt:new Date().toISOString()})}));};
+ if(ending==='road')w.UmmaNhaTrangRouter={route:async()=>({seconds:420,path:[{lat:12.28,lng:109.2},{lat:12.31,lng:109.2}]})};
  w.eval(read('js/cafe/public-tracking.js'));await tick();
  assert.equal(d.getElementById('map').hidden,false);
  const eta=d.getElementById('eta'),initialEta=eta.textContent;
  assert.equal(eta.hidden,false);
  assert.ok(fitted);
  assert.equal(d.querySelector('#stages [aria-current]').textContent,w.ummaMenuI18n.t('Курьер в пути'));
+ d.getElementById('center').click();assert.equal(centered[0],12.28);
+ if(ending==='road'){assert.equal(roadPath.length,2);assert.equal(initialEta,w.ummaMenuI18n.t('Примерно {minutes} мин. до прибытия',{minutes:7}));w.close();continue;}
  await queue.shift()();await tick();
  if(ending==='moving'){
   assert.equal(d.getElementById('map').hidden,false);

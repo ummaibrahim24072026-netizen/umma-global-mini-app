@@ -3,6 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id),I=window.ummaMenuI18n,t=I.t;
 const token=new URLSearchParams(location.hash.slice(1)).get('token')||'';
+let road=null,routeRequest=0,routeOrigin=null;
 let map=null,marker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
 const terminal=['delivered','completed','cancelled'];
 const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ выдан',cancelled:'Заказ отменён'};
@@ -16,7 +17,10 @@ function point(d){
 }
 function hideMap(){
  if(map)map.remove();
- map=marker=trail=lastFix=null;
+ map=marker=trail=lastFix=road=routeOrigin=null;
+ routeRequest++;
+ delete $('map').closest('main').dataset.map;
+ $('center').hidden=true;
  etaMinutes=null;
  $('map').hidden=true;
 }
@@ -36,14 +40,17 @@ function drawPosition(d){
   if(d.state==='picked_up'&&!isTerminal(d))connectionKey='Ожидаем свежую геопозицию курьера';
   return;
  }
- etaMinutes=destination?estimateMinutes(courier,destination):null;
+ if(!routeOrigin)etaMinutes=destination?estimateMinutes(courier,destination):null;
  if(!window.L||!window.UmmaMaps){connectionKey='Не удалось загрузить карту';return;}
  const fix=[courier.lat,courier.lng];
  $('map').hidden=false;
+ $('map').closest('main').dataset.map='';
+ $('center').hidden=false;
  if(!map){
   map=UmmaMaps.create($('map'),courier,()=>{});
+  map.zoomControl?.setPosition('bottomleft');
   marker=UmmaMaps.marker(map,courier,'courier');
-  trail=L.polyline([fix],{color:'#087b80',weight:4}).addTo(map);
+  trail=L.polyline([fix],{color:'#478a80',weight:3,dashArray:'4 7'}).addTo(map);
   if(destination){
    UmmaMaps.marker(map,destination);
    map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[32,32],maxZoom:16});
@@ -55,10 +62,34 @@ function drawPosition(d){
   if(!map.getBounds().pad(-0.15).contains(fix))map.panTo(fix);
  }
  lastFix=fix;
+ if(destination)updateRoad(courier,destination);
+}
+$('center').onclick=()=>{if(map&&lastFix)map.panTo(lastFix);};
+function updateRoad(courier,destination){
+ if(!window.UmmaNhaTrangRouter)return;
+ if(routeOrigin&&Math.hypot(courier.lat-routeOrigin.lat,courier.lng-routeOrigin.lng)<0.00045)return;
+ routeOrigin=courier;
+ const request=++routeRequest;
+ void window.UmmaNhaTrangRouter.route(courier,destination).then(result=>{
+  if(request!==routeRequest||!map)return;
+  etaMinutes=result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination);
+  if(result){
+   const path=result.path.map(p=>[p.lat,p.lng]);
+   if(road)road.setLatLngs(path);
+   else road=L.polyline(path,{color:'#007c61',weight:5}).addTo(map);
+  }else if(road){road.remove();road=null;}
+  labels();
+ }).catch(()=>{
+  if(request!==routeRequest||!map)return;
+  routeOrigin=null;
+  road?.remove();road=null;
+  etaMinutes=estimateMinutes(courier,destination);
+  labels();
+ });
 }
 function renderStages(){
  const d=data;
- $('stages').hidden=!d||d.state==='cancelled'||d.orderStatus==='cancelled'||!!statusKey;
+ $('progress').hidden=!d||d.state==='cancelled'||d.orderStatus==='cancelled'||!!statusKey;
  const kitchen=d?.orderStatus==='ready'?2:d?.orderStatus==='preparing'?1:0;
  const delivery=d?.state==='courier_assigned'?3:d?.state==='picked_up'?4:d&&isTerminal(d)?5:0;
  const current=delivery>=4?delivery:Math.max(kitchen,delivery);
@@ -70,7 +101,20 @@ function renderStages(){
  $('eta').hidden=etaMinutes===null;
  $('eta').textContent=etaMinutes===null?'':t('Примерно {minutes} мин. до прибытия',{minutes:etaMinutes});
 }
-function labels(){document.title='UMMA Delivery';$('menuLanguage').setAttribute('aria-label',t('Выбрать язык'));$('status').textContent=statusKey?t(statusKey):data?t('Заказ №{number}',{number:data.number})+' · '+t(names[data.orderStatus]||'Заказ отправлен')+' · '+t(names[data.state]||'Ищем курьера'):'';$('connection').textContent=connectionKey?t(connectionKey):'';$('note').textContent=t('Координаты доступны только во время доставки. Обновление каждые 5 секунд.');$('notify').textContent=t(notificationKey);$('back').textContent=t('Вернуться к меню');renderStages();}
+function labels(){
+ document.title='UMMA Delivery';
+ $('menuLanguage').setAttribute('aria-label',t('Выбрать язык'));
+ $('orderNumber').textContent=data&&!statusKey?t('Заказ №{number}',{number:data.number}):'';
+ const state=data?.state;
+ const label=['courier_assigned','picked_up',...terminal].includes(state)?names[state]:names[data?.orderStatus]||names[state];
+ $('status').textContent=statusKey?t(statusKey):label?t(label):'';
+ $('connection').textContent=connectionKey?t(connectionKey):'';
+ $('notify').textContent=t(notificationKey);
+ $('back').textContent=t('Вернуться к меню');
+ $('center').textContent=t('Показать курьера');
+ $('progressLabel').textContent=t('Этапы доставки');
+ renderStages();
+}
 for(const [code,[label]]of Object.entries(I.languages)){const o=document.createElement('option');o.value=code;o.textContent=label;$('menuLanguage').append(o);}$('menuLanguage').value=I.language;$('menuLanguage').onchange=e=>I.setLanguage(e.target.value);window.addEventListener('umma-menu:languagechange',labels);labels();
 $('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!('Notification'in window))return;try{const p=await Notification.requestPermission();notificationKey=p==='granted'?'Уведомления разрешены для открытой страницы':'Уведомления не разрешены';labels();}catch{notificationKey='Уведомления не разрешены';labels();}};
 async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{
