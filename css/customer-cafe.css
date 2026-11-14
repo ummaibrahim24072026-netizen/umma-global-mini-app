@@ -100,8 +100,14 @@
 .public-cafe-menu #cafePage button.cafe-product-media {
   padding: 0;
   border: 0;
+  background: #fff;
   color: inherit;
   font: inherit;
+}
+.public-cafe-menu #cafePage .cafe-product-media .cafe-product-photo {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
 }
 .dish-link {
   display: block;
