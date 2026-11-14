@@ -421,12 +421,18 @@ Deno.serve(async req => {
       const courierQuery=supabase.from("cafe_staff").select("telegram_id,location_id,staff_role,courier_available").eq("is_active",true);
       if(actor.role!=="super_admin") courierQuery.in("location_id",assignedLocationIds);
       const {data:courierAssignments,error:courierError}=await courierQuery;
-      if(courierError) return response({ok:false,error:"Не удалось загрузить список курьеров"},500);
+      if(courierError) console.error("Kitchen courier assignments unavailable",courierError.message);
       const eligibleAssignments=[];
-      for(const assignment of (courierAssignments||[]).filter((s:any)=>s.staff_role==="courier"||s.courier_available)){const {data:active,error}=await supabase.rpc("cafe_active_courier",{p_actor:assignment.telegram_id,p_location:assignment.location_id});if(error)return response({ok:false,error:"Не удалось проверить курьера"},500);if(active)eligibleAssignments.push(assignment);}
+      for (const assignment of (courierAssignments || []).filter((item: any) => item.staff_role === "courier" || item.courier_available)) {
+        const {data: active, error} = await supabase.rpc("cafe_active_courier", {
+          p_actor: assignment.telegram_id, p_location: assignment.location_id,
+        });
+        if (error) console.error("Kitchen courier availability unavailable", error.message);
+        else if (active) eligibleAssignments.push(assignment);
+      }
       const courierIds=Array.from(new Set((eligibleAssignments).map((x:any)=>Number(x.telegram_id))));
       const {data:courierUsers,error:courierUsersError}=courierIds.length?await supabase.from("telegram_users").select("telegram_id,first_name,last_name,username").in("telegram_id",courierIds).eq("is_active",true):{data:[],error:null};
-      if(courierUsersError) return response({ok:false,error:"Не удалось загрузить профили курьеров"},500);
+      if(courierUsersError) console.error("Kitchen courier profiles unavailable",courierUsersError.message);
       const userById=new Map((courierUsers??[]).map((u:any)=>[Number(u.telegram_id),u]));
       const couriers=(eligibleAssignments).map((x:any)=>{const u=userById.get(Number(x.telegram_id));return {telegram_id:x.telegram_id,location_id:x.location_id,name:u?([u.first_name,u.last_name].filter(Boolean).join(" ")||(u.username?"@"+u.username:String(u.telegram_id))):String(x.telegram_id)}}).filter((x:any)=>userById.has(Number(x.telegram_id)));
       const orderIds=(ordersWithRoles??[]).map((o:any)=>o.id);
@@ -443,7 +449,8 @@ Deno.serve(async req => {
         supabase.rpc("list_cafe_courier_offers",{p_actor:telegramId}),
         orderIds.length?supabase.from("cafe_delivery_proofs").select("id,order_id,courier_telegram_id,kind,verified_at").in("order_id",orderIds).not("verified_at","is",null):Promise.resolve({data:[],error:null})
       ]);
-      if(offersError||proofsError)return response({ok:false,error:"Не удалось загрузить предложения или фото доставки"},500);
+      if (offersError) console.error("Kitchen courier offers unavailable", offersError.message);
+      if (proofsError) console.error("Kitchen delivery evidence unavailable", proofsError.message);
       let dispatchBoard:any=null;
       if(courierWorkspace){
         const {data:board,error:boardError}=await supabase.rpc("get_cafe_courier_dispatch_board",{p_actor:telegramId});
