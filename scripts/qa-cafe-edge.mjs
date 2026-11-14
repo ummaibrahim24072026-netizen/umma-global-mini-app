@@ -119,9 +119,9 @@ export async function verifyCafeEdges(db,cafe,product){
   // The older lifecycle fixture has yet to load the self-service and preorder columns.
   await db.query(`
     ALTER TABLE cafe_orders ADD COLUMN requires_prepayment boolean NOT NULL DEFAULT false,
-      ADD COLUMN preorder_waiting boolean NOT NULL DEFAULT false, ADD COLUMN preorder_expected_at timestamptz;
-    ALTER TABLE locations ADD COLUMN self_service_enabled boolean NOT NULL DEFAULT false;
+      ADD COLUMN preorder_waiting boolean NOT NULL DEFAULT false, ADD COLUMN preorder_expected_at timestamptz
   `);
+  await db.query("ALTER TABLE locations ADD COLUMN self_service_enabled boolean NOT NULL DEFAULT false");
   deliveryLookupsOffline=true;
   try {
     const staffOrders=await post(kitchen,{initData:auth(11),action:'list'});
@@ -131,9 +131,9 @@ export async function verifyCafeEdges(db,cafe,product){
   } finally {
     deliveryLookupsOffline=false;
     await db.query(`
-      ALTER TABLE cafe_orders DROP COLUMN requires_prepayment, DROP COLUMN preorder_waiting, DROP COLUMN preorder_expected_at;
-      ALTER TABLE locations DROP COLUMN self_service_enabled;
+      ALTER TABLE cafe_orders DROP COLUMN requires_prepayment, DROP COLUMN preorder_waiting, DROP COLUMN preorder_expected_at
     `);
+    await db.query("ALTER TABLE locations DROP COLUMN self_service_enabled");
   }
   const notified=notificationCalls;
   const customerRetry=await post(create,customer);assert.equal(customerRetry.status,200);assert.equal(customerRetry.data.order.id,newCustomer.data.order.id);assert.equal(notificationCalls,notified);
