@@ -47,7 +47,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
 #cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=4"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=4"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-menu.css?v=1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="34" height="34">UMMA CAFE</div>
@@ -65,15 +65,15 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
 <dialog id="activeOrders" aria-labelledby="activeOrdersTitle">
   <div class="checkout-header"><h2 id="activeOrdersTitle" data-i18n="Мои заказы">Мои заказы</h2><button class="close" type="button" id="closeActiveOrders" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></div>
-  <div class="checkout-body" id="activeOrdersList"></div>
+  <div class="checkout-body receipt-list" id="activeOrdersList"></div>
 </dialog>
 <dialog id="orderHistory" aria-labelledby="orderHistoryTitle">
   <div class="checkout-header"><h2 id="orderHistoryTitle" data-i18n="История заказов">История заказов</h2><button class="close" type="button" id="closeOrderHistory" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></div>
-  <div class="checkout-body" id="orderHistoryList"></div>
+  <div class="checkout-body receipt-list" id="orderHistoryList"></div>
 </dialog>
-<div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
-<a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
-<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><div id="orderInboxHost"></div><button type="button" id="orderHistoryButton" class="plain-btn" data-i18n="История заказов">История заказов</button><button type="button" id="receiptButton" class="plain-btn" data-i18n="Мои заказы" aria-haspopup="dialog" hidden>Мои заказы</button><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
+<div class="cafe-location-card"><div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
+<a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a></div>
+<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg> <span data-i18n="Поиск">Поиск</span></button><div class="menu-actions"><div id="orderInboxHost"></div><button type="button" id="orderHistoryButton" class="plain-btn" data-i18n="История заказов">История заказов</button><button type="button" id="receiptButton" class="plain-btn" data-i18n="Мои заказы" aria-haspopup="dialog" hidden>Мои заказы</button><span id="voiceOrderHost"></span></div></div>
 <div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
@@ -91,7 +91,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden><div class="success-mark" aria-hidden="true">✓</div><h3 id="orderState" data-i18n="Заказ отправлен">Заказ отправлен</h3><div id="successNumber" class="success-number"></div><div id="receiptDetails" class="receipt-lines" hidden></div><p id="successTotal"></p><div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><p id="receiptHint"></p><p id="paymentState" role="status"></p><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p></section><section id="deliveryReceipt" hidden><a id="trackingLink" class="primary bank-link" rel="noreferrer">Отследить доставку</a><button type="button" id="trackingCopy" class="plain-btn">Скопировать ссылку</button></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js"></script><script src="js/cafe/public-menu-delivery.js?v=5"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=5"></script><script src="js/cafe/order-inbox.js?v=7"></script><script src="js/cafe/public-menu-extras.js?v=10"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js"></script><script src="js/cafe/public-menu-delivery.js?v=5"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=5"></script><script src="js/cafe/order-inbox.js?v=8"></script><script src="js/cafe/public-menu-extras.js?v=10"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
 <script src="js/cafe/menu-audience.js?v=1"></script>
@@ -213,9 +213,21 @@ function renderReceiptList(list,orders,dialog){
   list.replaceChildren(...orders.map(order=>{
     const row=document.createElement('div'),button=document.createElement('button');
     button.type='button';
-    button.className='plain-btn';
-    const status=terminal(order)?' · '+t(order.status==='cancelled'?'Заказ отменён':'Заказ выдан'):'';
-    button.textContent=t('Заказ №{number}',{number:String(order.orderNumber)})+status+' · '+money(order.totalVnd);
+    button.className='plain-btn receipt-list-entry';
+    const copy=document.createElement('span');
+    const number=document.createElement('strong');
+    number.textContent=t('Заказ №{number}',{number:String(order.orderNumber)});
+    copy.append(number);
+    const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
+    if(Object.hasOwn(statuses,order.status)){
+      const status=document.createElement('small');
+      status.textContent=t(statuses[order.status]);
+      copy.append(status);
+    }
+    const total=document.createElement('span');
+    total.className='receipt-list-total';
+    total.textContent=money(order.totalVnd);
+    button.append(copy,total);
     button.onclick=()=>{dialog.close();openReceipt(order);};
     row.append(button);
     return row;
@@ -255,7 +267,7 @@ function receiptUpdated(order){
     renderReceiptLinks();
   }
 }
-function renderSuccess(){renderReceiptLinks();if(lastOrder){window.ummaPublicDelivery?.receipt(lastOrder);window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,updated:receiptUpdated});$('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});$('successTotal').textContent=t('Сумма: {amount}',{amount:money(lastOrder.totalVnd)});$('receiptHint').textContent=lastOrder.preorderWaiting&&!['cancelled','completed'].includes(lastOrder.status)?t('Предзаказ · готовится к {time}',{time:batchTime(lastOrder.preorderExpectedAt)})+' · '+t('Время Нячанга')+'. '+t('Сообщим, когда заказ будет собран.') :lastOrder.status==='cancelled'?t('Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.'):lastOrder.status==='completed'?'':lastOrder.orderType==='delivery'?t('Сохраните ссылку отслеживания заказа.'):lastOrder.status==='pending'&&lastOrder.paymentStatus!=='paid'?t(lastOrder.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.'):lastOrder.tableNumber?t('Для столика: {table}. Сохраните номер заказа.',{table:t('Стол №{number}',{number:lastOrder.tableNumber})}):t('Покажите номер заказа у стойки выдачи.');}}
+function renderSuccess(){renderReceiptLinks();if(lastOrder){const mark=$('success').querySelector('.success-mark');const cancelled=lastOrder.status==='cancelled';mark.toggleAttribute('data-cancelled',cancelled);mark.textContent=cancelled?'×':'✓';window.ummaPublicDelivery?.receipt(lastOrder);window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,updated:receiptUpdated});$('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});$('successTotal').textContent=t('Сумма: {amount}',{amount:money(lastOrder.totalVnd)});$('receiptHint').textContent=lastOrder.preorderWaiting&&!['cancelled','completed'].includes(lastOrder.status)?t('Предзаказ · готовится к {time}',{time:batchTime(lastOrder.preorderExpectedAt)})+' · '+t('Время Нячанга')+'. '+t('Сообщим, когда заказ будет собран.') :lastOrder.status==='cancelled'?t('Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.'):lastOrder.status==='completed'?'':lastOrder.orderType==='delivery'?t('Сохраните ссылку отслеживания заказа.'):lastOrder.status==='pending'&&lastOrder.paymentStatus!=='paid'?t(lastOrder.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.'):lastOrder.tableNumber?t('Для столика: {table}. Сохраните номер заказа.',{table:t('Стол №{number}',{number:lastOrder.tableNumber})}):t('Покажите номер заказа у стойки выдачи.');}}
 function renderLoadState(){if(menuState==='empty')$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
 async function load(){if(loadingCatalog||busy)return;loadingCatalog=true;catalogRequest++;menuState='loading';renderLoadState();try{const [base,rich]=await Promise.all([fetch(API+'cafe-guest-order?catalog=1',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error();return r.json();}),fetch(API+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>r.ok?r.json():null).catch(()=>null)]);if(!base.ok||!Array.isArray(base.products))throw Error();if(window.ummaCafeEpoch?.apply(base.cafeResetEpoch)){resetReceipts();pending=null;cart.clear();}const metadata=new Map((rich?.products||[]).map(p=>[p.id,p]));products=expandBatches(base.products.map(p=>({...p,image_url:metadata.get(p.id)?.image_url||p.image_url})),metadata);const loc=rich?.locations?.find(l=>l.id===locationId);window.ummaPublicDelivery?.setCafe(loc);if(loc?.address){$('location').innerHTML='<strong>'+esc(loc.name)+'</strong><a dir="ltr" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc.address)+'" target="_blank" rel="noopener">'+esc(loc.address)+' ↗</a>';delete $('pickupAddress').dataset.i18n;$('pickupAddress').dir='ltr';$('pickupAddress').textContent=loc.address;}menuState=products.some(p=>visibleDish(p))?'ready':'empty';renderCategories();renderProducts();renderCart();renderLoadState();}catch{menuState='error';renderLoadState();}finally{loadingCatalog=false;}}
 
