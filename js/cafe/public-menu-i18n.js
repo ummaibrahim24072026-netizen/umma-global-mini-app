@@ -29,6 +29,12 @@ copy['История заказов']={
  fr:'Historique des commandes',th:'ประวัติคำสั่งซื้อ',ms:'Sejarah pesanan',id:'Riwayat pesanan',
  ar:'سجل الطلبات',pt:'Histórico de pedidos'
 };
+copy['Завершённых заказов пока нет']={
+ en:'No completed orders yet',vi:'Chưa có đơn hàng đã kết thúc',ko:'종료된 주문이 아직 없습니다',zh:'暂无已结束的订单',
+ de:'Noch keine abgeschlossenen Bestellungen',fr:'Aucune commande clôturée pour le moment',
+ th:'ยังไม่มีคำสั่งซื้อที่สิ้นสุดแล้ว',ms:'Belum ada pesanan yang selesai',id:'Belum ada pesanan yang selesai',
+ ar:'لا توجد طلبات منتهية حتى الآن',pt:'Ainda não há pedidos encerrados'
+};
 const checkoutLocales=['ko','zh','de','fr','th','ms','id','ar','pt'];
 const checkoutCopy={
  'Как получить заказ?':['주문을 어떻게 받으시겠어요?','您希望如何取餐？','Wie möchten Sie Ihre Bestellung erhalten?','Comment souhaitez-vous recevoir votre commande ?','คุณต้องการรับอาหารแบบไหน','Bagaimana anda mahu menerima pesanan?','Bagaimana Anda ingin menerima pesanan?','كيف تريد استلام طلبك؟','Como quer receber o seu pedido?'],
