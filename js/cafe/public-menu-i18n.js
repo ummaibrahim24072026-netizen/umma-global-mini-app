@@ -29,6 +29,11 @@ copy['Оставить отзыв в Google Maps']={
 };
 
 // Keep the checkout and delivery controls in the selected language.
+copy['Мои заказы']={
+ en:'My orders',vi:'Đơn hàng của tôi',ko:'내 주문',zh:'我的订单',de:'Meine Bestellungen',
+ fr:'Mes commandes',th:'คำสั่งซื้อของฉัน',ms:'Pesanan saya',id:'Pesanan saya',
+ ar:'طلباتي',pt:'Os meus pedidos'
+};
 copy['История заказов']={
  en:'Order history',vi:'Lịch sử đơn hàng',ko:'주문 내역',zh:'订单历史',de:'Bestellverlauf',
  fr:'Historique des commandes',th:'ประวัติคำสั่งซื้อ',ms:'Sejarah pesanan',id:'Riwayat pesanan',

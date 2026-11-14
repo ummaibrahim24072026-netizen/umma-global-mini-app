@@ -17,6 +17,10 @@ for(const method of ['cash','qr']){
   w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
  }});
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
+ const receiptButton=d.getElementById('receiptButton');
+ assert.equal(receiptButton.hidden,true);
+ assert.equal(receiptButton.closest('.menu-sticky'),d.getElementById('orderInboxHost').closest('.menu-sticky'));
+ assert.equal(receiptButton.previousElementSibling.id,'orderHistoryButton');
  d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await new Promise(r=>setTimeout(r,20));assert.ok(d.getElementById('result').textContent.includes('Не удалось'));submit();await new Promise(r=>setTimeout(r,30));
  assert.equal(created,2);assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(calls[0].paymentMethod,method);assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('guestPayment').hidden,method!=='qr');assert.ok(d.getElementById('paymentState').textContent.includes(method==='qr'?'QR':'наличными'));
@@ -34,11 +38,16 @@ for(const method of ['cash','qr']){
   assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipt')).cashReceipt.changeVnd,10000);
  }
  terminal=method==='cash'?'completed':'cancelled';
- assert.equal(d.getElementById('receiptButton').hidden,false);
+ assert.equal(receiptButton.hidden,false);
+ assert.equal(receiptButton.textContent,'Мои заказы');
+ d.getElementById('newOrder').click();
+ receiptButton.click();
+ assert.equal(d.getElementById('checkout').open,true);
+ assert.match(d.getElementById('successNumber').textContent,/98765/);
  d.dispatchEvent(new w.Event('visibilitychange'));
  await new Promise(r=>setTimeout(r,20));
  assert.equal(d.getElementById('receiptButton').hidden,true);
- assert.equal(d.getElementById('receiptButton').textContent,'');
+ assert.equal(receiptButton.textContent,'Мои заказы');
  assert.equal(d.getElementById('orderHistoryButton').hidden,false);
  assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipts'))[0].status,terminal);
  d.getElementById('newOrder').click();
@@ -48,6 +57,18 @@ for(const method of ['cash','qr']){
  assert.equal(d.getElementById('success').hidden,false);
  assert.equal(d.getElementById('guestPayment').hidden,true);
  assert.match(d.getElementById('receiptDetails').textContent,/Шурпа/);
+ d.getElementById('newOrder').click();
+ w.eval(`saveReceipt({id:'active-1',orderNumber:101,status:'ready',totalVnd:90000});
+ saveReceipt({id:'active-2',orderNumber:102,status:'pending',totalVnd:120000});
+ renderReceiptLinks();`);
+ receiptButton.click();
+ assert.equal(d.getElementById('activeOrders').open,true);
+ const activeOrders=d.querySelectorAll('#activeOrdersList button');
+ assert.equal(activeOrders.length,2);
+ assert.match(activeOrders[0].textContent,/102/);
+ activeOrders[1].click();
+ assert.equal(d.getElementById('activeOrders').open,false);
+ assert.match(d.getElementById('successNumber').textContent,/101/);
  d.getElementById('newOrder').click();d.getElementById('installApp').click();assert.equal(d.getElementById('installHelp').hidden,false);dom.window.close();
 }
 console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status, receipt recovery and install guidance.');
