@@ -48,9 +48,11 @@ assert.ok(locationAdmin.includes("admin_upsert_location") === false, "location w
 assert.ok(html.includes("leaflet.js") && html.includes("locationAdminMap"), "Leaflet location map not wired into app");
 console.log("PASS dynamic location directory, map, and location admin UI");
 assert.ok(kitchen.includes("data-show-route"), "delivery order map action missing");
-assert.ok(courierRoute.includes("https://www.google.com/maps/dir/?api=1"), "Google Maps navigation missing");
-assert.ok(html.includes("js/maps/courier-route.js"), "courier route map script not loaded");
-console.log("PASS courier route map and navigation fallback");
+assert.ok(courierRoute.includes("window.UmmaNhaTrangRouter.route"), "in-app road routing missing");
+for (const page of [html, read("staff.html")]) {
+  assert.match(page, /js\/maps\/nha-trang-router\.js[^"]*"[^>]*><\/script>[\s\S]*js\/maps\/courier-route\.js/, "courier router must load before the route map");
+}
+console.log("PASS in-app courier route and road router wiring");
 console.log("PASS customer nearest/manual cafe selection");
 assert.ok(kitchen.includes("accepted_by_telegram_id"), "accepted order owner must be visible to staff");
 assert.ok(kitchen.includes('action:"assignCourier"'), "courier assignment request missing");
@@ -75,7 +77,7 @@ for (const id of ["staffOrderCart","staffOrderTotal","staffOrderType","staffOrde
 assert.match(kitchen, /summary\.hidden=!items\.length/, "summary visibility must follow cart contents");
 assert.match(appCss, /#staffOrderSummary\[hidden\]\s*\{\s*display:\s*none\s*!important/, "hidden order summary must override styles");
 assert.ok(!html.includes('id="staffOrderCustomerPhone"'), "guest phone should stay removed");
-assert.match(html, /js\/cafe\/kitchen\.js\?v=82/, "Telegram must load updated checkout JS");
+assert.ok(Number(html.match(/js\/cafe\/kitchen\.js\?v=(\d+)/)?.[1]) >= 82, "Telegram must load updated checkout JS");
 assert.ok(Number(html.match(/css\/app\.css\?v=(\d+)/)?.[1]) >= 37, "Telegram must load updated checkout CSS");
 console.log("PASS full checkout fields, cart visibility, and Telegram cache invalidation");
 
@@ -169,7 +171,7 @@ assert.match(kitchenLive,/refresh\(\{silent:true\}\)/,"background polling must b
 assert.match(kitchen,/if \(!silent\) showMessage\("Загружаем заказы…"/,"silent polling must not show loading text");
 assert.match(kitchen,/if \(changed\) \{\s*lastOrdersFingerprint = fingerprint/,"unchanged orders must not rerender");
 assert.ok(!html.includes('id="kitchenLiveStatus"'),"kitchen refresh status block must not be visible");
-console.log("PASS silent 5-second kitchen polling without unchanged DOM rerender");
+console.log("PASS silent 2-second kitchen polling without unchanged DOM rerender");
 
 assert.match(sandbox,/const page=\$\("adminPage"\)/,"superadmin sandbox must attach to administration");
 console.log("PASS kitchen is management-free, superadmin controls retained in admin");

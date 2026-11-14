@@ -7,30 +7,48 @@ import {dispatchCourierQueue,uploadDeliveryProof} from '../supabase/functions/_s
 import {dispatchCustomerNotifications} from '../supabase/functions/_shared/customer-notifications.ts';
 import { submitCafeOperation } from '../supabase/functions/_shared/order-operation.ts';
 import { loadCafeOrders } from '../supabase/functions/cafe-kitchen/order-list.ts';
+import { paymentFor, QR_LOCATION } from '../supabase/functions/cafe-my-orders/payment.ts';
 import { sandboxCanAdvance } from '../supabase/functions/cafe-kitchen/sandbox-policy.ts';
 
 export async function verifyCafeEdges(db,cafe,product){
-  let dbCalls=0,notificationCalls=0;
+  let dbCalls=0,notificationCalls=0,deliveryLookupsOffline=false;
   const ident=s=>{assert.match(s,/^[a-z_]+$/);return '"'+s+'"';};
   const client={
     rpc:async(name,args)=>{
       dbCalls++;
+      if (deliveryLookupsOffline && name === "list_cafe_courier_offers") return {data:null,error:{message:"Synthetic courier outage"}};
       const names=Object.keys(args);
       try {const r=await db.query('select '+ident(name)+'('+names.map((n,i)=>ident(n)+' => $'+(i+1)).join(',')+') result',Object.values(args));return {data:r.rows[0].result,error:null};}
       catch(e){return {data:null,error:{message:e.message,code:e.code}};}
     },
     from(table){
-      let columns='*',single=false,filters=[],values=[],ordering=[],limit='';
+      let columns='*',single=false,filters=[],values=[],ordering=[],limit='',updates=null;
       const run=async()=>{
         dbCalls++;
-        try{const r=await db.query('select '+columns+' from '+ident(table)+(filters.length?' where '+filters.join(' and '):'')+(ordering.length?' order by '+ordering.join(','):'')+limit,values);return {data:single?(r.rows[0]||null):r.rows,error:null};}
+        if (deliveryLookupsOffline && table === "cafe_delivery_proofs") return {data:null,error:{message:"Synthetic evidence outage"}};
+        try{
+          const where=filters.length?' where '+filters.join(' and '):'';
+          const sql=updates
+            ? 'update '+ident(table)+' set '+Object.keys(updates).map((key,i)=>ident(key)+'=$'+(values.length+i+1)).join(',')+where
+            : 'select '+columns+' from '+ident(table)+where+(ordering.length?' order by '+ordering.join(','):'')+limit;
+          const r=await db.query(sql,updates?[...values,...Object.values(updates)]:values);return {data:single?(r.rows[0]||null):r.rows,error:null};}
         catch(e){return {data:null,error:{message:e.message,code:e.code}};}
       };
       const query={
-        select(s){columns=s==='*'?'*':s.split(',').map(x=>ident(x.trim())).join(',');return query;},
+        select(s){columns=s==='*'?'*':s.split(/,\s*cafe_order_items\(/)[0].split(',').map(x=>ident(x.trim())).join(',');return query;},
         eq(field,value){values.push(value);filters.push(ident(field)+'=$'+values.length);return query;},
+        update(fields){updates=fields;return query;},
         neq(field,value){values.push(value);filters.push(ident(field)+'<>$'+values.length);return query;},
         in(field,array){values.push(array);filters.push(ident(field)+'=any($'+values.length+')');return query;},
+        gt(field,value){values.push(value);filters.push(ident(field)+'>$'+values.length);return query;},
+        not(field,operator,value){
+          if (operator === 'is' && value === null) filters.push(ident(field)+' is not null');
+          else if (operator === 'in') {
+            values.push(value.slice(1,-1).split(','));
+            filters.push(ident(field)+'<>all($'+values.length+')');
+          } else assert.fail('Unsupported filter in QA fixture');
+          return query;
+        },
         order(field,{ascending=true}={}){ordering.push(ident(field)+(ascending?' asc':' desc'));return query;},
         limit(n){assert.ok(Number.isInteger(n));limit=' limit '+n;return query;},
         maybeSingle(){single=true;return run();},
@@ -51,7 +69,7 @@ export async function verifyCafeEdges(db,cafe,product){
     const source=stripTypeScriptTypes(readFileSync(path,'utf8')).replace(/^import .*;\n/gm,'');
     vm.runInNewContext(source,{
       Deno:{env:{get:key=>({TELEGRAM_BOT_TOKEN:token,SUPABASE_URL:'http://local-test',SUPABASE_SERVICE_ROLE_KEY:'fake-test-key'})[key]},serve:fn=>serve=fn},
-      createClient:()=>client,dispatchCustomerNotifications:(c,t)=>dispatchCustomerNotifications(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true,"result":{"message_id":123}}');}),submitCafeOperation,loadCafeOrders,sandboxCanAdvance,uploadDeliveryProof,dispatchCourierQueue:(c,t)=>dispatchCourierQueue(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');}),
+      createClient:()=>client,dispatchCustomerNotifications:(c,t)=>dispatchCustomerNotifications(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true,"result":{"message_id":123}}');}),submitCafeOperation,loadCafeOrders,paymentFor,QR_LOCATION,sandboxCanAdvance,uploadDeliveryProof,dispatchCourierQueue:(c,t)=>dispatchCourierQueue(c,t,async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');}),
       crypto,Response,Request,URLSearchParams,TextEncoder,console,
       fetch:async(url)=>{assert.ok(url.startsWith('https://api.telegram.org/bot'));notificationCalls++;return new Response('{"ok":true}');},
     });return serve;
@@ -105,8 +123,50 @@ export async function verifyCafeEdges(db,cafe,product){
   assert.equal((await post(kitchen,{initData:auth(20),action:'updateDelivery',orderId:courierDelivery.data.order.id,deliveryStatus:'picked_up'})).status,400);
   const customer={...body,staffOrder:false,initData:auth(15),requestKey:randomUUID()};
   const newCustomer=await post(create,customer);assert.equal(newCustomer.status,201);
+  // The older lifecycle fixture has yet to load the self-service and preorder columns.
+  await db.query(`
+    ALTER TABLE cafe_orders ADD COLUMN requires_prepayment boolean NOT NULL DEFAULT false,
+      ADD COLUMN preorder_waiting boolean NOT NULL DEFAULT false, ADD COLUMN preorder_expected_at timestamptz
+  `);
+  await db.query("ALTER TABLE locations ADD COLUMN self_service_enabled boolean NOT NULL DEFAULT false");
+  deliveryLookupsOffline=true;
+  try {
+    const staffOrders=await post(kitchen,{initData:auth(11),action:'list'});
+    assert.equal(staffOrders.status,200);
+    assert.ok(staffOrders.data.orders.some(order=>order.id===newCustomer.data.order.id));
+    console.log('PASS new customer order remains visible when courier offers and evidence fail');
+  } finally {
+    deliveryLookupsOffline=false;
+    await db.query(`
+      ALTER TABLE cafe_orders DROP COLUMN requires_prepayment, DROP COLUMN preorder_waiting, DROP COLUMN preorder_expected_at
+    `);
+    await db.query("ALTER TABLE locations DROP COLUMN self_service_enabled");
+  }
   const notified=notificationCalls;
   const customerRetry=await post(create,customer);assert.equal(customerRetry.status,200);assert.equal(customerRetry.data.order.id,newCustomer.data.order.id);assert.equal(notificationCalls,notified);
+  const pickupId=newCustomer.data.order.id;
+  for(const status of ['confirmed','preparing','ready']){
+    const response=await post(kitchen,{initData:auth(12),action:'updateStatus',orderId:pickupId,status});
+    assert.equal(response.status,200,JSON.stringify(response.data));
+  }
+  const issue={initData:auth(13),action:'updateStatus',orderId:pickupId,status:'completed'};
+  assert.equal((await post(kitchen,issue)).status,400,'unpaid pickup cannot be issued');
+  const total=newCustomer.data.order.totalVnd;
+  const settlement={initData:auth(13),action:'updatePayment',orderId:pickupId,paymentStatus:'paid',
+    paymentMethod:'cash',tenderedAmountVnd:total,changeGivenVnd:0};
+  const paid=await post(kitchen,settlement);
+  assert.equal(paid.status,200,JSON.stringify(paid.data));
+  await post(kitchen,settlement);
+  const receipts=(await db.query("select count(*) n from cafe_payment_receipts where order_id=$1",[pickupId])).rows[0];
+  assert.equal(Number(receipts.n),1,'cash confirmation replay must not create a second receipt');
+  assert.equal((await post(kitchen,issue)).status,200);
+  const history=await post(myOrders,{initData:auth(15)});
+  assert.equal(history.status,200,JSON.stringify(history.data));
+  assert.ok(history.data.orders.some(order=>order.id===pickupId && order.status==='completed' && order.payment_status==='paid'));
+  const otherHistory=await post(myOrders,{initData:auth(17)});
+  assert.equal(otherHistory.status,200);
+  assert.ok(!otherHistory.data.orders.some(order=>order.id===pickupId));
+  console.log('PASS customer pickup through real Edge handlers: kitchen preparation, cash receipt, issue and private history');
   const legacy={...customer,requestKey:undefined,orderType:'delivery',paymentMethod:'courier',paymentTiming:undefined,deliveryAddress:'Synthetic legacy checkout'};
   const legacyFirst=await post(create,legacy);assert.equal(legacyFirst.status,201);assert.equal(legacyFirst.data.order.paymentTiming,'on_delivery');
   const legacyNotified=notificationCalls;

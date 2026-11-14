@@ -89,6 +89,7 @@ async function poll(){
  }finally{inFlight=false;}
 }
 window.setInterval(()=>{if(!document.hidden)void poll();},3000);
+window.addEventListener('online',()=>{if(!document.hidden)void poll();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
 window.ummaGuestExtras={install,installText,receipt,clearReceipt(){order=null;context=null;}};
 })();
