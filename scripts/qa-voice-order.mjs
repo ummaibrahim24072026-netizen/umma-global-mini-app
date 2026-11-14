@@ -33,7 +33,7 @@ say('я хочу плов, манты, шурпа, айран');assert.equal(car
 say('правильно');assert.equal(submitted,0,'unresolved ambiguity cannot submit');
 // Return to the drink clarification and choose volume verbally.
 say('айран');say('пол литра');assert.equal(cart.get('a5'),1);assert.equal(a.dialog.querySelector('.uv-actions button:last-child').hidden,false);
-const oldSummary=spoken.at(-1).text;assert.match(oldSummary,/400000/);
+const oldSummary=spoken.at(-1).text;assert.match(oldSummary,/четыреста тысяч вьетнамских донгов/);
 context={payment:'qr'};say('правильно');assert.equal(submitted,0,'changing fulfillment or payment invalidates review');say('правильно');assert.equal(submitted,1);assert.equal(checked,1);say('правильно');assert.equal(submitted,1,'closed session ignores duplicate confirmations');
 a.open();say('два плова');assert.equal(cart.get('p'),3);cart.set('p',4);say('правильно');assert.equal(submitted,1,'manual cart edits invalidate review');
 valid=false;say('правильно');assert.equal(submitted,1,'incomplete checkout never submits');assert.equal(checked,2);
@@ -48,6 +48,12 @@ dom.window.close();console.log('PASS voice ordering: multilingual menu parsing, 
 // Exercise the real public menu adapter and its existing checkout handler.
 const html=readFileSync(new URL('../menu/index.html',import.meta.url),'utf8');
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+// Keep exercising the dormant adapters while both customer entry points omit the script.
+for (const page of ['index.html', 'menu/index.html']) {
+ const document = new JSDOM(read(page)).window.document;
+ assert.ok(!document.querySelector('script[src*="js/cafe/voice-order.js"]'), `${page} keeps voice ordering disabled`);
+ document.defaultView.close();
+}
 let posts=[],lost=false;
 const live=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',beforeParse(w){
  w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
