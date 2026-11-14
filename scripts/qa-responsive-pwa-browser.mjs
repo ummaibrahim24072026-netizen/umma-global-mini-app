@@ -39,7 +39,7 @@ const product = {
   name_ar: 'أرز بلحم الضأن والخضار', description_ru: 'Длинное описание блюда',
   price_vnd: 120000, stockManaged: true, available: 10,
 };
-const sizes = [[320,568],[360,800],[390,844],[430,932],[768,1024],[1024,768],
+const sizes = [[320,568],[360,800],[375,812],[390,844],[412,915],[430,932],[768,1024],[1024,768],
   [1440,900],[1920,1080],[1080,1920],[720,1280],[844,390]];
 const languages = ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
 let available = 10;
@@ -130,9 +130,19 @@ try {
     assert.equal(await page.locator('html').getAttribute('dir'), language === 'ar' ? 'rtl' : 'ltr');
     for (const [width,height] of sizes) {
       await page.setViewportSize({ width, height });
-      await fits(page, 'Menu ' + language, ['.cafe-product','.order-bar','.menu-actions']);
+      await fits(page, 'Menu ' + language, ['.cafe-product','.order-bar','.menu-actions','.customer-dock','.customer-actions']);
     }
     await page.setViewportSize({width:320,height:568});
+    await page.evaluate(async () => {
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    const dockBottom = await page.locator('.customer-dock').evaluate(node => node.getBoundingClientRect().bottom);
+    assert.ok(Math.abs(dockBottom - 568) < 1, 'customer navigation remains visible at the end of the menu');
+    assert.ok(await page.locator('.menu-footer').evaluate(footer =>
+      footer.getBoundingClientRect().bottom < document.querySelector('.customer-dock').getBoundingClientRect().top),
+    'footer remains above the dock at maximum scroll');
     await page.locator('#openCart').click();
     await fits(page, 'Checkout ' + language, ['#checkout','.cart-row','.payment-choice']);
     if (language === 'ar') await page.screenshot({path:output+'/checkout-ar-320.png'});

@@ -167,3 +167,108 @@ body{max-inline-size:100%;overflow-x:clip}
  .public-cafe-menu .order-bar strong{font-size:clamp(15px,5vw,21px)}
 }
 @media(prefers-reduced-motion:reduce){.public-cafe-menu :is(.plain-btn,.search-toggle,.primary){transition:none}}
+
+/* Customer actions share one dock so the basket and navigation cannot overlap. */
+.public-cafe-menu #cafePage {
+  padding-block-end: calc(var(--customer-dock-height, 144px) + 20px);
+}
+.public-cafe-menu #cafePage .menu-tools {
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+}
+.public-cafe-menu #cafePage .menu-tools h1 {
+  overflow-wrap: anywhere;
+}
+.public-cafe-menu #cafePage .menu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  width: auto;
+}
+.customer-dock {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 20;
+  max-inline-size: 1160px;
+  margin-inline: auto;
+  padding: 8px max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: #fff;
+  border-block-start: 1px solid var(--gold);
+  box-shadow: 0 -8px 30px #163d3e14;
+}
+.public-cafe-menu .customer-dock .order-bar {
+  position: static;
+  transform: none;
+  max-inline-size: none;
+  padding: 0 0 8px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+}
+.public-cafe-menu .customer-dock .order-bar .primary {
+  min-inline-size: 0;
+  padding-inline: 12px;
+  overflow-wrap: anywhere;
+}
+.customer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.customer-actions:has(#receiptButton:not([hidden])) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.customer-actions > *, .customer-actions #orderInboxHost > * {
+  min-inline-size: 0;
+}
+.customer-actions :is(.plain-btn, .umma-inbox-button) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 44px;
+  padding: 6px !important;
+  border-radius: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-size: clamp(11px, 3vw, 14px);
+  line-height: 1.3;
+}
+.customer-actions #receiptButton {
+  border-color: var(--gold);
+  background: var(--umma-brand-deep);
+  color: white;
+}
+.public-cafe-menu dialog {
+  inset-block-end: var(--customer-keyboard-inset, 0px);
+  max-block-size: min(90dvh, calc(100dvh - var(--customer-keyboard-inset, 0px) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))));
+  max-inline-size: min(520px, calc(100% - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))));
+}
+.public-cafe-menu :is(.checkout-header h2, .payment-choice label) {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.public-cafe-menu :is(dialog, .searchbox) :is(input, select, textarea) {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  font-size: 16px;
+}
+
+/* Work filters wrap into reachable touch targets on narrow screens. */
+.web-work-app .cafe-kitchen-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  overflow: visible;
+  scroll-snap-type: none;
+}
+.web-work-app :is(.web-panel, .web-panel fieldset, .web-tabs) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.web-work-app :is(.web-panel, .web-login) :is(button, input, select, textarea) {
+  max-inline-size: 100%;
+}

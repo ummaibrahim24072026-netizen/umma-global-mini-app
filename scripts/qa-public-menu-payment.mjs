@@ -19,7 +19,8 @@ for(const method of ['cash','qr']){
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
  const receiptButton=d.getElementById('receiptButton');
  assert.equal(receiptButton.hidden,true);
- assert.equal(receiptButton.closest('.menu-sticky'),d.getElementById('orderInboxHost').closest('.menu-sticky'));
+ assert.ok(receiptButton.closest('.customer-actions'));
+ assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('orderInboxHost').closest('.customer-actions'));
  assert.equal(receiptButton.previousElementSibling.id,'orderHistoryButton');
  d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await new Promise(r=>setTimeout(r,20));assert.ok(d.getElementById('result').textContent.includes('Не удалось'));submit();await new Promise(r=>setTimeout(r,30));
