@@ -40,6 +40,11 @@ const checkoutCopy={
 for(const [key,translations] of Object.entries(checkoutCopy)){
  for(const [index,locale] of checkoutLocales.entries())copy[key][locale]=translations[index];
 }
+copy['Поделиться']={en:'Share',vi:'Chia sẻ',ko:'공유',zh:'分享',de:'Teilen',fr:'Partager',th:'แชร์',ms:'Kongsi',id:'Bagikan',ar:'مشاركة',pt:'Partilhar'};
+Object.assign(copy['Ссылка скопирована'],{
+ ko:'링크가 복사되었습니다',zh:'链接已复制',de:'Link kopiert',fr:'Lien copié',th:'คัดลอกลิงก์แล้ว',
+ ms:'Pautan disalin',id:'Tautan disalin',ar:'تم نسخ الرابط',pt:'Ligação copiada'
+});
 const receiptCopy={
  'Стоимость блюд':['Items subtotal','Tạm tính món ăn','음식 소계','菜品小计','Zwischensumme','Sous-total des plats','ค่าอาหาร','Jumlah makanan','Subtotal makanan','المجموع الفرعي للأطباق','Subtotal dos pratos'],
  'Стоимость доставки':['Delivery fee','Phí giao hàng','배달비','配送费','Liefergebühr','Frais de livraison','ค่าจัดส่ง','Caj penghantaran','Ongkos kirim','رسوم التوصيل','Taxa de entrega'],

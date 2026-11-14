@@ -4,12 +4,16 @@
 <meta name="theme-color" content="#03A2A5"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=15"></script>
+<script src="js/cafe/public-menu-i18n.js?v=16"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
 *{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button,a,input,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--umma-brand-primary);outline-offset:3px}[hidden]{display:none!important}a{color:var(--umma-brand-strong)}
 #cafePage{container:umma-shell / inline-size;max-width:820px;margin:auto;padding:0 16px 110px;min-height:100dvh}.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px}.brand{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;letter-spacing:.02em}.brand img{width:34px;height:34px;border-radius:50%;object-fit:contain}.topbar small{font-size:11px;font-weight:650;letter-spacing:.08em;color:var(--umma-brand-muted)}
+.topbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.topbar .share-menu-button{display:inline-flex;align-items:center;gap:6px;min-height:44px}
+.share-menu-button svg{width:17px;height:17px;flex:none}
+.share-menu-status:empty{display:none}.share-menu-status{margin:0 0 10px;text-align:end;font-size:13px;color:var(--umma-brand-strong)}
 .cafe-banner-art{width:100%;height:auto;display:block;margin-bottom:12px}.service-row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0}.pickup-pill{display:inline-flex;gap:8px;align-items:center;background:var(--umma-brand-strong);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;color:white;font-size:13px;font-weight:700}.cash-note{font-size:12px;color:var(--umma-brand-muted)}.location{border:1px solid var(--umma-brand-line);border-radius:12px;background:#fff;font-size:12px;line-height:1.5;padding:10px 12px;margin:8px 0 12px}.location strong{display:block}.location a{text-decoration:none}.plain-btn.google-review-link{display:flex;align-items:center;justify-content:center;min-height:44px;margin:0 0 12px;text-align:center;text-decoration:none}
 .menu-sticky{position:sticky;top:0;z-index:10;background:var(--umma-brand-canvas);padding-top:8px;padding-bottom:4px}.menu-tools{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}.menu-tools h1{margin:0;font-size:21px;letter-spacing:-.025em}.search-toggle,.plain-btn{min-height:42px;border:1px solid var(--umma-brand-line-strong);border-radius:12px;background:#fff;color:var(--umma-brand-strong);padding:8px 12px;font-size:13px;font-weight:650}.searchbox{display:flex;gap:6px;margin-bottom:8px}.searchbox input{min-width:0;flex:1;width:100%;border:1px solid var(--umma-brand-line-strong);border-radius:12px;padding:12px;background:white;font-size:16px;color:var(--umma-brand-ink)}
 .cafe-menu-categories{display:flex;gap:6px;overflow-x:auto;padding:3px 0 9px;scrollbar-width:none}.cafe-menu-categories::-webkit-scrollbar{display:none}.cafe-category{flex-shrink:0;border:1px solid var(--umma-brand-line);background:white;color:var(--umma-brand-text);font-weight:650;white-space:nowrap}.cafe-category span{display:inline-block;font-size:10px;margin-left:7px;padding:2px 5px;border-radius:5px;background:var(--umma-brand-pale);color:var(--umma-brand-muted)}
@@ -45,7 +49,17 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><script defer src="js/core/welcome-audio.js?v=3"></script><link rel="stylesheet" href="css/interface-polish.css?v=2"><link rel="stylesheet" href="css/cafe-connect.css?v=8"><script defer src="js/core/pwa-registration.js?v=1"></script></head><body class="public-cafe-menu">
 <main id="cafePage">
-<div class="topbar"><div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="34" height="34">UMMA CAFE</div><div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div></div>
+<div class="topbar">
+  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="34" height="34">UMMA CAFE</div>
+  <div class="topbar-actions">
+    <button id="shareMenu" class="plain-btn share-menu-button" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></svg>
+      <span data-i18n="Поделиться">Поделиться</span>
+    </button>
+    <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
+  </div>
+</div>
+<p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
 <div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10v10h14V10M3 11l9-8 9 8M12 10v7m-3-3 3 3 3-3"/></svg></span><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
@@ -91,6 +105,25 @@ const halalBadge = '<svg class="cafe-halal-badge" viewBox="0 0 100 100" role="im
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/', $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const I=window.ummaMenuI18n,t=I.t,num=I.number;
+$('shareMenu').addEventListener('click',async()=>{
+ const feedback=$('shareMenuStatus');
+ feedback.hidden=true;
+ const url=document.querySelector('link[rel="canonical"]').href;
+ if(typeof navigator.share==='function'){
+  try{
+   await navigator.share({title:'UMMA Cafe',url});
+   return;
+  }catch(error){
+   if(error?.name==='AbortError')return;
+  }
+ }
+ try{
+  await navigator.clipboard.writeText(url);
+  feedback.hidden=false;
+ }catch{
+  window.prompt(t('Скопировать ссылку'),url);
+ }
+});
 const money=n=>new Intl.NumberFormat(I.locale(),{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(n)||0);
 const name=p=>I.field(p,'name');const description=p=>I.field(p,'description');
 let products=[],cart=new Map(),category='all',query='',busy=false,pending=null,lastOrder=null,lastStatus=null,menuState='loading';
