@@ -28,18 +28,18 @@
     return libraries;
   }
   // Preserve labels, road hierarchy and data; change only the cartographic palette.
-  function theme(gl) {
+  function theme(gl, blueWater) {
     for (const layer of gl.getStyle?.().layers || []) {
       const source = layer['source-layer'], id = layer.id;
       try {
         if (layer.type === 'background') gl.setPaintProperty(id, 'background-color', '#f5f3ec');
-        if (layer.type === 'fill' && source === 'water') gl.setPaintProperty(id, 'fill-color', '#abd8d5');
+        if (layer.type === 'fill' && source === 'water') gl.setPaintProperty(id, 'fill-color', blueWater ? '#a0cbed' : '#abd8d5');
         if (layer.type === 'fill' && source === 'building') {
           gl.setPaintProperty(id, 'fill-color', '#d9d3c5');
           gl.setPaintProperty(id, 'fill-outline-color', '#c5bcaa');
         }
         if (layer.type === 'fill' && (source === 'park' || /landcover_wood|landuse_park/.test(id))) gl.setPaintProperty(id, 'fill-color', '#dce9da');
-        if (layer.type === 'line' && source === 'waterway') gl.setPaintProperty(id, 'line-color', '#8fc9c6');
+        if (layer.type === 'line' && source === 'waterway') gl.setPaintProperty(id, 'line-color', blueWater ? '#84b8e4' : '#8fc9c6');
         if (layer.type === 'symbol' && source === 'place') {
           gl.setPaintProperty(id, 'text-color', '#244f50');
           gl.setPaintProperty(id, 'text-halo-color', '#fffdf6');
@@ -47,7 +47,7 @@
       } catch { /* A provider style update must not prevent map display. */ }
     }
   }
-  function basemap(map, canvas, status = () => {}) {
+  function basemap(map, canvas, status = () => {}, {blueWater = false} = {}) {
     let vector, timer, raster = false, disposed = false;
     const active = () => !disposed;
     const fallback = () => {
@@ -68,7 +68,7 @@
         vector = window.L.maplibreGL({ style, attributionControl: { customAttribution: credit } }).addTo(map);
         const gl = vector.getMaplibreMap(); let errors = 0;
         timer = setTimeout(fallback, 15000);
-        gl.on('load', () => { if (active() && !raster) { clearTimeout(timer); theme(gl); canvas.dataset.basemap = 'openfreemap'; canvas.dataset.theme = 'umma'; } });
+        gl.on('load', () => { if (active() && !raster) { clearTimeout(timer); theme(gl, blueWater); canvas.dataset.basemap = 'openfreemap'; canvas.dataset.theme = 'umma'; } });
         gl.on('error', () => { if (++errors >= 3) fallback(); });
       } catch { fallback(); }
     }).catch(fallback);

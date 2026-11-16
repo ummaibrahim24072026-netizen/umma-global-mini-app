@@ -76,5 +76,27 @@ export async function verifyBatchPreorders(db,cafe,product){
  await plan('finish',3,manual.plan_revision);
  assert.equal(Number((await stock()).quantity),Number(manual.quantity)+3);
 
+ // Install the web-only handoff after the existing lifecycle and preorder patches.
+ await db.exec("alter table cafe_orders add column if not exists dispatch_mode text not null default 'nearest';");
+ await db.exec(source('supabase/proposals/cafe-web-green-sm.sql'));
+ const green=await create(1,{delivery:true,rows:[{productId:product,quantity:1}]});
+ const id=green.order.id;
+ const greenOrder=async()=>(await q('select * from cafe_orders where id=$1',[id])).rows[0];
+ const created=await greenOrder();
+ assert.equal(created.dispatch_mode,'manual');
+ assert.equal(created.requires_prepayment,true);
+ assert.equal(created.payment_timing,'now');
+ assert.equal(Number(created.delivery_fee_vnd),0);
+ await assert.rejects(q("select update_cafe_order_status($1,12,'confirmed')",[id]),/SELF_SERVICE_PAYMENT_REQUIRED/);
+ await assert.rejects(q('select offer_cafe_courier($1,12,13)',[id]),/Unavailable/);
+ await q("update cafe_orders set payment_status='paid',paid_by_telegram_id=11 where id=$1",[id]);
+ assert.equal((await greenOrder()).status,'preparing');
+ await q("select update_cafe_order_status($1,12,'ready')",[id]);
+ await assert.rejects(q("select update_cafe_order_status($1,13,'completed')",[id]),/Staff role/);
+ await q("select update_cafe_order_status($1,12,'completed')",[id]);
+ assert.equal((await greenOrder()).status,'completed');
+ assert.equal((await greenOrder()).delivery_status,'delivered');
+ console.log('PASS Green SM web delivery: free, prepaid, no UMMA offers, staff-only completion.');
+
  console.log('PASS batch preorders: separate availability, exact revision, atomic capacity, replay, cash/QR, paid waiting, expiry, cancellation, protected batch yield, conversion, dispatch deferral, release/assembled push events.');
 }

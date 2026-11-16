@@ -1,7 +1,7 @@
 import {JSDOM} from 'jsdom';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
-const dom=new JSDOM(`<fieldset id="customerFields"><select id="orderType"><option>pickup</option><option>delivery</option></select><section id="deliveryFields"><input id="deliveryAddress"><button id="deliveryMapOpen"></button><button id="deliveryLocate"></button><p id="deliveryPointState"></p><div id="deliveryMap"></div></section><label><select id="tableNumber"></select></label></fieldset>`,{runScripts:'outside-only',url:'https://example.com/menu/'});
+const dom=new JSDOM(`<fieldset id="customerFields"><select id="orderType"><option>pickup</option><option>delivery</option></select><section id="deliveryFields"><input id="deliveryAddress"><input id="deliveryPhone"><button id="deliveryMapOpen"></button><button id="deliveryLocate"></button><p id="deliveryPointState"></p><div id="deliveryMap"></div></section><label id="cashPaymentChoice"><input name="paymentMethod" type="radio" value="cash" checked></label><input name="paymentMethod" type="radio" value="qr"><label><select id="tableNumber"></select></label></fieldset>`,{runScripts:'outside-only',url:'https://example.com/menu/'});
 const w=dom.window,d=w.document;let gps,jobs=[],requests=[];
 w.ummaMenuI18n={t:k=>k};w.ummaDeliveryZone={contains:(_,p)=>p[0]>12&&p[0]<13};w.AbortController=AbortController;
 w.setTimeout=(fn,ms)=>{if(ms===450)jobs.push(fn);return fn;};w.clearTimeout=fn=>{jobs=jobs.filter(j=>j!==fn);};

@@ -9,29 +9,31 @@ const read=p=>readFileSync(p,'utf8'),html=read('menu/index.html').replace(/<scri
 const product={id:'def936dc-6c57-4b06-ac32-cdf6a736c238',sku:'UMMA-CAFE-SHURPA',name_ru:'Шурпа',price_vnd:90000};
 const cafe={id:'e22788bd-4734-4b3a-911e-ba103d52617a',latitude:12.28,longitude:109.20,delivery_zone:[[12.2,109.1],[12.3,109.1],[12.3,109.3],[12.2,109.3]]};
 const tick=()=>new Promise(r=>setTimeout(r,25));
-for(const method of ['cash','qr']){
+{
+ const method='qr';
  let calls=[],lost=true,gps,receipt;
  const dom=new JSDOM(html,{url:'https://example.com/umma-global-mini-app/menu/',runScripts:'dangerously',beforeParse(w){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/maps/delivery-zone.js'));w.eval(read('js/cafe/public-menu-extras.js'));
-  w.L={map:()=>({setView(){return this;},fitBounds(){},on(){},invalidateSize(){}}),polygon:()=>({addTo(){}}),marker:()=>({addTo(){return this;},setLatLng(){},remove(){}})};w.UmmaMaps={basemap(map,element,callback){callback('Включена запасная карта.');}};
+  w.L={map:()=>({setView(){return this;},fitBounds(){},on(){},invalidateSize(){}}),polygon:()=>({addTo(){}}),marker:()=>({addTo(){return this;},setLatLng(){},remove(){}})};w.UmmaMaps={basemap(map,element,callback,options){assert.equal(options.blueWater,true);callback('Включена запасная карта.');}};
   Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(fn){gps=fn;}}});
   w.fetch=async(url,o)=>{if(!o?.body)return new Response(JSON.stringify({ok:true,products:[product],locations:[cafe]}));const b=JSON.parse(o.body);calls.push(b);if(b.action==='status')return new Response(JSON.stringify({ok:true,order:{status:'preparing',paymentStatus:'pending'}}));if(lost){lost=false;throw Error('response lost');}return new Response(JSON.stringify({ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:90000,status:'pending',paymentMethod:method,paymentStatus:'pending'},trackingToken:'a'.repeat(64),payment:method==='qr'?paymentFor({id:'a',order_number:321,total_vnd:90000,location_id:cafe.id,payment_method:'qr',payment_status:'pending',status:'pending',currency:'VND'}):null}));};
  }});
  const w=dom.window,d=w.document;await tick();d.querySelector('[data-change="1"]').click();d.getElementById('openCart').click();d.getElementById('orderType').value='delivery';d.getElementById('orderType').dispatchEvent(new w.Event('change'));
  assert.equal(gps,undefined,'never prompts for GPS silently');assert.equal(d.getElementById('deliveryFields').hidden,false);
  d.getElementById('deliveryMapOpen').click();await tick();assert.equal(d.getElementById('deliveryMap').hidden,false);assert.doesNotMatch(d.getElementById('deliveryPointState').textContent,/недоступна/,'raster fallback stays usable');
- d.getElementById('deliveryAddress').value='Scenia Bay apartment 123';d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
+ d.getElementById('deliveryAddress').value='Scenia Bay apartment 123';d.getElementById('deliveryPhone').value='0901234567';
+ assert.equal(d.querySelector('[name=paymentMethod][value=qr]').checked,true);assert.equal(d.getElementById('cashPaymentChoice').hidden,true);
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await tick();assert.equal(calls.length,0,'point required');
  d.getElementById('deliveryLocate').click();gps({coords:{latitude:21,longitude:105}});submit();await tick();assert.equal(calls.length,0,'outside zone blocked');
  d.getElementById('deliveryAddress').value='';d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.28,longitude:109.20}});assert.equal(d.getElementById('deliveryAddress').value,'12.280000, 109.200000');d.getElementById('deliveryAddress').value+=' · apartment 123';d.getElementById('deliveryAddress').dispatchEvent(new w.Event('input'));d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.281,longitude:109.201}});assert.equal(d.getElementById('deliveryAddress').value,'12.280000, 109.200000 · apartment 123');d.getElementById('deliveryAddress').value='';d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.28,longitude:109.20}});submit();await tick();assert.equal(calls.length,1);assert.equal(d.getElementById('customerFields').disabled,true);const saved=JSON.parse(w.sessionStorage.getItem('umma-menu-pending'));assert.equal(saved.requestKey,calls[0].requestKey);
- submit();await tick();const created=calls.filter(b=>b.action==='create');assert.equal(created.length,2);assert.equal(created[0].requestKey,created[1].requestKey);assert.equal(created[1].orderType,'delivery');assert.equal(created[1].paymentMethod,method);assert.equal(created[1].latitude,12.28);assert.equal(created[1].name,'');assert.equal(created[1].phone,undefined);
- assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('deliveryReceipt').hidden,false);const link=new URL(d.getElementById('trackingLink').href);assert.equal(link.pathname,'/umma-global-mini-app/delivery-tracking.html');assert.equal(link.hash,'#token='+'a'.repeat(64));assert.equal(w.sessionStorage.getItem('umma-menu-pending'),null);receipt=JSON.parse(w.sessionStorage.getItem('umma-menu-receipt'));assert.equal(receipt.trackingToken,'a'.repeat(64));assert.equal(receipt.orderType,'delivery');
+ submit();await tick();const created=calls.filter(b=>b.action==='create');assert.equal(created.length,2);assert.equal(created[0].requestKey,created[1].requestKey);assert.equal(created[1].orderType,'delivery');assert.equal(created[1].paymentMethod,method);assert.equal(created[1].latitude,12.28);assert.equal(created[1].name,'');assert.equal(created[1].phone,'0901234567');
+ assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('trackingLink'),null);assert.equal(w.sessionStorage.getItem('umma-menu-pending'),null);receipt=JSON.parse(w.sessionStorage.getItem('umma-menu-receipt'));assert.equal(receipt.trackingToken,'a'.repeat(64));assert.equal(receipt.orderType,'delivery');
  d.getElementById('newOrder').click();assert.equal(d.getElementById('deliveryFields').hidden,true);assert.equal(d.getElementById('deliveryAddress').disabled,true);w.close();
 }
-console.log('PASS delivery UI: cash/QR shared cart, optional identity, explicit GPS, zone guard, missing point, lost response, stable retry, saved pending request, automatic private link and reset.');
+console.log('PASS delivery UI: QR prepayment, free delivery, recipient phone, explicit GPS, zone guard, missing point, lost response, stable retry, saved pending request, order receipt without courier map and reset.');
 let handler,rpcCalls=[];
 const receiptQuery={select(){return this;},eq(){return this;},order(){return this;},limit(){return this;},async maybeSingle(){return {data:null,error:{code:'FIXTURE_UNAVAILABLE'}};}};
 const db={from:()=>receiptQuery,rpc:async(name,args)=>{rpcCalls.push({name,args});return {data:{ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:90000,status:'pending',paymentMethod:args.p_payment_method,paymentStatus:'pending'}}};}};
