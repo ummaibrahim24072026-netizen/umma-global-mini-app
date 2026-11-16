@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=32"></script>
+<script src="js/cafe/public-menu-i18n.js?v=33"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -48,7 +48,12 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
 #cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
-.cart-clear{display:block;margin-inline-start:auto;min-height:44px;padding:8px 4px;border:0;background:transparent;color:#a12c26;font-size:14px;font-weight:650;text-decoration:underline;text-underline-offset:3px}.cart-clear[hidden]{display:none}
+.cart-clear{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 8px auto;margin-inline-start:auto;margin-inline-end:0;min-height:44px;padding:8px 13px;border:1px solid #f2dcd9;border-radius:999px;background:#fff4f2;color:#902b25;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.cart-clear:hover,.cart-clear:active{background:#fbe6e2}
+.cart-clear[hidden],.cart-feedback[hidden]{display:none}
+.cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
+.cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
+.cart-feedback button:hover{background:#d6eeea}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=13"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=13"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
@@ -132,7 +137,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </nav>
 </div>
 <dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
-<div id="checkoutContent"><section id="cartStep"><button type="button" id="clearCart" class="cart-clear" data-i18n="Очистить корзину" hidden>Очистить корзину</button><div id="cartItems"></div><div class="cart-total"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary" data-i18n="Оформить заказ">Оформить заказ</button></section><section id="checkoutStep" hidden>
+<div id="checkoutContent"><section id="cartStep"><button type="button" id="clearCart" class="cart-clear" hidden><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg><span data-i18n="Очистить корзину">Очистить корзину</span></button><div id="cartItems"></div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div><div class="cart-total"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary" data-i18n="Оформить заказ">Оформить заказ</button></section><section id="checkoutStep" hidden>
 <div class="checkout-note"><span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span></div>
 <div id="voiceReviewHost"></div><form id="form"><fieldset id="customerFields">
 <label class="field"><span data-i18n="Как получить заказ?">Как получить заказ?</span><select id="orderType"><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select></label><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></fieldset>
@@ -280,7 +285,7 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
  $('openCart').classList.toggle('has-items',n>0);
  $('cartTotal').textContent=money(amount);let batchHint=$('cartBatchHint');if(!batchHint){batchHint=document.createElement('p');batchHint.id='cartBatchHint';batchHint.className='cafe-preorder-label';$('cartItems').before(batchHint);}const future=products.filter(p=>p.isPreorder&&qty(p.id));batchHint.hidden=!future.length;if(future.length)batchHint.textContent=t('Весь заказ соберём после готовности блюд, не раньше {time}.',{time:batchTime(Math.max(...future.map(p=>Date.parse(p.plannedReadyAt))))})+' '+t('Время Нячанга');$('cartItems').innerHTML=products.filter(p=>qty(p.id)).map(p=>{const photo=safeImage(p);return '<div class="cart-row">'+(photo?'<img class="cart-photo" src="'+esc(photo)+'" alt="" width="56" height="56">':'')+'<div class="cart-copy"><strong>'+esc(name(p))+'</strong>'+(p.isPreorder?'<small class="cafe-preorder-label">'+esc(batchLabel(p))+'</small>':'')+'<small>'+money(p.price_vnd)+' × '+num(qty(p.id))+' · '+money(p.price_vnd*qty(p.id))+'</small></div><div class="cart-controls"><button type="button" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:name(p)}))+'">−</button><b>'+num(qty(p.id))+'</b><button type="button" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:name(p)}))+'">+</button></div></div>';}).join('')||'<p>'+t('В заказе пока нет блюд.')+'</p>';$('continueCheckout').disabled=!n; $('submit').disabled=!n||busy||(!pending&&shortages());lock();}
 function lock(){$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
-function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
+function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
 if(row){
   const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
   if(cardNode)cardNode.outerHTML=card(row.dish,row.batch);
@@ -334,17 +339,38 @@ function checkoutStage(stage){
   renderCheckoutTitle(stage);
   $('checkout').querySelector('.checkout-body').scrollTop=0;
 }
+let clearedCart, cartFeedbackTimer;
+function dismissCartFeedback(){
+  if(!clearedCart)return;
+  clearTimeout(cartFeedbackTimer);
+  clearedCart=null;
+  if(document.activeElement===$('undoClearCart'))$('checkoutTitle').focus();
+  $('cartFeedback').hidden=true;
+  $('cartFeedbackMessage').textContent='';
+}
 $('clearCart').onclick=()=>{
-  if(!cart.size||busy||pending||!window.confirm(t('Удалить все блюда из корзины?')))return;
+  if(!cart.size||busy||pending)return;
+  clearedCart=new Map(cart);
   cart.clear();
   renderProducts();
   renderCart();
   $('checkoutTitle').focus();
+  $('cartFeedback').hidden=false;
+  $('cartFeedbackMessage').textContent=t('Корзина очищена');
+  cartFeedbackTimer=setTimeout(dismissCartFeedback,8000);
+};
+$('undoClearCart').onclick=()=>{
+  if(!clearedCart||cart.size||busy||pending)return;
+  for(const [id,quantity] of clearedCart)cart.set(id,quantity);
+  dismissCartFeedback();
+  renderProducts();
+  renderCart();
+  $('clearCart').focus();
 };
 $('continueCheckout').onclick=()=>{checkoutStage('checkout');$('orderType').focus();};
 $('backToCart').onclick=()=>{checkoutStage('cart');$('continueCheckout').focus();};
 function closeCart(){if(!busy)$('checkout').close();}
-$('checkout').addEventListener('close',()=>{document.body.style.overflow='';});
+$('checkout').addEventListener('close',()=>{dismissCartFeedback();document.body.style.overflow='';});
 $('openCart').onclick=()=>{$('checkoutContent').hidden=false;$('success').hidden=true;checkoutStage(pending?'checkout':'cart');renderCart();$('checkout').showModal();document.body.style.overflow='hidden';};$('closeCart').onclick=closeCart;$('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();else document.body.style.overflow='';});$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
 $('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};

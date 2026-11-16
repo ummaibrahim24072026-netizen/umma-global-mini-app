@@ -10,6 +10,7 @@ for(const method of ['cash','qr']){
  const base={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:98765,totalVnd:90000,paymentMethod:method,paymentStatus:'pending',status:'pending',items:[item]};
  const payment=paymentFor({id:base.id,order_number:98765,total_vnd:90000,location_id:'e22788bd-4734-4b3a-911e-ba103d52617a',payment_method:'qr',payment_status:'pending',currency:'VND',status:'pending'});
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
+  w.confirm=()=>assert.fail('Clearing the cart must not ask for browser confirmation');
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
@@ -44,6 +45,18 @@ for(const method of ['cash','qr']){
  d.getElementById('openCart').click();
  assert.equal(d.getElementById('cartStep').hidden,false);
  assert.equal(d.getElementById('checkoutStep').hidden,true);
+ const clearCart=d.getElementById('clearCart'),feedback=d.getElementById('cartFeedback');
+ assert.equal(clearCart.hidden,false);
+ clearCart.click();
+ assert.equal(cartCount.hidden,true);
+ assert.equal(clearCart.hidden,true);
+ assert.equal(d.getElementById('continueCheckout').disabled,true);
+ assert.equal(feedback.hidden,false);
+ assert.equal(d.getElementById('cartFeedbackMessage').textContent,'Корзина очищена');
+ d.getElementById('undoClearCart').click();
+ assert.equal(cartCount.textContent,'1');
+ assert.equal(feedback.hidden,true);
+ assert.equal(clearCart.hidden,false);
  d.getElementById('continueCheckout').click();
  assert.equal(d.getElementById('checkoutStep').hidden,false);
  d.getElementById('backToCart').click();
