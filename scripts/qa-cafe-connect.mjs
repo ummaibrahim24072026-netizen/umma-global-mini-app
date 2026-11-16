@@ -340,7 +340,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  let galleryOpens=0;
  gallery.addEventListener('click',()=>galleryOpens++);
  cameraVideo.play=async()=>{};
- Object.defineProperties(cameraVideo,{videoWidth:{value:4000},videoHeight:{value:3000}});
+ Object.defineProperties(cameraVideo,{videoWidth:{value:4000,configurable:true},videoHeight:{value:3000,configurable:true}});
  const stickerContext=guest.HTMLCanvasElement.prototype.getContext;
  guest.HTMLCanvasElement.prototype.getContext=()=>({drawImage(source,x,y,width,height){
   assert.equal(source,cameraVideo);
@@ -451,29 +451,61 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   mimeType='video/webm;codecs=vp8,opus';
   start(timeslice){assert.equal(timeslice,250);super.start();}
  };
- guest.HTMLCanvasElement.prototype.captureStream=()=>({getVideoTracks:()=>[]});
+ let frameWidth=720,frameHeight=1280,captureSize,drawArgs,drawFrame,updateCountdown;
+ let now=0;
+ Object.defineProperties(cameraVideo,{
+  videoWidth:{get:()=>frameWidth},videoHeight:{get:()=>frameHeight},readyState:{value:2}
+ });
+ guest.HTMLCanvasElement.prototype.getContext=()=>({
+  save(){},restore(){},fillRect(){},
+  drawImage(...args){drawArgs=args;}
+ });
+ guest.HTMLCanvasElement.prototype.captureStream=function(){
+  captureSize=[this.width,this.height];
+  return {getVideoTracks:()=>[]};
+ };
+ guest.performance.now=()=>now;
+ guest.setInterval=callback=>{updateCountdown=callback;return 1;};
  guest.MediaStream=class{getVideoTracks(){return [];}};
- guest.requestAnimationFrame=()=>0;
+ guest.requestAnimationFrame=callback=>{drawFrame=callback;return 0;};
  guest.cancelAnimationFrame=()=>{};
  const rawMedia=guest.navigator.mediaDevices.getUserMedia;
  guest.navigator.mediaDevices.getUserMedia=async options=>({...await rawMedia(options),getAudioTracks:()=>[]});
+ const countdown=cameraPanel.querySelector('[role=timer]');
  const writesBeforeVideo=writes.length, stopsBeforeVideo=tracks.length;
  startVideo.click();
  await tick();
  shutter.click();
  assert.equal(shutter.getAttribute('aria-label'),'Остановить видео');
  assert.equal(shutter.dataset.mode,'recording');
+ assert.deepEqual(captureSize,[406,720]);
+ assert.equal(drawArgs[0],cameraVideo);
+ assert.deepEqual(drawArgs.slice(1),[0.5,0,405,720]);
+ assert.equal(countdown.hidden,false);
+ assert.equal(countdown.textContent,'Осталось 1:00');
+ now+=1000;
+ updateCountdown();
+ assert.equal(countdown.textContent,'Осталось 0:59');
+ frameWidth=1280;frameHeight=720;
+ drawFrame();
+ assert.deepEqual(captureSize,[406,720]);
+ assert.equal(drawArgs[3],406);
+ assert.ok(drawArgs[2]>0);
  assert.equal(send.disabled,true);
  cancelPhoto.click();
  await tick();
  assert.equal(tracks.length,stopsBeforeVideo+1);
+ assert.equal(countdown.hidden,true);
  assert.equal(form.querySelector('.connect-media-preview video'),null);
  startVideo.click();
  await tick();
  shutter.click();
+ assert.deepEqual(captureSize,[720,406]);
+ assert.equal(countdown.textContent,'Осталось 1:00');
  shutter.click();
  await tick();
  assert.equal(cameraPanel.hidden,true);
+ assert.equal(countdown.hidden,true);
  assert.equal(cameraVideo.srcObject,null);
  assert.equal(tracks.length,stopsBeforeVideo+2);
  assert.ok(form.querySelector('.connect-media-preview video[controls]'));
@@ -494,6 +526,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(modes[2].getAttribute('aria-pressed'),'true');
  shutter.click();
  assert.equal(modes.every(button=>button.disabled),true);
+ assert.deepEqual(captureSize,[480,480]);
+ assert.equal(countdown.textContent,'Осталось 1:00');
  shutter.click();
  await tick();
  assert.equal(cameraPanel.hidden,true);

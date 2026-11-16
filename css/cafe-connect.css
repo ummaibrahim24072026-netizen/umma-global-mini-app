@@ -576,7 +576,22 @@ audio.connect-media{width:min(100%,300px)}
   overflow:hidden;
   background:#15191c;
 }
-.public-cafe-menu .connect-camera-stage video {object-fit:cover}
+.public-cafe-menu .connect-camera-panel:not([data-kind=video]) .connect-camera-stage video {object-fit:cover}
+.connect-camera-timer:not([hidden]) {
+  position:absolute;
+  inset:max(14px,env(safe-area-inset-top)) auto auto 50%;
+  z-index:3;
+  transform:translateX(-50%);
+  padding:6px 12px;
+  border-radius:999px;
+  background:#8e2430;
+  color:#fff;
+  font-size:14px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  pointer-events:none;
+}
 .public-cafe-menu .connect-camera-stage .connect-camera-icon {
   background:#15191c88;
   border-color:transparent;

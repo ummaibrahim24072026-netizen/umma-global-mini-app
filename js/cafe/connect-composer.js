@@ -23,9 +23,9 @@
   vi:['Hủy','Chọn từ thư viện','Đang mở camera…','Không mở được camera. Hãy cấp quyền hoặc chọn ảnh từ thư viện.','Không chụp được ảnh. Hãy thử lại.']
  };
  const videoCopy={
-  ru:['Остановить видео','Идёт видеозапись, до 60 секунд.','Видеозапись недоступна. Проверьте доступ к камере и микрофону или выберите видео из галереи.','Не удалось сохранить видео. Попробуйте ещё раз.'],
-  en:['Stop video','Recording video, up to 60 seconds.','Video recording is unavailable. Check camera and microphone permissions or choose a video from the gallery.','Could not save the video. Try again.'],
-  vi:['Dừng quay video','Đang quay video, tối đa 60 giây.','Không thể quay video. Hãy kiểm tra quyền camera và micrô hoặc chọn video từ thư viện.','Không lưu được video. Hãy thử lại.']
+  ru:['Остановить видео','Осталось','Видеозапись недоступна. Проверьте доступ к камере и микрофону или выберите видео из галереи.','Не удалось сохранить видео. Попробуйте ещё раз.'],
+  en:['Stop video','Time left','Video recording is unavailable. Check camera and microphone permissions or choose a video from the gallery.','Could not save the video. Try again.'],
+  vi:['Dừng quay video','Còn lại','Không thể quay video. Hãy kiểm tra quyền camera và micrô hoặc chọn video từ thư viện.','Không lưu được video. Hãy thử lại.']
  };
  const videoDuration=60000;
  const expressionCopy={
@@ -125,7 +125,7 @@
    en:['Attachments','Gallery','Camera','Video','Close attachments'],
    vi:['Tệp đính kèm','Thư viện','Máy ảnh','Video','Đóng tệp đính kèm']
   })[lang]||['Attachments','Gallery','Camera','Video','Close attachments'];
-  let cameraSession=null,cameraPanel,cameraPreview,shutter,flipCamera,torch,cancelCamera;
+  let cameraSession=null,cameraPanel,cameraPreview,cameraTimer,shutter,flipCamera,torch,cancelCamera;
   const modeButtons=new Map();
   const cameraModes=({ru:['Видео','Фото','Видеозаметка','Фонарик'],vi:['Video','Ảnh','Tin nhắn video','Đèn pin']})[lang]||['Video','Photo','Video note','Torch'];let circleFacing='user';
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
@@ -255,6 +255,16 @@
    closeCamera();
    void openCamera(kind,facing);
   }
+  function startVideoCountdown(session,timer){
+   const deadline=performance.now()+videoDuration;
+   const update=()=>{
+    const seconds=Math.max(0,Math.ceil((deadline-performance.now())/1000));
+    timer.textContent=videoLabels[1]+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+   };
+   timer.hidden=false;
+   update();
+   session.clock=setInterval(update,250);
+  }
   function releaseCamera(session){
    session.stream?.getTracks().forEach(track=>track.stop());
    session.stream=null;
@@ -265,6 +275,8 @@
    const session=cameraSession;
    cameraSession=null;
    clearTimeout(session.timer);
+   clearInterval(session.clock);
+   cameraTimer.hidden=true;
    if(session.recorder&&session.recorder.state!=='inactive')session.recorder.stop();
    session.stopDrawing?.();
    session.recordStream?.getVideoTracks().forEach(t=>t.stop());
@@ -280,6 +292,7 @@
    const session={kind,stream:null,recorder:null,timer:null,facing,flipping:false,recordStream:null,stopDrawing:null};
    if(video)session.mime=['video/webm','video/mp4'].find(type=>window.MediaRecorder?.isTypeSupported?.(type));
    cameraSession=session;
+   cameraPanel.dataset.kind=kind;
    cameraPanel.hidden=false;
    cameraPreview.hidden=true;
    cameraPanel.setAttribute('aria-label',cameraModes[kind==='photo'?1:kind==='note'?2:0]);
@@ -348,10 +361,17 @@
     canvas.toBlob(finish,'image/jpeg',0.85);
    }catch{finish(null);}
   }
-  function createStableVideo(session,source,dimension){
+  function createStableVideo(session,source,square){
    const canvas=document.createElement('canvas');
-   canvas.width=dimension===480?480:720;
-   canvas.height=dimension===480?480:405;
+   if(square){
+    canvas.width=canvas.height=480;
+   }else{
+    const {videoWidth:width,videoHeight:height}=source;
+    if(!width||!height)throw Error('camera frame unavailable');
+    const scale=Math.min(1,720/Math.max(width,height));
+    canvas.width=Math.max(2,2*Math.round(width*scale/2));
+    canvas.height=Math.max(2,2*Math.round(height*scale/2));
+   }
    const ctx=canvas.getContext('2d');
    if(!ctx||!canvas.captureStream)throw Error('canvas unavailable');
    let active=true,frame=0;
@@ -359,10 +379,13 @@
     if(!active)return;
     if(source.readyState>=2&&source.videoWidth&&source.videoHeight){
      const w=source.videoWidth,h=source.videoHeight,cw=canvas.width,ch=canvas.height;
-     const scale=Math.max(cw/w,ch/h),sw=cw/scale,sh=ch/scale;
+     const scale=square?Math.max(cw/w,ch/h):Math.min(cw/w,ch/h);
+     const dw=w*scale,dh=h*scale;
+     ctx.fillStyle='#000';
+     ctx.fillRect(0,0,cw,ch);
      ctx.save();
      if(session.facing==='user'){ctx.translate(cw,0);ctx.scale(-1,1);}
-     try{ctx.drawImage(source,(w-sw)/2,(h-sh)/2,sw,sh,0,0,cw,ch);}catch{}
+     try{ctx.drawImage(source,(cw-dw)/2,(ch-dh)/2,dw,dh);}catch{}
      ctx.restore();
     }
     frame=requestAnimationFrame(draw);
@@ -389,7 +412,7 @@
      freeze.width=source.videoWidth;freeze.height=source.videoHeight;
      freeze.getContext('2d')?.drawImage(source,0,0,freeze.width,freeze.height);
      freeze.className='connect-camera-freeze';
-     Object.assign(freeze.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:'cover',pointerEvents:'none',zIndex:'2'});
+     Object.assign(freeze.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:getComputedStyle(source).objectFit||'cover',pointerEvents:'none',zIndex:'2'});
      if(getComputedStyle(parent).position==='static')parent.style.position='relative';
      parent.append(freeze);
     }
@@ -454,7 +477,7 @@
    const chunks=[];
    let size=0;
    try{
-    const recordStream=createStableVideo(session,cameraPreview,session.kind==='note'?480:720);
+    const recordStream=createStableVideo(session,cameraPreview,session.kind==='note');
     const recorder=new MediaRecorder(recordStream,{
      mimeType:session.mime,videoBitsPerSecond:1800000,audioBitsPerSecond:96000
     });
@@ -484,7 +507,8 @@
     shutter.setAttribute('aria-label',videoLabels[0]);
     shutter.title=videoLabels[0];
     for(const button of modeButtons.values())button.disabled=true;
-    status.textContent=videoLabels[1];
+    startVideoCountdown(session,cameraTimer);
+    status.textContent='';
    }catch{closeCamera();status.textContent=videoLabels[3];}
   }
   if(albums){
@@ -591,7 +615,7 @@
    circleSession=session;
    // Do not capture the pointer: the camera switch is a separate touch target.
    circlePanel.hidden=false;
-   circleTimer.textContent='0:00';
+   circleTimer.hidden=true;
    circleButton.classList.add('is-recording');
    if(flipCamera)flipCamera.disabled=false;
    controls();
@@ -605,7 +629,7 @@
     if(circleSession!==session||session.cancelled){finishCircle(session,true);return;}
     const mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
     if(!mime)throw Error('format');
-    const recordStream=createStableVideo(session,circlePreview,480);
+    const recordStream=createStableVideo(session,circlePreview,true);
     const recorder=new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
     session.recorder=recorder;
     recorder.ondataavailable=e=>{
@@ -627,11 +651,7 @@
      try{await onInstantVideo(file);}catch(e){status.textContent=e?.message||labels[11];}
     };
     recorder.start(250);
-    const start=performance.now();
-    session.clock=setInterval(()=>{
-     const seconds=Math.floor((performance.now()-start)/1000);
-     circleTimer.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
-    },250);
+    startVideoCountdown(session,circleTimer);
     session.timer=setTimeout(()=>finishCircle(session,false),videoDuration);
     status.textContent='';
    }catch{
@@ -787,7 +807,10 @@
    cancelCamera.className='connect-camera-icon connect-camera-dismiss';
    iconButton(cancelCamera,'close',cameraLabels[0]);
    const stage=el('div',null,'connect-camera-stage');
-   stage.append(cameraPreview,cancelCamera);
+   cameraTimer=el('span',null,'connect-camera-timer');
+   cameraTimer.setAttribute('role','timer');
+   cameraTimer.hidden=true;
+   stage.append(cameraPreview,cancelCamera,cameraTimer);
    const cameraControls=el('div',null,'connect-camera-controls');
    cameraControls.append(choose,shutter,flipCamera);
    stage.append(cameraControls);
@@ -824,7 +847,9 @@
     circlePanel.hidden=true;
     circlePreview=el('video');
     circlePreview.muted=true;circlePreview.playsInline=true;
-    circleTimer=el('span','0:00','connect-circle-timer');
+    circleTimer=el('span',null,'connect-circle-timer');
+    circleTimer.setAttribute('role','timer');
+    circleTimer.hidden=true;
     circlePanel.append(circlePreview,circleTimer);
     const flip=button('↻ Камера',flipCurrentCamera);
     flip.className='connect-flip-camera';
