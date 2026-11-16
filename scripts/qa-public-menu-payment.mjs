@@ -136,7 +136,8 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  w.ummaPublicDelivery={loadMapLibrary:async()=>{if(fail)throw Error('map offline');}};
  w.UmmaMaps={basemap(){}};
  w.L={map:()=>map,layerGroup:()=>({addTo(){return this;},clearLayers(){hints=[];}}),
-  marker:(point,{title})=>({bindTooltip(){return this;},on(_,callback){hints.push({title,callback});return this;},addTo(){}}),
+  icon:options=>options,
+  marker:(point,{title,alt,icon})=>({bindTooltip(){return this;},on(_,callback){hints.push({title,alt,icon,callback});return this;},addTo(){}}),
   latLng:latitude=>({distanceTo:point=>Math.abs(point[0]-latitude)})};
  Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(success){
   geolocationCalls++;success({coords:{latitude:13,longitude:109}});
@@ -155,6 +156,10 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal($('nearbyCafeMap').hidden,false);
  assert.deepEqual(center,[12.2814294,109.2020884]);
+ assert.equal(hints[0].icon.iconUrl,'logo/assets/umma-icon-192.png');
+ assert.deepEqual(Array.from(hints[0].icon.iconSize),[40,40]);
+ assert.deepEqual(Array.from(hints[0].icon.iconAnchor),[20,20]);
+ assert.equal(hints[0].alt,'Halal UMMA Nha Trang');
  assert.equal($('findNearestCafe').hidden,true);
  assert.equal(geolocationCalls,0);
  w.ummaNearbyCafe.setLocations([
