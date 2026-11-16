@@ -23,6 +23,21 @@ const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||c
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const publicChat=document.body.classList.contains('public-cafe-menu');
+const CHAT_THEME_KEY='umma:chat:theme:v1';
+const chatThemes=[
+ ['light','Светлый','Light','Sáng'],
+ ['turquoise','Бирюзовый','Turquoise','Xanh ngọc'],
+ ['dark','Тёмно-бирюзовый','Dark teal','Xanh ngọc đậm'],
+ ['beige','Бежевый','Beige','Màu be'],
+ ['blue','Синий (ночной)','Night blue','Xanh đêm'],
+ ['lavender','Лавандовый','Lavender','Oải hương']
+];
+function savedChatTheme(){
+ try{
+  const id=localStorage.getItem(CHAT_THEME_KEY);
+  return chatThemes.some(([theme])=>theme===id)?id:'light';
+ }catch{return 'light';}
+}
 const chatTitles={ru:'Чат UMMA',en:'UMMA Chat',vi:'Trò chuyện UMMA'};
 const connectHost=document.getElementById('customerConnectHost');
 const inMessages=!!connectHost?.closest('#customerMessages');
@@ -281,7 +296,8 @@ if(setupHost){
 }
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
- dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());if(publicChat){try{dialog.dataset.chatTheme=localStorage.getItem('umma:chat:theme:v1')||'light';}catch{dialog.dataset.chatTheme='light';}}
+ dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());
+ if(publicChat)dialog.dataset.chatTheme=savedChatTheme();
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
@@ -295,33 +311,25 @@ function build(){
   const clearButton=el('button',clearLabel,'connect-clear-chat');
   clearButton.type='button';
   const themeLabel=({ru:'Тема чата',vi:'Giao diện trò chuyện'})[lang()]||'Chat theme';
-  const themeButton=el('button',themeLabel,'connect-theme-menu-button');
+  const themeButton=el('button',({ru:'Тема',vi:'Giao diện'})[lang()]||'Theme','connect-theme-menu-button');
+  themeButton.setAttribute('aria-haspopup','dialog');
   themeButton.type='button';
   themeButton.onclick=()=>{
    chatMenu.open=false;
-   const themes=[
-    ['light','Светлый','Light','Sáng'],
-    ['turquoise','Бирюзовый','Turquoise','Xanh ngọc'],
-    ['dark','Тёмно-бирюзовый','Dark teal','Xanh ngọc đậm'],
-    ['beige','Бежевый','Beige','Màu be'],
-    ['blue','Синий (ночной)','Night blue','Xanh đêm'],
-    ['lavender','Лавандовый','Lavender','Oải hương']
-   ];
    const modal=el('dialog',null,'connect-theme-dialog');
+   modal.setAttribute('aria-label',themeLabel);
    const heading=el('h3',themeLabel);
    const grid=el('div',null,'connect-theme-grid');
-   const current=()=>{try{return localStorage.getItem('umma:chat:theme:v1')||'light';}catch{return 'light';}};
-   for(const [id,ru,en,vi] of themes){
+   for(const [id,ru,en,vi] of chatThemes){
     const choice=el('button',null,'connect-theme-choice');
-    choice.type='button';choice.dataset.theme=id;
+    choice.type='button';choice.dataset.chatTheme=id;
     const preview=el('span',null,'connect-theme-preview');
     const name=el('span',lang()==='ru'?ru:lang()==='vi'?vi:en);
     choice.append(preview,name);
-    choice.setAttribute('aria-pressed',String(current()===id));
+    choice.setAttribute('aria-pressed',String(dialog.dataset.chatTheme===id));
     choice.onclick=()=>{
      dialog.dataset.chatTheme=id;
-     try{localStorage.setItem('umma:chat:theme:v1',id);}catch{}
-     grid.querySelectorAll('.connect-theme-choice').forEach(node=>node.setAttribute('aria-pressed',String(node===choice)));
+     try{localStorage.setItem(CHAT_THEME_KEY,id);}catch{}
      modal.close();
     };
     grid.append(choice);
@@ -329,7 +337,7 @@ function build(){
    const closeTheme=el('button',lang()==='ru'?'Закрыть':lang()==='vi'?'Đóng':'Close','connect-theme-close');
    closeTheme.type='button';closeTheme.onclick=()=>modal.close();
    modal.append(heading,grid,closeTheme);
-   modal.addEventListener('close',()=>modal.remove(),{once:true});
+   modal.addEventListener('close',()=>{modal.remove();menuToggle.focus();},{once:true});
    document.body.append(modal);modal.showModal();
   };
   menuPanel.append(themeButton);
@@ -487,7 +495,9 @@ function build(){
    document.body.append(settingsDialog);
   }
   content.className='connect-chat-content';
-  content.append(list,status,form);
+  const wallpaper=el('div',null,'connect-chat-wallpaper');
+  wallpaper.append(list);
+  content.append(wallpaper,status,form);
   dialog.append(join,content);
  }else{
   actions.append(save,off);

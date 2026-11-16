@@ -246,6 +246,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  guest.URL.createObjectURL=()=> 'blob:https://qa.invalid/preview';
  guest.URL.revokeObjectURL=()=>{};
  guest.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ guest.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new guest.Event('close'));};
  guest.AudioContext=class{
   state='running';
   constructor(){contexts.push(this);}
@@ -286,7 +287,20 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(menu.open,false);
  menuToggle.click();
  assert.equal(menu.open,true);
- assert.equal(menu.querySelector('button').textContent,'Очистить чат');
+ assert.equal(menu.querySelector('.connect-clear-chat').textContent,'Очистить чат');
+ const themeButton=menu.querySelector('.connect-theme-menu-button');
+ assert.equal(themeButton.textContent,'Тема');
+ themeButton.click();
+ const picker=guest.document.querySelector('.connect-theme-dialog');
+ assert.ok(picker.open);
+ assert.equal(menu.open,false);
+ assert.equal(picker.querySelectorAll('.connect-theme-choice').length,6);
+ assert.equal(picker.querySelector('[aria-pressed=true]').dataset.chatTheme,'light');
+ picker.querySelector('[data-chat-theme=blue]').click();
+ assert.equal(guest.document.querySelector('.umma-connect-chat').dataset.chatTheme,'blue');
+ assert.equal(guest.localStorage.getItem('umma:chat:theme:v1'),'blue');
+ assert.equal(guest.document.querySelector('.connect-theme-dialog'),null);
+ menuToggle.click();
  assert.equal(guest.document.querySelector('.connect-clear-confirm'),null);
  menuToggle.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
  assert.equal(menu.open,false);
@@ -294,7 +308,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  guest.document.querySelector('.connect-thread').click();
  assert.equal(menu.open,false);
  menuToggle.click();
- menu.querySelector('button').click();
+ menu.querySelector('.connect-clear-chat').click();
  assert.equal(menu.open,false);
  const confirmation=guest.document.querySelector('.connect-clear-confirm');
  assert.ok(confirmation.open);
