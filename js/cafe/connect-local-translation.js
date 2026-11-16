@@ -41,7 +41,7 @@ async function translate(text,target,source){
  }
  return result;
 }
-async function voice(url,target){
+async function voice(url,target,source='auto'){
  const response=await fetch(url);
  if(!response.ok)throw Error('audio_download_failed');
  const buffer=await response.arrayBuffer();
@@ -59,13 +59,16 @@ async function voice(url,target){
   const converted=await offline.startRendering();samples=new Float32Array(converted.getChannelData(0));
  }finally{await audioContext.close();}
  const transcriber=await getPipe('automatic-speech-recognition','onnx-community/whisper-tiny');
- const output=await transcriber(samples,{task:'transcribe',chunk_length_s:25,return_timestamps:false});
+ const names={ru:'russian',vi:'vietnamese',en:'english'};
+ const options={task:'transcribe',chunk_length_s:25,return_timestamps:false};
+ if(names[source])options.language=names[source];
+ const output=await transcriber(samples,options);
  const transcript=output?.text?.trim();
  if(!transcript)throw Error('transcription_empty');
- const detected=await detect(transcript);
+ const detected=names[source]?source:await detect(transcript);
  if(detected==='tg')throw Error('Таджикский язык: текущая бесплатная модель не обеспечивает достоверный перевод. Прослушайте оригинал.');
  const text=await translate(transcript,target,detected);
- return {status:'ready',text,url:null,local:true,transcript};
+ return {status:'ready',text,url:null,local:true,transcript,source:detected};
 }
 function speak(text,lang){
  if(!('speechSynthesis'in window))return false;
