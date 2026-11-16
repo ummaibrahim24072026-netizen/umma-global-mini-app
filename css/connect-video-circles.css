@@ -73,9 +73,49 @@
 .umma-connect-chat .connect-message-actions .connect-action-icon{display:inline-grid;place-items:center;flex:0 0 22px;width:22px;font-size:22px;color:#087d80}
 .umma-connect-chat .connect-message-actions .connect-action-danger .connect-action-icon{color:#c0343b}
 
-/* Clear chat for me, styled as a discreet WhatsApp-like header action. */
-.umma-connect-chat .connect-clear-chat{margin-left:auto;flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;background:transparent;border:0;border-radius:50%;color:inherit;font-size:25px;cursor:pointer}
-.umma-connect-chat .connect-clear-chat:active{background:#ffffff30}
+/* Chat options in the public conversation header. */
+.umma-connect-chat .connect-chat-menu{position:relative;z-index:5;flex:none}
+.umma-connect-chat .connect-chat-menu-toggle{
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  color:var(--umma-brand-on-primary,#fff);
+  list-style:none;
+  cursor:pointer;
+}
+.connect-chat-menu-toggle::-webkit-details-marker{display:none}
+.connect-chat-menu-toggle::before{
+  content:"";
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 -7px currentColor,0 7px currentColor;
+}
+.connect-chat-menu-toggle:active,.connect-chat-menu[open]>.connect-chat-menu-toggle{background:#ffffff30}
+.umma-connect-chat .connect-chat-menu-panel{
+  position:absolute;
+  inset-block-start:calc(100% + 4px);
+  inset-inline-end:0;
+  min-width:172px;
+  padding:4px;
+  border:1px solid #d9e8e4;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 8px 24px #183d392e;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-menu-panel .connect-clear-chat{
+  width:100%;
+  min-height:44px;
+  padding:8px 12px;
+  border-radius:8px;
+  color:#973640;
+  font-size:14px;
+  text-align:start;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-menu-panel .connect-clear-chat:is(:hover,:focus-visible){background:#fbf0f0}
 .connect-clear-confirm{width:min(340px,calc(100vw - 36px));max-width:100%;border:0;border-radius:20px;padding:23px;box-shadow:0 18px 65px #001c1c40;background:#fff;color:#213f40}
 .connect-clear-confirm::backdrop{background:#001e1e8c}
 .connect-clear-confirm h3{font-size:19px;margin:0 0 12px;font-weight:700}

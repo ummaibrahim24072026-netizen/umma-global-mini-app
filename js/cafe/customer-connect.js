@@ -285,11 +285,30 @@ function build(){
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
-  const clearButton=el('button','⌫','connect-clear-chat');
+  const menuLabel=({ru:'Действия чата',vi:'Tùy chọn trò chuyện'})[lang()]||'Chat options';
+  const clearLabel=({ru:'Очистить чат',vi:'Xóa lịch sử trò chuyện'})[lang()]||'Clear chat';
+  const chatMenu=el('details',null,'connect-chat-menu');
+  const menuToggle=el('summary',null,'connect-chat-menu-toggle');
+  menuToggle.setAttribute('aria-label',menuLabel);
+  menuToggle.title=menuLabel;
+  const menuPanel=el('div',null,'connect-chat-menu-panel');
+  const clearButton=el('button',clearLabel,'connect-clear-chat');
   clearButton.type='button';
-  clearButton.setAttribute('aria-label',lang()==='ru'?'Очистить чат':lang()==='vi'?'Xóa lịch sử trò chuyện':'Clear chat');
-  clearButton.title=clearButton.getAttribute('aria-label');
+  menuPanel.append(clearButton);
+  chatMenu.append(menuToggle,menuPanel);
+  dialog.addEventListener('click',event=>{
+   if(chatMenu.open&&!chatMenu.contains(event.target))chatMenu.open=false;
+  });
+  dialog.addEventListener('keydown',event=>{
+   if(event.key!=='Escape'||!chatMenu.open)return;
+   event.preventDefault();
+   chatMenu.open=false;
+   menuToggle.focus();
+  });
+  dialog.addEventListener('close',()=>{chatMenu.open=false;});
   clearButton.onclick=()=>{
+   chatMenu.open=false;
+   menuToggle.focus();
    const modal=el('dialog',null,'connect-clear-confirm');
    const heading=el('h3',lang()==='ru'?'Очистить чат?':lang()==='vi'?'Xóa lịch sử trò chuyện?':'Clear chat?');
    const explanation=el('p',lang()==='ru'?'Все сообщения исчезнут только у вас. У UMMA переписка сохранится. Новые сообщения будут приходить как обычно.':lang()==='vi'?'Tin nhắn chỉ biến mất với bạn. UMMA vẫn giữ cuộc trò chuyện.':'Messages will disappear only for you. UMMA will keep the conversation.');
@@ -315,7 +334,7 @@ function build(){
    modal.addEventListener('close',()=>modal.remove(),{once:true});
    document.body.append(modal);modal.showModal();
   };
-  hero.append(close,heroIcon,heroText,clearButton);
+  hero.append(close,heroIcon,heroText,chatMenu);
   dialog.append(hero);
  }else{
   heroText.append(el('p',t(2)));
