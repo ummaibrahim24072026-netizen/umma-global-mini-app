@@ -12,11 +12,38 @@
   en:['Photo','Video','Record voice message','Stop recording','Remove attachment','Recording, up to 60 seconds.','Allow microphone access.','Microphone unavailable.','Listen to the recording before sending.','File exceeds the size limit of','Unsupported file format.','Could not send attachment. Try again.'],
   vi:['Ảnh','Video','Ghi âm tin nhắn','Dừng ghi âm','Xóa tệp đính kèm','Đang ghi âm, tối đa 60 giây.','Cho phép truy cập micrô.','Micrô không khả dụng.','Nghe lại bản ghi trước khi gửi.','Tệp vượt quá giới hạn','Định dạng tệp không được hỗ trợ.','Không gửi được tệp. Hãy thử lại.']
  };
- window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video']})=>{
-  const labels=copy[lang]||copy.en;
+ const compactCopy={
+  ru:['Прикрепить фото или видео','Снять фото','Снять видео','Отменить запись'],
+  en:['Attach photo or video','Take photo','Record video','Cancel recording'],
+  vi:['Đính kèm ảnh hoặc video','Chụp ảnh','Quay video','Hủy ghi âm']
+ };
+ const icons={
+  clip:'M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8-8',
+  mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v4 M9 23h6',
+  stop:'M6 6h12v12H6z'
+ };
+ function iconButton(control,icon,label){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg'),path=document.createElementNS(ns,'path');
+  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('aria-hidden','true');
+  path.setAttribute('d',icons[icon]);
+  svg.append(path);
+  control.replaceChildren(svg);
+  control.setAttribute('aria-label',label);
+  control.title=label;
+ }
+ window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false})=>{
+  const labels=copy[lang]||copy.en, compactLabels=compactCopy[lang]||compactCopy.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
   const pickers=[];
+  let attach,recordPanel,elapsed;
+  function showAttachments(open){
+   if(!attach)return;
+   bar.hidden=!open;
+   attach.setAttribute('aria-expanded',String(open));
+  }
   function button(label,action){
    const control=el('button',label);
    control.type='button';
@@ -29,7 +56,16 @@
    body.disabled=send.disabled=working||active;
    mic.disabled=working||starting;
    remove.disabled=working||active;
-   mic.textContent=recording?labels[3]:labels[2];
+   const micLabel=recording?labels[3]:labels[2];
+   if(compact){
+    const canSend=!!draft||!!body.value.trim();
+    attach.disabled=working||active;
+    if(attach.disabled)showAttachments(false);
+    send.hidden=active||!canSend;
+    mic.hidden=!active&&canSend;
+    recordPanel.hidden=!recording;
+    iconButton(mic,recording?'stop':'mic',micLabel);
+   }else mic.textContent=micLabel;
   }
   function sizeError(kind){return labels[9]+' '+limits[kind]+' MB.';}
   function setDraft(file,kind){
@@ -42,13 +78,14 @@
     url=URL.createObjectURL(file);
     preview.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),remove);
    }
+   controls();
   }
-  for(const kind of kinds){
-   const label=labels[kind==='photo'?0:1];
+  function addPicker(kind,label,capture=false){
    const input=el('input');
    input.type='file';
    input.hidden=true;
    input.accept=formats[kind].join(',');
+   if(capture)input.setAttribute('capture','environment');
    input.onchange=()=>{
     const file=input.files[0];
     input.value='';
@@ -58,16 +95,22 @@
     setDraft(file,kind);
     status.textContent='';
    };
-   const picker=button(label,()=>input.click());
+   const picker=button(label,()=>{showAttachments(false);attach?.focus();input.click();});
    pickers.push(picker);
    bar.append(input,picker);
   }
+  for(const kind of kinds)addPicker(kind,labels[kind==='photo'?0:1]);
+  if(compact){
+   addPicker('photo',compactLabels[1],true);
+   addPicker('video',compactLabels[2],true);
+  }
   function release(r){
    clearTimeout(r.timer);
+   clearInterval(r.clock);
    r.stream.getTracks().forEach(track=>track.stop());
   }
   function stop(r,discard=false){
-   r.discard=discard;
+   r.discard=r.discard||discard;
    if(r.recorder.state!=='inactive')r.recorder.stop();
    release(r);
   }
@@ -104,6 +147,14 @@
     };
     recorder.start();
     r.timer=setTimeout(()=>stop(r),60000);
+    if(compact){
+     const started=performance.now();
+     elapsed.textContent='0:00';
+     r.clock=setInterval(()=>{
+      const seconds=Math.min(60,Math.floor((performance.now()-started)/1000));
+      elapsed.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+     },250);
+    }
     status.textContent=labels[5];
    }catch{
     stream?.getTracks().forEach(track=>track.stop());
@@ -113,15 +164,46 @@
    }
   }
   const mic=button(labels[2],record),remove=button(labels[4],()=>{setDraft(null);status.textContent='';});
-  bar.append(mic);
-  form.insertBefore(bar,send);
-  form.insertBefore(preview,send);
+  if(compact){
+   form.classList.add('connect-compose-compact');
+   attach=button(compactLabels[0],()=>showAttachments(bar.hidden));
+   attach.className='connect-attach';
+   iconButton(attach,'clip',compactLabels[0]);
+   bar.id='umma-connect-attachments';
+   attach.setAttribute('aria-controls',bar.id);
+   showAttachments(false);
+   mic.className='primary connect-mic';
+   elapsed=el('span','0:00','connect-record-time');
+   recordPanel=el('div',null,'connect-record-panel');
+   recordPanel.append(elapsed,button(compactLabels[3],()=>{
+    if(recording)stop(recording,true);
+    status.textContent='';
+   }));
+   form.prepend(attach,bar,preview,recordPanel);
+   form.append(mic);
+   form.addEventListener('focusout',event=>{
+    if(event.relatedTarget!==attach&&!bar.contains(event.relatedTarget))showAttachments(false);
+   });
+   form.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||bar.hidden)return;
+    event.preventDefault();
+    showAttachments(false);
+    attach.focus();
+   });
+   body.addEventListener('input',controls);
+   controls();
+  }else{
+   bar.append(mic);
+   form.insertBefore(bar,send);
+   form.insertBefore(preview,send);
+  }
   return {
    get draft(){return draft;},
    get recording(){return starting||!!recording;},
    busy(value){working=value;controls();},
    clear(){setDraft(null);},
    close(){
+    showAttachments(false);
     generation++;
     starting=false;
     if(recording){stop(recording,true);recording=null;}

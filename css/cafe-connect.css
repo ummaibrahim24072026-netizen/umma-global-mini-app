@@ -234,7 +234,7 @@ audio.connect-media{width:min(100%,300px)}
 .umma-connect-chat [role=status]:empty {display:none}
 .umma-connect-chat .connect-compose {
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-columns:44px minmax(0,1fr) 44px;
   flex:none;
   margin:0;
   padding:6px 10px max(8px,env(safe-area-inset-bottom));
@@ -244,7 +244,7 @@ audio.connect-media{width:min(100%,300px)}
   gap:4px 8px;
 }
 .umma-connect-chat .connect-compose textarea {
-  grid-area:2 / 1;
+  grid-area:3 / 2;
   min-height:44px;
   max-height:88px;
   padding:10px 12px;
@@ -252,7 +252,7 @@ audio.connect-media{width:min(100%,300px)}
   resize:none;
 }
 .umma-connect-chat .connect-compose .connect-send {
-  grid-area:2 / 2;
+  grid-area:3 / 3;
   min-width:44px;
   width:44px;
   padding:0;
@@ -276,7 +276,7 @@ audio.connect-media{width:min(100%,300px)}
 }
 .umma-connect-chat .connect-media-preview:empty {display:none}
 .umma-connect-chat .connect-media-preview:not(:empty) {
-  grid-row:3;
+  grid-row:2;
   display:flex;
   flex-wrap:wrap;
   align-items:center;
@@ -296,4 +296,52 @@ audio.connect-media{width:min(100%,300px)}
     border-radius:0;
   }
   .umma-connect-chat::before {display:none}
+}
+
+.umma-connect-chat .connect-compose-compact [hidden] {display:none}
+.umma-connect-chat .connect-compose-compact .connect-attach {grid-area:3 / 1}
+.umma-connect-chat .connect-compose-compact .connect-mic {grid-area:3 / 3}
+.umma-connect-chat .connect-compose-compact :is(.connect-attach,.connect-mic) {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  padding:0;
+  border-radius:50%;
+}
+.umma-connect-chat .connect-compose-compact .connect-mic {
+  border-color:var(--umma-brand-strong);
+  background:var(--umma-brand-strong);
+}
+.umma-connect-chat .connect-compose-compact .connect-mic[hidden] {display:none}
+.umma-connect-chat .connect-compose-compact svg {
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.umma-connect-chat .connect-compose-compact .connect-media-tools:not([hidden]) {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.umma-connect-chat .connect-record-panel:not([hidden]) {
+  grid-area:4 / 1 / 5 / -1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  color:#a21d2f;
+}
+.umma-connect-chat .connect-record-time {font-variant-numeric:tabular-nums}
+.umma-connect-chat .connect-record-time::before {
+  content:'';
+  display:inline-block;
+  width:8px;
+  height:8px;
+  margin-inline-end:8px;
+  border-radius:50%;
+  background:currentColor;
 }

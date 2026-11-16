@@ -213,7 +213,7 @@ function build(){
   send.setAttribute('aria-label',t(10));
   form.append(body,send);
  }else form.append(label(t(9),body),send);
- const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,onChange:()=>{pending=null;}});
+ const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,compact:publicChat,onChange:()=>{pending=null;}});
  form.onsubmit=e=>{
   e.preventDefault();
   if(busy||composer.recording||(!body.value.trim()&&!composer.draft))return;

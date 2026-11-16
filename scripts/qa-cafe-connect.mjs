@@ -221,7 +221,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
 }
 // The guest records first and uploads only on a separate Send tap.
 {
- const app=new JSDOM('<html lang="ru"><body><header></header></body></html>',{
+ const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><header></header></body></html>',{
   url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
  });
  const guest=app.window,credential='a'.repeat(64);
@@ -259,18 +259,47 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  };
  loadConnect(guest,'customer-connect');
  await guest.ummaCustomerConnect.open();
- const mic=[...guest.document.querySelectorAll('form button')].find(b=>b.textContent==='Записать голосовое');
+ const form=guest.document.querySelector('.connect-compose-compact');
+ const mic=form.querySelector('.connect-mic');
+ const send=form.querySelector('.connect-send');
+ const body=form.querySelector('textarea');
+ const bar=form.querySelector('.connect-media-tools');
+ const attach=form.querySelector('.connect-attach');
+ assert.equal(mic.getAttribute('aria-label'),'Записать голосовое');
+ assert.equal(send.hidden,true);
+ body.value='Текст';
+ body.dispatchEvent(new guest.Event('input'));
+ assert.equal(mic.hidden,true);
+ assert.equal(send.hidden,false);
+ body.value='';
+ body.dispatchEvent(new guest.Event('input'));
+ attach.click();
+ assert.equal(attach.getAttribute('aria-expanded'),'true');
+ assert.deepEqual([...bar.querySelectorAll('button')].map(b=>b.textContent),['Фото','Видео','Снять фото','Снять видео']);
+ assert.equal(bar.querySelectorAll('input[capture="environment"]').length,2);
+ attach.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+ assert.equal(bar.hidden,true);
  const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
  mic.click();
  await tick();
- assert.equal(mic.textContent,'Остановить запись');
+ assert.equal(mic.getAttribute('aria-label'),'Остановить запись');
+ const recorder=form.querySelector('.connect-record-panel');
+ assert.equal(recorder.hidden,false);
+ recorder.querySelector('button').click();
+ await tick();
+ assert.equal(recorder.hidden,true);
+ assert.equal(form.querySelector('audio'),null);
+ assert.equal(writes.length,0);
+ mic.click();
+ await tick();
  mic.click();
  await tick();
  assert.ok(tracks.length);
  assert.ok(guest.document.querySelector('.connect-media-preview audio'));
  assert.equal(writes.length,0);
- guest.document.querySelector('textarea').value='Голос';
- const submit=()=>guest.document.querySelector('form').dispatchEvent(new guest.Event('submit',{cancelable:true}));
+ assert.equal(send.hidden,false);
+ body.value='Голос';
+ const submit=()=>form.dispatchEvent(new guest.Event('submit',{cancelable:true}));
  submit();
  await tick();
  assert.ok(guest.document.querySelector('.connect-media-preview audio'));
@@ -282,6 +311,19 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.ok((await writes[1].body.text()).startsWith('"Голос"\n'));
  assert.equal(guest.document.querySelector('.connect-media-preview audio'),null);
  assert.match(guest.document.querySelector('.connect-thread').textContent,/Прослушать голосовое/);
+ for(const [i,type,element] of [[0,'image/jpeg','img'],[1,'video/mp4','video']]){
+  const input=bar.querySelectorAll('input')[i];
+  const file=new Blob(['synthetic attachment'],{type});
+  Object.defineProperty(input,'files',{value:[file]});
+  input.dispatchEvent(new guest.Event('change'));
+  assert.ok(form.querySelector('.connect-media-preview '+element));
+  assert.equal(send.hidden,false);
+  submit();
+  await tick();
+  assert.equal(writes.at(-1).headers['Content-Type'],type);
+  assert.equal(form.querySelector('.connect-media-preview '+element),null);
+  assert.equal(mic.hidden,false);
+ }
  guest.close();
 }
 // Staff inbox updates the receipt while the current conversation stays open.
