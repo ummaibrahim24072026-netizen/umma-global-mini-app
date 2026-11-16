@@ -98,7 +98,9 @@ Object.assign(copy,{
  'Банк':{en:'Bank',vi:'Ngân hàng'},
  'Получатель':{en:'Recipient',vi:'Người nhận'},
  'Телефон для перевода':{en:'Transfer phone number',vi:'Số điện thoại nhận tiền'},
- 'Скопировать номер':{en:'Copy number',vi:'Sao chép số'},
+ 'Скопировать номер и открыть свой банк':{en:'Copy the number and open your bank',vi:'Sao chép số và mở ngân hàng của bạn'},
+ 'Скопировать только номер':{en:'Copy number only',vi:'Chỉ sao chép số'},
+ 'Скопируйте номер из реквизитов вручную.':{en:'Copy the phone number from the payment details manually.',vi:'Hãy sao chép số điện thoại từ thông tin thanh toán theo cách thủ công.'},
  'Номер скопирован':{en:'Number copied',vi:'Đã sao chép số'},
  'Переведите указанную сумму по номеру телефона. Кафе подтвердит заказ после поступления перевода.':{
   en:'Transfer the amount shown using the phone number. The cafe will confirm your order once payment arrives.',
