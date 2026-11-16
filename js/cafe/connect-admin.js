@@ -113,7 +113,7 @@ function showMessages(data){
    'Не удалось открыть вложение. Попробуйте ещё раз.'));
   if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation('ru',target,
-    async()=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target);},true));
+    async(source)=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target,source);},true));
   }
   li.append(node('small',dateTime.format(new Date(m.created_at))));
   if(m.direction!=='customer')li.append(node('small',null,'connect-receipt'));
