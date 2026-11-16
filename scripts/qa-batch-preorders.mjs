@@ -79,6 +79,7 @@ export async function verifyBatchPreorders(db,cafe,product){
  // Install the web-only handoff after the existing lifecycle and preorder patches.
  await db.exec("alter table cafe_orders add column if not exists dispatch_mode text not null default 'nearest';");
  await db.exec(source('supabase/proposals/cafe-web-green-sm.sql'));
+ await db.exec(source('supabase/proposals/cafe-web-delivery-fee.sql'));
  const green=await create(1,{delivery:true,rows:[{productId:product,quantity:1}]});
  const id=green.order.id;
  const greenOrder=async()=>(await q('select * from cafe_orders where id=$1',[id])).rows[0];
@@ -86,7 +87,9 @@ export async function verifyBatchPreorders(db,cafe,product){
  assert.equal(created.dispatch_mode,'manual');
  assert.equal(created.requires_prepayment,true);
  assert.equal(created.payment_timing,'now');
- assert.equal(Number(created.delivery_fee_vnd),0);
+ assert.equal(Number(created.subtotal_vnd),25000);
+ assert.equal(Number(created.delivery_fee_vnd),30000);
+ assert.equal(Number(created.total_vnd),55000);
  await assert.rejects(q("select update_cafe_order_status($1,12,'confirmed')",[id]),/SELF_SERVICE_PAYMENT_REQUIRED/);
  await assert.rejects(q('select offer_cafe_courier($1,12,13)',[id]),/Unavailable/);
  await q("update cafe_orders set payment_status='paid',paid_by_telegram_id=11 where id=$1",[id]);
@@ -96,7 +99,14 @@ export async function verifyBatchPreorders(db,cafe,product){
  await q("select update_cafe_order_status($1,12,'completed')",[id]);
  assert.equal((await greenOrder()).status,'completed');
  assert.equal((await greenOrder()).delivery_status,'delivered');
- console.log('PASS Green SM web delivery: free, prepaid, no UMMA offers, staff-only completion.');
+ for (const quantity of [4,5]) {
+  const free=await create(quantity,{delivery:true,rows:[{productId:product,quantity}]});
+  const row=(await q('select subtotal_vnd,delivery_fee_vnd,total_vnd from cafe_orders where id=$1',[free.order.id])).rows[0];
+  assert.equal(Number(row.delivery_fee_vnd),0);
+  assert.equal(Number(row.total_vnd),25000*quantity);
+  await q("select update_cafe_order_status($1,12,'cancelled')",[free.order.id]);
+ }
+ console.log('PASS Green SM web delivery: fee below 100,000, free at and above 100,000, prepaid, no UMMA offers, staff-only completion.');
 
  console.log('PASS batch preorders: separate availability, exact revision, atomic capacity, replay, cash/QR, paid waiting, expiry, cancellation, protected batch yield, conversion, dispatch deferral, release/assembled push events.');
 }
