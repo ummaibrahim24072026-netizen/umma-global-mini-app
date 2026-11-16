@@ -23,3 +23,14 @@
 .umma-connect-chat .connect-video-circle-toggle[hidden]{display:none}
 .umma-connect-chat .connect-video-circle-status{position:absolute;bottom:8px;left:12px;right:12px;color:#fff;background:#123b3bbb;border-radius:10px;text-align:center;font-size:11px}
 .umma-connect-chat .connect-video-circle-status:empty{display:none}
+
+/* Inline WhatsApp-style photo and video bubbles. */
+.umma-connect-chat .connect-inline-attachment{position:relative;max-width:min(310px,72vw);overflow:hidden;border-radius:16px;background:#e2efee}
+.umma-connect-chat .connect-inline-attachment .connect-media{display:block;width:100%;max-width:100%;max-height:340px;object-fit:cover;border-radius:16px}
+.umma-connect-chat .connect-inline-photo .connect-media{cursor:zoom-in;min-height:70px}
+.umma-connect-chat .connect-inline-video .connect-media{min-height:120px;background:#123c3d}
+.umma-connect-chat .connect-inline-attachment small[role=status]:empty{display:none}
+.umma-connect-chat .connect-inline-attachment button:not([hidden]){position:absolute;top:8px;right:8px;border:0;border-radius:50%;background:#ffffffeb;color:#174a4b;min-width:32px;min-height:32px}
+.connect-photo-lightbox{position:fixed;inset:0;z-index:2147483647;background:#071819ed;display:flex;align-items:center;justify-content:center;padding:20px}
+.connect-photo-lightbox img{max-width:100%;max-height:92dvh;object-fit:contain}
+.connect-photo-lightbox button{position:absolute;right:16px;top:max(16px,env(safe-area-inset-top));border:0;border-radius:50%;width:44px;height:44px;background:#fff;color:#143f40;font-size:30px}
