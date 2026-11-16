@@ -38,6 +38,72 @@
   wrapper.append(open,status);
   return wrapper;
  }
+ function videoCircle(load,errorText){
+  const wrapper=document.createElement('div');
+  wrapper.className='connect-video-circle';
+  const video=document.createElement('video');
+  video.className='connect-media connect-video-circle-player';
+  video.playsInline=true;
+  video.preload='auto';
+  video.muted=true;
+  video.setAttribute('aria-label','Видеосообщение');
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='connect-video-circle-toggle';
+  toggle.textContent='▶';
+  toggle.setAttribute('aria-label','Воспроизвести видеосообщение');
+  const message=document.createElement('small');
+  message.className='connect-video-circle-status';
+  message.setAttribute('role','status');
+  wrapper.append(video,toggle,message);
+  let loaded=false,loading=null;
+  async function prepare(){
+   if(loaded)return true;
+   if(loading)return loading;
+   loading=(async()=>{
+    try{
+     const url=await load();
+     if(!wrapper.isConnected)return false;
+     video.src=url;
+     video.load();
+     loaded=true;
+     return true;
+    }catch{
+     message.textContent=errorText;
+     return false;
+    }finally{loading=null;}
+   })();
+   return loading;
+  }
+  video.addEventListener('loadeddata',()=>{
+   if(video.paused&&video.currentTime===0){
+    try{video.currentTime=Math.min(0.08,Number.isFinite(video.duration)?Math.max(0,video.duration-0.01):0.08);}catch{}
+   }
+  });
+  video.addEventListener('error',()=>{loaded=false;message.textContent=errorText;toggle.textContent='↻';});
+  video.addEventListener('ended',()=>{video.muted=true;toggle.textContent='▶';toggle.hidden=false;});
+  video.addEventListener('pause',()=>{if(!video.ended){toggle.textContent='▶';toggle.hidden=false;}});
+  toggle.onclick=async()=>{
+   if(!loaded&&!(await prepare()))return;
+   if(!video.paused){video.pause();return;}
+   try{
+    video.muted=false;
+    await video.play();
+    toggle.hidden=true;
+    message.textContent='';
+   }catch{message.textContent=errorText;}
+  };
+  // Load the first video frame automatically when the message is on screen.
+  if('IntersectionObserver'in window){
+   const observer=new IntersectionObserver(entries=>{
+    if(!entries.some(entry=>entry.isIntersecting))return;
+    observer.disconnect();
+    void prepare();
+   },{rootMargin:'180px'});
+   observer.observe(wrapper);
+  }else void prepare();
+  return wrapper;
+ }
  const languages=new Set('ar de en fr id ja ko ms pt ru tg th tk tr ug uz vi zh'.split(' '));
  const language=value=>{
   const code=value?.toLowerCase().split(/[-_]/)[0];
@@ -126,5 +192,5 @@
   });
   for(const row of rows.values())row.remove();
  }
- window.ummaConnectMedia={player,attachment,render,language,voiceTranslation,upload};
+ window.ummaConnectMedia={player,attachment,videoCircle,render,language,voiceTranslation,upload};
 })();
