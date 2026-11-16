@@ -324,7 +324,6 @@
   color: var(--umma-brand-on-primary);
   font-size: 22px;
 }
-#activeOrdersList button, #orderHistoryList button { width: 100%; margin-block-end: 8px; text-align: start; }
 .public-cafe-menu .umma-connect .connect-hero { background: var(--cafe-header); }
 .public-cafe-menu .umma-connect .connect-hero :is(h2, p, .connect-close) { color: var(--umma-brand-on-primary); }
 .public-cafe-menu .umma-connect .connect-hero-icon { width: 42px; height: 42px; object-fit: contain; background: transparent; }
@@ -354,8 +353,6 @@
   transform: translateY(50%);
 }
 
-.customer-order-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-block-end: 12px; }
-.customer-order-filters .plain-btn[aria-pressed="true"] { background: var(--umma-brand-deep); color: white; }
 .nearby-cafe-body { display: grid; gap: 12px; }
 #nearbyCafeMap { height: clamp(200px, 42dvh, 360px); border-radius: 14px; background: var(--umma-brand-pale); }
 #nearbyCafeStatus { margin: 0; }
@@ -407,3 +404,108 @@
   color: var(--umma-brand-deep);
 }
 #cartCount { background: #00747a; }
+
+/* Customer orders share the guest receipt and payment flow. */
+#customerOrders {
+  width: min(100%, 510px);
+  max-height: 92dvh;
+  background: #f3f9f8;
+}
+#customerOrders .orders-header {
+  padding: 18px 20px 15px;
+  gap: 12px;
+  background: #f3f9f8;
+  color: var(--umma-brand-night);
+  border: 0;
+}
+.orders-heading { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.orders-heading img { flex: none; border-radius: 50%; }
+.orders-heading span { color: var(--umma-brand-deep); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+#customerOrdersTitle { max-width: none; font-size: clamp(21px, 6vw, 27px); line-height: 1.14; letter-spacing: -.035em; }
+#customerOrders .close { flex: none; width: 44px; height: 44px; border-radius: 50%; color: var(--umma-brand-night); }
+.customer-order-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin-block-end: 14px;
+  border-radius: 15px;
+  background: #e1eeeb;
+}
+.customer-order-filters .plain-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--umma-brand-text);
+  overflow-wrap: anywhere;
+}
+.customer-order-filters .plain-btn[aria-pressed="true"] {
+  background: white;
+  color: var(--umma-brand-night);
+  box-shadow: 0 2px 6px #163d3e16;
+}
+.orders-count { padding: 2px 6px; border-radius: 99px; background: var(--umma-brand-soft); font-size: 11px; }
+#customerOrders :is(#activeOrdersList, #orderHistoryList) { display: grid; gap: 10px; }
+.order-summary {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #dceae7;
+  border-radius: 19px;
+  background: white;
+  color: var(--umma-brand-ink);
+  text-align: start;
+  box-shadow: 0 4px 13px #163d3e0a;
+}
+.order-summary-top, .order-summary-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+.order-summary-copy { display: grid; flex: 1 1 98px; min-width: 0; gap: 2px; }
+.order-summary-copy strong { font-size: 16px; overflow-wrap: anywhere; }
+.order-dish { color: var(--umma-brand-muted); font-size: 12px; overflow-wrap: anywhere; }
+.order-thumb { flex: none; border-radius: 11px; object-fit: cover; }
+.order-status { border-radius: 99px; padding: 5px 8px; background: var(--umma-brand-pale); color: var(--umma-brand-deep); font-size: 11px; font-weight: 750; }
+.order-status[data-tone="payment"] { background: #fff2d8; color: #78541c; }
+.order-status[data-tone="cancelled"] { background: #f0eeee; color: #615857; }
+.order-summary-bottom { margin-block-start: 10px; padding-block-start: 9px; border-top: 1px solid #e5efed; }
+.order-amount { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.order-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 11px;
+  border-radius: 11px;
+  color: var(--umma-brand-deep);
+  font-size: 13px;
+  font-weight: 750;
+}
+.order-action[data-primary="true"] { background: var(--umma-brand-deep); color: white; }
+.order-arrow { font-size: 19px; line-height: 1; }
+[dir="rtl"] .order-arrow { transform: scaleX(-1); }
+.order-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block-start: 13px; }
+.order-step { display: grid; justify-items: center; align-content: start; gap: 4px; position: relative; padding-inline: 2px; color: var(--umma-brand-muted); text-align: center; font-size: 11px; overflow-wrap: anywhere; }
+.order-step:not(:last-child)::after { content: ""; position: absolute; inset-block-start: 8px; inset-inline-start: calc(50% + 11px); width: calc(100% - 22px); height: 2px; background: var(--umma-brand-line); }
+.order-step[data-state="done"]::after { background: var(--umma-brand-strong); }
+.order-step-mark { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #e8f2f1; line-height: 1; }
+.order-step[data-state="done"] .order-step-mark { background: var(--umma-brand-deep); color: white; }
+.order-step[data-state="current"] { color: var(--umma-brand-deep); font-weight: 750; }
+.order-step[data-state="current"] .order-step-mark { border: 5px solid var(--umma-brand-strong); background: white; }
+.orders-empty { margin: 0; padding: 24px 12px; color: var(--umma-brand-muted); text-align: center; }
+@media (max-width: 600px) {
+  #customerOrders {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+  #customerOrders .orders-header { padding: calc(16px + env(safe-area-inset-top)) 14px 14px; }
+  #customerOrders .checkout-body { padding: 0 14px calc(18px + env(safe-area-inset-bottom)); }
+}
