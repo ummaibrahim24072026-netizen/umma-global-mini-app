@@ -77,16 +77,16 @@
 .connect-translated-text .connect-original-text[hidden]{display:none}
 
 /* Manager inbox: keep long conversations usable on narrow phones. */
-.work-messages,.work-messages *{box-sizing:border-box}
-.work-messages{min-width:0;max-width:100%;overflow-x:hidden}
-.work-messages .work-inbox{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:100%}
-.work-messages .work-inbox-sidebar,.work-messages .work-thread{min-width:0;max-width:100%;width:100%}
-.work-messages .work-inbox-sidebar{max-height:180px;overflow-y:auto;overscroll-behavior:contain}
-.work-messages .work-thread{display:flex;flex-direction:column;min-height:0}
-.work-messages .connect-thread{width:100%;min-width:0;max-width:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:auto;max-height:min(54dvh,560px);padding:12px 8px}
-.work-messages .connect-thread>li{max-width:94%;min-width:0;overflow-wrap:anywhere;word-break:break-word}
-.work-messages .connect-thread audio,.work-messages .connect-thread video{max-width:100%;width:100%}
-.work-messages .connect-voice-translation{max-width:100%;min-width:0}
-.work-messages .connect-voice-translation button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
-.work-messages textarea{max-width:100%;width:100%;min-height:76px}
-@media(min-width:900px){.work-messages .work-inbox{display:grid;grid-template-columns:minmax(230px,300px) minmax(0,1fr);align-items:start}.work-messages .work-inbox-sidebar{max-height:65dvh}.work-messages .connect-thread{max-height:60dvh}}
+#webMessages,#webMessages *{box-sizing:border-box}
+#webMessages{min-width:0;max-width:100%;overflow-x:hidden}
+#webMessages .work-inbox{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:100%}
+#webMessages .work-inbox-sidebar,#webMessages .work-thread{min-width:0;max-width:100%;width:100%}
+#webMessages .work-inbox-sidebar{max-height:180px;overflow-y:auto;overscroll-behavior:contain}
+#webMessages .work-thread{display:flex;flex-direction:column;min-height:0}
+#webMessages .connect-thread{width:100%;min-width:0;max-width:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:auto;max-height:min(54dvh,560px);padding:12px 8px}
+#webMessages .connect-thread>li{max-width:94%;min-width:0;overflow-wrap:anywhere;word-break:break-word}
+#webMessages .connect-thread audio,#webMessages .connect-thread video{max-width:100%;width:100%}
+#webMessages .connect-voice-translation{max-width:100%;min-width:0}
+#webMessages .connect-voice-translation button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#webMessages textarea{max-width:100%;width:100%;min-height:76px}
+@media(min-width:900px){#webMessages .work-inbox{display:grid;grid-template-columns:minmax(230px,300px) minmax(0,1fr);align-items:start}#webMessages .work-inbox-sidebar{max-height:65dvh}#webMessages .connect-thread{max-height:60dvh}}
