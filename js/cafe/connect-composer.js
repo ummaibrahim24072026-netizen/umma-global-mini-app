@@ -59,6 +59,8 @@
   stop:'M6 6h12v12H6z',
   gallery:'M3 7V3h15m-8 9h.01M7 8h14v13H7z M7 18l4-4 3 3 2-2 5 5',
   video:'M3 6h13v12H3z M16 10l5-3v10l-5-3',
+  flash:'M13 2L4 14h7l-1 8 10-12h-7l1-8z',
+  flashOff:'M3 3l18 18M13 2l-2 3m-3 4-4 5h7l-1 8 5-6m2-3 3-3h-6l1-8',
   flip:'M20 9a8 8 0 0 0-13-3L4 9m0-5v5h5 M4 15a8 8 0 0 0 13 3l3-3m0 5v-5h-5',
   close:'M6 6l12 12M18 6L6 18',
   smile:'M21 10v3l-7 8h-4a7 7 0 0 1-7-7v-4a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7z M14 21v-4a4 4 0 0 1 4-4h3 M8 9h.01 M15 9h.01 M8 14c1 2 3 2 5 1',
@@ -123,7 +125,9 @@
    en:['Attachments','Gallery','Camera','Video','Close attachments'],
    vi:['Tệp đính kèm','Thư viện','Máy ảnh','Video','Đóng tệp đính kèm']
   })[lang]||['Attachments','Gallery','Camera','Video','Close attachments'];
-  let cameraSession=null,cameraPanel,cameraPreview,shutter,flipCamera;let circleFacing='user';
+  let cameraSession=null,cameraPanel,cameraPreview,shutter,flipCamera,torch,cancelCamera;
+  const modeButtons=new Map();
+  const cameraModes=({ru:['Видео','Фото','Видеозаметка','Фонарик'],vi:['Video','Ảnh','Tin nhắn video','Đèn pin']})[lang]||['Video','Photo','Video note','Torch'];let circleFacing='user';
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
   function showExpressions(open){
    if(!expression)return;
@@ -228,6 +232,29 @@
    return input;
   }
   for(const kind of kinds)gallery[kind]=addPicker(kind,labels[kind==='photo'?0:1]);
+  function updateTorch(){
+   if(!torch)return;
+   const track=cameraSession?.stream?.getVideoTracks?.()[0];
+   torch.hidden=!track?.getCapabilities?.().torch;
+   const enabled=Boolean(track?.getSettings?.().torch);
+   iconButton(torch,enabled?'flash':'flashOff',cameraModes[3]);
+   torch.setAttribute('aria-pressed',String(enabled));
+  }
+  async function toggleTorch(){
+   const track=cameraSession?.stream?.getVideoTracks?.()[0];
+   if(!track)return;
+   torch.disabled=true;
+   try{await track.applyConstraints({advanced:[{torch:!track.getSettings().torch}]});}
+   catch{torch.hidden=true;return;}
+   finally{torch.disabled=false;}
+   updateTorch();
+  }
+  function selectCameraMode(kind){
+   if(!cameraSession||cameraSession.recorder||cameraSession.kind===kind)return;
+   const {facing}=cameraSession;
+   closeCamera();
+   void openCamera(kind,facing);
+  }
   function releaseCamera(session){
    session.stream?.getTracks().forEach(track=>track.stop());
    session.stream=null;
@@ -242,17 +269,26 @@
    session.stopDrawing?.();
    session.recordStream?.getVideoTracks().forEach(t=>t.stop());
    releaseCamera(session);
+   const restoreFocus=cameraPanel.contains(document.activeElement);
    cameraPanel.hidden=true;
    controls();
+   if(restoreFocus)(albums?attach:camera).focus({preventScroll:true});
   }
   async function openCamera(kind,facing='environment'){
    if(cameraSession||working||starting||recording)return;
-   const video=kind==='video';
+   const video=kind!=='photo';
    const session={kind,stream:null,recorder:null,timer:null,facing,flipping:false,recordStream:null,stopDrawing:null};
    if(video)session.mime=['video/webm','video/mp4'].find(type=>window.MediaRecorder?.isTypeSupported?.(type));
    cameraSession=session;
    cameraPanel.hidden=false;
    cameraPreview.hidden=true;
+   cameraPanel.setAttribute('aria-label',cameraModes[kind==='photo'?1:kind==='note'?2:0]);
+   for(const [mode,button] of modeButtons){
+    button.disabled=false;
+    button.setAttribute('aria-pressed',String(kind===mode));
+   }
+   updateTorch();
+   cancelCamera.focus({preventScroll:true});
    shutter.disabled=true;
    flipCamera.disabled=true;
    shutter.dataset.mode=video?'video':'photo';
@@ -280,7 +316,8 @@
     await cameraPreview.play();
     if(cameraSession!==session)return;
     shutter.disabled=false;
-    if(flipCamera)flipCamera.disabled=false;
+    flipCamera.disabled=false;
+    updateTorch();
     status.textContent='';
    }catch{
     if(cameraSession!==session)return;
@@ -417,7 +454,7 @@
    const chunks=[];
    let size=0;
    try{
-    const recordStream=createStableVideo(session,cameraPreview,720);
+    const recordStream=createStableVideo(session,cameraPreview,session.kind==='note'?480:720);
     const recorder=new MediaRecorder(recordStream,{
      mimeType:session.mime,videoBitsPerSecond:1800000,audioBitsPerSecond:96000
     });
@@ -429,20 +466,24 @@
      chunks.push(e.data);
     };
     recorder.onerror=()=>{closeCamera();status.textContent=videoLabels[3];};
-    recorder.onstop=()=>{
+    recorder.onstop=async()=>{
      session.stopDrawing?.();
      session.recordStream?.getVideoTracks().forEach(t=>t.stop());
      if(cameraSession!==session)return;
      const type=(recorder.mimeType||session.mime).split(';')[0];
      closeCamera();
      if(!size||!formats.video.includes(type)){status.textContent=videoLabels[3];return;}
-     setDraft(new Blob(chunks,{type}),'video');
+     const file=new Blob(chunks,{type});
+     if(session.kind==='note'){
+      try{await onInstantVideo(file);}catch(error){status.textContent=error?.message||labels[11];}
+     }else setDraft(file,'video');
     };
     recorder.start(250);
     session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},videoDuration);
     shutter.dataset.mode='recording';
-   shutter.setAttribute('aria-label',videoLabels[0]);
-   shutter.title=videoLabels[0];
+    shutter.setAttribute('aria-label',videoLabels[0]);
+    shutter.title=videoLabels[0];
+    for(const button of modeButtons.values())button.disabled=true;
     status.textContent=videoLabels[1];
    }catch{closeCamera();status.textContent=videoLabels[3];}
   }
@@ -605,6 +646,7 @@
    }
    if(cameraSession){
     await switchStreamCamera(cameraSession,cameraPreview);
+    updateTorch();
     return;
    }
    circleFacing=circleFacing==='user'?'environment':'user';
@@ -721,7 +763,7 @@
    cameraPreview.muted=true;
    cameraPreview.playsInline=true;
    shutter=button(null,()=>{
-    if(cameraSession?.kind==='video')recordVideo(cameraSession);
+    if(cameraSession&&cameraSession.kind!=='photo')recordVideo(cameraSession);
     else takePhoto();
    });
    shutter.className='connect-camera-shutter';
@@ -730,25 +772,43 @@
    flipCamera.className='connect-camera-icon';
    iconButton(flipCamera,'flip',flipLabel);
    const choose=button(null,()=>{
-    const input=gallery[cameraSession?.kind];
+    const input=gallery[cameraSession?.kind==='photo'?'photo':'video'];
     closeCamera();
     status.textContent='';
     input?.click();
    });
    choose.className='connect-camera-icon';
    iconButton(choose,'gallery',cameraLabels[1]);
-   const cancel=button(null,()=>{
+   cancelCamera=button(null,()=>{
     closeCamera();
     status.textContent='';
     (albums?attach:camera).focus();
    });
-   cancel.className='connect-camera-icon connect-camera-dismiss';
-   iconButton(cancel,'close',cameraLabels[0]);
+   cancelCamera.className='connect-camera-icon connect-camera-dismiss';
+   iconButton(cancelCamera,'close',cameraLabels[0]);
    const stage=el('div',null,'connect-camera-stage');
-   stage.append(cameraPreview,cancel);
+   stage.append(cameraPreview,cancelCamera);
    const cameraControls=el('div',null,'connect-camera-controls');
    cameraControls.append(choose,shutter,flipCamera);
-   cameraPanel.append(stage,cameraControls);
+   stage.append(cameraControls);
+   cameraPanel.append(stage);
+   if(albums){
+    cameraPanel.setAttribute('role','dialog');
+    cameraPanel.setAttribute('aria-modal','true');
+    torch=button(null,toggleTorch);
+    torch.className='connect-camera-icon connect-camera-torch';
+    torch.hidden=true;
+    stage.append(torch);
+    const modes=el('div',null,'connect-camera-modes');
+    for(const [kind,label] of ['video','photo','note'].map((kind,index)=>[kind,cameraModes[index]])){
+     if(kind==='note'&&!onInstantVideo)continue;
+     const mode=button(label,()=>selectCameraMode(kind));
+     modeButtons.set(kind,mode);
+     modes.append(mode);
+    }
+    cameraPanel.append(modes);
+   }
+
    camera.className='connect-camera';
    if(onInstantVideo){
     circleButton=button(lang==='ru'?'Удерживайте для видеокружка':'Hold for video note',()=>{});
@@ -796,6 +856,15 @@
     if(event.relatedTarget!==expression&&!expressionPanel.contains(event.relatedTarget))showExpressions(false);
    });
    form.addEventListener('keydown',event=>{
+    if(event.key==='Tab'&&cameraSession&&albums){
+     const controls=[...cameraPanel.querySelectorAll('button:not([hidden]):not(:disabled)')];
+     const first=controls[0],last=controls.at(-1),current=document.activeElement;
+     if(!controls.includes(current)||(event.shiftKey?current===first:current===last)){
+      event.preventDefault();
+      (event.shiftKey?last:first)?.focus();
+     }
+     return;
+    }
     if(event.key!=='Escape')return;
     if(cameraSession){
      event.preventDefault();

@@ -558,3 +558,78 @@ audio.connect-media{width:min(100%,300px)}
 }
 .umma-connect-chat .connect-camera-panel button:disabled {opacity:.45;cursor:default}
 .umma-connect-chat .connect-camera-panel button:focus-visible {outline:2px solid #94ede6;outline-offset:3px}
+
+.public-cafe-menu .umma-connect-chat .connect-camera-panel:not([hidden]) {
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  border:0;
+  border-radius:0;
+  background:#080808;
+  overscroll-behavior:contain;
+}
+.public-cafe-menu .connect-camera-panel .connect-camera-stage {
+  height:auto;
+  min-height:0;
+  overflow:hidden;
+  background:#15191c;
+}
+.public-cafe-menu .connect-camera-stage video {object-fit:cover}
+.public-cafe-menu .connect-camera-stage .connect-camera-icon {
+  background:#15191c88;
+  border-color:transparent;
+}
+.public-cafe-menu .connect-camera-stage .connect-camera-dismiss {
+  inset:max(14px,env(safe-area-inset-top)) auto auto max(14px,env(safe-area-inset-left));
+}
+.public-cafe-menu .connect-camera-stage .connect-camera-torch:not([hidden]) {
+  position:absolute;
+  inset:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) auto auto;
+  z-index:3;
+}
+.public-cafe-menu .connect-camera-stage .connect-camera-controls {
+  position:absolute;
+  inset:auto 0 0;
+  z-index:3;
+  width:100%;
+  grid-template-columns:1fr 76px 1fr;
+  padding:24px max(14px,env(safe-area-inset-right)) 18px max(14px,env(safe-area-inset-left));
+  background:linear-gradient(transparent,#0006);
+}
+.public-cafe-menu .connect-camera-controls .connect-camera-icon:first-child {justify-self:start}
+.public-cafe-menu .connect-camera-controls .connect-camera-icon:last-child {justify-self:end}
+.public-cafe-menu .connect-camera-panel .connect-camera-shutter {width:72px;height:72px}
+.public-cafe-menu .connect-camera-shutter::before {width:52px;height:52px}
+.public-cafe-menu .connect-camera-shutter[data-mode=recording]::before {width:24px;height:24px}
+.public-cafe-menu .connect-camera-modes {
+  display:flex;
+  justify-content:center;
+  gap:4px;
+  padding:9px 4px max(12px,env(safe-area-inset-bottom));
+}
+.umma-connect-chat .connect-camera-modes button {
+  min-height:44px;
+  padding:4px clamp(8px,3vw,18px);
+  border:0;
+  border-radius:24px;
+  background:transparent;
+  color:white;
+  font-size:clamp(12px,3.7vw,15px);
+  white-space:nowrap;
+}
+.umma-connect-chat .connect-camera-modes button[aria-pressed=true] {background:#222}
+.public-cafe-menu .umma-connect-chat :has(> .connect-compose .connect-camera-panel:not([hidden])) > [role=status]:not(:empty) {
+  position:fixed;
+  inset:max(68px,calc(env(safe-area-inset-top) + 60px)) 12px auto;
+  z-index:21;
+  max-width:460px;
+  margin-inline:auto;
+  border-radius:12px;
+  background:#15191cd9;
+  color:white;
+  text-align:center;
+  pointer-events:none;
+}
+.umma-connect-chat .connect-camera-torch[hidden] {display:none}

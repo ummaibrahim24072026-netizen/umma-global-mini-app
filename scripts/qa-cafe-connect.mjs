@@ -483,6 +483,21 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(writes.length,writesBeforeVideo+1);
  assert.equal(writes.at(-1).headers['Content-Type'],'video/webm');
+ guest.navigator.mediaDevices.getUserMedia=async()=>({...await originalMedia(),getAudioTracks:()=>[]});
+ camera.click();
+ await tick();
+ const modes=[...cameraPanel.querySelectorAll('.connect-camera-modes button')];
+ assert.deepEqual(modes.map(button=>button.textContent),['Видео','Фото','Видеозаметка']);
+ assert.equal(modes[1].getAttribute('aria-pressed'),'true');
+ modes[2].click();
+ await tick();
+ assert.equal(modes[2].getAttribute('aria-pressed'),'true');
+ shutter.click();
+ assert.equal(modes.every(button=>button.disabled),true);
+ shutter.click();
+ await tick();
+ assert.equal(cameraPanel.hidden,true);
+ assert.ok((await writes.at(-1).body.text()).startsWith('"◉ Видеосообщение"\n'));
  guest.close();
 }
 // Staff inbox updates the receipt while the current conversation stays open.
