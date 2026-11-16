@@ -231,14 +231,14 @@
   const section=document.createElement('div'),button=document.createElement('button'),status=document.createElement('small');
   section.className='connect-voice-translation';
   button.type='button';
-  button.textContent=labels[0];
+  button.textContent='🌐 Перевести голос';
   status.setAttribute('role','status');
   section.append(button,status);
   if(!enabled){button.hidden=true;status.textContent=labels[2];return section;}
   let timer=null,attempts=0,loading=false;
   const request=async()=>{
    if(loading||!section.isConnected)return;
-   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent='Обработка на телефоне · первая загрузка моделей может занять несколько минут';
+   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent='Загружаем модели и распознаём речь на телефоне. Первый запуск может занять несколько минут…';
    try{
     const result=await load();
     if(!section.isConnected)return;
@@ -260,20 +260,17 @@
      timer=setTimeout(request,7000);
     }else{
      status.textContent=result.reason==='service_unavailable'?(locale==='ru'?'Сервис перевода временно недоступен. Оригинал можно прослушать.':labels[2]):labels[2];
-     button.textContent=labels[6];
+     button.textContent='Повторить перевод';
     }
    }catch(error){
     console.warn('UMMA local voice translation',error);
     const details=String(error?.message||error||'').slice(0,100);
     status.textContent=labels[2]+(details?' · '+details:'');
-    button.textContent=labels[6];
+    button.textContent='Повторить перевод';
    }finally{loading=false;button.disabled=false;}
   };
   button.onclick=()=>{if(timer)clearTimeout(timer);attempts=0;void request();};
-  if('IntersectionObserver'in window){
-   const watcher=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){watcher.disconnect();void request();}},{rootMargin:'100px'});
-   watcher.observe(section);
-  }
+  status.textContent='Бесплатный перевод на телефоне. Нажмите кнопку; при первом запуске загрузятся модели.';
   return section;
  }
  async function upload(api,identity,draft,requestKey,body,error){
