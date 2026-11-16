@@ -199,3 +199,56 @@
   grid-column: 1 / -1;
   justify-self: center;
 }
+
+
+/* UMMA calling screen: turquoise native-style surface, official brand mark. */
+.umma-call {
+  position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none;
+  max-height: none; margin: 0; border: 0; border-radius: 0;
+  background: radial-gradient(ellipse at 50% 25%, #c9f8f3 0%, #8edfd8 52%, #48b8b7 100%);
+  color: #104c50; box-shadow: none;
+}
+.umma-call::backdrop { background: #082d34b8; }
+.umma-call-card {
+  box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column;
+  justify-content: center; gap: 12px;
+  padding: max(30px, env(safe-area-inset-top)) 22px max(30px, env(safe-area-inset-bottom));
+}
+.umma-call-identity { gap: 14px; }
+.umma-call-logo {
+  display: block; width: clamp(100px, 29vw, 148px); height: auto;
+  aspect-ratio: 1; object-fit: contain; border-radius: 50%;
+  filter: drop-shadow(0 8px 20px #0a68672e);
+}
+.umma-call-card h2 { font-size: clamp(26px, 6.5vw, 38px); font-weight: 750; line-height: 1.18; color: #12484d; }
+.umma-call-card .umma-call-type { color: #886323; font-weight: 650; }
+.umma-call-card .umma-call-status { color: #28676b; }
+.umma-call-media { max-height: 45dvh; background: #07363b; border-radius: 20px; }
+.umma-call-controls {
+  width: min(100%, 390px); margin: 24px auto 0; display: flex;
+  justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.umma-call-controls button {
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  gap: 7px; width: 92px; min-height: 86px; padding: 10px 4px;
+  border: 0; border-radius: 20px; background: #ffffff70; color: #164b51;
+  font-size: 12px; font-weight: 600;
+}
+.umma-call-controls button svg { width: 27px; height: 27px; flex-shrink: 0; }
+.umma-call-controls button[aria-pressed="true"] { background: #176b70; color: white; }
+.umma-call-controls .umma-call-end, .umma-call-controls .umma-call-answer {
+  width: 102px; min-height: 78px; border-radius: 25px; color: #fff;
+}
+.umma-call-controls .umma-call-end { background: #d7384e; }
+.umma-call-controls .umma-call-answer { background: #178a72; }
+.umma-call-incoming { background: radial-gradient(ellipse at 50% 25%, #c9f8f3, #8edfd8 52%, #48b8b7); }
+.umma-call-incoming .umma-call-card { justify-content: center; }
+.umma-call-incoming .umma-call-controls { display: flex; width: min(100%, 360px); gap: 18px; margin-top: 36px; }
+.umma-call-incoming .umma-call-mark { display: none; }
+.umma-call-incoming .umma-call-status { position: static; width: auto; height: auto; clip-path: none; }
+.umma-call-incoming .umma-call-ring-button { width: auto; min-height: 44px; padding: 10px 18px; }
+@media(max-height: 620px) {
+  .umma-call-card { justify-content: flex-start; overflow-y: auto; }
+  .umma-call-logo { width: 78px; }
+  .umma-call-controls { margin-top: 10px; }
+}
