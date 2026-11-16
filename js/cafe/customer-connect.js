@@ -265,7 +265,37 @@ function build(){
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
-  hero.append(close,heroIcon,heroText);
+  const clearButton=el('button','⌫','connect-clear-chat');
+  clearButton.type='button';
+  clearButton.setAttribute('aria-label',lang()==='ru'?'Очистить чат':lang()==='vi'?'Xóa lịch sử trò chuyện':'Clear chat');
+  clearButton.title=clearButton.getAttribute('aria-label');
+  clearButton.onclick=()=>{
+   const modal=el('dialog',null,'connect-clear-confirm');
+   const heading=el('h3',lang()==='ru'?'Очистить чат?':lang()==='vi'?'Xóa lịch sử trò chuyện?':'Clear chat?');
+   const explanation=el('p',lang()==='ru'?'Все сообщения исчезнут только у вас. У UMMA переписка сохранится. Новые сообщения будут приходить как обычно.':lang()==='vi'?'Tin nhắn chỉ biến mất với bạn. UMMA vẫn giữ cuộc trò chuyện.':'Messages will disappear only for you. UMMA will keep the conversation.');
+   const cancel=el('button',lang()==='ru'?'Отмена':lang()==='vi'?'Hủy':'Cancel');
+   const confirmButton=el('button',lang()==='ru'?'Очистить чат':lang()==='vi'?'Xóa cuộc trò chuyện':'Clear chat','connect-clear-confirm-action');
+   cancel.type=confirmButton.type='button';
+   cancel.onclick=()=>modal.close();
+   confirmButton.onclick=async()=>{
+    confirmButton.disabled=true;
+    try{
+     await messageAction('clear');
+     await refreshHidden();
+     renderThread();
+     modal.close();
+    }catch(error){
+     confirmButton.disabled=false;
+     explanation.textContent=error.message||'Не удалось очистить чат.';
+    }
+   };
+   const actions=el('div',null,'connect-clear-confirm-buttons');
+   actions.append(cancel,confirmButton);
+   modal.append(heading,explanation,actions);
+   modal.addEventListener('close',()=>modal.remove(),{once:true});
+   document.body.append(modal);modal.showModal();
+  };
+  hero.append(close,heroIcon,heroText,clearButton);
   dialog.append(hero);
  }else{
   heroText.append(el('p',t(2)));
