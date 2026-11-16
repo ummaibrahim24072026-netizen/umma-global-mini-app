@@ -262,8 +262,10 @@
      status.textContent=result.reason==='service_unavailable'?(locale==='ru'?'Сервис перевода временно недоступен. Оригинал можно прослушать.':labels[2]):labels[2];
      button.textContent=labels[6];
     }
-   }catch{
-    status.textContent=labels[2];
+   }catch(error){
+    console.warn('UMMA local voice translation',error);
+    const details=String(error?.message||error||'').slice(0,100);
+    status.textContent=labels[2]+(details?' · '+details:'');
     button.textContent=labels[6];
    }finally{loading=false;button.disabled=false;}
   };
