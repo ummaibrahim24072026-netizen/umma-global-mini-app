@@ -67,6 +67,14 @@ const mediaCopy={
  en:{photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
  vi:{photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
 };
+const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
+async function translateChat(messageId,language,clientId){
+ const payload={token,messageId,language};
+ const response=await fetch(TRANSLATE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
+ const result=await response.json();
+ if(!response.ok||!result.ok)throw Error(result.error||'Translation unavailable');
+ return result;
+}
 const ACTIONS='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-actions';
 async function messageAction(action,messageId){
  const response=await fetch(ACTIONS,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,action,messageId})});
@@ -147,7 +155,7 @@ function renderThread(){
   li.dataset.direction=m.direction;
   if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
-  else if(m.body)li.append(el('div',m.body));
+  else if(m.body)li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>translateChat(m.id,target)));
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
    li.append(m.media_kind==='video'&&m.body==='◉ Видеосообщение'
