@@ -346,6 +346,13 @@ function build(){
  push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(settingsStatus,true);
  const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();settingsStatus.textContent=t(20);update();},settingsStatus);
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
+ if(publicChat)list.addEventListener('loadedmetadata',event=>{
+  const latest=list.lastElementChild;
+  if(!event.target.matches('.connect-inline-video video')||!latest?.contains(event.target))return;
+  const {top,bottom}=list.getBoundingClientRect();
+  const messageTop=latest.getBoundingClientRect().top;
+  if(messageTop>=top&&messageTop<bottom)list.scrollTop=list.scrollHeight;
+ },true);
  const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});
  if(publicChat){
