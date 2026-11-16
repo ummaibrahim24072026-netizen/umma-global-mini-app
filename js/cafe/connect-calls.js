@@ -2,6 +2,7 @@
   'use strict';
 
   const apiUrl = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-calls';
+  const validId = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
   const icons = {
     audio: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 18 18 0 0 1-7.9-2.8 18 18 0 0 1-5.5-5.5A18 18 0 0 1 3.6 5.7 2 2 0 0 1 5.6 3.5h3a2 2 0 0 1 2 1.7l.4 2.5a2 2 0 0 1-.4 2l-1.3 1.3a14 14 0 0 0 5.5 5.5l1.3-1.3a2 2 0 0 1 2-.4l2.2.4a2 2 0 0 1 1.7 1.7Z"/>',
     video: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/>'
@@ -13,7 +14,7 @@
       answer: 'Принять', decline: 'Отклонить', end: 'Завершить', close: 'Закрыть',
       mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
       busy: 'Линия занята. Попробуйте чуть позже.', ended: 'Звонок завершён.',
-      unanswered: 'На звонок не ответили.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
+      unanswered: 'На звонок не ответили.', expired: 'Этот вызов уже завершён.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
       denied: 'Разрешите доступ к микрофону и, для видеозвонка, к камере.', playback: 'Включить звук', client: 'Клиент'
     },
     en: {
@@ -22,7 +23,7 @@
       answer: 'Answer', decline: 'Decline', end: 'End call', close: 'Close',
       mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
       busy: 'Line busy. Try again shortly.', ended: 'Call ended.',
-      unanswered: 'No answer.', unavailable: 'Could not connect. Try again.',
+      unanswered: 'No answer.', expired: 'This call has already ended.', unavailable: 'Could not connect. Try again.',
       denied: 'Allow microphone access and camera access for video calls.', playback: 'Play sound', client: 'Customer'
     },
     vi: {
@@ -31,7 +32,7 @@
       answer: 'Trả lời', decline: 'Từ chối', end: 'Kết thúc', close: 'Đóng',
       mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
       busy: 'Đường dây đang bận. Vui lòng thử lại sau.', ended: 'Cuộc gọi đã kết thúc.',
-      unanswered: 'Không có trả lời.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
+      unanswered: 'Không có trả lời.', expired: 'Cuộc gọi này đã kết thúc.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
       denied: 'Hãy cho phép dùng micrô và camera khi gọi video.', playback: 'Bật âm thanh', client: 'Khách hàng'
     }
   };
@@ -61,6 +62,20 @@
     const device = crypto.randomUUID();
     const t = key => (copy[language()] || copy.en)[key];
     let current, modal, pollTimer, ringAudio, polling = false, pollFailures = 0;
+    const linkedId = new URL(location.href).searchParams.get('call');
+    let requestedCall = validId(linkedId) ? linkedId : null;
+
+    function dismissNotification(id) {
+      navigator.serviceWorker?.controller?.postMessage({type: 'UMMA_CLOSE_CALL', callId: id});
+    }
+
+    function consumeLink() {
+      requestedCall = null;
+      const url = new URL(location.href);
+      if (!url.searchParams.has('call')) return;
+      url.searchParams.delete('call');
+      history.replaceState(history.state, '', url);
+    }
 
     async function request(action, data = {}, credentials = identity(), keepalive = false) {
       if (!credentials) throw new Error('unavailable');
@@ -101,6 +116,7 @@
     function finish(call, reason, notify = true, keepalive = false) {
       if (current !== call) return;
       current = null;
+      dismissNotification(call.id);
       release(call);
       if (notify) signalEnd(call, keepalive);
       if (!reason) {
@@ -198,6 +214,7 @@
 
     async function establish(call) {
       clearInterval(call.ringer);
+      dismissNotification(call.id);
       call.status.textContent = t('connecting');
       call.controls.replaceChildren(action('end', () => finish(call), 'umma-call-end'));
       try {
@@ -308,13 +325,20 @@
       // An outgoing request is not visible until the offer has been posted.
       const credentials = call ? call.credentials : identity();
       try {
-        if ((!call && modal?.open) || (!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
-        const {call: state} = await request('poll', {id: call?.id}, credentials);
+        if ((!call && modal?.open && !requestedCall) || (!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
+        const linked = !call ? requestedCall : null;
+        const {call: state} = await request('poll', {id: call?.id || linked}, credentials);
         pollFailures = 0;
         if (current !== call) return;
-        if (!call && state?.incoming) {
+        if (linked && requestedCall !== linked) return;
+        if (linked) consumeLink();
+        if (!call && state?.incoming && state.offer) {
           current = {...state, credentials};
           show(current);
+        } else if (linked && !call) {
+          current = {id: linked, mode: 'audio', credentials};
+          show(current);
+          finish(current, 'expired', false);
         } else if (call && !state) {
           finish(call, call.ready && !call.incoming && !call.peer?.remoteDescription ? 'unanswered' : 'ended', false);
         } else if (call && state?.answer && !call.peer?.remoteDescription) {
@@ -330,12 +354,23 @@
       }
     }
 
+    navigator.serviceWorker?.addEventListener('message', event => {
+      const data = event.data;
+      if (data?.type === 'UMMA_OPEN_CALL' && validId(data.callId) && current?.id !== data.callId) {
+        requestedCall = data.callId;
+      }
+      if (data?.type === 'UMMA_OPEN_CALL' || data?.type === 'UMMA_CALL_PUSH') schedule(0);
+    });
+    document.addEventListener('umma:staff-ready', () => schedule(0));
     document.addEventListener('click', enableRinger, {once: true, capture: true});
     document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); });
     window.addEventListener('pagehide', () => { if (current) finish(current, null, true, true); });
     schedule(0);
 
     return {
+      saveStaffSubscription(subscription) {
+        return request('staffSubscription', {subscription});
+      },
       buttons(target = () => ({})) {
         const group = element('div', 'umma-call-buttons');
         for (const mode of ['audio', 'video']) {

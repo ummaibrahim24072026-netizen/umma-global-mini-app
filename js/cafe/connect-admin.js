@@ -20,6 +20,63 @@ const calls=workspace?window.ummaConnectCalls?.({identity:()=>{
  return owner()&&initData.startsWith('web:')?{initData}:null;
 },language:()=> 'ru'}):null;
 let callButtons;
+const callAlerts=document.getElementById('webCallAlerts');
+const callAlertStatus=document.getElementById('webCallAlertStatus');
+const pushSupported=()=> 'Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator;
+const alertKey=()=> 'umma:staff-call-alerts:'+window.ummaStaffAuth?.actorId();
+function syncCallAlerts(){
+ if(!callAlerts||!calls||!owner())return;
+ callAlerts.hidden=false;
+ const enabled=pushSupported()&&Notification.permission==='granted'&&localStorage.getItem(alertKey())==='on';
+ callAlerts.textContent=enabled?'Отключить уведомления о звонках':'Включить уведомления о звонках';
+}
+async function registerCallAlerts(){
+ const registration=await Promise.race([
+  navigator.serviceWorker.ready,
+  new Promise((_,reject)=>setTimeout(()=>reject(Error('Служба уведомлений недоступна.')),12000))
+ ]);
+ let subscription=await registration.pushManager.getSubscription();
+ if(!subscription){
+  const response=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-push',{
+   method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(12000),
+   body:JSON.stringify({action:'config'})
+  });
+  const config=await response.json();
+  if(!response.ok||!config.publicKey)throw Error('Не удалось подключить уведомления.');
+  const key=Uint8Array.from(atob(config.publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+  subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+ }
+ await calls.saveStaffSubscription(subscription.toJSON());
+}
+if(callAlerts&&calls){
+ callAlerts.onclick=async()=>{
+  callAlerts.disabled=true;
+  callAlertStatus.textContent='';
+  try{
+   if(!pushSupported())throw Error('Чтобы получать звонки, добавьте UMMA Work на экран «Домой» или откройте приложение в браузере с уведомлениями.');
+   const key=alertKey();
+   if(Notification.permission==='granted'&&localStorage.getItem(key)==='on'){
+    await calls.saveStaffSubscription(null);
+    localStorage.removeItem(key);
+    callAlertStatus.textContent='Уведомления о звонках отключены.';
+   }else{
+    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+    if(permission!=='granted')throw Error('Разрешите уведомления для UMMA Work в настройках браузера.');
+    await registerCallAlerts();
+    localStorage.setItem(key,'on');
+    callAlertStatus.textContent='Уведомления о звонках включены.';
+   }
+  }catch(error){callAlertStatus.textContent=error.message;}
+  finally{callAlerts.disabled=false;syncCallAlerts();}
+ };
+ document.addEventListener('umma:staff-ready',()=>{
+  syncCallAlerts();
+  if(owner()&&pushSupported()&&Notification.permission==='granted'&&localStorage.getItem(alertKey())==='on'){
+   void registerCallAlerts().catch(()=>{callAlertStatus.textContent='Не удалось обновить уведомления о звонках.';});
+  }
+ });
+}
+
 const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
 async function translateChat(messageId,language,clientId){
  const payload={staff:true,initData:credential(),clientId,messageId,language};

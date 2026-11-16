@@ -5,14 +5,14 @@ let token='',state=null,dialog=null,busy=false,pending=null,reading=false,refres
 try{token=localStorage.getItem(KEY)||'';}catch{}
 const copy={ru:['Связь с UMMA','Закрыть','Сообщения кафе, акции и обратная связь','Начать переписку','Имя (необязательно)','Получать рассылку об акциях и новых блюдах','Сохранить настройки','Включить уведомления','Отключить уведомления кафе','Напишите нам','Отправить','Переписка сохранится на этом устройстве. Сообщения по заказам — в «Мои сообщения».','Пока сообщений нет.','Сохранено','Уведомления включены','Разрешите уведомления в настройках сайта. На iPhone откройте установленное приложение с экрана «Домой».','Не удалось соединиться. Повторите попытку.','Подключаем…','Вы','UMMA','Уведомления кафе отключены. Уведомления заказов настраиваются отдельно.','Не удалось сохранить доступ на этом устройстве. Разрешите хранение данных сайта.'],en:['Contact UMMA','Close','Cafe updates, offers and feedback','Start conversation','Name (optional)','Subscribe to offers and new dishes','Save preferences','Enable notifications','Disable cafe notifications','Write to us','Send','This conversation stays on this device. Order updates are in “Order updates”.','No messages yet.','Saved','Notifications enabled','Allow notifications in site settings. On iPhone, open the installed app from the Home Screen.','Could not connect. Please retry.','Connecting…','You','UMMA','Cafe notifications disabled. Order alerts have separate settings.','Could not save access on this device. Allow site storage.'],vi:['Liên hệ UMMA','Đóng','Tin tức, ưu đãi và phản hồi','Bắt đầu trò chuyện','Tên (không bắt buộc)','Đăng ký nhận ưu đãi và món mới','Lưu tùy chọn','Bật thông báo','Tắt thông báo quán','Nhắn cho chúng tôi','Gửi','Cuộc trò chuyện lưu trên thiết bị này. Thông báo đơn hàng ở mục “Thông báo”.','Chưa có tin nhắn.','Đã lưu','Đã bật thông báo','Cho phép thông báo trong cài đặt trang. Trên iPhone, mở ứng dụng từ Màn hình chính.','Không thể kết nối. Hãy thử lại.','Đang kết nối…','Bạn','UMMA','Đã tắt thông báo quán. Thông báo đơn hàng có cài đặt riêng.','Không lưu được quyền truy cập. Cho phép lưu dữ liệu trang.']};
 const notificationCopy={
- ru:['Включить уведомления об ответах','Сообщение отправлено. Включите уведомления, чтобы увидеть ответ, даже когда UMMA закрыта.','Ответы появятся в чате. Телефон управляет звуком, вибрацией и значком на ярлыке.'],
- en:['Enable reply notifications','Message sent. Enable notifications to get replies even when UMMA is closed.','Replies appear in this chat. Your phone controls sound, vibration and the app icon badge.'],
- vi:['Bật thông báo phản hồi','Đã gửi tin nhắn. Bật thông báo để nhận phản hồi ngay cả khi đã đóng UMMA.','Phản hồi xuất hiện trong cuộc trò chuyện. Âm thanh, rung và huy hiệu theo cài đặt điện thoại.']
+ ru:['Включить уведомления о сообщениях и звонках','Сообщение отправлено. Включите уведомления, чтобы увидеть ответ, даже когда UMMA закрыта.','Ответы появятся в чате. Телефон управляет звуком, вибрацией и значком на ярлыке.'],
+ en:['Enable message and call notifications','Message sent. Enable notifications to get replies even when UMMA is closed.','Replies appear in this chat. Your phone controls sound, vibration and the app icon badge.'],
+ vi:['Bật thông báo tin nhắn và cuộc gọi','Đã gửi tin nhắn. Bật thông báo để nhận phản hồi ngay cả khi đã đóng UMMA.','Phản hồi xuất hiện trong cuộc trò chuyện. Âm thanh, rung và huy hiệu theo cài đặt điện thoại.']
 };
 const setupCopy={
- ru:['Получайте ответы UMMA, даже когда приложение закрыто.','Позже'],
- en:['Get replies from UMMA even when the app is closed.','Later'],
- vi:['Nhận phản hồi từ UMMA ngay cả khi đã đóng ứng dụng.','Để sau']
+ ru:['Получайте сообщения и звонки от UMMA, даже когда приложение закрыто.','Позже'],
+ en:['Get messages and calls from UMMA even when the app is closed.','Later'],
+ vi:['Nhận tin nhắn và cuộc gọi từ UMMA ngay cả khi ứng dụng đã đóng.','Để sau']
 };
 const receiptCopy={
  ru:['Отправлено','Прочитано сотрудником'],
