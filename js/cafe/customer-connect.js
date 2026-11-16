@@ -22,6 +22,8 @@ const receiptCopy={
 const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||copy.en)[i];
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
+const publicChat=document.body.classList.contains('public-cafe-menu');
+const chatSettings={ru:'Настройки чата',en:'Chat settings',vi:'Cài đặt trò chuyện'};
 const button=el('button',t(0),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (document.getElementById('customerConnectHost')||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='voice'?115000:15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
@@ -56,6 +58,7 @@ const mediaCopy={
 };
 function renderThread(){
  if(!list)return;
+ const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
  const receipt=receiptCopy[lang()]||receiptCopy.en;
  const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
  const media=mediaCopy[lang()]||mediaCopy.en;
@@ -64,7 +67,7 @@ function renderThread(){
   const li=el('li');
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
-  li.append(el('strong',outgoing?t(18):m.title||t(19)));
+  if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body)li.append(el('div',m.body));
   if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,media[m.media_kind],
    async()=> (await api('mediaGet',{messageId:m.id})).url,media.error));
@@ -72,11 +75,18 @@ function renderThread(){
    li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
     ()=>api('voice',{messageId:m.id,language:target}),state.voiceTranslation));
   }
-  li.append(el('small',dateTime.format(new Date(m.created_at))));
-  if(outgoing)li.append(el('small',null,'connect-receipt'));
+  const timestamp=dateTime.format(new Date(m.created_at));
+  const meta=publicChat?el('div',null,'connect-message-meta'):li;
+  meta.append(el('small',timestamp));
+  if(outgoing)meta.append(el('small',null,'connect-receipt'));
+  if(publicChat)li.append(meta);
   return li;
- },m=>m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0]);
- if(!list.children.length)list.append(el('li',t(12)));
+ },m=>{
+  if(publicChat)return m.read_at?'✓✓ '+receipt[1]:'✓ '+receipt[0];
+  return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
+ });
+ if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
+ if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;
  badge();
 }
 async function markRead(){
@@ -162,8 +172,16 @@ if(setupHost){
 }
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
- dialog=el('dialog',null,'umma-connect');dialog.setAttribute('aria-label',t(0));
- const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(document.getElementById('customerConnectHost')){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',t(0)),el('p',t(2)));hero.append(heroIcon,heroText,close);dialog.append(hero,el('small',t(11)));
+ dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',t(0));
+ const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(document.getElementById('customerConnectHost')){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',t(0)),el('p',t(2)));if(publicChat){
+  close.textContent='←';
+  close.setAttribute('aria-label',t(1));
+  hero.append(close,heroIcon,heroText);
+  dialog.append(hero);
+ }else{
+  hero.append(heroIcon,heroText,close);
+  dialog.append(hero,el('small',t(11)));
+ }
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
  join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
  name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
@@ -186,7 +204,15 @@ function build(){
  const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',t(0));
  const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
- body.addEventListener('input',()=>{pending=null;});form.append(label(t(9),body),send);
+ body.addEventListener('input',()=>{pending=null;});
+ if(publicChat){
+  body.placeholder=t(9);
+  body.setAttribute('aria-label',t(9));
+  body.rows=1;
+  send.textContent='➤';
+  send.setAttribute('aria-label',t(10));
+  form.append(body,send);
+ }else form.append(label(t(9),body),send);
  const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,onChange:()=>{pending=null;}});
  form.onsubmit=e=>{
   e.preventDefault();
@@ -201,25 +227,69 @@ function build(){
    body.value='';
    composer.clear();
    pending=null;
-   status.textContent=push.hidden?t(13):notice(1);
+   status.textContent=publicChat?(receiptCopy[lang()]||receiptCopy.en)[0]:push.hidden?t(13):notice(1);
    if(draft){
     try{state=await api('list');}catch{setTimeout(refresh,0);}
    }
    renderThread();
+   if(publicChat)list.scrollTop=list.scrollHeight;
    await markRead();
   }).finally(()=>composer.busy(false));
  };
- const settings=el('section',null,'connect-settings');settings.append(label(t(4),name),check);const actions=el('div',null,'connect-actions');actions.append(save,off);settings.append(actions);const messagesHeading=el('h3',lang()==='ru'?'Ваши сообщения':lang()==='vi'?'Tin nhắn của bạn':'Your messages','connect-messages-heading');content.append(settings,messagesHeading,list,form);dialog.append(join,push,content,status);document.body.append(dialog);
+ const settings=el('section',null,'connect-settings');
+ const actions=el('div',null,'connect-actions');
+ settings.append(label(t(4),name),check,actions);
+ if(publicChat){
+  const settingsLabel=chatSettings[lang()]||chatSettings.en;
+  const toggle=el('button','⋯','connect-settings-toggle');
+  toggle.type='button';
+  toggle.hidden=!token;
+  toggle.setAttribute('aria-label',settingsLabel);
+  toggle.setAttribute('aria-expanded','false');
+  toggle.setAttribute('aria-controls','umma-connect-settings');
+  settings.id='umma-connect-settings';
+  settings.hidden=true;
+  toggle.onclick=()=>{
+   settings.hidden=!settings.hidden;
+   toggle.setAttribute('aria-expanded',String(!settings.hidden));
+  };
+  hero.append(toggle);
+  actions.append(save,push,off);
+  settings.append(el('small',t(11)));
+  content.className='connect-chat-content';
+  content.append(list,status,form);
+  dialog.append(settings,join,content);
+ }else{
+  actions.append(save,off);
+  const heading=el('h3',lang()==='ru'?'Ваши сообщения':lang()==='vi'?'Tin nhắn của bạn':'Your messages','connect-messages-heading');
+  content.append(settings,heading,list,form);
+  dialog.append(join,push,content,status);
+ }
+ document.body.append(dialog);
  dialog.addEventListener('close',()=>{
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
   button.focus();
  });
- function update(){join.hidden=!!token;content.hidden=!token;name.value=state?.client.name||'';promotions.checked=state?.client.promotions===true;const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';off.hidden=!state?.client.pushEnabled;push.hidden=subscribed;renderThread();}
+ function update(){
+  join.hidden=!!token;
+  content.hidden=!token;
+  if(publicChat){
+   dialog.querySelector('.connect-settings-toggle').hidden=!token;
+   if(token)content.insertBefore(status,form);
+   else join.after(status);
+  }
+  name.value=state?.client.name||'';
+  promotions.checked=state?.client.promotions===true;
+  const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
+  off.hidden=!state?.client.pushEnabled;
+  push.hidden=subscribed;
+  renderThread();
+ }
  dialog.update=update;
  dialog.releaseDraft=()=>composer.clear();
 }
-async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();await markRead();}
+async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();if(publicChat)list.scrollTop=list.scrollHeight;await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=t(0);if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;}else if(dialog){list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
