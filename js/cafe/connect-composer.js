@@ -292,39 +292,76 @@
    session.recordStream=new MediaStream([...stream.getVideoTracks(),...session.stream.getAudioTracks()]);
    return session.recordStream;
   }
+  // Keep the last real frame visible while Android releases and opens its camera.
+  // The recorder captures a separate canvas, so its audio and timeline stay intact.
   async function switchStreamCamera(session,source){
    if(session.flipping||!session.stream)return;
    session.flipping=true;
    const next=session.facing==='user'?'environment':'user';
    const old=session.stream.getVideoTracks()[0];
+   const active=()=>session.kind==='circle'?circleSession===session:cameraSession===session;
+   const parent=source.parentElement;
+   let freeze=null,replacement=null;
    try{
+    if(parent&&source.videoWidth&&source.videoHeight){
+     freeze=document.createElement('canvas');
+     freeze.width=source.videoWidth;freeze.height=source.videoHeight;
+     freeze.getContext('2d')?.drawImage(source,0,0,freeze.width,freeze.height);
+     freeze.className='connect-camera-freeze';
+     Object.assign(freeze.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:'cover',pointerEvents:'none',zIndex:'2'});
+     if(getComputedStyle(parent).position==='static')parent.style.position='relative';
+     parent.append(freeze);
+    }
+    // Mobile browsers often cannot open the other camera until this track stops.
     old?.stop();
-    const replacement=await navigator.mediaDevices.getUserMedia({audio:false,video:{
+    replacement=await navigator.mediaDevices.getUserMedia({audio:false,video:{
      facingMode:{ideal:next},width:{ideal:session.kind==='circle'?480:1280},
-     height:{ideal:session.kind==='circle'?480:720},frameRate:{ideal:24}
+     height:{ideal:session.kind==='circle'?480:720},frameRate:{ideal:24,max:30}
     }});
-    const current=session.kind==='circle'?circleSession===session:cameraSession===session;
-    if(!current){replacement.getTracks().forEach(t=>t.stop());return;}
-    if(old)session.stream.removeTrack(old);
-    session.stream.addTrack(replacement.getVideoTracks()[0]);
-    session.facing=next;
-    if(session.kind==='circle')circleFacing=next;
+    if(!active())return;
+    const track=replacement.getVideoTracks()[0];
+    if(!track)throw Error('No camera video track');
+    session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
+    session.stream.addTrack(track);
+    replacement=null; // The live session now owns the new track.
+    source.srcObject=null;
     source.srcObject=session.stream;
     await source.play();
+    if(!active())return;
+    // Wait for the new camera's first frame, not just play() resolving.
+    if(source.requestVideoFrameCallback){
+     await Promise.race([
+      new Promise(resolve=>source.requestVideoFrameCallback(()=>resolve())),
+      new Promise(resolve=>setTimeout(resolve,650))
+     ]);
+    }else if(source.readyState<2){
+     await Promise.race([
+      new Promise(resolve=>source.addEventListener('loadeddata',resolve,{once:true})),
+      new Promise(resolve=>setTimeout(resolve,650))
+     ]);
+    }
+    session.facing=next;
+    if(session.kind==='circle')circleFacing=next;
     status.textContent='';
-   }catch{
-    status.textContent=lang==='ru'?'Не удалось переключить камеру. Запись продолжается.':'Camera switch failed. Recording continues.';
-    try{
-     const restored=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:session.facing}}});
-     const current=session.kind==='circle'?circleSession===session:cameraSession===session;
-     if(current){
-      session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
-      session.stream.addTrack(restored.getVideoTracks()[0]);
-      source.srcObject=session.stream;
-      await source.play();
-     }else restored.getTracks().forEach(t=>t.stop());
-    }catch{}
-   }finally{session.flipping=false;}
+   }catch(error){
+    if(active()){
+     status.textContent=lang==='ru'?'Переключение не удалось. Восстанавливаем камеру…':'Camera switch failed. Restoring camera…';
+     try{
+      const restored=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:session.facing}}});
+      if(active()){
+       session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
+       session.stream.addTrack(restored.getVideoTracks()[0]);
+       source.srcObject=null;source.srcObject=session.stream;
+       await source.play();
+       status.textContent='';
+      }else restored.getTracks().forEach(t=>t.stop());
+     }catch{status.textContent=lang==='ru'?'Камера недоступна. Остановите запись и попробуйте снова.':'Camera unavailable. Restart recording.';}
+    }
+   }finally{
+    replacement?.getTracks().forEach(t=>t.stop());
+    freeze?.remove();
+    session.flipping=false;
+   }
   }
   function recordVideo(session){
    if(session.recorder){
