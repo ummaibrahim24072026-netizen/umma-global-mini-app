@@ -5,6 +5,69 @@
 const $=id=>document.getElementById(id);
 const banks=[['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
 let installPrompt=null,translate,order=null,context=null,inFlight=false,lastQr='',lastPoll=0;
+let rubleProofState=null;
+const proofFormats={pdf:'application/pdf',jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',webp:'image/webp'};
+const proofHint='Чек в PDF, JPG, PNG или WEBP · до 5 МБ';
+function renderRubleProof(ruble,value,{API,t}){
+ const section=$('rubleProof');
+ section.hidden=!(ruble&&value.requestKey);
+ if(section.hidden)return;
+ const button=$('attachRubleProof'),input=$('rubleProofFile'),status=$('rubleProofStatus');
+ const refresh=state=>{
+  if(rubleProofState!==state)return;
+  button.hidden=state.sent;
+  button.disabled=state.sending;
+  status.textContent=t(state.sent?'Чек отправлен кассиру на проверку.':state.sending?'Отправляем чек…':state.message);
+ };
+ const request=async(action,file={})=>{
+  const res=await fetch(API+'cafe-transfer-proof',{
+   method:'POST',headers:{'content-type':'application/json'},signal:AbortSignal.timeout(30000),
+   body:JSON.stringify({action,requestKey:value.requestKey,orderId:value.id,...file})
+  });
+  const result=await res.json();
+  if(!res.ok||!result.ok)throw Error('Receipt unavailable');
+  return result;
+ };
+ if(rubleProofState?.id!==value.id){
+  const state=rubleProofState={id:value.id,sent:false,sending:false,message:proofHint};
+  void request('guestMine').then(result=>{
+   if(result.proofs.length){state.sent=true;refresh(state);}
+  }).catch(()=>{});
+ }
+ const state=rubleProofState;
+ refresh(state);
+ button.onclick=()=>input.click();
+ input.onchange=async()=>{
+  const file=input.files?.[0];
+  input.value='';
+  if(!file||state.sending||state.sent)return;
+  const mimeType=file.type||proofFormats[file.name.split('.').at(-1)?.toLowerCase()];
+  if(!Object.values(proofFormats).includes(mimeType)||file.size>5242880||!file.size){
+   state.message=proofHint;
+   refresh(state);
+   return;
+  }
+  state.sending=true;
+  refresh(state);
+  try{
+   const base64=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result).split(',')[1]);
+    reader.onerror=()=>reject(reader.error);
+    reader.onabort=()=>reject(Error('File reading cancelled'));
+    reader.readAsDataURL(file);
+   });
+   await request('guestSubmit',{mimeType,base64});
+   state.sent=true;
+  }catch{
+   try{state.sent=(await request('guestMine')).proofs.length>0;}catch{}
+   state.message='Не удалось отправить чек. Попробуйте ещё раз.';
+  }finally{
+   state.sending=false;
+   refresh(state);
+  }
+ };
+}
 const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
 function installText(t){translate=t;$('installApp').hidden=standalone();if(!$('installHelp').hidden)$('installHelp').textContent=t(/iPad|iPhone|iPod/.test(navigator.userAgent)?'В Safari: Поделиться → На экран «Домой».':'В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».');}
 function install(t){installText(t);window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});window.addEventListener('appinstalled',()=>{installPrompt=null;$('installApp').hidden=true;$('installHelp').hidden=true;});$('installApp').onclick=async()=>{if(installPrompt){const prompt=installPrompt;installPrompt=null;try{await prompt.prompt();await prompt.userChoice;}catch{$('installHelp').hidden=false;installText(translate);}}else{$('installHelp').hidden=!$('installHelp').hidden;installText(translate);}};}
@@ -67,6 +130,7 @@ const rubleSection=$('rublePayment');
 if(rubleSection&&previousOrderId!==value.id)$('rubleCopyStatus').textContent='';
 if(rubleSection){
  rubleSection.hidden=!ruble;
+ renderRubleProof(ruble,value,ctx);
  if(ruble){
   const locale=window.ummaMenuI18n?.locale()||'ru';
   $('rubleAmount').textContent=new Intl.NumberFormat(locale,{style:'currency',currency:'RUB'}).format(ruble.kopecks/100);

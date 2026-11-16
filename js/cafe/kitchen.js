@@ -47,8 +47,8 @@
   const rubleAmount=order=>order.rub_payment_kopecks==null?'':new Intl.NumberFormat('ru',{style:'currency',currency:'RUB'}).format(Number(order.rub_payment_kopecks)/100);
   const receivedPayment=order=>'Подтвердить получение оплаты по заказу №'+order.order_number+(rubleAmount(order)?' на Сбер: '+rubleAmount(order):'')+'?';
   function paymentProofButton(order) {
-    return order.canAcceptPayments===true && !rubleAmount(order) && ['qr','bank_transfer'].includes(order.payment_method)
-      ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Скриншоты оплаты</button>' : '';
+    return order.canAcceptPayments===true && ['qr','bank_transfer'].includes(order.payment_method)
+      ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Чеки оплаты</button>' : '';
   }
   function showPaymentProofs(proofs) {
     const dialog=document.createElement('dialog');dialog.className='cafe-payment-sheet';dialog.setAttribute('aria-label','Скриншоты оплаты');
@@ -56,7 +56,15 @@
     const notice=document.createElement('p');notice.className='cafe-payment-notice';notice.textContent='Проверьте фактическое поступление денег в банке. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Подтвердить оплату» в заказе.';dialog.append(notice);
     for(const proof of proofs){
       const text=document.createElement('p');text.textContent=({pending:'На проверке',confirmed:'Проверен',rejected:'Отклонён'}[proof.status]||'Чек')+' · '+formatDate(proof.createdAt);dialog.append(text);
-      try{const url=new URL(proof.url);if(url.origin!=='https://zwzojugspldexyyljwpr.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/'))continue;const image=document.createElement('img');image.src=url.href;image.alt='Скриншот перевода';image.style.cssText='display:block;max-width:100%;height:auto;border-radius:12px';dialog.append(image);}catch{}
+      try{
+        const url=new URL(proof.url);
+        if(url.origin!=='https://zwzojugspldexyyljwpr.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/cafe-transfer-proofs/'))continue;
+        if(proof.mimeType==='application/pdf'){
+          const link=document.createElement('a');link.href=url.href;link.rel='noopener noreferrer';link.target='_blank';link.textContent='Скачать чек PDF';dialog.append(link);
+        }else{
+          const image=document.createElement('img');image.src=url.href;image.alt='Чек перевода';image.style.cssText='display:block;max-width:100%;border-radius:12px';dialog.append(image);
+        }
+      }catch{}
     }
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
@@ -786,7 +794,7 @@
         const res=await fetch(PROOF_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list",initData,orderId})});
         const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"Не удалось загрузить чек");
         const proofs=data.proofs||[];
-        if(!proofs.length){showMessage("По этому заказу скриншоты оплаты пока не отправляли.");return;}
+        if(!proofs.length){showMessage("По этому заказу пока нет чеков оплаты.");return;}
         showPaymentProofs(proofs);
       }catch(e){showMessage(e.message||"Ошибка проверки чека");}finally{proofButton.disabled=false;}
       return;

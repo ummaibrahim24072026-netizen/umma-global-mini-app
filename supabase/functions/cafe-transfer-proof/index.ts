@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyWebStaffSession } from "../_shared/web-staff-auth.ts";
 const corsHeaders={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 function response(data:unknown,status=200){return new Response(JSON.stringify(data),{status,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});}
 async function signHmac(key: CryptoKey, value: string): Promise<ArrayBuffer> {
@@ -64,41 +65,72 @@ Deno.serve(async req=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  if(req.method!=="POST")return response({ok:false,error:"Method not allowed"},405);
  try{
- const body=await req.json();
- if(typeof body.initData!=="string")return response({ok:false,error:"Откройте приложение через Telegram"},401);
- const token=Deno.env.get("TELEGRAM_BOT_TOKEN"),url=Deno.env.get("SUPABASE_URL"),key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
- if(!token||!url||!key)return response({ok:false,error:"Server configuration error"},500);
- const {telegramId}=await verifyTelegramInitData(body.initData,token);
+ if(Number(req.headers.get("content-length"))>7250000)return response({ok:false,error:"Файл больше 5 МБ"},413);
+ const rawBody=await req.text();
+ if(rawBody.length>7250000)return response({ok:false,error:"Файл больше 5 МБ"},413);
+ const body=JSON.parse(rawBody);
+ const guest=body.action==="guestSubmit"||body.action==="guestMine";
+ const uuid=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+ if(typeof body.orderId!=="string"||!uuid.test(body.orderId))return response({ok:false,error:"Некорректный заказ"},400);
+ const url=Deno.env.get("SUPABASE_URL"),key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+ if(!url||!key)return response({ok:false,error:"Server configuration error"},500);
  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
- if(typeof body.orderId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.orderId))return response({ok:false,error:"Некорректный заказ"},400);
- const {data:order,error:orderError}=await db.from("cafe_orders").select("id,location_id,customer_telegram_id,created_by_telegram_id,payment_status,payment_method,status").eq("id",body.orderId).maybeSingle();
+ let telegramId:number|null=null;
+ if(guest){
+  if(typeof body.requestKey!=="string"||!uuid.test(body.requestKey))return response({ok:false,error:"Нет доступа к заказу"},403);
+  const {data,error}=await db.rpc("cafe_guest_order_status",{p_request_key:body.requestKey,p_order_id:body.orderId});
+  if(error||data?.order?.id!==body.orderId)return response({ok:false,error:"Нет доступа к заказу"},403);
+ }else{
+  if(typeof body.initData!=="string")return response({ok:false,error:"Требуется вход"},401);
+  if(body.action==="list"&&body.initData.startsWith("web:")){
+   try{telegramId=await verifyWebStaffSession(db,body.initData);}
+   catch{return response({ok:false,error:"Войдите в кабинет сотрудника заново"},401);}
+  }else{
+   const token=Deno.env.get("TELEGRAM_BOT_TOKEN");
+   if(!token)return response({ok:false,error:"Server configuration error"},500);
+   telegramId=(await verifyTelegramInitData(body.initData,token)).telegramId;
+  }
+ }
+ const {data:order,error:orderError}=await db.from("cafe_orders").select("id,location_id,customer_telegram_id,created_by_telegram_id,payment_status,payment_method,status,rub_payment_kopecks").eq("id",body.orderId).maybeSingle();
  if(orderError||!order)return response({ok:false,error:"Заказ не найден"},404);
- const {data:profile}=await db.from("telegram_users").select("role,is_active").eq("telegram_id",telegramId).maybeSingle();
- if(!profile?.is_active)return response({ok:false,error:"Профиль отключён или не найден"},403);
- if(body.action==="mine"){
-   if(String(order.customer_telegram_id)!==String(telegramId)&&String(order.created_by_telegram_id)!==String(telegramId))return response({ok:false,error:"Нет доступа к заказу"},403);
+ if(guest&&(order.customer_telegram_id!=null||order.rub_payment_kopecks==null||order.payment_method!=="bank_transfer")){
+  return response({ok:false,error:"Нет доступа к заказу"},403);
+ }
+ const profile=telegramId===null?null:(await db.from("telegram_users").select("role,is_active").eq("telegram_id",telegramId).maybeSingle()).data;
+ if(!guest&&!profile?.is_active)return response({ok:false,error:"Профиль отключён или не найден"},403);
+ if(body.action==="mine"||body.action==="guestMine"){
+   if(!guest&&String(order.customer_telegram_id)!==String(telegramId)&&String(order.created_by_telegram_id)!==String(telegramId))return response({ok:false,error:"Нет доступа к заказу"},403);
    const {data:proofs,error}=await db.from("cafe_transfer_proofs").select("id,created_at,review_status").eq("order_id",order.id).order("created_at",{ascending:false}).limit(10);
    if(error)return response({ok:false,error:"Не удалось проверить отправку чека"},500);
    return response({ok:true,proofs:(proofs??[]).map(proof=>({id:proof.id,createdAt:proof.created_at,status:proof.review_status}))});
  }
- if(body.action==="submit"){
- if(String(order.customer_telegram_id)!==String(telegramId)&&String(order.created_by_telegram_id)!==String(telegramId))return response({ok:false,error:"Нет доступа к заказу"},403);
+ if(body.action==="submit"||body.action==="guestSubmit"){
+ if(!guest&&String(order.customer_telegram_id)!==String(telegramId)&&String(order.created_by_telegram_id)!==String(telegramId))return response({ok:false,error:"Нет доступа к заказу"},403);
  if(order.payment_status!=="pending"||["cancelled","completed"].includes(order.status))return response({ok:false,error:"Заказ уже оплачен или закрыт"},409);
- const bankCountry=order.payment_method==="qr"?"VN":body.bankCountry;
+ const bankCountry=guest?"RU":order.payment_method==="qr"?"VN":body.bankCountry;
  if(order.payment_method!=="qr"&&!["RU","KZ"].includes(bankCountry))return response({ok:false,error:"Выберите страну банка"},400);
  if(!["bank_transfer","qr"].includes(order.payment_method))return response({ok:false,error:"Для заказа не выбран банковский перевод"},400);
  if(typeof body.base64!=="string"||body.base64.length>7200000||body.base64.length<100)return response({ok:false,error:"Некорректный файл"},400);
  const types:Record<string,string>={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
- const ext=types[body.mimeType];if(!ext)return response({ok:false,error:"Только JPG, PNG или WEBP"},400);
- const raw=atob(body.base64);if(raw.length>5242880)return response({ok:false,error:"Файл больше 5 МБ"},400);
+ if(guest)types["application/pdf"]="pdf";
+ const ext=Object.hasOwn(types,body.mimeType)?types[body.mimeType]:null;
+ if(!ext)return response({ok:false,error:guest?"Только PDF, JPG, PNG или WEBP":"Только JPG, PNG или WEBP"},400);
+ let raw:string;
+ try{raw=atob(body.base64);}catch{return response({ok:false,error:"Некорректный файл"},400);}
+ if(raw.length>5242880)return response({ok:false,error:"Файл больше 5 МБ"},400);
  const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
- const valid=ext==="png"?bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71:ext==="jpg"?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&String.fromCharCode(...bytes.slice(8,12))==="WEBP";
- if(!valid)return response({ok:false,error:"Файл не соответствует формату изображения"},400);
+ const valid=ext==="pdf"?raw.startsWith("%PDF-"):ext==="png"?bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71:ext==="jpg"?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&String.fromCharCode(...bytes.slice(8,12))==="WEBP";
+ if(!valid)return response({ok:false,error:"Файл не соответствует формату"},400);
  const digest=toHex(await crypto.subtle.digest("SHA-256",bytes));
  const path=order.id+"/"+digest+"."+ext;
  const existing=await db.from("cafe_transfer_proofs").select("id").eq("order_id",order.id).eq("file_path",path).maybeSingle();
  if(existing.error)return response({ok:false,error:"Не удалось проверить отправку чека"},500);
  if(existing.data)return response({ok:true,proofId:existing.data.id,message:"Этот чек уже отправлен на проверку."});
+ if(guest){
+   const count=await db.from("cafe_transfer_proofs").select("id").eq("order_id",order.id).is("customer_telegram_id",null).limit(1);
+   if(count.error)return response({ok:false,error:"Не удалось проверить отправку чека"},500);
+   if(count.data?.length)return response({ok:false,error:"Чек уже прикреплён"},409);
+ }
  const upload=await db.storage.from("cafe-transfer-proofs").upload(path,bytes,{contentType:body.mimeType,upsert:false});
  if(upload.error){
    const replay=await db.from("cafe_transfer_proofs").select("id").eq("order_id",order.id).eq("file_path",path).maybeSingle();
@@ -106,7 +138,10 @@ Deno.serve(async req=>{
    return response({ok:false,error:"Не удалось загрузить чек. Проверьте ранее отправленные чеки и повторите попытку."},500);
  }
  const inserted=await db.from("cafe_transfer_proofs").insert({order_id:order.id,customer_telegram_id:telegramId,bank_country:bankCountry,file_path:path}).select("id").single();
- if(inserted.error){await db.storage.from("cafe-transfer-proofs").remove([path]);return response({ok:false,error:"Не удалось сохранить чек"},500);}
+ if(inserted.error){
+   await db.storage.from("cafe-transfer-proofs").remove([path]);
+   return guest&&inserted.error.code==="23505"?response({ok:false,error:"Чек уже прикреплён"},409):response({ok:false,error:"Не удалось сохранить чек"},500);
+ }
  return response({ok:true,proofId:inserted.data.id,message:"Чек отправлен. Ожидайте подтверждения сотрудником."});
  }
  if(body.action==="list"){
@@ -119,7 +154,11 @@ Deno.serve(async req=>{
  const {data:proofs,error}=await db.from("cafe_transfer_proofs").select("id,bank_country,created_at,review_status,file_path").eq("order_id",order.id).order("created_at",{ascending:false}).limit(10);
  if(error)return response({ok:false,error:"Не удалось загрузить чеки"},500);
  const results=[];
- for(const proof of proofs??[]){const {data}=await db.storage.from("cafe-transfer-proofs").createSignedUrl(proof.file_path,120);results.push({id:proof.id,bankCountry:proof.bank_country,createdAt:proof.created_at,status:proof.review_status,url:data?.signedUrl??null});}
+ for(const proof of proofs??[]){
+   const pdf=proof.file_path.endsWith(".pdf");
+   const {data}=await db.storage.from("cafe-transfer-proofs").createSignedUrl(proof.file_path,120,pdf?{download:"receipt.pdf"}:undefined);
+   results.push({id:proof.id,bankCountry:proof.bank_country,createdAt:proof.created_at,status:proof.review_status,mimeType:pdf?"application/pdf":null,url:data?.signedUrl??null});
+ }
  return response({ok:true,proofs:results});
  }
  return response({ok:false,error:"Неизвестное действие"},400);

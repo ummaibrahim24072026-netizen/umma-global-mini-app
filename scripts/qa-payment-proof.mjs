@@ -2,14 +2,20 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {stripTypeScriptTypes} from 'node:module';
-import {createHmac,webcrypto} from 'node:crypto';
+import {createHash,createHmac,webcrypto} from 'node:crypto';
 import {JSDOM} from 'jsdom';
 const read=p=>readFileSync(p,'utf8'),id='11111111-1111-4111-8111-111111111111';
 const tick=()=>new Promise(r=>setTimeout(r,5));
 async function until(check){for(let i=0;i<100;i++){if(check())return;await tick();}assert.fail('UI did not settle');}
 let handler,profile={is_active:true,role:'customer'},staff=null,order={id,location_id:'cafe',customer_telegram_id:42,created_by_telegram_id:42,payment_method:'qr',payment_status:'pending',status:'pending'},proofs=[],uploaded=[],removed=[],signed=[],failInsert=false,failUpload=false;
-const db={from(table){let insert,filters=[];const q={select(){return q;},eq(k,v){filters.push([k,v]);return q;},insert(value){insert=value;return q;},order(){return q;},limit(){return Promise.resolve({data:proofs});},async maybeSingle(){if(table==='cafe_orders')return {data:order};if(table==='telegram_users')return {data:profile};if(table==='cafe_staff')return {data:staff};return {data:proofs.find(p=>filters.every(([k,v])=>p[k]===v))??null};},async single(){if(failInsert)return {error:{}};const proof={...insert,id:'proof-'+proofs.length,created_at:'2026-10-15T20:00:00Z',review_status:'pending'};proofs.unshift(proof);return {data:proof};}};return q;},storage:{from(bucket){assert.equal(bucket,'cafe-transfer-proofs');return {async upload(path,bytes,options){uploaded.push({path,bytes,options});return failUpload?{error:{}}:{};},async remove(paths){removed.push(...paths);return {};},async createSignedUrl(path,seconds){signed.push({path,seconds});return {data:{signedUrl:'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/test?token=synthetic'}};}};}}};
-const code=stripTypeScriptTypes(read('supabase/functions/cafe-transfer-proof/index.ts').replace(/^import .*;\n/gm,''));vm.runInNewContext(code,{Deno:{serve:fn=>handler=fn,env:{get:k=>k==='TELEGRAM_BOT_TOKEN'?'test-token':'synthetic'}},createClient:()=>db,crypto:webcrypto,URLSearchParams,TextEncoder,Response,atob,console:{error(){}}});
+const guestKey='22222222-2222-4222-8222-222222222222';
+const staffToken='f'.repeat(64);
+const db={async rpc(name,args){
+ assert.equal(name,'cafe_guest_order_status');
+ return args.p_request_key===guestKey&&args.p_order_id===id?{data:{order:{id}}}:{error:{}};
+},from(table){let insert,filters=[];const q={select(){return q;},eq(k,v){filters.push([k,v]);return q;},insert(value){insert=value;return q;},order(){return q;},is(k,v){filters.push([k,v]);return q;},gt(){return q;},limit(){return Promise.resolve({data:proofs.filter(p=>filters.every(([k,v])=>p[k]===v))});},async maybeSingle(){if(table==='cafe_orders')return {data:order};if(table==='cafe_web_sessions')return {data:filters.some(([k,v])=>k==='token_hash'&&v===createHash('sha256').update(staffToken).digest('hex'))?{actor_id:42}:null};if(table==='cafe_web_accounts')return {data:{active:true}};if(table==='telegram_users')return {data:profile};if(table==='cafe_staff')return {data:staff};return {data:proofs.find(p=>filters.every(([k,v])=>p[k]===v))??null};},async single(){if(failInsert)return {error:{}};const proof={...insert,id:'proof-'+proofs.length,created_at:'2026-10-15T20:00:00Z',review_status:'pending'};proofs.unshift(proof);return {data:proof};}};return q;},storage:{from(bucket){assert.equal(bucket,'cafe-transfer-proofs');return {async upload(path,bytes,options){uploaded.push({path,bytes,options});return failUpload?{error:{}}:{};},async remove(paths){removed.push(...paths);return {};},async createSignedUrl(path,seconds,options){signed.push({path,seconds,options});return {data:{signedUrl:'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/test?token=synthetic'}};}};}}};
+const helper=read('supabase/functions/_shared/web-staff-auth.ts').replace(/^export /gm,'');
+const code=stripTypeScriptTypes(helper+'\n'+read('supabase/functions/cafe-transfer-proof/index.ts').replace(/^import .*;\n/gm,''));vm.runInNewContext(code,{Deno:{serve:fn=>handler=fn,env:{get:k=>k==='TELEGRAM_BOT_TOKEN'?'test-token':'synthetic'}},createClient:()=>db,crypto:webcrypto,URLSearchParams,TextEncoder,Response,atob,console:{error(){}}});
 const params=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),user:JSON.stringify({id:42})}),check=[...params].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('\n');params.set('hash',createHmac('sha256',createHmac('sha256','WebAppData').update('test-token').digest()).update(check).digest('hex'));
 const bytes=Buffer.alloc(100,0);bytes.set([137,80,78,71,13,10,26,10]);const base={action:'submit',orderId:id,initData:params.toString(),mimeType:'image/png',base64:bytes.toString('base64'),bankCountry:'RU'};
 async function request(body={}){const response=await handler(new Request('https://qa.invalid',{method:'POST',body:JSON.stringify({...base,...body})}));return {status:response.status,data:await response.json()};}
@@ -23,6 +29,28 @@ assert.equal((await request({initData:'invalid'})).status,401);profile.is_active
 assert.equal((await request({action:'list'})).status,403);profile.role='employee';assert.equal((await request({action:'list'})).status,403);staff={can_accept_payments:true};response=await request({action:'list'});assert.equal(response.status,200);assert.equal(response.data.proofs.length,1);assert.equal(signed[0].seconds,120);
 profile.role='customer';proofs=[];failInsert=true;assert.equal((await request()).status,500);assert.equal(removed.length,1,'failed DB save cleans up private upload');failInsert=false;
 order.payment_method='bank_transfer';response=await request();assert.equal(response.status,200);assert.equal(proofs[0].bank_country,'RU');proofs=[];assert.equal((await request({bankCountry:'VN'})).status,400);order.payment_method='cash';assert.equal((await request()).status,400);
+// A guest order's receipt key authorizes only its own RUB transfer.
+order={...order,customer_telegram_id:null,created_by_telegram_id:null,payment_method:'bank_transfer',rub_payment_kopecks:47943};
+const pdf=Buffer.from('%PDF-1.7\n'+' '.repeat(100)).toString('base64');
+const guest={action:'guestSubmit',initData:undefined,requestKey:guestKey,mimeType:'application/pdf',base64:pdf,bankCountry:'KZ'};
+assert.equal((await request({...guest,requestKey:id})).status,403);
+assert.equal((await request({...guest,base64:base.base64})).status,400);
+assert.equal((await request(guest)).status,200);
+assert.equal(proofs[0].customer_telegram_id,null);
+assert.equal(proofs[0].bank_country,'RU');
+assert.equal(order.payment_status,'pending');
+assert.equal((await request(guest)).data.proofId,proofs[0].id);
+assert.equal((await request({...guest,mimeType:'image/png',base64:base.base64})).status,409);
+assert.equal((await request({...guest,action:'guestMine'})).data.proofs.length,1);
+profile.role='employee';staff={can_accept_payments:false};
+const staffReq={action:'list',initData:'web:'+staffToken};
+assert.equal((await request(staffReq)).status,403);
+staff={can_accept_payments:true};
+assert.equal((await request({...staffReq,initData:'web:'+'a'.repeat(64)})).status,401);
+assert.equal((await request(staffReq)).data.proofs[0].mimeType,'application/pdf');
+assert.equal(signed.at(-1).options.download,'receipt.pdf');
+order.payment_status='paid';
+assert.equal((await request(guest)).status,409);
 // Actual client attachment controls, isolated FileReader and network.
 const dom=new JSDOM('<body></body>',{runScripts:'outside-only',url:'https://qa.invalid/'}),w=dom.window,d=w.document;let mode='ok',held,requests=[],mine=[{status:'pending'}];
 w.Telegram={WebApp:{initData:'synthetic'}};w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
@@ -39,6 +67,31 @@ await select('image/png',5242881);assert.equal(send.disabled,true);await select(
 mode='fail';send.click();await until(()=>send.textContent==='Повторить отправку');assert.equal(send.disabled,false);assert.equal(input.disabled,false);assert.equal(d.querySelector('.cafe-payment-sheet').open,true,'upload failure keeps QR available');
 mode='held';send.click();send.click();assert.equal(requests.filter(r=>r.action==='submit').length,2,'one failed attempt plus one held attempt, duplicate tap ignored');assert.equal(send.disabled,true);held(new Response('{"ok":true}'));await until(()=>send.textContent==='Чек отправлен');assert.equal(send.disabled,true);assert.equal(d.querySelector('.cafe-payment-sheet').open,false,'successful receipt closes QR');assert.equal(d.querySelector('.cafe-payment-qr'),null);assert.equal(requests.some(r=>r.action==='updatePayment'),false);
 dom.window.close();
+// Web guest receipt uses the saved order key and keeps payment pending.
+const webHtml=read('menu/index.html');
+const webDom=new JSDOM(webHtml,{runScripts:'outside-only',url:'https://qa.invalid/menu/'}),ww=webDom.window,wd=ww.document;
+ww.AbortSignal=AbortSignal;
+ww.FileReader=w.FileReader;
+const webCalls=[];
+ww.fetch=async(url,options)=>{
+ const b=JSON.parse(options.body);webCalls.push(b);
+ return new Response(JSON.stringify(b.action==='guestMine'?{ok:true,proofs:[]}:{ok:true,proofId:'synthetic'}));
+};
+ww.eval(read('js/cafe/public-menu-extras.js'));
+const webOrder={id,requestKey:guestKey,status:'pending',paymentStatus:'pending',paymentMethod:'bank_transfer',payment:{currency:'RUB',kopecks:47943,rate:312,bankName:'Сбер',recipient:'Test',phone:'+70000000000'}};
+const ctx={API:'https://qa.invalid/',money:String,t:s=>s,activeReceipts:()=>[]};
+ww.ummaGuestExtras.receipt(webOrder,ctx);
+assert.equal(wd.getElementById('rubleProof').hidden,false);
+const webInput=wd.getElementById('rubleProofFile');
+Object.defineProperty(webInput,'files',{value:[{type:'application/pdf',name:'receipt.pdf',size:100}]});
+webInput.dispatchEvent(new ww.Event('change'));
+await until(()=>wd.getElementById('attachRubleProof').hidden);
+assert.match(wd.getElementById('rubleProofStatus').textContent,/кассиру на проверку/);
+assert.equal(webCalls.find(x=>x.action==='guestSubmit').requestKey,guestKey);
+assert.equal(webOrder.paymentStatus,'pending');
+ww.ummaGuestExtras.receipt({...webOrder,paymentStatus:'paid',payment:null},ctx);
+assert.equal(wd.getElementById('rubleProof').hidden,true);
+webDom.window.close();
 // Staff can view submitted QR screenshots without changing payment status.
 const staffDom=new JSDOM(read('index.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',url:'https://qa.invalid'}),sw=staffDom.window,sd=sw.document;let mutations=0;sw.Telegram={WebApp:{initData:'synthetic'}};sw.ummaRole='employee';sw.HTMLDialogElement.prototype.showModal=function(){this.open=true;};sw.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new sw.Event('close'));};
 sw.fetch=async(url,opts)=>{const body=JSON.parse(opts.body);if(url.includes('cafe-transfer-proof'))return new Response(JSON.stringify({ok:true,proofs:[{status:'pending',createdAt:'2026-10-15T20:00:00Z',url:'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/demo?token=synthetic'}]}));if(body.action!=='list')mutations++;return new Response(JSON.stringify({ok:true,staffRole:'manager',orders:[{id,order_number:1,status:'pending',order_type:'pickup',payment_status:'pending',payment_method:'qr',canAcceptPayments:true,staffRole:'manager',total_vnd:125000,cafe_order_items:[]}]}));};
