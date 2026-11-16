@@ -2,8 +2,12 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),t=(key)=>window.ummaMenuI18n.t(key);
-let cafe=null,map=null,marker=null,point=null,loading=null,generation=0;
+let cafe=null,map=null,marker=null,point=null,loading=null,opening=null,generation=0;
 let statusKey='Выберите точку доставки на карте.';
+const choosePoint='Выберите точку доставки на карте.';
+const mapUnavailable='Карта недоступна. Используйте геолокацию.';
+const locateFailed='Не удалось определить местоположение. Выберите точку на карте.';
+const isDelivery=()=>$('orderType').value==='delivery';
 function text(key){statusKey=key;$('deliveryPointState').removeAttribute('data-i18n');$('deliveryPointState').textContent=t(key);}
 window.addEventListener('umma-menu:languagechange',()=>text(statusKey));
 // Photon receives only the explicitly selected point, without order or customer details.
@@ -40,11 +44,64 @@ function select(p,resolveAddress=true){
  if(resolveAddress)fillAddress(point);
  text('Точка доставки выбрана.');
 }
-function leaflet(){if(window.L)return Promise.resolve();if(loading)return loading;
- loading=new Promise((resolve,reject)=>{const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.append(css);const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=resolve;s.onerror=()=>{loading=null;reject(Error());};document.head.append(s);});return loading;
+function leaflet(){
+ if(window.L)return Promise.resolve();
+ if(loading)return loading;
+ if(!document.getElementById('publicDeliveryMapCSS')){
+  const css=document.createElement('link');
+  css.id='publicDeliveryMapCSS';css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.append(css);
+ }
+ loading=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  const fail=()=>{clearTimeout(timer);script.remove();reject(Error('Leaflet unavailable'));};
+  const timer=setTimeout(fail,10000);
+  script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.onload=()=>{clearTimeout(timer);window.L?resolve():fail();};
+  script.onerror=fail;
+  document.head.append(script);
+ }).catch(error=>{loading=null;throw error;});
+ return loading;
 }
-$('deliveryMapOpen').onclick=async()=>{const button=$('deliveryMapOpen');button.disabled=true;try{if(!cafe?.delivery_zone)throw Error();await leaflet();$('deliveryMap').hidden=false;if(!map){map=L.map('deliveryMap',{scrollWheelZoom:false}).setView([Number(cafe.latitude),Number(cafe.longitude)],15);window.UmmaMaps.basemap(map,$('deliveryMap'),()=>{}, {blueWater:true});L.polygon(cafe.delivery_zone,{color:'#03a2a5',weight:2,fillOpacity:.1}).addTo(map);map.fitBounds(cafe.delivery_zone);map.on('click',e=>select(e.latlng));if(point)select({lat:point.latitude,lng:point.longitude},false);}map.invalidateSize();}catch{text('Карта недоступна. Используйте геолокацию.');}finally{button.disabled=false;}};
-$('deliveryLocate').onclick=()=>{const version=++generation;if(!navigator.geolocation){text('Не удалось определить местоположение. Выберите точку на карте.');return;}text('Определяем местоположение…');navigator.geolocation.getCurrentPosition(p=>{if(version!==generation||$('orderType').value!=='delivery')return;select({lat:p.coords.latitude,lng:p.coords.longitude});if(point&&map)map.setView([point.latitude,point.longitude],17);},()=>{if(version===generation)text('Не удалось определить местоположение. Выберите точку на карте.');},{enableHighAccuracy:true,timeout:12000,maximumAge:0});};
+function openMap(){
+ if(!isDelivery())return;
+ const canvas=$('deliveryMap'),button=$('deliveryMapOpen');
+ if(map){canvas.hidden=false;map.invalidateSize();return;}
+ if(opening)return;
+ if(!cafe?.delivery_zone){button.hidden=false;if(statusKey===choosePoint)text(mapUnavailable);return;}
+ button.hidden=true;
+ opening=(async()=>{
+  try{
+   await leaflet();
+   if(!isDelivery())return;
+   canvas.hidden=false;
+   map=L.map(canvas,{scrollWheelZoom:false}).setView([Number(cafe.latitude),Number(cafe.longitude)],15);
+   window.UmmaMaps.basemap(map,canvas,key=>{if(key==='Карта загружается с ошибками. Попробуйте позже.'&&statusKey===choosePoint)text(mapUnavailable);},{blueWater:true});
+   L.polygon(cafe.delivery_zone,{color:'#03a2a5',weight:2,fillOpacity:.1}).addTo(map);
+   map.fitBounds(cafe.delivery_zone);
+   map.on('click',e=>{generation++;select(e.latlng);});
+   if(point){select({lat:point.latitude,lng:point.longitude},false);if(point)map.setView([point.latitude,point.longitude],17);}
+   else if(statusKey===mapUnavailable)text(choosePoint);
+   map.invalidateSize();
+  }catch{
+   map?.remove();map=null;marker=null;canvas.hidden=true;button.hidden=false;
+   if(statusKey===choosePoint)text(mapUnavailable);
+  }finally{opening=null;}
+ })();
+}
+$('deliveryMapOpen').onclick=openMap;
+$('deliveryLocate').onclick=()=>{
+ const version=++generation;
+ if(!navigator.geolocation){text(locateFailed);return;}
+ text('Определяем местоположение…');
+ openMap();
+ navigator.geolocation.getCurrentPosition(p=>{
+  if(version!==generation||!isDelivery()||$('customerFields').disabled)return;
+  if(!cafe?.delivery_zone){text(locateFailed);return;}
+  select({lat:p.coords.latitude,lng:p.coords.longitude});
+  if(point&&map)map.setView([point.latitude,point.longitude],17);
+ },()=>{if(version===generation)text(locateFailed);},{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+};
 function mode(){
  generation++;cancelAddress();const delivery=$('orderType').value==='delivery';
  $('deliveryFields').hidden=!delivery;
@@ -53,11 +110,14 @@ function mode(){
  cash.disabled=delivery;$('cashPaymentChoice').hidden=delivery;
  if(delivery&&cash.checked)document.querySelector('[name="paymentMethod"][value="qr"]').checked=true;
  $('tableNumber').closest('label').hidden=true;
- if(map&&delivery)setTimeout(()=>map.invalidateSize(),0);
+ if(delivery){
+  text(point?'Точка доставки выбрана.':choosePoint);
+  openMap();
+ }
 }
 $('orderType').onchange=mode;mode();
 window.ummaPublicDelivery={
- setCafe(value){cafe=value;},
+ setCafe(value){cafe=value;if(value)openMap();},
  point:()=>point?{...point}:null,
  fields(){if($('orderType').value!=='delivery')return {};if(!point)throw Error(t('Выберите точку доставки на карте.'));return {orderType:'delivery',address:$('deliveryAddress').value.trim(),phone:$('deliveryPhone').value.trim(),...point};},
  reset(){cancelAddress();autoAddress='';point=null;generation++;if(marker){marker.remove();marker=null;}mode();text('Выберите точку доставки на карте.');},
