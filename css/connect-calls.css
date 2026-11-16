@@ -128,3 +128,74 @@
   background: #a6293e;
   border-color: #f092a3;
 }
+
+.umma-call-incoming {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: radial-gradient(ellipse at 50% 38%, #10645c, #083735 55%, #042220);
+}
+.umma-call-incoming .umma-call-card {
+  box-sizing: border-box;
+  min-height: 100%;
+  align-content: center;
+  gap: 12px;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+}
+.umma-call-identity {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.umma-call-incoming h2 {
+  font-size: clamp(26px, 7vw, 44px);
+  line-height: 1.15;
+}
+.umma-call-incoming .umma-call-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.umma-call-mark {
+  display: none;
+}
+.umma-call-incoming .umma-call-mark {
+  display: grid;
+  width: clamp(58px, 16vmin, 104px);
+  aspect-ratio: 1;
+  margin-bottom: 12px;
+  place-items: center;
+  color: #fff0cd;
+  border: 1px solid #cfb475;
+  border-radius: 50%;
+  background: #ffffff12;
+  box-shadow: 0 0 0 8px #ffffff09;
+}
+.umma-call-mark svg {
+  width: 44%;
+  height: 44%;
+}
+.umma-call-incoming .umma-call-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 350px);
+  gap: 12px;
+  margin-top: clamp(12px, 6vh, 48px);
+}
+.umma-call-incoming .umma-call-controls button {
+  min-height: 54px;
+  overflow-wrap: anywhere;
+}
+.umma-call-incoming .umma-call-ring-button {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
