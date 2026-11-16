@@ -670,3 +670,43 @@ audio.connect-media{width:min(100%,300px)}
   pointer-events:none;
 }
 .umma-connect-chat .connect-camera-torch[hidden] {display:none}
+
+/* Customer-selectable Islamic wallpaper themes (local to each device). */
+.public-cafe-menu .umma-connect-chat .connect-thread{position:relative;isolation:isolate;background:var(--chat-paper,#fffaf0)!important;}
+.public-cafe-menu .umma-connect-chat .connect-thread::before{
+ content:"";position:sticky;top:0;display:block;height:0;z-index:-1;pointer-events:none;
+}
+.public-cafe-menu .umma-connect-chat .connect-thread{
+ background-image:linear-gradient(var(--chat-wash,rgba(255,250,240,.83)),var(--chat-wash,rgba(255,250,240,.83))),url("../assets/chat-ornament.png?v=2")!important;
+ background-size:auto,180px 180px!important;background-repeat:repeat!important;
+}
+.umma-connect-chat[data-chat-theme=light]{--chat-paper:#fffaf1;--chat-wash:rgba(255,250,241,.88);--chat-own:#fff3d9;--chat-other:#fff;}
+.umma-connect-chat[data-chat-theme=turquoise]{--chat-paper:#a5ece6;--chat-wash:rgba(103,217,210,.76);--chat-own:#fff4da;--chat-other:#e9fffc;}
+.umma-connect-chat[data-chat-theme=dark]{--chat-paper:#064c4a;--chat-wash:rgba(0,67,65,.76);--chat-own:#d5f0e7;--chat-other:#f3fffc;}
+.umma-connect-chat[data-chat-theme=beige]{--chat-paper:#fae8cc;--chat-wash:rgba(249,228,193,.84);--chat-own:#fff2d4;--chat-other:#fffaf0;}
+.umma-connect-chat[data-chat-theme=blue]{--chat-paper:#1c527e;--chat-wash:rgba(23,70,112,.78);--chat-own:#dceffb;--chat-other:#f2f8ff;}
+.umma-connect-chat[data-chat-theme=lavender]{--chat-paper:#e8dcf7;--chat-wash:rgba(229,213,248,.85);--chat-own:#f9eafb;--chat-other:#fffaff;}
+.public-cafe-menu .umma-connect-chat[data-chat-theme] .connect-thread>li:not(.connect-empty){
+ background:var(--chat-other)!important;border-radius:16px 16px 16px 5px!important;
+ padding:8px 11px!important;box-shadow:0 2px 8px rgba(0,0,0,.06)!important;
+ max-width:86%;color:#173b3b;
+}
+.public-cafe-menu .umma-connect-chat[data-chat-theme] .connect-thread>li[data-direction=customer]{
+ background:var(--chat-own)!important;border-radius:16px 16px 5px 16px!important;
+}
+.connect-theme-dialog{width:min(94vw,520px);max-height:85dvh;overflow:auto;border:1px solid #d5c38d;border-radius:22px;padding:20px;background:#fffdf9;color:#183f3d;box-shadow:0 20px 60px #082d2d44;}
+.connect-theme-dialog::backdrop{background:#092d2d99;}
+.connect-theme-dialog h3{font:700 21px system-ui;margin:0 0 18px;}
+.connect-theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.connect-theme-choice{display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:6px;border:2px solid transparent;border-radius:15px;background:#f8f8f5;color:#173b3b;font:600 12px system-ui;cursor:pointer;min-width:0;}
+.connect-theme-choice[aria-pressed=true]{border-color:#078c8c;box-shadow:0 0 0 2px #bce9e5;}
+.connect-theme-choice[aria-pressed=true]::after{content:"✓";position:absolute;align-self:flex-end;margin:7px;color:white;background:#007c80;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;}
+.connect-theme-preview{display:block;aspect-ratio:3/4;border-radius:10px;background-image:linear-gradient(var(--preview-wash),var(--preview-wash)),url("../assets/chat-ornament.png?v=2");background-size:auto,110px 110px;background-color:var(--preview-color);}
+.connect-theme-choice[data-theme=light]{--preview-color:#fffaf1;--preview-wash:#fffaf1dd}
+.connect-theme-choice[data-theme=turquoise]{--preview-color:#a5ece6;--preview-wash:#67d9d2bb}
+.connect-theme-choice[data-theme=dark]{--preview-color:#064c4a;--preview-wash:#004341bb}
+.connect-theme-choice[data-theme=beige]{--preview-color:#fae8cc;--preview-wash:#f9e4c1dd}
+.connect-theme-choice[data-theme=blue]{--preview-color:#1c527e;--preview-wash:#174670bb}
+.connect-theme-choice[data-theme=lavender]{--preview-color:#e8dcf7;--preview-wash:#e5d5f8dd}
+.connect-theme-close{margin-top:16px;width:100%;min-height:44px;border:1px solid #b9d9d6;border-radius:12px;background:#e7f7f4;color:#075f60;font-weight:700;}
+@media(max-width:360px){.connect-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
