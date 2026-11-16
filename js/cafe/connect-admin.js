@@ -107,13 +107,13 @@ function showMessages(data){
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
-  if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>translateChat(m.id,target,data.client.id)));
+  if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}))));
   if(m.media_kind)li.append(window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],
    async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url,
    'Не удалось открыть вложение. Попробуйте ещё раз.'));
   if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation('ru',target,
-    ()=>api('staffVoice',{clientId:data.client.id,messageId:m.id,language:target}),data.voiceTranslation));
+    async()=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target);},true));
   }
   li.append(node('small',dateTime.format(new Date(m.created_at))));
   if(m.direction!=='customer')li.append(node('small',null,'connect-receipt'));
