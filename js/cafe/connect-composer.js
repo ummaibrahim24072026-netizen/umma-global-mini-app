@@ -197,6 +197,8 @@
    cameraSession=null;
    clearTimeout(session.timer);
    if(session.recorder&&session.recorder.state!=='inactive')session.recorder.stop();
+   session.stopDrawing?.();
+   session.recordStream?.getVideoTracks().forEach(t=>t.stop());
    releaseCamera(session);
    cameraPanel.hidden=true;
    controls();
@@ -204,7 +206,7 @@
   async function openCamera(kind,facing='environment'){
    if(cameraSession||working||starting||recording)return;
    const video=kind==='video';
-   const session={kind,stream:null,recorder:null,timer:null,facing};
+   const session={kind,stream:null,recorder:null,timer:null,facing,flipping:false,recordStream:null,stopDrawing:null};
    if(video)session.mime=['video/webm','video/mp4'].find(type=>window.MediaRecorder?.isTypeSupported?.(type));
    cameraSession=session;
    cameraPanel.hidden=false;
@@ -265,52 +267,102 @@
     canvas.toBlob(finish,'image/jpeg',0.85);
    }catch{finish(null);}
   }
+  function createStableVideo(session,source,dimension){
+   const canvas=document.createElement('canvas');
+   canvas.width=dimension===480?480:720;
+   canvas.height=dimension===480?480:405;
+   const ctx=canvas.getContext('2d');
+   if(!ctx||!canvas.captureStream)throw Error('canvas unavailable');
+   let active=true,frame=0;
+   const draw=()=>{
+    if(!active)return;
+    if(source.readyState>=2&&source.videoWidth&&source.videoHeight){
+     const w=source.videoWidth,h=source.videoHeight,cw=canvas.width,ch=canvas.height;
+     const scale=Math.max(cw/w,ch/h),sw=cw/scale,sh=ch/scale;
+     ctx.save();
+     if(session.facing==='user'){ctx.translate(cw,0);ctx.scale(-1,1);}
+     try{ctx.drawImage(source,(w-sw)/2,(h-sh)/2,sw,sh,0,0,cw,ch);}catch{}
+     ctx.restore();
+    }
+    frame=requestAnimationFrame(draw);
+   };
+   draw();
+   session.stopDrawing=()=>{active=false;cancelAnimationFrame(frame);};
+   const stream=canvas.captureStream(24);
+   session.recordStream=new MediaStream([...stream.getVideoTracks(),...session.stream.getAudioTracks()]);
+   return session.recordStream;
+  }
+  async function switchStreamCamera(session,source){
+   if(session.flipping||!session.stream)return;
+   session.flipping=true;
+   const next=session.facing==='user'?'environment':'user';
+   const old=session.stream.getVideoTracks()[0];
+   try{
+    old?.stop();
+    const replacement=await navigator.mediaDevices.getUserMedia({audio:false,video:{
+     facingMode:{ideal:next},width:{ideal:session.kind==='circle'?480:1280},
+     height:{ideal:session.kind==='circle'?480:720},frameRate:{ideal:24}
+    }});
+    const current=session.kind==='circle'?circleSession===session:cameraSession===session;
+    if(!current){replacement.getTracks().forEach(t=>t.stop());return;}
+    if(old)session.stream.removeTrack(old);
+    session.stream.addTrack(replacement.getVideoTracks()[0]);
+    session.facing=next;
+    if(session.kind==='circle')circleFacing=next;
+    source.srcObject=session.stream;
+    await source.play();
+    status.textContent='';
+   }catch{
+    status.textContent=lang==='ru'?'Не удалось переключить камеру. Запись продолжается.':'Camera switch failed. Recording continues.';
+    try{
+     const restored=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:session.facing}}});
+     const current=session.kind==='circle'?circleSession===session:cameraSession===session;
+     if(current){
+      session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
+      session.stream.addTrack(restored.getVideoTracks()[0]);
+      source.srcObject=session.stream;
+      await source.play();
+     }else restored.getTracks().forEach(t=>t.stop());
+    }catch{}
+   }finally{session.flipping=false;}
+  }
   function recordVideo(session){
-   function stopVideo(){
+   if(session.recorder){
     clearTimeout(session.timer);
     shutter.disabled=true;
-    if(session.recorder.state!=='inactive')session.recorder.stop();
+    if(session.recorder.state==='recording')session.recorder.stop();
+    return;
    }
-   if(session.recorder){stopVideo();return;}
    const chunks=[];
-   const maxBytes=limits.video*1024*1024;
    let size=0;
    try{
-    const recorder=new MediaRecorder(session.stream,{
+    const recordStream=createStableVideo(session,cameraPreview,720);
+    const recorder=new MediaRecorder(recordStream,{
      mimeType:session.mime,videoBitsPerSecond:1800000,audioBitsPerSecond:96000
     });
     session.recorder=recorder;
-    recorder.ondataavailable=event=>{
-     if(cameraSession!==session||!event.data.size)return;
-     size+=event.data.size;
-     if(size>maxBytes){
-      closeCamera();
-      status.textContent=sizeError('video');
-      return;
-     }
-     chunks.push(event.data);
+    recorder.ondataavailable=e=>{
+     if(cameraSession!==session||!e.data.size)return;
+     size+=e.data.size;
+     if(size>limits.video*1024*1024){closeCamera();status.textContent=sizeError('video');return;}
+     chunks.push(e.data);
     };
-    recorder.onerror=()=>{
-     if(cameraSession!==session)return;
-     closeCamera();
-     status.textContent=videoLabels[3];
-    };
+    recorder.onerror=()=>{closeCamera();status.textContent=videoLabels[3];};
     recorder.onstop=()=>{
+     session.stopDrawing?.();
+     session.recordStream?.getVideoTracks().forEach(t=>t.stop());
      if(cameraSession!==session)return;
-     closeCamera();
      const type=(recorder.mimeType||session.mime).split(';')[0];
+     closeCamera();
      if(!size||!formats.video.includes(type)){status.textContent=videoLabels[3];return;}
      setDraft(new Blob(chunks,{type}),'video');
      status.textContent='';
     };
-    recorder.start(1000);
-    session.timer=setTimeout(stopVideo,videoDuration);
+    recorder.start(250);
+    session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},videoDuration);
     shutter.textContent=videoLabels[0];
     status.textContent=videoLabels[1];
-   }catch{
-    closeCamera();
-    status.textContent=videoLabels[3];
-   }
+   }catch{closeCamera();status.textContent=videoLabels[3];}
   }
   if(compact){
    for(const kind of kinds){
@@ -389,9 +441,9 @@
    if(working||starting||recording||cameraSession||!onInstantVideo)return;
    if(event?.button!==undefined&&event.button!==0)return;
    event?.preventDefault();
-   const session={held:true,pressAt:performance.now(),tapMode:false,cancelled:false,stream:null,recordStream:null,canvas:null,drawFrame:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null,flipping:false};
+   const session={kind:'circle',facing:circleFacing,held:true,pressAt:performance.now(),tapMode:false,cancelled:false,stream:null,recordStream:null,canvas:null,drawFrame:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null,flipping:false};
    circleSession=session;
-   try{circleButton.setPointerCapture?.(event.pointerId);}catch{}
+   // Do not capture the pointer: the camera switch is a separate touch target.
    circlePanel.hidden=false;
    circleTimer.textContent='0:00';
    circleButton.classList.add('is-recording');
@@ -400,39 +452,15 @@
    try{
     if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('camera');
     const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:{facingMode:circleFacing,width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}});
-    if(circleSession!==session||session.cancelled||!session.held){stream.getTracks().forEach(t=>t.stop());finishCircle(session,true);return;}
+    if(circleSession!==session||session.cancelled){stream.getTracks().forEach(t=>t.stop());finishCircle(session,true);return;}
     session.stream=stream;
     circlePreview.srcObject=stream;
     await circlePreview.play();
-    if(circleSession!==session||!session.held){finishCircle(session,true);return;}
+    if(circleSession!==session||session.cancelled){finishCircle(session,true);return;}
     const mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
     if(!mime)throw Error('format');
-    // Record a stable canvas track so camera switches do not interrupt MediaRecorder.
-    const canvas=document.createElement('canvas');
-    canvas.width=canvas.height=480;
-    const context=canvas.getContext('2d');
-    if(!context||!canvas.captureStream)throw Error('canvas');
-    session.canvas=canvas;
-    let drawing=true;
-    const draw=()=>{
-     if(!drawing)return;
-     if(circlePreview.readyState>=2){
-      const w=circlePreview.videoWidth,h=circlePreview.videoHeight;
-      if(w&&h){
-       const side=Math.min(w,h);
-       context.save();
-       if(circleFacing==='user'){context.translate(480,0);context.scale(-1,1);}
-       context.drawImage(circlePreview,(w-side)/2,(h-side)/2,side,side,0,0,480,480);
-       context.restore();
-      }
-     }
-     session.drawFrame=requestAnimationFrame(draw);
-    };
-    session.stopDrawing=()=>{drawing=false;cancelAnimationFrame(session.drawFrame);};
-    draw();
-    const canvasStream=canvas.captureStream(24);
-    session.recordStream=new MediaStream([...canvasStream.getVideoTracks(),...stream.getAudioTracks()]);
-    const recorder=new MediaRecorder(session.recordStream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
+    const recordStream=createStableVideo(session,circlePreview,480);
+    const recorder=new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
     session.recorder=recorder;
     recorder.ondataavailable=e=>{
      if(!e.data.size)return;
@@ -466,55 +494,15 @@
    }
   }
   async function flipCurrentCamera(){
-   if(cameraSession){
-    if(cameraSession.recorder)return;
-    const session=cameraSession;
-    session.facing=session.facing==='user'?'environment':'user';
-    session.stream?.getTracks().forEach(track=>track.stop());
-    session.stream=null;
-    cameraPreview.srcObject=null;
-    cameraSession=null;
-    cameraPanel.hidden=true;
-    controls();
-    await openCamera(session.kind,session.facing);
+   if(circleSession){
+    await switchStreamCamera(circleSession,circlePreview);
     return;
    }
-   if(circleSession){
-    const session=circleSession;
-    if(session.flipping||session.cancelled||!session.stream)return;
-    session.flipping=true;
-    const nextFacing=circleFacing==='user'?'environment':'user';
-    const oldVideo=session.stream.getVideoTracks()[0];
-    try{
-     // Some Android devices cannot open both cameras simultaneously.
-     oldVideo?.stop();
-     const replacement=await navigator.mediaDevices.getUserMedia({
-      audio:false,video:{facingMode:{ideal:nextFacing},width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}
-     });
-     if(circleSession!==session||session.cancelled){
-      replacement.getTracks().forEach(t=>t.stop());return;
-     }
-     session.stream.removeTrack(oldVideo);
-     const newVideo=replacement.getVideoTracks()[0];
-     session.stream.addTrack(newVideo);
-     circleFacing=nextFacing;
-     circlePreview.srcObject=session.stream;
-     await circlePreview.play();
-     status.textContent='';
-    }catch(error){
-     // Keep the recording alive even if this device refuses the camera switch.
-     status.textContent=lang==='ru'?'Не удалось переключить камеру. Запись продолжается.':'Could not switch camera. Recording continues.';
-     try{
-      const restored=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:circleFacing},width:{ideal:480},height:{ideal:480}}});
-      if(circleSession===session){
-       session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
-       session.stream.addTrack(restored.getVideoTracks()[0]);
-       circlePreview.srcObject=session.stream;
-       await circlePreview.play();
-      }else restored.getTracks().forEach(t=>t.stop());
-     }catch{}
-    }finally{session.flipping=false;}
-   }else circleFacing=circleFacing==='user'?'environment':'user';
+   if(cameraSession){
+    await switchStreamCamera(cameraSession,cameraPreview);
+    return;
+   }
+   circleFacing=circleFacing==='user'?'environment':'user';
   }
   function finishCircle(session,discard){
    if(!session)return;
