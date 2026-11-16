@@ -422,3 +422,18 @@ audio.connect-media{width:min(100%,300px)}
   font-size:24px;
   background:white;
 }
+
+.umma-connect-chat .connect-camera-panel:not([hidden]) {
+  grid-area: 4 / 1 / 5 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .5rem;
+}
+.umma-connect-chat .connect-camera-panel video {
+  width: 100%;
+  max-height: min(32dvh, 260px);
+  object-fit: contain;
+  border-radius: 12px;
+  background: #102e32;
+}

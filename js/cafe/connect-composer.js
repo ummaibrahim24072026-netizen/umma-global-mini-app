@@ -17,6 +17,11 @@
   en:['Attach photo or video','Take photo','Record video','Cancel recording'],
   vi:['Đính kèm ảnh hoặc video','Chụp ảnh','Quay video','Hủy ghi âm']
  };
+ const cameraCopy={
+  ru:['Отмена','Выбрать из галереи','Открываем камеру…','Камера недоступна. Разрешите доступ к камере или выберите фото из галереи.','Не удалось сделать снимок. Попробуйте ещё раз.'],
+  en:['Cancel','Choose from gallery','Opening camera…','Camera unavailable. Allow camera access or choose a photo from the gallery.','Could not take the photo. Try again.'],
+  vi:['Hủy','Chọn từ thư viện','Đang mở camera…','Không mở được camera. Hãy cấp quyền hoặc chọn ảnh từ thư viện.','Không chụp được ảnh. Hãy thử lại.']
+ };
  const expressionCopy={
   ru:['Эмодзи','Стикеры','Не удалось добавить стикер'],
   en:['Emoji','Stickers','Could not add sticker'],
@@ -98,6 +103,8 @@
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
   const pickers=[];
+  const cameraLabels=cameraCopy[lang]||cameraCopy.en;
+  let cameraSession=null,cameraPanel,cameraPreview,shutter,gallery;
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars;
   function showExpressions(open){
    if(!expression)return;
@@ -118,10 +125,10 @@
    return control;
   }
   function controls(){
-   const active=starting||!!recording;
+   const active=starting||!!recording||!!cameraSession;
    for(const picker of pickers)picker.disabled=working||active;
    body.disabled=send.disabled=working||active;
-   mic.disabled=working||starting;
+   mic.disabled=working||starting||!!cameraSession;
    remove.disabled=working||active;
    const micLabel=recording?labels[3]:labels[2];
    if(compact){
@@ -132,7 +139,7 @@
      showExpressions(false);
     }
     send.hidden=active||!canSend;
-    mic.hidden=!active&&canSend;
+    mic.hidden=!!cameraSession||(!active&&canSend);
     recordPanel.hidden=!recording;
     iconButton(mic,recording?'stop':'mic',micLabel);
    }else mic.textContent=micLabel;
@@ -170,10 +177,78 @@
    bar.append(input,picker);
    return input;
   }
-  for(const kind of kinds)addPicker(kind,labels[kind==='photo'?0:1]);
-  let photoCamera;
+  for(const kind of kinds){
+   const input=addPicker(kind,labels[kind==='photo'?0:1]);
+   if(kind==='photo')gallery=input;
+  }
+  function closeCamera(){
+   if(!cameraSession)return;
+   cameraSession.stream?.getTracks().forEach(track=>track.stop());
+   cameraSession=null;
+   cameraPreview.srcObject=null;
+   cameraPanel.hidden=true;
+   controls();
+  }
+  async function openCamera(){
+   if(cameraSession||working||starting||recording)return;
+   const session={stream:null};
+   cameraSession=session;
+   cameraPanel.hidden=false;
+   cameraPreview.hidden=true;
+   shutter.disabled=true;
+   controls();
+   status.textContent=cameraLabels[2];
+   try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+     audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}
+    });
+    if(cameraSession!==session){
+     stream.getTracks().forEach(track=>track.stop());
+     return;
+    }
+    session.stream=stream;
+    cameraPreview.srcObject=stream;
+    cameraPreview.hidden=false;
+    await cameraPreview.play();
+    if(cameraSession!==session)return;
+    shutter.disabled=false;
+    status.textContent='';
+   }catch{
+    if(cameraSession!==session)return;
+    session.stream?.getTracks().forEach(track=>track.stop());
+    session.stream=null;
+    cameraPreview.srcObject=null;
+    cameraPreview.hidden=true;
+    status.textContent=cameraLabels[3];
+   }
+  }
+  function takePhoto(){
+   const session=cameraSession;
+   const {videoWidth:width,videoHeight:height}=cameraPreview;
+   if(!session?.stream||!width||!height)return;
+   shutter.disabled=true;
+   function finish(file){
+    if(cameraSession!==session)return;
+    shutter.disabled=false;
+    if(!file?.size){status.textContent=cameraLabels[4];return;}
+    if(file.size>limits.photo*1024*1024){status.textContent=sizeError('photo');return;}
+    closeCamera();
+    setDraft(file,'photo');
+    status.textContent='';
+   }
+   try{
+    const canvas=el('canvas');
+    const scale=Math.min(1,1600/Math.max(width,height));
+    canvas.width=Math.max(1,Math.round(width*scale));
+    canvas.height=Math.max(1,Math.round(height*scale));
+    canvas.getContext('2d').drawImage(cameraPreview,0,0,canvas.width,canvas.height);
+    canvas.toBlob(finish,'image/jpeg',0.85);
+   }catch{finish(null);}
+  }
   if(compact){
-   photoCamera=addPicker('photo',compactLabels[1],true);
+   const photoPicker=button(compactLabels[1],openCamera);
+   pickers.push(photoPicker);
+   bar.append(photoPicker);
    addPicker('video',compactLabels[2],true);
   }
   function release(r){
@@ -281,11 +356,22 @@
    tabs.append(emojiTab,stickerTab);
    expressionPanel.append(tabs,choices);
    selectExpressions(false);
-   camera=button(compactLabels[1],()=>{
-    showAttachments(false);
-    showExpressions(false);
-    photoCamera.click();
-   });
+   camera=button(compactLabels[1],openCamera);
+   cameraPanel=el('div',null,'connect-camera-panel');
+   cameraPanel.hidden=true;
+   cameraPreview=el('video');
+   cameraPreview.muted=true;
+   cameraPreview.playsInline=true;
+   shutter=button(compactLabels[1],takePhoto);
+   cameraPanel.append(cameraPreview,shutter,button(cameraLabels[1],()=>{
+    closeCamera();
+    status.textContent='';
+    gallery?.click();
+   }),button(cameraLabels[0],()=>{
+    closeCamera();
+    status.textContent='';
+    camera.focus();
+   }));
    camera.className='connect-camera';
    iconButton(camera,'camera',compactLabels[1]);
    mic.className='primary connect-mic';
@@ -301,14 +387,22 @@
    }));
    const entry=el('div',null,'connect-entry');
    entry.append(expression,body,attach,camera);
-   form.prepend(bar,expressionPanel,preview,recordPanel,entry);
+   form.prepend(bar,expressionPanel,preview,cameraPanel,recordPanel,entry);
    form.append(mic);
    form.addEventListener('focusout',event=>{
     if(event.relatedTarget!==attach&&!bar.contains(event.relatedTarget))showAttachments(false);
     if(event.relatedTarget!==expression&&!expressionPanel.contains(event.relatedTarget))showExpressions(false);
    });
    form.addEventListener('keydown',event=>{
-    if(event.key!=='Escape'||(bar.hidden&&expressionPanel.hidden))return;
+    if(event.key!=='Escape')return;
+    if(cameraSession){
+     event.preventDefault();
+     closeCamera();
+     status.textContent='';
+     camera.focus();
+     return;
+    }
+    if(bar.hidden&&expressionPanel.hidden)return;
     event.preventDefault();
     const trigger=bar.hidden?expression:attach;
     showAttachments(false);
@@ -324,10 +418,11 @@
   }
   return {
    get draft(){return draft;},
-   get recording(){return starting||!!recording;},
+   get recording(){return starting||!!recording||!!cameraSession;},
    busy(value){working=value;controls();},
    clear(){setDraft(null);},
    close(){
+    closeCamera();
     showAttachments(false);
     showExpressions(false);
     generation++;
