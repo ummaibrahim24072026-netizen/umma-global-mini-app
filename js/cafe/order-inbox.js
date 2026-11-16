@@ -3,7 +3,7 @@
 try{const saved=JSON.parse(localStorage.getItem(storeKey)||'null');if(saved&&saved.states&&Array.isArray(saved.messages))data=saved;}catch{}
 const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здесь появятся обновления ваших заказов."], "en": ["Order updates", "Close", "Order updates will appear here."], "vi": ["Thông báo", "Đóng", "Thông tin cập nhật đơn hàng sẽ xuất hiện ở đây."], "ko": ["주문 알림", "닫기", "주문 업데이트가 여기에 표시됩니다."], "zh": ["订单消息", "关闭", "订单更新将在此显示。"], "de": ["Bestellmeldungen", "Schließen", "Hier erscheinen Neuigkeiten zu Ihren Bestellungen."], "fr": ["Mes notifications", "Fermer", "Les mises à jour de vos commandes apparaîtront ici."], "th": ["แจ้งเตือนคำสั่งซื้อ", "ปิด", "ข้อมูลอัปเดตคำสั่งซื้อจะแสดงที่นี่"], "ms": ["Kemas kini pesanan", "Tutup", "Kemas kini pesanan anda akan muncul di sini."], "id": ["Notifikasi pesanan", "Tutup", "Pembaruan pesanan Anda akan muncul di sini."], "ar": ["إشعارات الطلبات", "إغلاق", "ستظهر تحديثات طلباتك هنا."], "pt": ["Notificações", "Fechar", "As atualizações dos seus pedidos aparecerão aqui."]};
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
-const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',refunded:'Возвращено'};
+const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
 const host=document.getElementById('orderInboxHost'),inDock=!!host?.closest('.customer-actions');
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inDock)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
@@ -66,8 +66,9 @@ function renderOrders(list){
   const finished=values.has(delivery?'delivered':'completed');
   const progress=orderStages.findLastIndex(key=>values.has(key));
   const kitchen=courier==='picked_up'||finished?Math.max(progress,3):progress;
+  const awaitingPayment=inDock&&state?.payment==='pending'&&state.status==='pending';
   const stages=[
-   ['pending',kitchen>=0?'done':'future'],
+   ['pending',awaitingPayment?'current':kitchen>=0?'done':'future',awaitingPayment?'awaiting_payment':'pending'],
    ['confirmed',kitchen>=1?'done':'future'],
    ['preparing',kitchen>=3?'done':kitchen===2?'current':'future'],
    ['ready',kitchen>=3?'done':'future']
@@ -81,7 +82,7 @@ function renderOrders(list){
   number.textContent='№'+group.number;
   number.title=[...new Map(group.messages.map(message=>[message.value,message])).values()]
    .sort((a,b)=>a.at-b.at)
-   .map(message=>translate(labels[message.value])+' · '+new Date(message.at).toLocaleString())
+   .map(message=>translate(labels[message.value==='pending'&&awaitingPayment?'awaiting_payment':message.value])+' · '+new Date(message.at).toLocaleString())
    .join('\n');
   const timeline=document.createElement('ol');
   timeline.className='umma-inbox-stages';
@@ -97,7 +98,7 @@ function renderOrders(list){
    else dot.setAttribute('aria-hidden','true');
    dot.textContent=status==='done'?'✓':status==='cancelled'?'×':status==='current'&&!cancelled?'•':'';
    const label=document.createElement('span');
-   label.textContent=(description==='picked_up'&&status==='current'?inTransit[language]:'')||
+   label.textContent=description==='awaiting_payment'?translate('Оплата'):(description==='picked_up'&&status==='current'?inTransit[language]:'')||
     shortLabels[language]?.[stageKeys.indexOf(key)]||translate(labels[description]);
    label.title=translate(labels[description]);
    stage.append(dot,label);

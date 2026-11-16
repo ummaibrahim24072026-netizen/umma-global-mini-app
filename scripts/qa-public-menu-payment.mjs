@@ -38,6 +38,9 @@ for(const method of ['cash','qr']){
  d.getElementById('continueCheckout').click();
  d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await new Promise(r=>setTimeout(r,20));assert.ok(d.getElementById('result').textContent.includes('Не удалось'));submit();await new Promise(r=>setTimeout(r,30));
+ assert.equal(d.getElementById('checkoutTitle').textContent,'Оплата заказа');
+ assert.equal(d.getElementById('paymentConfirmedMark').hidden,true);
+ assert.match(d.getElementById('receiptHint').textContent,/после подтверждения оплаты/);
  assert.equal(created,2);assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(calls[0].paymentMethod,method);assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('guestPayment').hidden,method!=='qr');assert.ok(d.getElementById('paymentState').textContent.includes(method==='qr'?'QR':'наличными'));
  const receiptLines=d.getElementById('receiptDetails');
  assert.equal(receiptLines.hidden,false);
@@ -46,6 +49,8 @@ for(const method of ['cash','qr']){
  if(method==='qr'){assert.equal(d.getElementById('paymentBank').options.length,6);assert.ok(d.getElementById('paymentQr').src.startsWith('data:image/png'));d.getElementById('paymentBank').value='mb';d.getElementById('paymentBank').dispatchEvent(new w.Event('change'));const url=new URL(d.getElementById('openBank').href);assert.equal(url.searchParams.get('am'),'90000');assert.equal(url.searchParams.get('ba'),'1062679069@vcb');assert.equal(url.searchParams.get('tn'),'UMMA 98765');}
  for(const code of Object.keys(w.ummaMenuI18n.languages)){w.ummaMenuI18n.setLanguage(code);for(const key of ['Язык','На главный экран','Способ оплаты','Наличные','По QR-коду','Ваш банк','Открыть банк','Сохранить QR','Ожидаем оплату по QR','Получено наличными','Сдача','Стоимость блюд','Стоимость доставки','Скидка'])if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(w.ummaMenuI18n.t(key)),code+': '+key);}
  w.ummaMenuI18n.setLanguage('ru');paid=true;d.dispatchEvent(new w.Event('visibilitychange'));await new Promise(r=>setTimeout(r,20));assert.equal(d.getElementById('paymentState').textContent,'Оплачено');assert.equal(d.getElementById('guestPayment').hidden,true);assert.equal(d.getElementById('orderState').textContent,'Заказ готов');assert.equal(calls.filter(x=>/paid|confirm/.test(x.action)).length,0);assert.ok(JSON.parse(w.sessionStorage.getItem('umma-menu-receipt')).requestKey);
+ assert.equal(d.getElementById('checkoutTitle').textContent,'Ваш заказ');
+ assert.equal(d.getElementById('paymentConfirmedMark').hidden,false);
  assert.equal(d.getElementById('receiptCash').hidden,method!=='cash');
  if(method==='cash'){
   assert.match(d.getElementById('receiptTendered').textContent,/100\D?000/);

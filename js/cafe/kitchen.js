@@ -62,6 +62,14 @@
   }
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
   const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
+  const awaitingWebPayment=o=>awaitingCounterPayment(o)&&o.created_via==="customer"&&o.chat_available===false;
+  const hiddenFromPreparation=o=>awaitingCounterPayment(o)&&(
+    ((o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)||
+    (document.body.dataset.workspace==="orders"&&awaitingWebPayment(o))
+  );
+  const preparationAlerts=()=>orders.filter(o=>!hiddenFromPreparation(o)&&!(
+    ["orders","pos","cashOrders"].includes(document.body.dataset.workspace)&&awaitingWebPayment(o)
+  ));
   const counterPaymentButton=o=>o.canAcceptPayments===true&&awaitingCounterPayment(o)?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-payment-status="paid">'+(o.payment_method==="cash"?"Принять наличные · Оплачено":"Подтвердить поступление оплаты")+'</button>':"";
   function orderItemPhoto(item) {
     const photo = item.product && window.ummaCafeProductPhoto?.(item.product);
@@ -102,7 +110,7 @@
     if (!root) return;
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
-    shown=shown.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+    shown=shown.filter(o=>!hiddenFromPreparation(o));
     const counter=document.body.dataset.workspace==="pos" && byId("counterIncoming")?.hidden===false;
     if(counter){
       const locationId=byId("posLocation").value;
@@ -119,7 +127,7 @@
     const webSummary=byId("webOrderSummary");
     if(webSummary){
       webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";
-      const visible=orders.filter(o=>(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true));
+      const visible=orders.filter(o=>(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!hiddenFromPreparation(o));
       const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
@@ -273,7 +281,7 @@
       orders = incomingOrders;
       if (changed) {
         lastOrdersFingerprint = fingerprint;
-        window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)), courierWorkspace);
+        window.ummaKitchenLive?.update(preparationAlerts(), courierWorkspace);
     window.ummaCourierTracking?.syncOrders(orders);
         render();
         renderOpenBills();
@@ -334,7 +342,7 @@
     locations = Array.isArray(result.locations) ? result.locations : [];
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
-    window.ummaKitchenLive?.update(orders.filter(o=>!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)), courierWorkspace);
+    window.ummaKitchenLive?.update(preparationAlerts(), courierWorkspace);
     window.ummaCourierTracking?.syncOrders(orders);
     render();
     renderOpenBills();
@@ -905,7 +913,7 @@
   }
   function renderStaffActiveOrders() {
     const root=byId("staffActiveOrders");if(!root)return;
-    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)&&!(awaitingCounterPayment(o)&&(o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    const active=orders.filter(o=>!["completed","cancelled"].includes(o.status)&&!hiddenFromPreparation(o)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     syncSelfServiceCheckout();
     updateTableAvailability();
     root.innerHTML=active.length?active.map(o=>{
