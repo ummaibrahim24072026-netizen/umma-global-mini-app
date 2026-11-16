@@ -155,7 +155,8 @@
 .public-cafe-menu .customer-actions .dock-menu { grid-column: 1; }
 .public-cafe-menu #customerMessagesButton { grid-column: 2; }
 .public-cafe-menu #nearbyCafeButton { grid-column: 3; }
-.public-cafe-menu .customer-actions #receiptButton { grid-column: 4 / 6; }
+.public-cafe-menu .customer-actions #receiptButton { grid-column: 4; }
+.public-cafe-menu .customer-actions #openCart { grid-column: 5; }
 .public-cafe-menu .customer-actions .plain-btn {
   display: flex;
   position: relative;
@@ -213,9 +214,12 @@
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z M15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'/%3E%3C/svg%3E");
 }
 .public-cafe-menu .customer-actions #receiptButton {
-  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10a2 2 0 0 1 2 1.8l1 9A2 2 0 0 1 18 20H6a2 2 0 0 1-2-2.2l1-9A2 2 0 0 1 7 7Zm2 2V7a3 3 0 0 1 6 0v2'/%3E%3C/svg%3E");
+  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3l3 2 3-2 3 2 3-2v18l-3-2-3 2-3-2-3 2V3Zm3 6h6m-6 4h6'/%3E%3C/svg%3E");
   border: 0;
   background: transparent;
+}
+.public-cafe-menu .customer-actions #openCart {
+  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 11 2 8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l2-8M3 11h18M7 11l3-6m7 6-3-6m-4 10v2m4-2v2'/%3E%3C/svg%3E");
 }
 .public-cafe-menu .customer-actions #receiptButton.has-active-orders {
   --dock-icon-surface: #f8edce;
@@ -376,10 +380,16 @@
   color: white;
   font: 750 11px/1 system-ui, sans-serif;
 }
-#customerMessagesButton .messages-unread {
+.customer-actions .messages-unread {
   position: absolute;
   z-index: 1;
   inset-block-start: 0;
   inset-inline-end: max(0px, calc(50% - 30px));
   border: 1px solid white;
 }
+
+.public-cafe-menu .customer-actions #openCart.has-items {
+  --dock-icon-surface: #c4eeee;
+  color: var(--umma-brand-deep);
+}
+#cartCount { background: #00747a; }

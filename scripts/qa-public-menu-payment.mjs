@@ -18,6 +18,14 @@ for(const method of ['cash','qr']){
  }});
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
  const receiptButton=d.getElementById('receiptButton');
+ const cartButton=d.getElementById('openCart'),cartCount=d.getElementById('cartCount');
+ assert.equal(d.getElementById('orderBar'),null);
+ assert.equal(cartButton.closest('.customer-actions').lastElementChild,cartButton);
+ assert.equal(cartCount.hidden,true);
+ cartButton.click();
+ assert.equal(d.getElementById('checkout').open,true);
+ assert.equal(d.getElementById('continueCheckout').disabled,true);
+ d.getElementById('closeCart').click();
  assert.equal(receiptButton.classList.contains('has-active-orders'),false);
  assert.ok(receiptButton.closest('.customer-actions'));
  assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('customerMessagesButton').closest('.customer-actions'));
@@ -29,6 +37,9 @@ for(const method of ['cash','qr']){
  assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
  d.querySelector('#dishDetails [data-change="1"]').click();
  assert.equal(d.querySelector('#dishDetails .cafe-card-quantity strong').textContent,'1');
+ assert.equal(cartCount.hidden,false);
+ assert.equal(cartCount.textContent,'1');
+ assert.equal(cartButton.classList.contains('has-items'),true);
  d.getElementById('dishDetails').close();
  d.getElementById('openCart').click();
  assert.equal(d.getElementById('cartStep').hidden,false);
@@ -40,6 +51,7 @@ for(const method of ['cash','qr']){
  d.getElementById('continueCheckout').click();
  d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
  const submit=()=>d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await new Promise(r=>setTimeout(r,20));assert.ok(d.getElementById('result').textContent.includes('Не удалось'));submit();await new Promise(r=>setTimeout(r,30));
+ assert.equal(cartCount.hidden,true);
  assert.equal(d.getElementById('checkoutTitle').textContent,'Оплата заказа');
  assert.equal(d.getElementById('paymentConfirmedMark').hidden,true);
  assert.match(d.getElementById('receiptHint').textContent,/после подтверждения оплаты/);
@@ -61,7 +73,7 @@ for(const method of ['cash','qr']){
  }
  terminal=method==='cash'?'completed':'cancelled';
  assert.equal(receiptButton.classList.contains('has-active-orders'),true);
- assert.equal(receiptButton.textContent,'Мои заказы');
+ assert.equal(receiptButton.textContent,'Заказы');
  d.getElementById('newOrder').click();
  receiptButton.click();
  assert.equal(d.getElementById('activeOrdersList').hidden,false);
@@ -72,7 +84,7 @@ for(const method of ['cash','qr']){
  d.dispatchEvent(new w.Event('visibilitychange'));
  await new Promise(r=>setTimeout(r,20));
  assert.equal(receiptButton.classList.contains('has-active-orders'),false);
- assert.equal(receiptButton.textContent,'Мои заказы');
+ assert.equal(receiptButton.textContent,'Заказы');
  assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipts'))[0].status,terminal);
  d.getElementById('newOrder').click();
  receiptButton.click();

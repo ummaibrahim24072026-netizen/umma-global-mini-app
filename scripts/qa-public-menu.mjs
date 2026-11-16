@@ -14,9 +14,9 @@ d.querySelector('[data-category="soups"]').click();assert.equal(d.querySelectorA
 d.querySelector('[data-category="all"]').click();
 d.getElementById('searchToggle').click();d.getElementById('search').value='рис';d.getElementById('search').dispatchEvent(new w.Event('input'));assert.equal(d.querySelectorAll('[data-card]').length,1);assert.match(d.querySelector('[data-card]').textContent,/Плов/);
 d.getElementById('clearSearch').click();
-d.querySelector('[data-id="'+a.id+'"][data-change="1"]').click();assert.match(d.getElementById('barTotal').textContent,/90/);assert.equal(d.getElementById('barCount').textContent,'1');
-d.querySelector('[data-id="'+a.id+'"][data-change="1"]').click();assert.match(d.getElementById('barTotal').textContent,/180/);
-d.querySelector('[data-id="'+a.id+'"][data-change="-1"]').click();assert.match(d.getElementById('barTotal').textContent,/90/);
+d.querySelector('[data-id="'+a.id+'"][data-change="1"]').click();assert.match(d.getElementById('cartTotal').textContent,/90/);assert.equal(d.getElementById('cartCount').textContent,'1');
+d.querySelector('[data-id="'+a.id+'"][data-change="1"]').click();assert.match(d.getElementById('cartTotal').textContent,/180/);
+d.querySelector('[data-id="'+a.id+'"][data-change="-1"]').click();assert.match(d.getElementById('cartTotal').textContent,/90/);
 d.getElementById('openCart').click();assert.equal(d.getElementById('checkout').open,true);
 assert.equal(d.getElementById('customerPhone'),null);assert.equal(d.getElementById('customerName').required,false);assert.equal(d.getElementById('customerName').value,'');
 d.getElementById('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();assert.equal(requests.length,1);assert.equal(d.getElementById('customerFields').disabled,true);assert.match(d.getElementById('result').textContent,/не продублируется/);assert.equal(requests[0].point,'test-point');assert.equal(requests[0].name,'');assert.equal(requests[0].tableNumber,'');assert.ok(!('phone' in requests[0]));assert.equal(w.location.search,'');assert.equal(requests[0].items[0].productId,a.id);assert.equal(requests[0].items[0].quantity,1);

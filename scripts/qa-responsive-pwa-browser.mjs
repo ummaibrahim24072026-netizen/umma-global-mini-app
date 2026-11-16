@@ -130,7 +130,7 @@ try {
     assert.equal(await page.locator('html').getAttribute('dir'), language === 'ar' ? 'rtl' : 'ltr');
     for (const [width,height] of sizes) {
       await page.setViewportSize({ width, height });
-      await fits(page, 'Menu ' + language, ['.cafe-product','.order-bar','.menu-actions','.customer-dock','.customer-actions']);
+      await fits(page, 'Menu ' + language, ['.cafe-product','#openCart','.menu-actions','.customer-dock','.customer-actions']);
     }
     await page.setViewportSize({width:320,height:568});
     await page.evaluate(async () => {

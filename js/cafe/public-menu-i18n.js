@@ -3,6 +3,8 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Меню":{"en":"Menu","vi":"Thực đơn","ko":"메뉴","zh":"菜单","de":"Menü","fr":"Menu","th":"เมนู","ms":"Menu","id":"Menu","ar":"القائمة","pt":"Menu"},
+"Заказы":{"en":"Orders","vi":"Đơn hàng","ko":"주문","zh":"订单","de":"Bestellungen","fr":"Commandes","th":"คำสั่งซื้อ","ms":"Pesanan","id":"Pesanan","ar":"الطلبات","pt":"Pedidos"},
 "Сообщения":{"en":"Messages","vi":"Tin nhắn","ko":"메시지","zh":"消息","de":"Nachrichten","fr":"Messages","th":"ข้อความ","ms":"Mesej","id":"Pesan","ar":"الرسائل","pt":"Mensagens"},
 "Профиль":{"en":"Profile","vi":"Hồ sơ","ko":"프로필","zh":"个人资料","de":"Profil","fr":"Profil","th":"โปรไฟล์","ms":"Profil","id":"Profil","ar":"الملف الشخصي","pt":"Perfil"},
 "Халяльная кухня":{"en":"Halal cuisine","vi":"Ẩm thực Halal","ko":"할랄 요리","zh":"清真美食","de":"Halal-Küche","fr":"Cuisine halal","th":"อาหารฮาลาล","ms":"Hidangan halal","id":"Masakan halal","ar":"مأكولات حلال","pt":"Cozinha halal"},
