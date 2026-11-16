@@ -78,7 +78,8 @@ function renderThread(){
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
   if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
-  if(m.body)li.append(el('div',m.body));
+  if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
+  else if(m.body)li.append(el('div',m.body));
   if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,media[m.media_kind],
    async()=> (await api('mediaGet',{messageId:m.id})).url,media.error));
   if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
