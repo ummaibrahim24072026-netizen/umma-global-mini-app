@@ -32,10 +32,29 @@ let pushWork=Promise.resolve();
 function serial(work){const next=pushWork.then(work);pushWork=next.catch(()=>{});return next;}
 async function history(){const cache=await caches.open(PUSH_CACHE),response=await cache.match(historyURL);return response?response.json():{messages:[],count:0};}
 async function storeHistory(value){const cache=await caches.open(PUSH_CACHE);await cache.put(historyURL,new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}}));}
+const callId=value=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+const callTag=id=>'umma-call:'+id;
 const badgeCount=saved=>Math.min(999,(saved.count||0)+(saved.connectCount||0));
 async function setBadge(count){try{if(count)await self.navigator.setAppBadge?.(count);else await self.navigator.clearAppBadge?.();}catch{}}
 self.addEventListener('push',event=>event.waitUntil(serial(async()=>{
  let payload;try{payload=event.data.json();}catch{payload={title:'UMMA Cafe',body:'Order update'};}
+ if(!payload||typeof payload!=='object')payload={title:'UMMA Cafe',body:'Order update'};
+ if(payload.kind==='call'&&callId(payload.callId)){
+  const icon=new URL('./logo/assets/umma-icon-192.png',base).href;
+  await self.registration.showNotification(payload.title||'UMMA',{
+   body:payload.body,icon,badge:icon,tag:callTag(payload.callId),vibrate:[350,150,350],
+   data:{umma:true,kind:'call',callId:payload.callId,staff:payload.staff===true}
+  });
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  for(const client of windows){
+   const path=new URL(client.url).pathname;
+   if(payload.staff===true?path===new URL('staff.html',base).pathname:
+    [new URL('menu/',base).pathname,new URL('menu/index.html',base).pathname].includes(path)){
+    client.postMessage({type:'UMMA_CALL_PUSH'});
+   }
+  }
+  return;
+ }
  const saved=await history();
  const duplicate=!!payload.eventId&&saved.messages.some(m=>m.eventId===payload.eventId);
  if((payload.order||payload.kind==='connect')&&!duplicate){saved.messages.push(payload);saved.messages=saved.messages.slice(-100);const key=payload.kind==='connect'?'connectCount':'count';saved[key]=Math.min(999,(saved[key]||0)+1);await storeHistory(saved);}
@@ -43,7 +62,15 @@ self.addEventListener('push',event=>event.waitUntil(serial(async()=>{
  await setBadge(badgeCount(saved));
  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows)client.postMessage({type:payload.kind==='connect'?'UMMA_CONNECT_PUSH':'UMMA_ORDER_PUSH',payload});
 })));
-self.addEventListener('message',event=>{const data=event.data||{};if(!['UMMA_GET_HISTORY','UMMA_BADGE','UMMA_CONNECT_BADGE','UMMA_RESET'].includes(data.type))return;event.waitUntil(serial(async()=>{
+self.addEventListener('message',event=>{const data=event.data||{};
+ if(data.type==='UMMA_CLOSE_CALL'&&callId(data.callId)){
+  event.waitUntil(serial(async()=>{
+   const notifications=await self.registration.getNotifications({tag:callTag(data.callId)});
+   for(const notification of notifications)notification.close();
+  }));
+  return;
+ }
+ if(!['UMMA_GET_HISTORY','UMMA_BADGE','UMMA_CONNECT_BADGE','UMMA_RESET'].includes(data.type))return;event.waitUntil(serial(async()=>{
  const saved=await history();
  if(data.type==='UMMA_RESET'){saved.messages=[];saved.count=0;saved.connectCount=0;await storeHistory(saved);await setBadge(0);const notifications=await self.registration.getNotifications();for(const n of notifications)if(n.data?.umma)n.close();event.source?.postMessage({type:'UMMA_PUSH_RESET'});return;}
  if(data.type==='UMMA_GET_HISTORY'){event.source?.postMessage({type:'UMMA_PUSH_HISTORY',messages:saved.messages});return;}
@@ -52,11 +79,27 @@ self.addEventListener('message',event=>{const data=event.data||{};if(!['UMMA_GET
  await storeHistory(saved);await setBadge(badgeCount(saved));
  if(!saved[key]){
   const notifications=await self.registration.getNotifications();
-  for(const n of notifications)if(n.data?.umma&&(n.data.kind==='connect')===connect)n.close();
+  for(const n of notifications)if(n.data?.umma&&n.data.kind!=='call'&&(n.data.kind==='connect')===connect)n.close();
  }
 }));});
 self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil((async()=>{
- const connect=event.notification.data?.kind==='connect';
+ const data=event.notification.data||{};
+ if(data.kind==='call'&&callId(data.callId)){
+  const url=new URL(data.staff?'./staff.html?work=messages':'./menu/',base);
+  url.searchParams.set('call',data.callId);
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  const existing=windows.find(c=>{
+   const u=new URL(c.url);
+   return u.origin===url.origin&&
+    (u.pathname===url.pathname||(!data.staff&&u.pathname===url.pathname+'index.html'));
+  });
+  if(existing){
+   await existing.focus();
+   existing.postMessage({type:'UMMA_OPEN_CALL',callId:data.callId});
+  }else await self.clients.openWindow(url.href);
+  return;
+ }
+ const connect=data.kind==='connect';
  const url=new URL(connect?'./menu/?connect=1':'./menu/?messages=1',self.registration.scope);
  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
  const existing=windows.find(c=>{const u=new URL(c.url);return u.origin===url.origin&&(u.pathname===url.pathname||u.pathname===url.pathname+'index.html');});
