@@ -255,7 +255,7 @@
      status.textContent=labels[7];
      timer=setTimeout(request,7000);
     }else{
-     status.textContent=labels[2];
+     status.textContent=result.reason==='service_unavailable'?(locale==='ru'?'Сервис перевода временно недоступен. Оригинал можно прослушать.':labels[2]):labels[2];
      button.textContent=labels[6];
     }
    }catch{
