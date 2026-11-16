@@ -3,12 +3,12 @@
 const models=new Map();
 const base='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
 let library=null;
-const getLib=()=>library||(library=import(base));
+const getLib=()=>library||(library=import(base).catch(error=>{library=null;throw new Error('Не удалось загрузить модуль перевода: '+String(error?.message||error));}));
 const pairs=new Set(['ru-en','en-ru','vi-en','en-vi']);
 const getPipe=async(name,model)=>{
  const key=name+'|'+model;
  if(!models.has(key)){
-  const work=(async()=>{const {pipeline}=await getLib();return pipeline(name,model,{device:'wasm',dtype:'q8'});})();
+  const work=(async()=>{const {pipeline,env}=await getLib();env.allowLocalModels=false;env.allowRemoteModels=true;env.useBrowserCache=true;return pipeline(name,model,{device:'wasm',dtype:'q8'});})();
   models.set(key,work);
   work.catch(()=>models.delete(key));
  }
@@ -41,12 +41,13 @@ async function translate(text,target,source){
  return result;
 }
 async function voice(url,target){
- const transcriber=await getPipe('automatic-speech-recognition','onnx-community/whisper-tiny');
  const response=await fetch(url);
  if(!response.ok)throw Error('audio_download_failed');
  const buffer=await response.arrayBuffer();
  if(buffer.byteLength>12*1024*1024)throw Error('audio_too_large');
- const audioContext=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+ const Audio=window.AudioContext||window.webkitAudioContext;
+ if(!Audio||!window.OfflineAudioContext)throw Error('Аудиообработка не поддерживается браузером');
+ const audioContext=new Audio();
  let samples;
  try{
   const decoded=await audioContext.decodeAudioData(buffer.slice(0));
@@ -54,9 +55,10 @@ async function voice(url,target){
   if(length>16000*90)throw Error('audio_too_long');
   const offline=new OfflineAudioContext(1,length,16000);
   const source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();
-  const converted=await offline.startRendering();samples=converted.getChannelData(0);
+  const converted=await offline.startRendering();samples=new Float32Array(converted.getChannelData(0));
  }finally{await audioContext.close();}
- const output=await transcriber(samples,{task:'translate',chunk_length_s:25});
+ const transcriber=await getPipe('automatic-speech-recognition','onnx-community/whisper-tiny');
+ const output=await transcriber(samples,{task:'translate',chunk_length_s:25,return_timestamps:false});
  const english=output?.text?.trim();
  if(!english)throw Error('transcription_empty');
  const text=await translate(english,target,'en');
