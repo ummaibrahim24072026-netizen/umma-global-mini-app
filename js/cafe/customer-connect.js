@@ -188,12 +188,13 @@ if(setupHost){
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());
- const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()),el('p',t(2)));if(publicChat){
+ const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
   hero.append(close,heroIcon,heroText);
   dialog.append(hero);
  }else{
+  heroText.append(el('p',t(2)));
   hero.append(heroIcon,heroText,close);
   dialog.append(hero,el('small',t(11)));
  }
