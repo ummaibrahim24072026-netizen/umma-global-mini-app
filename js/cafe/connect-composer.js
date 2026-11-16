@@ -22,6 +22,12 @@
   en:['Cancel','Choose from gallery','Opening camera…','Camera unavailable. Allow camera access or choose a photo from the gallery.','Could not take the photo. Try again.'],
   vi:['Hủy','Chọn từ thư viện','Đang mở camera…','Không mở được camera. Hãy cấp quyền hoặc chọn ảnh từ thư viện.','Không chụp được ảnh. Hãy thử lại.']
  };
+ const videoCopy={
+  ru:['Остановить видео','Идёт видеозапись, до 60 секунд.','Видеозапись недоступна. Проверьте доступ к камере и микрофону или выберите видео из галереи.','Не удалось сохранить видео. Попробуйте ещё раз.'],
+  en:['Stop video','Recording video, up to 60 seconds.','Video recording is unavailable. Check camera and microphone permissions or choose a video from the gallery.','Could not save the video. Try again.'],
+  vi:['Dừng quay video','Đang quay video, tối đa 60 giây.','Không thể quay video. Hãy kiểm tra quyền camera và micrô hoặc chọn video từ thư viện.','Không lưu được video. Hãy thử lại.']
+ };
+ const videoDuration=60000;
  const expressionCopy={
   ru:['Эмодзи','Стикеры','Не удалось добавить стикер'],
   en:['Emoji','Stickers','Could not add sticker'],
@@ -104,7 +110,9 @@
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
   const pickers=[];
   const cameraLabels=cameraCopy[lang]||cameraCopy.en;
-  let cameraSession=null,cameraPanel,cameraPreview,shutter,gallery;
+  const videoLabels=videoCopy[lang]||videoCopy.en;
+  const gallery={};
+  let cameraSession=null,cameraPanel,cameraPreview,shutter;
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars;
   function showExpressions(open){
    if(!expression)return;
@@ -157,16 +165,15 @@
    }
    controls();
   }
-  function addPicker(kind,label,capture=false){
+  function addPicker(kind,label){
    const input=el('input');
    input.type='file';
    input.hidden=true;
    input.accept=formats[kind].join(',');
-   if(capture)input.setAttribute('capture','environment');
    input.onchange=()=>{
     const file=input.files[0];
     input.value='';
-    if(!file||working||recording||starting)return;
+    if(!file||working||recording||starting||cameraSession)return;
     if(!formats[kind].includes(file.type)){status.textContent=labels[10];return;}
     if(!file.size||file.size>limits[kind]*1024*1024){status.textContent=sizeError(kind);return;}
     setDraft(file,kind);
@@ -177,30 +184,43 @@
    bar.append(input,picker);
    return input;
   }
-  for(const kind of kinds){
-   const input=addPicker(kind,labels[kind==='photo'?0:1]);
-   if(kind==='photo')gallery=input;
+  for(const kind of kinds)gallery[kind]=addPicker(kind,labels[kind==='photo'?0:1]);
+  function releaseCamera(session){
+   session.stream?.getTracks().forEach(track=>track.stop());
+   session.stream=null;
+   cameraPreview.srcObject=null;
   }
   function closeCamera(){
    if(!cameraSession)return;
-   cameraSession.stream?.getTracks().forEach(track=>track.stop());
+   const session=cameraSession;
    cameraSession=null;
-   cameraPreview.srcObject=null;
+   clearTimeout(session.timer);
+   if(session.recorder&&session.recorder.state!=='inactive')session.recorder.stop();
+   releaseCamera(session);
    cameraPanel.hidden=true;
    controls();
   }
-  async function openCamera(){
+  async function openCamera(kind){
    if(cameraSession||working||starting||recording)return;
-   const session={stream:null};
+   const video=kind==='video';
+   const session={kind,stream:null,recorder:null,timer:null};
+   if(video)session.mime=['video/webm','video/mp4'].find(type=>window.MediaRecorder?.isTypeSupported?.(type));
    cameraSession=session;
    cameraPanel.hidden=false;
    cameraPreview.hidden=true;
    shutter.disabled=true;
+   shutter.textContent=compactLabels[video?2:1];
    controls();
+   if(video&&!session.mime){status.textContent=videoLabels[2];return;}
    status.textContent=cameraLabels[2];
    try{
     const stream=await navigator.mediaDevices.getUserMedia({
-     audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}
+     audio:video,
+     video:{
+      facingMode:{ideal:'environment'},
+      width:{ideal:1280},height:{ideal:video?720:960},
+      ...(video?{frameRate:{ideal:24,max:30}}:{})
+     }
     });
     if(cameraSession!==session){
      stream.getTracks().forEach(track=>track.stop());
@@ -215,11 +235,9 @@
     status.textContent='';
    }catch{
     if(cameraSession!==session)return;
-    session.stream?.getTracks().forEach(track=>track.stop());
-    session.stream=null;
-    cameraPreview.srcObject=null;
+    releaseCamera(session);
     cameraPreview.hidden=true;
-    status.textContent=cameraLabels[3];
+    status.textContent=video?videoLabels[2]:cameraLabels[3];
    }
   }
   function takePhoto(){
@@ -245,11 +263,59 @@
     canvas.toBlob(finish,'image/jpeg',0.85);
    }catch{finish(null);}
   }
+  function recordVideo(session){
+   function stopVideo(){
+    clearTimeout(session.timer);
+    shutter.disabled=true;
+    if(session.recorder.state!=='inactive')session.recorder.stop();
+   }
+   if(session.recorder){stopVideo();return;}
+   const chunks=[];
+   const maxBytes=limits.video*1024*1024;
+   let size=0;
+   try{
+    const recorder=new MediaRecorder(session.stream,{
+     mimeType:session.mime,videoBitsPerSecond:1800000,audioBitsPerSecond:96000
+    });
+    session.recorder=recorder;
+    recorder.ondataavailable=event=>{
+     if(cameraSession!==session||!event.data.size)return;
+     size+=event.data.size;
+     if(size>maxBytes){
+      closeCamera();
+      status.textContent=sizeError('video');
+      return;
+     }
+     chunks.push(event.data);
+    };
+    recorder.onerror=()=>{
+     if(cameraSession!==session)return;
+     closeCamera();
+     status.textContent=videoLabels[3];
+    };
+    recorder.onstop=()=>{
+     if(cameraSession!==session)return;
+     closeCamera();
+     const type=(recorder.mimeType||session.mime).split(';')[0];
+     if(!size||!formats.video.includes(type)){status.textContent=videoLabels[3];return;}
+     setDraft(new Blob(chunks,{type}),'video');
+     status.textContent='';
+    };
+    recorder.start(1000);
+    session.timer=setTimeout(stopVideo,videoDuration);
+    shutter.textContent=videoLabels[0];
+    status.textContent=videoLabels[1];
+   }catch{
+    closeCamera();
+    status.textContent=videoLabels[3];
+   }
+  }
   if(compact){
-   const photoPicker=button(compactLabels[1],openCamera);
-   pickers.push(photoPicker);
-   bar.append(photoPicker);
-   addPicker('video',compactLabels[2],true);
+   for(const kind of kinds){
+    const picker=button(compactLabels[kind==='photo'?1:2],()=>openCamera(kind));
+    pickers.push(picker);
+    bar.append(picker);
+   }
   }
   function release(r){
    clearTimeout(r.timer);
@@ -356,17 +422,21 @@
    tabs.append(emojiTab,stickerTab);
    expressionPanel.append(tabs,choices);
    selectExpressions(false);
-   camera=button(compactLabels[1],openCamera);
+   camera=button(compactLabels[1],()=>openCamera('photo'));
    cameraPanel=el('div',null,'connect-camera-panel');
    cameraPanel.hidden=true;
    cameraPreview=el('video');
    cameraPreview.muted=true;
    cameraPreview.playsInline=true;
-   shutter=button(compactLabels[1],takePhoto);
+   shutter=button(compactLabels[1],()=>{
+    if(cameraSession?.kind==='video')recordVideo(cameraSession);
+    else takePhoto();
+   });
    cameraPanel.append(cameraPreview,shutter,button(cameraLabels[1],()=>{
+    const input=gallery[cameraSession?.kind];
     closeCamera();
     status.textContent='';
-    gallery?.click();
+    input?.click();
    }),button(cameraLabels[0],()=>{
     closeCamera();
     status.textContent='';

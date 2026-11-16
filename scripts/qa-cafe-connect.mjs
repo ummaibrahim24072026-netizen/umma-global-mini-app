@@ -289,7 +289,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  attach.click();
  assert.equal(attach.getAttribute('aria-expanded'),'true');
  assert.deepEqual([...bar.querySelectorAll('button')].map(b=>b.textContent),['Фото','Видео','Снять фото','Снять видео']);
- assert.equal(bar.querySelectorAll('input[capture="environment"]').length,1);
+ assert.equal(bar.querySelectorAll('input[capture]').length,0);
  assert.equal(bar.querySelector('input[accept^="image/"]').hasAttribute('capture'),false);
  attach.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
  assert.equal(bar.hidden,true);
@@ -419,6 +419,51 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(writes.at(-1).headers['Content-Type'],'image/png');
  assert.equal(form.querySelector('.connect-media-preview img'),null);
+ const startVideo=bar.querySelectorAll('button')[3];
+ const galleryVideo=bar.querySelector('input[accept^="video/"]');
+ let videoPickerOpens=0;
+ galleryVideo.addEventListener('click',()=>videoPickerOpens++);
+ startVideo.click();
+ assert.equal(cameraPanel.hidden,false);
+ assert.equal(shutter.disabled,true);
+ assert.match(form.previousElementSibling.textContent,/Видеозапись недоступна/);
+ choosePhoto.click();
+ assert.equal(videoPickerOpens,1);
+ guest.navigator.mediaDevices.getUserMedia=async options=>{
+  assert.equal(options.audio,true);
+  assert.equal(options.video.height.ideal,720);
+  return originalMedia();
+ };
+ guest.MediaRecorder=class extends guest.MediaRecorder{
+  static isTypeSupported(type){return type==='video/webm';}
+  mimeType='video/webm;codecs=vp8,opus';
+  start(timeslice){assert.equal(timeslice,1000);super.start();}
+ };
+ const writesBeforeVideo=writes.length, stopsBeforeVideo=tracks.length;
+ startVideo.click();
+ await tick();
+ shutter.click();
+ assert.equal(shutter.textContent,'Остановить видео');
+ assert.equal(send.disabled,true);
+ cancelPhoto.click();
+ await tick();
+ assert.equal(tracks.length,stopsBeforeVideo+1);
+ assert.equal(form.querySelector('.connect-media-preview video'),null);
+ startVideo.click();
+ await tick();
+ shutter.click();
+ shutter.click();
+ await tick();
+ assert.equal(cameraPanel.hidden,true);
+ assert.equal(cameraVideo.srcObject,null);
+ assert.equal(tracks.length,stopsBeforeVideo+2);
+ assert.ok(form.querySelector('.connect-media-preview video[controls]'));
+ assert.equal(writes.length,writesBeforeVideo);
+ assert.equal(send.hidden,false);
+ submit();
+ await tick();
+ assert.equal(writes.length,writesBeforeVideo+1);
+ assert.equal(writes.at(-1).headers['Content-Type'],'video/webm');
  guest.close();
 }
 // Staff inbox updates the receipt while the current conversation stays open.
