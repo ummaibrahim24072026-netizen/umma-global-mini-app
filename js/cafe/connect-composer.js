@@ -57,6 +57,8 @@
   clip:'M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8-8',
   mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v4 M9 23h6',
   stop:'M6 6h12v12H6z',
+  gallery:'M3 7V3h15m-8 9h.01M7 8h14v13H7z M7 18l4-4 3 3 2-2 5 5',
+  video:'M3 6h13v12H3z M16 10l5-3v10l-5-3',
   close:'M6 6l12 12M18 6L6 18',
   smile:'M21 10v3l-7 8h-4a7 7 0 0 1-7-7v-4a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7z M14 21v-4a4 4 0 0 1 4-4h3 M8 9h.01 M15 9h.01 M8 14c1 2 3 2 5 1',
   camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0 4 4 0 1 1 8 0z'
@@ -69,8 +71,10 @@
   path.setAttribute('d',icons[icon]);
   svg.append(path);
   control.replaceChildren(svg);
-  control.setAttribute('aria-label',label);
-  control.title=label;
+  if(label){
+   control.setAttribute('aria-label',label);
+   control.title=label;
+  }
  }
  function showWaveform(stream,bars){
   for(const bar of bars)bar.style.removeProperty('height');
@@ -113,6 +117,11 @@
   const cameraLabels=cameraCopy[lang]||cameraCopy.en;
   const videoLabels=videoCopy[lang]||videoCopy.en;
   const gallery={};
+  const attachmentLabels=({
+   ru:['Вложения','Галерея','Камера','Видео','Закрыть вложения'],
+   en:['Attachments','Gallery','Camera','Video','Close attachments'],
+   vi:['Tệp đính kèm','Thư viện','Máy ảnh','Video','Đóng tệp đính kèm']
+  })[lang]||['Attachments','Gallery','Camera','Video','Close attachments'];
   let cameraSession=null,cameraPanel,cameraPreview,shutter,flipCamera;let circleFacing='user';
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
   function showExpressions(open){
@@ -125,6 +134,7 @@
    if(!attach)return;
    if(open)showExpressions(false);
    bar.hidden=!open;
+   if(albums)form.classList.toggle('connect-attachments-open',open);
    attach.setAttribute('aria-expanded',String(open));
   }
   function button(label,action){
@@ -208,9 +218,12 @@
     }
     addDrafts(items);
    };
-   const picker=button(label,()=>{showAttachments(false);attach?.focus();input.click();});
-   pickers.push(picker);
-   bar.append(input,picker);
+   bar.append(input);
+   if(!albums){
+    const picker=button(label,()=>{showAttachments(false);attach?.focus();input.click();});
+    pickers.push(picker);
+    bar.append(picker);
+   }
    return input;
   }
   for(const kind of kinds)gallery[kind]=addPicker(kind,labels[kind==='photo'?0:1]);
@@ -427,14 +440,36 @@
     status.textContent=videoLabels[1];
    }catch{closeCamera();status.textContent=videoLabels[3];}
   }
-  if(compact){
+  if(albums){
+   const mixed=addPicker('album',attachmentLabels[1]);
+   bar.classList.add('connect-attachment-sheet');
+   bar.setAttribute('role','group');
+   bar.setAttribute('aria-label',attachmentLabels[0]);
+   const handle=button(null,()=>{showAttachments(false);attach.focus();});
+   handle.className='connect-attachment-handle';
+   handle.setAttribute('aria-label',attachmentLabels[4]);
+   const actions=el('div',null,'connect-attachment-actions');
+   function sheetAction(label,icon,action){
+    const control=button(null,action);
+    control.className='connect-attachment-action connect-attachment-'+icon;
+    const iconTile=el('span',null,'connect-attachment-icon');
+    iconButton(iconTile,icon);
+    iconTile.setAttribute('aria-hidden','true');
+    control.append(iconTile,el('span',label));
+    actions.append(control);
+    pickers.push(control);
+   }
+   sheetAction(attachmentLabels[1],'gallery',()=>mixed.click());
+   sheetAction(attachmentLabels[2],'camera',()=>openCamera('photo'));
+   sheetAction(attachmentLabels[3],'video',()=>openCamera('video'));
+   bar.append(handle,actions);
+  }else if(compact){
    for(const kind of kinds){
     const picker=button(compactLabels[kind==='photo'?1:2],()=>openCamera(kind));
     pickers.push(picker);
     bar.append(picker);
    }
   }
-  if(albums)addPicker('album',({ru:'Фото и видео',vi:'Ảnh và video'}[lang]||'Photos and videos'));
   function release(r){
    clearTimeout(r.timer);
    clearInterval(r.clock);
@@ -692,7 +727,7 @@
    }),button(cameraLabels[0],()=>{
     closeCamera();
     status.textContent='';
-    camera.focus();
+    (albums?attach:camera).focus();
    }));
    camera.className='connect-camera';
    if(onInstantVideo){
@@ -730,10 +765,14 @@
    const entry=el('div',null,'connect-entry');
    entry.append(expression,body,attach,circleButton||camera);
    if(circleButton)form.prepend(circlePanel);
-   form.prepend(bar,expressionPanel,preview,cameraPanel,recordPanel,entry);
+   form.prepend(expressionPanel,preview,cameraPanel,recordPanel,entry);
    form.append(mic);
+   if(albums)form.append(bar);
+   else form.prepend(bar);
    form.addEventListener('focusout',event=>{
-    if(event.relatedTarget!==attach&&!bar.contains(event.relatedTarget))showAttachments(false);
+    const next=event.relatedTarget;
+    const leavesAttachments=albums?next&&!form.contains(next):next!==attach&&!bar.contains(next);
+    if(leavesAttachments)showAttachments(false);
     if(event.relatedTarget!==expression&&!expressionPanel.contains(event.relatedTarget))showExpressions(false);
    });
    form.addEventListener('keydown',event=>{
@@ -742,7 +781,7 @@
      event.preventDefault();
      closeCamera();
      status.textContent='';
-     camera.focus();
+     (albums?attach:camera).focus();
      return;
     }
     if(bar.hidden&&expressionPanel.hidden)return;

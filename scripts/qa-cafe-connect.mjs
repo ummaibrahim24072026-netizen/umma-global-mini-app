@@ -297,7 +297,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  body.dispatchEvent(new guest.Event('input'));
  attach.click();
  assert.equal(attach.getAttribute('aria-expanded'),'true');
- assert.deepEqual([...bar.querySelectorAll('button')].map(b=>b.textContent),['Фото','Видео','Снять фото','Снять видео','Фото и видео']);
+ assert.deepEqual([...bar.querySelectorAll('.connect-attachment-action')].map(b=>b.textContent),['Галерея','Камера','Видео']);
  assert.equal(bar.querySelectorAll('input[capture]').length,0);
  assert.equal(bar.querySelector('input[accept^="image/"]').hasAttribute('capture'),false);
  attach.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
@@ -305,7 +305,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  const expression=form.querySelector('.connect-expression');
  const panel=form.querySelector('.connect-expression-panel');
  assert.deepEqual([...form.querySelector('.connect-entry').children].map(node=>node.className||node.tagName),
-  ['connect-expression','TEXTAREA','connect-attach','connect-camera']);
+  ['connect-expression','TEXTAREA','connect-attach','connect-circle-button']);
  expression.click();
  assert.equal(panel.hidden,false);
  body.value='АБ';
@@ -329,10 +329,10 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  form.querySelector('.connect-media-preview button').click();
  assert.equal(mic.hidden,false);
  const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
- const camera=form.querySelector('.connect-camera');
+ const camera=bar.querySelector('.connect-attachment-camera');
  const cameraPanel=form.querySelector('.connect-camera-panel');
  const cameraVideo=cameraPanel.querySelector('video');
- const [shutter,choosePhoto,cancelPhoto]=cameraPanel.querySelectorAll('button');
+ const [,shutter,choosePhoto,cancelPhoto]=cameraPanel.querySelectorAll('button');
  const gallery=bar.querySelector('input[accept^="image/"]');
  let galleryOpens=0;
  gallery.addEventListener('click',()=>galleryOpens++);
@@ -356,7 +356,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.ok(form.querySelector('.connect-media-preview img'));
  assert.equal(writes.length,0);
  form.querySelector('.connect-media-preview button').click();
- bar.querySelectorAll('button')[2].click();
+ bar.querySelector('.connect-attachment-camera').click();
  await tick();
  cancelPhoto.click();
  assert.equal(cameraPanel.hidden,true);
@@ -428,7 +428,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(writes.at(-1).headers['Content-Type'],'image/png');
  assert.equal(form.querySelector('.connect-media-preview img'),null);
- const startVideo=bar.querySelectorAll('button')[3];
+ const startVideo=bar.querySelector('.connect-attachment-video');
  const galleryVideo=bar.querySelector('input[accept^="video/"]');
  let videoPickerOpens=0;
  galleryVideo.addEventListener('click',()=>videoPickerOpens++);
@@ -446,8 +446,14 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  guest.MediaRecorder=class extends guest.MediaRecorder{
   static isTypeSupported(type){return type==='video/webm';}
   mimeType='video/webm;codecs=vp8,opus';
-  start(timeslice){assert.equal(timeslice,1000);super.start();}
+  start(timeslice){assert.equal(timeslice,250);super.start();}
  };
+ guest.HTMLCanvasElement.prototype.captureStream=()=>({getVideoTracks:()=>[]});
+ guest.MediaStream=class{getVideoTracks(){return [];}};
+ guest.requestAnimationFrame=()=>0;
+ guest.cancelAnimationFrame=()=>{};
+ const rawMedia=guest.navigator.mediaDevices.getUserMedia;
+ guest.navigator.mediaDevices.getUserMedia=async options=>({...await rawMedia(options),getAudioTracks:()=>[]});
  const writesBeforeVideo=writes.length, stopsBeforeVideo=tracks.length;
  startVideo.click();
  await tick();
