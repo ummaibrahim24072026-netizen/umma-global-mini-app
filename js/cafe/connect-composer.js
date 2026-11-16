@@ -389,7 +389,7 @@
    if(working||starting||recording||cameraSession||!onInstantVideo)return;
    if(event?.button!==undefined&&event.button!==0)return;
    event?.preventDefault();
-   const session={held:true,pressAt:performance.now(),tapMode:false,cancelled:false,stream:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null};
+   const session={held:true,pressAt:performance.now(),tapMode:false,cancelled:false,stream:null,recordStream:null,canvas:null,drawFrame:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null,flipping:false};
    circleSession=session;
    try{circleButton.setPointerCapture?.(event.pointerId);}catch{}
    circlePanel.hidden=false;
@@ -407,7 +407,32 @@
     if(circleSession!==session||!session.held){finishCircle(session,true);return;}
     const mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
     if(!mime)throw Error('format');
-    const recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
+    // Record a stable canvas track so camera switches do not interrupt MediaRecorder.
+    const canvas=document.createElement('canvas');
+    canvas.width=canvas.height=480;
+    const context=canvas.getContext('2d');
+    if(!context||!canvas.captureStream)throw Error('canvas');
+    session.canvas=canvas;
+    let drawing=true;
+    const draw=()=>{
+     if(!drawing)return;
+     if(circlePreview.readyState>=2){
+      const w=circlePreview.videoWidth,h=circlePreview.videoHeight;
+      if(w&&h){
+       const side=Math.min(w,h);
+       context.save();
+       if(circleFacing==='user'){context.translate(480,0);context.scale(-1,1);}
+       context.drawImage(circlePreview,(w-side)/2,(h-side)/2,side,side,0,0,480,480);
+       context.restore();
+      }
+     }
+     session.drawFrame=requestAnimationFrame(draw);
+    };
+    session.stopDrawing=()=>{drawing=false;cancelAnimationFrame(session.drawFrame);};
+    draw();
+    const canvasStream=canvas.captureStream(24);
+    session.recordStream=new MediaStream([...canvasStream.getVideoTracks(),...stream.getAudioTracks()]);
+    const recorder=new MediaRecorder(session.recordStream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
     session.recorder=recorder;
     recorder.ondataavailable=e=>{
      if(!e.data.size)return;
@@ -453,11 +478,40 @@
     return;
    }
    if(circleSession){
-    const old=circleSession;
-    if(old.recorder?.state==='recording')return;
-    circleFacing=circleFacing==='user'?'environment':'user';
-    finishCircle(old,true);
-    beginCircle();
+    const session=circleSession;
+    if(session.flipping||session.cancelled||!session.stream)return;
+    session.flipping=true;
+    const nextFacing=circleFacing==='user'?'environment':'user';
+    const oldVideo=session.stream.getVideoTracks()[0];
+    try{
+     // Some Android devices cannot open both cameras simultaneously.
+     oldVideo?.stop();
+     const replacement=await navigator.mediaDevices.getUserMedia({
+      audio:false,video:{facingMode:{ideal:nextFacing},width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}
+     });
+     if(circleSession!==session||session.cancelled){
+      replacement.getTracks().forEach(t=>t.stop());return;
+     }
+     session.stream.removeTrack(oldVideo);
+     const newVideo=replacement.getVideoTracks()[0];
+     session.stream.addTrack(newVideo);
+     circleFacing=nextFacing;
+     circlePreview.srcObject=session.stream;
+     await circlePreview.play();
+     status.textContent='';
+    }catch(error){
+     // Keep the recording alive even if this device refuses the camera switch.
+     status.textContent=lang==='ru'?'Не удалось переключить камеру. Запись продолжается.':'Could not switch camera. Recording continues.';
+     try{
+      const restored=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:circleFacing},width:{ideal:480},height:{ideal:480}}});
+      if(circleSession===session){
+       session.stream.getVideoTracks().forEach(t=>{session.stream.removeTrack(t);t.stop();});
+       session.stream.addTrack(restored.getVideoTracks()[0]);
+       circlePreview.srcObject=session.stream;
+       await circlePreview.play();
+      }else restored.getTracks().forEach(t=>t.stop());
+     }catch{}
+    }finally{session.flipping=false;}
    }else circleFacing=circleFacing==='user'?'environment':'user';
   }
   function finishCircle(session,discard){
@@ -466,6 +520,8 @@
    session.cancelled ||= discard;
    clearTimeout(session.timer);
    clearInterval(session.clock);
+   session.stopDrawing?.();
+   session.recordStream?.getVideoTracks().forEach(t=>t.stop());
    if(circleSession===session){
     circleSession=null;
     circlePanel.hidden=true;
