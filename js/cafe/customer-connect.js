@@ -146,10 +146,24 @@ function messageMenu(li,m){
  const summary=el('summary','⋯');
  summary.setAttribute('aria-label',ru?'Действия с сообщением':'Message actions');
  menu.append(summary);
+ const forwardIcon='M14 4l7 7-7 7v-4h-3c-3.5 0-6 1.5-8 4.5.5-6.5 4-10.5 11-10.5z';
+ const deleteIcon='M3 6h18M9 6V4h6v2M5 6l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M10 10v7m4-7v7';
  const add=(icon,label,action,danger=false)=>{
   const button=el('button',null,danger?'connect-action-danger':'');
   button.type='button';
-  const glyph=el('span',icon,'connect-action-icon');
+  const glyph=el('span',icon.text,'connect-action-icon');
+  glyph.setAttribute('aria-hidden','true');
+  if(icon.path){
+   const ns='http://www.w3.org/2000/svg';
+   const svg=document.createElementNS(ns,'svg');
+   for(const [name,value] of Object.entries({width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':1.8,'stroke-linecap':'round','stroke-linejoin':'round',focusable:'false'})){
+    svg.setAttribute(name,value);
+   }
+   const path=document.createElementNS(ns,'path');
+   path.setAttribute('d',icon.path);
+   svg.append(path);
+   glyph.append(svg);
+  }
   const title=el('span',label);
   button.append(glyph,title);
   button.onclick=async()=>{
@@ -159,10 +173,10 @@ function messageMenu(li,m){
   };
   menu.append(button);
  };
- if(m.body&&m.body!=='◉ Видеосообщение')add('▤',l[0],async()=>navigator.clipboard.writeText(m.body));
- add('↗',l[1],()=>forwardMessage(m));
- add('⌫',l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
- if(m.direction==='customer'&&!m.read_at)add('⌦',l[3],async()=>{
+ if(m.body&&m.body!=='◉ Видеосообщение')add({text:'▤'},l[0],async()=>navigator.clipboard.writeText(m.body));
+ add({path:forwardIcon},l[1],()=>forwardMessage(m));
+ add({path:deleteIcon},l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
+ if(m.direction==='customer'&&!m.read_at)add({path:deleteIcon},l[3],async()=>{
   if(!confirm(l[3]+'?'))return;
   await messageAction('deleteAll',m.id);
   state=await api('list');renderThread();
