@@ -70,3 +70,8 @@
 .connect-clear-confirm-buttons button{padding:10px 15px;border:0;border-radius:999px;background:#edf5f4;color:#087c7c;font-weight:650}
 .connect-clear-confirm-buttons .connect-clear-confirm-action{background:#087f80;color:#fff}
 .connect-clear-confirm-buttons button:disabled{opacity:.55}
+
+.connect-translated-text{display:flex;flex-direction:column;align-items:flex-start;gap:5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.connect-translated-text>button{border:0;background:transparent;color:#087d80;font-size:11px;font-weight:600;padding:3px 0;cursor:pointer}
+.connect-translated-text .connect-original-text{padding:6px 9px;border-left:2px solid #d4ac64;color:#557a79;font-size:12px;white-space:pre-wrap}
+.connect-translated-text .connect-original-text[hidden]{display:none}
