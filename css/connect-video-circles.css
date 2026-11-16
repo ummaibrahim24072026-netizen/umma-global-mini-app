@@ -90,3 +90,6 @@
 #webMessages .connect-voice-translation button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 #webMessages textarea{max-width:100%;width:100%;min-height:76px}
 @media(min-width:900px){#webMessages .work-inbox{display:grid;grid-template-columns:minmax(230px,300px) minmax(0,1fr);align-items:start}#webMessages .work-inbox-sidebar{max-height:65dvh}#webMessages .connect-thread{max-height:60dvh}}
+
+/* Speech translation controls: compact, usable on mobile. */
+.connect-voice-translation{display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%;min-width:0}.connect-voice-translation .connect-voice-language{flex:1 1 105px;min-width:100px;max-width:180px;border-radius:12px;padding:8px;background:var(--surface,#fff);color:inherit}.connect-voice-translation>button{flex:0 1 auto;max-width:100%;border-radius:12px;padding:8px 11px}.connect-voice-translation>small{flex:1 0 100%;overflow-wrap:anywhere}.connect-voice-result{width:100%;min-width:0;overflow-wrap:anywhere}.connect-voice-original{font-size:.85em;opacity:.8;margin-bottom:6px}
