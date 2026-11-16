@@ -84,7 +84,7 @@ function renderThread(){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
    li.append(m.media_kind==='video'&&m.body==='◉ Видеосообщение'
     ?window.ummaConnectMedia.videoCircle(load,media.error)
-    :window.ummaConnectMedia.attachment(m.media_kind,media[m.media_kind],load,media.error));
+    :window.ummaConnectMedia.inlineAttachment(m.media_kind,media[m.media_kind],load,media.error));
   }
   if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
