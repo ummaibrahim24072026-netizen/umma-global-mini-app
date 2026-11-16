@@ -48,6 +48,7 @@ function refresh(){
  if(!token||document.hidden||busy)return;
  refreshing=(async()=>{
   try{
+   await refreshHidden();
    const next=await api('list');
    if(busy||document.hidden)return;
    state=next;
@@ -108,8 +109,7 @@ function renderThread(){
  const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
  const media=mediaCopy[lang()]||mediaCopy.en;
  const target=window.ummaConnectMedia.language(lang());
- window.ummaConnectMedia.render(list,state?.messages||[],m=>{
-  if(hiddenMessages.has(m.id))return null;
+ window.ummaConnectMedia.render(list,(state?.messages||[]).filter(m=>!hiddenMessages.has(m.id)),m=>{
   const li=el('li');
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
@@ -282,6 +282,7 @@ function build(){
    try{
     await connect();
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},{file,kind:'video'},requestKey,'◉ Видеосообщение',composer.error);
+    await refreshHidden();
     state=await api('list');
     renderThread();
     list.scrollTop=list.scrollHeight;
