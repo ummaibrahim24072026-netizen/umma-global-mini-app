@@ -44,8 +44,10 @@
     catch { return ""; }
   }
 
+  const rubleAmount=order=>order.rub_payment_kopecks==null?'':new Intl.NumberFormat('ru',{style:'currency',currency:'RUB'}).format(Number(order.rub_payment_kopecks)/100);
+  const receivedPayment=order=>'Подтвердить получение оплаты по заказу №'+order.order_number+(rubleAmount(order)?' на Сбер: '+rubleAmount(order):'')+'?';
   function paymentProofButton(order) {
-    return order.canAcceptPayments===true && ['qr','bank_transfer'].includes(order.payment_method)
+    return order.canAcceptPayments===true && !rubleAmount(order) && ['qr','bank_transfer'].includes(order.payment_method)
       ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Скриншоты оплаты</button>' : '';
   }
   function showPaymentProofs(proofs) {
@@ -142,7 +144,7 @@
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
-      const paymentMethod = { cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
+      const paymentMethod = rubleAmount(order)?"Сбер · "+rubleAmount(order):{ cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
       const paymentStatus = order.payment_status === "paid" ? "Оплачено" : order.payment_status === "refunded" ? "Возвращено" : "Ожидает оплаты";
       const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
       const deliveryNext = { waiting_courier:{status:"courier_assigned",label:"Назначить курьера"}, courier_assigned:{status:"picked_up",label:"Курьер забрал"}, picked_up:{status:"delivered",label:"Подтвердить доставку"} };
@@ -530,7 +532,7 @@
   }
   function showRefund(order){
     const dialog=document.createElement("dialog");dialog.className="cafe-refund-dialog";
-    dialog.innerHTML='<form class="cafe-order-form"><h3>Полный возврат · заказ №'+esc(order.order_number)+'</h3><p>Сумма: '+money(order.total_vnd)+'. Эта операция записывает уже выполненный возврат и отменяет заказ. Деньги автоматически не переводятся. Для наличных откройте свою смену.</p><label>Причина<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="cafe-refund-confirm"><input type="checkbox" name="payout" required>Я фактически вернул гостю всю указанную сумму</label><div class="kitchen-order-actions"><button type="button" data-close-refund>Назад</button><button type="submit" class="kitchen-cancel">Записать возврат и отменить заказ</button></div><p role="status"></p></form>';
+    dialog.innerHTML='<form class="cafe-order-form"><h3>Полный возврат · заказ №'+esc(order.order_number)+'</h3><p>Сумма: '+(rubleAmount(order)||money(order.total_vnd))+'. Эта операция записывает уже выполненный возврат и отменяет заказ. Деньги автоматически не переводятся. Для наличных откройте свою смену.</p><label>Причина<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="cafe-refund-confirm"><input type="checkbox" name="payout" required>Я фактически вернул гостю всю указанную сумму</label><div class="kitchen-order-actions"><button type="button" data-close-refund>Назад</button><button type="submit" class="kitchen-cancel">Записать возврат и отменить заказ</button></div><p role="status"></p></form>';
     document.body.append(dialog);dialog.showModal();
     dialog.querySelector('[data-close-refund]').onclick=()=>{dialog.close();dialog.remove();};
     dialog.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=dialog.querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;
@@ -558,7 +560,7 @@
     if (paymentButton) {
       const order=orders.find(o=>String(o.id)===paymentButton.getAttribute("data-order-id"));
       if(paymentButton.getAttribute("data-payment-status")==="paid" && order && order.payment_method==="cash"){openCashPayment(order);}
-      else updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
+      else if(!order||!rubleAmount(order)||window.confirm(receivedPayment(order)))updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
       return;
     }
     const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
@@ -790,7 +792,7 @@
       if(paymentStatus){
         const order=orders.find(o=>String(o.id)===String(orderId));
         if(paymentStatus==="paid"&&order?.payment_method==="cash")openCashPayment(order);
-        else if(order&&window.confirm("Подтвердить получение оплаты по заказу №"+order.order_number+"?"))updatePayment(orderId,paymentStatus,Number(order.total_vnd)||0,0,order.payment_method||"qr");
+        else if(order&&window.confirm(receivedPayment(order)))updatePayment(orderId,paymentStatus,Number(order.total_vnd)||0,0,order.payment_method||"qr");
         return;
       }
     }
@@ -916,7 +918,7 @@
       const step=canAdvance?'<button type="button" class="kitchen-action" data-order-id="'+esc(o.id)+'" data-new-status="'+next.status+'">'+next.label+'</button>':"";
       const add=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-add-to-bill="'+esc(o.id)+'">＋ Добавить блюда</button>':"";
       const settle=o.order_type==="dine_in"&&o.payment_status!=="paid"?'<button type="button" class="kitchen-action" data-settle-bill="'+esc(o.id)+'">Перейти к оплате</button>':"";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(awaitingCounterPayment(o)?"Ожидает оплаты у кассира":statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+counterPaymentButton(o)+paymentProofButton(o)+add+settle+step+'</div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+esc(awaitingCounterPayment(o)?"Ожидает оплаты у кассира":statusNames[o.status]||o.status)+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc((rubleAmount(o)?'Сбер · '+rubleAmount(o):{cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul>'+'<div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div><div class="staff-order-actions-inline">'+counterPaymentButton(o)+paymentProofButton(o)+add+settle+step+'</div></article>';
     }).join(""):'<p class="cafe-empty-cart">Активных заказов пока нет.</p>';
   }
   function renderStaffClosedOrders() {
@@ -929,7 +931,7 @@
       const type={dine_in:"В кафе",pickup:"С собой",delivery:"Доставка"}[o.order_type]||o.order_type||"";
       const status=o.status==="completed"?"Завершён":"Отменён";
       const payment=o.payment_status==="paid"?"Оплачено":o.payment_status==="refunded"?"Возвращено":"Не оплачено";
-      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+status+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc(({cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div></article>';
+      return '<article class="staff-active-order"><div class="staff-active-order-head"><strong>Заказ №'+esc(o.order_number)+'</strong><small>'+esc(formatDate(o.created_at))+' · '+esc(type)+'</small></div><div class="staff-active-order-meta"><span class="staff-status-pill">'+status+'</span><span class="staff-payment-pill '+(o.payment_status==="paid"?"is-paid":"is-unpaid")+'">'+esc((rubleAmount(o)?'Сбер · '+rubleAmount(o):{cash:'Наличные',qr:'QR-платёж',bank_transfer:'Банковский перевод',card:'Карта'}[o.payment_method]||o.payment_method||''))+' · '+payment+'</span></div><ul class="staff-active-order-items">'+itemList+'</ul><div class="staff-active-order-total"><span>Итого</span><strong>'+money(o.total_vnd)+'</strong></div></article>';
     }).join(""):'<p class="cafe-empty-cart">Закрытых заказов пока нет.</p>';
   }
   function syncStaffPaymentOptions(source=null){

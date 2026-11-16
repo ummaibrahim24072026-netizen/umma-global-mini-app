@@ -54,8 +54,23 @@ function receipt(value,ctx){order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
-$('orderState').removeAttribute('data-i18n');$('orderState').textContent=value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга'):value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ'):t(value.orderType!=='delivery'&&value.status==='pending'&&value.paymentStatus!=='paid'?(value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Ожидает оплаты у кассира'):statuses[value.status]||'Заказ отправлен');
-$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='qr'?'Ожидаем оплату по QR':value.orderType==='delivery'?'Оплата наличными при получении.':value.preorderWaiting?'Оплатите предзаказ у кассира. Сборка — после готовности блюд.':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.');
+$('orderState').removeAttribute('data-i18n');$('orderState').textContent=value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга'):value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ'):t(value.orderType!=='delivery'&&value.status==='pending'&&value.paymentStatus!=='paid'?(value.paymentMethod==='bank_transfer'?'Ожидаем перевод в рублях':value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Ожидает оплаты у кассира'):statuses[value.status]||'Заказ отправлен');
+$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?'Ожидаем перевод в рублях':value.paymentMethod==='qr'?'Ожидаем оплату по QR':value.orderType==='delivery'?'Оплата наличными при получении.':value.preorderWaiting?'Оплатите предзаказ у кассира. Сборка — после готовности блюд.':'Оплатите наличными у кассира. Приготовление начнётся после оплаты.');
+const ruble=value.payment?.currency==='RUB'&&value.paymentStatus==='pending'&&
+ !['cancelled','completed'].includes(value.status)?value.payment:null;
+const rubleSection=$('rublePayment');
+if(rubleSection){
+ rubleSection.hidden=!ruble;
+ if(ruble){
+  const locale=window.ummaMenuI18n?.locale()||'ru';
+  $('rubleAmount').textContent=new Intl.NumberFormat(locale,{style:'currency',currency:'RUB'}).format(ruble.kopecks/100);
+  $('rubleRate').textContent=new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(ruble.rate)+' ₫ / ₽';
+  $('rubleBank').textContent=ruble.bankName;$('rubleRecipient').textContent=ruble.recipient;$('rublePhone').textContent=ruble.phone;
+  const copy=$('copyRublePhone');
+  copy.hidden=!navigator.clipboard?.writeText;
+  copy.onclick=async()=>{try{await navigator.clipboard.writeText(ruble.phone);copy.textContent=t('Номер скопирован');}catch{copy.textContent=t('Скопировать номер');}};
+ }
+}
 const p=value.payment,show=value.paymentMethod==='qr'&&value.paymentStatus!=='paid'&&value.paymentStatus!=='refunded'&&!['cancelled','completed'].includes(value.status)&&p;
 $('guestPayment').hidden=!show;
 if(show){

@@ -489,9 +489,9 @@ Deno.serve(async req => {
         return response({ ok: false, error: "Некорректный заказ или статус оплаты" }, 400);
       }
       if(paymentStatus==="paid"){
-        const {data:paymentOrder,error:paymentOrderError}=await supabase.from("cafe_orders").select("id,payment_method").eq("id",orderId).maybeSingle();
+        const {data:paymentOrder,error:paymentOrderError}=await supabase.from("cafe_orders").select("id,payment_method,rub_payment_kopecks").eq("id",orderId).maybeSingle();
         if(paymentOrderError||!paymentOrder)return response({ok:false,error:"Заказ не найден"},404);
-        if(paymentOrder.payment_method==="bank_transfer"){
+        if(paymentOrder.payment_method==="bank_transfer"&&paymentOrder.rub_payment_kopecks==null){
           const {data:proofs,error:proofError}=await supabase.from("cafe_transfer_proofs").select("id").eq("order_id",orderId).eq("review_status","pending").limit(1);
           if(proofError||!proofs?.length)return response({ok:false,error:"Для банковского перевода сначала требуется скриншот платежа"},400);
         }

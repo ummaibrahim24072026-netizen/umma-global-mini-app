@@ -106,6 +106,29 @@ export async function verifyBatchPreorders(db,cafe,product){
   assert.equal(Number(row.total_vnd),25000*quantity);
   await q("select update_cafe_order_status($1,12,'cancelled')",[free.order.id]);
  }
+ await db.exec(source('supabase/proposals/cafe-web-ruble-transfer.sql'));
+ await q("insert into umma_private.cafe_web_rub_recipient(phone,recipient,bank) values('+70000000000','QA','QA bank')");
+ for(const delivery of [false,true]){
+  const key=randomUUID(),args={
+   p_request_key:key,p_ip_hash:createHash('sha256').update(key).digest('hex'),p_location_id:cafe,
+   p_items:[{productId:product,quantity:1}],p_source:'qa',
+   ...(delivery?{p_address:'QA delivery address',p_lat:12.28,p_lng:109.2,p_token_hash:'b'.repeat(64)}:{})
+  };
+  const createRuble=(rate)=>r('select submit_cafe_web_ruble_order($1::jsonb,$2,now()) result',[JSON.stringify(args),rate]);
+  await assert.rejects(createRuble(null),/RUBLE_RATE_UNAVAILABLE/);
+  const accepted=await createRuble(320);
+  const ruble=await r('select cafe_guest_ruble_payment($1) result',[accepted.order.id]);
+  assert.equal(ruble.kopecks,Math.round(accepted.order.totalVnd*100/320));
+  assert.equal(ruble.currency,'RUB');
+  assert.equal((await createRuble(400)).order.id,accepted.order.id);
+  assert.equal((await r('select cafe_guest_ruble_payment($1) result',[accepted.order.id])).kopecks,ruble.kopecks);
+  await assert.rejects(q("select update_cafe_order_status($1,12,'confirmed')",[accepted.order.id]),/SELF_SERVICE_PAYMENT_REQUIRED/);
+  await r("select update_cafe_order_payment_cash($1,11,'paid',null,$2,0) result",[accepted.order.id,accepted.order.totalVnd]);
+  assert.equal(await r('select cafe_guest_ruble_payment($1) result',[accepted.order.id]),null);
+  await q("update cafe_orders set status='cancelled' where id=$1",[accepted.order.id]);
+ }
+ console.log('PASS RUB checkout: fail closed without quote, pickup/delivery, frozen amount on retry and prepayment gate.');
+
  console.log('PASS Green SM web delivery: fee below 100,000, free at and above 100,000, prepaid, no UMMA offers, staff-only completion.');
 
  console.log('PASS batch preorders: separate availability, exact revision, atomic capacity, replay, cash/QR, paid waiting, expiry, cancellation, protected batch yield, conversion, dispatch deferral, release/assembled push events.');
