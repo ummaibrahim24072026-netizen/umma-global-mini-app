@@ -11,24 +11,33 @@ function install(t){installText(t);window.addEventListener('beforeinstallprompt'
 function bankLink(){if(!order?.payment)return;const p=order.payment,selected=$('paymentBank').value;try{localStorage.setItem('umma-payment-bank',selected);}catch{}const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:p.account+'@vcb',am:String(p.amount),tn:p.reference,app:selected,url:location.origin+location.pathname});$('openBank').href=url.href;
 // Vietcombank's existing flow uses a saved QR rather than a bank deep link.
 $('openBank').hidden=selected==='vcb';}
-function receiptDetails(value,{t,money}){
+function receiptDetails(value,{t,money,receiptPhoto}){
  const details=$('receiptDetails');
  details.hidden=!value.items?.length;
  const rows=[];
- const addRow=(label,amount,quantityPrice)=>{
+ const addRow=(label,amount,quantityPrice,photo)=>{
   const row=document.createElement('div'),copy=document.createElement('span'),sum=document.createElement('strong');
   copy.textContent=label;
   if(quantityPrice){
+   row.className='receipt-item';
    const quantity=document.createElement('small');
    quantity.textContent=quantityPrice;
    copy.append(quantity);
   }
   sum.textContent=money(amount);
+  if(photo){
+   const image=document.createElement('img');
+   image.className='receipt-item-photo';
+   image.alt='';
+   image.addEventListener('error',()=>image.remove(),{once:true});
+   image.src=photo;
+   row.append(image);
+  }
   row.append(copy,sum);
   rows.push(row);
  };
  for(const item of value.items||[]){
-  addRow(window.ummaMenuI18n.field(item,'name'),item.lineTotalVnd,item.quantity+' × '+money(item.unitPriceVnd));
+  addRow(window.ummaMenuI18n.field(item,'name'),item.lineTotalVnd,item.quantity+' × '+money(item.unitPriceVnd),receiptPhoto?.(item,value));
  }
  if(value.deliveryFeeVnd||value.discountVnd)addRow(t('Стоимость блюд'),value.subtotalVnd);
  if(value.deliveryFeeVnd)addRow(t('Стоимость доставки'),value.deliveryFeeVnd);
