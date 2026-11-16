@@ -142,7 +142,7 @@
    if(compact){
     const canSend=!!draft||!!body.value.trim();
     attach.disabled=expression.disabled=camera.disabled=working||active;
-    if(circleButton)circleButton.disabled=working||active;
+    if(circleButton)circleButton.disabled=working||starting||!!recording||!!cameraSession;
     if(attach.disabled){
      showAttachments(false);
      showExpressions(false);
@@ -389,7 +389,7 @@
    event?.preventDefault();
    const session={held:true,cancelled:false,stream:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null};
    circleSession=session;
-   circleButton.setPointerCapture?.(event.pointerId);
+   try{circleButton.setPointerCapture?.(event.pointerId);}catch{}
    circlePanel.hidden=false;
    circleTimer.textContent='0:00';
    circleButton.classList.add('is-recording');
@@ -418,6 +418,7 @@
      const type=(recorder.mimeType||mime).split(';')[0];
      const file=valid?new Blob(session.chunks,{type}):null;
      finishCircle(session,true);
+     session.stream?.getTracks().forEach(t=>t.stop());
      if(!file||!formats.video.includes(type))return;
      try{await onInstantVideo(file);}catch(e){status.textContent=e?.message||labels[11];}
     };
@@ -451,7 +452,7 @@
    if(session.recorder?.state==='recording'){
     try{session.recorder.stop();}catch{}
    }
-   session.stream?.getTracks().forEach(t=>t.stop());
+   if(session.recorder?.state!=='recording')session.stream?.getTracks().forEach(t=>t.stop());
   }
   function endCircle(event){
    const session=circleSession;
@@ -538,6 +539,7 @@
     circleButton.addEventListener('pointerdown',beginCircle);
     circleButton.addEventListener('pointerup',endCircle);
     circleButton.addEventListener('pointercancel',endCircle);
+   circleButton.addEventListener('contextmenu',e=>e.preventDefault());
     circleButton.addEventListener('lostpointercapture',()=>{if(circleSession?.held)endCircle();});
     circlePanel=el('div',null,'connect-circle-panel');
     circlePanel.hidden=true;
