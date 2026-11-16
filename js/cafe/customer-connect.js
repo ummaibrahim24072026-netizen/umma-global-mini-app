@@ -155,7 +155,7 @@ function renderThread(){
   li.dataset.direction=m.direction;
   if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
-  else if(m.body)li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>translateChat(m.id,target)));
+  else if(m.body)li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}))));
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
    li.append(m.media_kind==='video'&&m.body==='◉ Видеосообщение'
@@ -164,7 +164,7 @@ function renderThread(){
   }
   if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
-    ()=>api('voice',{messageId:m.id,language:target}),state.voiceTranslation));
+    async()=>{const media=await api('mediaGet',{messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target);},true));
   }
   const timestamp=dateTime.format(new Date(m.created_at));
   const meta=publicChat?el('div',null,'connect-message-meta'):li;
