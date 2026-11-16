@@ -442,6 +442,8 @@
     };
     recorder.onerror=()=>{session.cancelled=true;finishCircle(session,true);status.textContent=videoLabels[3];};
     recorder.onstop=async()=>{
+     session.stopDrawing?.();
+     session.recordStream?.getVideoTracks().forEach(t=>t.stop());
      const valid=!session.cancelled&&session.bytes>0;
      const type=(recorder.mimeType||mime).split(';')[0];
      const file=valid?new Blob(session.chunks,{type}):null;
@@ -520,8 +522,10 @@
    session.cancelled ||= discard;
    clearTimeout(session.timer);
    clearInterval(session.clock);
-   session.stopDrawing?.();
-   session.recordStream?.getVideoTracks().forEach(t=>t.stop());
+   if(!session.recorder||session.recorder.state==='inactive'){
+    session.stopDrawing?.();
+    session.recordStream?.getVideoTracks().forEach(t=>t.stop());
+   }
    if(circleSession===session){
     circleSession=null;
     circlePanel.hidden=true;
