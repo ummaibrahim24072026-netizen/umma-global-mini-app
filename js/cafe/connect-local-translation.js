@@ -33,7 +33,7 @@ async function translate(text,target,source){
  for(let i=0;i<route.length-1;i++){
   const pair=route[i]+'-'+route[i+1];
   if(!pairs.has(pair))throw Error('local_pair_unsupported');
-  const pipe=await getPipe('translation','onnx-community/opus-mt-'+pair);
+  const pipe=await getPipe('translation','Xenova/opus-mt-'+pair);
   const output=await pipe(result,{max_new_tokens:240});
   result=output?.[0]?.translation_text||'';
   if(!result)throw Error('local_translation_empty');
@@ -41,7 +41,7 @@ async function translate(text,target,source){
  return result;
 }
 async function voice(url,target){
- const transcriber=await getPipe('automatic-speech-recognition','Xenova/whisper-tiny');
+ const transcriber=await getPipe('automatic-speech-recognition','onnx-community/whisper-tiny');
  const response=await fetch(url);
  if(!response.ok)throw Error('audio_download_failed');
  const buffer=await response.arrayBuffer();
