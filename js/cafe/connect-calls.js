@@ -9,7 +9,7 @@
   };
   const copy = {
     ru: {
-      audio: 'Голосовой звонок', video: 'Видеозвонок', incoming: 'Входящий звонок', outgoing: 'Вызываем…',
+      audio: 'Голосовой звонок', video: 'Видеозвонок', incoming: 'Входящий звонок', fromCafe: 'Звонит UMMA', fromClient: 'Звонит клиент', ringtone: 'Включить звук звонка', outgoing: 'Вызываем…',
       connecting: 'Подключаем…', connected: 'На связи', reconnecting: 'Восстанавливаем связь…',
       answer: 'Принять', decline: 'Отклонить', end: 'Завершить', close: 'Закрыть',
       mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
@@ -18,7 +18,7 @@
       denied: 'Разрешите доступ к микрофону и, для видеозвонка, к камере.', playback: 'Включить звук', client: 'Клиент'
     },
     en: {
-      audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', outgoing: 'Calling…',
+      audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', fromCafe: 'UMMA is calling', fromClient: 'A customer is calling', ringtone: 'Enable ringtone', outgoing: 'Calling…',
       connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…',
       answer: 'Answer', decline: 'Decline', end: 'End call', close: 'Close',
       mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
@@ -27,7 +27,7 @@
       denied: 'Allow microphone access and camera access for video calls.', playback: 'Play sound', client: 'Customer'
     },
     vi: {
-      audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', outgoing: 'Đang gọi…',
+      audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', fromCafe: 'UMMA đang gọi', fromClient: 'Khách hàng đang gọi', ringtone: 'Bật nhạc chuông', outgoing: 'Đang gọi…',
       connecting: 'Đang kết nối…', connected: 'Đã kết nối', reconnecting: 'Đang kết nối lại…',
       answer: 'Trả lời', decline: 'Từ chối', end: 'Kết thúc', close: 'Đóng',
       mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
@@ -100,7 +100,7 @@
 
     function release(call) {
       clearTimeout(call.deadline);
-      clearInterval(call.ringer);
+      stopRinger(call);
       call.peer?.close();
       call.stream?.getTracks().forEach(track => track.stop());
       if (call.remote) call.remote.srcObject = null;
@@ -123,6 +123,7 @@
         modal?.close();
         return;
       }
+      modal?.classList.remove('umma-call-incoming');
       call.status.textContent = t(reason);
       call.media.hidden = true;
       call.controls.replaceChildren(action('close', () => modal.close()));
@@ -138,28 +139,45 @@
       return button;
     }
 
-    function enableRinger() {
+    async function enableRinger() {
       const Audio = window.AudioContext || window.webkitAudioContext;
       if (!Audio) return;
-      ringAudio ||= new Audio();
-      if (ringAudio.state !== 'running') void ringAudio.resume().catch(() => {});
+      try {
+        ringAudio ||= new Audio();
+        if (ringAudio.state !== 'running') await ringAudio.resume();
+      } catch {}
     }
 
-    function ring() {
-      if (document.hidden) return;
-      navigator.vibrate?.([120, 80, 120]);
-      if (ringAudio?.state !== 'running') return;
-      for (const offset of [0, 0.22]) {
+    function stopRinger(call) {
+      clearInterval(call.ringer);
+      call.ringer = null;
+      for (const note of call.notes || []) note.stop();
+      call.notes?.clear();
+      call.ringtoneButton?.remove();
+    }
+
+    function ring(call) {
+      if (current !== call || document.hidden) return;
+      navigator.vibrate?.([240, 120, 240]);
+      if (ringAudio?.state !== 'running' || call.notes.size) return;
+      call.ringtoneButton?.remove();
+      for (const [offset, frequency] of [[0, 660], [0.24, 880], [0.48, 660]]) {
         const time = ringAudio.currentTime + offset;
         const oscillator = ringAudio.createOscillator();
         const gain = ringAudio.createGain();
-        oscillator.frequency.value = 520;
+        oscillator.frequency.value = frequency;
         gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.13, time + 0.025);
-        gain.gain.linearRampToValueAtTime(0, time + 0.18);
+        gain.gain.linearRampToValueAtTime(0.32, time + 0.03);
+        gain.gain.linearRampToValueAtTime(0, time + 0.19);
         oscillator.connect(gain).connect(ringAudio.destination);
+        call.notes.add(oscillator);
+        oscillator.onended = () => {
+          call.notes.delete(oscillator);
+          oscillator.disconnect();
+          gain.disconnect();
+        };
         oscillator.start(time);
-        oscillator.stop(time + 0.18);
+        oscillator.stop(time + 0.19);
       }
     }
 
@@ -170,8 +188,24 @@
       const opened = modal;
       opened.setAttribute('aria-label', t(call.mode));
       const card = element('section', 'umma-call-card');
+      const identity = element('div', 'umma-call-identity');
       const title = element('h2');
-      title.textContent = call.name || (call.credentials?.initData ? t('client') : 'UMMA');
+      const isStaff = Boolean(call.credentials?.initData);
+      title.textContent = call.name || (isStaff ? t('client') : 'UMMA');
+      if (call.incoming) {
+        opened.classList.add('umma-call-incoming');
+        title.textContent = t(isStaff ? 'fromClient' : 'fromCafe');
+        const mark = element('span', 'umma-call-mark');
+        mark.setAttribute('aria-hidden', 'true');
+        mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + icons[call.mode] + '</svg>';
+        identity.append(mark);
+      }
+      identity.append(title);
+      if (call.incoming && isStaff && call.name) {
+        const from = element('p', 'umma-call-from');
+        from.textContent = call.name;
+        identity.append(from);
+      }
       const type = element('p', 'umma-call-type');
       type.textContent = t(call.mode);
       call.status = element('p', 'umma-call-status');
@@ -187,7 +221,7 @@
       } else {
         call.controls.append(action('end', cancel, 'umma-call-end'));
       }
-      card.append(title, type, call.status, call.media, call.controls);
+      card.append(identity, type, call.status, call.media, call.controls);
       opened.append(card);
       opened.addEventListener('cancel', event => {
         event.preventDefault();
@@ -202,8 +236,16 @@
       document.body.append(opened);
       opened.showModal();
       if (call.incoming) {
-        ring();
-        call.ringer = setInterval(ring, 2500);
+        call.notes = new Set();
+        if (ringAudio?.state !== 'running' && (window.AudioContext || window.webkitAudioContext)) {
+          call.ringtoneButton = action('ringtone', async () => {
+            await enableRinger();
+            if (call.ringer) ring(call);
+          }, 'umma-call-ring-button');
+          call.controls.append(call.ringtoneButton);
+        }
+        ring(call);
+        call.ringer = setInterval(() => ring(call), 2100);
       }
     }
 
@@ -213,7 +255,8 @@
     }
 
     async function establish(call) {
-      clearInterval(call.ringer);
+      stopRinger(call);
+      modal?.classList.remove('umma-call-incoming');
       dismissNotification(call.id);
       call.status.textContent = t('connecting');
       call.controls.replaceChildren(action('end', () => finish(call), 'umma-call-end'));
