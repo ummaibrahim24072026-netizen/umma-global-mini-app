@@ -15,6 +15,14 @@ const root=()=>workspace||dialog;
 const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!workspace.parentElement.hidden:!!dialog?.open;
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='staffVoice'?115000:20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
+const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
+async function translateChat(messageId,language,clientId){
+ const payload={staff:true,initData:credential(),clientId,messageId,language};
+ const response=await fetch(TRANSLATE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
+ const result=await response.json();
+ if(!response.ok||!result.ok)throw Error(result.error||'Translation unavailable');
+ return result;
+}
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,composer;
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
@@ -94,13 +102,13 @@ async function run(fn,feedback=status){
  finally{busy=false;buttons.forEach(b=>b.disabled=false);}
 }
 function showMessages(data){
- const target=window.ummaConnectMedia.language(navigator.language);
+ const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
  const labels={photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое'};
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
-  if(m.body)li.append(node('div',m.body));
-  if(m.media_kind)li.append(window.ummaConnectMedia.attachment(m.media_kind,labels[m.media_kind],
+  if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>translateChat(m.id,target,data.client.id)));
+  if(m.media_kind)li.append(window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],
    async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url,
    'Не удалось открыть вложение. Попробуйте ещё раз.'));
   if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
