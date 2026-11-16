@@ -3,6 +3,8 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Очистить корзину":{"en":"Clear cart","vi":"Xóa giỏ hàng","ko":"장바구니 비우기","zh":"清空购物车","de":"Warenkorb leeren","fr":"Vider le panier","th":"ล้างตะกร้า","ms":"Kosongkan troli","id":"Kosongkan keranjang","ar":"إفراغ السلة","pt":"Esvaziar carrinho"},
+"Удалить все блюда из корзины?":{"en":"Remove all items from your cart?","vi":"Xóa tất cả món trong giỏ hàng?","ko":"장바구니에서 모든 상품을 삭제할까요?","zh":"要移除购物车中的全部商品吗？","de":"Alle Artikel aus dem Warenkorb entfernen?","fr":"Retirer tous les articles du panier ?","th":"นำรายการทั้งหมดออกจากตะกร้าหรือไม่?","ms":"Buang semua item daripada troli?","id":"Hapus semua item dari keranjang?","ar":"هل تريد إزالة جميع الأصناف من السلة؟","pt":"Remover todos os artigos do carrinho?"},
 "Настройки чата":{"en":"Chat settings","vi":"Cài đặt trò chuyện","ko":"채팅 설정","zh":"聊天设置","de":"Chat-Einstellungen","fr":"Paramètres du chat","th":"การตั้งค่าแชต","ms":"Tetapan sembang","id":"Pengaturan chat","ar":"إعدادات الدردشة","pt":"Definições do chat"},
 "Меню":{"en":"Menu","vi":"Thực đơn","ko":"메뉴","zh":"菜单","de":"Menü","fr":"Menu","th":"เมนู","ms":"Menu","id":"Menu","ar":"القائمة","pt":"Menu"},
 "Заказы":{"en":"Orders","vi":"Đơn hàng","ko":"주문","zh":"订单","de":"Bestellungen","fr":"Commandes","th":"คำสั่งซื้อ","ms":"Pesanan","id":"Pesanan","ar":"الطلبات","pt":"Pedidos"},
