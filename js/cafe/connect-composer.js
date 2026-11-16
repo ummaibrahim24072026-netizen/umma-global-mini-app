@@ -133,7 +133,7 @@
    return control;
   }
   function controls(){
-   const active=starting||!!recording||!!cameraSession;
+   const active=starting||!!recording||!!cameraSession||!!circleSession;
    for(const picker of pickers)picker.disabled=working||active;
    body.disabled=send.disabled=working||active;
    mic.disabled=working||starting||!!cameraSession;
@@ -592,7 +592,7 @@
   }
   return {
    get draft(){return draft;},
-   get recording(){return starting||!!recording||!!cameraSession;},
+   get recording(){return starting||!!recording||!!cameraSession||!!circleSession;},
    busy(value){working=value;controls();},
    clear(){setDraft(null);},
    close(){
