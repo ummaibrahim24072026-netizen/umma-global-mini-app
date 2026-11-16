@@ -8,7 +8,13 @@ w.AudioContext=class{state='running';currentTime=0;destination={};createOscillat
 w.navigator.setAppBadge=async n=>badge=n;w.navigator.clearAppBadge=async()=>badge=0;
 w.Notification={permission:'default',requestPermission(){requests++;return Promise.resolve('denied');}};
 w.eval(source('js/cafe/order-alerts.js'));w.eval(source('js/cafe/order-inbox.js'));assert.equal(requests,0);assert.equal(sounds,0);
-w.document.querySelector('.umma-order-alerts button').click();await tick();assert.equal(sounds,2); // unsupported push, foreground sound still works
+const controls=w.ummaOrderAlerts.controls;
+assert.equal(controls.hidden,false);
+assert.equal(controls.querySelector('p'),null);
+controls.querySelector('button').click();
+assert.equal(controls.hidden,true);
+assert.equal(w.localStorage.getItem('umma:order-alerts:v1'),'on');
+await tick();assert.equal(sounds,2); // unsupported push, foreground sound still works
 const o={id:'q',orderNumber:90,status:'pending',paymentStatus:'pending'};w.ummaOrderInbox.publish(o);assert.equal(sounds,2);assert.equal(badge,1);
 w.ummaOrderInbox.publish({...o,status:'ready',paymentStatus:'paid'});assert.equal(sounds,4);assert.equal(badge,3);w.ummaOrderInbox.publish({...o,status:'ready',paymentStatus:'paid'});assert.equal(sounds,4);
 // Pushes can arrive out of order: retain event times, do not regress the latest state.
@@ -17,7 +23,7 @@ w.ummaOrderInbox.publish({...o,orderNumber:91,status:'completed',eventId:'done',
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt:new Date(Date.now()-60000).toISOString(),changes:{status:'preparing'}});
 let stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.states['91'].status,'completed');const length=stored.messages.length;
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt,changes:{status:'preparing'}});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.length,length);
-w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog .umma-inbox-order').length,2);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
+w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog .umma-inbox-order').length,2);assert.equal(w.document.querySelector('dialog .umma-order-alerts').hidden,true);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
 w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:true});w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:false});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.at(-1).value,'batch_ready_unpaid');w.close();
 }
 // Supported browser: one explicit permission tap, subscription bound to the exact receipt.
@@ -28,7 +34,13 @@ const registration={pushManager:{async getSubscription(){return null;},async sub
 Object.defineProperty(w.navigator,'serviceWorker',{value:{ready:Promise.resolve(registration),controller:{postMessage(){}},addEventListener(){}}});
 w.fetch=async(u,opts)=>{const b=JSON.parse(opts.body);calls.push(b);return new Response(JSON.stringify(b.action==='config'?{ok:true,publicKey:Buffer.alloc(65).toString('base64url')}:{ok:true}));};
 w.eval(source('js/cafe/order-alerts.js'));w.ummaOrderAlerts.setOrder({id:'receipt-id',requestKey:'receipt-key'});await tick();assert.equal(permissions,0);assert.equal(calls.length,0);
-w.document.querySelector('.umma-order-alerts button').click();await tick();await tick();assert.equal(permissions,1);assert.equal(subscribes,1);assert.equal(calls[1].orderId,'receipt-id');assert.equal(calls[1].requestKey,'receipt-key');assert.equal(calls[1].language,'ru');w.close();
+w.document.querySelector('.umma-order-alerts button').click();await tick();await tick();assert.equal(permissions,1);assert.equal(w.ummaOrderAlerts.controls.hidden,true);assert.equal(subscribes,1);assert.equal(calls[1].orderId,'receipt-id');assert.equal(calls[1].requestKey,'receipt-key');assert.equal(calls[1].language,'ru');
+const reload=new JSDOM('<html lang="ru"><body></body></html>',{url:'https://qa.invalid/menu/',runScripts:'outside-only'}).window;
+reload.localStorage.setItem('umma:order-alerts:v1',w.localStorage.getItem('umma:order-alerts:v1'));
+reload.eval(source('js/cafe/order-alerts.js'));
+assert.equal(reload.ummaOrderAlerts.controls.hidden,true);
+assert.equal(reload.ummaOrderAlerts.controls.querySelector('p'),null);
+reload.close();w.close();
 }
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
 {
