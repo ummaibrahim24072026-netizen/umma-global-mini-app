@@ -233,21 +233,25 @@
   button.type='button';
   button.textContent='🌐 Перевести голос';
   status.setAttribute('role','status');
-  section.append(button,status);
+  const source=document.createElement('select');source.className='connect-voice-language';source.setAttribute('aria-label','Язык голосового сообщения');
+  for(const [code,name] of [['auto','Автоязык'],['ru','Русский'],['vi','Tiếng Việt'],['en','English']]){const option=document.createElement('option');option.value=code;option.textContent=name;source.append(option);}
+  section.append(source,button,status);
   if(!enabled){button.hidden=true;status.textContent=labels[2];return section;}
   let timer=null,attempts=0,loading=false;
   const request=async()=>{
    if(loading||!section.isConnected)return;
    loading=true;button.disabled=true;button.textContent=labels[1];status.textContent='Загружаем модели и распознаём речь на телефоне. Первый запуск может занять несколько минут…';
    try{
-    const result=await load();
+    const result=await load(source.value);
     if(!section.isConnected)return;
     if(result.status==='ready'){
      status.textContent=result.url?labels[3]:labels[5];
      const text=document.createElement('div');
      text.lang=target;text.dir='auto';text.textContent=result.text||'';
      section.querySelectorAll('.connect-voice-result').forEach(x=>x.remove());
-     const resultBox=document.createElement('div');resultBox.className='connect-voice-result';resultBox.append(text);
+     const resultBox=document.createElement('div');resultBox.className='connect-voice-result';
+     if(result.transcript){const original=document.createElement('div');original.className='connect-voice-original';original.textContent='Распознано ('+({ru:'RU',vi:'VI',en:'EN'}[result.source]||'?')+'): '+result.transcript;resultBox.append(original);}
+     resultBox.append(text);
      if(result.url){
       const audio=player('voice',result.url,labels[4]);
       audio.addEventListener('error',()=>{status.textContent=labels[2];button.hidden=false;button.textContent=labels[6];},{once:true});
@@ -270,6 +274,7 @@
    }finally{loading=false;button.disabled=false;}
   };
   button.onclick=()=>{if(timer)clearTimeout(timer);attempts=0;void request();};
+  source.onchange=()=>{button.hidden=false;button.disabled=false;button.textContent='🌐 Перевести голос';status.textContent='Выбран язык: '+source.options[source.selectedIndex].textContent;};
   status.textContent='Бесплатный перевод на телефоне. Нажмите кнопку; при первом запуске загрузятся модели.';
   return section;
  }
