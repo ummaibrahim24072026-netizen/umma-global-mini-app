@@ -18,10 +18,12 @@ for(const method of ['cash','qr']){
  }});
  const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
  const receiptButton=d.getElementById('receiptButton');
- assert.equal(receiptButton.hidden,true);
+ assert.equal(receiptButton.classList.contains('has-active-orders'),false);
  assert.ok(receiptButton.closest('.customer-actions'));
  assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('orderInboxHost').closest('.customer-actions'));
- assert.equal(receiptButton.previousElementSibling.id,'orderHistoryButton');
+ assert.equal(receiptButton.hidden,false);
+ assert.equal(receiptButton.closest('nav').children[2].id,'nearbyCafeButton');
+ assert.equal(d.getElementById('orderHistoryButton'),null);
  d.querySelector(method==='cash'?'.cafe-product-photo':'.dish-link').click();
  assert.equal(d.getElementById('dishDetails').open,true);
  assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
@@ -58,20 +60,26 @@ for(const method of ['cash','qr']){
   assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipt')).cashReceipt.changeVnd,10000);
  }
  terminal=method==='cash'?'completed':'cancelled';
- assert.equal(receiptButton.hidden,false);
+ assert.equal(receiptButton.classList.contains('has-active-orders'),true);
  assert.equal(receiptButton.textContent,'Мои заказы');
  d.getElementById('newOrder').click();
  receiptButton.click();
+ assert.equal(d.getElementById('activeOrdersList').hidden,false);
+ assert.match(d.getElementById('activeOrdersList').textContent,/Заказ готов/);
+ d.querySelector('#activeOrdersList button').click();
  assert.equal(d.getElementById('checkout').open,true);
  assert.match(d.getElementById('successNumber').textContent,/98765/);
  d.dispatchEvent(new w.Event('visibilitychange'));
  await new Promise(r=>setTimeout(r,20));
- assert.equal(d.getElementById('receiptButton').hidden,true);
+ assert.equal(receiptButton.classList.contains('has-active-orders'),false);
  assert.equal(receiptButton.textContent,'Мои заказы');
- assert.equal(d.getElementById('orderHistoryButton').hidden,false);
  assert.equal(JSON.parse(w.localStorage.getItem('umma-menu-receipts'))[0].status,terminal);
  d.getElementById('newOrder').click();
- d.getElementById('orderHistoryButton').click();
+ receiptButton.click();
+ assert.equal(d.getElementById('orderHistoryList').hidden,false);
+ d.getElementById('showActiveOrders').click();
+ assert.equal(d.getElementById('activeOrdersList').hidden,false);
+ d.getElementById('showOrderHistory').click();
  assert.match(d.getElementById('orderHistoryList').textContent,method==='cash'?/Заказ выдан/:/Заказ отменён/);
  d.querySelector('#orderHistoryList button').click();
  assert.equal(d.getElementById('success').hidden,false);
@@ -82,16 +90,63 @@ for(const method of ['cash','qr']){
  saveReceipt({id:'active-2',orderNumber:102,status:'pending',totalVnd:120000});
  renderReceiptLinks();`);
  receiptButton.click();
- assert.equal(d.getElementById('activeOrders').open,true);
+ assert.equal(d.getElementById('customerOrders').open,true);
  const activeOrders=d.querySelectorAll('#activeOrdersList button');
  assert.equal(activeOrders.length,2);
  assert.match(activeOrders[0].textContent,/102/);
  activeOrders[1].click();
- assert.equal(d.getElementById('activeOrders').open,false);
+ assert.equal(d.getElementById('customerOrders').open,false);
  assert.match(d.getElementById('successNumber').textContent,/101/);
  d.getElementById('newOrder').click();d.getElementById('installApp').click();assert.equal(d.getElementById('installHelp').hidden,false);dom.window.close();
 }
 console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status, receipt recovery and install guidance.');
+{
+ const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
+ const w=dom.window,d=w.document,$=id=>d.getElementById(id);
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+ w.eval(read('js/cafe/public-menu-i18n.js'));
+ let hints=[],center,fail=false,geolocationCalls=0;
+ const map={setView(point){center=Array.from(point);return this;},invalidateSize(){}};
+ w.ummaPublicDelivery={loadMapLibrary:async()=>{if(fail)throw Error('map offline');}};
+ w.UmmaMaps={basemap(){}};
+ w.L={map:()=>map,layerGroup:()=>({addTo(){return this;},clearLayers(){hints=[];}}),
+  marker:(point,{title})=>({bindTooltip(){return this;},on(_,callback){hints.push({title,callback});return this;},addTo(){}}),
+  latLng:latitude=>({distanceTo:point=>Math.abs(point[0]-latitude)})};
+ Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(success){
+  geolocationCalls++;success({coords:{latitude:13,longitude:109}});
+ }}});
+ w.eval(read('js/cafe/public-menu-nearby.js'));
+ const point=()=>new URL($('nearbyCafeRoute').href).searchParams.get('destination');
+ assert.equal(point(),'12.2814294,109.2020884');
+ fail=true;
+ $('nearbyCafeButton').click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal($('nearbyCafeMap').hidden,true);
+ assert.equal(point(),'12.2814294,109.2020884');
+ $('closeNearbyCafe').click();
+ fail=false;
+ $('nearbyCafeButton').click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal($('nearbyCafeMap').hidden,false);
+ assert.deepEqual(center,[12.2814294,109.2020884]);
+ assert.equal($('findNearestCafe').hidden,true);
+ assert.equal(geolocationCalls,0);
+ w.ummaNearbyCafe.setLocations([
+  {id:'north',name:'North UMMA',address:'North cafe',latitude:13,longitude:109},
+  {id:'south',name:'South UMMA',address:'South cafe',latitude:12,longitude:109}
+ ],'south');
+ assert.equal(point(),'12,109');
+ assert.equal($('findNearestCafe').hidden,false);
+ $('findNearestCafe').click();
+ assert.equal(point(),'13,109');
+ assert.equal($('nearbyCafeName').textContent,'North UMMA');
+ hints.find(marker=>marker.title==='South UMMA').callback();
+ assert.equal(point(),'12,109');
+ assert.equal(geolocationCalls,1);
+ dom.window.close();
+}
+console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, explicit geolocation and nearest cafe selection.');
 // Exercise the deployed handler code: guest capabilities, server totals and payment scope.
 const {stripTypeScriptTypes}=await import('node:module');const vm=await import('node:vm');const {webcrypto}=await import('node:crypto');
 let handler,rpcCalls=[],allowStatus=true,receiptReads=0,storedMethod='qr',storedStatus='pending';

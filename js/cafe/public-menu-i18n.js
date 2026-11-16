@@ -125,6 +125,18 @@ Object.assign(copy,{
   vi:'Tỷ giá Google Finance tạm thời không khả dụng. Hãy chọn cách thanh toán khác hoặc thử lại sau.'
  }
 });
+Object.assign(copy,{
+ 'Навигация кафе':{en:'Cafe navigation',vi:'Điều hướng quán ăn'},
+ 'Активные':{en:'Active',vi:'Đang xử lý'},
+ 'История':{en:'History',vi:'Lịch sử'},
+ 'Активных заказов пока нет':{en:'No active orders yet',vi:'Chưa có đơn đang xử lý'},
+ 'Ожидаем оплату':{en:'Awaiting payment',vi:'Đang chờ thanh toán'},
+ 'Кафе рядом':{en:'Nearby cafe',vi:'Quán gần đây'},
+ 'Проложить маршрут':{en:'Get directions',vi:'Chỉ đường'},
+ 'Найти ближайшее кафе':{en:'Find the nearest cafe',vi:'Tìm quán gần nhất'},
+ 'Карта кафе недоступна.':{en:'The cafe map is unavailable.',vi:'Bản đồ quán hiện không khả dụng.'},
+ 'Не удалось определить местоположение.':{en:'Could not find your location.',vi:'Không tìm được vị trí của bạn.'}
+});
 function t(key,params={}){return String(language==='ru'?key:copy[key]?.[language]||copy[key]?.en||key).replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}
 function field(p,key){const specific=p[key+'_'+language];if(specific)return specific;if(language==='ru')return p[key+'_ru']||p[key+'_en']||p[key+'_vi']||'';if(language==='en'||language==='vi')return p[key+'_'+language]||p[key+'_en']||p[key+'_ru']||'';const source=p[key+'_ru'];return copy[source]?.[language]||p[key+'_en']||source||'';}
 function staticText(){document.documentElement.setAttribute('translate','no');document.documentElement.classList.add('notranslate');document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.title=t('Меню кафе')+' · UMMA Cafe';document.querySelector('meta[name=description]')?.setAttribute('content',t('Наше меню')+' · HALAL UMMA · Nha Trang');for(const node of document.querySelectorAll('[data-i18n]'))node.textContent=t(node.dataset.i18n);for(const node of document.querySelectorAll('[data-i18n-placeholder]'))node.placeholder=t(node.dataset.i18nPlaceholder);for(const node of document.querySelectorAll('[data-i18n-label]'))node.setAttribute('aria-label',t(node.dataset.i18nLabel));for(const node of document.querySelectorAll('[data-i18n-alt]'))node.alt=t(node.dataset.i18nAlt);const select=document.getElementById('menuLanguage');if(select)select.value=language;}

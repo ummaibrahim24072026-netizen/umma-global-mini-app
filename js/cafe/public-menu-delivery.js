@@ -117,6 +117,7 @@ function mode(){
 }
 $('orderType').onchange=mode;mode();
 window.ummaPublicDelivery={
+ loadMapLibrary:leaflet,
  setCafe(value){cafe=value;if(value)openMap();},
  point:()=>point?{...point}:null,
  fields(){if($('orderType').value!=='delivery')return {};if(!point)throw Error(t('Выберите точку доставки на карте.'));return {orderType:'delivery',address:$('deliveryAddress').value.trim(),phone:$('deliveryPhone').value.trim(),...point};},
