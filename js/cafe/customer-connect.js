@@ -229,11 +229,11 @@ function renderSetup(){
  setupHost.hidden=!installed||dismissed||!pushSupported()||(!!token&&!state)||state?.client?.pushEnabled===true||
   (Notification.permission==='denied'&&!setupStatus.textContent);
 }
-async function run(fn,feedback=status){
+async function run(fn,feedback=status,showProgress=true){
  if(busy)return;
  busy=true;await refreshing;
  const buttons=[...(dialog?.querySelectorAll('button')||[]),...(settingsDialog?.querySelectorAll('button')||[]),setupButton,later];
- buttons.forEach(b=>b.disabled=true);feedback.textContent=t(17);
+ buttons.forEach(b=>b.disabled=true);feedback.textContent=showProgress?t(17):'';
  try{await fn();}catch(e){feedback.textContent=e.message||t(16);}
  finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
 }
@@ -367,7 +367,7 @@ function build(){
   onInstantVideo:publicChat?async file=>{
    if(busy)throw Error(t(16));
    const requestKey=crypto.randomUUID();
-   composer.busy(true);
+   sending(true);
    try{
     await connect();
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},{file,kind:'video'},requestKey,'◉ Видеосообщение',composer.error);
@@ -376,14 +376,23 @@ function build(){
     renderThread();
     list.scrollTop=list.scrollHeight;
     status.textContent='';
-   }finally{composer.busy(false);}
+   }finally{sending(false);}
   }:null});
+ function sending(value){
+  composer.busy(value);
+  if(!publicChat)return;
+  if(value){
+   status.textContent='';
+   send.setAttribute('aria-busy','true');
+   send.hidden=false;
+  }else send.removeAttribute('aria-busy');
+ }
  form.onsubmit=e=>{
   e.preventDefault();
   if(busy||composer.recording||(!body.value.trim()&&!composer.draft))return;
   pending=pending||{requestKey:crypto.randomUUID(),body:body.value.trim()};
   const draft=composer.draft;
-  composer.busy(true);
+  sending(true);
   void run(async()=>{
    if(draft){
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},draft,pending.requestKey,pending.body,composer.error);
@@ -391,14 +400,14 @@ function build(){
    body.value='';
    composer.clear();
    pending=null;
-   status.textContent=publicChat?(receiptCopy[lang()]||receiptCopy.en)[0]:push.hidden?t(13):notice(1);
+   status.textContent=publicChat?'':push.hidden?t(13):notice(1);
    if(draft){
     try{state=await api('list');}catch{setTimeout(refresh,0);}
    }
    renderThread();
    if(publicChat)list.scrollTop=list.scrollHeight;
    await markRead();
-  }).finally(()=>composer.busy(false));
+  },status,!publicChat).finally(()=>sending(false));
  };
  const settings=el('section',null,'connect-settings');
  const actions=el('div',null,'connect-actions');

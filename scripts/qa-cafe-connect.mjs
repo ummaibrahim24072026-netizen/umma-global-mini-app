@@ -512,7 +512,12 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(writes.length,writesBeforeVideo);
  assert.equal(send.hidden,false);
  submit();
+ assert.equal(send.getAttribute('aria-busy'),'true');
+ assert.equal(send.hidden,false);
+ await Promise.resolve();
+ assert.equal(form.previousElementSibling.textContent,'');
  await tick();
+ assert.equal(send.hasAttribute('aria-busy'),false);
  assert.equal(writes.length,writesBeforeVideo+1);
  assert.equal(writes.at(-1).headers['Content-Type'],'video/webm');
  guest.navigator.mediaDevices.getUserMedia=async()=>({...await originalMedia(),getAudioTracks:()=>[]});
