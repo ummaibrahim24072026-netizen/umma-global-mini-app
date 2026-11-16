@@ -77,29 +77,61 @@ async function messageAction(action,messageId){
 async function refreshHidden(){
  try{const result=await messageAction('hidden');hiddenMessages=new Set(result.ids||[]);}catch{}
 }
+async function forwardMessage(m){
+ const text=(m.body&&m.body!=='◉ Видеосообщение')?m.body:'';
+ if(m.media_kind){
+  const result=await api('mediaGet',{messageId:m.id});
+  const response=await fetch(result.url,{cache:'no-store'});
+  if(!response.ok)throw Error('Не удалось загрузить вложение');
+  const blob=await response.blob();
+  const mime=blob.type||({'photo':'image/jpeg','video':'video/mp4','voice':'audio/webm'}[m.media_kind]);
+  const extension=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','video/mp4':'mp4','video/webm':'webm','audio/webm':'webm','audio/mp4':'m4a','audio/ogg':'ogg'})[mime.split(';')[0]]||'bin';
+  const file=new File([blob],'UMMA-'+m.media_kind+'-'+m.id.slice(0,8)+'.'+extension,{type:mime});
+  if(navigator.share&&navigator.canShare?.({files:[file]})){
+   await navigator.share({files:[file],...(text?{text}:{})});
+   return;
+  }
+  // Never forward a filename instead of the actual attachment.
+  const url=URL.createObjectURL(file);
+  const link=document.createElement('a');
+  link.href=url;link.download=file.name;
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  alert('Файл сохранён. Прикрепите его в WhatsApp или другом чате.');
+  return;
+ }
+ if(navigator.share)await navigator.share({text});
+ else if(navigator.clipboard){await navigator.clipboard.writeText(text);alert('Текст скопирован');}
+}
 function messageMenu(li,m){
- const labels={ru:['Копировать','Переслать','Удалить у себя','Удалить у всех','Сообщение удалено','Не удалось выполнить действие'],en:['Copy','Forward','Delete for me','Delete for everyone','Message deleted','Action failed'],vi:['Sao chép','Chuyển tiếp','Xóa phía tôi','Xóa với mọi người','Đã xóa','Không thực hiện được']};
+ const ru=lang()==='ru';
+ const labels={ru:['Копировать','Переслать','Удалить у себя','Удалить у всех'],en:['Copy','Forward','Delete for me','Delete for everyone'],vi:['Sao chép','Chuyển tiếp','Xóa phía tôi','Xóa với mọi người']};
  const l=labels[lang()]||labels.en;
  const menu=el('details',null,'connect-message-actions');
  const summary=el('summary','⋯');
- summary.setAttribute('aria-label','Действия с сообщением');
+ summary.setAttribute('aria-label',ru?'Действия с сообщением':'Message actions');
  menu.append(summary);
- const add=(label,action)=>{
-  const button=el('button',label);button.type='button';
-  button.onclick=async()=>{menu.open=false;try{await action();}catch(error){alert(error.message||l[5]);}};
+ const add=(icon,label,action,danger=false)=>{
+  const button=el('button',null,danger?'connect-action-danger':'');
+  button.type='button';
+  const glyph=el('span',icon,'connect-action-icon');
+  const title=el('span',label);
+  button.append(glyph,title);
+  button.onclick=async()=>{
+   menu.open=false;
+   try{await action();}
+   catch(error){if(error?.name!=='AbortError')alert(error?.message||'Не удалось выполнить действие');}
+  };
   menu.append(button);
  };
- if(m.body)add(l[0],()=>navigator.clipboard.writeText(m.body));
- add(l[1],async()=>{
-  const text=m.body||((m.media_kind==='photo'?'Фото':m.media_kind==='video'?'Видео':'Голосовое сообщение')+' · UMMA');
-  if(navigator.share)await navigator.share({text});else if(navigator.clipboard){await navigator.clipboard.writeText(text);alert(l[0]+' ✓');}
- });
- add(l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
- if(m.direction==='customer'&&!m.read_at)add(l[3],async()=>{
+ if(m.body&&m.body!=='◉ Видеосообщение')add('▤',l[0],async()=>navigator.clipboard.writeText(m.body));
+ add('↗',l[1],()=>forwardMessage(m));
+ add('⌫',l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
+ if(m.direction==='customer'&&!m.read_at)add('⌦',l[3],async()=>{
   if(!confirm(l[3]+'?'))return;
   await messageAction('deleteAll',m.id);
   state=await api('list');renderThread();
- });
+ },true);
  li.append(menu);
 }
 function renderThread(){
