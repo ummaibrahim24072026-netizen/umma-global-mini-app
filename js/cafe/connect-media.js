@@ -38,6 +38,67 @@
   wrapper.append(open,status);
   return wrapper;
  }
+ function inlineAttachment(kind,label,load,errorText){
+  if(kind!=='photo'&&kind!=='video')return attachment(kind,label,load,errorText);
+  const wrapper=document.createElement('div');
+  wrapper.className='connect-inline-attachment connect-inline-'+kind;
+  const media=player(kind,'',label);
+  media.removeAttribute('src');
+  if(kind==='video'){media.preload='metadata';media.controls=true;media.playsInline=true;}
+  else {media.loading='lazy';media.decoding='async';media.tabIndex=0;media.setAttribute('role','button');}
+  const status=document.createElement('small');
+  status.setAttribute('role','status');
+  const retry=document.createElement('button');
+  retry.type='button';retry.textContent='↻';retry.hidden=true;
+  retry.setAttribute('aria-label','Повторить загрузку');
+  wrapper.append(media,status,retry);
+  let loading=null,loaded=false;
+  async function prepare(){
+   if(loaded)return;
+   if(loading)return loading;
+   status.textContent='';
+   retry.hidden=true;
+   loading=(async()=>{
+    try{
+     const url=await load();
+     if(!wrapper.isConnected)return;
+     media.src=url;
+     if(kind==='video')media.load();
+     loaded=true;
+    }catch{status.textContent=errorText;retry.hidden=false;}
+    finally{loading=null;}
+   })();
+   return loading;
+  }
+  retry.onclick=()=>{loaded=false;void prepare();};
+  media.addEventListener('error',()=>{loaded=false;status.textContent=errorText;retry.hidden=false;});
+  if(kind==='photo'){
+   const enlarge=()=>{
+    if(!media.src)return;
+    const overlay=document.createElement('div');
+    overlay.className='connect-photo-lightbox';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-label',label);
+    const image=document.createElement('img');
+    image.src=media.src;image.alt=label;
+    const close=document.createElement('button');
+    close.type='button';close.textContent='×';close.setAttribute('aria-label','Закрыть');
+    const dismiss=()=>overlay.remove();
+    close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};
+    overlay.append(image,close);document.body.append(overlay);close.focus();
+   };
+   media.addEventListener('click',enlarge);
+   media.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enlarge();}});
+  }
+  if('IntersectionObserver'in window){
+   const observer=new IntersectionObserver(entries=>{
+    if(!entries.some(entry=>entry.isIntersecting))return;
+    observer.disconnect();void prepare();
+   },{rootMargin:'240px'});
+   observer.observe(wrapper);
+  }else void prepare();
+  return wrapper;
+ }
  function videoCircle(load,errorText){
   const wrapper=document.createElement('div');
   wrapper.className='connect-video-circle';
@@ -192,5 +253,5 @@
   });
   for(const row of rows.values())row.remove();
  }
- window.ummaConnectMedia={player,attachment,videoCircle,render,language,voiceTranslation,upload};
+ window.ummaConnectMedia={player,attachment,inlineAttachment,videoCircle,render,language,voiceTranslation,upload};
 })();
