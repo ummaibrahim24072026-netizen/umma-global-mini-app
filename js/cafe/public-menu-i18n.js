@@ -3,6 +3,7 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Настройки чата":{"en":"Chat settings","vi":"Cài đặt trò chuyện","ko":"채팅 설정","zh":"聊天设置","de":"Chat-Einstellungen","fr":"Paramètres du chat","th":"การตั้งค่าแชต","ms":"Tetapan sembang","id":"Pengaturan chat","ar":"إعدادات الدردشة","pt":"Definições do chat"},
 "Меню":{"en":"Menu","vi":"Thực đơn","ko":"메뉴","zh":"菜单","de":"Menü","fr":"Menu","th":"เมนู","ms":"Menu","id":"Menu","ar":"القائمة","pt":"Menu"},
 "Заказы":{"en":"Orders","vi":"Đơn hàng","ko":"주문","zh":"订单","de":"Bestellungen","fr":"Commandes","th":"คำสั่งซื้อ","ms":"Pesanan","id":"Pesanan","ar":"الطلبات","pt":"Pedidos"},
 "Сообщения":{"en":"Messages","vi":"Tin nhắn","ko":"메시지","zh":"消息","de":"Nachrichten","fr":"Messages","th":"ข้อความ","ms":"Mesej","id":"Pesan","ar":"الرسائل","pt":"Mensagens"},

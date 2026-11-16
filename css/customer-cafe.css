@@ -277,6 +277,20 @@
 }
 #customerProfile .language-control { justify-content: space-between; margin-bottom: 14px; }
 #customerProfile .language-control select { max-width: 70%; }
+#customerProfile #openChatSettings {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 12px;
+}
+#customerChatSettings .connect-close {
+  float: inline-end;
+  margin: 0 0 0 8px;
+}
+#customerChatSettings .connect-settings { margin-inline: 0; }
+#customerChatSettings .connect-actions {
+  grid-template-columns: 1fr;
+}
+#customerChatSettings [role=status]:empty { display: none; }
 .public-cafe-menu #customerProfile .install-row #installApp { min-height: 56px; border-color: #b8d8d6; }
 #dishDetailsBody .dish-detail-photo {
   display: block;

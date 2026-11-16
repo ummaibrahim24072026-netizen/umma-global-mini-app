@@ -27,6 +27,8 @@ const chatTitles={ru:'Чат UMMA',en:'UMMA Chat',vi:'Trò chuyện UMMA'};
 const connectHost=document.getElementById('customerConnectHost');
 const inMessages=!!connectHost?.closest('#customerMessages');
 const chatTitle=()=>publicChat?(chatTitles[lang()]||chatTitles.en):t(0);
+const profileSettingsButton=document.getElementById('openChatSettings');
+let settingsDialog;
 const chatSettings={ru:'Настройки чата',en:'Chat settings',vi:'Cài đặt trò chuyện'};
 const button=el('button',chatTitle(),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (connectHost||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
@@ -136,7 +138,7 @@ function renderSetup(){
 async function run(fn,feedback=status){
  if(busy)return;
  busy=true;await refreshing;
- const buttons=[...(dialog?.querySelectorAll('button')||[]),setupButton,later];
+ const buttons=[...(dialog?.querySelectorAll('button')||[]),...(settingsDialog?.querySelectorAll('button')||[]),setupButton,later];
  buttons.forEach(b=>b.disabled=true);feedback.textContent=t(17);
  try{await fn();}catch(e){feedback.textContent=e.message||t(16);}
  finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
@@ -150,7 +152,7 @@ async function connect(){
   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
  }catch(error){token='';throw error;}
 }
-function enablePush(feedback){
+function enablePush(feedback,enableOrderAlerts=feedback===status){
  if(busy)return;
  // Only a direct tap can ask for a new browser permission.
  const permission=pushSupported()?(Notification.permission==='granted'?'granted':Notification.requestPermission()):'unsupported';
@@ -164,7 +166,7 @@ function enablePush(feedback){
   const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
   await connect();
   state=await api('preferences',{subscription:subscription.toJSON(),language:lang()});
-  if(feedback===status)window.ummaOrderAlerts?.enableGranted?.();
+  if(enableOrderAlerts)window.ummaOrderAlerts?.enableGranted?.();
   feedback.textContent=t(14)+' '+notice(2);
   if(dialog)dialog.update?.();else badge();
  },feedback);
@@ -195,6 +197,8 @@ function build(){
   hero.append(heroIcon,heroText,close);
   dialog.append(hero,el('small',t(11)));
  }
+ const settingsStatus=publicChat?el('p'):status;
+ if(publicChat)settingsStatus.setAttribute('role','status');
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
  join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
  name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
@@ -204,17 +208,18 @@ function build(){
   promotions.disabled=true;
   void run(async()=>{
    try{
+    await connect();
     state=await api('preferences',{promotions:selected,language:lang()});
-    status.textContent=t(13);
+    settingsStatus.textContent=t(13);
    }finally{
     promotions.checked=state?.client.promotions===true;
     promotions.disabled=false;
    }
-  });
+  },settingsStatus);
  };
- const save=el('button',t(6),'connect-save');save.type='button';save.onclick=()=>run(async()=>{state=await api('preferences',{name:name.value,language:lang()});status.textContent=t(13);update();});
- push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(status);
- const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();status.textContent=t(20);update();});
+ const save=el('button',t(6),'connect-save');save.type='button';save.onclick=()=>run(async()=>{await connect();state=await api('preferences',{name:name.value,language:lang()});settingsStatus.textContent=t(13);update();},settingsStatus);
+ push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(settingsStatus,true);
+ const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();settingsStatus.textContent=t(20);update();},settingsStatus);
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});
@@ -253,25 +258,24 @@ function build(){
  const actions=el('div',null,'connect-actions');
  settings.append(label(t(4),name),check,actions);
  if(publicChat){
-  const settingsLabel=chatSettings[lang()]||chatSettings.en;
-  const toggle=el('button','⋯','connect-settings-toggle');
-  toggle.type='button';
-  toggle.hidden=!token;
-  toggle.setAttribute('aria-label',settingsLabel);
-  toggle.setAttribute('aria-expanded','false');
-  toggle.setAttribute('aria-controls','umma-connect-settings');
-  settings.id='umma-connect-settings';
-  settings.hidden=true;
-  toggle.onclick=()=>{
-   settings.hidden=!settings.hidden;
-   toggle.setAttribute('aria-expanded',String(!settings.hidden));
-  };
-  hero.append(toggle);
-  actions.append(save,push,off);
-  settings.append(el('small',t(11)));
+  if(profileSettingsButton){
+   const settingsLabel=window.ummaMenuI18n?.t('Настройки чата')||chatSettings[lang()]||chatSettings.en;
+   settingsDialog=el('dialog',null,'umma-connect');
+   settingsDialog.id='customerChatSettings';
+   settingsDialog.setAttribute('aria-labelledby','customerChatSettingsTitle');
+   const heading=el('h2',settingsLabel);
+   heading.id='customerChatSettingsTitle';
+   const closeSettings=el('button','×','connect-close');
+   closeSettings.type='button';
+   closeSettings.setAttribute('aria-label',t(1));
+   closeSettings.onclick=()=>settingsDialog.close();
+   actions.append(save,push,off);
+   settingsDialog.append(closeSettings,heading,settings,settingsStatus);
+   document.body.append(settingsDialog);
+  }
   content.className='connect-chat-content';
   content.append(list,status,form);
-  dialog.append(settings,join,content);
+  dialog.append(join,content);
  }else{
   actions.append(save,off);
   const heading=el('h3',lang()==='ru'?'Ваши сообщения':lang()==='vi'?'Tin nhắn của bạn':'Your messages','connect-messages-heading');
@@ -288,7 +292,6 @@ function build(){
   join.hidden=!!token;
   content.hidden=!token;
   if(publicChat){
-   dialog.querySelector('.connect-settings-toggle').hidden=!token;
    if(token)content.insertBefore(status,form);
    else join.after(status);
   }
@@ -304,7 +307,14 @@ function build(){
 }
 async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();if(publicChat)list.scrollTop=list.scrollHeight;await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;}else if(dialog){list.replaceChildren();renderThread();}badge();renderSetup();});
+if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
+ if(!dialog)build();
+ settingsDialog.showModal();
+ settingsDialog.querySelector('[role=status]').textContent='';
+ await refresh();
+ dialog.update?.();
+};
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();

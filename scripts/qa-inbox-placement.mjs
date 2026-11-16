@@ -8,10 +8,13 @@ const staffReplies=[
  {id:'reply-1',direction:'staff',body:'Первый ответ',created_at:'2026-11-07T12:00:00Z'},
  {id:'reply-2',direction:'staff',body:'Второй ответ',created_at:'2026-11-07T12:01:00Z'}
 ];
+const profileClient={name:'Тест',promotions:true,pushEnabled:true};
 w.fetch=async(_url, options)=>{
- const {action}=JSON.parse(options.body);
+ const {action,promotions,subscription}=JSON.parse(options.body);
+ if(action==='preferences'&&typeof promotions==='boolean')profileClient.promotions=promotions;
+ if(action==='preferences'&&subscription===null)profileClient.pushEnabled=false;
  if(action==='read')for(const message of staffReplies)message.read_at='2026-11-07T12:02:00Z';
- return new Response(JSON.stringify({ok:true,client:{},messages:staffReplies}));
+ return new Response(JSON.stringify({ok:true,client:profileClient,messages:staffReplies}));
 };
 for(const script of ['order-inbox','connect-media','connect-composer','customer-connect','customer-messages']){
  w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
@@ -39,6 +42,8 @@ assert.equal(badge(trigger).textContent,'5');
 chat.click();
 await flush();
 assert.ok(d.querySelector('.umma-connect-chat').open);
+assert.equal(d.querySelector('.umma-connect-chat .connect-settings'),null);
+assert.equal(d.querySelector('.connect-settings-toggle'),null);
 assert.ok(badge(chat).hidden);
 assert.equal(badge(trigger).textContent,'3');
 d.querySelector('.umma-connect-chat').close();
@@ -67,6 +72,23 @@ w.ummaOrderInbox.publish({orderNumber:54,status:'cancelled'});
 assert.equal(list.children.length,3);
 assert.equal(list.firstElementChild.querySelectorAll('.is-done').length,0);
 assert.equal(list.firstElementChild.querySelectorAll('.is-cancelled').length,1);d.querySelector('dialog[data-umma-inbox]').close();assert.equal(button.parentElement.id,'orderInboxHost');
+inbox.close();
+d.getElementById('customerProfile').showModal();
+d.getElementById('openChatSettings').click();
+await flush();
+const settings=d.getElementById('customerChatSettings');
+assert.ok(settings.open);
+const promotions=settings.querySelector('input[type=checkbox]');
+assert.equal(promotions.checked,true);
+promotions.click();
+await flush();
+assert.equal(profileClient.promotions,false);
+settings.querySelector('.connect-off').click();
+await flush();
+assert.equal(profileClient.pushEnabled,false);
+settings.querySelector('.connect-close').click();
+assert.ok(d.getElementById('customerProfile').open);
+d.getElementById('customerProfile').close();
 // Standalone render of the actual header, with no live server requests or order actions.
 d.getElementById('menuLanguage').innerHTML='<option>Русский</option>';d.getElementById('products').innerHTML='<div class="message">Готовые блюда появятся после приёма кухни.</div>';
 mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, independent unread counts, clear-on-read, and order timelines.');

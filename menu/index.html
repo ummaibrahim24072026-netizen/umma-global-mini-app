@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=30"></script>
+<script src="js/cafe/public-menu-i18n.js?v=31"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -48,7 +48,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-preorder-action{width:100%;min-height:44px;margin-top:3px;padding:6px;border:1px solid var(--umma-brand-strong);border-radius:9px;background:#fff;color:var(--umma-brand-deep);font:inherit;font-size:12px;font-weight:700;line-height:1.25;cursor:pointer}
 #cafePage .cafe-preorder-action:disabled{opacity:.55;cursor:default}
 #cafePage .cafe-preorder-card .cafe-card-quantity{margin-top:3px;max-width:100%}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=12"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=12"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=12"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=13"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -74,6 +74,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div class="checkout-body">
     <div class="profile-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="68" height="68"><strong>UMMA CAFE</strong></div>
     <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
+    <button type="button" id="openChatSettings" class="plain-btn" aria-haspopup="dialog" data-i18n="Настройки чата">Настройки чата</button>
     <div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
     <div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
     <a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
@@ -518,4 +519,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 });
 window.ummaMenuAudience?.start(source);
 load();
-</script><script src="js/cafe/connect-media.js?v=2"></script><script src="js/cafe/connect-composer.js?v=5"></script><script src="js/cafe/customer-connect.js?v=16"></script><script src="js/cafe/customer-messages.js?v=1"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
+</script><script src="js/cafe/connect-media.js?v=2"></script><script src="js/cafe/connect-composer.js?v=5"></script><script src="js/cafe/customer-connect.js?v=17"></script><script src="js/cafe/customer-messages.js?v=1"></script><script src="js/cafe/menu-news.js?v=1"></script></body></html>
