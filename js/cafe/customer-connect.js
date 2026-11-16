@@ -63,9 +63,9 @@ function refresh(){
 const status=el('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let list,name,promotions,push;
 const mediaCopy={
- ru:{photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
- en:{photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
- vi:{photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
+ ru:{album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
+ en:{album:'Open photos and videos',photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
+ vi:{album:'Mở ảnh và video',photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
 };
 const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
 async function translateChat(messageId,language,clientId){
@@ -85,10 +85,26 @@ async function messageAction(action,messageId){
 async function refreshHidden(){
  try{const result=await messageAction('hidden');hiddenMessages=new Set(result.ids||[]);}catch{}
 }
+function downloadAttachment(file){
+ const url=URL.createObjectURL(file);
+ const link=document.createElement('a');
+ link.href=url;link.download=file.name;
+ document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
 async function forwardMessage(m){
  const text=(m.body&&m.body!=='◉ Видеосообщение')?m.body:'';
  if(m.media_kind){
   const result=await api('mediaGet',{messageId:m.id});
+  if(m.media_kind==='album'){
+   const files=await window.ummaConnectMedia.albumFiles(result.url);
+   if(navigator.share&&navigator.canShare?.({files})){
+    await navigator.share({files,...(text?{text}:{})});
+    return;
+   }
+   for(const file of files)downloadAttachment(file);
+   return;
+  }
   const response=await fetch(result.url,{cache:'no-store'});
   if(!response.ok)throw Error('Не удалось загрузить вложение');
   const blob=await response.blob();
@@ -100,11 +116,7 @@ async function forwardMessage(m){
    return;
   }
   // Never forward a filename instead of the actual attachment.
-  const url=URL.createObjectURL(file);
-  const link=document.createElement('a');
-  link.href=url;link.download=file.name;
-  document.body.append(link);link.click();link.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  downloadAttachment(file);
   alert('Файл сохранён. Прикрепите его в WhatsApp или другом чате.');
   return;
  }
@@ -158,7 +170,7 @@ function renderThread(){
   else if(m.body)li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}))));
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
-   li.append(m.media_kind==='video'&&m.body==='◉ Видеосообщение'
+   li.append(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.media_kind==='video'&&m.body==='◉ Видеосообщение'
     ?window.ummaConnectMedia.videoCircle(load,media.error)
     :window.ummaConnectMedia.inlineAttachment(m.media_kind,media[m.media_kind],load,media.error));
   }
@@ -344,7 +356,7 @@ function build(){
   send.setAttribute('aria-label',t(10));
   form.append(body,send);
  }else form.append(label(t(9),body),send);
- const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,compact:publicChat,onChange:()=>{pending=null;},
+ const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,compact:publicChat,albums:publicChat,onChange:()=>{pending=null;},
   onInstantVideo:publicChat?async file=>{
    if(busy)throw Error(t(16));
    const requestKey=crypto.randomUUID();
@@ -441,7 +453,7 @@ if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
  await refresh();
  dialog.update?.();
 };
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){list.replaceChildren();renderThread();}badge();renderSetup();});
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();

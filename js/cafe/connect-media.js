@@ -278,13 +278,71 @@
   status.textContent='Бесплатный перевод на телефоне. Нажмите кнопку; при первом запуске загрузятся модели.';
   return section;
  }
+ const albumType='application/octet-stream';
+ async function albumFiles(url){
+  const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(120000)});
+  if(!response.ok)throw Error('Album unavailable');
+  const blob=await response.blob();
+  const header=await blob.slice(0,2048).text();
+  const boundary=header.indexOf('\n');
+  if(boundary<0)throw Error('Invalid album');
+  const entries=JSON.parse(header.slice(0,boundary));
+  if(!Array.isArray(entries)||entries.length<2||entries.length>10)throw Error('Invalid album');
+  let offset=boundary+1;
+  const files=entries.map(({type,size},index)=>{
+   if(typeof type!=='string'||!/^(image|video)\//.test(type)||!Number.isSafeInteger(size)||size<=0||offset+size>blob.size)throw Error('Invalid album');
+   const item=blob.slice(offset,offset+size,type);
+   offset+=size;
+   const extension=({'image/jpeg':'jpg','video/quicktime':'mov'})[type]||type.split('/')[1];
+   return new File([item],'UMMA-'+(index+1)+'.'+extension,{type});
+  });
+  if(offset!==blob.size)throw Error('Invalid album');
+  return files;
+ }
+ function inlineAlbum(labels,load){
+  const wrapper=document.createElement('div'),open=document.createElement('button'),status=document.createElement('small');
+  open.type='button';
+  open.textContent=labels.album;
+  status.setAttribute('role','status');
+  const urls=[];
+  const release=()=>{for(const url of urls)URL.revokeObjectURL(url);urls.length=0;};
+  wrapper.releaseAlbum=release;
+  const grid=document.createElement('div');
+  Object.assign(grid.style,{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'6px'});
+  open.onclick=async()=>{
+   open.disabled=true;
+   status.textContent='';
+   try{
+    const files=await albumFiles(await load());
+    if(!wrapper.isConnected)return;
+    for(const file of files){
+     const url=URL.createObjectURL(file),kind=file.type.startsWith('image/')?'photo':'video';
+     urls.push(url);
+     const media=inlineAttachment(kind,labels[kind],async()=>url,labels.error);
+     media.style.minWidth='0';
+     grid.append(media);
+    }
+    open.hidden=true;
+   }catch{release();grid.replaceChildren();status.textContent=labels.error;}
+   finally{open.disabled=false;}
+  };
+  wrapper.className='connect-inline-album';
+  wrapper.append(open,status,grid);
+  return wrapper;
+ }
  async function upload(api,identity,draft,requestKey,body,error){
+  const album=draft.kind==='album';
+  const files=album?draft.items.map(item=>item.file):[draft.file];
+  const manifest=album?[JSON.stringify(files.map(({type,size})=>({type,size}))),'\n']:[];
   const response=await fetch(api,{method:'POST',cache:'no-store',signal:AbortSignal.timeout(120000),
-   headers:{'Content-Type':draft.file.type,'X-Umma-Request':requestKey,...identity},
-   body:new Blob([JSON.stringify(body),'\n',draft.file])});
+   headers:{'Content-Type':album?albumType:draft.file.type,'X-Umma-Request':requestKey,...identity},
+   body:new Blob([JSON.stringify(body),'\n',...manifest,...files])});
   const result=await response.json();
   if(!response.ok||!result.ok)throw Error(result.error||error(result.code,draft.kind));
   return result;
+ }
+ function releaseAlbums(container){
+  for(const album of container.querySelectorAll('.connect-inline-album'))album.releaseAlbum();
  }
  function render(list,messages,create,receipt){
   const rows=new Map(Array.from(list.children,row=>[row.dataset.connectMessage,row]));
@@ -296,7 +354,10 @@
    if(list.children[index]!==row)list.insertBefore(row,list.children[index]||null);
    rows.delete(message.id);
   });
-  for(const row of rows.values())row.remove();
+  for(const row of rows.values()){
+   releaseAlbums(row);
+   row.remove();
+  }
  }
- window.ummaConnectMedia={player,attachment,inlineAttachment,videoCircle,translatedText,render,language,voiceTranslation,upload};
+ window.ummaConnectMedia={player,attachment,inlineAttachment,inlineAlbum,albumFiles,releaseAlbums,videoCircle,translatedText,render,language,voiceTranslation,upload};
 })();

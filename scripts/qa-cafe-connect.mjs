@@ -160,6 +160,15 @@ await rpc('voiceComplete',a,null,{...viVoice,lease:viClaim.lease,text:'Xin chào
 assert.deepEqual(await rpc('voiceClaim',a,null,viVoice),{ok:true,status:'ready',text:'Xin chào',audioPath:'translated.mp3'});
 assert.equal((await rpc('voiceClaim',a,null,{...viVoice,language:'en'})).status,'claimed');
 assert.equal((await rpc('staffVoiceClaim','',1,{clientId:ca,messageId:attachment.id,language:'ru'})).path,mediaPath);
+await db.exec(source('supabase/proposals/cafe-connect-albums.sql'));
+await db.exec(source('supabase/proposals/cafe-connect-albums.sql'));
+const albumArgs={requestKey:randomUUID(),kind:'album',path:cb+'/'+randomUUID(),body:'Фото и видео'};
+const album=await rpc('mediaSend',b,null,albumArgs);
+assert.equal((await rpc('mediaSend',b,null,{...albumArgs,path:cb+'/'+randomUUID()})).id,album.id);
+assert.equal((await rpc('list',b)).messages.filter(m=>m.media_kind==='album').length,1);
+assert.equal((await rpc('staffMediaGet','',1,{clientId:cb,messageId:album.id})).path,albumArgs.path);
+await assert.rejects(rpc('mediaGet',a,null,{messageId:album.id}),/Access denied/);
+await assert.rejects(rpc('staffMediaSend','',1,{...albumArgs,clientId:cb,requestKey:randomUUID()}));
 await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);await assert.rejects(rpc('news'),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
@@ -288,7 +297,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  body.dispatchEvent(new guest.Event('input'));
  attach.click();
  assert.equal(attach.getAttribute('aria-expanded'),'true');
- assert.deepEqual([...bar.querySelectorAll('button')].map(b=>b.textContent),['Фото','Видео','Снять фото','Снять видео']);
+ assert.deepEqual([...bar.querySelectorAll('button')].map(b=>b.textContent),['Фото','Видео','Снять фото','Снять видео','Фото и видео']);
  assert.equal(bar.querySelectorAll('input[capture]').length,0);
  assert.equal(bar.querySelector('input[accept^="image/"]').hasAttribute('capture'),false);
  attach.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
