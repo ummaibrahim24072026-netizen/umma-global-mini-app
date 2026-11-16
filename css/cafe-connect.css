@@ -199,14 +199,18 @@ audio.connect-media{width:min(100%,300px)}
   overscroll-behavior:contain;
   gap:6px;
 }
-.umma-connect-chat .connect-thread li {
-  margin-block:0;
-  padding:7px 11px;
-  background:#fff;
+.public-cafe-menu .umma-connect-chat .connect-thread {
+  background:#edf7f4 url("../assets/chat-ornament.png") repeat;
+  background-size:160px 160px;
 }
-.umma-connect-chat .connect-thread li[data-direction=customer] {
-  background:var(--umma-brand-soft);
-  border-color:var(--umma-brand-line);
+.public-cafe-menu .umma-connect-chat .connect-thread > li {
+  flex:none;
+  margin-block:0;
+  padding:5px 2px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
 }
 .umma-connect-chat .connect-thread .connect-empty {
   align-self:center;
@@ -259,6 +263,24 @@ audio.connect-media{width:min(100%,300px)}
   background:var(--umma-brand-strong);
   border-color:var(--umma-brand-strong);
   font-size:21px;
+}
+.umma-connect-chat .connect-compose .connect-send[aria-busy=true] {
+  display:grid;
+  place-items:center;
+  font-size:0;
+}
+.umma-connect-chat .connect-send[aria-busy=true]::after {
+  content:"";
+  width:17px;
+  height:17px;
+  border:2px solid #ffffff66;
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:connect-sending .8s linear infinite;
+}
+@keyframes connect-sending {to {transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  .umma-connect-chat .connect-send[aria-busy=true]::after {animation:none}
 }
 .umma-connect-chat .connect-media-tools,
 .umma-connect-chat .connect-media-preview {
