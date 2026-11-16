@@ -384,10 +384,11 @@
   // Hold to record, release to send. Camera permissions are requested directly
   // from the pointer gesture; a pending permission request can be cancelled safely.
   async function beginCircle(event){
-   if(circleSession||working||starting||recording||cameraSession||!onInstantVideo)return;
+   if(circleSession){if(circleSession.tapMode)finishCircle(circleSession,false);return;}
+   if(working||starting||recording||cameraSession||!onInstantVideo)return;
    if(event?.button!==undefined&&event.button!==0)return;
    event?.preventDefault();
-   const session={held:true,cancelled:false,stream:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null};
+   const session={held:true,pressAt:performance.now(),tapMode:false,cancelled:false,stream:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null};
    circleSession=session;
    try{circleButton.setPointerCapture?.(event.pointerId);}catch{}
    circlePanel.hidden=false;
@@ -462,9 +463,10 @@
     const rect=circleButton.getBoundingClientRect();
     if(event.clientX<rect.left-70)session.cancelled=true;
    }
+   if(session.cancelled){finishCircle(session,true);return;}
+   if(performance.now()-session.pressAt<450){session.tapMode=true;return;}
    session.held=false;
-   if(session.recorder)finishCircle(session,session.cancelled);
-   else if(session.cancelled)finishCircle(session,true);
+   if(session.recorder)finishCircle(session,false);
    // If permissions are still pending, beginCircle will discard after resolution.
   }
 
@@ -540,7 +542,8 @@
     circleButton.addEventListener('pointerup',endCircle);
     circleButton.addEventListener('pointercancel',endCircle);
    circleButton.addEventListener('contextmenu',e=>e.preventDefault());
-    circleButton.addEventListener('lostpointercapture',()=>{if(circleSession?.held)endCircle();});
+    circleButton.addEventListener('lostpointercapture',()=>{});
+    circleButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(circleSession)finishCircle(circleSession,false);else beginCircle();}});
     circlePanel=el('div',null,'connect-circle-panel');
     circlePanel.hidden=true;
     circlePreview=el('video');
@@ -561,8 +564,8 @@
     status.textContent='';
    }));
    const entry=el('div',null,'connect-entry');
-   entry.append(expression,body,attach,camera);
-   if(circleButton){entry.append(circleButton);form.prepend(circlePanel);}
+   entry.append(expression,body,attach,circleButton||camera);
+   if(circleButton)form.prepend(circlePanel);
    form.prepend(bar,expressionPanel,preview,cameraPanel,recordPanel,entry);
    form.append(mic);
    form.addEventListener('focusout',event=>{
