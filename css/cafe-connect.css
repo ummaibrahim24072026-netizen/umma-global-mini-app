@@ -144,3 +144,156 @@ audio.connect-media{width:min(100%,300px)}
  .umma-connect .connect-compose{flex-wrap:wrap}
  .umma-connect .connect-compose label{flex-basis:calc(100% - 90px)}
 }
+
+/* Conversation layout for the public web menu. */
+.public-cafe-menu .umma-connect-chat[open] {
+  display:flex;
+  flex-direction:column;
+  height:min(760px, 90dvh);
+  max-height:90dvh;
+  overflow:hidden;
+  background:var(--umma-brand-canvas);
+}
+.umma-connect-chat[open] > * {margin:0}
+.public-cafe-menu .umma-connect-chat .connect-hero {
+  flex:none;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:0;
+  background:var(--umma-brand-strong);
+}
+.public-cafe-menu .umma-connect-chat .connect-hero h2 {
+  color:#fff0cd;
+  font-size:18px;
+}
+.public-cafe-menu .umma-connect-chat .connect-hero p {
+  color:white;
+  font-size:12px;
+}
+.public-cafe-menu .umma-connect-chat .connect-hero button {
+  flex:none;
+  width:44px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:white;
+  font-size:24px;
+}
+.umma-connect-chat .connect-settings {
+  flex:none;
+  max-height:40%;
+  overflow:auto;
+}
+.umma-connect-chat > .primary {margin:20px auto}
+.umma-connect-chat .connect-chat-content {
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  min-height:0;
+}
+.umma-connect-chat .connect-thread {
+  flex:1;
+  min-height:0;
+  padding:14px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  gap:6px;
+}
+.umma-connect-chat .connect-thread li {
+  margin-block:0;
+  padding:7px 11px;
+  background:#fff;
+}
+.umma-connect-chat .connect-thread li[data-direction=customer] {
+  background:var(--umma-brand-soft);
+  border-color:var(--umma-brand-line);
+}
+.umma-connect-chat .connect-thread .connect-empty {
+  align-self:center;
+  margin:auto;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  color:var(--umma-brand-muted);
+}
+.connect-message-meta {
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:3px 8px;
+}
+.umma-connect-chat .connect-message-meta small {color:var(--umma-brand-muted)}
+.umma-connect-chat [role=status] {
+  margin:0;
+  padding:5px 12px;
+  max-height:18dvh;
+  overflow:auto;
+  background:#fff;
+  font-size:12px;
+}
+.umma-connect-chat [role=status]:empty {display:none}
+.umma-connect-chat .connect-compose {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  flex:none;
+  margin:0;
+  padding:6px 10px max(8px,env(safe-area-inset-bottom));
+  border:0;
+  border-top:1px solid var(--umma-brand-line);
+  border-radius:0;
+  gap:4px 8px;
+}
+.umma-connect-chat .connect-compose textarea {
+  grid-area:2 / 1;
+  min-height:44px;
+  max-height:88px;
+  padding:10px 12px;
+  border-radius:22px;
+  resize:none;
+}
+.umma-connect-chat .connect-compose .connect-send {
+  grid-area:2 / 2;
+  min-width:44px;
+  width:44px;
+  padding:0;
+  border-radius:50%;
+  background:var(--umma-brand-strong);
+  border-color:var(--umma-brand-strong);
+  font-size:21px;
+}
+.umma-connect-chat .connect-media-tools,
+.umma-connect-chat .connect-media-preview {
+  grid-column:1 / -1;
+  grid-row:1;
+  gap:4px;
+  margin:0;
+}
+.umma-connect-chat .connect-media-tools button {
+  min-height:44px;
+  padding:4px 8px;
+  border-radius:8px;
+  font-size:12px;
+}
+.umma-connect-chat .connect-media-preview:empty {display:none}
+.umma-connect-chat .connect-media-preview:not(:empty) {
+  grid-row:3;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  max-height:25dvh;
+  overflow:auto;
+}
+.umma-connect-chat .connect-media-preview .connect-media {max-height:15dvh}
+@media(max-width:600px){
+  .public-cafe-menu .umma-connect-chat[open] {
+    width:100%;
+    max-inline-size:none;
+    height:calc(100dvh - var(--customer-keyboard-inset, 0px));
+    max-height:100dvh;
+    inset-block-end:var(--customer-keyboard-inset, 0px)!important;
+    padding:env(safe-area-inset-top) 0 0;
+    border:0;
+    border-radius:0;
+  }
+  .umma-connect-chat::before {display:none}
+}
