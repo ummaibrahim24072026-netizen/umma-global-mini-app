@@ -162,7 +162,10 @@
    preview.replaceChildren();
    if(file){
     url=URL.createObjectURL(file);
-    preview.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),remove);
+    const thumbnail=el('div',null,'connect-draft-thumbnail');
+    Object.assign(thumbnail.style,{position:'relative',display:'inline-block',maxWidth:'100%',verticalAlign:'top'});
+    thumbnail.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),remove);
+    preview.append(thumbnail);
    }
    controls();
   }
@@ -579,7 +582,11 @@
    // If permissions are still pending, beginCircle will discard after resolution.
   }
 
-  const mic=button(labels[2],record),remove=button(labels[4],()=>{setDraft(null);status.textContent='';});
+  const mic=button(labels[2],record),remove=button('×',()=>{setDraft(null);status.textContent='';});
+  remove.className='connect-draft-remove';
+  remove.setAttribute('aria-label',labels[4]);
+  remove.title=labels[4];
+  Object.assign(remove.style,{position:'absolute',top:'4px',right:'4px',width:'30px',height:'30px',borderRadius:'50%',border:'0',background:'rgba(20,55,58,.85)',color:'#fff',fontSize:'24px',lineHeight:'30px',padding:'0',display:'grid',placeItems:'center',cursor:'pointer',zIndex:'2'});
   if(compact){
    form.classList.add('connect-compose-compact');
    attach=button(compactLabels[0],()=>showAttachments(bar.hidden));
