@@ -6,12 +6,13 @@ let library=null;
 const getLib=()=>library||(library=import(base));
 const pairs=new Set(['ru-en','en-ru','vi-en','en-vi']);
 const getPipe=async(name,model)=>{
- if(!models.has(name)){
+ const key=name+'|'+model;
+ if(!models.has(key)){
   const work=(async()=>{const {pipeline}=await getLib();return pipeline(name,model,{device:'wasm',dtype:'q8'});})();
-  models.set(name,work);
-  work.catch(()=>models.delete(name));
+  models.set(key,work);
+  work.catch(()=>models.delete(key));
  }
- return models.get(name);
+ return models.get(key);
 };
 async function detect(text){
  if(!text?.trim())return 'en';
