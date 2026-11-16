@@ -112,7 +112,7 @@
   const cameraLabels=cameraCopy[lang]||cameraCopy.en;
   const videoLabels=videoCopy[lang]||videoCopy.en;
   const gallery={};
-  let cameraSession=null,cameraPanel,cameraPreview,shutter;
+  let cameraSession=null,cameraPanel,cameraPreview,shutter,flipCamera;let circleFacing='user';
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
   function showExpressions(open){
    if(!expression)return;
@@ -201,10 +201,10 @@
    cameraPanel.hidden=true;
    controls();
   }
-  async function openCamera(kind){
+  async function openCamera(kind,facing='environment'){
    if(cameraSession||working||starting||recording)return;
    const video=kind==='video';
-   const session={kind,stream:null,recorder:null,timer:null};
+   const session={kind,stream:null,recorder:null,timer:null,facing};
    if(video)session.mime=['video/webm','video/mp4'].find(type=>window.MediaRecorder?.isTypeSupported?.(type));
    cameraSession=session;
    cameraPanel.hidden=false;
@@ -218,7 +218,7 @@
     const stream=await navigator.mediaDevices.getUserMedia({
      audio:video,
      video:{
-      facingMode:{ideal:'environment'},
+      facingMode:{ideal:session.facing},
       width:{ideal:1280},height:{ideal:video?720:960},
       ...(video?{frameRate:{ideal:24,max:30}}:{})
      }
@@ -233,6 +233,7 @@
     await cameraPreview.play();
     if(cameraSession!==session)return;
     shutter.disabled=false;
+    if(flipCamera)flipCamera.disabled=false;
     status.textContent='';
    }catch{
     if(cameraSession!==session)return;
@@ -394,10 +395,11 @@
    circlePanel.hidden=false;
    circleTimer.textContent='0:00';
    circleButton.classList.add('is-recording');
+   if(flipCamera)flipCamera.disabled=false;
    controls();
    try{
     if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('camera');
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:{facingMode:'user',width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:{facingMode:circleFacing,width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}});
     if(circleSession!==session||session.cancelled||!session.held){stream.getTracks().forEach(t=>t.stop());finishCircle(session,true);return;}
     session.stream=stream;
     circlePreview.srcObject=stream;
@@ -435,6 +437,28 @@
     finishCircle(session,true);
     status.textContent=videoLabels[2];
    }
+  }
+  async function flipCurrentCamera(){
+   if(cameraSession){
+    if(cameraSession.recorder)return;
+    const session=cameraSession;
+    session.facing=session.facing==='user'?'environment':'user';
+    session.stream?.getTracks().forEach(track=>track.stop());
+    session.stream=null;
+    cameraPreview.srcObject=null;
+    cameraSession=null;
+    cameraPanel.hidden=true;
+    controls();
+    await openCamera(session.kind,session.facing);
+    return;
+   }
+   if(circleSession){
+    const old=circleSession;
+    if(old.recorder?.state==='recording')return;
+    circleFacing=circleFacing==='user'?'environment':'user';
+    finishCircle(old,true);
+    beginCircle();
+   }else circleFacing=circleFacing==='user'?'environment':'user';
   }
   function finishCircle(session,discard){
    if(!session)return;
@@ -523,7 +547,8 @@
     if(cameraSession?.kind==='video')recordVideo(cameraSession);
     else takePhoto();
    });
-   cameraPanel.append(cameraPreview,shutter,button(cameraLabels[1],()=>{
+   flipCamera=button('↻ Камера',flipCurrentCamera);
+   cameraPanel.append(cameraPreview,flipCamera,shutter,button(cameraLabels[1],()=>{
     const input=gallery[cameraSession?.kind];
     closeCamera();
     status.textContent='';
@@ -550,6 +575,9 @@
     circlePreview.muted=true;circlePreview.playsInline=true;
     circleTimer=el('span','0:00','connect-circle-timer');
     circlePanel.append(circlePreview,circleTimer);
+    const flip=button('↻ Камера',flipCurrentCamera);
+    flip.className='connect-flip-camera';
+    circlePanel.append(flip);
    }
    iconButton(camera,'camera',compactLabels[1]);
    mic.className='primary connect-mic';
