@@ -232,7 +232,20 @@ function build(){
   send.setAttribute('aria-label',t(10));
   form.append(body,send);
  }else form.append(label(t(9),body),send);
- const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,compact:publicChat,onChange:()=>{pending=null;}});
+ const composer=window.ummaConnectComposer({lang:lang(),el,form,body,send,status,compact:publicChat,onChange:()=>{pending=null;},
+  onInstantVideo:publicChat?async file=>{
+   if(busy)throw Error(t(16));
+   const requestKey=crypto.randomUUID();
+   composer.busy(true);
+   try{
+    await connect();
+    await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},{file,kind:'video'},requestKey,'◉ Видеосообщение',composer.error);
+    state=await api('list');
+    renderThread();
+    list.scrollTop=list.scrollHeight;
+    status.textContent='';
+   }finally{composer.busy(false);}
+  }:null});
  form.onsubmit=e=>{
   e.preventDefault();
   if(busy||composer.recording||(!body.value.trim()&&!composer.draft))return;
