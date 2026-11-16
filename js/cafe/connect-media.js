@@ -204,10 +204,10 @@
   }else void translate();
   return wrapper;
  }
- const languages=new Set('ar de en fr id ja ko ms pt ru tg th tk tr ug uz vi zh'.split(' '));
+ const languages=new Set('ar de en fr id ja ko ms pt ru tg th tk tr ug uz vi zh bn hi ur fa es it nl pl uk sw fil my km lo ne si he el ro cs hu sv no da fi am ka mn ta te ml pa gu mr bg sr hr sk sl et lv lt az kk ky ps so sq af ca eu gl is ga mt cy hy be bs mk sq'.split(' '));
  const language=value=>{
   const code=value?.toLowerCase().split(/[-_]/)[0];
-  return languages.has(code)?code:'en';
+  return languages.has(code)?code:(/^[a-z]{2,3}$/.test(code||'')?code:'en');
  };
  const voiceCopy={
   ru:['Перевод голоса','Переводим…','Перевод недоступен. Можно прослушать оригинал.','Перевод ИИ','Озвучка ИИ','Расшифровка','Повторить перевод','Перевод готовится…'],
