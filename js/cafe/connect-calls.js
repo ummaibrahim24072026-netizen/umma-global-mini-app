@@ -94,6 +94,20 @@
       const button = element('button', className);
       button.type = 'button';
       button.textContent = t(label);
+      button.setAttribute('aria-label', t(label));
+      button.dataset.callAction = label;
+      const iconPaths = {
+        mute: '<path d="M12 19v3m-5 0h10M9 9v3a3 3 0 0 0 5.1 2.1M15 9V6a3 3 0 0 0-6 0v1M5 10v2a7 7 0 0 0 12 4M3 3l18 18"/>',
+        unmute: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-5 0h10"/>',
+        hide: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3M3 3l18 18"/>',
+        show: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/>',
+        end: '<path d="M3 15.5c5-5 13-5 18 0l-2.8 3.2-3.6-2.1v-2.1a12 12 0 0 0-5.2 0v2.1l-3.6 2.1Z"/>',
+        decline: '<path d="M3 15.5c5-5 13-5 18 0l-2.8 3.2-3.6-2.1v-2.1a12 12 0 0 0-5.2 0v2.1l-3.6 2.1Z"/>',
+        answer: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 18 18 0 0 1-7.9-2.8 18 18 0 0 1-5.5-5.5A18 18 0 0 1 3.6 5.7 2 2 0 0 1 5.6 3.5h3a2 2 0 0 1 2 1.7l.4 2.5a2 2 0 0 1-.4 2l-1.3 1.3a14 14 0 0 0 5.5 5.5l1.3-1.3a2 2 0 0 1 2-.4l2.2.4a2 2 0 0 1 1.7 1.7Z"/>'
+      };
+      if (iconPaths[label]) {
+        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + iconPaths[label] + '</svg><span>' + t(label) + '</span>';
+      }
       button.onclick = handler;
       return button;
     }
@@ -132,7 +146,8 @@
     function toggleTrack(track, off, on) {
       const button = action(off, () => {
         track.enabled = !track.enabled;
-        button.textContent = t(track.enabled ? off : on);
+        button.setAttribute('aria-label', t(track.enabled ? off : on));
+        button.querySelector('span')?.replaceChildren(document.createTextNode(t(track.enabled ? off : on)));
         button.setAttribute('aria-pressed', String(!track.enabled));
       });
       button.setAttribute('aria-pressed', 'false');
@@ -189,6 +204,12 @@
       opened.setAttribute('aria-label', t(call.mode));
       const card = element('section', 'umma-call-card');
       const identity = element('div', 'umma-call-identity');
+      const logo = element('img', 'umma-call-logo');
+      logo.src = new URL('logo/assets/umma-logo.png', document.baseURI).href;
+      logo.alt = 'UMMA Global';
+      logo.width = 112;
+      logo.height = 112;
+      identity.append(logo);
       const title = element('h2');
       const isStaff = Boolean(call.credentials?.initData);
       title.textContent = call.name || (isStaff ? t('client') : 'UMMA');
