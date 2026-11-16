@@ -281,7 +281,7 @@ if(setupHost){
 }
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
- dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());
+ dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());if(publicChat){try{dialog.dataset.chatTheme=localStorage.getItem('umma:chat:theme:v1')||'light';}catch{dialog.dataset.chatTheme='light';}}
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
@@ -294,6 +294,45 @@ function build(){
   const menuPanel=el('div',null,'connect-chat-menu-panel');
   const clearButton=el('button',clearLabel,'connect-clear-chat');
   clearButton.type='button';
+  const themeLabel=({ru:'Тема чата',vi:'Giao diện trò chuyện'})[lang()]||'Chat theme';
+  const themeButton=el('button',themeLabel,'connect-theme-menu-button');
+  themeButton.type='button';
+  themeButton.onclick=()=>{
+   chatMenu.open=false;
+   const themes=[
+    ['light','Светлый','Light','Sáng'],
+    ['turquoise','Бирюзовый','Turquoise','Xanh ngọc'],
+    ['dark','Тёмно-бирюзовый','Dark teal','Xanh ngọc đậm'],
+    ['beige','Бежевый','Beige','Màu be'],
+    ['blue','Синий (ночной)','Night blue','Xanh đêm'],
+    ['lavender','Лавандовый','Lavender','Oải hương']
+   ];
+   const modal=el('dialog',null,'connect-theme-dialog');
+   const heading=el('h3',themeLabel);
+   const grid=el('div',null,'connect-theme-grid');
+   const current=()=>{try{return localStorage.getItem('umma:chat:theme:v1')||'light';}catch{return 'light';}};
+   for(const [id,ru,en,vi] of themes){
+    const choice=el('button',null,'connect-theme-choice');
+    choice.type='button';choice.dataset.theme=id;
+    const preview=el('span',null,'connect-theme-preview');
+    const name=el('span',lang()==='ru'?ru:lang()==='vi'?vi:en);
+    choice.append(preview,name);
+    choice.setAttribute('aria-pressed',String(current()===id));
+    choice.onclick=()=>{
+     dialog.dataset.chatTheme=id;
+     try{localStorage.setItem('umma:chat:theme:v1',id);}catch{}
+     grid.querySelectorAll('.connect-theme-choice').forEach(node=>node.setAttribute('aria-pressed',String(node===choice)));
+     modal.close();
+    };
+    grid.append(choice);
+   }
+   const closeTheme=el('button',lang()==='ru'?'Закрыть':lang()==='vi'?'Đóng':'Close','connect-theme-close');
+   closeTheme.type='button';closeTheme.onclick=()=>modal.close();
+   modal.append(heading,grid,closeTheme);
+   modal.addEventListener('close',()=>modal.remove(),{once:true});
+   document.body.append(modal);modal.showModal();
+  };
+  menuPanel.append(themeButton);
   menuPanel.append(clearButton);
   chatMenu.append(menuToggle,menuPanel);
   dialog.addEventListener('click',event=>{
