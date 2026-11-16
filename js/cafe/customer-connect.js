@@ -164,7 +164,7 @@ function renderThread(){
   }
   if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
-    async()=>{const media=await api('mediaGet',{messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target);},true));
+    async(source)=>{const media=await api('mediaGet',{messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target,source);},true));
   }
   const timestamp=dateTime.format(new Date(m.created_at));
   const meta=publicChat?el('div',null,'connect-message-meta'):li;
