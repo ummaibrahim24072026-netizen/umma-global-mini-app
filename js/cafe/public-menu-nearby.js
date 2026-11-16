@@ -24,11 +24,17 @@
 
   function drawMarkers() {
     markers.clearLayers();
+    const icon = window.L.icon({
+      iconUrl: 'logo/assets/umma-icon-192.png',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+      tooltipAnchor: [20, 0]
+    });
     for (const cafe of cafes) {
       if (!cafe.point) continue;
       const label = document.createElement('span');
       label.textContent = cafe.name;
-      window.L.marker(cafe.point, {title:cafe.name, alt:cafe.name})
+      window.L.marker(cafe.point, {icon, title:cafe.name, alt:cafe.name})
         .bindTooltip(label).on('click', () => select(cafe)).addTo(markers);
     }
     select(selected);
