@@ -225,13 +225,21 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
  });
  const guest=app.window,credential='a'.repeat(64);
- const writes=[],tracks=[];
+ const writes=[],tracks=[],contexts=[];
  guest.AbortSignal=AbortSignal;
  guest.crypto.randomUUID=randomUUID;
  guest.Blob=Blob;
  guest.URL.createObjectURL=()=> 'blob:https://qa.invalid/preview';
  guest.URL.revokeObjectURL=()=>{};
  guest.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ guest.AudioContext=class{
+  state='running';
+  constructor(){contexts.push(this);}
+  createMediaStreamSource(){return {connect(){}};}
+  createAnalyser(){return {getByteTimeDomainData(samples){samples.fill(160);}};}
+  async resume(){}
+  async close(){this.state='closed';}
+ };
  guest.MediaRecorder=class{
   static isTypeSupported(type){return type==='audio/webm';}
   mimeType='audio/webm';
@@ -285,9 +293,15 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(mic.getAttribute('aria-label'),'Остановить запись');
  const recorder=form.querySelector('.connect-record-panel');
  assert.equal(recorder.hidden,false);
+ const waveform=recorder.querySelector('.connect-record-wave');
+ assert.equal(waveform.getAttribute('aria-hidden'),'true');
+ await new Promise(resolve=>setTimeout(resolve,160));
+ assert.ok(parseInt(waveform.lastElementChild.style.height)>3);
+ assert.equal(waveform.firstElementChild.style.height,'3px');
  recorder.querySelector('button').click();
  await tick();
  assert.equal(recorder.hidden,true);
+ assert.equal(contexts[0].state,'closed');
  assert.equal(form.querySelector('audio'),null);
  assert.equal(writes.length,0);
  mic.click();
@@ -295,6 +309,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  mic.click();
  await tick();
  assert.ok(tracks.length);
+ assert.equal(contexts[1].state,'closed');
  assert.ok(guest.document.querySelector('.connect-media-preview audio'));
  assert.equal(writes.length,0);
  assert.equal(send.hidden,false);

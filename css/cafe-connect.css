@@ -335,7 +335,28 @@ audio.connect-media{width:min(100%,300px)}
   gap:8px;
   color:#a21d2f;
 }
-.umma-connect-chat .connect-record-time {font-variant-numeric:tabular-nums}
+.umma-connect-chat .connect-record-time {
+  flex:none;
+  font-variant-numeric:tabular-nums;
+}
+.umma-connect-chat .connect-record-wave {
+  display:flex;
+  flex:1;
+  min-width:0;
+  max-width:260px;
+  height:28px;
+  align-items:center;
+  justify-content:space-between;
+  color:var(--umma-brand-strong);
+}
+.umma-connect-chat .connect-record-wave span {
+  width:2px;
+  height:3px;
+  border-radius:999px;
+  background:currentColor;
+  transition:height 70ms linear;
+}
+.umma-connect-chat .connect-record-panel button {flex:none}
 .umma-connect-chat .connect-record-time::before {
   content:'';
   display:inline-block;

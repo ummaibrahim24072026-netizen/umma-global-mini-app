@@ -33,12 +33,45 @@
   control.setAttribute('aria-label',label);
   control.title=label;
  }
+ function showWaveform(stream,bars){
+  for(const bar of bars)bar.style.removeProperty('height');
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  let context,timer;
+  const stop=()=>{
+   clearInterval(timer);
+   if(context)void context.close().catch(()=>{});
+  };
+  try{
+   context=new AudioContext();
+   const source=context.createMediaStreamSource(stream);
+   const analyser=context.createAnalyser();
+   analyser.fftSize=512;
+   source.connect(analyser);
+   const samples=new Uint8Array(analyser.fftSize);
+   const levels=bars.map(()=>0);
+   void context.resume().catch(()=>{});
+   timer=setInterval(()=>{
+    if(context.state!=='running')return;
+    analyser.getByteTimeDomainData(samples);
+    let energy=0;
+    for(const sample of samples)energy+=((sample-128)/128)**2;
+    const level=Math.sqrt(energy/samples.length);
+    levels.shift();
+    levels.push(Math.min(1,level*4));
+    bars.forEach((bar,index)=>{bar.style.height=Math.round(3+levels[index]*23)+'px';});
+   },70);
+   return stop;
+  }catch{
+   stop();
+  }
+ }
  window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false})=>{
   const labels=copy[lang]||copy.en, compactLabels=compactCopy[lang]||compactCopy.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
   const pickers=[];
-  let attach,recordPanel,elapsed;
+  let attach,recordPanel,elapsed,waveBars;
   function showAttachments(open){
    if(!attach)return;
    bar.hidden=!open;
@@ -107,6 +140,8 @@
   function release(r){
    clearTimeout(r.timer);
    clearInterval(r.clock);
+   r.stopWaveform?.();
+   r.stopWaveform=null;
    r.stream.getTracks().forEach(track=>track.stop());
   }
   function stop(r,discard=false){
@@ -150,6 +185,7 @@
     if(compact){
      const started=performance.now();
      elapsed.textContent='0:00';
+     r.stopWaveform=showWaveform(stream,waveBars);
      r.clock=setInterval(()=>{
       const seconds=Math.min(60,Math.floor((performance.now()-started)/1000));
       elapsed.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
@@ -175,7 +211,11 @@
    mic.className='primary connect-mic';
    elapsed=el('span','0:00','connect-record-time');
    recordPanel=el('div',null,'connect-record-panel');
-   recordPanel.append(elapsed,button(compactLabels[3],()=>{
+   const waveform=el('div',null,'connect-record-wave');
+   waveform.setAttribute('aria-hidden','true');
+   waveBars=Array.from({length:22},()=>el('span'));
+   waveform.append(...waveBars);
+   recordPanel.append(elapsed,waveform,button(compactLabels[3],()=>{
     if(recording)stop(recording,true);
     status.textContent='';
    }));
