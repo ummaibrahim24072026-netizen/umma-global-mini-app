@@ -59,6 +59,7 @@
   stop:'M6 6h12v12H6z',
   gallery:'M3 7V3h15m-8 9h.01M7 8h14v13H7z M7 18l4-4 3 3 2-2 5 5',
   video:'M3 6h13v12H3z M16 10l5-3v10l-5-3',
+  flip:'M20 9a8 8 0 0 0-13-3L4 9m0-5v5h5 M4 15a8 8 0 0 0 13 3l3-3m0 5v-5h-5',
   close:'M6 6l12 12M18 6L6 18',
   smile:'M21 10v3l-7 8h-4a7 7 0 0 1-7-7v-4a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7z M14 21v-4a4 4 0 0 1 4-4h3 M8 9h.01 M15 9h.01 M8 14c1 2 3 2 5 1',
   camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0 4 4 0 1 1 8 0z'
@@ -253,7 +254,10 @@
    cameraPanel.hidden=false;
    cameraPreview.hidden=true;
    shutter.disabled=true;
-   shutter.textContent=compactLabels[video?2:1];
+   flipCamera.disabled=true;
+   shutter.dataset.mode=video?'video':'photo';
+   shutter.setAttribute('aria-label',compactLabels[video?2:1]);
+   shutter.title=compactLabels[video?2:1];
    controls();
    if(video&&!session.mime){status.textContent=videoLabels[2];return;}
    status.textContent=cameraLabels[2];
@@ -436,7 +440,9 @@
     };
     recorder.start(250);
     session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},videoDuration);
-    shutter.textContent=videoLabels[0];
+    shutter.dataset.mode='recording';
+   shutter.setAttribute('aria-label',videoLabels[0]);
+   shutter.title=videoLabels[0];
     status.textContent=videoLabels[1];
    }catch{closeCamera();status.textContent=videoLabels[3];}
   }
@@ -714,21 +720,35 @@
    cameraPreview=el('video');
    cameraPreview.muted=true;
    cameraPreview.playsInline=true;
-   shutter=button(compactLabels[1],()=>{
+   shutter=button(null,()=>{
     if(cameraSession?.kind==='video')recordVideo(cameraSession);
     else takePhoto();
    });
-   flipCamera=button('↻ Камера',flipCurrentCamera);
-   cameraPanel.append(cameraPreview,flipCamera,shutter,button(cameraLabels[1],()=>{
+   shutter.className='connect-camera-shutter';
+   const flipLabel=({ru:'Переключить камеру',vi:'Đổi máy ảnh'})[lang]||'Switch camera';
+   flipCamera=button(null,flipCurrentCamera);
+   flipCamera.className='connect-camera-icon';
+   iconButton(flipCamera,'flip',flipLabel);
+   const choose=button(null,()=>{
     const input=gallery[cameraSession?.kind];
     closeCamera();
     status.textContent='';
     input?.click();
-   }),button(cameraLabels[0],()=>{
+   });
+   choose.className='connect-camera-icon';
+   iconButton(choose,'gallery',cameraLabels[1]);
+   const cancel=button(null,()=>{
     closeCamera();
     status.textContent='';
     (albums?attach:camera).focus();
-   }));
+   });
+   cancel.className='connect-camera-icon connect-camera-dismiss';
+   iconButton(cancel,'close',cameraLabels[0]);
+   const stage=el('div',null,'connect-camera-stage');
+   stage.append(cameraPreview,cancel);
+   const cameraControls=el('div',null,'connect-camera-controls');
+   cameraControls.append(choose,shutter,flipCamera);
+   cameraPanel.append(stage,cameraControls);
    camera.className='connect-camera';
    if(onInstantVideo){
     circleButton=button(lang==='ru'?'Удерживайте для видеокружка':'Hold for video note',()=>{});
