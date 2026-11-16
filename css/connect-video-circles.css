@@ -14,3 +14,12 @@
 .umma-connect-chat .connect-compose-compact .connect-circle-button{width:40px;height:44px;min-width:0;touch-action:none}
 .umma-connect-chat .connect-compose-compact .connect-circle-button.is-recording{background:#b91c1c;color:#fff;border-radius:50%}
 .umma-connect-chat .connect-compose-compact .connect-circle-panel:not([hidden]){grid-area:2 / 1 / 3 / -1;display:flex}
+
+/* Video notes are visible immediately, without an 'Open video' button. */
+.umma-connect-chat .connect-video-note{max-width:fit-content}
+.umma-connect-chat .connect-video-circle{position:relative;width:min(220px,62vw);height:min(220px,62vw);aspect-ratio:1;border-radius:50%;overflow:hidden;background:#143d3e;border:3px solid #d3ac62}
+.umma-connect-chat .connect-video-circle-player{display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;border:0;border-radius:50%;background:#143d3e}
+.umma-connect-chat .connect-video-circle-toggle{position:absolute;inset:0;display:grid;place-items:center;width:100%;height:100%;border:0;border-radius:50%;background:transparent;color:#fff;font-size:35px;text-shadow:0 2px 12px #000a;cursor:pointer}
+.umma-connect-chat .connect-video-circle-toggle[hidden]{display:none}
+.umma-connect-chat .connect-video-circle-status{position:absolute;bottom:8px;left:12px;right:12px;color:#fff;background:#123b3bbb;border-radius:10px;text-align:center;font-size:11px}
+.umma-connect-chat .connect-video-circle-status:empty{display:none}
