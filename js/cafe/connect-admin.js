@@ -15,6 +15,11 @@ const root=()=>workspace||dialog;
 const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!workspace.parentElement.hidden:!!dialog?.open;
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='staffVoice'?115000:20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет связи с кафе');return d;}
+const calls=workspace?window.ummaConnectCalls?.({identity:()=>{
+ const initData=credential();
+ return owner()&&initData.startsWith('web:')?{initData}:null;
+},language:()=> 'ru'}):null;
+let callButtons;
 const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
 async function translateChat(messageId,language,clientId){
  const payload={staff:true,initData:credential(),clientId,messageId,language};
@@ -124,6 +129,7 @@ function showMessages(data){
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
  replyForm.hidden=false;
+ if(callButtons)callButtons.hidden=false;
 }
 async function readThread(id,background=false){
  const d=await api('staffThread',{clientId:id});
@@ -133,7 +139,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
+ if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  await readThread(id);
  threadTitle.focus({preventScroll:true});
@@ -233,7 +239,12 @@ function build(){
    void refresh().catch(()=>{});
   },replyStatus).finally(()=>composer.busy(false));
  };
- const threadPanel=node('section',null,'work-thread');threadPanel.append(threadTitle,messages,replyForm);
+ const threadHeading=node('header',null,'work-call-heading');threadHeading.append(threadTitle);
+ if(calls){
+  callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
+  callButtons.hidden=true;threadHeading.append(callButtons);
+ }
+ const threadPanel=node('section',null,'work-thread');threadPanel.append(threadHeading,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
  section.append(header,nav,status,...Object.values(panels));selectView('inbox');

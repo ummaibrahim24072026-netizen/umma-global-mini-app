@@ -1,0 +1,352 @@
+(() => {
+  'use strict';
+
+  const apiUrl = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-calls';
+  const icons = {
+    audio: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 18 18 0 0 1-7.9-2.8 18 18 0 0 1-5.5-5.5A18 18 0 0 1 3.6 5.7 2 2 0 0 1 5.6 3.5h3a2 2 0 0 1 2 1.7l.4 2.5a2 2 0 0 1-.4 2l-1.3 1.3a14 14 0 0 0 5.5 5.5l1.3-1.3a2 2 0 0 1 2-.4l2.2.4a2 2 0 0 1 1.7 1.7Z"/>',
+    video: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/>'
+  };
+  const copy = {
+    ru: {
+      audio: 'Голосовой звонок', video: 'Видеозвонок', incoming: 'Входящий звонок', outgoing: 'Вызываем…',
+      connecting: 'Подключаем…', connected: 'На связи', reconnecting: 'Восстанавливаем связь…',
+      answer: 'Принять', decline: 'Отклонить', end: 'Завершить', close: 'Закрыть',
+      mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
+      busy: 'Линия занята. Попробуйте чуть позже.', ended: 'Звонок завершён.',
+      unanswered: 'На звонок не ответили.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
+      denied: 'Разрешите доступ к микрофону и, для видеозвонка, к камере.', playback: 'Включить звук', client: 'Клиент'
+    },
+    en: {
+      audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', outgoing: 'Calling…',
+      connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…',
+      answer: 'Answer', decline: 'Decline', end: 'End call', close: 'Close',
+      mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
+      busy: 'Line busy. Try again shortly.', ended: 'Call ended.',
+      unanswered: 'No answer.', unavailable: 'Could not connect. Try again.',
+      denied: 'Allow microphone access and camera access for video calls.', playback: 'Play sound', client: 'Customer'
+    },
+    vi: {
+      audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', outgoing: 'Đang gọi…',
+      connecting: 'Đang kết nối…', connected: 'Đã kết nối', reconnecting: 'Đang kết nối lại…',
+      answer: 'Trả lời', decline: 'Từ chối', end: 'Kết thúc', close: 'Đóng',
+      mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
+      busy: 'Đường dây đang bận. Vui lòng thử lại sau.', ended: 'Cuộc gọi đã kết thúc.',
+      unanswered: 'Không có trả lời.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
+      denied: 'Hãy cho phép dùng micrô và camera khi gọi video.', playback: 'Bật âm thanh', client: 'Khách hàng'
+    }
+  };
+
+  function element(tag, className) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    return node;
+  }
+
+  function listenForIce(peer) {
+    if (peer.iceGatheringState === 'complete') return Promise.resolve();
+    return new Promise(resolve => {
+      const finish = () => {
+        clearTimeout(timer);
+        peer.removeEventListener('icegatheringstatechange', onState);
+        resolve();
+      };
+      const onState = () => { if (peer.iceGatheringState === 'complete') finish(); };
+      const timer = setTimeout(finish, 5000);
+      peer.addEventListener('icegatheringstatechange', onState);
+    });
+  }
+
+  window.ummaConnectCalls = function ({identity, language, prepare}) {
+    if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia || !crypto.randomUUID) return null;
+    const device = crypto.randomUUID();
+    const t = key => (copy[language()] || copy.en)[key];
+    let current, modal, pollTimer, ringAudio, polling = false, pollFailures = 0;
+
+    async function request(action, data = {}, credentials = identity(), keepalive = false) {
+      if (!credentials) throw new Error('unavailable');
+      const response = await fetch(apiUrl, {
+        method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+        signal: keepalive ? undefined : AbortSignal.timeout(6500), keepalive,
+        body: JSON.stringify({...credentials, action, device, ...data})
+      });
+      const result = await response.json();
+      if (result.busy) throw new Error('busy');
+      if (!response.ok || !result.ok) throw new Error('unavailable');
+      return result;
+    }
+
+    function action(label, handler, className) {
+      const button = element('button', className);
+      button.type = 'button';
+      button.textContent = t(label);
+      button.onclick = handler;
+      return button;
+    }
+
+    function release(call) {
+      clearTimeout(call.deadline);
+      clearInterval(call.ringer);
+      call.peer?.close();
+      call.stream?.getTracks().forEach(track => track.stop());
+      if (call.remote) call.remote.srcObject = null;
+      if (call.local) call.local.srcObject = null;
+    }
+
+    function signalEnd(call, keepalive) {
+      if (call.credentials && (call.sent || call.incoming)) {
+        void request('end', {id: call.id}, call.credentials, keepalive).catch(() => {});
+      }
+    }
+
+    function finish(call, reason, notify = true, keepalive = false) {
+      if (current !== call) return;
+      current = null;
+      release(call);
+      if (notify) signalEnd(call, keepalive);
+      if (!reason) {
+        modal?.close();
+        return;
+      }
+      call.status.textContent = t(reason);
+      call.media.hidden = true;
+      call.controls.replaceChildren(action('close', () => modal.close()));
+    }
+
+    function toggleTrack(track, off, on) {
+      const button = action(off, () => {
+        track.enabled = !track.enabled;
+        button.textContent = t(track.enabled ? off : on);
+        button.setAttribute('aria-pressed', String(!track.enabled));
+      });
+      button.setAttribute('aria-pressed', 'false');
+      return button;
+    }
+
+    function enableRinger() {
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (!Audio) return;
+      ringAudio ||= new Audio();
+      if (ringAudio.state !== 'running') void ringAudio.resume().catch(() => {});
+    }
+
+    function ring() {
+      if (document.hidden) return;
+      navigator.vibrate?.([120, 80, 120]);
+      if (ringAudio?.state !== 'running') return;
+      for (const offset of [0, 0.22]) {
+        const time = ringAudio.currentTime + offset;
+        const oscillator = ringAudio.createOscillator();
+        const gain = ringAudio.createGain();
+        oscillator.frequency.value = 520;
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.13, time + 0.025);
+        gain.gain.linearRampToValueAtTime(0, time + 0.18);
+        oscillator.connect(gain).connect(ringAudio.destination);
+        oscillator.start(time);
+        oscillator.stop(time + 0.18);
+      }
+    }
+
+    function show(call) {
+      const existing = modal;
+      if (existing?.open) existing.close();
+      modal = element('dialog', 'umma-call');
+      const opened = modal;
+      opened.setAttribute('aria-label', t(call.mode));
+      const card = element('section', 'umma-call-card');
+      const title = element('h2');
+      title.textContent = call.name || (call.credentials?.initData ? t('client') : 'UMMA');
+      const type = element('p', 'umma-call-type');
+      type.textContent = t(call.mode);
+      call.status = element('p', 'umma-call-status');
+      call.status.setAttribute('role', 'status');
+      call.status.textContent = t(call.incoming ? 'incoming' : 'connecting');
+      call.media = element('div', 'umma-call-media');
+      call.media.hidden = true;
+      call.controls = element('div', 'umma-call-controls');
+      const cancel = () => finish(call);
+      if (call.incoming) {
+        call.controls.append(action('decline', cancel, 'umma-call-end'),
+          action('answer', () => void establish(call), 'umma-call-answer'));
+      } else {
+        call.controls.append(action('end', cancel, 'umma-call-end'));
+      }
+      card.append(title, type, call.status, call.media, call.controls);
+      opened.append(card);
+      opened.addEventListener('cancel', event => {
+        event.preventDefault();
+        if (current === call) cancel();
+        else opened.close();
+      });
+      opened.addEventListener('close', () => {
+        if (current === call) finish(call);
+        opened.remove();
+        if (modal === opened) modal = null;
+      });
+      document.body.append(opened);
+      opened.showModal();
+      if (call.incoming) {
+        ring();
+        call.ringer = setInterval(ring, 2500);
+      }
+    }
+
+    function armTimeout(call, key, ms) {
+      clearTimeout(call.deadline);
+      call.deadline = setTimeout(() => finish(call, key), ms);
+    }
+
+    async function establish(call) {
+      clearInterval(call.ringer);
+      call.status.textContent = t('connecting');
+      call.controls.replaceChildren(action('end', () => finish(call), 'umma-call-end'));
+      try {
+        if (!call.credentials) {
+          await prepare?.();
+          if (current !== call) return;
+          call.credentials = identity();
+        }
+        // Start the permission request from the answer/start gesture where possible.
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: call.mode === 'video' && {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}
+        });
+        if (current !== call) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+        call.stream = stream;
+        const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
+        if (current !== call) return;
+        const peer = call.peer = new RTCPeerConnection({iceServers: servers});
+        const remote = call.remote = element(call.mode === 'video' ? 'video' : 'audio');
+        remote.autoplay = true;
+        remote.playsInline = true;
+        call.media.append(remote);
+        if (call.mode === 'video') {
+          const local = call.local = element('video', 'umma-call-preview');
+          local.muted = true;
+          local.autoplay = true;
+          local.playsInline = true;
+          local.srcObject = stream;
+          call.media.append(local);
+          call.media.hidden = false;
+        }
+        const playback = action('playback', () => {
+          void remote.play().then(() => { playback.hidden = true; }).catch(() => {});
+        });
+        playback.hidden = true;
+        call.controls.prepend(playback, toggleTrack(stream.getAudioTracks()[0], 'mute', 'unmute'));
+        if (call.mode === 'video') call.controls.prepend(toggleTrack(stream.getVideoTracks()[0], 'hide', 'show'));
+        peer.ontrack = event => {
+          remote.srcObject = event.streams[0];
+          void remote.play().catch(() => { playback.hidden = false; });
+        };
+        peer.onconnectionstatechange = () => {
+          if (current !== call) return;
+          if (peer.connectionState === 'connected') {
+            clearTimeout(call.deadline);
+            call.connected = true;
+            call.status.textContent = t('connected');
+          } else if (peer.connectionState === 'disconnected' && call.connected) {
+            call.status.textContent = t('reconnecting');
+            armTimeout(call, 'unavailable', 15000);
+          } else if (peer.connectionState === 'failed') {
+            finish(call, 'unavailable');
+          }
+        };
+        stream.getTracks().forEach(track => peer.addTrack(track, stream));
+        if (call.incoming) await peer.setRemoteDescription({type: 'offer', sdp: call.offer});
+        await peer.setLocalDescription(call.incoming ? await peer.createAnswer() : await peer.createOffer());
+        await listenForIce(peer);
+        if (current !== call) return;
+        call.sent = true;
+        const result = await request(call.incoming ? 'answer' : 'start', {
+          id: call.id, clientId: call.clientId, mode: call.mode, sdp: peer.localDescription.sdp
+        }, call.credentials);
+        if (current !== call) {
+          // The first cancellation may have reached the server before this request.
+          signalEnd(call);
+          return;
+        }
+        if (!result.call) {
+          finish(call, 'ended', false);
+          return;
+        }
+        call.ready = true;
+        if (!call.incoming) {
+          call.status.textContent = t('outgoing');
+          armTimeout(call, 'unanswered', 44000);
+        } else if (!call.connected) {
+          armTimeout(call, 'unavailable', 22000);
+        }
+        schedule(0);
+      } catch (error) {
+        const permissionError = ['NotAllowedError', 'NotFoundError', 'NotReadableError'].includes(error.name);
+        const reason = permissionError ? 'denied' : error.message === 'busy' ? 'busy' : 'unavailable';
+        finish(call, reason);
+      }
+    }
+
+    function start(mode, target) {
+      if (current) return;
+      pollFailures = 0;
+      current = {id: crypto.randomUUID(), mode, ...target, credentials: identity()};
+      show(current);
+      void establish(current);
+    }
+
+    function schedule(delay) {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(poll, delay);
+    }
+
+    async function poll() {
+      if (polling) return;
+      polling = true;
+      const call = current;
+      // An outgoing request is not visible until the offer has been posted.
+      const credentials = call ? call.credentials : identity();
+      try {
+        if ((!call && modal?.open) || (!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
+        const {call: state} = await request('poll', {id: call?.id}, credentials);
+        pollFailures = 0;
+        if (current !== call) return;
+        if (!call && state?.incoming) {
+          current = {...state, credentials};
+          show(current);
+        } else if (call && !state) {
+          finish(call, call.ready && !call.incoming && !call.peer?.remoteDescription ? 'unanswered' : 'ended', false);
+        } else if (call && state?.answer && !call.peer?.remoteDescription) {
+          call.status.textContent = t('connecting');
+          armTimeout(call, 'unavailable', 22000);
+          await call.peer.setRemoteDescription({type: 'answer', sdp: state.answer});
+        }
+      } catch {
+        if (call && ++pollFailures >= 3 && current === call) finish(call, 'unavailable');
+      } finally {
+        polling = false;
+        schedule(current?.connected ? 3500 : current ? 1100 : 3000);
+      }
+    }
+
+    document.addEventListener('click', enableRinger, {once: true, capture: true});
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); });
+    window.addEventListener('pagehide', () => { if (current) finish(current, null, true, true); });
+    schedule(0);
+
+    return {
+      buttons(target = () => ({})) {
+        const group = element('div', 'umma-call-buttons');
+        for (const mode of ['audio', 'video']) {
+          const button = action(mode, () => start(mode, target()));
+          button.setAttribute('aria-label', t(mode));
+          button.title = t(mode);
+          button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[mode] + '</svg>';
+          group.append(button);
+        }
+        return group;
+      }
+    };
+  };
+})();

@@ -23,6 +23,7 @@ const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||c
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const publicChat=document.body.classList.contains('public-cafe-menu');
+const calls=publicChat?window.ummaConnectCalls?.({identity:()=>token?{token}:null,language:lang,prepare:connect}):null;
 const CHAT_THEME_KEY='umma:chat:theme:v1';
 const chatThemes=[
  ['light','Светлый','Light','Sáng'],
@@ -395,7 +396,9 @@ function build(){
    modal.addEventListener('close',()=>modal.remove(),{once:true});
    document.body.append(modal);modal.showModal();
   };
-  hero.append(close,heroIcon,heroText,chatMenu);
+  hero.append(close,heroIcon,heroText);
+  if(calls)hero.append(calls.buttons());
+  hero.append(chatMenu);
   dialog.append(hero);
  }else{
   heroText.append(el('p',t(2)));

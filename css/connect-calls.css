@@ -1,0 +1,130 @@
+.umma-call-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+.umma-call-buttons[hidden], .umma-call [hidden] {
+  display: none !important;
+}
+.umma-call-buttons button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 7px;
+  color: #065a5a;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.umma-call-buttons button:hover, .umma-call-buttons button:focus-visible {
+  background: #daf6ef;
+}
+.umma-call-buttons svg {
+  width: 22px;
+  height: 22px;
+}
+.public-cafe-menu .umma-connect-chat .connect-hero:has(.umma-call-buttons) {
+  gap: 4px;
+}
+.public-cafe-menu .umma-connect-chat .connect-hero .umma-call-buttons button {
+  width: 38px;
+  border-radius: 50%;
+  color: #fff0cd;
+}
+.public-cafe-menu .umma-connect-chat .connect-hero .umma-call-buttons button:hover,
+.public-cafe-menu .umma-connect-chat .connect-hero .umma-call-buttons button:focus-visible {
+  background: #ffffff30;
+}
+.work-call-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.umma-call {
+  box-sizing: border-box;
+  width: min(480px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  color: #ebfffc;
+  background: #083735;
+  border: 1px solid #b19b61;
+  border-radius: 22px;
+  box-shadow: 0 24px 65px #001f21a6;
+}
+.umma-call::backdrop {
+  background: #021e25b3;
+}
+.umma-call-card {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 20px;
+  text-align: center;
+}
+.umma-call-card h2, .umma-call-card p {
+  margin: 0;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.umma-call-card .umma-call-type {
+  color: #f1d89a;
+}
+.umma-call-media {
+  position: relative;
+  width: 100%;
+  max-height: 58dvh;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #021c1b;
+  border-radius: 14px;
+}
+.umma-call-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.umma-call-media .umma-call-preview {
+  position: absolute;
+  inset: auto 8px 8px auto;
+  width: 28%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  transform: scaleX(-1);
+  border: 1px solid #e6c781;
+  border-radius: 10px;
+}
+.umma-call-controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.umma-call-controls button {
+  min-height: 44px;
+  padding: 8px 14px;
+  color: #e9fffc;
+  background: #175956;
+  border: 1px solid #79aea4;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+.umma-call-controls button[aria-pressed="true"] {
+  background: #e9fffc;
+  color: #083735;
+}
+.umma-call-controls .umma-call-answer {
+  color: #082e2b;
+  background: #92ebd8;
+}
+.umma-call-controls .umma-call-end {
+  color: #fff;
+  background: #a6293e;
+  border-color: #f092a3;
+}
