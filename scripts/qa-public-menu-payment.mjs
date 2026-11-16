@@ -20,7 +20,7 @@ for(const method of ['cash','qr']){
  const receiptButton=d.getElementById('receiptButton');
  assert.equal(receiptButton.classList.contains('has-active-orders'),false);
  assert.ok(receiptButton.closest('.customer-actions'));
- assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('orderInboxHost').closest('.customer-actions'));
+ assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('customerMessagesButton').closest('.customer-actions'));
  assert.equal(receiptButton.hidden,false);
  assert.equal(receiptButton.closest('nav').children[2].id,'nearbyCafeButton');
  assert.equal(d.getElementById('orderHistoryButton'),null);

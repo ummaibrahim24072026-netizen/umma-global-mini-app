@@ -153,11 +153,10 @@
 }
 .public-cafe-menu .customer-actions > * { grid-row: 1; }
 .public-cafe-menu .customer-actions .dock-menu { grid-column: 1; }
-.public-cafe-menu #orderInboxHost { grid-column: 2; }
+.public-cafe-menu #customerMessagesButton { grid-column: 2; }
 .public-cafe-menu #nearbyCafeButton { grid-column: 3; }
-.public-cafe-menu #customerConnectHost { grid-column: 4; }
-.public-cafe-menu .customer-actions #receiptButton { grid-column: 5; }
-.public-cafe-menu .customer-actions :is(.umma-connect-button, .plain-btn, .umma-inbox-button) {
+.public-cafe-menu .customer-actions #receiptButton { grid-column: 4 / 6; }
+.public-cafe-menu .customer-actions .plain-btn {
   display: flex;
   position: relative;
   flex-direction: column;
@@ -178,7 +177,7 @@
   overflow-wrap: anywhere;
   text-align: center;
 }
-.public-cafe-menu .customer-actions :is(.umma-connect-button, .plain-btn, .umma-inbox-button)::before {
+.public-cafe-menu .customer-actions .plain-btn::before {
   content: "";
   flex: none;
   inline-size: 100%;
@@ -187,7 +186,7 @@
   border-radius: 999px;
   background: var(--dock-icon-surface, var(--umma-brand-pale));
 }
-.public-cafe-menu .customer-actions :is(.umma-connect-button, .plain-btn, .umma-inbox-button)::after {
+.public-cafe-menu .customer-actions .plain-btn::after {
   content: "";
   position: absolute;
   inset-block-start: 8px;
@@ -207,10 +206,7 @@
   text-decoration: none;
 }
 .public-cafe-menu .customer-actions .dock-menu::after { background: var(--umma-brand-white); }
-.public-cafe-menu .customer-actions .umma-inbox-button {
-  --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 16H5c1.2-1.3 2-2.6 2-5V9a5 5 0 0 1 10 0v2c0 2.4.8 3.7 2 5Zm-9 3a2 2 0 0 0 4 0'/%3E%3C/svg%3E");
-}
-.public-cafe-menu .customer-actions .umma-connect-button {
+.public-cafe-menu .customer-actions #customerMessagesButton {
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-5l-4 3v-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Zm1 5h8m-8 3h5'/%3E%3C/svg%3E");
 }
 .public-cafe-menu .customer-actions #nearbyCafeButton {
@@ -347,3 +343,43 @@
 #nearbyCafeStatus { margin: 0; }
 .nearby-cafe-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--umma-brand-line); border-radius: 14px; background: white; }
 .nearby-cafe-card a { display: block; padding: 12px; border-radius: 12px; text-align: center; text-decoration: none; }
+
+.customer-message-sections {
+  display: grid;
+  gap: 10px;
+}
+.customer-message-sections button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  inline-size: 100%;
+  min-block-size: 52px;
+  padding: 10px 14px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 14px;
+  background: var(--umma-brand-white);
+  color: var(--umma-brand-ink);
+  text-align: start;
+  font: 700 15px/1.3 system-ui, sans-serif;
+}
+.messages-unread:not([hidden]) {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  min-inline-size: 20px;
+  min-block-size: 20px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: #bc263c;
+  color: white;
+  font: 750 11px/1 system-ui, sans-serif;
+}
+#customerMessagesButton .messages-unread {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 0;
+  inset-inline-end: max(0px, calc(50% - 30px));
+  border: 1px solid white;
+}

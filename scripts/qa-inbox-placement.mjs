@@ -1,6 +1,53 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync,mkdirSync,cpSync} from 'node:fs';import assert from 'node:assert/strict';
-const html=readFileSync('menu/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/menu/'}),w=dom.window,d=w.document;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
-w.eval(readFileSync('js/cafe/order-inbox.js','utf8'));const button=d.querySelector('.umma-inbox-button');assert.equal(button.parentElement.id,'orderInboxHost');assert.equal(button.style.position,'');assert.equal(button.style.bottom,'');assert.equal(d.querySelector('.customer-actions').contains(button),true);w.ummaOrderInbox.publish({id:'demo',orderNumber:52,status:'pending'});w.ummaOrderInbox.publish({id:'demo',orderNumber:52,status:'preparing',paymentStatus:'paid'});assert.match(button.textContent,/3$/);button.click();assert.equal(d.querySelector('dialog[data-umma-inbox]').open,true);const list=d.querySelector('.umma-inbox-orders');
+const html=readFileSync('menu/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/menu/'}),w=dom.window,d=w.document;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+const inbox=d.getElementById('customerMessages');
+const trigger=d.getElementById('customerMessagesButton');
+w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
+w.AbortSignal=AbortSignal;
+const staffReplies=[
+ {id:'reply-1',direction:'staff',body:'Первый ответ',created_at:'2026-11-07T12:00:00Z'},
+ {id:'reply-2',direction:'staff',body:'Второй ответ',created_at:'2026-11-07T12:01:00Z'}
+];
+w.fetch=async(_url, options)=>{
+ const {action}=JSON.parse(options.body);
+ if(action==='read')for(const message of staffReplies)message.read_at='2026-11-07T12:02:00Z';
+ return new Response(JSON.stringify({ok:true,client:{},messages:staffReplies}));
+};
+for(const script of ['order-inbox','connect-media','connect-composer','customer-connect','customer-messages']){
+ w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
+}
+const button=d.querySelector('#orderInboxHost button');
+const chat=d.querySelector('#customerConnectHost button');
+const badge=element=>element.querySelector('.messages-unread');
+const flush=()=>new Promise(resolve=>setTimeout(resolve,0));
+await flush();
+assert.equal(badge(trigger).textContent,'2');
+assert.equal(badge(chat).textContent,'2');
+assert.ok(badge(button).hidden);
+assert.equal(button.parentElement.id,'orderInboxHost');
+assert.equal(button.closest('dialog'),inbox);
+assert.equal(trigger.closest('.customer-actions').querySelectorAll('button[aria-controls="customerMessages"]').length,1);
+w.ummaOrderInbox.publish({id:'demo',orderNumber:52,status:'pending'});
+assert.equal(badge(button).textContent,'1');
+assert.equal(badge(trigger).textContent,'3');
+w.ummaOrderInbox.publish({id:'demo',orderNumber:52,status:'preparing',paymentStatus:'paid'});
+assert.equal(badge(button).textContent,'3');
+assert.equal(badge(trigger).textContent,'5');
+trigger.click();
+assert.ok(inbox.open);
+assert.equal(badge(trigger).textContent,'5');
+chat.click();
+await flush();
+assert.ok(d.querySelector('.umma-connect-chat').open);
+assert.ok(badge(chat).hidden);
+assert.equal(badge(trigger).textContent,'3');
+d.querySelector('.umma-connect-chat').close();
+assert.ok(inbox.open);
+button.click();
+assert.ok(d.querySelector('dialog[data-umma-inbox]').open);
+assert.ok(badge(button).hidden);
+assert.ok(badge(trigger).hidden);
+const list=d.querySelector('.umma-inbox-orders');
 assert.equal(list.children.length,1);
 assert.equal(list.querySelector('.umma-inbox-number').textContent,'№52');
 assert.equal(list.querySelectorAll('.is-done').length,2);
@@ -19,7 +66,7 @@ assert.equal(list.firstElementChild.querySelectorAll('.is-done').length,6);
 w.ummaOrderInbox.publish({orderNumber:54,status:'cancelled'});
 assert.equal(list.children.length,3);
 assert.equal(list.firstElementChild.querySelectorAll('.is-done').length,0);
-assert.equal(list.firstElementChild.querySelectorAll('.is-cancelled').length,1);assert.doesNotMatch(button.textContent,/3$/);d.querySelector('dialog[data-umma-inbox]').close();assert.equal(button.parentElement.id,'orderInboxHost');
+assert.equal(list.firstElementChild.querySelectorAll('.is-cancelled').length,1);d.querySelector('dialog[data-umma-inbox]').close();assert.equal(button.parentElement.id,'orderInboxHost');
 // Standalone render of the actual header, with no live server requests or order actions.
 d.getElementById('menuLanguage').innerHTML='<option>Русский</option>';d.getElementById('products').innerHTML='<div class="message">Готовые блюда появятся после приёма кухни.</div>';
-mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: permanent customer dock location, no separately floating button, readable unread count, working dialog/read state and stable placement after close.');
+mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, independent unread counts, clear-on-read, and order timelines.');

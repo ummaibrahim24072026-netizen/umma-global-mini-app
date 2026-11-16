@@ -4,10 +4,22 @@ try{const saved=JSON.parse(localStorage.getItem(storeKey)||'null');if(saved&&sav
 const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здесь появятся обновления ваших заказов."], "en": ["Order updates", "Close", "Order updates will appear here."], "vi": ["Thông báo", "Đóng", "Thông tin cập nhật đơn hàng sẽ xuất hiện ở đây."], "ko": ["주문 알림", "닫기", "주문 업데이트가 여기에 표시됩니다."], "zh": ["订单消息", "关闭", "订单更新将在此显示。"], "de": ["Bestellmeldungen", "Schließen", "Hier erscheinen Neuigkeiten zu Ihren Bestellungen."], "fr": ["Mes notifications", "Fermer", "Les mises à jour de vos commandes apparaîtront ici."], "th": ["แจ้งเตือนคำสั่งซื้อ", "ปิด", "ข้อมูลอัปเดตคำสั่งซื้อจะแสดงที่นี่"], "ms": ["Kemas kini pesanan", "Tutup", "Kemas kini pesanan anda akan muncul di sini."], "id": ["Notifikasi pesanan", "Tutup", "Pembaruan pesanan Anda akan muncul di sini."], "ar": ["إشعارات الطلبات", "إغلاق", "ستظهر تحديثات طلباتك هنا."], "pt": ["Notificações", "Fechar", "As atualizações dos seus pedidos aparecerão aqui."]};
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
 const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
-const host=document.getElementById('orderInboxHost'),inDock=!!host?.closest('.customer-actions');
-const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inDock)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
+const host=document.getElementById('orderInboxHost'),inHub=!!host?.closest('#customerMessages');
+const inPublicMenu=inHub||!!host?.closest('.customer-actions');
+const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления о заказах':ui()[0];
+const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
-function render(){const list=document.querySelector('dialog[data-umma-inbox][open] .umma-inbox-orders');if(list)renderOrders(list);const unread=data.messages.filter(m=>m.at>data.readAt).length;window.ummaOrderAlerts?.badge(unread);button.textContent=(inDock?'':'🔔 ')+ui()[0]+(unread?' · '+unread:'');}
+function render(){
+ const list=document.querySelector('dialog[data-umma-inbox][open] .umma-inbox-orders');
+ if(list)renderOrders(list);
+ const unread=data.messages.filter(m=>m.at>data.readAt).length;
+ window.ummaOrderAlerts?.badge(unread);
+ button.textContent=(inPublicMenu?'':'🔔 ')+inboxTitle()+(unread&&!inHub?' · '+unread:'');
+ if(inHub){
+  button.dataset.unread=String(unread);
+  window.dispatchEvent(new Event('umma:messages-count'));
+ }
+}
 function publish(order,t=null){if(t)translate=t;
  const id=String(order.orderNumber||order.number||order.id),number=String(order.orderNumber||order.number||''),at=Date.parse(order.eventAt)||Date.now(),event=order.eventId;
  data.events=data.events||[];if(event&&data.events.includes(event))return;
@@ -66,7 +78,7 @@ function renderOrders(list){
   const finished=values.has(delivery?'delivered':'completed');
   const progress=orderStages.findLastIndex(key=>values.has(key));
   const kitchen=courier==='picked_up'||finished?Math.max(progress,3):progress;
-  const awaitingPayment=inDock&&state?.payment==='pending'&&state.status==='pending';
+  const awaitingPayment=inPublicMenu&&state?.payment==='pending'&&state.status==='pending';
   const stages=[
    ['pending',awaitingPayment?'current':kitchen>=0?'done':'future',awaitingPayment?'awaiting_payment':'pending'],
    ['confirmed',kitchen>=1?'done':'future'],
@@ -128,7 +140,7 @@ function open(){
  close.onclick=()=>dialog.close();
  const heading=document.createElement('h2');
  heading.id='ummaOrderInboxTitle';
- heading.textContent=ui()[0];
+ heading.textContent=inboxTitle();
  heading.style.cssText='margin:0 48px 0 0;min-height:44px;display:grid;align-items:center;font-size:1.25rem';
  const empty=document.createElement('p');
  empty.textContent=ui()[2];
