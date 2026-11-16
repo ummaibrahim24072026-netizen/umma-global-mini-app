@@ -76,9 +76,9 @@ function openMap(){
    if(!isDelivery())return;
    canvas.hidden=false;
    map=L.map(canvas,{scrollWheelZoom:false}).setView([Number(cafe.latitude),Number(cafe.longitude)],15);
+   map.attributionControl?.setPrefix(false);
    window.UmmaMaps.basemap(map,canvas,key=>{if(key==='Карта загружается с ошибками. Попробуйте позже.'&&statusKey===choosePoint)text(mapUnavailable);},{blueWater:true});
-   L.polygon(cafe.delivery_zone,{color:'#03a2a5',weight:2,fillOpacity:.1}).addTo(map);
-   map.fitBounds(cafe.delivery_zone);
+   L.polygon(cafe.delivery_zone,{color:'#087b80',weight:2,fill:false,interactive:false}).addTo(map);
    map.on('click',e=>{generation++;select(e.latlng);});
    if(point){select({lat:point.latitude,lng:point.longitude},false);if(point)map.setView([point.latitude,point.longitude],17);}
    else if(statusKey===mapUnavailable)text(choosePoint);

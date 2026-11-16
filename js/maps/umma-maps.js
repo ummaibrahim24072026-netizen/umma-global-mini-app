@@ -33,13 +33,13 @@
       const source = layer['source-layer'], id = layer.id;
       try {
         if (layer.type === 'background') gl.setPaintProperty(id, 'background-color', '#f5f3ec');
-        if (layer.type === 'fill' && source === 'water') gl.setPaintProperty(id, 'fill-color', blueWater ? '#a0cbed' : '#abd8d5');
+        if (layer.type === 'fill' && source === 'water') gl.setPaintProperty(id, 'fill-color', blueWater ? '#91bdef' : '#abd8d5');
         if (layer.type === 'fill' && source === 'building') {
           gl.setPaintProperty(id, 'fill-color', '#d9d3c5');
           gl.setPaintProperty(id, 'fill-outline-color', '#c5bcaa');
         }
         if (layer.type === 'fill' && (source === 'park' || /landcover_wood|landuse_park/.test(id))) gl.setPaintProperty(id, 'fill-color', '#dce9da');
-        if (layer.type === 'line' && source === 'waterway') gl.setPaintProperty(id, 'line-color', blueWater ? '#84b8e4' : '#8fc9c6');
+        if (layer.type === 'line' && source === 'waterway') gl.setPaintProperty(id, 'line-color', blueWater ? '#79aee4' : '#8fc9c6');
         if (layer.type === 'symbol' && source === 'place') {
           gl.setPaintProperty(id, 'text-color', '#244f50');
           gl.setPaintProperty(id, 'text-halo-color', '#fffdf6');
