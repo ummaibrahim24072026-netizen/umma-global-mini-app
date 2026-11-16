@@ -64,7 +64,7 @@ if(rubleSection){
  if(ruble){
   const locale=window.ummaMenuI18n?.locale()||'ru';
   $('rubleAmount').textContent=new Intl.NumberFormat(locale,{style:'currency',currency:'RUB'}).format(ruble.kopecks/100);
-  $('rubleRate').textContent=new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(ruble.rate)+' ₫ / ₽';
+  $('rubleRate').textContent='1 ₽ = '+new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(ruble.rate)+' ₫';
   $('rubleBank').textContent=ruble.bankName;$('rubleRecipient').textContent=ruble.recipient;$('rublePhone').textContent=ruble.phone;
   const copy=$('copyRublePhone');
   copy.hidden=!navigator.clipboard?.writeText;

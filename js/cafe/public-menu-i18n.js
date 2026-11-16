@@ -93,6 +93,7 @@ if(document.documentElement){document.documentElement.lang=language;document.doc
 Object.assign(copy,{
  'Перевод в рублях':{en:'Bank transfer in RUB',vi:'Chuyển khoản bằng rúp'},
  'Ожидаем перевод в рублях':{en:'Awaiting your RUB transfer',vi:'Đang chờ chuyển khoản bằng rúp'},
+ 'Курс':{en:'Exchange rate',vi:'Tỷ giá'},
  'Сумма перевода':{en:'Transfer amount',vi:'Số tiền chuyển khoản'},
  'Банк':{en:'Bank',vi:'Ngân hàng'},
  'Получатель':{en:'Recipient',vi:'Người nhận'},
