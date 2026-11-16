@@ -1,7 +1,7 @@
 /* Device-bound customer channel. The opaque credential never appears in URLs or push payloads. */
 (()=>{'use strict';
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect',KEY='umma:connect:token:v1';
-let token='',state=null,dialog=null,busy=false,pending=null,reading=false,refreshing=null;
+let token='',state=null,dialog=null,busy=false,pending=null,reading=false,refreshing=null,hiddenMessages=new Set();
 try{token=localStorage.getItem(KEY)||'';}catch{}
 const copy={ru:['Связь с UMMA','Закрыть','Сообщения кафе, акции и обратная связь','Начать переписку','Имя (необязательно)','Получать рассылку об акциях и новых блюдах','Сохранить настройки','Включить уведомления','Отключить уведомления кафе','Напишите нам','Отправить','Переписка сохранится на этом устройстве. Сообщения по заказам — в «Мои сообщения».','Пока сообщений нет.','Сохранено','Уведомления включены','Разрешите уведомления в настройках сайта. На iPhone откройте установленное приложение с экрана «Домой».','Не удалось соединиться. Повторите попытку.','Подключаем…','Вы','UMMA','Уведомления кафе отключены. Уведомления заказов настраиваются отдельно.','Не удалось сохранить доступ на этом устройстве. Разрешите хранение данных сайта.'],en:['Contact UMMA','Close','Cafe updates, offers and feedback','Start conversation','Name (optional)','Subscribe to offers and new dishes','Save preferences','Enable notifications','Disable cafe notifications','Write to us','Send','This conversation stays on this device. Order updates are in “Order updates”.','No messages yet.','Saved','Notifications enabled','Allow notifications in site settings. On iPhone, open the installed app from the Home Screen.','Could not connect. Please retry.','Connecting…','You','UMMA','Cafe notifications disabled. Order alerts have separate settings.','Could not save access on this device. Allow site storage.'],vi:['Liên hệ UMMA','Đóng','Tin tức, ưu đãi và phản hồi','Bắt đầu trò chuyện','Tên (không bắt buộc)','Đăng ký nhận ưu đãi và món mới','Lưu tùy chọn','Bật thông báo','Tắt thông báo quán','Nhắn cho chúng tôi','Gửi','Cuộc trò chuyện lưu trên thiết bị này. Thông báo đơn hàng ở mục “Thông báo”.','Chưa có tin nhắn.','Đã lưu','Đã bật thông báo','Cho phép thông báo trong cài đặt trang. Trên iPhone, mở ứng dụng từ Màn hình chính.','Không thể kết nối. Hãy thử lại.','Đang kết nối…','Bạn','UMMA','Đã tắt thông báo quán. Thông báo đơn hàng có cài đặt riêng.','Không lưu được quyền truy cập. Cho phép lưu dữ liệu trang.']};
 const notificationCopy={
@@ -66,6 +66,41 @@ const mediaCopy={
  en:{photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
  vi:{photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
 };
+const ACTIONS='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-actions';
+async function messageAction(action,messageId){
+ const response=await fetch(ACTIONS,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,action,messageId})});
+ const result=await response.json();
+ if(!response.ok||!result.ok)throw Error(result.code==='READ_OR_NOT_OWN'?'Сообщение уже прочитано. Удалить у всех нельзя.':result.error||'Не удалось выполнить действие.');
+ return result;
+}
+async function refreshHidden(){
+ try{const result=await messageAction('hidden');hiddenMessages=new Set(result.ids||[]);}catch{}
+}
+function messageMenu(li,m){
+ const labels={ru:['Копировать','Переслать','Удалить у себя','Удалить у всех','Сообщение удалено','Не удалось выполнить действие'],en:['Copy','Forward','Delete for me','Delete for everyone','Message deleted','Action failed'],vi:['Sao chép','Chuyển tiếp','Xóa phía tôi','Xóa với mọi người','Đã xóa','Không thực hiện được']};
+ const l=labels[lang()]||labels.en;
+ const menu=el('details',null,'connect-message-actions');
+ const summary=el('summary','⋯');
+ summary.setAttribute('aria-label','Действия с сообщением');
+ menu.append(summary);
+ const add=(label,action)=>{
+  const button=el('button',label);button.type='button';
+  button.onclick=async()=>{menu.open=false;try{await action();}catch(error){alert(error.message||l[5]);}};
+  menu.append(button);
+ };
+ if(m.body)add(l[0],()=>navigator.clipboard.writeText(m.body));
+ add(l[1],async()=>{
+  const text=m.body||((m.media_kind==='photo'?'Фото':m.media_kind==='video'?'Видео':'Голосовое сообщение')+' · UMMA');
+  if(navigator.share)await navigator.share({text});else if(navigator.clipboard){await navigator.clipboard.writeText(text);alert(l[0]+' ✓');}
+ });
+ add(l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
+ if(m.direction==='customer'&&!m.read_at)add(l[3],async()=>{
+  if(!confirm(l[3]+'?'))return;
+  await messageAction('deleteAll',m.id);
+  state=await api('list');renderThread();
+ });
+ li.append(menu);
+}
 function renderThread(){
  if(!list)return;
  const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
@@ -74,6 +109,7 @@ function renderThread(){
  const media=mediaCopy[lang()]||mediaCopy.en;
  const target=window.ummaConnectMedia.language(lang());
  window.ummaConnectMedia.render(list,state?.messages||[],m=>{
+  if(hiddenMessages.has(m.id))return null;
   const li=el('li');
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
@@ -95,6 +131,7 @@ function renderThread(){
   meta.append(el('small',timestamp));
   if(outgoing)meta.append(el('small',null,'connect-receipt'));
   if(publicChat)li.append(meta);
+  if(publicChat)messageMenu(li,m);
   return li;
  },m=>{
   if(publicChat)return m.read_at?'✓✓ '+receipt[1]:'✓ '+receipt[0];
