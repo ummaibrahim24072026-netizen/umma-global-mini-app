@@ -165,6 +165,45 @@
   }else void prepare();
   return wrapper;
  }
+ const textTranslations=new Map();
+ function translatedText(original,language,load){
+  const wrapper=document.createElement('div');
+  wrapper.className='connect-translated-text';
+  const main=document.createElement('div');
+  main.textContent=original;
+  const originalText=document.createElement('div');
+  originalText.className='connect-original-text';
+  originalText.textContent=original;
+  originalText.hidden=true;
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.textContent='Показать оригинал';
+  toggle.hidden=true;
+  toggle.onclick=()=>{originalText.hidden=!originalText.hidden;toggle.textContent=originalText.hidden?'Показать оригинал':'Скрыть оригинал';};
+  wrapper.append(main,toggle,originalText);
+  const key=language+'|'+original;
+  async function translate(){
+   try{
+    let work=textTranslations.get(key);
+    if(!work){work=load();textTranslations.set(key,work);}
+    const result=await work;
+    if(!wrapper.isConnected)return;
+    if(result?.text&&result.text.trim()&&result.text.trim()!==original.trim()){
+     main.textContent=result.text;
+     main.lang=language;
+     toggle.hidden=false;
+    }
+   }catch{textTranslations.delete(key);}
+  }
+  if('IntersectionObserver'in window){
+   const observer=new IntersectionObserver(entries=>{
+    if(!entries.some(e=>e.isIntersecting))return;
+    observer.disconnect();void translate();
+   },{rootMargin:'240px'});
+   observer.observe(wrapper);
+  }else void translate();
+  return wrapper;
+ }
  const languages=new Set('ar de en fr id ja ko ms pt ru tg th tk tr ug uz vi zh'.split(' '));
  const language=value=>{
   const code=value?.toLowerCase().split(/[-_]/)[0];
@@ -253,5 +292,5 @@
   });
   for(const row of rows.values())row.remove();
  }
- window.ummaConnectMedia={player,attachment,inlineAttachment,videoCircle,render,language,voiceTranslation,upload};
+ window.ummaConnectMedia={player,attachment,inlineAttachment,videoCircle,translatedText,render,language,voiceTranslation,upload};
 })();
