@@ -485,16 +485,76 @@ audio.connect-media{width:min(100%,300px)}
 }
 
 .umma-connect-chat .connect-camera-panel:not([hidden]) {
-  grid-area: 4 / 1 / 5 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: .5rem;
+  grid-area:4 / 1 / 5 / -1;
+  display:grid;
+  gap:0;
+  overflow:hidden;
+  border:1px solid #19454a;
+  border-radius:22px;
+  background:#102e32;
+  color:white;
 }
-.umma-connect-chat .connect-camera-panel video {
-  width: 100%;
-  max-height: min(32dvh, 260px);
-  object-fit: contain;
-  border-radius: 12px;
-  background: #102e32;
+.umma-connect-chat .connect-camera-stage {
+  position:relative;
+  height:min(33dvh,310px);
+  background:#092024;
 }
+.umma-connect-chat .connect-camera-stage video {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.umma-connect-chat .connect-camera-stage video[hidden] {display:none}
+.umma-connect-chat .connect-camera-controls {
+  display:grid;
+  grid-template-columns:1fr 64px 1fr;
+  place-items:center;
+  gap:12px;
+  width:min(100%,292px);
+  margin-inline:auto;
+  padding:8px 12px 10px;
+  box-sizing:border-box;
+}
+.umma-connect-chat .connect-camera-panel .connect-camera-icon,
+.umma-connect-chat .connect-camera-panel .connect-camera-shutter {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  min-width:0;
+  min-height:0;
+  padding:0;
+  border:1px solid #ffffff36;
+  border-radius:50%;
+  background:#23464a;
+  color:white;
+}
+.umma-connect-chat .connect-camera-panel .connect-camera-dismiss {
+  position:absolute;
+  inset:8px 8px auto auto;
+  z-index:3;
+  background:#0b2025cb;
+}
+.umma-connect-chat .connect-camera-panel .connect-camera-shutter {
+  width:58px;
+  height:58px;
+  border:3px solid #fff;
+  background:transparent;
+}
+.connect-camera-shutter::before {
+  content:"";
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:white;
+}
+.connect-camera-shutter[data-mode=video]::before,
+.connect-camera-shutter[data-mode=recording]::before {background:#ff5965}
+.connect-camera-shutter[data-mode=recording]::before {
+  width:22px;
+  height:22px;
+  border-radius:5px;
+}
+.umma-connect-chat .connect-camera-panel button:disabled {opacity:.45;cursor:default}
+.umma-connect-chat .connect-camera-panel button:focus-visible {outline:2px solid #94ede6;outline-offset:3px}

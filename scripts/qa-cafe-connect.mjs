@@ -332,7 +332,10 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  const camera=bar.querySelector('.connect-attachment-camera');
  const cameraPanel=form.querySelector('.connect-camera-panel');
  const cameraVideo=cameraPanel.querySelector('video');
- const [,shutter,choosePhoto,cancelPhoto]=cameraPanel.querySelectorAll('button');
+ const shutter=cameraPanel.querySelector('.connect-camera-shutter');
+ const choosePhoto=cameraPanel.querySelector('.connect-camera-controls button:first-child');
+ const cancelPhoto=cameraPanel.querySelector('.connect-camera-dismiss');
+ assert.equal(cameraPanel.querySelectorAll('button svg').length,3);
  const gallery=bar.querySelector('input[accept^="image/"]');
  let galleryOpens=0;
  gallery.addEventListener('click',()=>galleryOpens++);
@@ -458,7 +461,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  startVideo.click();
  await tick();
  shutter.click();
- assert.equal(shutter.textContent,'Остановить видео');
+ assert.equal(shutter.getAttribute('aria-label'),'Остановить видео');
+ assert.equal(shutter.dataset.mode,'recording');
  assert.equal(send.disabled,true);
  cancelPhoto.click();
  await tick();
