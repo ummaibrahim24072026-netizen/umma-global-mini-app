@@ -200,7 +200,7 @@ audio.connect-media{width:min(100%,300px)}
   gap:6px;
 }
 .public-cafe-menu .umma-connect-chat .connect-thread {
-  background:#edf7f4 url("../assets/chat-ornament.png") repeat;
+  background:#edf7f4 url("../assets/chat-ornament.png?v=2") repeat;
   background-size:160px 160px;
 }
 .public-cafe-menu .umma-connect-chat .connect-thread > li {

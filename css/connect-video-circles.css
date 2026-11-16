@@ -17,8 +17,8 @@
 
 /* Video notes are visible immediately, without an 'Open video' button. */
 .umma-connect-chat .connect-video-note{max-width:fit-content}
-.umma-connect-chat .connect-video-circle{position:relative;width:min(220px,62vw);height:min(220px,62vw);aspect-ratio:1;border-radius:50%;overflow:hidden;background:#143d3e;border:3px solid #d3ac62}
-.umma-connect-chat .connect-video-circle-player{display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;border:0;border-radius:50%;background:#143d3e}
+.umma-connect-chat .connect-video-circle{position:relative;width:min(220px,62vw);height:min(220px,62vw);aspect-ratio:1;border-radius:50%;overflow:hidden;background:#111;border:3px solid #d3ac62}
+.umma-connect-chat .connect-video-circle-player{display:block;width:100%;height:100%;max-width:none;max-height:none;margin:0;object-fit:cover;border:0;border-radius:50%;background:#111}
 .umma-connect-chat .connect-video-circle-toggle{position:absolute;inset:0;display:grid;place-items:center;width:100%;height:100%;border:0;border-radius:50%;background:transparent;color:#fff;font-size:35px;text-shadow:0 2px 12px #000a;cursor:pointer}
 .umma-connect-chat .connect-video-circle-toggle[hidden]{display:none}
 .umma-connect-chat .connect-video-circle-status{position:absolute;bottom:8px;left:12px;right:12px;color:#fff;background:#123b3bbb;border-radius:10px;text-align:center;font-size:11px}
