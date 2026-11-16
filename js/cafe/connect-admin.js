@@ -103,14 +103,16 @@ async function run(fn,feedback=status){
 }
 function showMessages(data){
  const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
- const labels={photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое'};
+ const labels={album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'};
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
   if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}))));
-  if(m.media_kind)li.append(window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],
-   async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url,
-   'Не удалось открыть вложение. Попробуйте ещё раз.'));
+  if(m.media_kind){
+   const load=async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url;
+   li.append(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(labels,load)
+    :window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],load,labels.error));
+  }
   if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation('ru',target,
     async(source)=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target,source);},true));
@@ -131,7 +133,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){composer.close();composer.clear();messages.replaceChildren();thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
+ if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  await readThread(id);
  threadTitle.focus({preventScroll:true});

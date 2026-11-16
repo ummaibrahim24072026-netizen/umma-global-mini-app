@@ -105,10 +105,10 @@
    stop();
   }
  }
- window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false,onInstantVideo=null})=>{
+ window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false,onInstantVideo=null,albums=false})=>{
   const labels=copy[lang]||copy.en, compactLabels=compactCopy[lang]||compactCopy.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
-  let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
+  let drafts=[],recording=null,generation=0,starting=false,working=false;
   const pickers=[];
   const cameraLabels=cameraCopy[lang]||cameraCopy.en;
   const videoLabels=videoCopy[lang]||videoCopy.en;
@@ -138,10 +138,10 @@
    for(const picker of pickers)picker.disabled=working||active;
    body.disabled=send.disabled=working||active;
    mic.disabled=working||starting||!!cameraSession;
-   remove.disabled=working||active;
+   for(const remove of preview.querySelectorAll('.connect-draft-remove'))remove.disabled=working||active;
    const micLabel=recording?labels[3]:labels[2];
    if(compact){
-    const canSend=!!draft||!!body.value.trim();
+    const canSend=drafts.length>0||!!body.value.trim();
     attach.disabled=expression.disabled=camera.disabled=working||active;
     if(circleButton)circleButton.disabled=working||starting||!!recording||!!cameraSession;
     if(attach.disabled){
@@ -155,34 +155,58 @@
    }else mic.textContent=micLabel;
   }
   function sizeError(kind){return labels[9]+' '+limits[kind]+' MB.';}
-  function setDraft(file,kind){
-   if(url)URL.revokeObjectURL(url);
-   url=null;
-   draft=file?{file,kind}:null;
+  const albumLimit=20*1024*1024;
+  function renderDrafts(){
    onChange();
-   preview.replaceChildren();
-   if(file){
-    url=URL.createObjectURL(file);
-    const thumbnail=el('div',null,'connect-draft-thumbnail');
-    Object.assign(thumbnail.style,{position:'relative',display:'inline-block',maxWidth:'100%',verticalAlign:'top'});
-    thumbnail.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),remove);
-    preview.append(thumbnail);
-   }
+   preview.style.display=drafts.length>1?'grid':'';
+   preview.style.gridTemplateColumns=drafts.length>1?'repeat(2,minmax(0,1fr))':'';
+   preview.replaceChildren(...drafts.map(item=>item.thumbnail));
    controls();
   }
+  function clearDrafts(){
+   for(const item of drafts)URL.revokeObjectURL(item.url);
+   drafts=[];
+  }
+  function addDrafts(items){
+   const batch=albums&&items[0].kind!=='voice'&&drafts[0]?.kind!=='voice';
+   const existing=batch?drafts:[];
+   const combined=[...existing,...items];
+   if(combined.length>10||combined.length>1&&combined.reduce((size,item)=>size+item.file.size,0)>albumLimit-2048){
+    status.textContent=({ru:'До 10 фото и видео, не более 20 МБ вместе.',vi:'Tối đa 10 ảnh và video, tổng dung lượng tối đa 20 MB.'}[lang]||'Up to 10 photos and videos, 20 MB total.');
+    return;
+   }
+   if(!batch)clearDrafts();
+   for(const {file,kind} of items){
+    const url=URL.createObjectURL(file);
+    const thumbnail=el('div',null,'connect-draft-thumbnail');
+    Object.assign(thumbnail.style,{position:'relative',display:'inline-block',maxWidth:'100%',verticalAlign:'top'});
+    const item={file,kind,url,thumbnail};
+    thumbnail.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),removeButton(item));
+    drafts.push(item);
+   }
+   status.textContent='';
+   renderDrafts();
+  }
+  function setDraft(file,kind){addDrafts([{file,kind}]);}
   function addPicker(kind,label){
    const input=el('input');
    input.type='file';
    input.hidden=true;
-   input.accept=formats[kind].join(',');
+   input.multiple=albums;
+   const accepted=kind==='album'?[...formats.photo,...formats.video]:formats[kind];
+   input.accept=accepted.join(',');
    input.onchange=()=>{
-    const file=input.files[0];
+    const files=Array.from(input.files);
     input.value='';
-    if(!file||working||recording||starting||cameraSession)return;
-    if(!formats[kind].includes(file.type)){status.textContent=labels[10];return;}
-    if(!file.size||file.size>limits[kind]*1024*1024){status.textContent=sizeError(kind);return;}
-    setDraft(file,kind);
-    status.textContent='';
+    if(!files.length||working||recording||starting||cameraSession||circleSession)return;
+    const items=[];
+    for(const file of files){
+     if(!accepted.includes(file.type)){status.textContent=labels[10];return;}
+     const itemKind=file.type.startsWith('image/')?'photo':'video';
+     if(!file.size||file.size>limits[itemKind]*1024*1024){status.textContent=sizeError(itemKind);return;}
+     items.push({file,kind:itemKind});
+    }
+    addDrafts(items);
    };
    const picker=button(label,()=>{showAttachments(false);attach?.focus();input.click();});
    pickers.push(picker);
@@ -260,7 +284,6 @@
     if(file.size>limits.photo*1024*1024){status.textContent=sizeError('photo');return;}
     closeCamera();
     setDraft(file,'photo');
-    status.textContent='';
    }
    try{
     const canvas=el('canvas');
@@ -397,7 +420,6 @@
      closeCamera();
      if(!size||!formats.video.includes(type)){status.textContent=videoLabels[3];return;}
      setDraft(new Blob(chunks,{type}),'video');
-     status.textContent='';
     };
     recorder.start(250);
     session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},videoDuration);
@@ -412,6 +434,7 @@
     bar.append(picker);
    }
   }
+  if(albums)addPicker('album',({ru:'Фото и видео',vi:'Ảnh và video'}[lang]||'Photos and videos'));
   function release(r){
    clearTimeout(r.timer);
    clearInterval(r.clock);
@@ -584,23 +607,31 @@
   }
 
   const mic=button(labels[2],record);
-  const remove=button(null,()=>{setDraft(null);status.textContent='';});
-  remove.className='connect-draft-remove';
-  iconButton(remove,'close',labels[4]);
-  Object.assign(remove.style,{
-   position:'absolute',top:'6px',right:'6px',width:'28px',height:'28px',
-   minHeight:'0',minWidth:'0',boxSizing:'border-box',padding:'0',
-   borderRadius:'50%',border:'1px solid rgba(255,255,255,.22)',
-   background:'rgba(24,24,24,.82)',color:'#fff',
-   display:'grid',placeItems:'center',cursor:'pointer',zIndex:'2'
-  });
-  const removeIcon=remove.firstElementChild;
-  removeIcon.setAttribute('width','14');
-  removeIcon.setAttribute('height','14');
-  removeIcon.setAttribute('fill','none');
-  removeIcon.setAttribute('stroke','currentColor');
-  removeIcon.setAttribute('stroke-width','2.5');
-  removeIcon.setAttribute('stroke-linecap','round');
+  function removeButton(item){
+   const remove=button(null,()=>{
+    drafts=drafts.filter(draft=>draft!==item);
+    URL.revokeObjectURL(item.url);
+    status.textContent='';
+    renderDrafts();
+   });
+   remove.className='connect-draft-remove';
+   iconButton(remove,'close',labels[4]);
+   Object.assign(remove.style,{
+    position:'absolute',top:'6px',right:'6px',width:'28px',height:'28px',
+    minHeight:'0',minWidth:'0',boxSizing:'border-box',padding:'0',
+    borderRadius:'50%',border:'1px solid rgba(255,255,255,.22)',
+    background:'rgba(24,24,24,.82)',color:'#fff',
+    display:'grid',placeItems:'center',cursor:'pointer',zIndex:'2'
+   });
+   const removeIcon=remove.firstElementChild;
+   removeIcon.setAttribute('width','14');
+   removeIcon.setAttribute('height','14');
+   removeIcon.setAttribute('fill','none');
+   removeIcon.setAttribute('stroke','currentColor');
+   removeIcon.setAttribute('stroke-width','2.5');
+   removeIcon.setAttribute('stroke-linecap','round');
+   return remove;
+  }
   if(compact){
    form.classList.add('connect-compose-compact');
    attach=button(compactLabels[0],()=>showAttachments(bar.hidden));
@@ -626,7 +657,6 @@
      if(useStickers){
       try{
        setDraft(stickerImage(symbol),'photo');
-       status.textContent='';
        showExpressions(false);
        expression.focus();
       }catch{status.textContent=words[2];}
@@ -730,10 +760,10 @@
    form.insertBefore(preview,send);
   }
   return {
-   get draft(){return draft;},
+   get draft(){return drafts.length>1?{kind:'album',items:drafts}:drafts[0]||null;},
    get recording(){return starting||!!recording||!!cameraSession||!!circleSession;},
    busy(value){working=value;controls();},
-   clear(){setDraft(null);},
+   clear(){clearDrafts();renderDrafts();},
    close(){
     closeCamera();
     if(circleSession)finishCircle(circleSession,true);
@@ -742,7 +772,7 @@
     generation++;
     starting=false;
     if(recording){stop(recording,true);recording=null;}
-    preview.querySelector('audio,video')?.pause();
+    for(const media of preview.querySelectorAll('audio,video'))media.pause();
     controls();
    },
    error(code,kind){return code==='MEDIA_SIZE'?sizeError(kind):code==='MEDIA_FORMAT'?labels[10]:labels[11];}

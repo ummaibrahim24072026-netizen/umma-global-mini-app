@@ -27,7 +27,7 @@ Deno.serve(async(req:Request)=>{
    const prepare=await rpc('cafe_connect',{p_action:staff?'staffMediaPrepare':'mediaPrepare',...identity,p_data:mediaData});
    if(prepare.id)return reply({ok:true,id:prepare.id});
    const {bytes,kind,body}=await connectMedia(req,mime);
-   if(staff&&kind==='photo')return reply({ok:false,code:'MEDIA_FORMAT'},415);
+   if(staff&&(kind==='photo'||kind==='album'))return reply({ok:false,code:'MEDIA_FORMAT'},415);
    const path=prepare.clientId+'/'+crypto.randomUUID();
    const upload=await bucket.upload(path,bytes,{contentType:mime,cacheControl:'0',upsert:false});
    if(upload.error)throw Error('MEDIA_UPLOAD');
