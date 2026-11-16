@@ -104,7 +104,7 @@
    stop();
   }
  }
- window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false})=>{
+ window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false,onInstantVideo=null})=>{
   const labels=copy[lang]||copy.en, compactLabels=compactCopy[lang]||compactCopy.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
@@ -113,7 +113,7 @@
   const videoLabels=videoCopy[lang]||videoCopy.en;
   const gallery={};
   let cameraSession=null,cameraPanel,cameraPreview,shutter;
-  let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars;
+  let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
   function showExpressions(open){
    if(!expression)return;
    if(open)showAttachments(false);
@@ -133,7 +133,7 @@
    return control;
   }
   function controls(){
-   const active=starting||!!recording||!!cameraSession;
+   const active=starting||!!recording||!!cameraSession||!!circleSession;
    for(const picker of pickers)picker.disabled=working||active;
    body.disabled=send.disabled=working||active;
    mic.disabled=working||starting||!!cameraSession;
@@ -142,6 +142,7 @@
    if(compact){
     const canSend=!!draft||!!body.value.trim();
     attach.disabled=expression.disabled=camera.disabled=working||active;
+    if(circleButton)circleButton.disabled=working||active;
     if(attach.disabled){
      showAttachments(false);
      showExpressions(false);
@@ -379,6 +380,93 @@
     if(current===generation){starting=false;controls();}
    }
   }
+
+  // Hold to record, release to send. Camera permissions are requested directly
+  // from the pointer gesture; a pending permission request can be cancelled safely.
+  async function beginCircle(event){
+   if(circleSession||working||starting||recording||cameraSession||!onInstantVideo)return;
+   if(event?.button!==undefined&&event.button!==0)return;
+   event?.preventDefault();
+   const session={held:true,cancelled:false,stream:null,recorder:null,chunks:[],bytes:0,timer:null,clock:null};
+   circleSession=session;
+   circleButton.setPointerCapture?.(event.pointerId);
+   circlePanel.hidden=false;
+   circleTimer.textContent='0:00';
+   circleButton.classList.add('is-recording');
+   controls();
+   try{
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('camera');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:{facingMode:'user',width:{ideal:480},height:{ideal:480},frameRate:{ideal:24}}});
+    if(circleSession!==session||session.cancelled||!session.held){stream.getTracks().forEach(t=>t.stop());finishCircle(session,true);return;}
+    session.stream=stream;
+    circlePreview.srcObject=stream;
+    await circlePreview.play();
+    if(circleSession!==session||!session.held){finishCircle(session,true);return;}
+    const mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
+    if(!mime)throw Error('format');
+    const recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:850000,audioBitsPerSecond:64000});
+    session.recorder=recorder;
+    recorder.ondataavailable=e=>{
+     if(!e.data.size)return;
+     session.bytes+=e.data.size;
+     if(session.bytes>limits.video*1024*1024){session.cancelled=true;finishCircle(session,true);return;}
+     session.chunks.push(e.data);
+    };
+    recorder.onerror=()=>{session.cancelled=true;finishCircle(session,true);status.textContent=videoLabels[3];};
+    recorder.onstop=async()=>{
+     const valid=!session.cancelled&&session.bytes>0;
+     const type=(recorder.mimeType||mime).split(';')[0];
+     const file=valid?new Blob(session.chunks,{type}):null;
+     finishCircle(session,true);
+     if(!file||!formats.video.includes(type))return;
+     try{await onInstantVideo(file);}catch(e){status.textContent=e?.message||labels[11];}
+    };
+    recorder.start(250);
+    const start=performance.now();
+    session.clock=setInterval(()=>{
+     const seconds=Math.floor((performance.now()-start)/1000);
+     circleTimer.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+    },250);
+    session.timer=setTimeout(()=>finishCircle(session,false),videoDuration);
+    status.textContent='';
+   }catch{
+    finishCircle(session,true);
+    status.textContent=videoLabels[2];
+   }
+  }
+  function finishCircle(session,discard){
+   if(!session)return;
+   session.held=false;
+   session.cancelled ||= discard;
+   clearTimeout(session.timer);
+   clearInterval(session.clock);
+   if(circleSession===session){
+    circleSession=null;
+    circlePanel.hidden=true;
+    circleButton.classList.remove('is-recording');
+    circlePreview.pause();
+    circlePreview.srcObject=null;
+    controls();
+   }
+   if(session.recorder?.state==='recording'){
+    try{session.recorder.stop();}catch{}
+   }
+   session.stream?.getTracks().forEach(t=>t.stop());
+  }
+  function endCircle(event){
+   const session=circleSession;
+   if(!session)return;
+   if(event?.type==='pointercancel')session.cancelled=true;
+   if(event?.clientX!==undefined){
+    const rect=circleButton.getBoundingClientRect();
+    if(event.clientX<rect.left-70)session.cancelled=true;
+   }
+   session.held=false;
+   if(session.recorder)finishCircle(session,session.cancelled);
+   else if(session.cancelled)finishCircle(session,true);
+   // If permissions are still pending, beginCircle will discard after resolution.
+  }
+
   const mic=button(labels[2],record),remove=button(labels[4],()=>{setDraft(null);status.textContent='';});
   if(compact){
    form.classList.add('connect-compose-compact');
@@ -443,6 +531,21 @@
     camera.focus();
    }));
    camera.className='connect-camera';
+   if(onInstantVideo){
+    circleButton=button(lang==='ru'?'Удерживайте для видеокружка':'Hold for video note',()=>{});
+    circleButton.className='connect-circle-button';
+    iconButton(circleButton,'camera',lang==='ru'?'Удерживайте для видеокружка':'Hold for video note');
+    circleButton.addEventListener('pointerdown',beginCircle);
+    circleButton.addEventListener('pointerup',endCircle);
+    circleButton.addEventListener('pointercancel',endCircle);
+    circleButton.addEventListener('lostpointercapture',()=>{if(circleSession?.held)endCircle();});
+    circlePanel=el('div',null,'connect-circle-panel');
+    circlePanel.hidden=true;
+    circlePreview=el('video');
+    circlePreview.muted=true;circlePreview.playsInline=true;
+    circleTimer=el('span','0:00','connect-circle-timer');
+    circlePanel.append(circlePreview,circleTimer);
+   }
    iconButton(camera,'camera',compactLabels[1]);
    mic.className='primary connect-mic';
    elapsed=el('span','0:00','connect-record-time');
@@ -457,6 +560,7 @@
    }));
    const entry=el('div',null,'connect-entry');
    entry.append(expression,body,attach,camera);
+   if(circleButton){entry.append(circleButton);form.prepend(circlePanel);}
    form.prepend(bar,expressionPanel,preview,cameraPanel,recordPanel,entry);
    form.append(mic);
    form.addEventListener('focusout',event=>{
@@ -488,11 +592,12 @@
   }
   return {
    get draft(){return draft;},
-   get recording(){return starting||!!recording||!!cameraSession;},
+   get recording(){return starting||!!recording||!!cameraSession||!!circleSession;},
    busy(value){working=value;controls();},
    clear(){setDraft(null);},
    close(){
     closeCamera();
+    if(circleSession)finishCircle(circleSession,true);
     showAttachments(false);
     showExpressions(false);
     generation++;

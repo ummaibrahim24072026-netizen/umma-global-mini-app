@@ -1,0 +1,10 @@
+/* Circular video notes in UMMA customer chat */
+.connect-circle-button{touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;display:grid;place-items:center;border:1px solid #d3ac62;border-radius:50%;width:40px;height:40px;background:#e8faf7;color:#087e80;cursor:pointer}
+.connect-circle-button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8}
+.connect-circle-button.is-recording{background:#b91c1c;color:#fff;box-shadow:0 0 0 5px #fee2e2}
+.connect-circle-panel[hidden]{display:none!important}
+.connect-circle-panel{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:12px;background:#f0faf8;border-radius:16px}
+.connect-circle-panel video{width:min(220px,55vw);height:min(220px,55vw);border-radius:50%;object-fit:cover;background:#183c3c;transform:scaleX(-1);border:3px solid #d3ac62}
+.connect-circle-timer{font-variant-numeric:tabular-nums;font-weight:700;color:#b91c1c}
+.connect-video-note .connect-media{width:220px;max-width:65vw;height:220px;max-height:65vw;aspect-ratio:1;border-radius:50%;object-fit:cover;border:3px solid #d3ac62;background:#153f40}
+.connect-video-note button{border-radius:999px}
