@@ -287,6 +287,36 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(bar.querySelectorAll('input[capture="environment"]').length,2);
  attach.dispatchEvent(new guest.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
  assert.equal(bar.hidden,true);
+ const expression=form.querySelector('.connect-expression');
+ const panel=form.querySelector('.connect-expression-panel');
+ assert.deepEqual([...form.querySelector('.connect-entry').children].map(node=>node.className||node.tagName),
+  ['connect-expression','TEXTAREA','connect-attach','connect-camera']);
+ expression.click();
+ assert.equal(panel.hidden,false);
+ body.value='АБ';
+ body.setSelectionRange(1,1);
+ const firstChoice=()=>panel.querySelector('.connect-expression-choices button');
+ firstChoice().click();
+ assert.equal(body.value,'А😀Б');
+ assert.equal(send.hidden,false);
+ body.value='';
+ body.dispatchEvent(new guest.Event('input'));
+ guest.HTMLCanvasElement.prototype.getContext=()=>({
+  beginPath(){},arc(){},fill(){},stroke(){},fillText(){}
+ });
+ guest.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,iVBORw0KGgo=';
+ [...panel.querySelectorAll('.connect-expression-tabs button')].find(item=>item.textContent==='Стикеры').click();
+ firstChoice().click();
+ assert.equal(panel.hidden,true);
+ assert.ok(form.querySelector('.connect-media-preview img'));
+ assert.equal(send.hidden,false);
+ assert.equal(writes.length,0);
+ form.querySelector('.connect-media-preview button').click();
+ assert.equal(mic.hidden,false);
+ let launches=0;
+ bar.querySelector('input[capture="environment"]').addEventListener('click',()=>launches++);
+ form.querySelector('.connect-camera').click();
+ assert.equal(launches,1);
  const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
  mic.click();
  await tick();
@@ -339,6 +369,12 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   assert.equal(form.querySelector('.connect-media-preview '+element),null);
   assert.equal(mic.hidden,false);
  }
+ expression.click();
+ firstChoice().click();
+ submit();
+ await tick();
+ assert.equal(writes.at(-1).headers['Content-Type'],'image/png');
+ assert.equal(form.querySelector('.connect-media-preview img'),null);
  guest.close();
 }
 // Staff inbox updates the receipt while the current conversation stays open.

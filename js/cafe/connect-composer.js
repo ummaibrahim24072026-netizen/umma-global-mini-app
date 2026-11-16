@@ -17,10 +17,37 @@
   en:['Attach photo or video','Take photo','Record video','Cancel recording'],
   vi:['Đính kèm ảnh hoặc video','Chụp ảnh','Quay video','Hủy ghi âm']
  };
+ const expressionCopy={
+  ru:['Эмодзи','Стикеры','Не удалось добавить стикер'],
+  en:['Emoji','Stickers','Could not add sticker'],
+  vi:['Biểu tượng cảm xúc','Nhãn dán','Không thể thêm nhãn dán']
+ };
+ const emoji='😀 😄 😂 🤣 😊 😍 🥰 😎 🤔 😅 😋 🙃 😮 😢 😭 😡 👍 👎 👏 🙌 🤝 👋 🤲 ❤️ 🔥 ✅ 🎉 ✨ 💯 ☕ 🍽️ 🥤 🥟'.split(' ');
+ const stickers='👋 👍 ❤️ 😊 🎉 🙌 🔥 😍 😋 🤝 ☕ 🥟'.split(' ');
+ function stickerImage(symbol){
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=192;
+  const context=canvas.getContext('2d');
+  context.fillStyle='#dbf6f2';
+  context.beginPath();
+  context.arc(96,96,90,0,2*Math.PI);
+  context.fill();
+  context.lineWidth=4;
+  context.strokeStyle='#d2ab60';
+  context.stroke();
+  context.font='112px system-ui, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+  context.textAlign='center';
+  context.textBaseline='middle';
+  context.fillText(symbol,96,99);
+  const bytes=Uint8Array.from(atob(canvas.toDataURL('image/png').split(',')[1]),char=>char.charCodeAt(0));
+  return new Blob([bytes],{type:'image/png'});
+ }
  const icons={
   clip:'M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8-8',
   mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v4 M9 23h6',
-  stop:'M6 6h12v12H6z'
+  stop:'M6 6h12v12H6z',
+  smile:'M21 10v3l-7 8h-4a7 7 0 0 1-7-7v-4a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7z M14 21v-4a4 4 0 0 1 4-4h3 M8 9h.01 M15 9h.01 M8 14c1 2 3 2 5 1',
+  camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0 4 4 0 1 1 8 0z'
  };
  function iconButton(control,icon,label){
   const ns='http://www.w3.org/2000/svg';
@@ -71,9 +98,16 @@
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let draft=null,url=null,recording=null,generation=0,starting=false,working=false;
   const pickers=[];
-  let attach,recordPanel,elapsed,waveBars;
+  let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars;
+  function showExpressions(open){
+   if(!expression)return;
+   if(open)showAttachments(false);
+   expressionPanel.hidden=!open;
+   expression.setAttribute('aria-expanded',String(open));
+  }
   function showAttachments(open){
    if(!attach)return;
+   if(open)showExpressions(false);
    bar.hidden=!open;
    attach.setAttribute('aria-expanded',String(open));
   }
@@ -92,8 +126,11 @@
    const micLabel=recording?labels[3]:labels[2];
    if(compact){
     const canSend=!!draft||!!body.value.trim();
-    attach.disabled=working||active;
-    if(attach.disabled)showAttachments(false);
+    attach.disabled=expression.disabled=camera.disabled=working||active;
+    if(attach.disabled){
+     showAttachments(false);
+     showExpressions(false);
+    }
     send.hidden=active||!canSend;
     mic.hidden=!active&&canSend;
     recordPanel.hidden=!recording;
@@ -131,10 +168,12 @@
    const picker=button(label,()=>{showAttachments(false);attach?.focus();input.click();});
    pickers.push(picker);
    bar.append(input,picker);
+   return input;
   }
   for(const kind of kinds)addPicker(kind,labels[kind==='photo'?0:1]);
+  let photoCamera;
   if(compact){
-   addPicker('photo',compactLabels[1],true);
+   photoCamera=addPicker('photo',compactLabels[1],true);
    addPicker('video',compactLabels[2],true);
   }
   function release(r){
@@ -207,7 +246,48 @@
    iconButton(attach,'clip',compactLabels[0]);
    bar.id='umma-connect-attachments';
    attach.setAttribute('aria-controls',bar.id);
+   const words=expressionCopy[lang]||expressionCopy.en;
+   expression=button(words[0],()=>showExpressions(expressionPanel.hidden));
+   expression.className='connect-expression';
+   iconButton(expression,'smile',words[0]+' / '+words[1]);
+   expressionPanel=el('div',null,'connect-expression-panel');
+   expressionPanel.id='umma-connect-expressions';
+   expression.setAttribute('aria-controls',expressionPanel.id);
+   showExpressions(false);
    showAttachments(false);
+   const tabs=el('div',null,'connect-expression-tabs');
+   const choices=el('div',null,'connect-expression-choices');
+   function selectExpressions(useStickers){
+    emojiTab.setAttribute('aria-pressed',String(!useStickers));
+    stickerTab.setAttribute('aria-pressed',String(useStickers));
+    choices.replaceChildren(...(useStickers?stickers:emoji).map(symbol=>button(symbol,()=>{
+     if(useStickers){
+      try{
+       setDraft(stickerImage(symbol),'photo');
+       status.textContent='';
+       showExpressions(false);
+       expression.focus();
+      }catch{status.textContent=words[2];}
+     }else{
+      const start=body.selectionStart,end=body.selectionEnd;
+      if(body.value.length-(end-start)+symbol.length>body.maxLength)return;
+      body.setRangeText(symbol,start,end,'end');
+      body.dispatchEvent(new Event('input',{bubbles:true}));
+     }
+    })));
+   }
+   const emojiTab=button(words[0],()=>selectExpressions(false));
+   const stickerTab=button(words[1],()=>selectExpressions(true));
+   tabs.append(emojiTab,stickerTab);
+   expressionPanel.append(tabs,choices);
+   selectExpressions(false);
+   camera=button(compactLabels[1],()=>{
+    showAttachments(false);
+    showExpressions(false);
+    photoCamera.click();
+   });
+   camera.className='connect-camera';
+   iconButton(camera,'camera',compactLabels[1]);
    mic.className='primary connect-mic';
    elapsed=el('span','0:00','connect-record-time');
    recordPanel=el('div',null,'connect-record-panel');
@@ -219,16 +299,21 @@
     if(recording)stop(recording,true);
     status.textContent='';
    }));
-   form.prepend(attach,bar,preview,recordPanel);
+   const entry=el('div',null,'connect-entry');
+   entry.append(expression,body,attach,camera);
+   form.prepend(bar,expressionPanel,preview,recordPanel,entry);
    form.append(mic);
    form.addEventListener('focusout',event=>{
     if(event.relatedTarget!==attach&&!bar.contains(event.relatedTarget))showAttachments(false);
+    if(event.relatedTarget!==expression&&!expressionPanel.contains(event.relatedTarget))showExpressions(false);
    });
    form.addEventListener('keydown',event=>{
-    if(event.key!=='Escape'||bar.hidden)return;
+    if(event.key!=='Escape'||(bar.hidden&&expressionPanel.hidden))return;
     event.preventDefault();
+    const trigger=bar.hidden?expression:attach;
     showAttachments(false);
-    attach.focus();
+    showExpressions(false);
+    trigger.focus();
    });
    body.addEventListener('input',controls);
    controls();
@@ -244,6 +329,7 @@
    clear(){setDraft(null);},
    close(){
     showAttachments(false);
+    showExpressions(false);
     generation++;
     starting=false;
     if(recording){stop(recording,true);recording=null;}

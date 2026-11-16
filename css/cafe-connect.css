@@ -234,7 +234,7 @@ audio.connect-media{width:min(100%,300px)}
 .umma-connect-chat [role=status]:empty {display:none}
 .umma-connect-chat .connect-compose {
   display:grid;
-  grid-template-columns:44px minmax(0,1fr) 44px;
+  grid-template-columns:minmax(0,1fr) 44px;
   flex:none;
   margin:0;
   padding:6px 10px max(8px,env(safe-area-inset-bottom));
@@ -244,7 +244,6 @@ audio.connect-media{width:min(100%,300px)}
   gap:4px 8px;
 }
 .umma-connect-chat .connect-compose textarea {
-  grid-area:3 / 2;
   min-height:44px;
   max-height:88px;
   padding:10px 12px;
@@ -252,7 +251,7 @@ audio.connect-media{width:min(100%,300px)}
   resize:none;
 }
 .umma-connect-chat .connect-compose .connect-send {
-  grid-area:3 / 3;
+  grid-area:3 / 2;
   min-width:44px;
   width:44px;
   padding:0;
@@ -299,9 +298,33 @@ audio.connect-media{width:min(100%,300px)}
 }
 
 .umma-connect-chat .connect-compose-compact [hidden] {display:none}
-.umma-connect-chat .connect-compose-compact .connect-attach {grid-area:3 / 1}
-.umma-connect-chat .connect-compose-compact .connect-mic {grid-area:3 / 3}
-.umma-connect-chat .connect-compose-compact :is(.connect-attach,.connect-mic) {
+.umma-connect-chat .connect-entry {
+  grid-area:3 / 1;
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) 40px 40px;
+  align-items:end;
+  min-width:0;
+  border:1px solid var(--umma-brand-line);
+  border-radius:24px;
+  background:#f6faf9;
+}
+.umma-connect-chat .connect-entry textarea {
+  padding-inline:2px;
+  background:transparent;
+  box-shadow:none;
+}
+.umma-connect-chat .connect-entry button {
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.umma-connect-chat .connect-entry button[aria-expanded=true] {
+  background:var(--umma-brand-soft);
+}
+.umma-connect-chat .connect-compose-compact .connect-mic {grid-area:3 / 2}
+.umma-connect-chat .connect-compose-compact .connect-mic {
   display:grid;
   place-items:center;
   width:44px;
@@ -365,4 +388,37 @@ audio.connect-media{width:min(100%,300px)}
   margin-inline-end:8px;
   border-radius:50%;
   background:currentColor;
+}
+
+.umma-connect-chat .connect-expression-panel {
+  grid-area:1 / 1 / 2 / -1;
+  padding:6px;
+  border:1px solid var(--umma-brand-line);
+  border-radius:16px;
+  background:#f6faf9;
+}
+.umma-connect-chat .connect-expression-tabs {
+  display:flex;
+  gap:6px;
+  margin-bottom:6px;
+}
+.umma-connect-chat .connect-expression-tabs button {
+  padding-inline:12px;
+  font-size:13px;
+}
+.umma-connect-chat .connect-expression-tabs button[aria-pressed=true] {
+  background:var(--umma-brand-soft);
+  border-color:var(--umma-brand-strong);
+}
+.umma-connect-chat .connect-expression-choices {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(42px,1fr));
+  gap:4px;
+  max-height:min(26dvh,180px);
+  overflow:auto;
+}
+.umma-connect-chat .connect-expression-choices button {
+  padding:0;
+  font-size:24px;
+  background:white;
 }

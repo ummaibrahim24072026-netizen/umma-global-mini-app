@@ -206,7 +206,7 @@ function build(){
  const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});
  if(publicChat){
-  body.placeholder=t(9);
+  body.placeholder=({ru:'Сообщение',vi:'Tin nhắn',en:'Message'})[lang()]||'Message';
   body.setAttribute('aria-label',t(9));
   body.rows=1;
   send.textContent='➤';
