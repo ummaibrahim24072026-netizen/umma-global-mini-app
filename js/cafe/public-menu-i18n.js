@@ -137,6 +137,8 @@ Object.assign(copy,{
  'Активные':{en:'Active',vi:'Đang xử lý'},
  'История':{en:'History',vi:'Lịch sử'},
  'Активных заказов пока нет':{en:'No active orders yet',vi:'Chưa có đơn đang xử lý'},
+ 'Оплатить':{en:'Pay',vi:'Thanh toán',ko:'결제',zh:'付款',de:'Bezahlen',fr:'Payer',th:'ชำระเงิน',ms:'Bayar',id:'Bayar',ar:'ادفع',pt:'Pagar'},
+ 'Подробнее':{en:'Details',vi:'Chi tiết',ko:'상세 보기',zh:'详情',de:'Details',fr:'Détails',th:'รายละเอียด',ms:'Butiran',id:'Detail',ar:'التفاصيل',pt:'Detalhes'},
  'Ожидаем оплату':{en:'Awaiting payment',vi:'Đang chờ thanh toán'},
  'Кафе рядом':{en:'Nearby cafe',vi:'Quán gần đây'},
  'Проложить маршрут':{en:'Get directions',vi:'Chỉ đường'},
