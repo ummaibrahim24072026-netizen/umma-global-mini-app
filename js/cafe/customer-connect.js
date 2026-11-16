@@ -96,7 +96,12 @@ async function markRead(){
  if(reading||!latest||!dialog?.open||document.hidden)return;
  reading=true;
  try{
-  state=await api('read',{before:latest.created_at});
+  // The read endpoint serializes the cutoff to milliseconds. Round up only
+  // when the database timestamp has a nonzero fraction of a millisecond.
+  const createdAt=latest.created_at;
+  const hasSubMillisecondPrecision=/\.\d{3}\d*[1-9]\d*(?:Z|[+-]\d{2}:\d{2})$/.test(createdAt);
+  const before=hasSubMillisecondPrecision?new Date(Date.parse(createdAt)+1).toISOString():createdAt;
+  state=await api('read',{before});
   if(dialog.open&&!document.hidden)renderThread();else badge();
  }catch{}finally{reading=false;}
 }

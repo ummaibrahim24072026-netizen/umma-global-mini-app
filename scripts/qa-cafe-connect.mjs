@@ -176,7 +176,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
  });
  const client=app.window,worker=new client.EventTarget(),badgeUpdates=[];
- const credential='a'.repeat(64),reply={id:'staff-reply',direction:'staff',title:'UMMA',body:'Ответ кафе',created_at:'2026-11-07T12:00:00Z',read_at:null};
+ const credential='a'.repeat(64),reply={id:'staff-reply',direction:'staff',title:'UMMA',body:'Ответ кафе',created_at:'2026-11-07T12:00:00.123456+00:00',read_at:null};
  const sent={...reply,id:'customer-message',direction:'customer',body:'Вопрос',created_at:'2026-11-07T11:59:00Z'};
  let pushEnabled=false,prompts=0;
  client.localStorage.setItem('umma:connect:token:v1',credential);
@@ -193,7 +193,11 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   const request=JSON.parse(init.body);
   if(request.action==='config')return new Response(JSON.stringify({ok:true,publicKey:Buffer.alloc(65).toString('base64url')}));
   assert.equal(request.token,credential);
-  if(request.action==='read'){assert.equal(request.before,reply.created_at);reply.read_at=reply.created_at;}
+  if(request.action==='read'){
+   // The edge function truncates the cutoff to millisecond precision.
+   const cutoff=new Date(request.before).toISOString();
+   if(cutoff>='2026-11-07T12:00:00.124Z')reply.read_at=cutoff;
+  }
   if(request.action==='preferences'){assert.deepEqual(request.subscription,sub);pushEnabled=true;}
   return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled},messages:[sent,reply]}));
  };
@@ -206,6 +210,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await client.ummaCustomerConnect.open();
  assert.match(client.document.querySelector('.connect-thread').textContent,/Ответ кафе/);
  assert.equal(badgeUpdates.at(-1).count,0);
+ assert.doesNotMatch(client.document.querySelector('.umma-connect-button').textContent,/1$/);
  assert.deepEqual([...client.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  sent.read_at='2026-11-07T12:01:00Z';
  client.dispatchEvent(new client.Event('online'));
