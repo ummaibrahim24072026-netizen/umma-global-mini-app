@@ -57,6 +57,7 @@
   clip:'M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8-8',
   mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v4 M9 23h6',
   stop:'M6 6h12v12H6z',
+  close:'M6 6l12 12M18 6L6 18',
   smile:'M21 10v3l-7 8h-4a7 7 0 0 1-7-7v-4a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7z M14 21v-4a4 4 0 0 1 4-4h3 M8 9h.01 M15 9h.01 M8 14c1 2 3 2 5 1',
   camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0 4 4 0 1 1 8 0z'
  };
@@ -582,11 +583,24 @@
    // If permissions are still pending, beginCircle will discard after resolution.
   }
 
-  const mic=button(labels[2],record),remove=button('×',()=>{setDraft(null);status.textContent='';});
+  const mic=button(labels[2],record);
+  const remove=button(null,()=>{setDraft(null);status.textContent='';});
   remove.className='connect-draft-remove';
-  remove.setAttribute('aria-label',labels[4]);
-  remove.title=labels[4];
-  Object.assign(remove.style,{position:'absolute',top:'4px',right:'4px',width:'30px',height:'30px',borderRadius:'50%',border:'0',background:'rgba(20,55,58,.85)',color:'#fff',fontSize:'24px',lineHeight:'30px',padding:'0',display:'grid',placeItems:'center',cursor:'pointer',zIndex:'2'});
+  iconButton(remove,'close',labels[4]);
+  Object.assign(remove.style,{
+   position:'absolute',top:'6px',right:'6px',width:'28px',height:'28px',
+   minHeight:'0',minWidth:'0',boxSizing:'border-box',padding:'0',
+   borderRadius:'50%',border:'1px solid rgba(255,255,255,.22)',
+   background:'rgba(24,24,24,.82)',color:'#fff',
+   display:'grid',placeItems:'center',cursor:'pointer',zIndex:'2'
+  });
+  const removeIcon=remove.firstElementChild;
+  removeIcon.setAttribute('width','14');
+  removeIcon.setAttribute('height','14');
+  removeIcon.setAttribute('fill','none');
+  removeIcon.setAttribute('stroke','currentColor');
+  removeIcon.setAttribute('stroke-width','2.5');
+  removeIcon.setAttribute('stroke-linecap','round');
   if(compact){
    form.classList.add('connect-compose-compact');
    attach=button(compactLabels[0],()=>showAttachments(bar.hidden));
