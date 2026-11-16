@@ -182,8 +182,10 @@
   toggle.onclick=()=>{originalText.hidden=!originalText.hidden;toggle.textContent=originalText.hidden?'Показать оригинал':'Скрыть оригинал';};
   wrapper.append(main,toggle,originalText);
   const key=language+'|'+original;
+  const state=document.createElement('small');state.className='connect-local-status';state.textContent='';wrapper.append(state);
   async function translate(){
    try{
+    state.textContent='Перевод на устройстве · первая загрузка может занять несколько минут';
     let work=textTranslations.get(key);
     if(!work){work=load();textTranslations.set(key,work);}
     const result=await work;
@@ -192,8 +194,9 @@
      main.textContent=result.text;
      main.lang=language;
      toggle.hidden=false;
-    }
-   }catch{textTranslations.delete(key);}
+     state.textContent='';
+    }else state.textContent='';
+   }catch{state.textContent='Автоперевод недоступен на этом устройстве. Показан оригинал.';textTranslations.delete(key);}
   }
   if('IntersectionObserver'in window){
    const observer=new IntersectionObserver(entries=>{
@@ -235,7 +238,7 @@
   let timer=null,attempts=0,loading=false;
   const request=async()=>{
    if(loading||!section.isConnected)return;
-   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent=labels[1];
+   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent='Обработка на телефоне · первая загрузка моделей может занять несколько минут';
    try{
     const result=await load();
     if(!section.isConnected)return;
@@ -250,6 +253,7 @@
       audio.addEventListener('error',()=>{status.textContent=labels[2];button.hidden=false;button.textContent=labels[6];},{once:true});
       resultBox.append(audio);
      }
+     if(result.local&&window.ummaLocalTranslate?.speak){const speak=document.createElement('button');speak.type='button';speak.textContent='▶ Озвучить перевод';speak.onclick=()=>window.ummaLocalTranslate.speak(result.text,target);resultBox.append(speak);}
      section.append(resultBox);button.hidden=true;
     }else if(result.status==='pending'&&attempts++<3){
      status.textContent=labels[7];
