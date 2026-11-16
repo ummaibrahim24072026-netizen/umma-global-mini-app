@@ -222,7 +222,7 @@
    startWhenVisible.get(entry.target)?.();
   }
  }):null;
- let voiceWork=Promise.resolve();
+ const voiceRequests=new Map();
  function voiceTranslation(locale,target,load,enabled){
   const labels=voiceCopy[locale]||voiceCopy.en;
   const section=document.createElement('div'),button=document.createElement('button'),status=document.createElement('small');
@@ -232,44 +232,42 @@
   status.setAttribute('role','status');
   section.append(button,status);
   if(!enabled){button.hidden=true;status.textContent=labels[2];return section;}
-  let pendingRetries=0;
-  const request=()=>{
-   if(button.disabled)return;
-   button.disabled=true;
-   status.textContent=labels[1];
-   voiceWork=voiceWork.then(async()=>{
-    if(!section.isConnected){button.disabled=false;return;}
-    try{
-     const result=await load();
-     if(result.status==='ready'){
-      status.textContent=result.url?labels[3]:labels[5];
-      const text=document.createElement('div');
-      text.lang=target;
-      text.dir='auto';
-      text.textContent=result.text;
-      section.append(text);
-      if(result.url){
-       const audio=player('voice',result.url,labels[4]);
-       audio.addEventListener('error',()=>{
-        audio.remove();text.remove();button.hidden=false;button.textContent=labels[6];
-        status.textContent=labels[2];
-       },{once:true});
-       section.append(audio);
-      }
-      button.hidden=true;
-     }else{
-      status.textContent=result.status==='pending'?labels[7]:labels[2];
-      button.textContent=labels[6];
-      if(result.status==='pending'&&pendingRetries++<4)setTimeout(()=>{if(section.isConnected)request();},12000);
+  let timer=null,attempts=0,loading=false;
+  const request=async()=>{
+   if(loading||!section.isConnected)return;
+   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent=labels[1];
+   try{
+    const result=await load();
+    if(!section.isConnected)return;
+    if(result.status==='ready'){
+     status.textContent=result.url?labels[3]:labels[5];
+     const text=document.createElement('div');
+     text.lang=target;text.dir='auto';text.textContent=result.text||'';
+     section.querySelectorAll('.connect-voice-result').forEach(x=>x.remove());
+     const resultBox=document.createElement('div');resultBox.className='connect-voice-result';resultBox.append(text);
+     if(result.url){
+      const audio=player('voice',result.url,labels[4]);
+      audio.addEventListener('error',()=>{status.textContent=labels[2];button.hidden=false;button.textContent=labels[6];},{once:true});
+      resultBox.append(audio);
      }
-    }catch{
+     section.append(resultBox);button.hidden=true;
+    }else if(result.status==='pending'&&attempts++<3){
+     status.textContent=labels[7];
+     timer=setTimeout(request,7000);
+    }else{
      status.textContent=labels[2];
      button.textContent=labels[6];
-    }finally{button.disabled=false;}
-   });
+    }
+   }catch{
+    status.textContent=labels[2];
+    button.textContent=labels[6];
+   }finally{loading=false;button.disabled=false;}
   };
-  button.onclick=()=>{observer?.unobserve(section);request();};
-  if(observer){startWhenVisible.set(section,request);observer.observe(section);}
+  button.onclick=()=>{if(timer)clearTimeout(timer);attempts=0;void request();};
+  if('IntersectionObserver'in window){
+   const watcher=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){watcher.disconnect();void request();}},{rootMargin:'100px'});
+   watcher.observe(section);
+  }
   return section;
  }
  async function upload(api,identity,draft,requestKey,body,error){
