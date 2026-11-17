@@ -66,3 +66,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--cafe-sign-gold);text-shadow:0 1px 1px #002D2E70}
 #cafePage .cafe-brand-values{border-color:#FFE7A380}
 #cafePage .cafe-brand-values i{background:var(--cafe-sign-gold)}
+
+
+/* UMMA Cafe — refined checkout/cart modal, scoped to the public web menu. */
+#checkout{border:1px solid #d9b965!important;border-radius:28px!important;overflow:hidden!important;background:linear-gradient(160deg,#f6ffff,#fffdf7)!important;box-shadow:0 24px 85px #003f4566!important;max-width:min(94vw,540px)!important;width:100%;max-height:min(88dvh,800px)!important;padding:0!important;color:#123d40}
+#checkout::backdrop{background:#002f35a8;backdrop-filter:blur(5px)}
+#checkout .checkout-header{position:sticky;top:0;z-index:2;background:linear-gradient(125deg,#006b70,#08afb2)!important;border-bottom:3px solid #d7b75f!important;padding:15px 18px!important;min-height:82px;gap:12px}
+#checkout .checkout-header::before{content:"✦";display:grid;place-items:center;flex:none;width:42px;height:42px;border:2px solid #eac976;border-radius:50%;color:#ffe6a2;font-size:23px;background:#005c62}
+#checkout .checkout-header h2{flex:1;color:#ffe5a0!important;font-weight:800!important;font-size:clamp(21px,5vw,27px)!important;text-shadow:0 1px 2px #00474d;letter-spacing:-.025em}
+#checkout .checkout-header .close{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #ffffff80;background:#ffffffeb;color:#005e64;font-size:28px;line-height:1}
+#checkout .checkout-body{padding:18px clamp(16px,4vw,26px) 24px!important;overflow-y:auto}
+#checkout #cartStep{min-width:0}
+#checkout #cartItems:empty{min-height:195px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:8px;color:#477e80;font-size:15px}
+#checkout #cartItems:empty::before{content:"🛒";display:grid;place-items:center;width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#e4fafa,#fff2d7);border:1px solid #ead8a5;font-size:43px;box-shadow:0 8px 24px #006c7012}
+#checkout #cartItems:empty::after{content:"Выберите блюда из меню";font-size:14px;color:#578486}
+#checkout .cart-row{padding:13px 0;border-bottom:1px solid #d8e9e6}
+#checkout .cart-copy strong{color:#124c50;font-size:15px}
+#checkout .cart-controls button{border:1px solid #a7dbd7;border-radius:12px;background:#effcfb;color:#007f83;font-weight:700}
+#checkout .cart-total{margin-top:14px;padding:18px 2px;border-top:1px solid #d7b75f;color:#103d40;font-size:20px;gap:12px}
+#checkout .cart-total span:last-child{color:#aa751c;font-variant-numeric:tabular-nums}
+#checkout #continueCheckout{min-height:54px;border-radius:17px!important;background:linear-gradient(120deg,#007c80,#08afb2)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
+#checkout #continueCheckout:disabled{background:#8dd1d0!important;color:#eaf7f7!important;box-shadow:none;opacity:.75}
+#checkout .cart-clear{border-radius:12px}
+@media(max-width:420px){#checkout{max-width:calc(100vw - 24px)!important;border-radius:24px!important}#checkout .checkout-header{min-height:74px;padding:12px 15px!important}#checkout .checkout-header::before{width:36px;height:36px}#checkout .checkout-body{padding:14px 16px 20px!important}}
