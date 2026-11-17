@@ -225,7 +225,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  client.dispatchEvent(new client.Event('online'));
  await tick();
  assert.match(client.document.querySelector('.connect-receipt').textContent,/^Прочитано сотрудником · .+$/);
- const enable=[...client.document.querySelectorAll('dialog button')].find(button=>button.textContent==='Включить уведомления об ответах');
+ const enable=[...client.document.querySelectorAll('dialog button')].find(button=>button.textContent==='Включить уведомления о сообщениях и звонках');
  enable.click();
  await tick();
  assert.equal(prompts,1);
@@ -581,6 +581,14 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.AbortSignal=AbortSignal;
  staff.ummaRole='super_admin';
  Object.defineProperty(staff.navigator,'language',{value:'vi-VN'});
+ staff.ummaLocalTranslate={
+  async voice(url,target,source){
+   assert.equal(url,'https://qa.invalid/signed');
+   assert.equal(target,'vi');
+   assert.equal(source,'auto');
+   return {status:'ready',text:'Bản dịch',url:null,local:true,transcript:'Вопрос',source:'ru'};
+  }
+ };
  staff.ummaStaffAuth={credential:()=> 'web:test'};
  let poll;
  staff.setInterval=callback=>{poll=callback;};
@@ -592,12 +600,6 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   const request=JSON.parse(init.body);
   assert.equal(request.initData,'web:test');
   const client={id:ca,name:'Клиент',unread:0,last_message:'Ответ'};
-  if(request.action==='staffVoice'){
-   assert.equal(request.language,'vi');
-   assert.equal(request.clientId,ca);
-   assert.equal(request.messageId,'staff-view-question');
-   return new Response(JSON.stringify({ok:true,status:'ready',text:'Bản dịch',url:'https://qa.invalid/translated.mp3'}));
-  }
   if(request.action==='staffMediaGet'){
    assert.equal(request.clientId,ca);
    assert.equal(request.messageId,'staff-view-question');
@@ -615,10 +617,10 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Прослушать голосовое').click();
  await tick();
- [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Перевод голоса').click();
+ [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='🌐 Перевести голос').click();
  await tick();
  assert.equal(staff.document.querySelector('.connect-voice-translation [lang=vi]').textContent,'Bản dịch');
- assert.equal(staff.document.querySelector('.connect-voice-translation audio').src,'https://qa.invalid/translated.mp3');
+ assert.match(staff.document.querySelector('.connect-voice-original').textContent,/Вопрос/);
  const audio=staff.document.querySelector('.connect-thread audio');
  assert.equal(audio.src,'https://qa.invalid/signed');
  assert.ok(staff.document.querySelector('input[type=file][accept^="video/"]'));
