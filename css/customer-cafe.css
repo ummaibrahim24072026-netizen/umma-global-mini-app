@@ -590,3 +590,202 @@
   #customerOrders .orders-header { padding: calc(16px + env(safe-area-inset-top)) 14px 14px; }
   #customerOrders .checkout-body { padding: 0 14px calc(18px + env(safe-area-inset-bottom)); }
 }
+
+#checkout[data-stage="receipt"] {
+  width: min(calc(100% - 24px), 456px);
+  background: #fff;
+  border: 1px solid #e1efed;
+  border-radius: 26px;
+  box-shadow: 0 20px 72px #00353544;
+}
+
+#checkout[data-stage="receipt"] .checkout-header {
+  padding: 12px clamp(14px, 5vw, 22px);
+  background: #fff;
+  border-bottom-color: #e6efee;
+}
+
+#checkout[data-stage="receipt"] .checkout-header h2 {
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+#checkout[data-stage="receipt"] .close {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #edf7f5;
+  line-height: 1;
+}
+
+#checkout[data-stage="receipt"] .checkout-body {
+  padding: 14px clamp(14px, 5vw, 22px) 20px;
+}
+
+#checkout .receipt-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: clamp(12px, 4vw, 18px);
+  border: 1px solid #cce8e3;
+  border-radius: 19px;
+  background: linear-gradient(135deg, #ddf6f1, #f5fbfa);
+}
+
+#checkout .receipt-status-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 42px;
+  block-size: 42px;
+  border: 1px solid #cae8e2;
+  border-radius: 50%;
+  background: #fff;
+  color: #136358;
+}
+
+#checkout .receipt-status-icon svg {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+}
+
+#checkout .receipt-clock,
+#checkout #success:is([data-payment="pending"], [data-payment="paid"]) .receipt-document {
+  display: none;
+}
+
+#checkout #success[data-payment="pending"] .receipt-clock {
+  display: block;
+  color: #865c17;
+}
+
+#checkout #success[data-payment="pending"] .receipt-status-icon {
+  background: #fff9ed;
+  border-color: #eeddb8;
+}
+
+#checkout #success[data-payment="cancelled"] .receipt-status {
+  background: #fff5f0;
+  border-color: #f0dcd4;
+}
+
+#checkout #success[data-payment="cancelled"] .receipt-status-icon {
+  color: #903c2c;
+  border-color: #f0dcd4;
+}
+
+#checkout .receipt-status-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#checkout #successNumber {
+  margin: 0 0 4px;
+  color: #24695f;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+#checkout #orderState {
+  margin: 0;
+  font-size: clamp(17px, 4.7vw, 22px);
+  line-height: 1.22;
+}
+
+#checkout #orderReserveUntil {
+  margin: 6px 0 0;
+  color: #476663;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#checkout .receipt-summary {
+  margin-block: 12px;
+  padding-inline: clamp(10px, 4vw, 16px);
+  border: 1px solid #dcebe8;
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+}
+
+#checkout #receiptDetails {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid #e1eeeb;
+  font-size: 14px;
+}
+
+#checkout #receiptDetails > div {
+  gap: clamp(6px, 2vw, 10px);
+  padding-block: 10px;
+}
+
+#checkout #receiptDetails .receipt-item-photo {
+  inline-size: clamp(32px, 10vw, 44px);
+  block-size: clamp(32px, 10vw, 44px);
+  background: #f4f9f8;
+}
+
+#checkout .receipt-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding-block: 12px;
+  color: #24695f;
+  font-weight: 700;
+}
+
+#checkout #successTotal {
+  color: #123b37;
+  font-size: clamp(21px, 6vw, 28px);
+  line-height: 1.12;
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+
+#checkout .receipt-instructions:has(p:not(:empty)) {
+  padding: 12px clamp(10px, 4vw, 16px);
+  border-radius: 14px;
+  background: #f1f8f6;
+}
+
+#checkout .receipt-instructions p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+#checkout #receiptHint {
+  color: #476663;
+}
+
+#checkout #paymentState:not(:empty) + #receiptHint:not(:empty) {
+  margin-block-start: 4px;
+}
+
+#checkout #syncState:empty {
+  margin: 0;
+}
+
+#checkout #newOrder {
+  min-height: 48px;
+  margin-block-start: 14px;
+  border-radius: 14px;
+  background: #086a62;
+  color: #fff;
+  box-shadow: 0 4px 10px #086a6222;
+}
+
+#checkout #newOrder:hover {
+  background: #075951;
+}
+
+#checkout[data-stage="receipt"] :is(button, a, select):focus-visible {
+  outline: 2px solid #00796f;
+  outline-offset: 2px;
+}

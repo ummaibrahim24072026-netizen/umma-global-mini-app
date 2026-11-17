@@ -54,7 +54,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
 .cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
 .cart-feedback button:hover{background:#d6eeea}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=15"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=16"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -150,7 +150,26 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
 <details class="optional-name"><summary data-i18n="Добавить имя (необязательно)">Добавить имя (необязательно)</summary><label class="field"><span data-i18n="Имя — необязательно">Имя — необязательно</span><input id="customerName" autocomplete="given-name" maxlength="100" placeholder="Как к вам обращаться" data-i18n-placeholder="Как к вам обращаться"></label></details>
 </fieldset><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div></div><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button></form><button type="button" id="backToCart" class="plain-btn" data-i18n="Корзина">Корзина</button></section></div>
-<div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden><div id="paymentConfirmedMark" class="success-mark" aria-hidden="true" hidden>✓</div><h3 id="orderState" data-i18n="Заказ отправлен">Заказ отправлен</h3><div id="successNumber" class="success-number"></div><div id="receiptDetails" class="receipt-lines" hidden></div><p id="successTotal"></p><div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><p id="receiptHint"></p><p id="paymentState" role="status"></p><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="rublePayment" class="receipt-lines" hidden><div><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="rubleAmount"></strong></div><div><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="rubleRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="rubleBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="rubleRecipient"></strong></div><div><span data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="rublePhone" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="rubleBankPickerTitle">
+<div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
+  <header class="receipt-status">
+    <span class="receipt-status-icon" aria-hidden="true">
+      <svg class="receipt-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.75l3 1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="receipt-document" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 8h6m-6 4h6m-6 4h3"/></svg>
+      <span id="paymentConfirmedMark" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 12 4.25 4.25 8.75-8.75"/></svg></span>
+    </span>
+    <div class="receipt-status-copy">
+      <div id="successNumber" class="success-number"></div>
+      <h3 id="orderState" aria-live="polite" data-i18n="Заказ отправлен">Заказ отправлен</h3>
+    </div>
+  </header>
+  <div class="receipt-summary">
+    <div id="receiptDetails" class="receipt-lines" hidden></div>
+    <div class="receipt-total"><span data-i18n="Итого">Итого</span><strong id="successTotal"></strong></div>
+  </div>
+  <div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><div class="receipt-instructions">
+  <p id="paymentState" role="status"></p>
+  <p id="receiptHint"></p>
+</div><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="rublePayment" class="receipt-lines" hidden><div><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="rubleAmount"></strong></div><div><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="rubleRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="rubleBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="rubleRecipient"></strong></div><div><span data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="rublePhone" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="rubleBankPickerTitle">
 <p id="rubleBankPickerTitle" data-i18n="Скопировать номер и открыть свой банк">Скопировать номер и открыть свой банк</p>
 <div id="rubleBankLinks" class="ruble-bank-links">
 <a class="plain-btn bank-link" href="https://online.sberbank.ru/" target="_blank" rel="noopener noreferrer">Сбер</a>
@@ -511,10 +530,13 @@ function renderSuccess(){
   renderReceiptLinks();
   if(!lastOrder)return;
   if($('checkout').dataset.stage==='receipt')renderCheckoutTitle('receipt');
-  $('paymentConfirmedMark').hidden=lastOrder.paymentStatus!=='paid'||lastOrder.status==='cancelled';
+  const cancelled=lastOrder.status==='cancelled';
+  const paid=lastOrder.paymentStatus==='paid'&&!cancelled;
+  $('success').dataset.payment=cancelled?'cancelled':paymentPending(lastOrder)?'pending':paid?'paid':'closed';
+  $('paymentConfirmedMark').hidden=!paid;
   window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,receiptPhoto,updated:receiptUpdated});
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
-  $('successTotal').textContent=t('Сумма: {amount}',{amount:money(lastOrder.totalVnd)});
+  $('successTotal').textContent=money(lastOrder.totalVnd);
   $('receiptHint').textContent=receiptHint(lastOrder);
 }
 function renderLoadState(){if(menuState==='empty')$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
