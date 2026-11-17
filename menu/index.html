@@ -54,7 +54,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
 .cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
 .cart-feedback button:hover{background:#d6eeea}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=15"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=16"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -115,16 +115,27 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
 </dialog>
 <dialog id="nearbyCafe" aria-labelledby="nearbyCafeTitle">
-  <div class="checkout-header"><h2 id="nearbyCafeTitle" data-i18n="Кафе рядом">Кафе рядом</h2><button class="close" type="button" id="closeNearbyCafe" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></div>
-  <div class="checkout-body nearby-cafe-body">
+  <div class="nearby-cafe-header">
+    <h2 id="nearbyCafeTitle" data-i18n="Кафе рядом">Кафе рядом</h2>
+    <button class="close" type="button" id="closeNearbyCafe" aria-label="Закрыть" data-i18n-label="Закрыть">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="nearby-cafe-body">
     <div id="nearbyCafeMap" dir="ltr" hidden></div>
     <p id="nearbyCafeStatus" role="status" hidden></p>
     <button id="findNearestCafe" class="plain-btn" type="button" data-i18n="Найти ближайшее кафе" hidden>Найти ближайшее кафе</button>
     <div class="nearby-cafe-card">
-      <strong id="nearbyCafeName"></strong>
-      <span id="nearbyCafeAddress" dir="auto"></span>
-      <a id="nearbyCafeRoute" class="primary" target="_blank" rel="noopener" data-i18n="Проложить маршрут">Проложить маршрут</a>
+      <img src="logo/assets/umma-icon-192.png" alt="" width="44" height="44">
+      <div class="nearby-cafe-info">
+        <strong id="nearbyCafeName" dir="auto"></strong>
+        <span id="nearbyCafeAddress" dir="auto"></span>
+      </div>
     </div>
+    <a id="nearbyCafeRoute" class="primary" target="_blank" rel="noopener">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.1l7.9 3L14 21 21 3Z"/></svg>
+      <span data-i18n="Проложить маршрут">Проложить маршрут</span>
+    </a>
   </div>
 </dialog>
 <section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
@@ -137,7 +148,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <nav class="customer-actions" aria-label="Навигация кафе" data-i18n-label="Навигация кафе">
   <a class="plain-btn dock-menu" aria-current="page" href="menu/#products" data-i18n="Меню">Меню</a>
   <button type="button" id="customerMessagesButton" class="plain-btn" aria-haspopup="dialog" aria-controls="customerMessages"><span data-i18n="Сообщения">Сообщения</span><span class="messages-unread" hidden></span></button>
-  <button type="button" id="nearbyCafeButton" class="plain-btn" aria-haspopup="dialog" data-i18n="Кафе рядом">Кафе рядом</button>
+  <button type="button" id="nearbyCafeButton" class="plain-btn" aria-haspopup="dialog" aria-controls="nearbyCafe" data-i18n="Кафе рядом">Кафе рядом</button>
   <button type="button" id="receiptButton" class="plain-btn" aria-haspopup="dialog" aria-controls="customerOrders" data-i18n="Заказы">Заказы</button>
   <button type="button" id="openCart" class="plain-btn" aria-haspopup="dialog" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
@@ -167,7 +178,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=2"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=11"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=3"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=11"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
 <script src="js/cafe/menu-audience.js?v=1"></script>
