@@ -57,7 +57,7 @@ for (const page of ['index.html', 'menu/index.html']) {
 let posts=[],lost=false;
 const live=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',beforeParse(w){
  w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
- w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+ w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));w.eval(source);
  w.fetch=async(url,options={})=>{if(options.method!=='POST')return new Response(JSON.stringify({ok:true,products:products.map(p=>({...p,stockManaged:true,available:10}))}));const body=JSON.parse(options.body);if(body.action==='status')return new Response(JSON.stringify({ok:true,order:{status:'pending',paymentStatus:'pending'}}));posts.push(body);if(lost)throw Error('Response lost');return new Response(JSON.stringify({ok:true,order:{id:'fixture-order',orderNumber:101,totalVnd:body.items.reduce((s,x)=>s+products.find(p=>p.id===x.productId).price_vnd*x.quantity,0),status:'pending',paymentMethod:'cash',paymentStatus:'pending'}}));};
 }});

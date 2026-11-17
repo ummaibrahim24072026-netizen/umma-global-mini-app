@@ -11,7 +11,7 @@ updateAdminUI(
    START TELEGRAM AUTH
    ===================================================== */
 
-authenticateTelegramUser();
+if (tg?.initData) authenticateTelegramUser();
 
 
 /* Haptics for static and dynamic buttons are delegated by native-shell.js. */

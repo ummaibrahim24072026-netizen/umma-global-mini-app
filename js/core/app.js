@@ -95,6 +95,10 @@ function showToast(message) {
    ===================================================== */
 
 function openPage(page) {
+  if (!tg?.initData && (page === "cafe" || page === "orders")) {
+    window.location.assign(page === "orders" ? "menu/#orders" : "menu/");
+    return;
+  }
   if(page === "b2b") { window.ummaB2B?.open(); return; }
   if(page === "market") { window.ummaMarket?.open(); return; }
   if(page === "notifications") {

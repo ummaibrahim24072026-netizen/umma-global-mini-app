@@ -12,7 +12,7 @@ for(const method of ['cash','qr']){
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
   w.confirm=()=>assert.fail('Clearing the cart must not ask for browser confirmation');
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
-  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
   w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
@@ -128,7 +128,7 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
 {
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
  const w=dom.window,d=w.document,$=id=>d.getElementById(id);
- w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
  w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.eval(read('js/cafe/public-menu-i18n.js'));
  let hints=[],center,fail=false,geolocationCalls=0;
@@ -142,6 +142,7 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(success){
   geolocationCalls++;success({coords:{latitude:13,longitude:109}});
  }}});
+ w.ummaCafeNavigation={open:id=>$($(id).getAttribute('aria-controls')).show()};
  w.eval(read('js/cafe/public-menu-nearby.js'));
  const point=()=>new URL($('nearbyCafeRoute').href).searchParams.get('destination');
  assert.equal(point(),'12.2814294,109.2020884');

@@ -15,7 +15,7 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
  let calls=[],lost=true,gps,receipt;
  const dom=new JSDOM(html,{url:'https://example.com/umma-global-mini-app/menu/',runScripts:'dangerously',beforeParse(w){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
-  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/maps/delivery-zone.js'));w.eval(read('js/cafe/public-menu-extras.js'));
   w.L={map:()=>({setView(){return this;},fitBounds(){},on(){},invalidateSize(){}}),polygon:()=>({addTo(){}}),marker:()=>({addTo(){return this;},setLatLng(){},remove(){}})};w.UmmaMaps={basemap(map,element,callback,options){assert.equal(options.blueWater,true);callback('Включена запасная карта.');}};
