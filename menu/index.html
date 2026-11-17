@@ -54,10 +54,114 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
 .cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
 .cart-feedback button:hover{background:#d6eeea}
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=16"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=16"><link rel="stylesheet" href="css/connect-calls.css?v=2">
+<style>
+/* Customer menu layout. Checkout and staff views use their existing styles. */
+.public-cafe-menu {
+  background: #f1faf9;
+}
+.public-cafe-menu #cafePage .topbar {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 0 0 18px 18px;
+  background: #fff;
+  color: #103c3c;
+}
+.public-cafe-menu #cafePage .brand { min-width: 0; gap: 10px; }
+.public-cafe-menu #cafePage .brand img { flex: none; width: 44px; height: 44px; }
+.public-cafe-menu #cafePage .brand span,
+.public-cafe-menu #cafePage .brand small,
+.public-cafe-menu .cafe-intro-copy {
+  text-shadow: none;
+  -webkit-text-stroke: 0;
+}
+.public-cafe-menu #cafePage .brand span { color: #103c3c; font-size: clamp(14px, 4vw, 20px); }
+.public-cafe-menu #cafePage .brand small {
+  display: block;
+  margin-top: 2px;
+  color: #476864;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.public-cafe-menu #cafePage .topbar-actions button {
+  background: #fff;
+  border: 1px solid #c8dfdb;
+  color: #12635e;
+}
+.public-cafe-menu #cafePage .topbar button:focus-visible { outline-color: #00756f; }
+.public-cafe-menu .cafe-intro {
+  min-height: clamp(140px, 36vw, 260px);
+  margin-bottom: 16px;
+  background: linear-gradient(120deg, #005954, #008784 68%, #00a29e);
+}
+.public-cafe-menu .cafe-intro::before {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  content: "";
+  opacity: .15;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80' fill='none' stroke='%23dceee6'%3E%3Cpath d='M40 2l11 11h16v16l11 11-11 11v16H51L40 78 29 67H13V51L2 40l11-11V13h16z'/%3E%3Cpath d='M0 0h8l8 8M80 0h-8l-8 8M80 80h-8l-8-8M0 80h8l8-8'/%3E%3C/svg%3E");
+}
+.public-cafe-menu .cafe-intro-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-width: 57%;
+  padding: clamp(14px, 4vw, 34px);
+  color: #fff6df;
+}
+.public-cafe-menu .cafe-intro-copy p { margin: 0; color: #ffe399; }
+.public-cafe-menu .cafe-intro-copy strong { font-size: clamp(23px, 5.7vw, 54px); letter-spacing: -.04em; }
+.public-cafe-menu .cafe-intro img { width: clamp(110px, 43%, 248px); inset-inline-end: clamp(8px, 2vw, 24px); }
+.public-cafe-menu #cafePage .menu-sticky { position: static; background: transparent; }
+.public-cafe-menu #cafePage .menu-tools h1 { font-size: clamp(24px, 6.2vw, 36px); }
+.public-cafe-menu #cafePage .search-toggle { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; }
+.public-cafe-menu #cafePage .search-toggle svg { width: 18px; height: 18px; }
+.public-cafe-menu #cafePage .cafe-menu-categories { flex-wrap: wrap; overflow: visible; gap: 6px; }
+.public-cafe-menu #cafePage .cafe-category {
+  min-height: 44px;
+  max-inline-size: 100%;
+  padding: 6px clamp(9px, 2.4vw, 14px);
+  font-size: clamp(12px, 3vw, 14px);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.public-cafe-menu #cafePage .cafe-category[aria-pressed=true] { background: #00766f; color: #fff; }
+.public-cafe-menu #cafePage .cafe-products { scroll-margin-block-start: 12px; }
+.public-cafe-menu #cafePage .cafe-category-heading { margin-top: 8px; font-size: 20px; }
+.public-cafe-menu #cafePage .cafe-product {
+  grid-template-columns: minmax(72px, 32%) minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;
+  gap: 0 12px;
+  padding: 10px;
+  border-radius: 19px;
+}
+.public-cafe-menu #cafePage .cafe-product > :is(.cafe-product-media, .cafe-product-placeholder) {
+  grid-area: 1 / 1 / 5 / 2;
+  align-self: center;
+  border-radius: 12px;
+}
+.public-cafe-menu #cafePage .cafe-product-media .cafe-product-photo { object-fit: contain; }
+.public-cafe-menu #cafePage .cafe-product > h3 { grid-area: 1 / 2; font-size: clamp(14px, 3.65vw, 17px); }
+.public-cafe-menu #cafePage .cafe-product > .cafe-product-top { grid-area: 2 / 2; }
+.public-cafe-menu #cafePage .cafe-product > .cafe-availability { grid-area: 3 / 2; }
+.public-cafe-menu #cafePage .cafe-product > .cafe-product-bottom { grid-area: 4 / 2; }
+.public-cafe-menu #cafePage .cafe-product > .cafe-preorder-card { grid-row: 5; margin-top: 8px; }
+.public-cafe-menu #cafePage .cafe-product-bottom > .cafe-product-price { font-size: 16px; color: #006963; }
+.public-cafe-menu #cafePage .cafe-product .cafe-add { min-width: 44px; min-height: 44px; border-radius: 14px; background: #00766f; color: #fff; }
+.public-cafe-menu #customerDock { background: #fff; }
+.public-cafe-menu #customerDock .plain-btn:not([aria-current]):not(.has-items):not(:hover):not(:focus-visible)::before {
+  background: transparent;
+}
+.public-cafe-menu #customerDock .dock-menu::before { max-inline-size: 62px; background: #c5f3ec; }
+.public-cafe-menu #customerDock .dock-menu,
+.public-cafe-menu #customerDock .dock-menu::after { color: #006963; }
+.public-cafe-menu #customerDock .dock-menu::after { background: currentColor; }
+</style>
+</head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
-  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
+  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small data-i18n="Нячанг">Нячанг</small></span></div>
   <div class="topbar-actions">
     <button id="shareMenu" class="plain-btn share-menu-button" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></svg>
@@ -70,7 +174,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </div>
 <p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
 <section class="cafe-intro" aria-label="UMMA Cafe">
-  <div class="cafe-intro-copy"><p data-i18n="Халяльная кухня">Халяльная кухня</p><strong>UMMA CAFE</strong><span data-i18n="Нячанг">Нячанг</span></div>
+  <div class="cafe-intro-copy"><strong>UMMA CAFE</strong><p data-i18n="Халяльная кухня">Халяльная кухня</p></div>
   <img src="logo/assets/menu/plov-white-v2.webp" alt="" width="240" height="240" fetchpriority="high">
 </section>
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
@@ -138,7 +242,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     </a>
   </div>
 </dialog>
-<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
+<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg> <span data-i18n="Поиск">Поиск</span></button></div></div>
 <div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
