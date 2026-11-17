@@ -54,6 +54,7 @@
         if (!dialog.open) return;
         canvas.hidden = false;
         map = window.L.map(canvas, {scrollWheelZoom:false}).setView(selected.point || fallback.point, 16);
+        map.zoomControl?.setPosition('topright');
         map.attributionControl?.setPrefix(false);
         markers = window.L.layerGroup().addTo(map);
         window.UmmaMaps.basemap(map, canvas, key => {

@@ -353,11 +353,123 @@
   transform: translateY(50%);
 }
 
-.nearby-cafe-body { display: grid; gap: 12px; }
-#nearbyCafeMap { height: clamp(200px, 42dvh, 360px); border-radius: 14px; background: var(--umma-brand-pale); }
-#nearbyCafeStatus { margin: 0; }
-.nearby-cafe-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--umma-brand-line); border-radius: 14px; background: white; }
-.nearby-cafe-card a { display: block; padding: 12px; border-radius: 12px; text-align: center; text-decoration: none; }
+#nearbyCafe {
+  width: min(calc(100% - 32px), 500px);
+  max-width: none;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top));
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: #f4fbfa;
+  color: var(--umma-brand-night);
+  box-shadow: 0 20px 64px rgb(var(--umma-brand-night-rgb) / .24);
+  overscroll-behavior: contain;
+}
+#nearbyCafe::backdrop {
+  background: rgb(var(--umma-brand-night-rgb) / .43);
+  backdrop-filter: blur(4px);
+}
+.nearby-cafe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+}
+#nearbyCafeTitle {
+  margin: 0;
+  font-size: clamp(22px, 5.8vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+#closeNearbyCafe {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #c9efe7;
+  color: var(--umma-brand-night);
+}
+.nearby-cafe-body {
+  display: grid;
+  gap: 14px;
+  padding: 0 16px 18px;
+}
+#nearbyCafeMap {
+  height: clamp(148px, 39dvh, 360px);
+  border-radius: 20px;
+  background: var(--umma-brand-pale);
+  isolation: isolate;
+}
+#nearbyCafeMap .leaflet-control-zoom {
+  overflow: hidden;
+  margin: 12px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(var(--umma-brand-night-rgb) / .18);
+}
+#nearbyCafeMap .leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+#nearbyCafeStatus {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--umma-brand-pale);
+  font-size: .875rem;
+}
+.nearby-cafe-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 4px;
+}
+.nearby-cafe-card img {
+  flex: none;
+  border-radius: 50%;
+}
+.nearby-cafe-info {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+#nearbyCafeName { font-size: 1.125rem; line-height: 1.25; }
+#nearbyCafeAddress { color: var(--umma-brand-muted); font-size: .875rem; line-height: 1.4; }
+#nearbyCafeRoute {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #005d61;
+  color: #fff;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: none;
+}
+#nearbyCafeRoute svg { flex: none; }
+#nearbyCafeRoute:hover { background: #004d51; }
+
+@media (max-width: 640px) {
+  #nearbyCafe {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 28px 28px 0 0;
+  }
+  .nearby-cafe-body { padding-bottom: max(18px, calc(12px + env(safe-area-inset-bottom))); }
+}
 
 #customerMessages {
   width: min(calc(100% - 24px), 420px);
