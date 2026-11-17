@@ -54,6 +54,162 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
 .cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
 .cart-feedback button:hover{background:#d6eeea}
+/* Filled cart. Checkout, receipts and the existing empty cart keep their own layouts. */
+#checkout[data-stage="cart"][data-filled] {
+  --cart-surface: #fcfefd;
+  --cart-tint: #e7f7f4;
+  --cart-ink: #102c31;
+  --cart-action: #006561;
+  width: min(100%, 540px);
+  max-width: 100% !important;
+  max-height: 90dvh !important;
+  margin: auto auto 0;
+  border: 0 !important;
+  border-radius: 26px 26px 0 0 !important;
+  background: var(--cart-surface) !important;
+  color: var(--cart-ink);
+  box-shadow: none !important;
+}
+#checkout[data-stage="cart"][data-filled][open] { display: flex; flex-direction: column; }
+#checkout[data-stage="cart"][data-filled]::backdrop {
+  background: #092e365e;
+  backdrop-filter: blur(6px);
+}
+#checkout[data-stage="cart"][data-filled] .checkout-header {
+  flex: none;
+  min-height: auto;
+  padding: 28px 20px 12px !important;
+  border: 0 !important;
+  background: var(--cart-surface) !important;
+}
+#checkout[data-stage="cart"][data-filled] .checkout-header::before {
+  position: absolute;
+  inset: 10px 0 auto;
+  margin-inline: auto;
+  width: 30px;
+  height: 3px;
+  border: 0;
+  border-radius: 4px;
+  background: #c8ae70;
+  content: "";
+}
+#checkout .cart-heading { display: contents; }
+#checkout[data-stage="cart"][data-filled] .cart-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; min-width: 0; }
+#checkout[data-stage="cart"][data-filled] #checkoutTitle {
+  max-width: none;
+  flex: none;
+  color: var(--cart-ink) !important;
+  font-size: 26px !important;
+  text-shadow: none;
+}
+#checkoutCartSummary { display: none; color: #466064; font-size: 13px; }
+#checkout[data-stage="cart"][data-filled] #checkoutCartSummary { display: inline; }
+#checkout[data-stage="cart"][data-filled] #closeCart {
+  border: 0;
+  background: var(--cart-tint);
+  color: var(--cart-action);
+  font-size: 25px;
+}
+#checkout[data-stage="cart"][data-filled] .checkout-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 !important;
+}
+#checkout[data-stage="cart"][data-filled] #checkoutContent,
+#checkout[data-stage="cart"][data-filled] #cartStep {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#checkout[data-stage="cart"][data-filled] .cart-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 4px 20px 10px;
+}
+.public-cafe-menu #checkout[data-stage="cart"][data-filled] .cart-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 0;
+  padding: 12px 0;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+}
+#checkout[data-stage="cart"][data-filled] .cart-row + .cart-row { border-top: 1px solid #e1eeec; }
+#checkout[data-stage="cart"][data-filled] .cart-photo {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: contain;
+}
+#checkout[data-stage="cart"][data-filled] .cart-copy strong { color: var(--cart-ink); font-size: 16px; }
+#checkout[data-stage="cart"][data-filled] .cart-copy small { font-size: 13px; }
+#checkout[data-stage="cart"][data-filled] .cart-controls {
+  display: inline-grid;
+  gap: 0;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--cart-tint);
+}
+#checkout[data-stage="cart"][data-filled] .cart-controls button {
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cart-action);
+}
+#checkout[data-stage="cart"][data-filled] .cart-clear {
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #40585d;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#checkout[data-stage="cart"][data-filled] .cart-footer {
+  flex: none;
+  padding: 14px 20px max(16px, env(safe-area-inset-bottom));
+  background: var(--cart-tint);
+}
+#checkout[data-stage="cart"][data-filled] .cart-total {
+  margin: 0;
+  padding: 0 0 12px;
+  border: 0;
+  color: var(--cart-ink);
+}
+#checkout[data-stage="cart"][data-filled] #cartTotal { color: var(--cart-action); }
+#checkout[data-stage="cart"][data-filled] #continueCheckout {
+  position: relative;
+  min-height: 52px;
+  padding-inline: 46px;
+  border-radius: 999px !important;
+  background: var(--cart-action) !important;
+  box-shadow: none;
+  white-space: normal;
+}
+.cart-checkout-arrow { display: none; }
+#checkout[data-stage="cart"][data-filled] .cart-checkout-arrow {
+  position: absolute;
+  inset-inline-end: 18px;
+  top: 50%;
+  display: block;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+}
+[dir="rtl"] #checkout[data-stage="cart"][data-filled] .cart-checkout-arrow { transform: translateY(-50%) scaleX(-1); }
+#checkout[data-stage="cart"][data-filled] #result { margin: 8px 20px; }
+@media (min-width: 600px) {
+  #checkout[data-stage="cart"][data-filled] {
+    margin-block-end: 24px;
+    border-radius: 26px !important;
+  }
+}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=18"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
@@ -153,8 +309,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <button type="button" id="openCart" class="plain-btn" aria-haspopup="dialog" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
 </div>
-<dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
-<div id="checkoutContent"><section id="cartStep"><button type="button" id="clearCart" class="cart-clear" hidden><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg><span data-i18n="Очистить корзину">Очистить корзину</span></button><div id="cartItems"></div><div id="ummaEmptyCart" class="umma-empty-cart" hidden><div class="umma-empty-illustration" aria-hidden="true"><svg viewBox="0 0 220 160" width="180" height="135"><defs><linearGradient id="basketBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#16c9c5"/><stop offset="1" stop-color="#007b83"/></linearGradient></defs><ellipse cx="110" cy="146" rx="82" ry="8" fill="#006d7430"/><path d="M70 62L91 18Q100 4 112 14L153 62" fill="none" stroke="#c68d26" stroke-width="12" stroke-linecap="round"/><path d="M35 65H185L170 133Q168 142 156 142H64Q52 142 50 133Z" fill="url(#basketBody)" stroke="#007980" stroke-width="3"/><rect x="25" y="56" width="170" height="23" rx="11" fill="#16bcb9" stroke="#007980" stroke-width="3"/><path d="M72 93L78 125M104 93V125M137 93L131 125" stroke="#006d76" stroke-width="7" stroke-linecap="round"/><path d="M110 90L119 98L131 98L131 110L140 119L131 128L119 128L110 137L101 128L89 128L89 116L80 107L89 98L101 98Z" fill="#d5a444" stroke="#fff0b7" stroke-width="2" transform="translate(0 -5) scale(1 .85)"/><text x="110" y="111" text-anchor="middle" font-size="22" font-weight="900" fill="#006a72">U</text><path d="M175 23l10 -18M190 37l17 -11M194 51l21 -2" stroke="#d99c30" stroke-width="6" stroke-linecap="round"/></svg></div><h3 data-i18n="В заказе пока нет блюд.">В заказе пока нет блюд.</h3><p data-i18n="Добавьте блюда из меню">Добавьте блюда из меню</p><button type="button" id="ummaBackToMenu" class="umma-back-to-menu"><span aria-hidden="true">♜</span><span data-i18n="Перейти в меню">Перейти в меню</span><span aria-hidden="true">›</span></button><div class="umma-skyline" aria-hidden="true">✦　♧　♜　✧　♜　♧　✦</div></div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div><div class="cart-total"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary" data-i18n="Оформить заказ">Оформить заказ</button></section><section id="checkoutStep" hidden>
+<dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
+<div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden><div class="umma-empty-illustration" aria-hidden="true"><svg viewBox="0 0 220 160" width="180" height="135"><defs><linearGradient id="basketBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#16c9c5"/><stop offset="1" stop-color="#007b83"/></linearGradient></defs><ellipse cx="110" cy="146" rx="82" ry="8" fill="#006d7430"/><path d="M70 62L91 18Q100 4 112 14L153 62" fill="none" stroke="#c68d26" stroke-width="12" stroke-linecap="round"/><path d="M35 65H185L170 133Q168 142 156 142H64Q52 142 50 133Z" fill="url(#basketBody)" stroke="#007980" stroke-width="3"/><rect x="25" y="56" width="170" height="23" rx="11" fill="#16bcb9" stroke="#007980" stroke-width="3"/><path d="M72 93L78 125M104 93V125M137 93L131 125" stroke="#006d76" stroke-width="7" stroke-linecap="round"/><path d="M110 90L119 98L131 98L131 110L140 119L131 128L119 128L110 137L101 128L89 128L89 116L80 107L89 98L101 98Z" fill="#d5a444" stroke="#fff0b7" stroke-width="2" transform="translate(0 -5) scale(1 .85)"/><text x="110" y="111" text-anchor="middle" font-size="22" font-weight="900" fill="#006a72">U</text><path d="M175 23l10 -18M190 37l17 -11M194 51l21 -2" stroke="#d99c30" stroke-width="6" stroke-linecap="round"/></svg></div><h3 data-i18n="В заказе пока нет блюд.">В заказе пока нет блюд.</h3><p data-i18n="Добавьте блюда из меню">Добавьте блюда из меню</p><button type="button" id="ummaBackToMenu" class="umma-back-to-menu"><span aria-hidden="true">♜</span><span data-i18n="Перейти в меню">Перейти в меню</span><span aria-hidden="true">›</span></button><div class="umma-skyline" aria-hidden="true">✦　♧　♜　✧　♜　♧　✦</div></div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div></div><div class="cart-footer"><div class="cart-total" aria-live="polite"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary"><span data-i18n="Оформить заказ">Оформить заказ</span><svg class="cart-checkout-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button></div></section><section id="checkoutStep" hidden>
 <div class="checkout-note"><span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span></div>
 <div id="voiceReviewHost"></div><form id="form"><fieldset id="customerFields">
 <label class="field"><span data-i18n="Как получить заказ?">Как получить заказ?</span><select id="orderType"><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select></label><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></fieldset>
@@ -319,7 +475,53 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
  badge.textContent=n?num(n):'';
  badge.setAttribute('aria-label',n?num(n)+' '+t('шт.'):'');
  $('openCart').classList.toggle('has-items',n>0);
- $('cartTotal').textContent=money(amount);let batchHint=$('cartBatchHint');if(!batchHint){batchHint=document.createElement('p');batchHint.id='cartBatchHint';batchHint.className='cafe-preorder-label';$('cartItems').before(batchHint);}const future=products.filter(p=>p.isPreorder&&qty(p.id));batchHint.hidden=!future.length;if(future.length)batchHint.textContent=t('Весь заказ соберём после готовности блюд, не раньше {time}.',{time:batchTime(Math.max(...future.map(p=>Date.parse(p.plannedReadyAt))))})+' '+t('Время Нячанга');$('cartItems').innerHTML=products.filter(p=>qty(p.id)).map(p=>{const photo=safeImage(p);return '<div class="cart-row">'+(photo?'<img class="cart-photo" src="'+esc(photo)+'" alt="" width="56" height="56">':'')+'<div class="cart-copy"><strong>'+esc(name(p))+'</strong>'+(p.isPreorder?'<small class="cafe-preorder-label">'+esc(batchLabel(p))+'</small>':'')+'<small>'+money(p.price_vnd)+' × '+num(qty(p.id))+' · '+money(p.price_vnd*qty(p.id))+'</small></div><div class="cart-controls"><button type="button" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:name(p)}))+'">−</button><b>'+num(qty(p.id))+'</b><button type="button" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:name(p)}))+'">+</button></div></div>';}).join('')||'';$('ummaEmptyCart').hidden=!!n; $('continueCheckout').disabled=!n; $('submit').disabled=!n||busy||(!pending&&shortages());lock();}
+ const selected=products.filter(p=>qty(p.id));
+ const positions=selected.length;
+ const russianForms={one:'позиция',few:'позиции',many:'позиций',other:'позиции'};
+ const positionLabel=I.locale()==='ru-RU'
+   ? russianForms[new Intl.PluralRules('ru').select(positions)]
+   : t('шт.');
+ $('checkout').toggleAttribute('data-filled',n>0);
+ $('checkoutCartSummary').textContent=num(positions)+' '+positionLabel;
+ $('cartTotal').textContent=money(amount);
+ let batchHint=$('cartBatchHint');
+ if(!batchHint){
+   batchHint=document.createElement('p');
+   batchHint.id='cartBatchHint';
+   batchHint.className='cafe-preorder-label';
+   $('cartItems').before(batchHint);
+ }
+ const future=selected.filter(p=>p.isPreorder);
+ batchHint.hidden=!future.length;
+ if(future.length){
+   const readyAt=Math.max(...future.map(p=>Date.parse(p.plannedReadyAt)));
+   batchHint.textContent=t('Весь заказ соберём после готовности блюд, не раньше {time}.',{time:batchTime(readyAt)})+' '+t('Время Нячанга');
+ }
+ $('cartItems').innerHTML=selected.map(renderCartRow).join('');
+ $('ummaEmptyCart').hidden=!!n;
+ $('continueCheckout').disabled=!n;
+ $('submit').disabled=!n||busy||(!pending&&shortages());
+ lock();
+}
+function renderCartRow(product){
+ const photo=safeImage(product);
+ const dish=name(product);
+ const id=esc(product.id);
+ const quantity=qty(product.id);
+ return `<div class="cart-row">
+   ${photo?`<img class="cart-photo" src="${esc(photo)}" alt="" width="72" height="72">`:''}
+   <div class="cart-copy">
+     <strong>${esc(dish)}</strong>
+     ${product.isPreorder?`<small class="cafe-preorder-label">${esc(batchLabel(product))}</small>`:''}
+     <small>${esc(money(product.price_vnd))}</small>
+     <div class="cart-controls">
+       <button type="button" data-change="-1" data-id="${id}" aria-label="${esc(t('Уменьшить {dish}',{dish}))}">−</button>
+       <b>${num(quantity)}</b>
+       <button type="button" data-change="1" data-id="${id}" aria-label="${esc(t('Добавить ещё {dish}',{dish}))}">+</button>
+     </div>
+   </div>
+ </div>`;
+}
 function lock(){$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
 function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
 if(row){
@@ -328,7 +530,14 @@ if(row){
 }renderCart();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');if(b){
   const details=$('dishDetails');
+  const restoreCartFocus=document.activeElement===b&&$('cartItems').contains(b);
   change(b.dataset.id,Number(b.dataset.change));
+  if(restoreCartFocus&&!b.isConnected){
+    const controls=[...$('cartItems').querySelectorAll('button[data-change]:not(:disabled)')]
+      .filter(button=>button.dataset.id===b.dataset.id);
+    const next=controls.find(button=>button.dataset.change===b.dataset.change)||controls[0]||$('checkoutTitle');
+    next.focus({preventScroll:true});
+  }
   if(details.open&&details.contains(b)){
     const p=products.find(item=>item.id===details.dataset.productId);
     if(p)showDish(p,'[data-change="'+b.dataset.change+'"][data-id="'+CSS.escape(b.dataset.id)+'"]');
@@ -374,6 +583,7 @@ function checkoutStage(stage){
   $('checkoutStep').hidden=stage!=='checkout';
   renderCheckoutTitle(stage);
   $('checkout').querySelector('.checkout-body').scrollTop=0;
+  $('cartStep').querySelector('.cart-scroll').scrollTop=0;
 }
 let clearedCart, cartFeedbackTimer;
 function dismissCartFeedback(){
