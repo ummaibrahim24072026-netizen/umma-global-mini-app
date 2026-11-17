@@ -301,6 +301,103 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   background: #e5f5ef;
   border-color: #bde0d6;
 }
+
+/* Checkout keeps the total and payment action outside the scrolling form fields. */
+#checkout[data-stage="checkout"] {
+  width: calc(100% - 24px);
+  max-width: 460px !important;
+  max-height: 92dvh !important;
+  border: 1px solid #acd3cc !important;
+  background: #fdfcf9 !important;
+}
+#checkout[data-stage="checkout"][open],
+#checkout[data-stage="checkout"] :is(.checkout-body, #checkoutContent, #checkoutStep, #form) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#checkout[data-stage="checkout"] .checkout-header {
+  flex: none;
+  min-height: 0;
+  padding: 10px 16px !important;
+  border-bottom: 2px solid #d1ac58 !important;
+  background: #006163 !important;
+}
+#checkout[data-stage="checkout"] .checkout-header::before { content: none; }
+#checkout[data-stage="checkout"] .cart-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+#checkout[data-stage="checkout"] .empty-cart-logo { display: block; width: 38px; height: 38px; flex: none; }
+#checkout[data-stage="checkout"] #checkoutTitle { max-width: none; color: #fffdf5 !important; text-shadow: none; }
+#checkout[data-stage="checkout"] .checkout-body { padding: 0 !important; }
+.checkout-form-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 14px 16px 8px; }
+#checkout .order-mode-picker { padding: 0; margin: 0 0 8px; border: 0; min-width: 0; }
+#checkout .order-mode-picker legend { margin-bottom: 7px; font-weight: 750; font-size: 15px; }
+.order-mode-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #b5d4d0;
+  border-radius: 13px;
+  background: white;
+}
+.order-mode-options label { position: relative; min-width: 0; cursor: pointer; }
+.order-mode-options label span {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  padding: 6px;
+  border-radius: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+  font-size: 14px;
+}
+.order-mode-options label:has(:checked) span { background: #d7efea; color: #005a56; }
+.order-mode-options input:focus-visible + span { outline: 2px solid #087c78; outline-offset: -3px; }
+#checkout[data-stage="checkout"] .checkout-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border: 1px solid #c8deda;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+}
+.checkout-note svg { flex: none; color: #006561; }
+#checkout[data-stage="checkout"] .payment-choice {
+  display: block;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+#checkout[data-stage="checkout"] .payment-choice legend { font-size: 15px; font-weight: 750; }
+.checkout-payment-options { border: 1px solid #b5d4d0; border-radius: 12px; background: white; overflow: hidden; }
+#checkout[data-stage="checkout"] .payment-choice label {
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: start;
+  gap: 10px;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 0;
+}
+.checkout-payment-options label:not([hidden]) ~ label:not([hidden]) { border-top: 1px solid #d7e8e5 !important; }
+.checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
+.checkout-payment-options input { flex: none; }
+#checkout[data-stage="checkout"] .optional-name { margin: 8px 0 0; padding: 0; border: 0; }
+#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: none; padding-inline: 0; }
+#checkout .checkout-pay-footer {
+  flex: none;
+  padding: 9px 16px max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #d0e7e1;
+  background: #e5f5ef;
+}
+#checkout .checkout-pay-footer .receipt-lines { margin: 0 0 7px; border: 0; }
+#checkout .checkout-pay-footer .receipt-lines > div { padding: 3px 0; font-weight: 700; }
+#checkout .checkout-pay-footer #submit { margin: 0; min-height: 48px; border-radius: 999px; background: #006561; }
+#checkout .checkout-pay-footer .guest-hint { margin: 7px 0 0; font-size: 12px; line-height: 1.35; }
+#checkout[data-stage="checkout"] #result { flex: none; max-height: 20dvh; overflow: auto; margin: 4px 16px; }
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=18"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
@@ -420,12 +517,25 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
   </button>
 </div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div></div><div id="cartFooter" class="cart-footer" hidden><div class="cart-total" aria-live="polite"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary"><span data-i18n="Оформить заказ">Оформить заказ</span><svg class="cart-checkout-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button></div></section><section id="checkoutStep" hidden>
-<div class="checkout-note"><span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span></div>
-<div id="voiceReviewHost"></div><form id="form"><fieldset id="customerFields">
-<label class="field"><span data-i18n="Как получить заказ?">Как получить заказ?</span><select id="orderType"><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select></label><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></fieldset>
+<div id="voiceReviewHost"></div>
+<form id="form">
+<div class="checkout-form-scroll">
+<fieldset id="customerFields">
+  <fieldset class="order-mode-picker">
+    <legend data-i18n="Как получить заказ?">Как получить заказ?</legend>
+    <select id="orderType" hidden><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select>
+    <div class="order-mode-options">
+      <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="pickup" checked><span data-i18n="Самовывоз">Самовывоз</span></label>
+      <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="delivery"><span data-i18n="Доставка">Доставка</span></label>
+    </div>
+  </fieldset>
+  <div class="checkout-note" id="pickupInfo">
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.2"/></svg>
+    <span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span>
+  </div><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><div class="checkout-payment-options"><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></div></fieldset>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
 <details class="optional-name"><summary data-i18n="Добавить имя (необязательно)">Добавить имя (необязательно)</summary><label class="field"><span data-i18n="Имя — необязательно">Имя — необязательно</span><input id="customerName" autocomplete="given-name" maxlength="100" placeholder="Как к вам обращаться" data-i18n-placeholder="Как к вам обращаться"></label></details>
-</fieldset><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div></div><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button></form><button type="button" id="backToCart" class="plain-btn" data-i18n="Корзина">Корзина</button></section></div>
+</fieldset><button type="button" id="backToCart" class="plain-btn" data-i18n="Корзина">Корзина</button></div><div class="checkout-pay-footer"><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p></div></form></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
   <header class="receipt-status">
     <span class="receipt-status-icon" aria-hidden="true">
@@ -522,7 +632,22 @@ function renderCheckoutAmounts(subtotal=total()){
  $('checkoutDeliveryFee').textContent=money(fee);
  $('checkoutTotal').textContent=money(subtotal+fee);
 }
-$('orderType').addEventListener('change',()=>renderCheckoutAmounts());
+const orderModeInputs=[...document.querySelectorAll('[name="checkoutOrderMode"]')];
+function syncCheckoutMode(){
+ const mode=$('orderType').value;
+ orderModeInputs.forEach(input=>{input.checked=input.value===mode;});
+ $('pickupInfo').hidden=mode==='delivery';
+}
+$('orderType').addEventListener('change',()=>{
+ syncCheckoutMode();
+ renderCheckoutAmounts();
+});
+orderModeInputs.forEach(input=>input.addEventListener('change',()=>{
+ if(!input.checked||$('orderType').value===input.value)return;
+ $('orderType').value=input.value;
+ $('orderType').dispatchEvent(new Event('change',{bubbles:true}));
+}));
+syncCheckoutMode();
 const safeImage=p=>window.ummaCafeProductPhoto?.(p)||'';
 function catalogReceiptPhoto(item){
   if(!item.name_ru)return '';
@@ -694,6 +819,7 @@ function checkoutStage(stage){
   renderCheckoutTitle(stage);
   $('checkout').querySelector('.checkout-body').scrollTop=0;
   $('cartStep').querySelector('.cart-scroll').scrollTop=0;
+  $('checkoutStep').querySelector('.checkout-form-scroll').scrollTop=0;
 }
 let clearedCart, cartFeedbackTimer;
 function dismissCartFeedback(){
@@ -723,7 +849,7 @@ $('undoClearCart').onclick=()=>{
   renderCart();
   $('clearCart').focus();
 };
-$('continueCheckout').onclick=()=>{checkoutStage('checkout');$('orderType').focus();};
+$('continueCheckout').onclick=()=>{checkoutStage('checkout');$('checkoutTitle').focus({preventScroll:true});};
 $('backToCart').onclick=()=>{checkoutStage('cart');$('continueCheckout').focus();};
 function closeCart(){if(!busy)$('checkout').close();}
 $('checkout').addEventListener('close',()=>{dismissCartFeedback();document.body.style.overflow='';});
