@@ -129,7 +129,8 @@ function open(){
  dialog.dataset.ummaInbox='';
  dialog.id='ummaOrderInboxDialog';
  dialog.setAttribute('aria-labelledby','ummaOrderInboxTitle');
- dialog.style.cssText='box-sizing:border-box;width:min(94vw,560px);max-height:80vh;border:1px solid #cfac52;border-radius:20px;padding:14px;color:#153b39;background:#f4faf9';
+ const navigation=window.ummaCafeNavigation;
+ if(!navigation)dialog.style.cssText='box-sizing:border-box;width:min(94vw,560px);max-height:80vh;border:1px solid #cfac52;border-radius:20px;padding:14px;color:#153b39;background:#f4faf9';
  const styles=document.createElement('style');
  styles.textContent=inboxStyles;
  const close=document.createElement('button');
@@ -152,10 +153,11 @@ function open(){
  document.body.append(dialog);
  dialog.addEventListener('close',()=>{
   const controls=window.ummaOrderAlerts?.controls;
-  if(controls)(document.getElementById('syncState')?.parentNode||document.body).append(controls);
+  if(controls?.parentNode===dialog)(document.getElementById('syncState')?.parentNode||document.body).append(controls);
   dialog.remove();
  });
- dialog.showModal();
+ if(navigation)navigation.openMessagePage(dialog);
+ else dialog.showModal();
  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
  save();
 }

@@ -27,7 +27,7 @@
     showCount(totalBadge, total);
   }
 
-  trigger.addEventListener('click', () => dialog.showModal());
+  trigger.addEventListener('click', () => window.ummaCafeNavigation.open('customerMessagesButton'));
   window.addEventListener('umma:messages-count', renderCounts);
   renderCounts();
 })();

@@ -74,11 +74,12 @@
   }
 
   $('nearbyCafeButton').onclick = () => {
-    dialog.showModal();
+    window.ummaCafeNavigation.open('nearbyCafeButton');
     openMap();
   };
   $('closeNearbyCafe').onclick = () => dialog.close();
   dialog.addEventListener('close', () => {
+    if (dialog.open) return;
     locationRequest++;
     locate.disabled = false;
     if (statusKey === 'Определяем местоположение…') setStatus('');

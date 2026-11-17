@@ -524,9 +524,10 @@ function build(){
  }
  document.body.append(dialog);
  dialog.addEventListener('close',()=>{
+  if(dialog.open)return;
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
-  button.focus();
+  if(!publicChat||!window.ummaCafeNavigation)button.focus();
  });
  function update(){
   join.hidden=!!token;
@@ -545,7 +546,7 @@ function build(){
  dialog.update=update;
  dialog.releaseDraft=()=>composer.clear();
 }
-async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();if(publicChat)list.scrollTop=list.scrollHeight;await markRead();}
+async function open(){if(!dialog)build();if(!dialog.open){if(publicChat&&window.ummaCafeNavigation)window.ummaCafeNavigation.openMessagePage(dialog);else dialog.showModal();}status.textContent='';await refresh();dialog.update?.();if(publicChat)list.scrollTop=list.scrollHeight;await markRead();}
 button.onclick=open;window.ummaCustomerConnect={open};
 if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
  if(!dialog)build();
