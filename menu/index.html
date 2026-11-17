@@ -210,6 +210,97 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     border-radius: 26px !important;
   }
 }
+
+/* The empty cart uses the centered dialog from the approved design. */
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) {
+  width: calc(100% - 32px);
+  max-width: 420px !important;
+  max-height: 90dvh !important;
+  margin: auto;
+  border: 1px solid #a9d3cd !important;
+  border-radius: 26px !important;
+  background: #fdfcf9 !important;
+  color: #123b3f;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden]))[open] { display: flex; flex-direction: column; }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-header {
+  flex: none;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 13px 16px !important;
+  background: #006163 !important;
+  border-bottom: 2px solid #d1ac58 !important;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-header::before { content: none; }
+#checkout .empty-cart-logo { display: none; }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .cart-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .empty-cart-logo {
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 44px;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #checkoutTitle {
+  max-width: none;
+  margin: 0;
+  font-family: inherit;
+  font-size: clamp(19px, 5vw, 25px) !important;
+  text-align: start;
+  text-shadow: none;
+  color: #fffdf5 !important;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #closeCart {
+  position: static;
+  background: #dff4ef;
+  border: 0;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-body {
+  min-height: 0;
+  padding: 20px 16px 16px !important;
+  overscroll-behavior: contain;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #cartItems:empty { display: none; }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-empty-cart {
+  gap: 8px;
+  padding: 0 0 4px;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-empty-illustration {
+  width: clamp(92px, 28vw, 120px);
+  aspect-ratio: 1;
+  margin: 0 0 6px;
+  background: #def2ec;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-empty-illustration svg {
+  width: 82%;
+  height: auto;
+  filter: none;
+}
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-empty-cart h3 { font-size: clamp(17px, 4.5vw, 22px); }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-empty-cart p { margin: 0 0 8px; font-size: 14px; color: #456e70; }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .umma-back-to-menu {
+  min-height: 48px;
+  max-width: 100%;
+  padding: 10px 20px;
+  border: 0;
+  background: #006561;
+  color: white;
+  box-shadow: none;
+}
+#checkout .umma-back-to-menu svg { flex: none; }
+[dir="rtl"] #checkout .umma-back-to-menu svg { transform: scaleX(-1); }
+#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .cart-feedback {
+  gap: 0 8px;
+  margin: 14px 0 0;
+  padding: 0 4px 0 0;
+  padding-inline-start: 12px;
+  background: #e5f5ef;
+  border-color: #bde0d6;
+}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=18"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
@@ -309,8 +400,26 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <button type="button" id="openCart" class="plain-btn" aria-haspopup="dialog" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
 </div>
-<dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
-<div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden><div class="umma-empty-illustration" aria-hidden="true"><svg viewBox="0 0 220 160" width="180" height="135"><defs><linearGradient id="basketBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#16c9c5"/><stop offset="1" stop-color="#007b83"/></linearGradient></defs><ellipse cx="110" cy="146" rx="82" ry="8" fill="#006d7430"/><path d="M70 62L91 18Q100 4 112 14L153 62" fill="none" stroke="#c68d26" stroke-width="12" stroke-linecap="round"/><path d="M35 65H185L170 133Q168 142 156 142H64Q52 142 50 133Z" fill="url(#basketBody)" stroke="#007980" stroke-width="3"/><rect x="25" y="56" width="170" height="23" rx="11" fill="#16bcb9" stroke="#007980" stroke-width="3"/><path d="M72 93L78 125M104 93V125M137 93L131 125" stroke="#006d76" stroke-width="7" stroke-linecap="round"/><path d="M110 90L119 98L131 98L131 110L140 119L131 128L119 128L110 137L101 128L89 128L89 116L80 107L89 98L101 98Z" fill="#d5a444" stroke="#fff0b7" stroke-width="2" transform="translate(0 -5) scale(1 .85)"/><text x="110" y="111" text-anchor="middle" font-size="22" font-weight="900" fill="#006a72">U</text><path d="M175 23l10 -18M190 37l17 -11M194 51l21 -2" stroke="#d99c30" stroke-width="6" stroke-linecap="round"/></svg></div><h3 data-i18n="В заказе пока нет блюд.">В заказе пока нет блюд.</h3><p data-i18n="Добавьте блюда из меню">Добавьте блюда из меню</p><button type="button" id="ummaBackToMenu" class="umma-back-to-menu"><span aria-hidden="true">♜</span><span data-i18n="Перейти в меню">Перейти в меню</span><span aria-hidden="true">›</span></button><div class="umma-skyline" aria-hidden="true">✦　♧　♜　✧　♜　♧　✦</div></div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div></div><div class="cart-footer"><div class="cart-total" aria-live="polite"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary"><span data-i18n="Оформить заказ">Оформить заказ</span><svg class="cart-checkout-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button></div></section><section id="checkoutStep" hidden>
+<dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><img class="empty-cart-logo" src="logo/assets/umma-icon-192.png" alt="" width="44" height="44"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
+<div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
+  <div class="umma-empty-illustration" aria-hidden="true">
+    <svg viewBox="0 0 128 128" width="104" height="104" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="66" cy="106" rx="42" ry="7" fill="#b6ddd5"/>
+      <path d="M17 59l13 37 40 12 35-18 9-39-42 16z" fill="#b0e3da" stroke="#007b80" stroke-width="3"/>
+      <path d="M17 59l35-16 62 8-42 16z" fill="#d7f2ec" stroke="#007b80" stroke-width="3"/>
+      <path d="M23 73l48 12 39-16M27 85l43 13 37-17M32 63l11 37M46 66l9 38M59 69l4 37M72 67l-2 41M87 62l-5 40M101 56l-7 39" stroke="#008b92" stroke-width="2.5"/>
+      <path d="M38 53l10-26a7 7 0 0 1 8-5l34 7a7 7 0 0 1 5 8l-7 29" stroke="#a87520" stroke-width="8"/>
+      <path d="M38 53l10-26a7 7 0 0 1 8-5l34 7a7 7 0 0 1 5 8l-7 29" stroke="#e0b657" stroke-width="5"/>
+      <circle cx="38" cy="54" r="3" fill="#f4d887"/><circle cx="88" cy="66" r="3" fill="#f4d887"/>
+    </svg>
+  </div>
+  <h3 data-i18n="В заказе пока нет блюд.">В заказе пока нет блюд.</h3>
+  <p data-i18n="Добавьте блюда из меню">Добавьте блюда из меню</p>
+  <button type="button" id="ummaBackToMenu" class="umma-back-to-menu">
+    <span data-i18n="Перейти в меню">Перейти в меню</span>
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+  </button>
+</div><div id="cartFeedback" class="cart-feedback" hidden><span id="cartFeedbackMessage" role="status"></span><button type="button" id="undoClearCart" data-i18n="Отменить очистку">Отменить</button></div></div><div id="cartFooter" class="cart-footer" hidden><div class="cart-total" aria-live="polite"><span data-i18n="Итого">Итого</span><span id="cartTotal"></span></div><button type="button" id="continueCheckout" class="primary"><span data-i18n="Оформить заказ">Оформить заказ</span><svg class="cart-checkout-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button></div></section><section id="checkoutStep" hidden>
 <div class="checkout-note"><span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span></div>
 <div id="voiceReviewHost"></div><form id="form"><fieldset id="customerFields">
 <label class="field"><span data-i18n="Как получить заказ?">Как получить заказ?</span><select id="orderType"><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select></label><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></fieldset>
@@ -499,6 +608,7 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
  }
  $('cartItems').innerHTML=selected.map(renderCartRow).join('');
  $('ummaEmptyCart').hidden=!!n;
+ $('cartFooter').hidden=!n;
  $('continueCheckout').disabled=!n;
  $('submit').disabled=!n||busy||(!pending&&shortages());
  lock();
