@@ -359,24 +359,105 @@
 .nearby-cafe-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--umma-brand-line); border-radius: 14px; background: white; }
 .nearby-cafe-card a { display: block; padding: 12px; border-radius: 12px; text-align: center; text-decoration: none; }
 
-.customer-message-sections {
-  display: grid;
-  gap: 10px;
+#customerMessages {
+  width: min(calc(100% - 24px), 420px);
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 24px;
+  background: linear-gradient(160deg, var(--umma-brand-pale), white 70%);
+  box-shadow: 0 20px 64px rgb(var(--umma-brand-night-rgb) / .24);
 }
-.customer-message-sections button {
+#customerMessages::backdrop {
+  background: rgb(var(--umma-brand-night-rgb) / .36);
+  backdrop-filter: blur(3px);
+}
+#customerMessages .checkout-header {
+  gap: 12px;
+  padding: 14px 16px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--umma-brand-night);
+}
+#customerMessagesTitle {
+  font-size: clamp(21px, 5.8vw, 25px);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+#customerMessages .close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 50%;
+  background: var(--umma-brand-white);
+  color: var(--umma-brand-deep);
+  font-size: 22px;
+  line-height: 1;
+}
+#customerMessages .customer-message-sections {
+  display: grid;
+  gap: 8px;
+  padding: 6px 16px 16px;
+}
+#customerMessages .customer-message-sections button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   inline-size: 100%;
-  min-block-size: 52px;
-  padding: 10px 14px;
+  min-block-size: 60px;
+  padding-block: 9px;
+  padding-inline: 9px 12px;
   border: 1px solid var(--umma-brand-line);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--umma-brand-white);
   color: var(--umma-brand-ink);
   text-align: start;
   font: 700 15px/1.3 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+#customerMessages .customer-message-sections button::before {
+  content: "";
+  flex: 0 0 40px;
+  block-size: 40px;
+  border-radius: 12px;
+  background: var(--umma-brand-pale) var(--message-icon) center / 20px no-repeat;
+}
+#customerMessages #orderInboxHost {
+  --message-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2302595b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0'/%3E%3C/svg%3E");
+}
+#customerMessages #customerConnectHost {
+  --message-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23745518' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11.5a8 8 0 0 1-8 8 8 8 0 0 1-3.4-.75L4 20l1.25-4.6A8 8 0 1 1 20 11.5Z M9 11.5h6'/%3E%3C/svg%3E");
+}
+#customerMessages #customerConnectHost button::before {
+  background-color: #fbf1d9;
+}
+#customerMessages .customer-message-sections button::after {
+  content: "";
+  flex: none;
+  inline-size: 7px;
+  block-size: 7px;
+  border-block-start: 2px solid var(--umma-brand-deep);
+  border-inline-end: 2px solid var(--umma-brand-deep);
+  margin-inline: 2px 3px;
+  rotate: 45deg;
+}
+#customerMessages .customer-message-sections button:dir(rtl)::after {
+  rotate: -45deg;
+}
+#customerMessages .customer-message-sections button:not(:has(.messages-unread:not([hidden])))::after,
+#customerMessages .messages-unread {
+  margin-inline-start: auto;
+}
+#customerMessages .close:active,
+#customerMessages .customer-message-sections button:active {
+  background-color: var(--umma-brand-pale);
+}
+@media (hover: hover) {
+  #customerMessages .close:hover,
+  #customerMessages .customer-message-sections button:hover {
+    background-color: var(--umma-brand-pale);
+  }
 }
 .messages-unread:not([hidden]) {
   display: inline-grid;
