@@ -3,6 +3,8 @@
  * Strong shades carry small white text; primary is the brand accent. */
 :root{
   --umma-brand-primary:#03A2A5;
+  --umma-button-edge:#087f86;
+  --umma-button-gradient:linear-gradient(135deg,#0a9fa3 0%,var(--umma-button-edge) 100%);
   --umma-brand-on-primary:#002D2E;
   --umma-brand-on-primary-rgb:0,45,46;
   --umma-brand-primary-rgb:3,162,165;
@@ -85,7 +87,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #checkout:not([data-stage="receipt"]) .cart-controls button{border:1px solid #a7dbd7;border-radius:12px;background:#effcfb;color:#007f83;font-weight:700}
 #checkout:not([data-stage="receipt"]) .cart-total{margin-top:14px;padding:18px 2px;border-top:1px solid #d7b75f;color:#103d40;font-size:20px;gap:12px}
 #checkout:not([data-stage="receipt"]) .cart-total span:last-child{color:#aa751c;font-variant-numeric:tabular-nums}
-#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:linear-gradient(120deg,#007c80,#08afb2)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
+#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:var(--umma-button-gradient)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
 #checkout:not([data-stage="receipt"]) #continueCheckout:disabled{background:#8dd1d0!important;color:#eaf7f7!important;box-shadow:none;opacity:.75}
 #checkout:not([data-stage="receipt"]) .cart-clear{border-radius:12px}
 @media(max-width:420px){#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])){max-width:calc(100vw - 24px)!important;border-radius:24px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{min-height:74px;padding:12px 15px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{width:36px;height:36px}#checkout:not([data-stage="receipt"]) .checkout-body{padding:14px 16px 20px!important}}

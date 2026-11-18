@@ -5,7 +5,7 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <script src="js/cafe/public-menu-i18n.js?v=38"></script>
-<link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=6"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
+<link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=7"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
 *{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button,a,input,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--umma-brand-primary);outline-offset:3px}[hidden]{display:none!important}a{color:var(--umma-brand-strong)}
@@ -142,8 +142,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 52px;
   padding-inline: 46px;
   border-radius: 999px !important;
-  background: var(--umma-action) !important;
-  color: var(--umma-brand-on-primary) !important;
+  background: var(--umma-button-gradient) !important;
+  color: #fff !important;
   box-shadow: none;
   white-space: normal;
 }
@@ -189,8 +189,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   max-width: 100%;
   padding: 10px 20px;
   border: 0;
-  background: var(--umma-action);
-  color: var(--umma-brand-on-primary);
+  background: var(--umma-button-gradient);
+  color: #fff;
   box-shadow: none;
 }
 #checkout .umma-back-to-menu svg { flex: none; }
@@ -287,7 +287,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
 .checkout-payment-options input { flex: none; }
 #checkout[data-stage="checkout"] .optional-name { margin: 8px 0 0; padding: 0; border: 0; }
-#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: none; padding-inline: 0; }
+#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; border-radius: 999px; background: var(--umma-button-gradient); padding-inline: 14px; }
 #checkout .checkout-pay-footer {
   flex: none;
   padding: 9px 16px max(10px, env(safe-area-inset-bottom));
@@ -395,7 +395,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
 
-#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:linear-gradient(135deg,#0ba9ad 0%,#07898e 100%)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n
+#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:var(--umma-button-gradient)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n
 /* Cashier payment: clear next action for guests */
 #checkout #success[data-cash-pending="true"] .receipt-instructions{background:linear-gradient(135deg,#fff8e8,#fffdf6);border:2px solid #dfb74f;border-radius:22px;padding:18px 16px;box-shadow:0 7px 20px rgba(147,107,24,.12);text-align:left}
 #checkout #success[data-cash-pending="true"] #paymentState{color:#075b5c;font-weight:800;font-size:19px;line-height:1.3;margin:0 0 10px}
@@ -437,7 +437,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success[data-cash-pending="true"] #newOrder{
   border-radius:999px!important;min-height:54px;
-  background:linear-gradient(105deg,#0aa3a4,#087f82)!important;
+  background:var(--umma-button-gradient)!important;
   color:#fff!important;font-weight:800;box-shadow:0 8px 18px rgba(7,127,130,.18);
 }
 @media(max-width:360px){
@@ -446,7 +446,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=26"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=49"><link rel="stylesheet" href="css/connect-calls.css?v=2">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=26"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=52"><link rel="stylesheet" href="css/connect-calls.css?v=2">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
@@ -711,7 +711,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=23"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=26"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=2"></script>
