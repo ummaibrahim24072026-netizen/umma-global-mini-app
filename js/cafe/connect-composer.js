@@ -128,7 +128,7 @@
   let cameraSession=null,cameraPanel,cameraPreview,cameraTimer,shutter,flipCamera,torch,cancelCamera;
   const modeButtons=new Map();
   const cameraModes=({ru:['Видео','Фото','Видеозаметка','Фонарик'],vi:['Video','Ảnh','Tin nhắn video','Đèn pin']})[lang]||['Video','Photo','Video note','Torch'];let circleFacing='user';
-  let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null;
+  let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null,circleStop,circleSend,circleCancel,circleRing;
   function showExpressions(open){
    if(!expression)return;
    if(open)showAttachments(false);
@@ -615,7 +615,9 @@
    circleSession=session;
    // Do not capture the pointer: the camera switch is a separate touch target.
    circlePanel.hidden=false;
-   circleTimer.hidden=true;
+   circleTimer.hidden=false;
+   circlePanel.classList.add('is-active');
+   circleRing?.style.setProperty('--circle-progress','0');
    circleButton.classList.add('is-recording');
    if(flipCamera)flipCamera.disabled=false;
    controls();
@@ -652,6 +654,8 @@
     };
     recorder.start(250);
     startVideoCountdown(session,circleTimer);
+    const ringStart=performance.now();
+    session.ringClock=setInterval(()=>circleRing?.style.setProperty('--circle-progress',String(Math.min(100,(performance.now()-ringStart)/videoDuration*100))),100);
     session.timer=setTimeout(()=>finishCircle(session,false),videoDuration);
     status.textContent='';
    }catch{
@@ -677,6 +681,7 @@
    session.cancelled ||= discard;
    clearTimeout(session.timer);
    clearInterval(session.clock);
+   clearInterval(session.ringClock);
    if(!session.recorder||session.recorder.state==='inactive'){
     session.stopDrawing?.();
     session.recordStream?.getVideoTracks().forEach(t=>t.stop());
@@ -684,6 +689,7 @@
    if(circleSession===session){
     circleSession=null;
     circlePanel.hidden=true;
+    circlePanel.classList.remove('is-active');
     circleButton.classList.remove('is-recording');
     circlePreview.pause();
     circlePreview.srcObject=null;
@@ -845,15 +851,30 @@
     circleButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(circleSession)finishCircle(circleSession,false);else beginCircle();}});
     circlePanel=el('div',null,'connect-circle-panel');
     circlePanel.hidden=true;
+    circlePanel.setAttribute('role','dialog');
+    circlePanel.setAttribute('aria-label',lang==='ru'?'Запись видеосообщения':'Record video message');
     circlePreview=el('video');
     circlePreview.muted=true;circlePreview.playsInline=true;
     circleTimer=el('span',null,'connect-circle-timer');
     circleTimer.setAttribute('role','timer');
     circleTimer.hidden=true;
-    circlePanel.append(circlePreview,circleTimer);
-    const flip=button('↻ Камера',flipCurrentCamera);
+    circleRing=el('div',null,'connect-circle-ring');
+    circleRing.append(circlePreview);
+    circleCancel=button('×',()=>finishCircle(circleSession,true));
+    circleCancel.className='connect-circle-cancel';
+    circleCancel.setAttribute('aria-label',lang==='ru'?'Отменить запись':'Cancel recording');
+    circleStop=button('■',()=>finishCircle(circleSession,false));
+    circleStop.className='connect-circle-stop';
+    circleStop.setAttribute('aria-label',lang==='ru'?'Остановить и отправить':'Stop and send');
+    circleSend=button('➤',()=>finishCircle(circleSession,false));
+    circleSend.className='connect-circle-send';
+    circleSend.setAttribute('aria-label',lang==='ru'?'Отправить видеосообщение':'Send video message');
+    const flip=button('⟳',flipCurrentCamera);
     flip.className='connect-flip-camera';
-    circlePanel.append(flip);
+    flip.setAttribute('aria-label',lang==='ru'?'Переключить камеру':'Switch camera');
+    const actions=el('div',null,'connect-circle-actions');
+    actions.append(flip,circleStop,circleSend);
+    circlePanel.append(circleCancel,circleTimer,circleRing,actions);
    }
    iconButton(camera,'camera',compactLabels[1]);
    mic.className='primary connect-mic';
