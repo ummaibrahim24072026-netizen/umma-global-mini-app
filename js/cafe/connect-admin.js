@@ -85,6 +85,7 @@ async function translateChat(messageId,language,clientId){
  if(!response.ok||!result.ok)throw Error(result.error||'Translation unavailable');
  return result;
 }
+const connection=node('p',null,'work-board-connection');connection.hidden=true;connection.setAttribute('role','status');
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,composer;
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
@@ -169,7 +170,7 @@ function showMessages(data){
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
   const li=node('li');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
-  if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}))));
+  if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target,data.client.id))));
   if(m.media_kind){
    const load=async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url;
    li.append(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(labels,load)
@@ -196,7 +197,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
+ if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;threadTitle.textContent='Загружаем переписку…';replyForm.hidden=true;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  await readThread(id);
  threadTitle.focus({preventScroll:true});
@@ -228,7 +229,11 @@ async function refresh(){
 }
 async function refreshView(){
  if(view==='audience')await refreshAudience();
- else await refresh();
+ else {
+  await refresh();
+  if(view==='inbox'&&thread)await readThread(thread);
+ }
+ connection.hidden=true;
  status.textContent='';
 }
 function build(){
@@ -304,7 +309,7 @@ function build(){
  const threadPanel=node('section',null,'work-thread');threadPanel.append(threadHeading,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
- section.append(header,nav,status,...Object.values(panels));selectView('inbox');
+ section.append(header,nav,connection,status,...Object.values(panels));selectView('inbox');
  if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
@@ -324,7 +329,13 @@ async function poll(){
  try{
   await refresh();
   if(visible()&&view==='inbox'&&thread&&!busy)await readThread(thread,true);
- }catch{}finally{polling=false;}
+  connection.hidden=true;
+ }catch{
+  if(visible()){
+   connection.textContent='Сообщения пока не обновились. Повторим попытку автоматически.';
+   connection.hidden=false;
+  }
+ }finally{polling=false;}
 }
 document.addEventListener('umma:staff-tab',e=>{
  if(e.detail==='messages'&&owner())openInbox();
@@ -332,6 +343,13 @@ document.addEventListener('umma:staff-tab',e=>{
 });
 document.addEventListener('umma:staff-ready',()=>{syncVisibility();void poll();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
+window.addEventListener('offline',()=>{
+ if(visible()){
+  connection.textContent='Нет интернета. Открыта последняя полученная переписка.';
+  connection.hidden=false;
+ }
+});
+window.addEventListener('online',()=>void poll());
 setInterval(()=>{syncVisibility();void poll();},15000);
 syncVisibility();
 })();

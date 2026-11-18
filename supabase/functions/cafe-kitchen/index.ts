@@ -266,7 +266,9 @@ Deno.serve(async req => {
     }
 
     if (body.action === "cashList") {
-      let locations = assignedLocationIds;
+      let locations = assignmentsForResponse
+        .filter(a => ["manager","cashier"].includes(a.staff_role) || (["kitchen","waiter"].includes(a.staff_role) && a.can_accept_payments))
+        .map(a => a.location_id);
       let cafesForResponse: {id:string;name:string}[] = [];
       if (actor.role === "super_admin") {
         const { data: cafes, error: cafesError } = await supabase.from("locations").select("id,name").eq("location_type","cafe").eq("is_active",true).order("name");
@@ -274,10 +276,14 @@ Deno.serve(async req => {
         cafesForResponse = cafes ?? [];
         locations = cafesForResponse.map((x:any)=>x.id);
       } else {
-        const { data: cafes } = await supabase.from("locations").select("id,name").in("id",locations).eq("is_active",true).order("name");
+        if (!locations.length) return response({ok:false,error:"Нет доступа к кассе"},403);
+        const { data: cafes, error: cafesError } = await supabase.from("locations").select("id,name")
+          .in("id",locations).eq("location_type","cafe").eq("is_active",true).order("name");
+        if (cafesError) throw cafesError;
         cafesForResponse = cafes ?? [];
+        locations = cafesForResponse.map(cafe => cafe.id);
       }
-      const locationId = typeof body.locationId === "string" && locations.includes(body.locationId) ? body.locationId : locations[0];
+      const locationId = body.locationId === undefined ? locations[0] : locations.find(id => id === body.locationId);
       if (!locationId) return response({ok:false,error:"Не удалось определить кафе"},403);
       const {data:cashSummary,error:cashSummaryError}=await supabase.rpc("get_cafe_cash_summary",{p_location_id:locationId});
       if(cashSummaryError)return response({ok:false,error:"Не удалось загрузить итог кассы"},500);
@@ -395,6 +401,24 @@ Deno.serve(async req => {
       const signed=await supabase.storage.from("cafe-delivery-evidence").createSignedUrl(data.path,60);if(signed.error)return response({ok:false,error:"Не удалось открыть фото"},500);return response({ok:true,url:signed.data.signedUrl});
     }
 
+    if (body.action === "managerOrderHistory") {
+      const orderId = body.orderId;
+      if (typeof orderId !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(orderId)) {
+        return response({ok:false,error:"Выберите заказ"},400);
+      }
+      const managerLocations = assignmentsForResponse.filter(a => a.staff_role === "manager").map(a => a.location_id);
+      if (actor.role !== "super_admin" && !managerLocations.length) return response({ok:false,error:"Нет доступа к истории"},403);
+      let query = supabase.from("cafe_orders").select("id").eq("id",orderId).eq("source_module","cafe");
+      if (actor.role !== "super_admin") query = query.in("location_id",managerLocations);
+      const {data:order,error:orderError} = await query.maybeSingle();
+      if (orderError) throw orderError;
+      if (!order) return response({ok:false,error:"Заказ недоступен"},404);
+      const {data:events,error} = await supabase.from("cafe_order_events")
+        .select("created_at,from_status,to_status,note").eq("order_id",orderId).order("created_at",{ascending:false});
+      if (error) throw error;
+      return response({ok:true,events:events??[]});
+    }
+
     if (body.action === "list") {
       const { data: orders, error } = await loadCafeOrders(supabase, {
         locationIds: actor.role === "super_admin" && !courierWorkspace ? null : assignedLocationIds,
@@ -506,7 +530,7 @@ Deno.serve(async req => {
         p_order_id: orderId,
         p_actor_telegram_id: telegramId,
         p_payment_status: paymentStatus,
-        p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
+        p_note: typeof body.note === "string" ? body.note.trim().slice(0, 500) : null,
         p_tendered_amount_vnd: tenderedAmount,
         p_change_given_vnd: changeGiven,
       });
@@ -529,7 +553,7 @@ Deno.serve(async req => {
         p_order_id: orderId,
         p_actor_telegram_id: telegramId,
         p_delivery_status: deliveryStatus,
-        p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
+        p_note: typeof body.note === "string" ? body.note.trim().slice(0, 500) : null,
       });
       if (error) {
         const clientError = error.code === "P0001";
@@ -546,11 +570,15 @@ Deno.serve(async req => {
       if (typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId) || !allowedStatuses.includes(status)) {
         return response({ ok: false, error: "Некорректный заказ или статус" }, 400);
       }
+      if (status === "cancelled" && typeof body.initData === "string" && body.initData.startsWith("web:") &&
+          (typeof body.note !== "string" || !body.note.trim() || body.note.length > 500)) {
+        return response({ok:false,error:"Укажите причину отмены (до 500 символов)"},400);
+      }
       const { data, error } = await supabase.rpc("update_cafe_order_status", {
         p_order_id: orderId,
         p_actor_telegram_id: telegramId,
         p_new_status: status,
-        p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
+        p_note: typeof body.note === "string" ? body.note.trim().slice(0, 500) : null,
       });
       if (error) {
         const clientError = /Paid order requires recorded refund before cancellation|Staff role cannot perform this order status transition|SELF_SERVICE_PAYMENT_REQUIRED|Invalid order status transition|Order cannot be completed before payment is confirmed|Delivery must be confirmed before completing the order|Order already has this status|Order already accepted by another employee|Order not found|Order management access denied|Invalid order status/.test(error.message);

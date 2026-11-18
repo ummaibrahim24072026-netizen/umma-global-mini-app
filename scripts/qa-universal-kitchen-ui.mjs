@@ -24,7 +24,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  const staff=await openWorkspace('staff.html');
  {
  const w=staff.window,d=w.document;
- assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':role==='cashier'?'cashOrders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
  assert.equal(d.getElementById('readyStockPanel').hidden,true,'order and counter views exclude planning');
  assert.equal(d.querySelector('[data-web-tab=kitchen]').hidden,role==='cashier');
  if(role!=='cashier'){

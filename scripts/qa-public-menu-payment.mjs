@@ -129,7 +129,7 @@ for(const method of ['cash','qr']){
  assert.equal(cartCount.hidden,true);
  assert.equal(d.getElementById('checkoutTitle').textContent,'Оплата заказа');
  assert.equal(d.getElementById('paymentConfirmedMark').hidden,true);
- assert.match(d.getElementById('receiptHint').textContent,/после подтверждения оплаты/);
+ assert.match(d.getElementById('receiptHint').textContent,method==='cash'?/Назовите сотруднику ваш номер заказа/:/после подтверждения оплаты/);
  assert.equal(created,2);assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(calls[0].paymentMethod,method);assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('guestPayment').hidden,method!=='qr');assert.ok(d.getElementById('paymentState').textContent.includes(method==='qr'?'QR':'наличными'));
  const receiptLines=d.getElementById('receiptDetails');
  assert.equal(receiptLines.hidden,false);

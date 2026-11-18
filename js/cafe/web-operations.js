@@ -83,7 +83,7 @@ $('posForm').onsubmit=sell;$('posMethod').onchange=paymentFields;$('posCash').on
 $('posLocation').onchange=()=>{cart.clear();sale=null;$('posReceipt').hidden=true;renderCart();menu();showPair(screen());void loadAvailability().then(menu).catch(e=>notice(e.message));if(openKitchen)window.ummaKitchen.rerender?.();};
 $('posProducts').onclick=e=>{const b=e.target.closest('[data-pos-add]');if(!b||busy)return;const p=available().find(x=>x.id===b.dataset.posAdd);if(!p)return;const x=cart.get(p.id)||{product:p,quantity:0};if(x.quantity>=Math.min(99,p.available))return;x.quantity++;cart.set(p.id,x);renderCart();};
 $('posCart').onclick=e=>{const b=e.target.closest('[data-pos-delta]');if(!b||busy)return;const x=cart.get(b.dataset.id);if(!x)return;const qty=x.quantity+Number(b.dataset.posDelta);if(qty>x.quantity&&qty>Math.min(99,available().find(p=>p.id===b.dataset.id)?.available||0))return;if(qty<=0)cart.delete(b.dataset.id);else x.quantity=qty;renderCart();};
-$('posConfirmQr').onclick=async()=>{if(busy||!sale)return;busy=true;$('posConfirmQr').disabled=true;try{await api('updatePayment',{orderId:sale.id,paymentStatus:'paid',paymentMethod:'qr'},'cafe-kitchen');sale.paymentStatus='paid';showSale(sale);$('posResult').textContent='Оплата подтверждена. Заказ передан на сборку.';}catch(e){$('posResult').textContent=e.message;}finally{busy=false;$('posConfirmQr').disabled=false;}};
+$('posConfirmQr').onclick=async()=>{if(busy||!sale||!window.confirm('Деньги за заказ №'+sale.orderNumber+' на сумму '+money(sale.totalVnd)+' поступили на счёт?'))return;busy=true;$('posConfirmQr').disabled=true;try{await api('updatePayment',{orderId:sale.id,paymentStatus:'paid',paymentMethod:'qr'},'cafe-kitchen');sale.paymentStatus='paid';showSale(sale);$('posResult').textContent='Оплата подтверждена. Заказ передан на сборку.';}catch(e){$('posResult').textContent=e.message;}finally{busy=false;$('posConfirmQr').disabled=false;}};
 $('posShowScreen').onclick=()=>displayOrder(sale?.id).catch(e=>notice(e.message));
 $('screenPair').onclick=async()=>{if(busy)return;busy=true;$('screenPair').disabled=true;try{const old=screen();if(old)await api('screenRevoke',{screenId:old.id});const d=await api('screenCreate',{locationId:$('posLocation').value});const value={id:d.id,token:d.screenToken};localStorage.setItem(screenKey(),JSON.stringify(value));showPair(value);if(sale)await displayOrder(sale.id);}catch(e){$('screenPairState').textContent=e.message;}finally{busy=false;$('screenPair').disabled=false;}};
 $('screenUnpair').onclick=async()=>{const s=screen();if(!s)return;try{await api('screenRevoke',{screenId:s.id});localStorage.removeItem(screenKey());showPair(null);$('screenPairState').textContent='Планшет отключён.';}catch(e){$('screenPairState').textContent=e.message;}};
@@ -97,9 +97,35 @@ function filterStaff(){
 $('webStaffSearch').oninput=filterStaff;
 const roleNames={kitchen_cashier:'Кассир-кухня',kitchen:'Кухня',cashier:'Кассир',courier:'Курьер',manager:'Менеджер'};
 const accessNames={active:'Подключён · вход создан',invited:'Ожидает регистрации по приглашению',expired:'Приглашение истекло',not_created:'Веб-доступ ещё не создан',disabled:'Доступ отключён'};
+async function managerRoster() {
+ const {employees} = await api('managerRoster');
+ const root = $('webStaffList');
+ const cards = employees.map(employee => {
+  const card = document.createElement('article');
+  card.className = 'staff-account';
+  const copy = document.createElement('div');
+  copy.className = 'staff-access-copy';
+  const name = document.createElement('strong');
+  name.textContent = employee.name;
+  const roles = document.createElement('p');
+  roles.textContent = employee.assignments.map(assignment => [
+   assignment.staff_role === 'waiter' ? 'Официант' : roleNames[assignment.staff_role] || assignment.staff_role,
+   assignment.locationName,
+   assignment.can_accept_payments ? 'Принимает оплату' : ''
+  ].filter(Boolean).join(' · ')).join(', ');
+  const status = document.createElement('small');
+  status.textContent = employee.active ? 'Учётная запись активна' : 'Доступ отключён';
+  copy.append(name, roles, status);
+  card.append(copy);
+  return card;
+ });
+ root.replaceChildren(...cards);
+ $('webStaffStatus').textContent = cards.length ? 'Сотрудников в списке: '+cards.length : 'В этом кафе пока нет сотрудников.';
+ filterStaff();
+}
 function staffList(){
  if(staffLoading)return staffLoading;
- staffLoading=(async()=>{const d=await api('staffList'),employees=d.employees||d.accounts.map(a=>({...a,name:a.login,status:a.active?'active':'disabled',assignments:[]}));$('webStaffList').innerHTML=employees.map(a=>'<article class="staff-account" data-staff-status="'+esc(a.status)+'">'+expiredInviteButton(a)+'<div class="staff-access-copy"><strong>'+esc(a.name)+'</strong><p>'+esc(a.assignments.map(s=>(roleNames[s.staff_role==='kitchen'&&s.can_accept_payments?'kitchen_cashier':s.staff_role]||s.staff_role)+' · '+s.locationName).join('; ')||'Веб-доступ')+'</p><p class="staff-access-state">'+esc(accessNames[a.status])+'</p>'+(a.login?'<small>Логин: '+esc(a.login)+'</small>':'<small>Сотрудник должен открыть приглашение на своём телефоне и задать логин и пароль.</small>')+'</div>'+a.assignments.map(s=>'<div class="staff-role-editor"><label>Роль · '+esc(s.locationName)+'<select data-staff-role-select="'+a.actor_id+'" data-location="'+esc(s.location_id)+'">'+Object.entries(roleNames).map(([value,label])=>'<option value="'+value+'"'+(value===(s.staff_role==='kitchen'&&s.can_accept_payments?'kitchen_cashier':s.staff_role)?' selected':'')+'>'+label+'</option>').join('')+'</select></label><button type="button" data-save-staff-role="'+a.actor_id+'" data-location="'+esc(s.location_id)+'">Сохранить роль</button></div>').join('')+(['invited','expired','not_created'].includes(a.status)?'<button type="button" data-reinvite-staff="'+a.actor_id+'" data-staff-name="'+esc(a.name)+'">Получить ссылку приглашения</button>':a.status==='active'&&Number(a.actor_id)!==auth.actorId()?'<button type="button" data-disable-staff="'+a.actor_id+'">Отключить</button>':'')+'</article>').join('')||'<p>Сотрудников пока нет. Создайте приглашение выше.</p>';filterStaff();$('webStaffStatus').textContent='Сотрудников в списке: '+employees.length;
+ staffLoading=(async()=>{if(me.user.role!=='super_admin')return managerRoster();const d=await api('staffList'),employees=d.employees||d.accounts.map(a=>({...a,name:a.login,status:a.active?'active':'disabled',assignments:[]}));$('webStaffList').innerHTML=employees.map(a=>'<article class="staff-account" data-staff-status="'+esc(a.status)+'">'+expiredInviteButton(a)+'<div class="staff-access-copy"><strong>'+esc(a.name)+'</strong><p>'+esc(a.assignments.map(s=>(roleNames[s.staff_role==='kitchen'&&s.can_accept_payments?'kitchen_cashier':s.staff_role]||s.staff_role)+' · '+s.locationName).join('; ')||'Веб-доступ')+'</p><p class="staff-access-state">'+esc(accessNames[a.status])+'</p>'+(a.login?'<small>Логин: '+esc(a.login)+'</small>':'<small>Сотрудник должен открыть приглашение на своём телефоне и задать логин и пароль.</small>')+'</div>'+a.assignments.map(s=>'<div class="staff-role-editor"><label>Роль · '+esc(s.locationName)+'<select data-staff-role-select="'+a.actor_id+'" data-location="'+esc(s.location_id)+'">'+Object.entries(roleNames).map(([value,label])=>'<option value="'+value+'"'+(value===(s.staff_role==='kitchen'&&s.can_accept_payments?'kitchen_cashier':s.staff_role)?' selected':'')+'>'+label+'</option>').join('')+'</select></label><button type="button" data-save-staff-role="'+a.actor_id+'" data-location="'+esc(s.location_id)+'">Сохранить роль</button></div>').join('')+(['invited','expired','not_created'].includes(a.status)?'<button type="button" data-reinvite-staff="'+a.actor_id+'" data-staff-name="'+esc(a.name)+'">Получить ссылку приглашения</button>':a.status==='active'&&Number(a.actor_id)!==auth.actorId()?'<button type="button" data-disable-staff="'+a.actor_id+'">Отключить</button>':'')+'</article>').join('')||'<p>Сотрудников пока нет. Создайте приглашение выше.</p>';filterStaff();$('webStaffStatus').textContent='Сотрудников в списке: '+employees.length;
  })().finally(()=>{staffLoading=null;});
  return staffLoading;
 }
@@ -112,13 +138,77 @@ $('webStaffList').onclick=async e=>{const b=e.target.closest('[data-disable-staf
 $('webStaffList').onchange=e=>{if(e.target.matches('[data-staff-role-select]'))e.target.dataset.roleDirty='true';};
 $('webStaffRefresh').onclick=()=>void staffList().catch(e=>$('webStaffStatus').textContent=e.message);
 $('webInviteForm').onsubmit=async e=>{e.preventDefault();const button=e.target.querySelector('button');button.disabled=true;try{const d=await api('inviteStaff',{name:$('webStaffName').value,locationId:$('webStaffLocation').value,role:$('webStaffRole').value});showInvite(d.invite,$('webStaffName').value);await staffList();}catch(err){$('webInviteResult').textContent=err.message;}finally{button.disabled=false;}};
-setInterval(()=>{if(me?.user.role==='super_admin'&&currentTab==='admin'&&!document.hidden&&!$('webStaffList').querySelector('[data-role-dirty]')&&!$('webStaffList').contains(document.activeElement))void staffList().catch(e=>$('webStaffStatus').textContent=e.message);},10000);
-function tab(name){
+setInterval(()=>{if(me&&currentTab==='admin'&&!document.hidden&&!$('webStaffList').querySelector('[data-role-dirty]')&&!$('webStaffList').contains(document.activeElement))void staffList().catch(e=>$('webStaffStatus').textContent=e.message);},10000);
+const overview = $('webOverview');
+const overviewLocation = $('webOverviewLocation');
+let overviewRequest;
+function clearOverview() {
+ $('webOverviewMetrics').hidden = true;
+ $('webOverviewStock').hidden = true;
+}
+async function loadOverview() {
+ if (currentTab !== 'overview' || !overviewLocation.value || document.hidden) return;
+ const id = overviewLocation.value;
+ if (overviewRequest?.id === id) return;
+ const request = {id};
+ overviewRequest = request;
+ const status = $('webOverviewStatus');
+ if ($('webOverviewMetrics').hidden) status.textContent = 'Загружаем сводку…';
+ $('webOverviewRefresh').disabled = true;
+ try {
+  const {metrics, soldOut} = await api('managerOverview', {locationId:id});
+  if (overviewRequest !== request) return;
+  for (const field of overview.querySelectorAll('[data-overview]')) {
+   const value = metrics[field.dataset.overview];
+   field.textContent = value == null ? '—' : field.dataset.overview === 'revenue' ? money(value) : String(value);
+  }
+  $('webOverviewStockList').replaceChildren(...soldOut.map(name => {
+   const item = document.createElement('li');
+   item.textContent = name;
+   return item;
+  }));
+  $('webOverviewStock').hidden = soldOut.length === 0;
+  $('webOverviewMetrics').hidden = false;
+  status.textContent = '';
+ } catch (error) {
+  if (overviewRequest !== request) return;
+  if (error.status === 401 || error.status === 403) clearOverview();
+  status.textContent = ($('webOverviewMetrics').hidden ? '' : 'Показаны последние полученные данные. ') + error.message;
+ } finally {
+  if (overviewRequest === request) {
+   overviewRequest = null;
+   $('webOverviewRefresh').disabled = false;
+  }
+ }
+}
+function updateOverviewLinks() {
+ overview.querySelector('[data-overview-tab="cashOrders"]').hidden =
+  !me || (me.user.role !== 'super_admin' && !me.assignments?.some(a =>
+   a.location_id === overviewLocation.value && a.staff_role === 'manager' && a.can_accept_payments));
+}
+overviewLocation.onchange = () => {
+ clearOverview();
+ updateOverviewLinks();
+ void loadOverview();
+};
+$('webOverviewRefresh').onclick = loadOverview;
+overview.querySelectorAll('[data-overview-tab]').forEach(button => {
+ button.onclick = () => {
+  tab(button.dataset.overviewTab, overviewLocation.value);
+  window.scrollTo({top:0,behavior:'instant'});
+ };
+});
+window.addEventListener('online', loadOverview);
+document.addEventListener('visibilitychange', loadOverview);
+setInterval(loadOverview, 15000);
+
+function tab(name, cafeId){
  const cash=name==='pos'||name==='cashOrders';
  const counter=name==='pos'&&openKitchen;
  const nav=document.querySelector('[data-web-tab="'+(cash?'pos':name)+'"]');
  if(!nav||nav.hidden)return;
  currentTab=name;notice('');
+ overview.hidden=name!=='overview';
  document.body.dataset.workspace=name;
  $('posCartJump').hidden=name!=='pos'||!cart.size||basketInView;
  document.querySelector('.web-account-menu')?.removeAttribute('open');
@@ -128,12 +218,26 @@ function tab(name){
  $('cafeKitchenPage').hidden=!counter&&!['cashOrders','orders','courier'].includes(name);
  document.querySelectorAll('[data-web-tab]').forEach(b=>b.setAttribute('aria-current',String(b===nav)));
  document.querySelectorAll('[data-cash-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cashView===name)));
- if(!$('cafeKitchenPage').hidden)window.ummaKitchen.open(name==='courier',name==='cashOrders'?'payment':'active');
+ if(!$('cafeKitchenPage').hidden){
+  const boardArgs=[name==='courier',name==='cashOrders'?'payment':'active'];
+  if(cafeId)boardArgs.push(cafeId);
+  window.ummaKitchen.open(...boardArgs);
+ }
+ if(name==='kitchen'&&cafeId){
+  const stockLocation=$('readyStockLocation');
+  if(Array.from(stockLocation.options).some(o=>o.value===cafeId)&&stockLocation.value!==cafeId){
+   stockLocation.value=cafeId;
+   stockLocation.dispatchEvent(new Event('change'));
+  }
+ }
  document.dispatchEvent(new CustomEvent('umma:staff-tab',{detail:name}));
+ if(name==='overview')void loadOverview();
  if(name==='admin')void staffList().catch(e=>$('webStaffStatus').textContent=e.message);
 }
 document.querySelectorAll('[data-web-tab],[data-cash-view]').forEach(b=>b.onclick=()=>{
- tab(b.dataset.webTab||b.dataset.cashView);window.scrollTo({top:0,behavior:'instant'});
+ const destination=b.dataset.webTab||b.dataset.cashView;
+ const cashierOnly=me?.assignments?.some(a=>a.staff_role==='cashier')&&!openKitchen;
+ tab(destination==='pos'&&b.dataset.webTab&&cashierOnly?'cashOrders':destination);window.scrollTo({top:0,behavior:'instant'});
 });
 $('counterOpenOrders').onclick=()=>{tab('orders');window.scrollTo({top:0,behavior:'instant'});};
 $('webCashShift').onclick=()=>{
@@ -152,6 +256,14 @@ $('webLogout').onclick=async()=>{try{await api('logout');}catch{}auth.clear();lo
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});$('webInstall').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}else notice('В меню браузера выберите «Установить приложение» или «Добавить на главный экран». В Safari: «Поделиться» → «На экран Домой».');};
 async function boot(){me=await api('me');window.ummaCafeEpoch?.apply(me.cafeResetEpoch);auth.setActor(Number(me.user.id));window.ummaRole=me.user.role;window.ummaUser=me.user;$('webIdentity').textContent=me.user.name||'Сотрудник';$('webLogin').hidden=true;$('webLogout').hidden=false;
 const owner=me.user.role==='super_admin',roles=me.assignments||[],sell=owner||roles.some(a=>['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments),courier=owner||roles.some(a=>a.staff_role==='courier'),kitchen=owner||roles.some(a=>a.staff_role!=='courier');
+const roleLabels={manager:'Менеджер',cashier:'Кассир',kitchen:'Кухня',waiter:'Официант',courier:'Курьер'};
+$('webRole').textContent=owner?'Владелец':Array.from(new Set(roles.map(a=>roleLabels[a.staff_role]).filter(Boolean))).join(' · ');
+const managerLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&a.staff_role==='manager'));
+overviewLocation.replaceChildren(...managerLocations.map(l=>{
+ const option=document.createElement('option');option.value=l.id;option.textContent=l.name;return option;
+}));
+overviewLocation.closest('label').hidden=managerLocations.length===1;
+updateOverviewLinks();
 const stockLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&['kitchen','manager'].includes(a.staff_role)));
 $('webStockLink').hidden=requested==='stock'||!stockLocations.length;
 if(requested==='stock'){
@@ -171,11 +283,15 @@ if(openKitchen){
   document.querySelector('[data-web-tab="orders"] span').firstChild.textContent='Заказы ';
   $('posHeading').textContent='Новый заказ со стойки';
 }
-for(const [name,allowed]of [['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',owner],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
+for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',!!managerLocations.length],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
+$('webInvitePanel').hidden=!owner;
+$('webStaffDescription').textContent=owner?'Управляйте ролями и доступом сотрудников к рабочему кабинету.':'Сотрудники, назначенные в ваши кафе.';
 document.body.classList.toggle('work-owner',owner);
+document.body.classList.toggle('work-waiter',roles.some(a=>a.staff_role==='waiter')&&!owner&&!managerLocations.length);
+document.body.classList.toggle('work-cash-access', sell||!!managerLocations.length||roles.some(a=>a.staff_role==='waiter'&&a.can_accept_payments));
 document.dispatchEvent(new CustomEvent('umma:staff-ready',{detail:me}));
-tab(owner&&requested==='messages'?'messages':openKitchen?'pos':!owner&&roles.some(a=>a.staff_role==='kitchen')?'orders':sell?'pos':courier?'courier':'orders');
+tab(owner&&requested==='messages'?'messages':managerLocations.length?'overview':openKitchen?'pos':!owner&&roles.some(a=>a.staff_role==='kitchen')?'orders':sell?'cashOrders':courier?'courier':'orders');
 if(sell){
  try{
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();

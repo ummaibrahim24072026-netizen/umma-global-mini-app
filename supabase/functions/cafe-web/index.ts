@@ -63,6 +63,44 @@ Deno.serve(async req=>{
   const {data,error}=await db.rpc(name,{p_actor:actor,p_location:b.locationId,p_day:b.date,...(b.action==='ingredientReceive'?{p_key:b.requestKey,p_supplier:b.supplier||'',p_items:b.items}:{})});
   if(error)return reply({ok:false,error:/access denied/i.test(error.message)?'Нет доступа к ингредиентам':/^(Проверьте|Укажите)/.test(error.message)?error.message:'Не удалось сохранить закупку. Проверьте данные и повторите.'},/access denied/i.test(error.message)?403:error.code==='P0001'||error.code?.startsWith('22')?400:503);return reply(data);
  }
+ if(b.action==='managerOverview'){
+  const locationId=b.locationId;
+  if(typeof locationId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(locationId))return reply({ok:false,error:'Выберите кафе'},400);
+  if(!isOwner&&!assignments?.some(a=>a.location_id===locationId&&a.staff_role==='manager'))return reply({ok:false,error:'Нет доступа к сводке этого кафе'},403);
+  const {data:location,error:locationError}=await db.from('locations').select('id,ready_stock_enabled')
+    .eq('id',locationId).eq('location_type','cafe').eq('is_active',true).maybeSingle();
+  if(locationError)throw locationError;
+  if(!location)return reply({ok:false,error:'Кафе недоступно'},404);
+
+  // Nha Trang is UTC+7 year-round. Terminal counts follow the calendar day at the cafe.
+  const now=Date.now();
+  const offset=7*60*60*1000;
+  const dayStart=new Date(Math.floor((now+offset)/86400000)*86400000-offset).toISOString();
+  const orders=()=>db.from('cafe_orders').select('id',{head:true,count:'exact'}).eq('location_id',locationId).eq('source_module','cafe');
+  const active=()=>orders().not('status','in','(completed,cancelled)');
+  const counts={
+   new:orders().in('status',['pending','confirmed']).or('requires_prepayment.eq.false,payment_status.eq.paid').eq('preorder_waiting',false),
+   payment:active().eq('payment_status','pending').or('payment_timing.is.null,payment_timing.neq.on_delivery'),
+   preparing:orders().eq('status','preparing'),
+   ready:orders().eq('status','ready').neq('delivery_status','picked_up'),
+   delivery:active().eq('delivery_status','picked_up'),
+   completed:orders().eq('status','completed').gte('completed_at',dayStart),
+   cancelled:orders().eq('status','cancelled').gte('cancelled_at',dayStart)
+  };
+  const [totals,cash,stock]=await Promise.all([
+   Promise.all(Object.entries(counts).map(async ([key,request])=>{
+    const {count,error}=await request;if(error||count===null)throw error??Error('Missing order count');
+    return [key,count];
+   })),
+   db.rpc('get_cafe_cash_summary',{p_location_id:locationId}),
+   location.ready_stock_enabled?db.rpc('cafe_ready_list',{p_actor:actor,p_location:locationId}):Promise.resolve({data:null,error:null})
+  ]);
+  if(cash.error)throw cash.error;
+  if(stock.error)throw stock.error;
+  const soldOut=stock.data?.products?.filter((p:{confirmed:boolean;state:string;available:number})=>p.confirmed&&p.state!=='paused'&&p.available===0)
+    .map((p:{name:string})=>p.name)??[];
+  return reply({ok:true,metrics:{...Object.fromEntries(totals),revenue:cash.data?.total24hVnd??null},soldOut});
+ }
  if(b.action==='staffRoleUpdate'){
   if(!isOwner)return reply({ok:false,error:'Только владелец'},403);
   const {data,error}=await db.rpc('cafe_web_change_staff_role',{p_actor:actor,p_target:b.actorId,p_location:b.locationId,p_role:b.role});if(error)return reply({ok:false,error:/^(Сначала|Сотрудник|Укажите)/.test(error.message)?error.message:'Не удалось изменить роль'},400);return reply(data);
@@ -80,6 +118,30 @@ Deno.serve(async req=>{
  if(b.action==='inviteStaff'){
   if(!isOwner)return reply({ok:false,error:'Только владелец'},403);if(typeof b.name!=='string'||!b.name.trim())return reply({ok:false,error:'Укажите имя'},400);
   const token=secret();const {data,error}=await db.rpc('cafe_web_invite_staff',{p_actor:actor,p_location:b.locationId,p_role:b.role,p_name:b.name.trim(),p_token:await sha256(token)});if(error)return reply({ok:false,error:'Проверьте кафе и должность'},400);return reply({ok:true,invite:token,actorId:data});
+ }
+ if(b.action==='managerRoster'){
+  const managerLocations=(assignments??[]).filter(a=>a.staff_role==='manager').map(a=>a.location_id);
+  if(!managerLocations.length)return reply({ok:false,error:'Доступ к сотрудникам только своего кафе'},403);
+  const [locations,roster]=await Promise.all([
+   db.from('locations').select('id,name').in('id',managerLocations).eq('location_type','cafe').eq('is_active',true),
+   db.from('cafe_staff').select('telegram_id,location_id,staff_role,can_accept_payments').in('location_id',managerLocations).eq('is_active',true)
+  ]);
+  if(locations.error)throw locations.error;
+  if(roster.error)throw roster.error;
+  const activeLocations=new Map((locations.data??[]).map(l=>[l.id,l.name]));
+  const staff=(roster.data??[]).filter(s=>activeLocations.has(s.location_id));
+  if(!staff.length)return reply({ok:true,employees:[]});
+  const ids=[...new Set(staff.map(s=>s.telegram_id))];
+  const {data:users,error}=await db.from('telegram_users').select('telegram_id,first_name,last_name,is_active').in('telegram_id',ids);
+  if(error)throw error;
+  const employees=(users??[]).map(user=>({
+   name:[user.first_name,user.last_name].filter(Boolean).join(' ')||'Сотрудник',
+   active:user.is_active,
+   assignments:staff.filter(s=>s.telegram_id===user.telegram_id).map(s=>({
+    staff_role:s.staff_role,can_accept_payments:s.can_accept_payments,locationName:activeLocations.get(s.location_id)
+   }))
+  }));
+  return reply({ok:true,employees});
  }
  if(b.action==='staffList'){
   if(!isOwner)return reply({ok:false},403);
