@@ -1622,7 +1622,7 @@
 .public-cafe-menu #checkout :is(.cart-controls button, #undoClearCart, #newOrder, .checkout-payment-options label),
 .public-cafe-menu #customerOrders .order-action,
 .public-cafe-menu :is(.cafe-spotlight-cta, .order-mode-options label span),
-.public-cafe-menu .umma-connect-chat :is(.connect-record-pause, .connect-voice-speed) {
+.public-cafe-menu .umma-connect-chat :is(.connect-record-pause, .connect-voice-speed, .connect-record-main button, .connect-attachment-action, .connect-expression-tabs button) {
   background: var(--customer-button-fill);
   border-color: var(--customer-button-fill);
   color: var(--customer-button-label);
@@ -1658,6 +1658,11 @@
 .public-cafe-menu #cafePage .cafe-category[aria-pressed="true"],
 .public-cafe-menu #customerOrders .customer-order-filters button[aria-pressed="true"],
 .public-cafe-menu #checkout .order-mode-options label:has(:checked) span {
+  background: var(--customer-button-active);
+  color: var(--customer-button-label);
+  box-shadow: inset 0 0 0 2px var(--customer-back-border);
+}
+.public-cafe-menu .umma-connect-chat .connect-expression-tabs button[aria-pressed="true"] {
   background: var(--customer-button-active);
   color: var(--customer-button-label);
   box-shadow: inset 0 0 0 2px var(--customer-back-border);

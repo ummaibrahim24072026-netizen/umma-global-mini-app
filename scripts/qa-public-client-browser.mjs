@@ -172,6 +172,7 @@ try{
   await whiteLabels('.connect-record-pause','.connect-translated-text > button:not([hidden])');
   await voicePanel.locator('.connect-record-pause').click();
   await voicePanel.getByText(/Продолжить/).waitFor();
+  await whiteLabels('.connect-record-main button:not([hidden])');
   await voicePanel.locator('.connect-record-pause').click();
   await page.waitForFunction(()=>document.querySelector('.connect-record-time')?.textContent==='0:01');
   if(output){
