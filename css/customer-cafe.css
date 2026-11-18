@@ -233,39 +233,12 @@
   background: #f5fbfa;
   box-shadow: 0 25px 82px #00343645;
 }
-.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"]) {
+.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"]) {
   --dock-icon-surface: var(--umma-brand-primary);
   color: var(--umma-brand-deep);
 }
-.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"])::after {
+.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"])::after {
   background: var(--umma-brand-white);
-}
-.public-cafe-menu:has(.customer-section[open]) { overflow: hidden; }
-.public-cafe-menu:has(.customer-section[open], #checkout[data-stage="cart"][open]) #cafePage {
-  visibility: hidden;
-}
-.public-cafe-menu .customer-section[open] {
-  position: fixed;
-  inset: 0 0 var(--customer-dock-height, 80px);
-  z-index: 15;
-  width: 100%;
-  max-width: 680px;
-  height: auto;
-  max-height: none;
-  margin: 0 auto;
-  padding-block-start: env(safe-area-inset-top);
-  overflow: auto;
-  overscroll-behavior: contain;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-.public-cafe-menu #checkout[data-stage="cart"][open] {
-  position: fixed;
-  inset: 0 0 var(--customer-dock-height, 80px);
-  z-index: 15;
-  max-height: calc(100dvh - var(--customer-dock-height, 80px) - env(safe-area-inset-top)) !important;
-  overscroll-behavior: contain;
 }
 .public-cafe-menu .checkout-header {
   background: var(--cafe-header);
@@ -902,4 +875,123 @@
 #checkout[data-stage="receipt"] :is(button, a, select):focus-visible {
   outline: 2px solid #00796f;
   outline-offset: 2px;
+}
+
+
+/* The dock and its scroll region occupy separate rows in every client view. */
+.customer-shell {
+  --customer-gutter: clamp(12px, 4vw, 22px);
+  --customer-view-width: 680px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100vh;
+  height: calc(100dvh - var(--customer-keyboard-inset, 0px));
+  padding-block-start: env(safe-area-inset-top);
+  background: var(--umma-brand-canvas);
+}
+#customerContent {
+  min-inline-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 72px 16px;
+}
+.public-cafe-menu #cafePage {
+  min-height: auto;
+  min-inline-size: 0;
+  padding-inline: max(var(--customer-gutter), env(safe-area-inset-left), env(safe-area-inset-right));
+  padding-block-end: 24px;
+}
+.public-cafe-menu #customerDock {
+  position: relative;
+  inset: auto;
+  inline-size: 100%;
+  max-inline-size: none;
+  border-radius: 0;
+}
+#customerDock .customer-actions {
+  max-inline-size: var(--customer-view-width);
+  margin-inline: auto;
+  grid-auto-rows: minmax(62px, auto);
+}
+#customerDock .customer-actions .plain-btn {
+  font-size: clamp(10px, 2.8vw, 12px);
+}
+#customerDock .customer-actions .plain-btn:focus-visible {
+  outline-offset: -2px;
+}
+#customerContent > dialog.customer-view[open] {
+  position: relative;
+  inset: auto !important;
+  width: 100% !important;
+  max-inline-size: var(--customer-view-width) !important;
+  max-height: none !important;
+  height: auto;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 0 max(0px, env(safe-area-inset-left), env(safe-area-inset-right));
+  overflow: visible;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: var(--umma-brand-canvas) !important;
+  color: var(--umma-brand-ink);
+}
+#customerContent > dialog.customer-view[open] > :is(.checkout-header, .connect-hero) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  min-height: 62px;
+  flex-shrink: 0;
+  padding: 9px var(--customer-gutter) !important;
+  border: 0;
+  border-block-end: 1px solid var(--umma-brand-line) !important;
+  border-radius: 0;
+  background: #f5fbfa !important;
+  color: var(--umma-brand-ink);
+}
+#customerContent > .customer-view > :is(.checkout-header, .connect-hero) h2 {
+  margin: 0;
+  font-size: clamp(19px, 5vw, 24px);
+  line-height: 1.2;
+  color: var(--umma-brand-ink) !important;
+  text-shadow: none;
+  overflow-wrap: anywhere;
+}
+#customerContent .customer-view :is(.checkout-header, .connect-hero) :is(.close, .connect-close) {
+  display: grid;
+  place-items: center;
+  inline-size: auto;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  background: white;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 12px;
+  color: var(--umma-brand-deep);
+}
+#customerContent .customer-view > :is(.checkout-body, .nearby-cafe-body) {
+  padding: 14px var(--customer-gutter) 20px;
+}
+#customerContent #checkout :is(.cart-scroll, .checkout-form-scroll, #result) {
+  overflow: visible;
+  max-height: none;
+}
+#customerContent #checkout :is(.cart-footer, .checkout-pay-footer) {
+  padding-block-end: 12px;
+}
+#customerContent #checkout .checkout-form-scroll { padding-inline: var(--customer-gutter); }
+#customerContent .cart-heading { min-inline-size: 0; }
+#customerContent .connect-hero p { color: var(--umma-brand-muted); }
+#customerContent[data-view="chat"] { overflow: hidden; }
+#customerContent > .umma-connect-chat.customer-view[open] {
+  height: 100%;
+  overflow: hidden;
+}
+#customerContent > .umma-connect-chat.customer-view .connect-entry { min-inline-size: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  #customerContent .customer-view { animation: customer-view-enter 180ms ease-out; }
+}
+@keyframes customer-view-enter {
+  from { opacity: .6; }
+  to { opacity: 1; }
 }

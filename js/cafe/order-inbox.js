@@ -5,6 +5,7 @@ const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здес
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
 const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
 const host=document.getElementById('orderInboxHost'),inHub=!!host?.closest('#customerMessages');
+const navigation=inHub?window.ummaCafeNavigation:null;
 const inPublicMenu=inHub||!!host?.closest('.customer-actions');
 const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления о заказах':ui()[0];
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
@@ -123,8 +124,7 @@ function renderOrders(list){
  list.hidden=groups.size===0;
  list.previousElementSibling.hidden=groups.size>0;
 }
-function open(){
- if(document.querySelector('dialog[data-umma-inbox][open]'))return;
+function createInbox(){
  const dialog=document.createElement('dialog');
  dialog.dataset.ummaInbox='';
  dialog.id='ummaOrderInboxDialog';
@@ -137,7 +137,7 @@ function open(){
  close.textContent='✕';
  close.setAttribute('aria-label',ui()[1]);
  close.style.cssText='float:inline-end;width:44px;height:44px;min-height:44px;border:1px solid #c8dbd8;border-radius:12px;background:white;color:#145354';
- close.onclick=()=>dialog.close();
+ close.onclick=()=>navigation?navigation.back('messages'):dialog.close();
  const heading=document.createElement('h2');
  heading.id='ummaOrderInboxTitle';
  heading.textContent=inboxTitle();
@@ -147,18 +147,50 @@ function open(){
  const list=document.createElement('ol');
  list.className='umma-inbox-orders';
  list.setAttribute('role','list');
- dialog.append(styles,close,heading,empty,list);
- if(window.ummaOrderAlerts?.controls)dialog.append(window.ummaOrderAlerts.controls);
- document.body.append(dialog);
- dialog.addEventListener('close',()=>{
+ if(navigation){
+  const header=document.createElement('div'),body=document.createElement('div');
+  header.className='checkout-header';
+  body.className='checkout-body';
+  close.className='close';
+  close.dataset.customerBack='messages';
+  close.onclick=null;
+  close.removeAttribute('style');
+  heading.removeAttribute('style');
+  heading.tabIndex=-1;
+  header.append(heading,close);
+  body.append(empty,list);
+  dialog.append(styles,header,body);
+  dialog.classList.add('customer-view');
+  dialog.hidden=true;
+  dialog.setAttribute('role','region');
+ }else dialog.append(styles,close,heading,empty,list);
+ function enter(){
+  if(window.ummaOrderAlerts?.controls)(dialog.querySelector('.checkout-body')||dialog).append(window.ummaOrderAlerts.controls);
+  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
+  save();
+ }
+ function leave(){
   const controls=window.ummaOrderAlerts?.controls;
   if(controls)(document.getElementById('syncState')?.parentNode||document.body).append(controls);
   dialog.remove();
- });
- dialog.showModal();
- data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
- save();
+ }
+ if(navigation){
+  document.getElementById('customerContent').append(dialog);
+  dialog.addEventListener('umma:sectionenter',enter);
+  dialog.addEventListener('umma:sectionleave',leave);
+ }else{
+  document.body.append(dialog);
+  dialog.addEventListener('close',leave);
+  dialog.showModal();
+  enter();
+ }
+ return dialog;
+}
+if(navigation)navigation.register('inbox',null,createInbox);
+function open(){
+ if(navigation){navigation.go('inbox');return;}
+ if(!document.querySelector('dialog[data-umma-inbox][open]'))createInbox();
 }
 button.onclick=open;
-window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
+window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,reset(){data={states:{},messages:[],readAt:0};save();if(navigation?.view()==='inbox')navigation.go('messages',{replace:true});else document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
 })();

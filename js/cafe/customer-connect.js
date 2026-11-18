@@ -42,6 +42,7 @@ function savedChatTheme(){
 const chatTitles={ru:'Чат UMMA',en:'UMMA Chat',vi:'Trò chuyện UMMA'};
 const connectHost=document.getElementById('customerConnectHost');
 const inMessages=!!connectHost?.closest('#customerMessages');
+const navigation=inMessages?window.ummaCafeNavigation:null;
 const chatTitle=()=>publicChat?(chatTitles[lang()]||chatTitles.en):t(0);
 const profileSettingsButton=document.getElementById('openChatSettings');
 let settingsDialog;
@@ -313,7 +314,7 @@ function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());
  if(publicChat)dialog.dataset.chatTheme=savedChatTheme();
- const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
+ const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>navigation?navigation.back('messages'):dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
   const menuLabel=({ru:'Действия чата',vi:'Tùy chọn trò chuyện'})[lang()]||'Chat options';
@@ -367,7 +368,7 @@ function build(){
    chatMenu.open=false;
    menuToggle.focus();
   });
-  dialog.addEventListener('close',()=>{chatMenu.open=false;});
+  dialog.addEventListener(navigation?'umma:sectionleave':'close',()=>{chatMenu.open=false;});
   clearButton.onclick=()=>{
    chatMenu.open=false;
    menuToggle.focus();
@@ -522,11 +523,18 @@ function build(){
   content.append(settings,heading,list,form);
   dialog.append(join,push,content,status);
  }
- document.body.append(dialog);
- dialog.addEventListener('close',()=>{
+ if(navigation){
+  dialog.classList.add('customer-view');
+  dialog.hidden=true;
+  dialog.setAttribute('role','region');
+  dialog.querySelector('h2').tabIndex=-1;
+  document.getElementById('customerContent').append(dialog);
+  dialog.addEventListener('umma:sectionenter',activate);
+ }else document.body.append(dialog);
+ dialog.addEventListener(navigation?'umma:sectionleave':'close',()=>{
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
-  button.focus();
+  if(!navigation)button.focus();
  });
  function update(){
   join.hidden=!!token;
@@ -545,7 +553,21 @@ function build(){
  dialog.update=update;
  dialog.releaseDraft=()=>composer.clear();
 }
-async function open(){if(!dialog)build();if(!dialog.open)dialog.showModal();status.textContent='';await refresh();dialog.update?.();if(publicChat)list.scrollTop=list.scrollHeight;await markRead();}
+async function activate(){
+ status.textContent='';
+ await refresh();
+ if(!dialog?.open)return;
+ dialog.update?.();
+ if(publicChat)list.scrollTop=list.scrollHeight;
+ await markRead();
+}
+if(navigation)navigation.register('chat',null,()=>{if(!dialog)build();return dialog;});
+async function open(){
+ if(navigation){navigation.go('chat');return;}
+ if(!dialog)build();
+ if(!dialog.open)dialog.showModal();
+ await activate();
+}
 button.onclick=open;window.ummaCustomerConnect={open};
 if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
  if(!dialog)build();
@@ -558,5 +580,5 @@ window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatT
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();
-if(new URL(location.href).searchParams.has('connect'))void open();
+if(new URL(location.href).searchParams.has('connect')&&!history.state?.ummaCafeView?.previous&&navigation?.view()==='menu')void open();
 })();
