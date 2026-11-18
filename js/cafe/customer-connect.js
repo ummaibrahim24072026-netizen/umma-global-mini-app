@@ -245,6 +245,7 @@ function renderThread(){
   if(publicChat)return m.read_at?'✓✓ '+receipt[1]:'✓ '+receipt[0];
   return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
  });
+ window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
  if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;
  badge();
@@ -636,7 +637,8 @@ async function open(){
  }
  await refresh();
 }
-button.onclick=open;window.ummaCustomerConnect={open};
+button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
+window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
 if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>{
  if(settingsDialog.open)return;
  if(!dialog)build();
