@@ -172,7 +172,7 @@ function showMessages(data){
  const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
  const labels={album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'};
  window.ummaConnectMedia.render(messages,data.messages||[],m=>{
-  const li=node('li');li.dataset.direction=m.direction;
+  const li=node('li',null,'connect-chat-bubble');li.dataset.direction=m.direction;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
   if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target,data.client.id))));
   if(m.media_kind){
@@ -275,9 +275,9 @@ function build(){
  form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked,publicNews:publicNews.checked&&!installedOnly.checked&&language.value==='all'};confirm.textContent=campaign.publicNews?'Опубликовать и отправить подписчикам':'Отправить подписчикам';previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent=(campaign.publicNews?'В меню увидят все. ':'')+'Получатели рассылки: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
  confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent=(campaign.publicNews?'Опубликовано в меню. ':'')+'Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();language.value='all';updatePublic();});
  threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');
- replyForm=node('form');replyForm.hidden=true;replyBody=node('textarea');replyBody.maxLength=2000;
+ replyForm=node('form');replyForm.classList.add('connect-compose');replyForm.hidden=true;replyBody=node('textarea');replyBody.maxLength=2000;
  replyBody.addEventListener('input',()=>{replyKey=null;replyStatus.textContent='';});
- const send=node('button','Отправить ответ','primary');send.type='submit';
+ const send=node('button','Отправить ответ','primary connect-send');send.type='submit';
  replyStatus=node('p');replyStatus.setAttribute('role','status');
  replyForm.append(label('Ответ',replyBody),send,replyStatus);
  composer=window.ummaConnectComposer({lang:'ru',el:node,form:replyForm,body:replyBody,send,status:replyStatus,
@@ -306,7 +306,7 @@ function build(){
    void refresh().catch(()=>{});
   },replyStatus).finally(()=>composer.busy(false));
  };
- const threadHeading=node('header',null,'work-call-heading');threadHeading.append(threadTitle);
+ const threadHeading=node('header',null,'work-call-heading connect-chat-header');threadHeading.append(threadTitle);
  if(calls){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
