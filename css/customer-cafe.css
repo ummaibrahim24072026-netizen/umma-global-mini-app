@@ -722,67 +722,11 @@
   border-radius: 16px;
   overflow-wrap: anywhere;
 }
-#customerChatSettings {
-  width: min(100% - 20px, 460px);
-  max-block-size: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(10px, env(safe-area-inset-bottom)));
-  padding: 16px;
-  border: 1px solid var(--umma-brand-line);
-  border-radius: 24px;
-  background: var(--umma-brand-canvas);
-}
-#customerChatSettings::before { content: none; }
-#customerChatSettings > * { margin: 0; }
-#customerChatSettings .customer-aux-header { margin-block-end: 14px; }
-#customerChatSettings .connect-close {
-  float: none;
-  display: grid;
-  place-items: center;
-  inline-size: 44px;
-  min-block-size: 44px;
-  margin: 0;
-  padding: 0;
-  font-size: 23px;
-  line-height: 1;
-}
-#customerChatSettings .chat-settings-name,
+#customerChatSettings .chat-settings-body { padding: 0 16px 20px; }
 #customerChatSettings .chat-settings-notifications {
   border: 1px solid var(--umma-brand-line);
   border-radius: 16px;
   background: var(--umma-brand-white);
-}
-#customerChatSettings .chat-settings-name {
-  margin-block-end: 10px;
-  padding: 12px;
-}
-#customerChatSettings .chat-settings-name label {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0 8px;
-  margin: 0 0 6px;
-  color: var(--umma-brand-night);
-  font-weight: 700;
-}
-#customerChatSettings .chat-settings-name label span {
-  color: #526e6d;
-  font-size: 12px;
-  font-weight: 500;
-}
-.chat-settings-name-controls { display: flex; gap: 8px; }
-#customerChatSettings .chat-settings-name-controls input {
-  flex: 1 1 0;
-  min-block-size: 44px;
-  padding: 8px 12px;
-  border-radius: 12px;
-}
-#customerChatSettings .connect-save {
-  flex: 0 0 auto;
-  max-inline-size: 60%;
-  padding: 8px 13px;
-  border-color: var(--umma-brand-line);
-  background: var(--umma-brand-pale);
-  color: var(--umma-brand-deep);
-  font-size: 14px;
 }
 #customerChatSettings .chat-setting-row {
   position: relative;
@@ -798,6 +742,8 @@
   border-radius: 15px;
   background: transparent;
   color: var(--umma-brand-night);
+  font: inherit;
+  line-height: 1.35;
   text-align: start;
   cursor: pointer;
 }
@@ -807,7 +753,12 @@
   border-start-end-radius: 0;
 }
 .chat-setting-copy { min-inline-size: 0; overflow-wrap: anywhere; }
-#customerChatSettings .chat-setting-copy small { margin-block-start: 2px; color: #526e6d; }
+#customerChatSettings .chat-setting-copy small {
+  display: block;
+  margin-block-start: 4px;
+  color: var(--umma-brand-muted);
+  font-size: 13px;
+}
 #customerChatSettings .chat-setting-row input {
   position: absolute;
   inline-size: 1px;
@@ -819,9 +770,9 @@
   flex: none;
   inline-size: 42px;
   block-size: 25px;
-  border: 1px solid #789894;
+  border: 1px solid var(--umma-brand-line-strong);
   border-radius: 999px;
-  background: #dbe9e7;
+  background: var(--umma-brand-pale);
 }
 .chat-setting-track::after {
   content: "";
@@ -835,25 +786,19 @@
   box-shadow: 0 1px 3px #133d3d45;
 }
 #customerChatSettings :is(input:checked + .chat-setting-track, [aria-checked=true] .chat-setting-track) {
-  border-color: var(--umma-brand-deep);
-  background: var(--umma-brand-deep);
+  border-color: var(--umma-brand-strong);
+  background: var(--umma-brand-primary);
 }
 #customerChatSettings :is(input:checked + .chat-setting-track, [aria-checked=true] .chat-setting-track)::after {
   inset-inline-start: 20px;
 }
-#customerChatSettings .chat-setting-row input:focus-visible + .chat-setting-track {
-  outline: 3px solid #c4a356;
+#customerChatSettings :is(.chat-setting-row:focus-visible, .chat-setting-row input:focus-visible + .chat-setting-track) {
+  outline: 3px solid var(--umma-brand-strong);
   outline-offset: 3px;
 }
-#customerChatSettings .chat-setting-row input:disabled + .chat-setting-track { opacity: .5; }
+#customerChatSettings :is(.chat-setting-row:disabled, input:disabled + .chat-setting-track) { opacity: .5; }
 #customerChatSettings [role=status] { margin: 0; font-size: 13px; }
 #customerChatSettings [role=status]:not(:empty) { margin-block-start: 8px; }
-@media (max-width: 600px) {
-  #customerChatSettings {
-    inset: auto 0 max(10px, env(safe-area-inset-bottom)) !important;
-    margin-inline: auto;
-  }
-}
 .public-cafe-menu #customerProfile .install-row #installApp { min-height: 56px; border-color: #b8d8d6; }
 /* Dish details and their scrim share the space above the existing dock. */
 .public-cafe-menu:has(#dishDetails[open]) { overflow: hidden; }

@@ -7,19 +7,20 @@
   const save = document.getElementById('saveProfileName');
   const status = document.getElementById('profileNameStatus');
   const t = window.ummaMenuI18n.t;
-  let savedName = '';
+  let savedName = null;
   let statusKey = '';
   try {
-    savedName = (localStorage.getItem(storageKey) || '').trim().slice(0, field.maxLength);
+    savedName = localStorage.getItem(storageKey)?.trim().slice(0, field.maxLength) ?? null;
   } catch {}
-  field.value = savedName;
+  field.value = savedName ?? '';
+  window.ummaMenuProfileName = () => savedName;
 
   function renderStatus() {
     status.textContent = statusKey ? t(statusKey) : '';
   }
 
   field.addEventListener('input', () => {
-    save.disabled = field.value.trim() === savedName;
+    save.disabled = field.value.trim() === (savedName ?? '');
     statusKey = '';
     renderStatus();
   });
@@ -27,8 +28,7 @@
     event.preventDefault();
     const name = field.value.trim().slice(0, field.maxLength);
     try {
-      if (name) localStorage.setItem(storageKey, name);
-      else localStorage.removeItem(storageKey);
+      localStorage.setItem(storageKey, name);
       savedName = field.value = name;
       save.disabled = true;
       statusKey = name ? 'Имя сохранено.' : 'Имя удалено.';

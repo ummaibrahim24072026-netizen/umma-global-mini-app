@@ -55,12 +55,11 @@ const connectHost=document.getElementById('customerConnectHost');
 const inMessages=!!connectHost?.closest('#customerMessages');
 const chatTitle=()=>publicChat?(chatTitles[lang()]||chatTitles.en):t(0);
 const profileSettingsButton=document.getElementById('openChatSettings');
-let settingsDialog;
-const chatSettings={ru:'Настройки чата',en:'Chat settings',vi:'Cài đặt trò chuyện'};
+const settingsDialog=document.getElementById('customerChatSettings');
 const settingsCopy={
- ru:['Имя для переписки','Необязательно','Сохранить имя','Акции и новые блюда','Получать новости и предложения кафе','Push-уведомления кафе','Ответы и звонки, даже когда UMMA закрыта'],
- en:['Name in chat','Optional','Save name','Offers and new dishes','Get news and offers from the cafe','Cafe push notifications','Get replies and calls even when UMMA is closed'],
- vi:['Tên trong cuộc trò chuyện','Không bắt buộc','Lưu tên','Ưu đãi và món mới','Nhận tin tức và ưu đãi từ quán','Thông báo đẩy của quán','Nhận phản hồi và cuộc gọi ngay cả khi đã đóng UMMA']
+ ru:['Акции и новые блюда','Получать новости и предложения кафе','Push-уведомления кафе','Ответы и звонки, даже когда UMMA закрыта'],
+ en:['Offers and new dishes','Get news and offers from the cafe','Cafe push notifications','Get replies and calls even when UMMA is closed'],
+ vi:['Ưu đãi và món mới','Nhận tin tức và ưu đãi từ quán','Thông báo đẩy của quán','Nhận phản hồi và cuộc gọi ngay cả khi đã đóng UMMA']
 };
 const button=el('button',chatTitle(),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (connectHost||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
@@ -98,7 +97,7 @@ const connectionStatus=el('p');connectionStatus.setAttribute('role','status');
 function showReconnect(){
  if(dialog?.open&&token)connectionStatus.textContent=reconnectCopy[lang()]||reconnectCopy.en;
 }
-let list,name,promotions,push;
+let list,promotions,push;
 const mediaCopy={
  ru:{album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
  en:{album:'Open photos and videos',photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
@@ -289,7 +288,7 @@ function renderSetup(){
 async function run(fn,feedback=status,showProgress=true){
  if(busy)return;
  busy=true;await refreshing;
- const buttons=[...(dialog?.querySelectorAll('button')||[]),...(settingsDialog?.querySelectorAll('button')||[]),setupButton,later];
+ const buttons=[...(dialog?.querySelectorAll('button')||[]),...(settingsDialog?.querySelectorAll('button[role=switch]')||[]),setupButton,later];
  buttons.forEach(b=>b.disabled=true);feedback.textContent=showProgress?t(17):'';
  try{await fn();}catch(e){feedback.textContent=e.message||t(16);}
  finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
@@ -302,6 +301,13 @@ async function connect(){
   state=await api('join');
   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
  }catch(error){token='';throw error;}
+}
+async function connectForMessage(){
+ await connect();
+ const profileName=publicChat?window.ummaMenuProfileName?.():null;
+ if(profileName!=null&&profileName!==(state?.client?.name||'')){
+  state=await api('preferences',{name:profileName,language:lang()});
+ }
 }
 function enablePush(feedback,enableOrderAlerts=feedback===status){
  if(busy)return;
@@ -436,11 +442,10 @@ function build(){
   hero.append(heroIcon,heroText,close);
   dialog.append(hero,el('small',t(11)));
  }
- const settingsStatus=publicChat?el('p'):status;
- if(publicChat)settingsStatus.setAttribute('role','status');
+ const settingsStatus=settingsDialog?.querySelector('[role=status]')||status;
  const join=el('button',t(3),'primary');join.type='button';const content=el('div');join.hidden=!!token;content.hidden=!token;
  join.onclick=()=>run(async()=>{await connect();update();state=await api('preferences',{language:lang()});status.textContent='';});
- name=el('input');name.maxLength=80;name.autocomplete='given-name';promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
+ promotions=el('input');promotions.type='checkbox';const check=label(t(5),promotions);check.className='connect-check';
  promotions.onchange=()=>{
   if(busy){promotions.checked=state?.client.promotions===true;return;}
   const selected=promotions.checked;
@@ -456,15 +461,6 @@ function build(){
    }
   },settingsStatus);
  };
- const save=el('button',t(6),'connect-save');save.type='button';
- const savePreferences=()=>run(async()=>{
-  const submittedName=name.value;
-  await connect();
-  state=await api('preferences',{name:submittedName,language:lang()});
-  settingsStatus.textContent=t(13);
-  update(name.value===submittedName);
- },settingsStatus);
- save.onclick=savePreferences;
  push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(settingsStatus,true);
  const off=el('button',t(8),'connect-off');off.type='button';
  const disablePush=()=>run(async()=>{
@@ -474,7 +470,7 @@ function build(){
   update();
  },settingsStatus);
  off.onclick=disablePush;
- let pushSwitch;
+ let pushSwitch,name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  if(publicChat)list.addEventListener('loadedmetadata',event=>{
   const latest=list.lastElementChild;
@@ -499,7 +495,7 @@ function build(){
    const requestKey=crypto.randomUUID();
    sending(true);
    try{
-    await connect();
+    await connectForMessage();
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},{file,kind:'video'},requestKey,'◉ Видеосообщение',composer.error);
     await refreshHidden();
     state=await api('list');
@@ -524,6 +520,7 @@ function build(){
   const draft=composer.draft;
   sending(true);
   void run(async()=>{
+   if(publicChat)await connectForMessage();
    if(draft){
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},draft,pending.requestKey,pending.body,composer.error);
    }else state=await api('send',pending);
@@ -539,39 +536,9 @@ function build(){
    await markRead();
   },status,!publicChat).finally(()=>sending(false));
  };
- const settings=el('section',null,'connect-settings');
- const actions=el('div',null,'connect-actions');
- settings.append(label(t(4),name),check,actions);
  if(publicChat){
-  if(profileSettingsButton){
-   const settingsLabel=window.ummaMenuI18n?.t('Настройки чата')||chatSettings[lang()]||chatSettings.en;
-   settingsDialog=el('dialog',null,'umma-connect');
-   settingsDialog.id='customerChatSettings';
-   settingsDialog.setAttribute('aria-labelledby','customerChatSettingsTitle');
-   const heading=el('h2',settingsLabel);
-   heading.id='customerChatSettingsTitle';
-   const closeSettings=el('button','×','connect-close');
-   closeSettings.type='button';
-   closeSettings.setAttribute('aria-label',t(1));
-   closeSettings.onclick=()=>settingsDialog.close();
-   const [nameTitle,optional,saveName,offersTitle,offersHint,pushTitle,pushHint]=settingsCopy[lang()]||settingsCopy.en;
-   const nameForm=el('form',null,'chat-settings-name');
-   name.id='customerChatName';
-   name.dir='auto';
-   name.setAttribute('aria-describedby','customerChatNameOptional');
-   const nameLabel=el('label',nameTitle);
-   nameLabel.htmlFor=name.id;
-   const optionalText=el('span',optional);
-   optionalText.id='customerChatNameOptional';
-   nameLabel.append(optionalText);
-   const nameControls=el('div',null,'chat-settings-name-controls');
-   save.textContent=saveName;
-   save.type='submit';
-   save.onclick=null;
-   nameForm.onsubmit=event=>{event.preventDefault();void savePreferences();};
-   nameControls.append(name,save);
-   nameForm.append(nameLabel,nameControls);
-
+  if(settingsDialog){
+   const [offersTitle,offersHint,pushTitle,pushHint]=settingsCopy[lang()]||settingsCopy.en;
    const notificationText=(title,hint,id)=>{
     const text=el('span',null,'chat-setting-copy');
     const label=el('strong',title);label.id=id;
@@ -594,19 +561,7 @@ function build(){
    pushSwitch.setAttribute('aria-describedby','customerChatPushHint');
    pushSwitch.append(notificationText(pushTitle,pushHint,'customerChatPush'),el('span',null,'chat-setting-track'));
    pushSwitch.onclick=()=>state?.client?.pushEnabled?disablePush():enablePush(settingsStatus,false);
-   const notifications=el('div',null,'chat-settings-notifications');
-   notifications.append(check,pushSwitch);
-   settings.className='chat-settings-body';
-   settings.replaceChildren(nameForm,notifications,settingsStatus);
-   const brandTemplate=document.getElementById('customerHeadingTemplate');
-   if(brandTemplate){
-    const header=el('div',null,'customer-aux-header');
-    const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
-    brandHeading.querySelector('.customer-heading-copy').append(heading);
-    header.append(brandHeading,closeSettings);
-    settingsDialog.append(header,settings);
-   }else settingsDialog.append(closeSettings,heading,settings);
-   document.body.append(settingsDialog);
+   settingsDialog.querySelector('.chat-settings-notifications').replaceChildren(check,pushSwitch);
   }
   content.className='connect-chat-content';
   const wallpaper=el('div',null,'connect-chat-wallpaper');
@@ -614,7 +569,21 @@ function build(){
   content.append(wallpaper,connectionStatus,status,form);
   dialog.append(join,content);
  }else{
+  const settings=el('section',null,'connect-settings');
+  const actions=el('div',null,'connect-actions');
+  name=el('input');
+  name.maxLength=80;
+  name.autocomplete='given-name';
+  const save=el('button',t(6),'connect-save');
+  save.type='button';
+  save.onclick=()=>run(async()=>{
+   await connect();
+   state=await api('preferences',{name:name.value,language:lang()});
+   settingsStatus.textContent=t(13);
+   update();
+  },settingsStatus);
   actions.append(save,off);
+  settings.append(label(t(4),name),check,actions);
   const heading=el('h3',lang()==='ru'?'Ваши сообщения':lang()==='vi'?'Tin nhắn của bạn':'Your messages','connect-messages-heading');
   content.append(settings,heading,list,form);
   dialog.append(join,push,content,connectionStatus,status);
@@ -634,14 +603,14 @@ function build(){
    }
   }else button.focus();
  });
- function update(syncName=!pushSwitch){
+ function update(){
   join.hidden=!!token;
   content.hidden=!token;
   if(publicChat){
    if(token)content.insertBefore(status,form);
    else join.after(status);
   }
-  if(syncName)name.value=state?.client?.name||'';
+  if(name)name.value=state?.client?.name||'';
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
   off.hidden=!state?.client.pushEnabled;
@@ -668,16 +637,18 @@ async function open(){
  await refresh();
 }
 button.onclick=open;window.ummaCustomerConnect={open};
-if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
+if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>{
+ if(settingsDialog.open)return;
  if(!dialog)build();
- dialog.update(true);
- const initialName=name.value;
+ dialog.update();
  settingsDialog.querySelector('[role=status]').textContent='';
- settingsDialog.showModal();
+ settingsDialog.show();
+ window.dispatchEvent(new Event('umma:chat-settings-open'));
+ settingsDialog.querySelector('h2').focus({preventScroll:true});
  await refresh();
- dialog.update(name.value===initialName);
+ if(settingsDialog.open)dialog?.update();
 };
-window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
+window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();
