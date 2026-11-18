@@ -26,7 +26,15 @@ for(const method of ['cash','qr']){
  assert.equal(d.getElementById('orderBar'),null);
  assert.equal(cartButton.closest('.customer-actions').lastElementChild,cartButton);
  assert.equal(cartCount.hidden,true);
+ const profile=d.getElementById('customerProfile');
+ d.getElementById('openProfile').click();
+ assert.equal(profile.open,true);
+ assert.equal(profile.dataset.testModal,undefined);
+ assert.ok(profile.matches('.customer-section'));
+ assert.equal(d.getElementById('cafePage').inert,true);
+ assert.equal(d.activeElement.id,'profileTitle');
  cartButton.click();
+ assert.equal(profile.open,false);
  assert.equal(d.getElementById('checkout').open,true);
  assert.equal(d.getElementById('continueCheckout').disabled,true);
  d.getElementById('closeCart').click();

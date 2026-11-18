@@ -396,13 +396,17 @@
   background: white;
 }
 #guestPayment .payment-qr { background: white; padding: 8px; }
-#customerProfile .checkout-header { background: var(--umma-brand-white); color: var(--umma-brand-night); }
+#customerProfile .profile-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 20px;
+}
+#customerProfile .profile-body > * { min-inline-size: 0; margin: 0; }
 #customerProfile .profile-avatar-editor {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 8px 12px;
-  margin-block-end: 16px;
   padding: 12px;
   border: 1px solid var(--umma-brand-line);
   border-radius: 16px;
@@ -423,12 +427,30 @@
 #chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
 #profileAvatarStatus { grid-column: 1 / -1; margin: 0; font-size: 13px; }
 #profileAvatarStatus:empty { display: none; }
-#customerProfile .language-control { justify-content: space-between; margin-bottom: 14px; }
-#customerProfile .language-control select { max-width: 70%; }
-#customerProfile #openChatSettings {
+#customerProfile .language-control {
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 16px;
+  background: var(--umma-brand-white);
+}
+#customerProfile .language-control label {
+  color: var(--umma-brand-night);
+  font-size: 14px;
+}
+#customerProfile .language-control select {
+  min-height: 44px;
+  max-width: 100%;
+  font-size: 16px;
+}
+#customerProfile :is(#openChatSettings, .google-review-link) {
   width: 100%;
   min-height: 48px;
-  margin-bottom: 12px;
+}
+#customerProfile .location {
+  padding: 12px;
+  border-radius: 16px;
+  overflow-wrap: anywhere;
 }
 #customerChatSettings .connect-close { float: none; margin: 0; }
 #customerChatSettings .connect-settings { margin-inline: 0; }
