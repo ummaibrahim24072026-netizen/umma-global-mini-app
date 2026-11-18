@@ -1,0 +1,36 @@
+/* UMMA staff messages — aligned with customer UI, 2026-11-18 */
+.web-work-app[data-workspace="messages"]{--work-accent:#079fa4;--work-line:#d8e9e6;background:#f1fafb;color:#153c3c}
+.web-work-app[data-workspace="messages"] #webMessages{margin:0 auto!important;padding:16px 14px 24px!important;min-height:0!important;max-width:900px;width:100%;box-sizing:border-box}
+.web-work-app[data-workspace="messages"] .work-messages{margin:0!important;padding:0!important;width:100%;max-width:none}
+.web-work-app[data-workspace="messages"] .work-messages-heading{margin:0 0 14px;gap:10px;align-items:center}
+.web-work-app[data-workspace="messages"] .work-messages-heading h1{font-size:clamp(23px,5.5vw,30px);letter-spacing:-.04em;line-height:1.15;color:#123d3c}
+.web-work-app[data-workspace="messages"] .work-messages-heading button{min-height:42px;border-radius:999px;padding:9px 17px;background:#079fa4;color:#fff;border:1px solid #079fa4;font-weight:750}
+.web-work-app[data-workspace="messages"] .work-section-switch{display:flex;flex-wrap:nowrap;gap:8px;margin:0 0 16px;overflow-x:auto;scrollbar-width:none}
+.web-work-app[data-workspace="messages"] .work-section-switch::-webkit-scrollbar{display:none}
+.web-work-app[data-workspace="messages"] .work-section-switch button{flex:1 0 auto;min-height:44px;border-radius:999px;background:#fff;color:#226a69;border:1px solid #d1e6e3;font-weight:750}
+.web-work-app[data-workspace="messages"] .work-section-switch button[aria-pressed="true"]{background:#079fa4;border-color:#079fa4;color:#fff}
+.web-work-app[data-workspace="messages"] :is(.work-inbox-sidebar,.work-thread,.work-campaign){border-radius:20px;border:1px solid #d9e9e6;background:#fff;box-shadow:0 4px 18px rgba(9,75,76,.045)}
+.web-work-app[data-workspace="messages"] .work-inbox-sidebar{padding:14px}
+.web-work-app[data-workspace="messages"] .work-inbox-list{gap:0;max-height:none;overflow:visible}
+.web-work-app[data-workspace="messages"] .work-inbox-list li+li{border-top:1px solid #e9f1f0}
+.web-work-app[data-workspace="messages"] .work-thread-choice{border:0;border-radius:12px;background:#fff;box-shadow:none;padding:14px 12px;min-height:76px;gap:5px;color:#143f40}
+.web-work-app[data-workspace="messages"] .work-thread-choice[data-unread="true"]{background:#effafa}
+.web-work-app[data-workspace="messages"] .work-thread-choice[aria-pressed="true"]{background:#e5f7f6;box-shadow:inset 3px 0 #079fa4}
+.web-work-app[data-workspace="messages"] .work-thread-choice small{color:#65817e;font-weight:500}
+.web-work-app[data-workspace="messages"] .work-thread-unread{color:#087e81;font-weight:800}
+.web-work-app[data-workspace="messages"] .work-thread{padding:14px;overflow:hidden}
+.web-work-app[data-workspace="messages"] .work-thread button.primary,.web-work-app[data-workspace="messages"] .work-campaign button.primary{background:#079fa4;color:#fff;border-radius:999px}
+.web-work-app[data-workspace="messages"] .web-tabs button[aria-selected="true"],.web-work-app[data-workspace="messages"] .web-tabs button.active{background:#079fa4;color:#fff;border-radius:999px}
+@media(max-width:760px){
+.web-work-app[data-workspace="messages"] .work-inbox{grid-template-columns:minmax(0,1fr);gap:12px}
+.web-work-app[data-workspace="messages"] .work-inbox-list{max-height:none}
+}
+@media(max-width:650px){
+.web-work-app[data-workspace="messages"] #webMessages{padding:12px 12px 20px!important}
+.web-work-app[data-workspace="messages"] .work-messages-heading h1{font-size:24px}
+.web-work-app[data-workspace="messages"] .web-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}
+.web-work-app[data-workspace="messages"] .web-tabs button{flex-direction:column!important;gap:4px!important;min-height:56px!important;padding:6px 2px!important;font-size:10px!important;border-radius:16px!important}
+.web-work-app[data-workspace="messages"] .web-tabs .work-nav-icon{width:21px!important;height:21px!important;flex-basis:21px!important}
+.web-work-app[data-workspace="messages"] .work-inbox-sidebar{padding:10px}
+.web-work-app[data-workspace="messages"] .work-thread-choice{min-height:72px}
+}
