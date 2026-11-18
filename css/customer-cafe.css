@@ -141,6 +141,11 @@
   flex: 1 1 100%;
 }
 .public-cafe-menu #cafePage .cafe-qty-btn { min-width: 44px; width: 44px; }
+.public-cafe-menu #cafePage :is(.cafe-add, .cafe-qty-btn[data-add-product], .cafe-preorder-action) {
+  background: var(--umma-action);
+  color: var(--umma-brand-on-primary);
+  border-color: var(--umma-action);
+}
 .public-cafe-menu .customer-dock {
   max-inline-size: 1060px;
   background: #fcffff;
@@ -234,7 +239,7 @@
   box-shadow: 0 25px 82px #00343645;
 }
 .public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"]) {
-  --dock-icon-surface: var(--umma-brand-primary);
+  --dock-icon-surface: var(--umma-action);
   color: var(--umma-brand-deep);
 }
 .public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"])::after {
@@ -493,10 +498,10 @@
   background: #fff;
   color: var(--umma-brand-deep);
 }
-#dishDetails :is(.cafe-add, [data-change="1"].cafe-qty-btn) {
+#dishDetails :is(.cafe-add, .cafe-preorder-action, [data-change="1"].cafe-qty-btn) {
   border: 0;
   background: var(--umma-action);
-  color: #fff;
+  color: var(--umma-brand-on-primary);
 }
 #dishDetails .cafe-add {
   width: 100%;
@@ -507,6 +512,13 @@
   font-weight: 750;
 }
 #dishDetails [data-change="1"].cafe-qty-btn { font-size: 22px; }
+/* The main chat actions use the same fill as the selected bottom tab. */
+.public-cafe-menu .umma-connect button.primary,
+.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic {
+  border-color: var(--umma-action);
+  background: var(--umma-action);
+  color: var(--umma-brand-on-primary);
+}
 .public-cafe-menu .umma-connect .connect-hero { background: var(--cafe-header); }
 .public-cafe-menu .umma-connect .connect-hero :is(h2, p, .connect-close) { color: var(--umma-brand-on-primary); }
 .public-cafe-menu .umma-connect .connect-hero-icon { width: 42px; height: 42px; object-fit: contain; background: transparent; }
@@ -593,14 +605,11 @@
   min-height: 52px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: #005d61;
-  color: #fff;
   font-weight: 750;
   text-align: center;
   text-decoration: none;
 }
 #nearbyCafeRoute svg { flex: none; }
-#nearbyCafeRoute:hover { background: #004d51; }
 
 #customerMessages .customer-message-sections {
   display: grid;
@@ -754,7 +763,7 @@
   font-size: 13px;
   font-weight: 750;
 }
-.order-action[data-primary="true"] { background: var(--umma-brand-deep); color: white; }
+.order-action[data-primary="true"] { background: var(--umma-action); color: var(--umma-brand-on-primary); }
 .order-arrow { font-size: 19px; line-height: 1; }
 [dir="rtl"] .order-arrow { transform: scaleX(-1); }
 .order-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block-start: 13px; }
@@ -953,13 +962,7 @@
   min-height: 48px;
   margin-block-start: 14px;
   border-radius: 14px;
-  background: #086a62;
-  color: #fff;
-  box-shadow: 0 4px 10px #086a6222;
-}
-
-#checkout #newOrder:hover {
-  background: #075951;
+  box-shadow: 0 4px 10px rgb(var(--umma-brand-primary-rgb) / .16);
 }
 
 #checkout[data-stage="receipt"] :is(button, a, select):focus-visible {
