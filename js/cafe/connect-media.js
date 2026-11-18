@@ -38,7 +38,52 @@
   wrapper.append(open,status);
   return wrapper;
  }
+ function voiceBubble(load,errorText){
+  const wrapper=document.createElement('div');
+  wrapper.className='connect-voice-bubble';
+  wrapper.style.cssText='display:flex;align-items:center;gap:10px;min-width:220px;max-width:min(78vw,330px);padding:9px 12px;border-radius:18px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
+  const play=document.createElement('button');play.type='button';play.textContent='▶';
+  play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
+  play.style.cssText='flex:none;width:38px;height:38px;border:0;border-radius:50%;background:#0a9998;color:white;font-size:17px;cursor:pointer';
+  const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:grid;gap:3px';
+  const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
+  wave.style.cssText='height:22px;display:flex;align-items:center;gap:2px;overflow:hidden';
+  const heights=[7,13,19,11,21,16,8,14,22,12,18,9,16,21,10,14,19,8,15,12,20,11,17,9,14,19,10,16,12,7];
+  const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1;min-width:2px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
+  const time=document.createElement('small');time.textContent='0:00';time.style.cssText='font:12px system-ui;color:#527c77';
+  const seek=document.createElement('input');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.setAttribute('aria-label','Перемотать голосовое сообщение');
+  seek.style.cssText='width:100%;height:4px;margin:0;accent-color:#0a9998;cursor:pointer';
+  const speed=document.createElement('button');speed.type='button';speed.textContent='1×';speed.setAttribute('aria-label','Скорость воспроизведения');
+  speed.style.cssText='border:0;background:transparent;color:#126c6b;font:700 12px system-ui;padding:4px;cursor:pointer';
+  const status=document.createElement('small');status.setAttribute('role','status');status.style.cssText='color:#9b3939';
+  const audio=document.createElement('audio');audio.preload='metadata';
+  middle.append(wave,seek,time,status);wrapper.append(play,middle,speed,audio);
+  let loading=null,loaded=false;
+  const fmt=n=>{if(!Number.isFinite(n))return '0:00';const v=Math.max(0,Math.floor(n));return Math.floor(v/60)+':'+String(v%60).padStart(2,'0');};
+  async function prepare(){
+   if(loaded)return true;if(loading)return loading;
+   loading=(async()=>{try{const url=await load();if(!wrapper.isConnected)return false;audio.src=url;audio.load();loaded=true;status.textContent='';return true;}catch{status.textContent=errorText;return false;}finally{loading=null;}})();
+   return loading;
+  }
+  function update(){
+   const duration=audio.duration;
+   seek.value=Number.isFinite(duration)&&duration>0?String(Math.round(audio.currentTime/duration*1000)):'0';
+   time.textContent=fmt(audio.currentTime)+' / '+fmt(duration);
+   const count=Math.round(Number(seek.value)/1000*bars.length);
+   bars.forEach((bar,i)=>bar.style.background=i<count?'#0a9998':'#76aaa5');
+  }
+  play.onclick=async()=>{if(!loaded&&!(await prepare()))return;try{if(audio.paused)await audio.play();else audio.pause();}catch{status.textContent=errorText;}};
+  audio.addEventListener('play',()=>{play.textContent='Ⅱ';play.setAttribute('aria-label','Приостановить голосовое сообщение');});
+  audio.addEventListener('pause',()=>{play.textContent='▶';play.setAttribute('aria-label','Воспроизвести голосовое сообщение');});
+  audio.addEventListener('ended',()=>{play.textContent='▶';update();});
+  audio.addEventListener('timeupdate',update);audio.addEventListener('loadedmetadata',update);
+  audio.addEventListener('error',()=>{status.textContent=errorText;loaded=false;});
+  seek.oninput=async()=>{if(!loaded&&!(await prepare()))return;if(Number.isFinite(audio.duration))audio.currentTime=Number(seek.value)/1000*audio.duration;update();};
+  speed.onclick=()=>{const speeds=[1,1.5,2];const next=speeds[(speeds.indexOf(audio.playbackRate)+1)%speeds.length];audio.playbackRate=next;speed.textContent=next+'×';};
+  return wrapper;
+ }
  function inlineAttachment(kind,label,load,errorText){
+  if(kind==='voice')return voiceBubble(load,errorText);
   if(kind!=='photo'&&kind!=='video')return attachment(kind,label,load,errorText);
   const wrapper=document.createElement('div');
   wrapper.className='connect-inline-attachment connect-inline-'+kind;
