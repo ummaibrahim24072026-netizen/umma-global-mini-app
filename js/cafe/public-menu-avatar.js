@@ -24,7 +24,7 @@
       image.hidden = !avatar;
       if (avatar) image.src = avatar;
       else image.removeAttribute('src');
-      placeholders[index].hidden = !!avatar;
+      placeholders[index].toggleAttribute('hidden', !!avatar);
     });
     choose.textContent = t(avatar ? 'Заменить фото' : 'Добавить фото');
     choose.disabled = saving;

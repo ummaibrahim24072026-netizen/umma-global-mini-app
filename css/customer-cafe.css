@@ -417,10 +417,13 @@
   place-items: center;
   width: 72px;
   height: 72px;
+  overflow: hidden;
   border-radius: 50%;
   background: var(--umma-brand-pale);
   color: var(--umma-brand-deep);
 }
+.profile-avatar-preview > * { grid-area: 1 / 1; }
+.profile-avatar-preview .profile-avatar-image { width: 100%; height: 100%; }
 .profile-avatar-preview svg { width: 32px; height: 32px; }
 .profile-avatar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .profile-avatar-actions button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
