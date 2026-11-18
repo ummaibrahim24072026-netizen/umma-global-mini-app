@@ -734,3 +734,66 @@ audio.connect-media{width:min(100%,300px)}
 .public-cafe-menu .umma-connect-chat .connect-compose{position:relative;z-index:3;flex:0 0 auto!important;min-height:62px!important;max-height:min(48dvh,340px);overflow-y:auto;box-sizing:border-box;width:100%;background:#fafffe!important;border-top:1px solid #b7dfd9!important;box-shadow:0 -5px 20px #063d3d14}
 .public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-entry{border-radius:999px!important;background:#f0faf8!important}
 .public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-attach,.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic{border-radius:50%!important}
+
+
+/* Full-screen chat: the customer dock belongs to the main app, not to conversation. */
+body.public-cafe-menu:has(#customerChatDialog[open]) #customerDock{display:none!important}
+body.public-cafe-menu dialog#customerChatDialog.umma-connect-chat[open]{
+  --chat-bottom-inset:0px;
+  inset:env(safe-area-inset-top) 0 0!important;
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:none!important;
+  margin:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  z-index:1000!important;
+}
+body.public-cafe-menu #customerChatDialog .connect-hero{
+  position:relative;
+  z-index:5;
+  flex-shrink:0;
+  gap:clamp(5px,1.5vw,10px);
+  padding:10px clamp(8px,2vw,14px);
+}
+body.public-cafe-menu #customerChatDialog .connect-hero .connect-close{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:auto!important;
+  min-width:76px;
+  min-height:38px;
+  padding:7px 12px!important;
+  border:1.5px solid #e4bd62!important;
+  border-radius:999px!important;
+  background:rgba(0,91,96,.28)!important;
+  color:#fff!important;
+  font-size:clamp(12px,3.5vw,15px)!important;
+  font-weight:750;
+  line-height:1.2;
+  white-space:nowrap;
+}
+body.public-cafe-menu #customerChatDialog .connect-hero .connect-close:focus-visible{
+  outline:2px solid white;outline-offset:2px;
+}
+body.public-cafe-menu #customerChatDialog .connect-hero-icon{
+  flex:0 0 36px;
+  width:36px!important;
+  height:36px!important;
+}
+body.public-cafe-menu #customerChatDialog .connect-hero-copy h2{
+  font-size:clamp(13px,4vw,18px)!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+body.public-cafe-menu #customerChatDialog .connect-chat-content{min-height:0!important}
+body.public-cafe-menu #customerChatDialog .connect-compose{
+  padding-bottom:max(8px,env(safe-area-inset-bottom))!important;
+}
+@media(max-width:370px){
+ body.public-cafe-menu #customerChatDialog .connect-hero .connect-close{min-width:69px;padding-inline:8px!important}
+ body.public-cafe-menu #customerChatDialog .connect-hero-icon{flex-basis:30px;width:30px!important;height:30px!important}
+}
