@@ -40,7 +40,7 @@ function renderChatFeed(list){
    timeline.push(previous);
    continue;
   }
-  const expanded=previous?.querySelector('[aria-expanded=true]')!==null&&!!previous;
+  const expanded=Boolean(previous?.querySelector('[aria-expanded=true]'));
   previous?.remove();
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
   card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid var(--umma-brand-line,#c9e2df);border-radius:18px;background:var(--umma-brand-white,#f5fbfa);color:var(--umma-brand-ink,#153b39);box-sizing:border-box;overflow-wrap:anywhere';

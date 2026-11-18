@@ -582,7 +582,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <div class="dish-detail-scrim" aria-hidden="true"></div>
 <dialog id="orderLinkDialog" aria-labelledby="orderLinkTitle">
   <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="orderLinkTitle" data-i18n="Ваш заказ">Ваш заказ</h2></div></div></div>
-  <div class="checkout-body"><p id="orderLinkStatus" role="status"></p><form method="dialog"><button class="primary" type="submit" data-i18n="Вернуться в меню">Вернуться в меню</button></form></div>
+  <div class="checkout-body"><p id="orderLinkStatus" role="status" data-i18n="Этот заказ недоступен на данном устройстве."></p><form method="dialog"><button class="primary" type="submit" data-i18n="Вернуться в меню">Вернуться в меню</button></form></div>
 </dialog>
 <template id="customerHeadingTemplate"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span></div></div></template>
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
@@ -964,7 +964,11 @@ function reconcileCart(){
  const known=new Set(products.map(product=>product.id));
  let removed=false;
  for(const id of cart.keys())if(!known.has(id)){cart.delete(id);removed=true;}
- if(removed)$('catalogCartNotice').textContent=t('Недоступные позиции удалены из корзины.');
+ if(removed){
+  const notice=$('catalogCartNotice');
+  notice.dataset.i18n='Недоступные позиции удалены из корзины.';
+  notice.textContent=t(notice.dataset.i18n);
+ }
 }
 function renderCart(){ saveCart(); $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
  const badge=$('cartCount');
@@ -1321,7 +1325,7 @@ $('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
 $('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();if(queuedOrderLink){const requested=queuedOrderLink;queuedOrderLink='';openSpecificOrder(requested);}}};
-const terminal = order => ['cancelled','completed'].includes(order?.status);
+const terminal = order => ['cancelled','completed','delivered'].includes(order?.status)||order?.deliveryStatus==='delivered';
 const receiptKey = order => order.id || String(order.orderNumber);
 const activeReceipts = () => [...receipts.values()].reverse().filter(order => !terminal(order));
 function saveReceipt(order = lastOrder){
@@ -1361,7 +1365,7 @@ function renderReceiptList(list,orders,emptyKey){
     list.replaceChildren(empty);
     return;
   }
-  const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
+  const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',delivered:'Заказ доставлен',cancelled:'Заказ отменён'};
   const buttons=new Map([...list.querySelectorAll('button')].map(button=>[button.dataset.orderKey,button]));
   const next=orders.map(order=>{
     const key=String(receiptKey(order)),button=buttons.get(key)||document.createElement('button');
@@ -1406,7 +1410,9 @@ function renderReceiptList(list,orders,emptyKey){
   if(next.length!==list.children.length||next.some((button,index)=>button!==list.children[index]))list.replaceChildren(...next);
 }
 function resetReceipts(){
-  $('catalogCartNotice').textContent='';
+  const notice=$('catalogCartNotice');
+  delete notice.dataset.i18n;
+  notice.textContent='';
   lastOrder=null;
   receipts.clear();
   window.ummaGuestExtras.clearReceipt();

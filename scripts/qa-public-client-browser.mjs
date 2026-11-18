@@ -115,15 +115,34 @@ try{
     await $('#customerMessagesButton').click();
     await fits('#customerChatDialog');
     assert.ok(!await $('#customerDock').isVisible(),'the dock stays outside the full-screen chat');
+    if(width===390){
+      await page.evaluate(()=>document.body.style.setProperty('--customer-keyboard-inset','260px'));
+      assert.equal(await $('#customerChatDialog').evaluate(el=>Math.round(el.getBoundingClientRect().bottom)),584);
+      await page.evaluate(()=>document.body.style.removeProperty('--customer-keyboard-inset'));
+    }
     if(output&&[390,1440].includes(width)){
       await mkdir(output,{recursive:true});
       await page.screenshot({path:output+'/chat-'+width+'.png'});
     }
     await $('#customerChatDialog .connect-close').click();
   }
+  await $('#openProfile').click();
+  await $('#profileDisplayName').fill('Гость UMMA');
+  await $('#saveProfileName').click();
+  await $('#profileAvatarFile').setInputFiles({
+    name:'qa-avatar.png',mimeType:'image/png',
+    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aGhQAAAAASUVORK5CYII=','base64'),
+  });
+  await $('#profileAvatar').waitFor();
+  assert.equal(await $('#profileAvatar').evaluate(el=>getComputedStyle(el).borderTopLeftRadius),'50%');
+  await close('#customerProfile');
   const increase=$('#products [data-change="1"]').first();
   await increase.click();
   await page.reload();
+  await $('#openProfile').click();
+  assert.equal(await $('#profileDisplayName').inputValue(),'Гость UMMA');
+  await $('#profileAvatar').waitFor();
+  await close('#customerProfile');
   await $('button#openCart').click();
   assert.equal(await $('#cartItems .cart-controls b').innerText(),'1');
   await $('#continueCheckout').click();

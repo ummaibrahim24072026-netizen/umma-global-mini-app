@@ -726,7 +726,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await poll();
  await tick();
  assert.equal(staff.document.querySelector('.connect-thread audio'),audio);
- assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
+ const readTime=new staff.Intl.DateTimeFormat('ru',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date(messages[1].read_at));
+ assert.equal(staff.document.querySelector('.connect-receipt').textContent,'Прочитано клиентом · '+readTime);
  staff.close();
 }
 // Installed app: reuse an existing browser grant for a new chat, prompt only on a tap,
