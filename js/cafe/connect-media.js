@@ -46,11 +46,16 @@
   play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
   play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;align-self:center;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;cursor:pointer';
   const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px';
-  const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
-  wave.style.cssText='height:32px;width:100%;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer;align-self:stretch;transform:translateY(4px)';
-  const heights=[8,15,26,19,30,12,23,28,17,9,25,14,29,21,11,24,30,18,8,19,27,13,29,16,9,22,28,12,24,17,7,15,25,10,20,12,6,15,8,5];
-  const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1 1 0;min-width:1.5px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
-  const dot=document.createElement('span');dot.style.cssText='position:absolute;left:0;top:50%;width:12px;height:12px;transform:translate(-2px,-50%);background:#168fe0;border:1px solid #d9f3ee;border-radius:50%;box-sizing:border-box;pointer-events:none';wave.append(dot);
+  const wave=document.createElement('div');
+  wave.style.cssText='height:46px;width:100%;position:relative;cursor:pointer;align-self:stretch;transform:translateY(4px)';
+  const ns='http://www.w3.org/2000/svg';
+  const waveform=document.createElementNS(ns,'svg');waveform.setAttribute('viewBox','0 0 652 91');waveform.setAttribute('preserveAspectRatio','xMidYMid meet');
+  waveform.setAttribute('aria-hidden','true');waveform.style.cssText='display:block;width:100%;height:100%;overflow:visible';
+  const heights=[14,82,34,40,14,28,62,26,90,32,65,32,18,82,18,84,40,40,18,26,62,22,90,34,65,34,17,34,28,82,20,84,42,42,20,26,60,20,90,36,65,40];
+  const positions=[0,15,30,45,60,74,89,104,119,134,149,164,179,194,239,254,269,284,299,314,329,344,358,373,388,403,418,433,448,463,478,493,508,523,538,553,568,583,598,613,627,642];
+  const bars=heights.map((h,i)=>{const bar=document.createElementNS(ns,'rect');bar.setAttribute('x',positions[i]);bar.setAttribute('y',(91-h)/2);bar.setAttribute('width',9);bar.setAttribute('height',h);bar.setAttribute('rx',4.5);bar.setAttribute('fill',i<14?'#0a9998':'#a4c5c1');waveform.append(bar);return bar;});
+  const dot=document.createElementNS(ns,'circle');dot.setAttribute('cx','218');dot.setAttribute('cy','45.5');dot.setAttribute('r','17');dot.setAttribute('fill','#168fe0');waveform.append(dot);
+  wave.append(waveform);
   const time=document.createElement('small');time.textContent='0:00';time.style.cssText='font:12px system-ui;color:#527c77;line-height:16px';
   const seek=document.createElement('input');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.setAttribute('aria-label','Перемотать голосовое сообщение');seek.style.cssText='position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer';wave.append(seek);
   const speed=document.createElement('button');speed.type='button';speed.textContent='1×';speed.setAttribute('aria-label','Скорость воспроизведения');
@@ -68,9 +73,9 @@
   function update(){
    const duration=audio.duration;
    seek.value=Number.isFinite(duration)&&duration>0?String(Math.round(audio.currentTime/duration*1000)):'0';
-   time.textContent=audio.currentTime>0?fmt(audio.currentTime):fmt(duration);dot.style.left=(Number(seek.value)/10)+'%';
+   time.textContent=audio.currentTime>0?fmt(audio.currentTime):fmt(duration);dot.setAttribute('cx',String(17+Number(seek.value)/1000*618));
    const count=Math.round(Number(seek.value)/1000*bars.length);
-   bars.forEach((bar,i)=>bar.style.background=i<count?'#0a9998':'#76aaa5');
+   bars.forEach((bar,i)=>bar.setAttribute('fill',i<count?'#0a9998':'#a4c5c1'));
   }
   play.onclick=async()=>{if(!loaded&&!(await prepare()))return;try{if(audio.paused)await audio.play();else audio.pause();}catch{status.textContent=errorText;}};
   audio.addEventListener('play',()=>{play.textContent='Ⅱ';play.setAttribute('aria-label','Приостановить голосовое сообщение');});
