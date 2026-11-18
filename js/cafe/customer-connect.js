@@ -57,9 +57,9 @@ const chatTitle=()=>publicChat?(chatTitles[lang()]||chatTitles.en):t(0);
 const profileSettingsButton=document.getElementById('openChatSettings');
 const settingsDialog=document.getElementById('customerChatSettings');
 const settingsCopy={
- ru:['Акции и новые блюда','Получать новости и предложения кафе','Push-уведомления кафе','Ответы и звонки, даже когда UMMA закрыта'],
- en:['Offers and new dishes','Get news and offers from the cafe','Cafe push notifications','Get replies and calls even when UMMA is closed'],
- vi:['Ưu đãi và món mới','Nhận tin tức và ưu đãi từ quán','Thông báo đẩy của quán','Nhận phản hồi và cuộc gọi ngay cả khi đã đóng UMMA']
+ ru:['Акции и новые блюда','Получать новости и предложения кафе','Push-уведомления кафе','Получать сообщения, уведомления о заказах и входящих звонках, даже когда приложение закрыто. Чтобы ответить на звонок, необходимо открыть приложение.'],
+ en:['Offers and new dishes','Get news and offers from the cafe','Cafe push notifications','Receive messages, order updates and incoming call alerts even when the app is closed. Open the app to answer a call.'],
+ vi:['Ưu đãi và món mới','Nhận tin tức và ưu đãi từ quán','Thông báo đẩy của quán','Nhận tin nhắn, thông báo đơn hàng và cuộc gọi đến ngay cả khi ứng dụng đã đóng. Mở ứng dụng để trả lời cuộc gọi.']
 };
 const button=el('button',chatTitle(),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (connectHost||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
