@@ -259,7 +259,7 @@
    const deadline=performance.now()+videoDuration;
    const update=()=>{
     const seconds=Math.max(0,Math.ceil((deadline-performance.now())/1000));
-    timer.textContent=videoLabels[1]+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+    timer.textContent=(session.kind==='circle'?'':videoLabels[1]+' ')+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
    };
    timer.hidden=false;
    update();
