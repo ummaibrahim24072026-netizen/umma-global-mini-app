@@ -330,6 +330,10 @@ audio.connect-media{width:min(100%,300px)}
   background:transparent;
   box-shadow:none;
 }
+.umma-connect-chat .connect-entry textarea:focus {
+  outline:none;
+  box-shadow:none;
+}
 .umma-connect-chat .connect-entry button {
   display:grid;
   place-items:center;
