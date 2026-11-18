@@ -145,12 +145,22 @@ audio.connect-media{width:min(100%,300px)}
  .umma-connect .connect-compose label{flex-basis:calc(100% - 90px)}
 }
 
-/* Conversation layout for the public web menu. */
+/* Keep the conversation and its composer in the space above the dock. */
+.public-cafe-menu:has(#customerChatDialog[open]) { overflow:hidden }
+.public-cafe-menu:has(#customerChatDialog[open]) :is(#cafePage, #customerMessages) { visibility:hidden }
+.public-cafe-menu:has(#customerChatDialog[open]) #customerDock {
+  inset-block-end:var(--customer-keyboard-inset, 0px);
+}
 .public-cafe-menu .umma-connect-chat[open] {
+  --chat-bottom-inset:calc(var(--customer-dock-height, 80px) + var(--customer-keyboard-inset, 0px));
+  position:fixed;
+  inset:env(safe-area-inset-top) 0 var(--chat-bottom-inset);
+  z-index:16;
   display:flex;
   flex-direction:column;
-  height:min(760px, 90dvh);
-  max-height:90dvh;
+  height:auto;
+  max-block-size:none;
+  margin:0 auto;
   overflow:hidden;
   background:var(--umma-brand-canvas);
 }
@@ -236,7 +246,7 @@ audio.connect-media{width:min(100%,300px)}
   grid-template-columns:minmax(0,1fr) 44px;
   flex:none;
   margin:0;
-  padding:6px 10px max(8px,env(safe-area-inset-bottom));
+  padding:6px 10px 8px;
   border:0;
   border-top:1px solid var(--umma-brand-line);
   border-radius:0;
@@ -304,10 +314,7 @@ audio.connect-media{width:min(100%,300px)}
   .public-cafe-menu .umma-connect-chat[open] {
     width:100%;
     max-inline-size:none;
-    height:calc(100dvh - var(--customer-keyboard-inset, 0px));
-    max-height:100dvh;
-    inset-block-end:var(--customer-keyboard-inset, 0px)!important;
-    padding:env(safe-area-inset-top) 0 0;
+    padding:0;
     border:0;
     border-radius:0;
   }
@@ -582,7 +589,7 @@ audio.connect-media{width:min(100%,300px)}
 
 .public-cafe-menu .umma-connect-chat .connect-camera-panel:not([hidden]) {
   position:fixed;
-  inset:0;
+  inset:env(safe-area-inset-top) 0 var(--chat-bottom-inset, 80px);
   z-index:20;
   display:grid;
   grid-template-rows:minmax(0,1fr) auto;

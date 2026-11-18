@@ -394,7 +394,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=30"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=23"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=30"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -980,7 +980,8 @@ customerProfile.addEventListener('close', () => {
   }
 });
 function syncCustomerNavigation() {
-  const active = dockSections.find(section => section.open) || (customerProfile.open ? customerProfile : null);
+  const active = $('customerChatDialog')?.open ? $('customerMessages')
+    : dockSections.find(section => section.open) || (customerProfile.open ? customerProfile : null);
   $('cafePage').inert = !!active || dishDetails.open;
   for (const [index, button] of dockButtons.entries()) {
     button.setAttribute('aria-expanded', String(dockSections[index] === active));
@@ -996,6 +997,8 @@ customerDock.addEventListener('click', event => {
   if (customerProfile.open) customerProfile.close();
   const orderInbox = $('ummaOrderInboxDialog');
   if (orderInbox?.open) orderInbox.close();
+  const chat = $('customerChatDialog');
+  if (chat?.open) chat.close();
   for (const section of dockSections) {
     if (section.id !== nextId && section.open) section.close();
   }
@@ -1003,6 +1006,7 @@ customerDock.addEventListener('click', event => {
   syncCustomerNavigation();
 }, true);
 customerDock.addEventListener('click', syncCustomerNavigation);
+window.addEventListener('umma:chat-visibility', syncCustomerNavigation);
 for (const section of dockSections) section.addEventListener('close', syncCustomerNavigation);
 
 // Reserve the dock's actual height, including translated labels and the basket.
@@ -1320,4 +1324,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=40"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=41"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>

@@ -57,6 +57,17 @@ for(const method of ['cash','qr']){
   assert.equal(d.getElementById('customerMessages').open,false);
   assert.equal(d.getElementById('customerOrders').open,true);
   d.querySelector('.dock-menu').click();
+  for(const script of ['connect-media','connect-composer','customer-connect'])w.eval(read('js/cafe/'+script+'.js'));
+  await w.ummaCustomerConnect.open();
+  const chat=d.getElementById('customerChatDialog');
+  assert.ok(chat.open);
+  assert.equal(chat.dataset.testModal,undefined);
+  assert.equal(d.getElementById('customerMessagesButton').getAttribute('aria-expanded'),'true');
+  assert.equal(d.getElementById('cafePage').inert,true);
+  cartButton.click();
+  assert.equal(chat.open,false);
+  assert.equal(d.getElementById('checkout').open,true);
+  d.querySelector('.dock-menu').click();
  }
  d.querySelector(method==='cash'?'.cafe-product-photo':'.dish-link').click();
  assert.equal(d.getElementById('dishDetails').open,true);

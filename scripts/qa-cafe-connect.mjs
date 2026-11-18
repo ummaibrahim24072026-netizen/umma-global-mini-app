@@ -244,7 +244,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  let offline=false,translationUnavailable=true,translations=0,localTranslations=0;
  w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
  w.AbortSignal=AbortSignal;
- w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
  w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  w.ummaLocalTranslate={async translate(){localTranslations++;throw new Error('Local translation should not run');}};
  w.fetch=async(url,{signal,body})=>{
@@ -322,7 +322,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  guest.Blob=Blob;
  guest.URL.createObjectURL=()=> 'blob:https://qa.invalid/preview';
  guest.URL.revokeObjectURL=()=>{};
- guest.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ guest.HTMLDialogElement.prototype.show=guest.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
  guest.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new guest.Event('close'));};
  guest.AudioContext=class{
   state='running';

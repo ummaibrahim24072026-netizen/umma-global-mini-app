@@ -334,7 +334,11 @@ if(setupHost){
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
  dialog=el('dialog',null,publicChat?'umma-connect umma-connect-chat':'umma-connect');dialog.setAttribute('aria-label',chatTitle());
- if(publicChat)dialog.dataset.chatTheme=savedChatTheme();
+ if(publicChat){
+  dialog.id='customerChatDialog';
+  dialog.setAttribute('closedby','closerequest');
+  dialog.dataset.chatTheme=savedChatTheme();
+ }
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
   close.textContent='←';
   close.setAttribute('aria-label',t(1));
@@ -557,7 +561,14 @@ function build(){
   if(publicChat){try{sessionStorage.removeItem(CHAT_OPEN_KEY);}catch{}}
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
-  button.focus();
+  if(publicChat){
+   window.dispatchEvent(new Event('umma:chat-visibility'));
+   const focus=document.activeElement;
+   if(focus===document.body||dialog.contains(focus)){
+    const target=button.closest('dialog')?.open?button:document.getElementById('customerMessagesButton');
+    target?.focus({preventScroll:true});
+   }
+  }else button.focus();
  });
  function update(){
   join.hidden=!!token;
@@ -579,8 +590,12 @@ function build(){
 async function open(){
  if(!dialog)build();
  if(!dialog.open){
-  dialog.showModal();
-  if(publicChat){try{sessionStorage.setItem(CHAT_OPEN_KEY,'1');}catch{}}
+  if(publicChat){
+   dialog.show();
+   dialog.querySelector('.connect-close').focus({preventScroll:true});
+   try{sessionStorage.setItem(CHAT_OPEN_KEY,'1');}catch{}
+   window.dispatchEvent(new Event('umma:chat-visibility'));
+  }else dialog.showModal();
   status.textContent='';
   dialog.update();
   if(publicChat)list.scrollTop=list.scrollHeight;
