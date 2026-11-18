@@ -1414,7 +1414,7 @@ function renderSuccess(){
   $('success').dataset.cashPending=String(cashPending);
   if(cashPending){
     $('paymentState').textContent=t('Оплатите заказ наличными у кассира');
-    $('receiptHint').textContent=t('Назовите сотруднику ваш номер заказа. Заказ поступит на кухню только после подтверждения оплаты.');
+    $('receiptHint').textContent=t('Назовите сотруднику ваш номер заказа.');
   }else $('receiptHint').textContent=receiptHint(lastOrder);
 }
 function renderLoadState(){if(menuState==='empty')$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
