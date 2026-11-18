@@ -18,7 +18,7 @@ function renderChatFeed(list){
  const copy=dictionary[language]||dictionary.en;
  const groups=new Map();
  for(const m of data.messages){const group=groups.get(m.orderId)||[];group.push(m);groups.set(m.orderId,group);}
- for(const [id,messages] of [...groups].sort((a,b)=>b[1].at(-1).at-a[1].at(-1).at)){
+ for(const [id,messages] of [...groups].sort((a,b)=>a[1].at(-1).at-b[1].at(-1).at)){
   const state=data.states[id]||{},values=new Set(messages.map(m=>m.value));
   const delivery=state.orderType==='delivery'||['waiting_courier','courier_assigned','picked_up','delivered'].some(v=>values.has(v)||state.delivery===v);
   const steps=delivery?copy.steps:copy.pickup;
