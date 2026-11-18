@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=37"></script>
+<script src="js/cafe/public-menu-i18n.js?v=38"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=6"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -13,7 +13,7 @@
 .topbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .share-menu-status:empty{display:none}.share-menu-status{margin:0 0 10px;text-align:end;font-size:13px;color:var(--umma-brand-strong)}
 .cafe-banner-art{width:100%;height:auto;display:block;margin-bottom:12px}.service-row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0}.pickup-pill{display:inline-flex;gap:8px;align-items:center;background:var(--umma-brand-strong);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;color:white;font-size:13px;font-weight:700}.cash-note{font-size:12px;color:var(--umma-brand-muted)}.location{border:1px solid var(--umma-brand-line);border-radius:12px;background:#fff;font-size:12px;line-height:1.5;padding:10px 12px;margin:8px 0 12px}.location strong{display:block}.location a{text-decoration:none}.plain-btn.google-review-link{display:flex;align-items:center;justify-content:center;min-height:44px;margin:0 0 12px;text-align:center;text-decoration:none}
-.menu-sticky{position:sticky;top:0;z-index:10;background:var(--umma-brand-canvas);padding-top:8px;padding-bottom:4px}.menu-tools{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}.menu-tools h1{margin:0;font-size:21px;letter-spacing:-.025em}.plain-btn{min-height:42px;border:1px solid var(--umma-brand-line-strong);border-radius:12px;background:#fff;color:var(--umma-brand-strong);padding:8px 12px;font-size:13px;font-weight:650}.searchbox{display:flex;gap:6px;margin-bottom:8px}.searchbox input{min-width:0;flex:1;width:100%;border:1px solid var(--umma-brand-line-strong);border-radius:12px;padding:12px;background:white;font-size:16px;color:var(--umma-brand-ink)}
+.menu-sticky{position:sticky;top:0;z-index:10;background:var(--umma-brand-canvas);padding-top:8px;padding-bottom:4px}.menu-tools{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}.menu-tools h1{margin:0;font-size:21px;letter-spacing:-.025em}.plain-btn{min-height:42px;border:1px solid var(--umma-brand-line-strong);border-radius:12px;background:#fff;color:var(--umma-brand-strong);padding:8px 12px;font-size:13px;font-weight:650}
 .cafe-menu-categories{display:flex;gap:6px;overflow-x:auto;padding:3px 0 9px;scrollbar-width:none}.cafe-menu-categories::-webkit-scrollbar{display:none}.cafe-category{flex-shrink:0;border:1px solid var(--umma-brand-line);background:white;color:var(--umma-brand-text);font-weight:650;white-space:nowrap}.cafe-category span{display:inline-block;font-size:10px;margin-left:7px;padding:2px 5px;border-radius:5px;background:var(--umma-brand-pale);color:var(--umma-brand-muted)}
 .cafe-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cafe-category-heading{grid-column:1/-1;font-size:17px;margin:16px 0 0;display:flex;gap:8px;align-items:center}.cafe-category-heading span{font-size:11px;color:var(--umma-brand-muted);font-weight:500}.cafe-product{display:flex;flex-direction:column;position:relative;overflow:hidden;min-width:0}.cafe-product-media{overflow:hidden}.cafe-product-photo{display:block}.cafe-halal-badge{position:absolute}.cafe-product-description{font-size:12px}.cafe-product-description summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;list-style:none}.cafe-product-description summary::-webkit-details-marker{display:none}.cafe-product-description p{margin:0;color:var(--umma-brand-text)}.cafe-card-quantity{align-items:center;text-align:center}.cafe-product-bottom{min-height:52px}.message{grid-column:1/-1;background:#fff;border:1px solid var(--umma-brand-line);border-radius:16px;padding:24px;text-align:center;line-height:1.6}.message p{margin:0 0 14px}.menu-footer{font-size:11px;text-align:center;color:var(--umma-brand-muted);padding:28px 0 0;line-height:1.7}
 .primary{border:0;border-radius:14px;background:var(--umma-action);color:var(--umma-brand-on-primary);min-height:50px;padding:12px 22px;font-weight:750;font-size:14px}
@@ -394,7 +394,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=29"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=30"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -417,7 +417,18 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
 <section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="plain-btn menu-search-button" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.3 15.3 4.2 4.2"/></svg><span data-i18n="Поиск">Поиск</span></button></div></div>
-<div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
+<div id="searchPanel" class="menu-search-panel" role="search" hidden>
+  <div class="menu-search-field">
+    <input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off">
+    <button id="voiceSearch" class="menu-search-icon menu-search-mic" type="button" aria-label="Голосовой поиск" data-i18n-label="Голосовой поиск" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-3 0h6"/></svg>
+    </button>
+    <button id="clearSearch" class="menu-search-icon" type="button" aria-label="Закрыть поиск" data-i18n-label="Закрыть поиск">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m7 7 10 10M17 7 7 17"/></svg>
+    </button>
+  </div>
+  <p id="voiceSearchStatus" class="menu-search-status" role="status"></p>
+</div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
 <footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
@@ -836,8 +847,110 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');
   return;
 }const dish=e.target.closest('[data-dish]');if(dish){const p=products.find(item=>item.id===dish.dataset.dish);if(p)showDish(p);return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(document.querySelector('.menu-sticky').getBoundingClientRect().bottom<=menuTopbar.getBoundingClientRect().bottom)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){category='all';query='';$('search').value='';renderCategories();renderProducts();}});
 $('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<span>UMMA · Halal</span>';}},true);
-$('searchToggle').onclick=()=>{const open=$('searchPanel').hidden;$('searchPanel').hidden=!open;$('searchToggle').setAttribute('aria-expanded',String(open));if(open)$('search').focus();else{query='';$('search').value='';renderProducts();}};
-$('search').oninput=e=>{query=e.target.value;renderProducts();};$('clearSearch').onclick=()=>{query='';$('search').value='';renderProducts();$('search').focus();};
+const searchToggle = $('searchToggle');
+const searchPanel = $('searchPanel');
+const searchInput = $('search');
+const voiceSearch = $('voiceSearch');
+const voiceSearchStatus = $('voiceSearchStatus');
+let searchRecognition;
+let searchRecognitionTimer;
+
+function stopVoiceSearch(message = '') {
+  clearTimeout(searchRecognitionTimer);
+  const active = searchRecognition;
+  searchRecognition = null;
+  if (active) {
+    try { active.abort(); } catch {}
+  }
+  voiceSearch.setAttribute('aria-pressed', 'false');
+  voiceSearchStatus.textContent = message ? t(message) : '';
+}
+
+function closeSearch() {
+  stopVoiceSearch();
+  searchPanel.hidden = true;
+  searchToggle.setAttribute('aria-expanded', 'false');
+  searchInput.value = '';
+  query = '';
+  renderProducts();
+  searchToggle.focus({preventScroll:true});
+}
+
+searchToggle.onclick = () => {
+  if (!searchPanel.hidden) {
+    closeSearch();
+    return;
+  }
+  searchPanel.hidden = false;
+  searchToggle.setAttribute('aria-expanded', 'true');
+  searchInput.focus();
+};
+$('clearSearch').onclick = closeSearch;
+searchPanel.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeSearch();
+  }
+});
+searchInput.oninput = () => {
+  stopVoiceSearch();
+  query = searchInput.value;
+  renderProducts();
+};
+
+voiceSearch.onclick = () => {
+  if (searchRecognition) {
+    stopVoiceSearch();
+    return;
+  }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const tryAgain = 'Не удалось распознать речь. Повторите или введите название.';
+  const unavailable = 'Голосовой поиск недоступен. Введите название вручную.';
+  if (!Recognition) {
+    stopVoiceSearch(unavailable);
+    return;
+  }
+  voiceSearch.focus({preventScroll:true});
+  try {
+    const recognition = new Recognition();
+    searchRecognition = recognition;
+    recognition.lang = I.locale();
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.onresult = event => {
+      if (searchRecognition !== recognition) return;
+      const transcript = event.results[0]?.[0]?.transcript?.trim().replace(/[.!?…。！？]+$/u, '').trim();
+      if (!transcript) {
+        stopVoiceSearch(tryAgain);
+        return;
+      }
+      stopVoiceSearch();
+      searchInput.value = query = transcript;
+      if (category !== 'all') {
+        category = 'all';
+        renderCategories();
+      }
+      renderProducts();
+    };
+    recognition.onerror = event => {
+      if (searchRecognition !== recognition) return;
+      const microphoneUnavailable = ['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error);
+      stopVoiceSearch(microphoneUnavailable ? 'Нет доступа к микрофону. Введите название вручную.' : tryAgain);
+    };
+    recognition.onend = () => {
+      if (searchRecognition === recognition) stopVoiceSearch(tryAgain);
+    };
+    voiceSearch.setAttribute('aria-pressed', 'true');
+    voiceSearchStatus.textContent = t('Слушаю… Назовите блюдо или ингредиент.');
+    searchRecognitionTimer = setTimeout(() => stopVoiceSearch(tryAgain), 20000);
+    recognition.start();
+  } catch {
+    stopVoiceSearch(unavailable);
+  }
+};
+window.addEventListener('pagehide', () => stopVoiceSearch());
+window.addEventListener('umma-menu:languagechange', () => stopVoiceSearch());
+
 const dishDetails = $('dishDetails');
 document.querySelector('.dish-detail-scrim').addEventListener('click', () => dishDetails.close());
 dishDetails.addEventListener('close', () => {
