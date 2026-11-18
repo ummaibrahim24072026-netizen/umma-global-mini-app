@@ -166,7 +166,7 @@
   return wrapper;
  }
  const textTranslations=new Map();
- function translatedText(original,language,load){
+ function translatedText(original,language,load,translateLabel){
   const wrapper=document.createElement('div');
   wrapper.className='connect-translated-text';
   const main=document.createElement('div');
@@ -183,7 +183,9 @@
   wrapper.append(main,toggle,originalText);
   const key=language+'|'+original;
   const state=document.createElement('small');state.className='connect-local-status';state.textContent='';wrapper.append(state);
+  const start=translateLabel?document.createElement('button'):null;
   async function translate(){
+   if(start)start.disabled=true;
    try{
     state.textContent='Перевод на устройстве · первая загрузка может занять несколько минут';
     let work=textTranslations.get(key);
@@ -196,9 +198,16 @@
      toggle.hidden=false;
      state.textContent='';
     }else state.textContent='';
-   }catch{state.textContent='Автоперевод недоступен на этом устройстве. Показан оригинал.';textTranslations.delete(key);}
+    if(start)start.hidden=true;
+   }catch{state.textContent='Перевод недоступен на этом устройстве. Показан оригинал.';textTranslations.delete(key);}
+   finally{if(start)start.disabled=false;}
   }
-  if('IntersectionObserver'in window){
+  if(start){
+   start.type='button';
+   start.textContent=translateLabel;
+   start.onclick=translate;
+   wrapper.insertBefore(start,state);
+  }else if('IntersectionObserver'in window){
    const observer=new IntersectionObserver(entries=>{
     if(!entries.some(e=>e.isIntersecting))return;
     observer.disconnect();void translate();

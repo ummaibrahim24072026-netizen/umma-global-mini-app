@@ -233,6 +233,63 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(enable.hidden,true);
  app.window.close();
 }
+// The public chat stays on the same screen and recovers after a failed poll.
+{
+ const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><header></header></body></html>',{
+  url:'https://qa.invalid/app/menu/?connect=1',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const w=app.window;
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+ const messages=[{id:'reply',direction:'staff',body:'Hello',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'}];
+ let offline=false,translations=0;
+ w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
+ w.AbortSignal=AbortSignal;
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+ w.ummaLocalTranslate={async translate(){translations++;return 'Здравствуйте';}};
+ w.fetch=async(url,{signal,body})=>{
+  if(JSON.parse(body).action==='hidden'){
+   assert.ok(signal instanceof AbortSignal);
+   throw new Error('Optional endpoint unavailable');
+  }
+  if(offline)throw new TypeError('Failed to fetch');
+  return new Response(JSON.stringify({ok:true,client:{},messages}));
+ };
+ loadConnect(w,'customer-connect');
+ await w.ummaCustomerConnect.open();
+ const dialog=w.document.querySelector('.umma-connect-chat');
+ const row=dialog.querySelector('[data-connect-message="reply"]');
+ assert.ok(dialog.open);
+ assert.equal(w.location.search,'');
+ assert.equal(w.sessionStorage.getItem('umma:chat:open'),'1');
+ assert.match(row.textContent,/Hello/);
+ assert.equal(translations,0);
+ [...row.querySelectorAll('button')].find(button=>button.textContent==='Перевести').click();
+ await tick();
+ assert.equal(translations,1);
+ assert.match(row.textContent,/Здравствуйте/);
+ const draft=dialog.querySelector('textarea');
+ draft.value='Черновик';
+ offline=true;
+ w.document.dispatchEvent(new w.Event('visibilitychange'));
+ await tick();
+ assert.ok(dialog.open);
+ assert.match(dialog.textContent,/Переподключаемся/);
+ assert.equal(draft.value,'Черновик');
+ assert.equal(dialog.querySelector('[data-connect-message="reply"]'),row);
+ offline=false;
+ messages.push({...messages[0],id:'new-reply',body:'New reply'});
+ w.dispatchEvent(new w.Event('online'));
+ await tick();
+ assert.ok(dialog.open);
+ assert.match(dialog.textContent,/New reply/);
+ assert.doesNotMatch(dialog.textContent,/Переподключаемся/);
+ assert.equal(draft.value,'Черновик');
+ assert.equal(translations,1);
+ dialog.close();
+ assert.equal(w.sessionStorage.getItem('umma:chat:open'),null);
+ app.window.close();
+}
 // The guest records first and uploads only on a separate Send tap.
 {
  const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><header></header></body></html>',{

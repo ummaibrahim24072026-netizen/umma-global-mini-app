@@ -727,7 +727,16 @@ const money=n=>new Intl.NumberFormat(I.locale(),{style:'currency',currency:'VND'
 const name=p=>I.field(p,'name');const description=p=>I.field(p,'description');
 let products=[],cart=new Map(),category='all',query='',busy=false,pending=null,lastOrder=null,receipts=new Map(),lastStatus=null,menuState='loading';
 let catalogRequest=0,loadingCatalog=false,availabilityBusy=false;
-let source='';try{source=new URLSearchParams(location.search).get('point')||sessionStorage.getItem('umma-menu-point')||'';if(source)sessionStorage.setItem('umma-menu-point',source.slice(0,80));if(location.search)history.replaceState(null,'',location.pathname+location.hash);}catch{}
+let source='';
+try{
+ const url=new URL(location.href);
+ source=url.searchParams.get('point')||sessionStorage.getItem('umma-menu-point')||'';
+ if(source)sessionStorage.setItem('umma-menu-point',source.slice(0,80));
+ if(url.searchParams.has('point')){
+  url.searchParams.delete('point');
+  history.replaceState(history.state,'',url);
+ }
+}catch{}
 const locationId='e22788bd-4734-4b3a-911e-ba103d52617a';
 const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+s))?.id||'other';
 const qty=id=>cart.get(id)||0;
@@ -1235,4 +1244,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=13"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=37"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=14"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=38"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
