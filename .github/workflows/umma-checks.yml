@@ -24,6 +24,17 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Verify app and isolated cafe workflows
         run: npm test
+      - name: Verify public client in Chromium
+        env:
+          QA_CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_OUTPUT_DIR: artifacts/client-browser
+        run: npm run test:client-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-browser-screens
+          path: artifacts/client-browser
+          if-no-files-found: ignore
       - name: Verify Android notification recovery with JVM doubles
         run: python3 scripts/qa-android-relay.py
 

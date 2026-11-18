@@ -3,7 +3,10 @@
   --cafe-banner-gold: #FFE586;
   --cafe-button-gold: #fff0c4;
   --umma-action: var(--umma-brand-primary);
-  --umma-surface: #fff;
+  --umma-surface: var(--umma-brand-white);
+  --customer-sheet-radius: 28px;
+  --customer-control-size: 44px;
+  --customer-back-border: #e2ba5b;
   min-height: 100dvh;
   background: radial-gradient(ellipse at top, var(--umma-brand-soft), var(--umma-brand-canvas) 550px);
 }
@@ -15,6 +18,7 @@
 .public-cafe-menu #cafePage .topbar {
   position: sticky;
   inset-block-start: 0;
+  padding-block-start: max(12px, env(safe-area-inset-top));
   z-index: 11;
   flex-wrap: nowrap;
   border: 0;
@@ -499,7 +503,7 @@
   visibility: hidden;
 }
 .public-cafe-menu :is(.customer-section, #checkout[data-stage="cart"])[open] {
-  --section-surface: #f3f8f8;
+  --section-surface: var(--umma-brand-canvas);
   --section-gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
   position: fixed;
   inset: env(safe-area-inset-top) 0 var(--customer-dock-height, 80px);
@@ -513,7 +517,7 @@
   overflow: auto;
   overscroll-behavior: contain;
   border: 0;
-  border-radius: 28px;
+  border-radius: var(--customer-sheet-radius);
   background: var(--section-surface);
   color: var(--umma-brand-night);
   box-shadow: none;
@@ -1580,3 +1584,27 @@
   #checkout[data-stage="receipt"] #success .receipt-status { gap: 10px; padding: 14px; }
   #checkout[data-stage="receipt"] #success .receipt-status-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 15px; }
 }
+
+.public-cafe-menu :is(.umma-notifications-back, .connect-settings-back) {
+  min-height: var(--customer-control-size);
+  border-radius: 999px;
+  border-color: var(--customer-back-border);
+  background: var(--umma-brand-strong);
+  color: var(--umma-brand-white);
+}
+.customer-inline-notice:not(:empty) {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--umma-brand-pale);
+  color: var(--umma-brand-deep);
+}
+.customer-inline-notice:empty { display: none; }
+.public-cafe-menu #orderLinkDialog {
+  width: min(460px, calc(100% - 24px));
+  border: 1px solid var(--umma-brand-line);
+  border-radius: var(--customer-sheet-radius);
+  background: var(--umma-brand-white);
+}
+#orderLinkDialog .checkout-body { display: grid; gap: 12px; }
+#orderLinkDialog .checkout-body p { margin: 0; overflow-wrap: anywhere; }

@@ -271,6 +271,7 @@ function renderThread(){
  });
  window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
+ if(publicChat&&dialog?.open&&!document.hidden)window.ummaOrderInbox?.markChatRead?.();
  if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;
  badge();
 }
@@ -630,8 +631,9 @@ function build(){
  });
  function update(){
   join.hidden=!!token;
-  content.hidden=!token;
+  content.hidden=!publicChat&&!token;
   if(publicChat){
+   form.hidden=!token;
    if(token)content.insertBefore(status,form);
    else join.after(status);
   }
@@ -681,9 +683,10 @@ window.addEventListener('pageshow',refresh);window.addEventListener('online',ref
 let resumeChat=false;
 if(publicChat){try{resumeChat=sessionStorage.getItem(CHAT_OPEN_KEY)==='1';}catch{}}
 const launchURL=new URL(location.href);
-const openFromLink=launchURL.searchParams.has('connect');
+const openFromLink=launchURL.searchParams.has('connect')||(publicChat&&launchURL.searchParams.has('messages'));
 if(openFromLink){
  launchURL.searchParams.delete('connect');
+ launchURL.searchParams.delete('messages');
  history.replaceState(history.state,'',launchURL);
 }
 if(openFromLink||resumeChat)void open();

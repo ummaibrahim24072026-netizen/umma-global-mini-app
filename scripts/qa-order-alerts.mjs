@@ -23,7 +23,7 @@ w.ummaOrderInbox.publish({...o,orderNumber:91,status:'completed',eventId:'done',
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt:new Date(Date.now()-60000).toISOString(),changes:{status:'preparing'}});
 let stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.states['91'].status,'completed');const length=stored.messages.length;
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt,changes:{status:'preparing'}});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.length,length);
-w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog .umma-inbox-order').length,2);assert.equal(w.document.querySelector('dialog .umma-order-alerts').hidden,true);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
+w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);assert.equal(w.document.querySelectorAll('dialog .umma-inbox-event').length,3);assert.equal(w.document.querySelector('dialog .umma-order-alerts').hidden,true);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
 w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:true});w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:false});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.at(-1).value,'batch_ready_unpaid');w.close();
 }
 // Supported browser: one explicit permission tap, subscription bound to the exact receipt.
@@ -42,14 +42,50 @@ assert.equal(reload.ummaOrderAlerts.controls.hidden,true);
 assert.equal(reload.ummaOrderAlerts.controls.querySelector('p'),null);
 reload.close();w.close();
 }
+// Chat order updates keep their points in the timeline and are readable before joining.
+{
+const dom=new JSDOM('<body><dialog id="customerMessages"><div id="orderInboxHost"></div><div id="customerConnectHost"></div></dialog><button id="customerMessagesButton"><span class="messages-unread" hidden></span></button><ol><li data-connect-message="old" data-created-at="2026-11-18T12:00:00Z"></li><li data-connect-message="new" data-created-at="2026-11-18T12:03:00Z"></li></ol></body>',{url:'https://qa.invalid/menu/',runScripts:'outside-only'});
+const w=dom.window,d=w.document;
+for(const script of ['order-inbox','customer-messages','connect-media'])w.eval(source('js/cafe/'+script+'.js'));
+const inbox=w.ummaOrderInbox;
+inbox.publish({id:'single',orderNumber:199,status:'completed',eventId:'done-199',eventAt:'2026-11-18T12:01:00Z',changes:{status:'completed'}});
+const chatButton=d.createElement('button');chatButton.dataset.unread='2';d.querySelector('#customerConnectHost').append(chatButton);
+w.dispatchEvent(new w.Event('umma:messages-count'));
+assert.equal(d.querySelector('.messages-unread').textContent,'3');
+const list=d.querySelector('ol');
+inbox.renderChatFeed(list);
+const card=list.children[1];
+assert.equal(card.dataset.orderId,'199');
+const toggle=card.querySelector('[aria-expanded]');
+toggle.click();
+assert.equal(toggle.getAttribute('aria-expanded'),'true');
+w.ummaConnectMedia.render(list,[{id:'old'},{id:'new'}],()=>assert.fail('Reuse message rows'),()=>{});
+inbox.renderChatFeed(list);
+assert.equal(list.children[1],card);
+assert.equal(toggle.getAttribute('aria-expanded'),'true');
+inbox.markChatRead();
+assert.equal(d.querySelector('.messages-unread').textContent,'2');
+w.close();
+}
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
 {
-const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0;const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
-const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});const previous=notifications.findIndex(n=>n.tag===o.tag);if(previous>=0)notifications.splice(previous,1);const active={tag:o.tag,data:o.data,close(){notifications.splice(notifications.indexOf(active),1);closed++;}};notifications.push(active);},async getNotifications(){return [...notifications];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return[];},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
+const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0,windows=[];const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
+const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});const previous=notifications.findIndex(n=>n.tag===o.tag);if(previous>=0)notifications.splice(previous,1);const active={tag:o.tag,data:o.data,close(){notifications.splice(notifications.indexOf(active),1);closed++;}};notifications.push(active);},async getNotifications(){return [...notifications];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return windows;},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
 vm.runInNewContext(source('umma-menu-sw.js'),{self,caches:{async open(){return cache;}},URL,Response,Promise,JSON,Math,Number});
 async function event(type,obj){let task;callbacks[type]({...obj,waitUntil(p){task=p;}});await task;}
 const payload={eventId:'one',title:'Ready',body:'Collect',order:{id:'o',orderNumber:12,status:'ready'}};
 await event('push',{data:{json:()=>payload}});assert.equal(shown.length,1);assert.equal(shown[0].o.silent,false);assert.equal(badge,1);await event('push',{data:{json:()=>payload}});assert.equal(shown.length,2);assert.equal(shown[1].o.silent,true);assert.equal(badge,1);
+assert.equal(shown[0].o.data.orderNumber,'12');
+await event('notificationclick',{notification:{data:shown[0].o.data,close(){}}});
+assert.equal(out.pop(),'https://qa.invalid/app/menu/?order=12');
+let focused=0;
+windows=[{url:'https://qa.invalid/app/menu/',async focus(){focused++;},postMessage(message){out.push(message);}}];
+await event('notificationclick',{notification:{data:shown[0].o.data,close(){}}});
+assert.equal(focused,1);
+assert.equal(out.at(-1).type,'UMMA_OPEN_ORDER');
+assert.equal(out.pop().orderNumber,'12');
+windows=[];
+
 let history;await event('message',{data:{type:'UMMA_GET_HISTORY'},source:{postMessage(m){history=m;}}});assert.equal(history.messages.length,1);
 const connect={eventId:'reply',kind:'connect',title:'UMMA',body:'Reply'};
 await event('push',{data:{json:()=>connect}});assert.equal(badge,2);

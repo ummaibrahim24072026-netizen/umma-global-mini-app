@@ -96,6 +96,7 @@ for(const method of ['cash','qr']){
  assert.equal(d.querySelector('#dishDetails .cafe-card-quantity strong').textContent,'1');
  assert.equal(cartCount.hidden,false);
  assert.equal(cartCount.textContent,'1');
+ assert.deepEqual(JSON.parse(w.sessionStorage.getItem('umma-menu-cart')),[[product.id,1]]);
  assert.equal(cartButton.classList.contains('has-items'),true);
  receiptButton.click();
  assert.equal(d.getElementById('dishDetails').open,false);
@@ -129,7 +130,10 @@ for(const method of ['cash','qr']){
  assert.equal(cartCount.hidden,true);
  assert.equal(d.getElementById('checkoutTitle').textContent,'Оплата заказа');
  assert.equal(d.getElementById('paymentConfirmedMark').hidden,true);
- assert.match(d.getElementById('receiptHint').textContent,/после подтверждения оплаты/);
+ if(method==='cash'){
+  assert.match(d.getElementById('receiptHint').textContent,/Назовите сотруднику ваш номер заказа/);
+  assert.doesNotMatch(d.getElementById('receiptHint').textContent,/подтвержден/);
+ }else assert.match(d.getElementById('receiptHint').textContent,/после подтверждения оплаты/);
  assert.equal(created,2);assert.equal(calls[0].requestKey,calls[1].requestKey);assert.equal(calls[0].paymentMethod,method);assert.equal(d.getElementById('success').hidden,false);assert.equal(d.getElementById('guestPayment').hidden,method!=='qr');assert.ok(d.getElementById('paymentState').textContent.includes(method==='qr'?'QR':'наличными'));
  const receiptLines=d.getElementById('receiptDetails');
  assert.equal(receiptLines.hidden,false);
@@ -196,6 +200,16 @@ for(const method of ['cash','qr']){
  assert.match(activeOrders[0].textContent,/102/);
  activeOrders[1].click();
  assert.equal(d.getElementById('customerOrders').open,false);
+ assert.match(d.getElementById('successNumber').textContent,/101/);
+ const orderLink=orderId=>w.dispatchEvent(new w.CustomEvent('umma:open-specific-order',{detail:{orderId}}));
+ orderLink('102');
+ assert.match(d.getElementById('successNumber').textContent,/102/);
+ orderLink('199');
+ assert.equal(d.getElementById('orderLinkDialog').open,true);
+ assert.match(d.getElementById('orderLinkStatus').textContent,/недоступен/);
+ assert.doesNotMatch(d.getElementById('orderLinkDialog').textContent,/101|102/);
+ orderLink('101');
+ assert.equal(d.getElementById('orderLinkDialog').open,false);
  assert.match(d.getElementById('successNumber').textContent,/101/);
  d.getElementById('newOrder').click();d.getElementById('installApp').click();assert.equal(d.getElementById('installHelp').hidden,false);dom.window.close();
 }

@@ -740,7 +740,7 @@ audio.connect-media{width:min(100%,300px)}
 body.public-cafe-menu:has(#customerChatDialog[open]) #customerDock{display:none!important}
 body.public-cafe-menu dialog#customerChatDialog.umma-connect-chat[open]{
   --chat-bottom-inset:0px;
-  inset:env(safe-area-inset-top) 0 0!important;
+  inset:env(safe-area-inset-top) 0 var(--customer-keyboard-inset,0px)!important;
   width:100%!important;
   max-width:none!important;
   height:auto!important;
