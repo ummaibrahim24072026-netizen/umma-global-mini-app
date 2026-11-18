@@ -769,7 +769,62 @@ function menuDishes(){
 }
 
 function renderCategories(){const dishes=menuDishes().map(row=>row.dish);const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];$('categories').innerHTML=cats.map(c=>'<button type="button" class="cafe-category" data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products">'+esc(t(c.label))+'<span aria-hidden="true">'+num(c.id==='all'?dishes.length:dishes.filter(p=>categoryFor(p)===c.id).length)+'</span></button>').join('');}
-function renderProducts(){const visible=menuDishes().filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&[name(p),description(p),p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en].join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
+// Search tags for ingredients shown in the supplied catalogue photos or confirmed in the menu.
+const menuIngredientTags = {
+  'UMMA-CAFE-SALAD': 'помидор огурец',
+  'UMMA-CAFE-CHICKEN-LEG-SALAD': 'помидор огурец',
+  'UMMA-CAFE-CHEESE-KHACHAPURI': 'моцарелла',
+};
+const ingredientAliases = Object.entries({
+  баранина: 'баран(?:ин|ь|и[йя])\\p{L}*|mutton|thit cuu',
+  ягнятина: 'ягн(?:ятин|ен|ят)\\p{L}*|lambs?',
+  говядина: 'говядин\\p{L}*|говяж\\p{L}*|beef|thit bo',
+  помидор: 'помидор\\p{L}*|томат\\p{L}*|tomato(?:es)?|ca chua',
+  курица: 'куриц\\p{L}*|курин\\p{L}*|курятин\\p{L}*|chicken|thit ga',
+  морковь: 'морков\\p{L}*|carrots?|ca rot',
+  огурец: 'огур(?:ец|ц|еч)\\p{L}*|cucumbers?|dua (?:leo|chuot)',
+  капуста: 'капуст\\p{L}*|cabbages?|bap cai',
+  картофель: 'картофел\\p{L}*|картош\\p{L}*|potato(?:es)?|khoai tay',
+  свекла: 'свек(?:л|ол|оль)\\p{L}*|beets?|beetroot|cu den',
+  лимон: 'лимон\\p{L}*|lemons?',
+  ежевика: 'ежевик\\p{L}*|blackberr(?:y|ies)|mam xoi den',
+  миндаль: 'миндал\\p{L}*|almonds?|hanh nhan',
+  рис: 'рис(?:а|у|ом|е|ов\\p{L}*)?|rice',
+  сыр: 'сыр(?:а|у|ом|е|ы|ов|н\\p{L}*)?|cheese|pho mai',
+  моцарелла: 'моцарелл\\p{L}*|mozzarella',
+}).map(([ingredient, aliases]) => [ingredient, new RegExp('(^| )(?:'+aliases+')(?= |$)', 'gu')]);
+const ingredientTerms = new Set(ingredientAliases.map(([ingredient]) => ingredient));
+
+function normaliseMenuSearch(text) {
+  let normalised = text.toLowerCase().replace(/ё/g, 'е').normalize('NFD')
+    .replace(/(\p{Script=Latin})\p{M}+/gu, '$1').replace(/đ/g, 'd').normalize('NFC')
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ').trim();
+  for (const [ingredient, aliases] of ingredientAliases) {
+    normalised = normalised.replace(aliases, '$1'+ingredient);
+  }
+  return normalised;
+}
+
+function menuSearchTerms(value) {
+  const text = normaliseMenuSearch(value)
+    .replace(/^(?:покажи(?:те)?(?: мне)?|найди(?:те)?|хочу) /u, '')
+    .replace(/^блюда? (?:с|со) /u, '');
+  const terms = text ? text.split(' ') : [];
+  return terms.length > 1 ? terms.filter(term => !['с', 'со', 'и'].includes(term)) : terms;
+}
+
+function matchesMenuSearch(dish, terms) {
+  if (!terms.length) return true;
+  const text = normaliseMenuSearch([
+    name(dish), description(dish), dish.name_ru, dish.name_vi, dish.name_en,
+    dish.description_ru, dish.description_vi, dish.description_en, menuIngredientTags[dish.sku],
+  ].join(' '));
+  const words = new Set(text.split(' '));
+  if (words.has('ягнятина')) words.add('баранина');
+  return terms.every(term => ingredientTerms.has(term) ? words.has(term) : text.includes(term));
+}
+
+function renderProducts(){const terms=menuSearchTerms(query);const visible=menuDishes().filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&matchesMenuSearch(p,terms));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
 function renderCart(){ $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
  const badge=$('cartCount');
  badge.hidden=n===0;
@@ -892,10 +947,18 @@ searchPanel.addEventListener('keydown', event => {
     closeSearch();
   }
 });
+function applyMenuSearch(value) {
+  query = value;
+  if (value.trim() && category !== 'all') {
+    category = 'all';
+    renderCategories();
+  }
+  renderProducts();
+}
+
 searchInput.oninput = () => {
   stopVoiceSearch();
-  query = searchInput.value;
-  renderProducts();
+  applyMenuSearch(searchInput.value);
 };
 
 voiceSearch.onclick = () => {
@@ -925,12 +988,8 @@ voiceSearch.onclick = () => {
         return;
       }
       stopVoiceSearch();
-      searchInput.value = query = transcript;
-      if (category !== 'all') {
-        category = 'all';
-        renderCategories();
-      }
-      renderProducts();
+      searchInput.value = transcript;
+      applyMenuSearch(transcript);
     };
     recognition.onerror = event => {
       if (searchRecognition !== recognition) return;
