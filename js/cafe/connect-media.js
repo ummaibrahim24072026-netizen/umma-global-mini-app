@@ -41,20 +41,20 @@
  function voiceBubble(load,errorText){
   const wrapper=document.createElement('div');
   wrapper.className='connect-voice-bubble';
-  wrapper.style.cssText='display:flex;align-items:center;gap:9px;width:min(78vw,315px);max-width:100%;padding:8px 10px;border-radius:16px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
+  wrapper.style.cssText='display:flex;align-items:center;gap:8px;width:min(84vw,350px);max-width:100%;padding:9px 12px;border-radius:17px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
   const play=document.createElement('button');play.type='button';play.textContent='▶';
   play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
   play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;align-self:center;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;cursor:pointer';
   const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px';
   const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
-  wave.style.cssText='height:27px;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer;align-self:center';
-  const heights=[7,13,19,11,21,16,8,14,22,12,18,9,16,21,10,14,19,8,15,12,20,11,17,9,14,19,10,16,12,7];
-  const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1;min-width:2px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
-  const dot=document.createElement('span');dot.style.cssText='position:absolute;left:0;top:50%;width:10px;height:10px;transform:translate(-1px,-50%);background:#0a9998;border:2px solid #d9f3ee;border-radius:50%;box-sizing:border-box;pointer-events:none';wave.append(dot);
-  const time=document.createElement('small');time.textContent='0:00';time.style.cssText='font:12px system-ui;color:#527c77';
+  wave.style.cssText='height:32px;width:100%;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer;align-self:stretch';
+  const heights=[8,15,26,19,30,12,23,28,17,9,25,14,29,21,11,24,30,18,8,19,27,13,29,16,9,22,28,12,24,17,7,15,25,10,20,12,6,15,8,5];
+  const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1 1 0;min-width:1.5px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
+  const dot=document.createElement('span');dot.style.cssText='position:absolute;left:0;top:50%;width:12px;height:12px;transform:translate(-2px,-50%);background:#168fe0;border:1px solid #d9f3ee;border-radius:50%;box-sizing:border-box;pointer-events:none';wave.append(dot);
+  const time=document.createElement('small');time.textContent='0:00';time.style.cssText='font:12px system-ui;color:#527c77;line-height:16px';
   const seek=document.createElement('input');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.setAttribute('aria-label','Перемотать голосовое сообщение');seek.style.cssText='position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer';wave.append(seek);
   const speed=document.createElement('button');speed.type='button';speed.textContent='1×';speed.setAttribute('aria-label','Скорость воспроизведения');
-  speed.style.cssText='border:0;background:transparent;color:#126c6b;font:700 12px system-ui;padding:4px;cursor:pointer';
+  speed.style.cssText='border:0;background:transparent;color:#126c6b;font:700 11px system-ui;padding:3px;cursor:pointer;align-self:center';
   const status=document.createElement('small');status.setAttribute('role','status');status.style.cssText='color:#9b3939';
   const audio=document.createElement('audio');audio.preload='metadata';
   middle.append(wave,time,status);wrapper.append(play,middle,speed,audio);
