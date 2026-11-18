@@ -624,7 +624,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=20"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=21"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=2"></script>
@@ -1309,6 +1309,17 @@ function resetReceipts(){
   if(!$('success').hidden){closeCart();$('success').hidden=true;}
   renderReceiptLinks();
 }
+// Open only the order linked to a chat notification; never fall back to another receipt.
+window.addEventListener('umma:open-specific-order',event=>{
+  const requested=String(event.detail?.orderId??'');
+  if(!requested)return;
+  const matched=[...receipts.values()].find(order=>String(receiptKey(order))===requested||String(order.orderNumber??'')===requested);
+  if(!matched){window.dispatchEvent(new CustomEvent('umma:order-not-found',{detail:{orderId:requested}}));return;}
+  document.getElementById('customerMessages')?.close();
+  window.ummaCustomerConnect?.close?.();
+  if($('customerOrders').open)$('customerOrders').close();
+  openReceipt(matched);
+});
 function openReceipt(order){
   if(!order)return;
   lastOrder=order;
