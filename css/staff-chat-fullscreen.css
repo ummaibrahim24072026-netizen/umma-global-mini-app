@@ -59,3 +59,20 @@
 .web-work-app #webMessages.work-chat-open .connect-compose{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important}
 .web-work-app #webMessages.work-chat-open .connect-compose textarea{min-width:0!important;flex:1!important}
 }
+
+/* Mobile chat parity patch: compact single-row composer and visible conversation */
+@media (max-width:760px){
+  .web-work-app #webMessages.work-chat-open{height:100dvh!important;max-height:100dvh!important}
+  .web-work-app #webMessages.work-chat-open .work-call-heading{min-height:64px!important;padding:8px 12px!important;gap:8px!important}
+  .web-work-app #webMessages.work-chat-open .work-call-heading h2{font-size:18px!important}
+  .web-work-app #webMessages.work-chat-open .work-chat-back{white-space:nowrap;min-height:42px}
+  .web-work-app #webMessages.work-chat-open .connect-chat-wallpaper{flex:1 1 auto!important;min-height:0!important}
+  .web-work-app #webMessages.work-chat-open .connect-chat-wallpaper .connect-thread{padding:12px 12px 16px!important;gap:9px!important;scroll-padding-bottom:16px}
+  .web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble{max-width:min(88%,440px)!important;padding:10px 12px!important;line-height:1.4}
+  .web-work-app #webMessages.work-chat-open .work-thread form.connect-compose{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;min-height:70px!important;padding:8px 12px max(8px,env(safe-area-inset-bottom))!important;box-sizing:border-box}
+  .web-work-app #webMessages.work-chat-open .connect-compose .connect-composer{display:flex!important;flex:1 1 auto!important;min-width:0!important;max-width:none!important;align-items:center!important;flex-wrap:nowrap!important;gap:6px!important}
+  .web-work-app #webMessages.work-chat-open .connect-compose textarea{flex:1 1 auto!important;width:auto!important;min-width:0!important;min-height:44px!important;max-height:110px!important;margin:0!important}
+  .web-work-app #webMessages.work-chat-open .connect-compose button{flex-shrink:0!important}
+  .web-work-app #webMessages.work-chat-open .connect-compose .connect-send{flex:0 0 48px!important;width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important}
+  .web-work-app #webMessages.work-chat-open .connect-compose label{min-width:0!important}
+}
