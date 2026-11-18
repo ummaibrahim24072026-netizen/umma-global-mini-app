@@ -775,6 +775,38 @@
 }
 #nearbyCafeRoute svg { flex: none; }
 
+/* Order notifications use the same frame as the other customer sections. */
+.public-cafe-menu:has(#ummaOrderInboxDialog[open]) #customerMessages { visibility: hidden; }
+#ummaOrderInboxDialog.customer-section .checkout-body { padding: 0 14px 16px; }
+#ummaOrderInboxDialog .umma-inbox-orders { display: grid; gap: 9px; }
+#ummaOrderInboxDialog .umma-inbox-order {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 16px;
+  background: var(--umma-brand-white);
+}
+#ummaOrderInboxDialog .umma-inbox-number { color: var(--umma-brand-night); font-size: .875rem; }
+#ummaOrderInboxDialog .umma-inbox-stage { color: var(--umma-brand-muted); }
+#ummaOrderInboxDialog .umma-inbox-stage::before { background: var(--umma-brand-line); }
+#ummaOrderInboxDialog .umma-inbox-stage:is(.is-done, [aria-current])::before { background: var(--umma-brand-highlight); }
+#ummaOrderInboxDialog .umma-inbox-dot {
+  border-color: var(--umma-brand-line);
+  background: var(--umma-brand-pale);
+}
+#ummaOrderInboxDialog .is-done .umma-inbox-dot {
+  border-color: var(--umma-action);
+  background: var(--umma-action);
+  color: var(--umma-brand-on-primary);
+}
+#ummaOrderInboxDialog .umma-inbox-stage[aria-current] { color: var(--umma-brand-deep); }
+#ummaOrderInboxDialog .umma-inbox-stage[aria-current]:not(.is-done) .umma-inbox-dot {
+  border-color: var(--umma-brand-strong);
+  color: var(--umma-brand-deep);
+}
+#ummaOrderInboxDialog .is-cancelled { color: #a12b39; }
+#ummaOrderInboxDialog .is-cancelled .umma-inbox-dot { border-color: #bd4653; background: #fff0f1; }
+
 #customerMessages .customer-message-sections {
   display: grid;
   gap: 8px;

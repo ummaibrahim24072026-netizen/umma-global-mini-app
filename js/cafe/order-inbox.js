@@ -4,7 +4,7 @@ try{const saved=JSON.parse(localStorage.getItem(storeKey)||'null');if(saved&&sav
 const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здесь появятся обновления ваших заказов."], "en": ["Order updates", "Close", "Order updates will appear here."], "vi": ["Thông báo", "Đóng", "Thông tin cập nhật đơn hàng sẽ xuất hiện ở đây."], "ko": ["주문 알림", "닫기", "주문 업데이트가 여기에 표시됩니다."], "zh": ["订单消息", "关闭", "订单更新将在此显示。"], "de": ["Bestellmeldungen", "Schließen", "Hier erscheinen Neuigkeiten zu Ihren Bestellungen."], "fr": ["Mes notifications", "Fermer", "Les mises à jour de vos commandes apparaîtront ici."], "th": ["แจ้งเตือนคำสั่งซื้อ", "ปิด", "ข้อมูลอัปเดตคำสั่งซื้อจะแสดงที่นี่"], "ms": ["Kemas kini pesanan", "Tutup", "Kemas kini pesanan anda akan muncul di sini."], "id": ["Notifikasi pesanan", "Tutup", "Pembaruan pesanan Anda akan muncul di sini."], "ar": ["إشعارات الطلبات", "إغلاق", "ستظهر تحديثات طلباتك هنا."], "pt": ["Notificações", "Fechar", "As atualizações dos seus pedidos aparecerão aqui."]};
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
 const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
-const host=document.getElementById('orderInboxHost'),inHub=!!host?.closest('#customerMessages');
+const host=document.getElementById('orderInboxHost'),messagesSection=host?.closest('#customerMessages'),inHub=!!messagesSection;
 const inPublicMenu=inHub||!!host?.closest('.customer-actions');
 const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления о заказах':ui()[0];
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
@@ -150,21 +150,42 @@ function open(){
  const brandTemplate=document.getElementById('customerHeadingTemplate');
  if(inPublicMenu&&brandTemplate){
   const header=document.createElement('div');
-  header.className='customer-aux-header';
+  header.className='checkout-header';
+  dialog.classList.add('customer-section');
+  dialog.setAttribute('closedby','closerequest');
+  dialog.removeAttribute('style');
+  close.className='close';
+  close.removeAttribute('style');
+  heading.tabIndex=-1;
   const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
   heading.removeAttribute('style');
   brandHeading.querySelector('.customer-heading-copy').append(heading);
   header.append(brandHeading,close);
-  dialog.append(styles,header,empty,list);
- }else dialog.append(styles,close,heading,empty,list);
- if(window.ummaOrderAlerts?.controls)dialog.append(window.ummaOrderAlerts.controls);
+  const body=document.createElement('div');
+  body.className='checkout-body';
+  body.append(empty,list);
+  if(window.ummaOrderAlerts?.controls)body.append(window.ummaOrderAlerts.controls);
+  dialog.append(styles,header,body);
+ }else{
+  dialog.append(styles,close,heading,empty,list);
+  if(window.ummaOrderAlerts?.controls)dialog.append(window.ummaOrderAlerts.controls);
+ }
  document.body.append(dialog);
  dialog.addEventListener('close',()=>{
   const controls=window.ummaOrderAlerts?.controls;
-  if(controls)(document.getElementById('syncState')?.parentNode||document.body).append(controls);
+  if(controls&&dialog.contains(controls))(document.getElementById('syncState')?.parentNode||document.body).append(controls);
+  const focus=document.activeElement;
   dialog.remove();
+  if(messagesSection&&!document.querySelector('dialog[data-umma-inbox][open]')){
+   messagesSection.inert=false;
+   if(messagesSection.open&&(focus===document.body||dialog.contains(focus)))button.focus({preventScroll:true});
+  }
  });
- dialog.showModal();
+ if(inPublicMenu&&brandTemplate){
+  dialog.show();
+  if(messagesSection)messagesSection.inert=true;
+  heading.focus({preventScroll:true});
+ }else dialog.showModal();
  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
  save();
 }

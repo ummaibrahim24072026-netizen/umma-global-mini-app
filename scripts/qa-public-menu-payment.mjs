@@ -44,6 +44,20 @@ for(const method of ['cash','qr']){
  assert.equal(receiptButton.hidden,false);
  assert.equal(receiptButton.closest('nav').children[2].id,'nearbyCafeButton');
  assert.equal(d.getElementById('orderHistoryButton'),null);
+ if(method==='cash'){
+  w.eval(read('js/cafe/order-inbox.js'));
+  w.eval(read('js/cafe/customer-messages.js'));
+  d.getElementById('customerMessagesButton').click();
+  d.querySelector('#orderInboxHost button').click();
+  const notifications=d.getElementById('ummaOrderInboxDialog');
+  assert.ok(notifications.open);
+  assert.equal(notifications.dataset.testModal,undefined);
+  receiptButton.click();
+  assert.equal(notifications.open,false);
+  assert.equal(d.getElementById('customerMessages').open,false);
+  assert.equal(d.getElementById('customerOrders').open,true);
+  d.querySelector('.dock-menu').click();
+ }
  d.querySelector(method==='cash'?'.cafe-product-photo':'.dish-link').click();
  assert.equal(d.getElementById('dishDetails').open,true);
  assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
