@@ -6,7 +6,7 @@ const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.e
 const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
 const host=document.getElementById('orderInboxHost'),messagesSection=host?.closest('#customerMessages'),inHub=!!messagesSection;
 const inPublicMenu=inHub||!!host?.closest('.customer-actions');
-const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления о заказах':ui()[0];
+const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления':ui()[0];
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
 function render(){
@@ -41,6 +41,8 @@ const inTransit={ru:'В пути',en:'On the way',vi:'Đang giao'};
 const stageKeys=['pending','confirmed','preparing','ready','picked_up','completed','delivered','cancelled'];
 let inboxHistory=false;
 const inboxStyles=`
+.umma-inbox-event{list-style:none;margin:0 0 10px}.umma-inbox-event-button{width:100%;display:grid;gap:7px;text-align:left;background:#fff;border:1px solid #c9e2df;border-radius:18px;padding:15px;color:#153b39;cursor:pointer;font:inherit}.umma-inbox-event-button strong{font-size:15px}.umma-inbox-event-button time{font-size:12px;color:#647c7a}.umma-inbox-event-hint{color:#078f91;font-weight:700;font-size:13px}.umma-inbox-event-button:focus-visible{outline:3px solid #0aa3a4;outline-offset:2px}
+
 .umma-inbox-tabs{display:flex;gap:8px;margin-bottom:12px}.umma-inbox-tabs button{flex:1;min-height:42px;border:1px solid #b9d8d4;border-radius:14px;background:#fff;color:#164d4b;font-weight:700}.umma-inbox-tabs button[aria-selected=true]{background:#0aa3a4;color:#fff;border-color:#0aa3a4}
 .umma-inbox-meta{font-size:12px;color:#637b79;font-weight:500;white-space:nowrap}.umma-inbox-order{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}.umma-inbox-order-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.umma-inbox-orders:empty{display:none}
 
@@ -67,84 +69,52 @@ dialog.umma-inbox-fixed-header>.checkout-body{flex:1 1 auto;min-height:0;overflo
 `;
 
 function renderOrders(list){
+ const language=document.documentElement.lang.split('-')[0];
  const groups=new Map();
  for(const message of data.messages){
   const group=groups.get(message.orderId)||{number:message.orderId,values:new Set(),messages:[]};
   if(message.number)group.number=message.number;
   group.values.add(message.value);
   group.messages.push(message);
-  group.at=message.at;
   groups.set(message.orderId,group);
  }
- const language=document.documentElement.lang.split('-')[0];
  const fragment=document.createDocumentFragment();
  let visible=0;
- for(const [id,group] of [...groups].sort((a,b)=>b[1].at-a[1].at)){
-  const state=data.states[id];
-  const {values}=group;
+ const dateLabel=at=>new Date(at).toLocaleString(language,{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+ const openOrder=id=>{
+  document.querySelector('dialog[data-umma-inbox][open]')?.close();
+  document.getElementById('customerMessages')?.close();
+  const orders=document.getElementById('customerOrders');
+  document.getElementById('receiptButton')?.click();
+  const card=[...orders?.querySelectorAll('[data-order-key]')||[]].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
+  if(!card){
+   document.getElementById('showOrderHistory')?.click();
+   const historyCard=[...orders?.querySelectorAll('[data-order-key]')||[]].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
+   if(historyCard){historyCard.scrollIntoView({block:'center'});historyCard.focus({preventScroll:true});}
+  }else{card.scrollIntoView({block:'center'});card.focus({preventScroll:true});}
+ };
+ for(const [id,group] of [...groups].sort((a,b)=>Math.max(...b[1].messages.map(m=>m.at))-Math.max(...a[1].messages.map(m=>m.at)))){
+  const state=data.states[id],values=group.values;
   if(state?.status)values.add(state.status);
   if(state?.delivery)values.add(state.delivery);
-  const delivery=state?.orderType==='delivery'||deliveryStates.some(key=>values.has(key));
-  const cancelled=values.has('cancelled');
-  const courier=deliveryStates.findLast(key=>values.has(key));
-  const finished=values.has(delivery?'delivered':'completed');
-  if((cancelled||finished)!==inboxHistory)continue;
-  visible++;
-  const progress=orderStages.findLastIndex(key=>values.has(key));
-  const kitchen=courier==='picked_up'||finished?Math.max(progress,3):progress;
-  const awaitingPayment=inPublicMenu&&state?.payment==='pending'&&state.status==='pending';
-  const stages=[
-   ['pending',awaitingPayment?'current':kitchen>=0?'done':'future',awaitingPayment?'awaiting_payment':'pending'],
-   ['confirmed',kitchen>=1?'done':'future'],
-   ['preparing',kitchen>=3?'done':kitchen===2?'current':'future'],
-   ['ready',kitchen>=3?'done':'future']
-  ];
-  if(delivery)stages.push(['picked_up',finished?'done':courier==='picked_up'||(kitchen>=3&&courier)?'current':'future',courier||'picked_up']);
-  stages.push([cancelled?'cancelled':delivery?'delivered':'completed',cancelled?'cancelled':finished?'done':'future']);
-  const row=document.createElement('li');
-  row.className='umma-inbox-order';
-  const number=document.createElement('strong');
-  number.className='umma-inbox-number';
-  number.textContent='№'+group.number;
-  number.title=[...new Map(group.messages.map(message=>[message.value,message])).values()]
-   .sort((a,b)=>a.at-b.at)
-   .map(message=>translate(labels[message.value==='pending'&&awaitingPayment?'awaiting_payment':message.value])+' · '+new Date(message.at).toLocaleString())
-   .join('\n');
-  const timeline=document.createElement('ol');
-  timeline.className='umma-inbox-stages';
-  timeline.setAttribute('role','list');
-  const activeStage=stages.find(([,value])=>value==='current')?.[0]||orderStages[kitchen];
-  for(const [key,status,description=key] of stages){
-   const stage=document.createElement('li');
-   stage.className='umma-inbox-stage is-'+(cancelled&&status==='current'?'future':status);
-   if(key===activeStage&&!finished&&!cancelled)stage.setAttribute('aria-current','step');
-   const dot=document.createElement('span');
-   dot.className='umma-inbox-dot';
-   if(status==='done'||status==='cancelled')dot.setAttribute('role','img');
-   else dot.setAttribute('aria-hidden','true');
-   dot.textContent=status==='done'?'✓':status==='cancelled'?'×':status==='current'&&!cancelled?'•':'';
-   const label=document.createElement('span');
-   label.textContent=description==='awaiting_payment'?translate('Оплата'):(description==='picked_up'&&status==='current'?inTransit[language]:'')||
-    shortLabels[language]?.[stageKeys.indexOf(key)]||translate(labels[description]);
-   label.title=translate(labels[description]);
-   stage.append(dot,label);
-   timeline.append(stage);
+  const finished=values.has('cancelled')||values.has('completed')||values.has('delivered');
+  if(finished!==inboxHistory)continue;
+  for(const message of [...group.messages].reverse()){
+   visible++;
+   const item=document.createElement('li');item.className='umma-inbox-event';
+   const action=document.createElement('button');action.type='button';action.className='umma-inbox-event-button';
+   const title=document.createElement('strong');title.textContent='№'+group.number+' · '+translate(labels[message.value]||message.value);
+   const date=document.createElement('time');date.dateTime=new Date(message.at).toISOString();date.textContent=dateLabel(message.at);
+   const hint=document.createElement('span');hint.className='umma-inbox-event-hint';hint.textContent=({ru:'Посмотреть заказ ›',en:'View order ›',vi:'Xem đơn hàng ›'}[language]||'View order ›');
+   action.append(title,date,hint);action.onclick=()=>openOrder(id);
+   item.append(action);fragment.append(item);
   }
-  const head=document.createElement('div');head.className='umma-inbox-order-head';
-  const date=document.createElement('time');date.className='umma-inbox-meta';
-  const firstAt=Math.min(...group.messages.map(message=>message.at));
-  const when=new Date(firstAt),today=new Date(),yesterday=new Date(today);yesterday.setDate(today.getDate()-1);
-  const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
-  const time=when.toLocaleTimeString(language,{hour:'2-digit',minute:'2-digit'});
-  date.dateTime=when.toISOString();date.textContent=(sameDay(when,today)?({ru:'Сегодня',en:'Today',vi:'Hôm nay'}[language]||'Today'):sameDay(when,yesterday)?({ru:'Вчера',en:'Yesterday',vi:'Hôm qua'}[language]||'Yesterday'):when.toLocaleDateString(language,{day:'2-digit',month:'2-digit',year:'numeric'}))+', '+time;
-  date.title=({ru:'Первое уведомление о заказе',en:'First order notification',vi:'Thông báo đầu tiên về đơn hàng'}[language]||'First order notification');
-  head.append(number,date);row.append(head,timeline);
-  fragment.append(row);
  }
- list.replaceChildren(fragment);
- list.hidden=visible===0;
- const empty=list.parentElement.querySelector('.umma-inbox-empty');if(empty){empty.hidden=visible>0;empty.textContent=visible?'':inboxHistory?({ru:'История заказов пока пуста.',en:'No order history yet.',vi:'Chưa có lịch sử đơn hàng.'}[language]||'No order history yet.'):ui()[2];}
+ list.replaceChildren(fragment);list.hidden=visible===0;
+ const empty=list.parentElement.querySelector('.umma-inbox-empty');
+ if(empty){empty.hidden=visible>0;empty.textContent=visible?'':inboxHistory?({ru:'Нет завершённых уведомлений.',en:'No completed updates.',vi:'Chưa có thông báo hoàn tất.'}[language]||'No completed updates.'):ui()[2];}
 }
+
 function open(){
  if(document.querySelector('dialog[data-umma-inbox][open]'))return;
  const dialog=document.createElement('dialog');
