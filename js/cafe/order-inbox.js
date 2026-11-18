@@ -37,7 +37,17 @@ function renderChatFeed(list){
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
   const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
-  card.append(head,statusLine,progressBar,stageLabels,latest,detail);list.append(card);
+  card.append(head,statusLine,progressBar,stageLabels,latest,detail);
+  // Order updates belong in the chronological chat stream, never in a pinned footer.
+  const orderTime=Number(messages.at(-1).at)||0;
+  card.dataset.timelineAt=String(orderTime);
+  const chatMessages=[...list.children].filter(node=>!node.classList.contains('umma-chat-order-card'));
+  const nextMessage=chatMessages.find(node=>{
+    const time=node.querySelector('time[datetime]')?.dateTime||node.dataset.createdAt;
+    return time&&Date.parse(time)>orderTime;
+  });
+  if(nextMessage)list.insertBefore(card,nextMessage);
+  else list.append(card);
  }
 }
 function render(){
