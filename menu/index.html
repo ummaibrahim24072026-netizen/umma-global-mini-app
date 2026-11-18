@@ -54,59 +54,17 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .cart-feedback{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin:10px 0;padding:4px 8px 4px 12px;border:1px solid #c2e5e1;border-radius:14px;background:#eaf8f6;color:#174943;font-size:14px}
 .cart-feedback button{min-height:44px;padding:6px 12px;border:0;border-radius:10px;background:transparent;color:#00645d;font:inherit;font-weight:750;cursor:pointer}
 .cart-feedback button:hover{background:#d6eeea}
-/* Filled cart. Checkout, receipts and the existing empty cart keep their own layouts. */
+/* The filled cart scrolls its items inside the shared section frame. */
 #checkout[data-stage="cart"][data-filled] {
-  --cart-surface: #fcfefd;
   --cart-tint: #e7f7f4;
   --cart-ink: #102c31;
   --cart-action: #006561;
-  width: min(100%, 540px);
-  max-width: 100% !important;
-  max-height: 90dvh !important;
-  margin: auto auto 0;
-  border: 0 !important;
-  border-radius: 26px 26px 0 0 !important;
-  background: var(--cart-surface) !important;
-  color: var(--cart-ink);
-  box-shadow: none !important;
 }
-#checkout[data-stage="cart"][data-filled][open] { display: flex; flex-direction: column; }
-#checkout[data-stage="cart"][data-filled]::backdrop {
-  background: #092e365e;
-  backdrop-filter: blur(6px);
-}
-#checkout[data-stage="cart"][data-filled] .checkout-header {
-  flex: none;
-  min-height: auto;
-  padding: 28px 20px 12px !important;
-  border: 0 !important;
-  background: var(--cart-surface) !important;
-}
-#checkout[data-stage="cart"][data-filled] .checkout-header::before {
-  position: absolute;
-  inset: 10px 0 auto;
-  margin-inline: auto;
-  width: 30px;
-  height: 3px;
-  border: 0;
-  border-radius: 4px;
-  background: #c8ae70;
-  content: "";
-}
-#checkout[data-stage="cart"][data-filled] #checkoutTitle {
-  color: var(--cart-ink) !important;
-  font-size: clamp(20px, 5vw, 26px) !important;
-  text-shadow: none;
-}
+#checkout[data-stage="cart"][open] { display: flex; flex-direction: column; }
 #checkoutCartSummary { display: none; color: #466064; font-size: 13px; }
 #checkout[data-stage="cart"][data-filled] #checkoutCartSummary { display: inline; }
-#checkout[data-stage="cart"][data-filled] #closeCart {
-  border: 0;
-  background: var(--cart-tint);
-  color: var(--cart-action);
-  font-size: 25px;
-}
 #checkout[data-stage="cart"][data-filled] .checkout-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -114,11 +72,13 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 #checkout[data-stage="cart"][data-filled] #checkoutContent,
 #checkout[data-stage="cart"][data-filled] #cartStep {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 #checkout[data-stage="cart"][data-filled] .cart-scroll {
+  flex: 1;
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
@@ -200,49 +160,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 [dir="rtl"] #checkout[data-stage="cart"][data-filled] .cart-checkout-arrow { transform: translateY(-50%) scaleX(-1); }
 #checkout[data-stage="cart"][data-filled] #result { margin: 8px 20px; }
-@media (min-width: 600px) {
-  #checkout[data-stage="cart"][data-filled] {
-    margin-block-end: 24px;
-    border-radius: 26px !important;
-  }
-}
 
-/* The empty cart uses the centered dialog from the approved design. */
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) {
-  width: calc(100% - 32px);
-  max-width: 420px !important;
-  max-height: 90dvh !important;
-  margin: auto;
-  border: 1px solid #a9d3cd !important;
-  border-radius: 26px !important;
-  background: #fdfcf9 !important;
-  color: #123b3f;
-}
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden]))[open] { display: flex; flex-direction: column; }
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-header {
-  flex: none;
-  justify-content: space-between;
-  min-height: 0;
-  padding: 13px 16px !important;
-  background: #006163 !important;
-  --customer-heading-brand: #d2efec;
-  border-bottom: 2px solid #d1ac58 !important;
-}
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-header::before { content: none; }
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #checkoutTitle {
-  max-width: none;
-  margin: 0;
-  font-family: inherit;
-  font-size: clamp(19px, 5vw, 25px) !important;
-  text-align: start;
-  text-shadow: none;
-  color: #fffdf5 !important;
-}
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #closeCart {
-  position: static;
-  background: #dff4ef;
-  border: 0;
-}
+/* The illustration and return action stay at the top of the empty cart. */
 #checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-body {
   min-height: 0;
   padding: 20px 16px 16px !important;
@@ -476,7 +395,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=21"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=22"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -525,7 +444,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
     <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerOrdersTitle" tabindex="-1" autofocus data-i18n="Мои заказы">Мои заказы</h2></div></div>
-    <button class="close" type="button" id="closeCustomerOrders" aria-label="Закрыть" data-i18n-label="Закрыть">×</button>
+    <button class="close" type="button" id="closeCustomerOrders" aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="checkout-body">
     <div class="customer-order-filters">
@@ -537,7 +456,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
 </dialog>
 <dialog id="customerMessages" class="customer-section" closedby="closerequest" aria-labelledby="customerMessagesTitle">
-  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form></div>
   <div class="checkout-body customer-message-sections">
     <div id="orderInboxHost"></div>
     <div id="customerConnectHost"></div>
@@ -576,7 +495,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <button type="button" id="openCart" class="plain-btn" aria-expanded="false" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
 </div>
-<dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
+<dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="checkout-body">
 <div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
   <div class="umma-empty-illustration" aria-hidden="true">
     <svg viewBox="0 0 128 128" width="104" height="104" fill="none" stroke-linecap="round" stroke-linejoin="round">
