@@ -41,23 +41,23 @@
  function voiceBubble(load,errorText){
   const wrapper=document.createElement('div');
   wrapper.className='connect-voice-bubble';
-  wrapper.style.cssText='display:flex;align-items:center;gap:10px;min-width:220px;max-width:min(78vw,330px);padding:9px 12px;border-radius:18px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
+  wrapper.style.cssText='display:flex;align-items:center;gap:9px;width:min(78vw,315px);max-width:100%;padding:8px 10px;border-radius:16px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
   const play=document.createElement('button');play.type='button';play.textContent='▶';
   play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
-  play.style.cssText='flex:none;width:38px;height:38px;border:0;border-radius:50%;background:#0a9998;color:white;font-size:17px;cursor:pointer';
-  const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:grid;gap:3px';
+  play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;cursor:pointer';
+  const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:grid;gap:2px';
   const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
-  wave.style.cssText='height:22px;display:flex;align-items:center;gap:2px;overflow:hidden';
+  wave.style.cssText='height:27px;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer';
   const heights=[7,13,19,11,21,16,8,14,22,12,18,9,16,21,10,14,19,8,15,12,20,11,17,9,14,19,10,16,12,7];
   const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1;min-width:2px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
+  const dot=document.createElement('span');dot.style.cssText='position:absolute;left:0;top:50%;width:10px;height:10px;transform:translate(-1px,-50%);background:#0a9998;border:2px solid #d9f3ee;border-radius:50%;box-sizing:border-box;pointer-events:none';wave.append(dot);
   const time=document.createElement('small');time.textContent='0:00';time.style.cssText='font:12px system-ui;color:#527c77';
-  const seek=document.createElement('input');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.setAttribute('aria-label','Перемотать голосовое сообщение');
-  seek.style.cssText='width:100%;height:4px;margin:0;accent-color:#0a9998;cursor:pointer';
+  const seek=document.createElement('input');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.setAttribute('aria-label','Перемотать голосовое сообщение');seek.style.cssText='position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer';wave.append(seek);
   const speed=document.createElement('button');speed.type='button';speed.textContent='1×';speed.setAttribute('aria-label','Скорость воспроизведения');
   speed.style.cssText='border:0;background:transparent;color:#126c6b;font:700 12px system-ui;padding:4px;cursor:pointer';
   const status=document.createElement('small');status.setAttribute('role','status');status.style.cssText='color:#9b3939';
   const audio=document.createElement('audio');audio.preload='metadata';
-  middle.append(wave,seek,time,status);wrapper.append(play,middle,speed,audio);
+  middle.append(wave,time,status);wrapper.append(play,middle,speed,audio);
   let loading=null,loaded=false;
   const fmt=n=>{if(!Number.isFinite(n))return '0:00';const v=Math.max(0,Math.floor(n));return Math.floor(v/60)+':'+String(v%60).padStart(2,'0');};
   async function prepare(){
@@ -68,7 +68,7 @@
   function update(){
    const duration=audio.duration;
    seek.value=Number.isFinite(duration)&&duration>0?String(Math.round(audio.currentTime/duration*1000)):'0';
-   time.textContent=fmt(audio.currentTime)+' / '+fmt(duration);
+   time.textContent=audio.currentTime>0?fmt(audio.currentTime):fmt(duration);dot.style.left=(Number(seek.value)/10)+'%';
    const count=Math.round(Number(seek.value)/1000*bars.length);
    bars.forEach((bar,i)=>bar.style.background=i<count?'#0a9998':'#76aaa5');
   }
