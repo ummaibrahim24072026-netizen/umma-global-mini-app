@@ -1609,3 +1609,35 @@
     transition: none;
   }
 }
+
+/* Approved customer-screen refinements — 2026-11-18.
+   Scoped to the exact elements requested; never recolor all buttons. */
+.public-cafe-menu #nearbyCafeRoute {
+  border-radius: 999px;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.public-cafe-menu #nearbyCafeRoute svg,
+.public-cafe-menu #nearbyCafeRoute svg :is(path, polygon, polyline) {
+  color: #fff;
+  fill: currentColor;
+}
+.public-cafe-menu #customerOrders .order-summary {
+  border-radius: 22px;
+}
+.public-cafe-menu #customerOrders .order-action[data-primary="true"] {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.public-cafe-menu .umma-connect .connect-hero :is(h1, h2, h3, .connect-title, .connect-hero-title) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.public-cafe-menu #cafePage .cafe-add {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.public-cafe-menu #cafePage .cafe-spotlight-copy :is(strong, .cafe-spotlight-eyebrow, .cafe-spotlight-detail) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
