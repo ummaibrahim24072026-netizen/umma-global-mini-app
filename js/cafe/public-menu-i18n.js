@@ -3,6 +3,14 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Добавить фото":{"en":"Add photo","vi":"Thêm ảnh","ko":"사진 추가","zh":"添加照片","de":"Foto hinzufügen","fr":"Ajouter une photo","th":"เพิ่มรูปภาพ","ms":"Tambah foto","id":"Tambah foto","ar":"إضافة صورة","pt":"Adicionar foto"},
+"Заменить фото":{"en":"Change photo","vi":"Đổi ảnh","ko":"사진 변경","zh":"更换照片","de":"Foto ändern","fr":"Changer la photo","th":"เปลี่ยนรูปภาพ","ms":"Tukar foto","id":"Ganti foto","ar":"تغيير الصورة","pt":"Alterar foto"},
+"Удалить фото":{"en":"Remove photo","vi":"Xóa ảnh","ko":"사진 삭제","zh":"删除照片","de":"Foto entfernen","fr":"Supprimer la photo","th":"ลบรูปภาพ","ms":"Buang foto","id":"Hapus foto","ar":"إزالة الصورة","pt":"Remover foto"},
+"Фото сохранено.":{"en":"Photo saved.","vi":"Đã lưu ảnh."},
+"Фото удалено.":{"en":"Photo removed.","vi":"Đã xóa ảnh."},
+"Выберите фото размером до 20 МБ.":{"en":"Choose a photo up to 20 MB.","vi":"Chọn ảnh có dung lượng tối đa 20 MB."},
+"Не удалось открыть фото. Попробуйте JPG, PNG или WebP.":{"en":"Couldn't open the photo. Try JPG, PNG or WebP.","vi":"Không mở được ảnh. Hãy thử ảnh JPG, PNG hoặc WebP."},
+"Не удалось сохранить фото на этом устройстве.":{"en":"Couldn't save the photo on this device.","vi":"Không thể lưu ảnh trên thiết bị này."},
 "В корзину":{"en":"Add to cart","vi":"Thêm vào giỏ hàng","ko":"장바구니에 담기","zh":"加入购物车","de":"In den Warenkorb","fr":"Ajouter au panier","th":"เพิ่มลงในตะกร้า","ms":"Tambah ke troli","id":"Tambah ke keranjang","ar":"أضف إلى السلة","pt":"Adicionar ao carrinho"},
 "Очистить корзину":{"en":"Clear cart","vi":"Xóa giỏ hàng","ko":"장바구니 비우기","zh":"清空购物车","de":"Warenkorb leeren","fr":"Vider le panier","th":"ล้างตะกร้า","ms":"Kosongkan troli","id":"Kosongkan keranjang","ar":"إفراغ السلة","pt":"Esvaziar carrinho"},
 "Корзина очищена":{"en":"Cart cleared","vi":"Đã xóa giỏ hàng","ko":"장바구니를 비웠습니다","zh":"购物车已清空","de":"Warenkorb geleert","fr":"Panier vidé","th":"ล้างตะกร้าแล้ว","ms":"Troli dikosongkan","id":"Keranjang dikosongkan","ar":"تم إفراغ السلة","pt":"Carrinho esvaziado"},

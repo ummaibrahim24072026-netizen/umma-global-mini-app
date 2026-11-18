@@ -8,9 +8,13 @@
 }
 .public-cafe-menu #cafePage {
   max-width: 1060px;
+  --menu-topbar-height: 68px;
   padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
 }
 .public-cafe-menu #cafePage .topbar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 11;
   flex-wrap: nowrap;
   border: 0;
   background: var(--cafe-header);
@@ -43,6 +47,18 @@
 }
 .public-cafe-menu #cafePage .topbar-actions .share-menu-button { display: inline-flex; justify-content: center; }
 .topbar-actions svg { width: 19px; height: 19px; flex: none; }
+.public-cafe-menu #cafePage #openProfile { width: 44px; height: 44px; padding: 5px; }
+.profile-avatar-image { display: block; object-fit: cover; border-radius: 50%; }
+.public-cafe-menu #cafePage .share-menu-status {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--umma-brand-white);
+  box-shadow: 0 4px 14px #123b3b25;
+}
 .cafe-intro {
   position: relative;
   isolation: isolate;
@@ -68,7 +84,12 @@
   height: auto;
   filter: drop-shadow(0 14px 15px #002c2e80);
 }
-.public-cafe-menu .menu-sticky { background: #f1fafa; border-radius: 16px; }
+.public-cafe-menu .menu-sticky {
+  inset-block-start: calc(var(--menu-topbar-height) + 6px);
+  scroll-margin-block-start: calc(var(--menu-topbar-height) + 6px);
+  background: #f1fafa;
+  border-radius: 16px;
+}
 .public-cafe-menu #cafePage :is(.menu-tools, .menu-actions) { flex-wrap: nowrap; }
 .public-cafe-menu #cafePage .menu-actions { flex-basis: auto; }
 .public-cafe-menu #cafePage .search-toggle { min-height: 44px; }
@@ -85,7 +106,7 @@
 .public-cafe-menu #cafePage .cafe-category span { display: none; }
 .public-cafe-menu #cafePage .cafe-products {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  scroll-margin-block-start: 160px;
+  scroll-margin-block-start: calc(var(--menu-topbar-height) + 160px);
 }
 .public-cafe-menu #cafePage .cafe-product {
   display: grid;
@@ -376,6 +397,32 @@
 }
 #guestPayment .payment-qr { background: white; padding: 8px; }
 #customerProfile .checkout-header { background: var(--umma-brand-white); color: var(--umma-brand-night); }
+#customerProfile .profile-avatar-editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 12px;
+  margin-block-end: 16px;
+  padding: 12px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 16px;
+  background: var(--umma-brand-white);
+}
+.profile-avatar-preview {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--umma-brand-pale);
+  color: var(--umma-brand-deep);
+}
+.profile-avatar-preview svg { width: 32px; height: 32px; }
+.profile-avatar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.profile-avatar-actions button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+#chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
+#profileAvatarStatus { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+#profileAvatarStatus:empty { display: none; }
 #customerProfile .language-control { justify-content: space-between; margin-bottom: 14px; }
 #customerProfile .language-control select { max-width: 70%; }
 #customerProfile #openChatSettings {
@@ -524,7 +571,7 @@
 .public-cafe-menu .umma-connect .connect-hero-icon { width: 42px; height: 42px; object-fit: contain; background: transparent; }
 
 @media (max-width: 640px) {
-  .public-cafe-menu #cafePage .cafe-products { grid-template-columns: minmax(0, 1fr); scroll-margin-block-start: 12px; }
+  .public-cafe-menu #cafePage .cafe-products { grid-template-columns: minmax(0, 1fr); scroll-margin-block-start: calc(var(--menu-topbar-height) + 12px); }
   .public-cafe-menu #cafePage .cafe-product { grid-template-columns: minmax(66px, 23%) minmax(0, 1fr); }
 }
 @media (max-width: 420px) {
