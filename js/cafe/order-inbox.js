@@ -14,16 +14,17 @@ function renderChatFeed(list){
  if(!list)return;
  list.querySelectorAll('.umma-chat-order-card').forEach(node=>node.remove());
  const language=document.documentElement.lang.split('-')[0];
- const dictionary={ru:{order:'Заказ',detail:'Детали заказа',cancel:'Отменён',steps:['Принят','Готовится','Готов','Курьер','Доставлен'],pickup:['Принят','Готовится','Готов','Выдан']},en:{order:'Order',detail:'Order details',cancel:'Cancelled',steps:['Accepted','Preparing','Ready','Courier','Delivered'],pickup:['Accepted','Preparing','Ready','Collected']},vi:{order:'Đơn hàng',detail:'Chi tiết đơn',cancel:'Đã hủy',steps:['Đã nhận','Đang nấu','Đã xong','Tài xế','Đã giao'],pickup:['Đã nhận','Đang nấu','Đã xong','Đã lấy']}};
+ const dictionary={ru:{order:'Заказ',detail:'Детали заказа',cancel:'Отменён',expand:'Показать шкалу',collapse:'Свернуть',steps:['Принят','Готовится','Готов','Курьер','Доставлен'],pickup:['Принят','Готовится','Готов','Выдан']},en:{order:'Order',detail:'Order details',cancel:'Cancelled',expand:'Show progress',collapse:'Collapse',steps:['Accepted','Preparing','Ready','Courier','Delivered'],pickup:['Accepted','Preparing','Ready','Collected']},vi:{order:'Đơn hàng',detail:'Chi tiết đơn',cancel:'Đã hủy',expand:'Xem tiến độ',collapse:'Thu gọn',steps:['Đã nhận','Đang nấu','Đã xong','Tài xế','Đã giao'],pickup:['Đã nhận','Đang nấu','Đã xong','Đã lấy']}};
  const copy=dictionary[language]||dictionary.en;
  const groups=new Map();
  for(const m of data.messages){const group=groups.get(m.orderId)||[];group.push(m);groups.set(m.orderId,group);}
- for(const [id,messages] of [...groups].sort((a,b)=>a[1].at(-1).at-b[1].at(-1).at)){
+ for(const [id,messages] of [...groups].sort((a,b)=>a[1][0].at-b[1][0].at)){
   const state=data.states[id]||{},values=new Set(messages.map(m=>m.value));
   const delivery=state.orderType==='delivery'||['waiting_courier','courier_assigned','picked_up','delivered'].some(v=>values.has(v)||state.delivery===v);
   const steps=delivery?copy.steps:copy.pickup;
   const cancelled=state.status==='cancelled'||values.has('cancelled');
   const status=state.delivery==='delivered'?'delivered':state.status||messages.at(-1).value;
+  const finished=cancelled||['completed','delivered'].includes(status);
   const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
   const progress=delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
@@ -37,9 +38,24 @@ function renderChatFeed(list){
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
   const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
-  card.append(head,statusLine,progressBar,stageLabels,latest,detail);
+  if(finished){
+    card.classList.add('umma-chat-order-card--finished');
+    card.style.gap='7px';card.style.padding='12px 14px';
+    const toggle=document.createElement('button');toggle.type='button';
+    toggle.textContent=copy.expand;toggle.setAttribute('aria-expanded','false');
+    toggle.style.cssText='justify-self:start;border:0;background:transparent;color:#087c80;font:650 12px system-ui;padding:5px 0;cursor:pointer';
+    const extras=[progressBar,stageLabels,latest,detail];
+    extras.forEach(el=>el.hidden=true);
+    toggle.onclick=()=>{
+      const expanded=toggle.getAttribute('aria-expanded')!=='true';
+      toggle.setAttribute('aria-expanded',String(expanded));
+      toggle.textContent=expanded?copy.collapse:copy.expand;
+      extras.forEach(el=>el.hidden=!expanded);
+    };
+    card.append(head,statusLine,toggle,...extras);
+  }else card.append(head,statusLine,progressBar,stageLabels,latest,detail);
   // Order updates belong in the chronological chat stream, never in a pinned footer.
-  const orderTime=Number(messages.at(-1).at)||0;
+  const orderTime=Number(messages[0].at)||0;
   card.dataset.timelineAt=String(orderTime);
   const chatMessages=[...list.children].filter(node=>!node.classList.contains('umma-chat-order-card'));
   const nextMessage=chatMessages.find(node=>{
