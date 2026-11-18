@@ -32,3 +32,30 @@
 .web-work-app #webMessages.work-chat-open .connect-compose .connect-send{min-height:44px!important}
 .web-work-app #webMessages.work-chat-open .work-call-heading{position:relative;z-index:2}
 }
+
+/* Reuse customer chat layout and theme controls on staff mobile */
+.web-work-app #webMessages .connect-chat-menu{margin-left:auto;position:relative;z-index:8}
+.web-work-app #webMessages .connect-chat-menu-toggle{list-style:none;cursor:pointer;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;font-size:25px;color:#fff}
+.web-work-app #webMessages .connect-chat-menu-toggle::-webkit-details-marker{display:none}
+.web-work-app #webMessages .connect-chat-menu-panel{position:absolute;right:0;top:45px;display:grid;gap:5px;min-width:170px;background:#fff;padding:8px;border-radius:14px;box-shadow:0 8px 28px #1235;z-index:9}
+.web-work-app #webMessages .connect-chat-menu-panel button{border:0;background:#eef8f6;color:#176568;border-radius:10px;padding:12px;text-align:left}
+.web-work-app #webMessages .connect-chat-wallpaper{min-height:0;flex:1;overflow:hidden;position:relative}
+.web-work-app #webMessages .connect-chat-wallpaper .connect-thread{height:100%;box-sizing:border-box;overflow-y:auto;max-height:none}
+.web-work-app #webMessages .connect-compose{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.web-work-app #webMessages .connect-compose textarea{flex:1;min-width:0}
+.web-work-app #webMessages .connect-compose button{border-radius:999px}
+.web-work-app #webMessages[data-chat-theme=light] .work-thread{--staff-chat-bg:#eaf4f2}
+.web-work-app #webMessages[data-chat-theme=turquoise] .work-thread{--staff-chat-bg:#c4eae6}
+.web-work-app #webMessages[data-chat-theme=dark] .work-thread{--staff-chat-bg:#144e52}
+.web-work-app #webMessages[data-chat-theme=beige] .work-thread{--staff-chat-bg:#f2e6d1}
+.web-work-app #webMessages[data-chat-theme=blue] .work-thread{--staff-chat-bg:#25547b}
+.web-work-app #webMessages[data-chat-theme=lavender] .work-thread{--staff-chat-bg:#ded6f0}
+@media(max-width:760px){
+.web-work-app #webMessages.work-chat-open .work-thread{background:var(--staff-chat-bg,#eaf4f2)!important}
+.web-work-app #webMessages.work-chat-open .connect-chat-wallpaper{flex:1!important;min-height:0!important;overflow:hidden!important}
+.web-work-app #webMessages.work-chat-open .connect-chat-wallpaper .connect-thread{height:100%!important;max-height:none!important;overflow-y:auto!important}
+.web-work-app #webMessages.work-chat-open .work-thread::before{display:none}
+.web-work-app #webMessages.work-chat-open .connect-chat-wallpaper::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.12;background:url('../assets/chat-wallpaper-mask.png') repeat;background-size:360px auto}
+.web-work-app #webMessages.work-chat-open .connect-compose{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important}
+.web-work-app #webMessages.work-chat-open .connect-compose textarea{min-width:0!important;flex:1!important}
+}
