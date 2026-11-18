@@ -86,12 +86,20 @@ function renderOrders(list){
   document.getElementById('customerMessages')?.close();
   const orders=document.getElementById('customerOrders');
   document.getElementById('receiptButton')?.click();
-  const card=[...orders?.querySelectorAll('[data-order-key]')||[]].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
-  if(!card){
-   document.getElementById('showOrderHistory')?.click();
-   const historyCard=[...orders?.querySelectorAll('[data-order-key]')||[]].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
-   if(historyCard){historyCard.scrollIntoView({block:'center'});historyCard.focus({preventScroll:true});}
-  }else{card.scrollIntoView({block:'center'});card.focus({preventScroll:true});}
+  // The orders view can render asynchronously after its navigation click.
+  // Wait for the matching card instead of querying the old view immediately.
+  let attempts=0,historyRequested=false;
+  const locate=()=>{
+   if(!orders?.isConnected)return;
+   const card=[...orders.querySelectorAll('[data-order-key]')].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
+   if(card){card.scrollIntoView({block:'center'});card.focus({preventScroll:true});return;}
+   if(!historyRequested&&attempts>=3){
+    historyRequested=true;
+    document.getElementById('showOrderHistory')?.click();
+   }
+   if(++attempts<18)window.setTimeout(locate,100);
+  };
+  window.setTimeout(locate,0);
  };
  for(const [id,group] of [...groups].sort((a,b)=>Math.max(...b[1].messages.map(m=>m.at))-Math.max(...a[1].messages.map(m=>m.at)))){
   const state=data.states[id],values=group.values;
