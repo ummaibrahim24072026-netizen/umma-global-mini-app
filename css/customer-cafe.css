@@ -45,7 +45,23 @@
   border: 1px solid #ffffff55;
   color: var(--umma-brand-on-primary);
 }
-.public-cafe-menu #cafePage .topbar-actions .share-menu-button { display: inline-flex; justify-content: center; }
+.public-cafe-menu #cafePage .topbar-actions .share-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid #ffe6a4;
+  border-radius: 999px;
+  background: #fff0c4;
+  color: var(--umma-brand-on-primary);
+  font-size: .875rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+.public-cafe-menu #cafePage .topbar-actions .share-menu-button:focus-visible {
+  outline-color: var(--umma-brand-on-primary);
+}
 .topbar-actions svg { width: 19px; height: 19px; flex: none; }
 .public-cafe-menu #cafePage #openProfile { width: 44px; height: 44px; padding: 5px; }
 .profile-avatar-image { display: block; object-fit: cover; border-radius: 50%; }
@@ -92,7 +108,30 @@
 }
 .public-cafe-menu #cafePage :is(.menu-tools, .menu-actions) { flex-wrap: nowrap; }
 .public-cafe-menu #cafePage .menu-actions { flex-basis: auto; }
-.public-cafe-menu #cafePage .search-toggle { min-height: 44px; }
+.public-cafe-menu #cafePage .menu-search-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 999px;
+  background: var(--umma-brand-pale);
+  color: var(--umma-brand-deep);
+  font-size: .875rem;
+  font-weight: 700;
+}
+.public-cafe-menu #cafePage .menu-search-button svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.public-cafe-menu #cafePage .menu-search-button[aria-expanded=true] {
+  border-color: var(--umma-brand-line-strong);
+  background: var(--umma-brand-soft);
+}
 .public-cafe-menu #cafePage .cafe-category {
   min-height: 44px;
   border-color: #cbdfdf;
@@ -639,13 +678,27 @@
   .public-cafe-menu #cafePage .cafe-product { grid-template-columns: minmax(66px, 23%) minmax(0, 1fr); }
 }
 @media (max-width: 420px) {
-  .public-cafe-menu #cafePage .share-menu-button span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+  .public-cafe-menu #cafePage .topbar {
+    gap: 8px;
+    padding-inline: 8px;
   }
+  .public-cafe-menu #cafePage .brand {
+    gap: 6px;
+    font-size: clamp(.6875rem, 3.6vw, .9375rem);
+  }
+  .public-cafe-menu #cafePage .brand img {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+  .public-cafe-menu #cafePage .topbar-actions { max-inline-size: 63%; }
+  .public-cafe-menu #cafePage .topbar-actions .share-menu-button {
+    gap: 5px;
+    padding-inline: 8px;
+    font-size: clamp(.75rem, 3.35vw, .8125rem);
+    overflow-wrap: anywhere;
+  }
+  .public-cafe-menu #cafePage .share-menu-button svg { width: 16px; height: 16px; }
 }
 .public-cafe-menu .umma-connect .connect-hero-icon img { width: 42px; height: 42px; }
 .public-cafe-menu :is(.checkout-header button, .topbar button):focus-visible { outline-color: #f5d481; }
