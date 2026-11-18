@@ -44,6 +44,7 @@ const sizes = [[320,568],[360,800],[375,812],[390,844],[412,915],[430,932],[768,
 const languages = ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
 let available = 10;
 let catalogCalls = 0;
+let catalogOffline = false;
 let checkoutCalls = 0;
 const requests = [];
 const errors = [];
@@ -75,7 +76,7 @@ try {
     executablePath: process.env.QA_CHROMIUM_PATH || undefined,
     args: ['--no-sandbox','--disable-dev-shm-usage','--single-process'],
   });
-  const context = await browser.newContext({ locale: 'de-DE' });
+  const context = await browser.newContext({ locale: 'de-DE', reducedMotion: 'reduce', hasTouch: true });
   await context.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -93,6 +94,7 @@ try {
     if (endpoint === 'cafe-menu') payload = { ...payload, products: [product], locations: [location], inventory: [] };
     if (endpoint === 'cafe-guest-order' && request.method() === 'GET') {
       catalogCalls++;
+      if (catalogOffline) return route.abort('internetdisconnected');
       payload.products = [{ ...product, available }];
     }
     if (endpoint === 'cafe-guest-order' && body.action === 'create') {
@@ -126,7 +128,9 @@ try {
   assert.equal(await page.locator('html').getAttribute('lang'), 'de', 'device language');
   await page.locator('[data-change="1"]').first().click();
   for (const language of languages) {
+    await page.locator('#openProfile').click();
     await page.locator('#menuLanguage').selectOption(language);
+    await page.locator('.dock-menu').click();
     assert.equal(await page.locator('html').getAttribute('dir'), language === 'ar' ? 'rtl' : 'ltr');
     for (const [width,height] of sizes) {
       await page.setViewportSize({ width, height });
@@ -136,7 +140,8 @@ try {
     await page.evaluate(async () => {
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
-      window.scrollTo(0, document.body.scrollHeight);
+      const content = document.getElementById('customerContent');
+      content.scrollTop = content.scrollHeight;
     });
     const dockBottom = await page.locator('.customer-dock').evaluate(node => node.getBoundingClientRect().bottom);
     assert.ok(Math.abs(dockBottom - 568) < 1, 'customer navigation remains visible at the end of the menu');
@@ -147,26 +152,107 @@ try {
     await fits(page, 'Checkout ' + language, ['#checkout','.cart-row','.payment-choice']);
     if (language === 'ar') await page.screenshot({path:output+'/checkout-ar-320.png'});
     await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#checkout').evaluate(dialog => dialog.open), false);
+    await page.locator('#checkout').waitFor({state:'hidden'});
   }
+  await page.locator('#openProfile').click();
   await page.locator('#menuLanguage').selectOption('ru');
+  await page.locator('.dock-menu').click();
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:output+'/menu-390.png'});
-  const summary = page.locator('[data-card] summary').first();
-  await summary.click();
-  await summary.focus();
+  async function view(name, tab = name) {
+    await page.waitForFunction(name => document.getElementById('customerContent').dataset.view === name, name);
+    const state = await page.evaluate(() => {
+      const content = document.getElementById('customerContent');
+      const dock = document.getElementById('customerDock');
+      const {top, bottom} = dock.getBoundingClientRect();
+      const active = dock.querySelectorAll('[aria-current=page]');
+      return {
+        sections:[...content.querySelectorAll(':scope > .customer-view:not([hidden])')].length,
+        modal:!!document.querySelector(':modal'),
+        dockAccessible:dock.contains(document.elementFromPoint(innerWidth / 2, top + 18)),
+        dockBelowContent:content.getBoundingClientRect().bottom <= top + 1,
+        dockInViewport:bottom <= (visualViewport?.height || innerHeight) + 1,
+        active:[...active].map(button=>button.dataset.view),
+      };
+    });
+    assert.deepEqual(state, {sections:1,modal:false,dockAccessible:true,dockBelowContent:true,dockInViewport:true,active:[tab]});
+  }
+  const menu = () => page.locator('.dock-menu').click();
+  const cart = () => page.locator('#openCart').click();
+  const messages = () => page.locator('#customerMessagesButton').click();
+  const orders = () => page.locator('#receiptButton').click();
+  await cart(); await view('cart');
+  await messages(); await view('messages');
+  await page.locator('#nearbyCafeButton').click(); await view('nearby');
+  await menu(); await view('menu');
+  await messages(); await menu(); await messages(); await view('messages');
+  await page.locator('#orderInboxHost button').click(); await view('inbox','messages');
+  await page.goBack(); await view('messages');
+  await page.locator('#customerConnectHost button').click(); await view('chat','messages');
+  await cart(); await orders(); await view('orders'); await cart(); await view('cart');
+  assert.equal(await page.locator('#cartCount').textContent(), '1');
+  await page.reload(); await page.locator('#cartItems .cart-row').waitFor(); await view('cart');
+  for (const [width,height] of sizes) {
+    await page.setViewportSize({width,height});
+    await page.locator('#continueCheckout').click(); await view('checkout','cart');
+    await fits(page,'Checkout', ['#customerContent','#checkout','.checkout-form-scroll','.checkout-pay-footer']);
+    await messages(); await view('messages');
+    await page.locator('#nearbyCafeButton').click(); await view('nearby');
+    await fits(page,'Nearby', ['#customerContent','#nearbyCafe','#nearbyCafeRoute']);
+    await orders(); await view('orders');
+    await cart();
+  }
+  await page.setViewportSize({width:320,height:440});
+  await page.locator('#continueCheckout').click();
+  await page.locator('.optional-name summary').click();
+  await page.locator('#customerName').fill('QA');
+  await view('checkout','cart');
+  await page.goBack(); await view('cart');
+  await page.locator('#continueCheckout').click();
+  assert.equal(await page.locator('#customerName').inputValue(), 'QA');
+  await page.evaluate(() => {
+    for (let i = 0; i < 12; i++) for (const id of ['nearbyCafeButton','openCart','receiptButton','customerMessagesButton']) {
+      document.getElementById(id).click();
+    }
+  });
+  await view('messages');
+  const length = await page.evaluate(() => history.length);
+  await page.locator('#customerMessagesButton').click();
+  assert.equal(await page.evaluate(() => history.length),length);
+  await menu();
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('.dish-link').first().click(); await view('dish','menu');
+  await cart(); await view('cart');
+  await page.locator('#continueCheckout').click(); await view('checkout','cart');
   const before = catalogCalls;
   available = 9;
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await page.waitForFunction(() => document.querySelector('.cafe-stock-count')?.textContent.includes('9'));
   assert.ok(catalogCalls > before);
-  assert.equal(await summary.evaluate(node => node.parentElement.open && node === document.activeElement), true,
-    'catalog refresh preserves opened description and keyboard focus');
-  await page.locator('#openCart').click();
+  await page.screenshot({path:output+'/checkout-390.png'});
   await page.locator('#submit').click();
   await page.locator('#successNumber').waitFor();
   assert.match(await page.locator('#successNumber').textContent(), /71/);
   assert.equal(checkoutCalls, 1);
+  await view('receipt','orders');
+  await cart(); await view('cart');
+  await orders(); await view('orders');
+  assert.equal(await page.locator('#activeOrdersCount').textContent(), '1');
+  await page.locator('#activeOrdersList button').click(); await view('receipt','orders');
+  await page.reload(); await view('receipt','orders');
+  await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+  await view('receipt','orders');
+  await page.locator('#closeCart').click(); await view('orders');
+  await page.locator('#showOrderHistory').click(); await view('history','orders');
+  await page.goBack(); await view('orders');
+
+  catalogOffline = true;
+  await page.goto(base+'menu/?qaReconnect=1');
+  await page.locator('#retry').waitFor();
+  await messages(); await cart(); await view('cart'); await menu();
+  catalogOffline = false;
+  await page.locator('#retry').click();
+  await page.locator('[data-card]').first().waitFor();
 
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
@@ -224,7 +310,7 @@ try {
   }
   assert.deepEqual(errors, []);
   assert.ok(requests.some(([endpoint, action]) => endpoint === 'cafe-web' && action === 'staffList'));
-  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, counter checkout, catalog focus, offline fallback and recovery, six staff tabs and kiosk. Isolated API fixtures.');
+  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, client navigation and browser history, counter checkout, catalog retry, offline fallback and recovery, six staff tabs and kiosk. Isolated API fixtures.');
 } finally {
   await browser?.close();
   server.closeAllConnections();

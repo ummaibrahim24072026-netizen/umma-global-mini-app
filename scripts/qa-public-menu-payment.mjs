@@ -18,7 +18,9 @@ for(const method of ['cash','qr']){
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
   w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
  }});
- const w=dom.window,d=w.document;await new Promise(r=>setTimeout(r,20));
+ const w=dom.window,d=w.document;
+ const back=(id)=>new Promise(resolve=>{w.addEventListener('popstate',resolve,{once:true});d.getElementById(id).click();});
+ await new Promise(r=>setTimeout(r,20));
  const receiptButton=d.getElementById('receiptButton');
  const cartButton=d.getElementById('openCart'),cartCount=d.getElementById('cartCount');
  assert.equal(d.getElementById('orderBar'),null);
@@ -27,7 +29,7 @@ for(const method of ['cash','qr']){
  cartButton.click();
  assert.equal(d.getElementById('checkout').open,true);
  assert.equal(d.getElementById('continueCheckout').disabled,true);
- d.getElementById('closeCart').click();
+ await back('closeCart');
  assert.equal(receiptButton.classList.contains('has-active-orders'),false);
  assert.ok(receiptButton.closest('.customer-actions'));
  assert.equal(receiptButton.closest('.customer-actions'),d.getElementById('customerMessagesButton').closest('.customer-actions'));
@@ -60,7 +62,7 @@ for(const method of ['cash','qr']){
  assert.equal(clearCart.hidden,false);
  d.getElementById('continueCheckout').click();
  assert.equal(d.getElementById('checkoutStep').hidden,false);
- d.getElementById('backToCart').click();
+ await back('backToCart');
  assert.equal(d.getElementById('cartStep').hidden,false);
  d.getElementById('continueCheckout').click();
  d.querySelector('[name=paymentMethod][value='+method+']').checked=true;
@@ -117,18 +119,18 @@ for(const method of ['cash','qr']){
  renderReceiptLinks();`);
  receiptButton.click();
  assert.equal(d.getElementById('customerOrders').open,true);
- assert.equal(receiptButton.getAttribute('aria-expanded'),'true');
- assert.equal(d.getElementById('cafePage').inert,true);
+ assert.equal(receiptButton.getAttribute('aria-current'),'page');
+ assert.equal(d.getElementById('cafePage').hidden,true);
  cartButton.click();
  assert.equal(d.getElementById('customerOrders').open,false);
- assert.equal(receiptButton.getAttribute('aria-expanded'),'false');
+ assert.equal(receiptButton.getAttribute('aria-current'),null);
  assert.equal(d.getElementById('checkout').open,true);
- assert.equal(cartButton.getAttribute('aria-expanded'),'true');
+ assert.equal(cartButton.getAttribute('aria-current'),'page');
  const menuButton=d.querySelector('.dock-menu');
  menuButton.click();
  assert.equal(d.getElementById('checkout').open,false);
  assert.equal(menuButton.getAttribute('aria-current'),'page');
- assert.equal(d.getElementById('cafePage').inert,false);
+ assert.equal(d.getElementById('cafePage').hidden,false);
  receiptButton.click();
  const activeOrders=d.querySelectorAll('#activeOrdersList button');
  assert.equal(activeOrders.length,2);
@@ -156,7 +158,8 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(success){
   geolocationCalls++;success({coords:{latitude:13,longitude:109}});
  }}});
- w.ummaCafeNavigation={open:id=>$($(id).getAttribute('aria-controls')).show()};
+ w.eval(d.getElementById('customer-navigation').textContent);
+ w.ummaCafeNavigation.restore(false);
  w.eval(read('js/cafe/public-menu-nearby.js'));
  const point=()=>new URL($('nearbyCafeRoute').href).searchParams.get('destination');
  assert.equal(point(),'12.2814294,109.2020884');
@@ -166,6 +169,7 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  assert.equal($('nearbyCafeMap').hidden,true);
  assert.equal(point(),'12.2814294,109.2020884');
  $('closeNearbyCafe').click();
+ await new Promise(resolve=>w.addEventListener('popstate',resolve,{once:true}));
  fail=false;
  $('nearbyCafeButton').click();
  await new Promise(resolve=>setImmediate(resolve));

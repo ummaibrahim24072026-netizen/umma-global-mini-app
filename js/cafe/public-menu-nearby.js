@@ -73,12 +73,9 @@
     })();
   }
 
-  $('nearbyCafeButton').onclick = () => {
-    dialog.show();
-    openMap();
-  };
-  $('closeNearbyCafe').onclick = () => dialog.close();
-  dialog.addEventListener('close', () => {
+  window.ummaCafeNavigation.register('nearby', 'nearbyCafe');
+  dialog.addEventListener('umma:sectionenter', openMap);
+  dialog.addEventListener('umma:sectionleave', () => {
     locationRequest++;
     locate.disabled = false;
     if (statusKey === 'Определяем местоположение…') setStatus('');
