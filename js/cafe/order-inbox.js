@@ -147,7 +147,16 @@ function open(){
  const list=document.createElement('ol');
  list.className='umma-inbox-orders';
  list.setAttribute('role','list');
- dialog.append(styles,close,heading,empty,list);
+ const brandTemplate=document.getElementById('customerHeadingTemplate');
+ if(inPublicMenu&&brandTemplate){
+  const header=document.createElement('div');
+  header.className='customer-aux-header';
+  const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
+  heading.removeAttribute('style');
+  brandHeading.querySelector('.customer-heading-copy').append(heading);
+  header.append(brandHeading,close);
+  dialog.append(styles,header,empty,list);
+ }else dialog.append(styles,close,heading,empty,list);
  if(window.ummaOrderAlerts?.controls)dialog.append(window.ummaOrderAlerts.controls);
  document.body.append(dialog);
  dialog.addEventListener('close',()=>{

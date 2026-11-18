@@ -530,7 +530,14 @@ function build(){
    closeSettings.setAttribute('aria-label',t(1));
    closeSettings.onclick=()=>settingsDialog.close();
    actions.append(save,push,off);
-   settingsDialog.append(closeSettings,heading,settings,settingsStatus);
+   const brandTemplate=document.getElementById('customerHeadingTemplate');
+   if(brandTemplate){
+    const header=el('div',null,'customer-aux-header');
+    const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
+    brandHeading.querySelector('.customer-heading-copy').append(heading);
+    header.append(brandHeading,closeSettings);
+    settingsDialog.append(header,settings,settingsStatus);
+   }else settingsDialog.append(closeSettings,heading,settings,settingsStatus);
    document.body.append(settingsDialog);
   }
   content.className='connect-chat-content';

@@ -93,13 +93,9 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   background: #c8ae70;
   content: "";
 }
-#checkout .cart-heading { display: contents; }
-#checkout[data-stage="cart"][data-filled] .cart-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; min-width: 0; }
 #checkout[data-stage="cart"][data-filled] #checkoutTitle {
-  max-width: none;
-  flex: none;
   color: var(--cart-ink) !important;
-  font-size: 26px !important;
+  font-size: clamp(20px, 5vw, 26px) !important;
   text-shadow: none;
 }
 #checkoutCartSummary { display: none; color: #466064; font-size: 13px; }
@@ -229,22 +225,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 0;
   padding: 13px 16px !important;
   background: #006163 !important;
+  --customer-heading-brand: #d2efec;
   border-bottom: 2px solid #d1ac58 !important;
 }
 #checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .checkout-header::before { content: none; }
-#checkout .empty-cart-logo { display: none; }
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .cart-heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-#checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) .empty-cart-logo {
-  display: block;
-  flex: none;
-  width: 44px;
-  height: 44px;
-}
 #checkout[data-stage="cart"]:not([data-filled]):has(#ummaEmptyCart:not([hidden])) #checkoutTitle {
   max-width: none;
   margin: 0;
@@ -322,10 +306,9 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   padding: 10px 16px !important;
   border-bottom: 2px solid #d1ac58 !important;
   background: #006163 !important;
+  --customer-heading-brand: #d2efec;
 }
 #checkout[data-stage="checkout"] .checkout-header::before { content: none; }
-#checkout[data-stage="checkout"] .cart-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
-#checkout[data-stage="checkout"] .empty-cart-logo { display: block; width: 38px; height: 38px; flex: none; }
 #checkout[data-stage="checkout"] #checkoutTitle { max-width: none; color: #fffdf5 !important; text-shadow: none; }
 #checkout[data-stage="checkout"] .checkout-body { padding: 0 !important; }
 .checkout-form-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 14px 16px 8px; }
@@ -410,20 +393,9 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .checkout-header {
   padding: 6px 12px;
   background: var(--ruble-teal);
+  --customer-heading-brand: #d2efec;
   border-bottom: 1px solid #d1ac58;
   color: #fff;
-}
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .cart-heading {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 0;
-}
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .empty-cart-logo {
-  display: block;
-  width: 34px;
-  height: 34px;
-  flex: none;
 }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) #checkoutTitle { max-width: none; }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .checkout-body { padding: 8px 12px 10px; }
@@ -504,7 +476,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=20"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=21"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -526,9 +498,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
 <dialog id="customerProfile" aria-labelledby="profileTitle">
-  <div class="checkout-header"><h2 id="profileTitle" data-i18n="Профиль">Профиль</h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" data-i18n="Профиль">Профиль</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body">
-    <div class="profile-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="68" height="68"><strong>UMMA CAFE</strong></div>
     <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
     <button type="button" id="openChatSettings" class="plain-btn" aria-haspopup="dialog" data-i18n="Настройки чата">Настройки чата</button>
     <div class="install-row"><button type="button" id="installApp" class="plain-btn"><span class="install-copy"><span class="install-title" data-i18n="Добавить приложение на главный экран">Добавить приложение на главный экран</span><span class="install-subtitle" data-i18n="Чтобы быстро открывать меню и заказывать снова">Чтобы быстро открывать меню и заказывать снова</span></span></button><p id="installHelp" class="guest-hint" hidden></p></div>
@@ -544,18 +515,16 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <dialog id="dishDetails" closedby="closerequest" aria-labelledby="dishTitle">
   <div class="checkout-header">
-    <h2 id="dishTitle"></h2>
+    <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="dishTitle"></h2></div></div>
     <form method="dialog"><button class="close" autofocus aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form>
   </div>
   <div class="checkout-body" id="dishDetailsBody"></div>
 </dialog>
 <div class="dish-detail-scrim" aria-hidden="true"></div>
+<template id="customerHeadingTemplate"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span></div></div></template>
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
-    <div class="orders-heading">
-      <img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42">
-      <div><span>UMMA CAFE</span><h2 id="customerOrdersTitle" tabindex="-1" autofocus data-i18n="Мои заказы">Мои заказы</h2></div>
-    </div>
+    <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerOrdersTitle" tabindex="-1" autofocus data-i18n="Мои заказы">Мои заказы</h2></div></div>
     <button class="close" type="button" id="closeCustomerOrders" aria-label="Закрыть" data-i18n-label="Закрыть">×</button>
   </div>
   <div class="checkout-body">
@@ -568,7 +537,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
 </dialog>
 <dialog id="customerMessages" class="customer-section" closedby="closerequest" aria-labelledby="customerMessagesTitle">
-  <div class="checkout-header"><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body customer-message-sections">
     <div id="orderInboxHost"></div>
     <div id="customerConnectHost"></div>
@@ -576,7 +545,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </dialog>
 <dialog id="nearbyCafe" class="customer-section" closedby="closerequest" aria-labelledby="nearbyCafeTitle">
   <div class="nearby-cafe-header">
-    <h2 id="nearbyCafeTitle" tabindex="-1" autofocus data-i18n="Кафе рядом">Кафе рядом</h2>
+    <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="nearbyCafeTitle" tabindex="-1" autofocus data-i18n="Кафе рядом">Кафе рядом</h2></div></div>
     <button class="close" type="button" id="closeNearbyCafe" aria-label="Закрыть" data-i18n-label="Закрыть">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
@@ -600,14 +569,14 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </dialog>
 <div class="customer-dock" id="customerDock">
 <nav class="customer-actions" aria-label="Навигация кафе" data-i18n-label="Навигация кафе">
-  <a class="plain-btn dock-menu" aria-current="page" href="menu/#products" data-i18n="Меню">Меню</a>
+  <a class="plain-btn dock-menu" aria-current="page" href="menu/#cafePage" data-i18n="Меню">Меню</a>
   <button type="button" id="customerMessagesButton" class="plain-btn" aria-expanded="false" aria-controls="customerMessages"><span data-i18n="Сообщения">Сообщения</span><span class="messages-unread" hidden></span></button>
   <button type="button" id="nearbyCafeButton" class="plain-btn" aria-expanded="false" aria-controls="nearbyCafe" data-i18n="Кафе рядом">Кафе рядом</button>
   <button type="button" id="receiptButton" class="plain-btn" aria-expanded="false" aria-controls="customerOrders" data-i18n="Заказы">Заказы</button>
   <button type="button" id="openCart" class="plain-btn" aria-expanded="false" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
 </div>
-<dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><img class="empty-cart-logo" src="logo/assets/umma-icon-192.png" alt="" width="44" height="44"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
+<dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
 <div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
   <div class="umma-empty-illustration" aria-hidden="true">
     <svg viewBox="0 0 128 128" width="104" height="104" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -683,7 +652,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=13"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=14"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
 <script src="js/cafe/menu-audience.js?v=1"></script>
@@ -1270,4 +1239,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=39"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=40"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>

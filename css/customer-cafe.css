@@ -274,6 +274,45 @@
   padding: 11px 16px;
 }
 .public-cafe-menu .checkout-header h2 { font-size: clamp(1.05rem, 5vw, 1.4rem); }
+/* Shared heading for the public cafe sections. */
+.customer-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-inline-size: 0;
+}
+.customer-heading > img {
+  display: block;
+  flex: none;
+  inline-size: 42px;
+  block-size: 42px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.customer-heading-copy { min-inline-size: 0; }
+.customer-heading-brand {
+  display: block;
+  margin-block-end: 2px;
+  color: var(--customer-heading-brand, var(--umma-brand-deep));
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  line-height: 1.25;
+}
+.public-cafe-menu .customer-heading h2 {
+  max-inline-size: none;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.customer-aux-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-block-end: 12px;
+}
+.customer-aux-header button { flex: none; }
+.public-cafe-menu .customer-aux-header h2 { font-size: clamp(18px, 5vw, 22px); line-height: 1.2; }
 .public-cafe-menu .checkout-body { padding-block-start: 14px; }
 .public-cafe-menu .close { flex: none; }
 .public-cafe-menu #checkout .cart-row {
@@ -300,12 +339,7 @@
   background: white;
 }
 #guestPayment .payment-qr { background: white; padding: 8px; }
-.profile-brand {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding: 9px 0 20px;
-}
+#customerProfile .checkout-header { background: var(--umma-brand-white); color: var(--umma-brand-night); }
 #customerProfile .language-control { justify-content: space-between; margin-bottom: 14px; }
 #customerProfile .language-control select { max-width: 70%; }
 #customerProfile #openChatSettings {
@@ -313,10 +347,7 @@
   min-height: 48px;
   margin-bottom: 12px;
 }
-#customerChatSettings .connect-close {
-  float: inline-end;
-  margin: 0 0 0 8px;
-}
+#customerChatSettings .connect-close { float: none; margin: 0; }
 #customerChatSettings .connect-settings { margin-inline: 0; }
 #customerChatSettings .connect-actions {
   grid-template-columns: 1fr;
@@ -713,9 +744,6 @@
   color: var(--umma-brand-night);
   border: 0;
 }
-.orders-heading { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.orders-heading img { flex: none; border-radius: 50%; }
-.orders-heading span { color: var(--umma-brand-deep); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 #customerOrdersTitle { max-width: none; font-size: clamp(21px, 6vw, 27px); line-height: 1.14; letter-spacing: -.035em; }
 #customerOrders .close { flex: none; width: 44px; height: 44px; border-radius: 50%; color: var(--umma-brand-night); }
 .customer-order-filters {
