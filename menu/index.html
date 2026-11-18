@@ -394,7 +394,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=23"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=32"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=23"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=33"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -410,9 +410,26 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
   <p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
 </div>
-<section class="cafe-intro" aria-label="UMMA Cafe">
-  <div class="cafe-intro-copy"><p data-i18n="Халяльная кухня">Халяльная кухня</p><strong>UMMA CAFE</strong><span data-i18n="Нячанг">Нячанг</span></div>
-  <img src="logo/assets/menu/plov-white-v2.webp" alt="" width="240" height="240" fetchpriority="high">
+<section class="cafe-intro" id="cafeSpotlight" aria-label="UMMA Cafe">
+  <div class="cafe-spotlight-fallback">
+    <div class="cafe-intro-copy"><p data-i18n="Халяльная кухня">Халяльная кухня</p><strong>UMMA CAFE</strong><span data-i18n="Нячанг">Нячанг</span></div>
+    <img src="logo/assets/menu/plov-white-v2.webp" alt="" width="240" height="240" fetchpriority="high">
+  </div>
+  <button type="button" class="cafe-spotlight-slide" aria-haspopup="dialog" hidden>
+    <span class="cafe-spotlight-copy">
+      <span class="cafe-spotlight-eyebrow"></span>
+      <strong></strong>
+      <span class="cafe-spotlight-detail"></span>
+      <span class="cafe-spotlight-cta"></span>
+    </span>
+    <img alt="" width="240" height="240" decoding="async" draggable="false" hidden>
+  </button>
+  <div class="cafe-spotlight-controls" hidden>
+    <div class="cafe-spotlight-dots"></div>
+    <button type="button" class="cafe-spotlight-pause">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3h2v10H4zm6 0h2v10h-2z"/><path d="M5 2.5v11l8-5.5z"/></svg>
+    </button>
+  </div>
 </section>
 <div id="replyNotificationsSetup" class="reply-notifications-setup" hidden></div>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
@@ -604,6 +621,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=15"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
+<script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=2"></script>
 <script src="js/cafe/public-menu-profile-name.js?v=1"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
@@ -743,6 +761,7 @@ function showDish(p, focusSelector){
     (future?preorderCard(future,n):'');
   $('dishDetails').dataset.productId=p.id;
   if(!$('dishDetails').open){
+    delete $('dishDetails').dataset.fromSpotlight;
     $('dishDetails').show();
     $('dishDetails').querySelector('.close').focus({preventScroll:true});
     syncCustomerNavigation();
@@ -824,7 +843,20 @@ function matchesMenuSearch(dish, terms) {
   return terms.every(term => ingredientTerms.has(term) ? words.has(term) : text.includes(term));
 }
 
-function renderProducts(){const terms=menuSearchTerms(query);const visible=menuDishes().filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&matchesMenuSearch(p,terms));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
+function renderSpotlight(dishes) {
+  if (!window.ummaCafeSpotlight) return;
+  const eligible = dishes.filter(({dish, batch}) => stockLeft(dish) > 0 || batch && stockLeft(batch) > 0);
+  window.ummaCafeSpotlight.setCatalog(eligible.map(({dish}) => ({
+    key: dish.id, sku: dish.sku, title: name(dish), detail: money(dish.price_vnd), image: safeImage(dish)
+  })), id => {
+    const product = menuDishes().find(({dish}) => dish.id === id)?.dish;
+    if (product) {
+      showDish(product);
+      $('dishDetails').dataset.fromSpotlight = 'true';
+    }
+  });
+}
+function renderProducts(){const dishes=menuDishes();renderSpotlight(dishes);const terms=menuSearchTerms(query);const visible=dishes.filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&matchesMenuSearch(p,terms));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
 function renderCart(){ $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
  const badge=$('cartCount');
  badge.hidden=n===0;
@@ -1017,7 +1049,8 @@ dishDetails.addEventListener('close', () => {
   const focus = document.activeElement;
   if (dishDetails.open || $('cafePage').inert || (focus !== document.body && !dishDetails.contains(focus))) return;
   const link = $('products').querySelector('.dish-link[data-dish="' + CSS.escape(dishDetails.dataset.productId) + '"]');
-  (link || $('menuHeading')).focus({preventScroll:true});
+  const spotlight = $('cafeSpotlight').querySelector('.cafe-spotlight-slide:not([hidden])');
+  (dishDetails.dataset.fromSpotlight === 'true' && spotlight || link || $('menuHeading')).focus({preventScroll:true});
 });
 const customerDock = $('customerDock');
 const dockMenu = customerDock.querySelector('.dock-menu');
@@ -1383,4 +1416,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=42"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=42"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=2"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>

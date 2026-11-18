@@ -92,12 +92,13 @@
   box-shadow: 0 4px 14px #123b3b25;
 }
 .cafe-intro {
+  --spotlight-height: clamp(184px, 44vw, 236px);
   position: relative;
   isolation: isolate;
   display: flex;
   align-items: center;
   margin: 0 0 12px;
-  min-height: clamp(153px, 35vw, 220px);
+  min-height: var(--spotlight-height);
   border-radius: 22px;
   overflow: hidden;
   background: var(--cafe-header);
@@ -107,7 +108,7 @@
 .cafe-intro-copy p { margin: 0 0 7px; font-size: .85rem; font-weight: 650; }
 .cafe-intro-copy strong { display: block; font-size: clamp(1.45rem, 6vw, 3rem); line-height: 1.02; }
 .cafe-intro-copy span { display: block; margin-top: 8px; font-size: .85rem; }
-.cafe-intro img {
+.cafe-spotlight-fallback img {
   position: absolute;
   z-index: -1;
   inset-inline-end: 0;
@@ -115,6 +116,123 @@
   width: min(48%, 320px);
   height: auto;
   filter: drop-shadow(0 14px 15px #002c2e80);
+}
+.cafe-spotlight-fallback { width: 100%; }
+.cafe-spotlight-slide {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: var(--spotlight-height);
+  padding: 14px clamp(16px, 4vw, 34px) 46px;
+  border: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 85% 48%, #007d82, #00686d 80%);
+  color: var(--umma-brand-white);
+  text-align: start;
+  touch-action: pan-y pinch-zoom;
+}
+.cafe-spotlight-slide.has-photo {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 43%);
+  gap: clamp(10px, 4vw, 34px);
+}
+.cafe-spotlight-slide:focus-visible {
+  outline: 3px solid #fff0c4;
+  outline-offset: -4px;
+}
+.cafe-spotlight-copy {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cafe-spotlight-eyebrow {
+  color: #fff0c4;
+  font-size: .75rem;
+  font-weight: 750;
+}
+.cafe-spotlight-eyebrow:empty { display: none; }
+.cafe-spotlight-copy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: #fff;
+  text-shadow: 0 1px 3px #00363899;
+  font-size: clamp(1.125rem, 5vw, 2.125rem);
+  line-height: 1.15;
+}
+.cafe-spotlight-detail {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: #fff8e4;
+  font-size: .875rem;
+  font-weight: 650;
+}
+.cafe-spotlight-cta {
+  margin-block-start: 3px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fff0c4;
+  color: var(--umma-brand-on-primary);
+  font-size: .75rem;
+  font-weight: 750;
+}
+.cafe-spotlight-slide img {
+  justify-self: end;
+  width: min(100%, calc(var(--spotlight-height) - 60px));
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 8px 13px #00363866);
+}
+.cafe-spotlight-controls {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 4px 48px;
+  pointer-events: none;
+}
+.cafe-spotlight-controls button {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff0c4;
+  pointer-events: auto;
+}
+.cafe-spotlight-controls button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+  border-radius: 999px;
+}
+.cafe-spotlight-dots { display: flex; margin-inline-start: 44px; }
+.cafe-spotlight-dots button { min-width: 26px; }
+.cafe-spotlight-dots button::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+.cafe-spotlight-dots button[aria-current]::before {
+  width: 16px;
+  background: currentColor;
+}
+.cafe-spotlight-pause { position: absolute; inset-inline-end: 4px; width: 44px; }
+.cafe-spotlight-pause svg { width: 16px; height: 16px; fill: currentColor; }
+.cafe-spotlight-pause:not([data-paused="true"]) path + path,
+.cafe-spotlight-pause[data-paused="true"] path:first-child { display: none; }
+.public-cafe-menu .cafe-menu-news article {
+  scroll-margin-block-start: calc(var(--menu-topbar-height) + 12px);
 }
 .public-cafe-menu .menu-sticky {
   inset-block-start: calc(var(--menu-topbar-height) + 6px);
@@ -900,7 +1018,7 @@
 .public-cafe-menu .umma-connect .connect-hero-icon img { width: 42px; height: 42px; }
 .public-cafe-menu :is(.checkout-header button, .topbar button):focus-visible { outline-color: #f5d481; }
 .public-cafe-menu #cafePage .cafe-product-bottom > .cafe-product-price { flex: 1 1 auto; }
-.cafe-intro img {
+.cafe-spotlight-fallback img {
   bottom: 50%;
   inset-inline-end: 10px;
   width: clamp(104px, 38%, 244px);

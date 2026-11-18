@@ -27,12 +27,17 @@ function render(){
  toggle.setAttribute('aria-expanded',String(!hidden));
  list.hidden=hidden;
  list.replaceChildren();
- if(hidden)return;
- for(const item of news){
+ const visible=hidden?[]:news;
+ const slides=[];
+ for(const [index,item] of visible.entries()){
   const article=element('article','');
+  article.id='cafeMenuNewsItem'+index;
+  article.tabIndex=-1;
+  slides.push({key:article.id,title:item.title,body:item.body});
   article.append(element('h3',item.title),element('p',item.body));
   list.append(article);
  }
+ window.dispatchEvent(new CustomEvent('umma-menu:public-news',{detail:slides}));
 }
 async function refresh(){
  if(hidden||loading||document.hidden)return;
