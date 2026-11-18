@@ -1,6 +1,7 @@
 .public-cafe-menu {
   --cafe-header: var(--umma-brand-primary);
   --cafe-banner-gold: #FFE586;
+  --cafe-button-gold: #fff0c4;
   --umma-action: var(--umma-brand-primary);
   --umma-surface: #fff;
   min-height: 100dvh;
@@ -53,7 +54,7 @@
   padding: 8px 14px;
   border: 1px solid #ffe6a4;
   border-radius: 999px;
-  background: #fff0c4;
+  background: var(--cafe-button-gold);
   color: var(--umma-brand-on-primary);
   font-size: .875rem;
   font-weight: 750;
@@ -69,12 +70,12 @@
   height: 44px;
   padding: 0;
   overflow: hidden;
-  border: 2px solid #fff0c4;
+  border: 2px solid var(--cafe-button-gold);
   border-radius: 50%;
-  background: #fff0c4;
+  background: var(--cafe-button-gold);
 }
 .public-cafe-menu #cafePage #openProfile:focus-visible {
-  outline-color: #fff0c4;
+  outline-color: var(--cafe-button-gold);
 }
 .public-cafe-menu #topbarAvatar {
   width: 100%;
@@ -115,7 +116,7 @@
   bottom: -18%;
   width: min(48%, 320px);
   height: auto;
-  filter: drop-shadow(0 14px 15px #002c2e80);
+  filter: drop-shadow(0 14px 15px rgb(var(--umma-brand-on-primary-rgb) / .5));
 }
 .cafe-spotlight-fallback { width: 100%; }
 .cafe-spotlight-slide {
@@ -126,8 +127,8 @@
   padding: 14px clamp(16px, 4vw, 34px) 46px;
   border: 0;
   border-radius: inherit;
-  background: radial-gradient(ellipse at 85% 48%, #007d82, #00686d 80%);
-  color: var(--umma-brand-white);
+  background: transparent;
+  color: inherit;
   text-align: start;
   touch-action: pan-y pinch-zoom;
 }
@@ -136,7 +137,7 @@
   gap: clamp(10px, 4vw, 34px);
 }
 .cafe-spotlight-slide:focus-visible {
-  outline: 3px solid #fff0c4;
+  outline: 3px solid var(--umma-brand-on-primary);
   outline-offset: -4px;
 }
 .cafe-spotlight-copy {
@@ -147,7 +148,6 @@
   overflow-wrap: anywhere;
 }
 .cafe-spotlight-eyebrow {
-  color: #fff0c4;
   font-size: .75rem;
   font-weight: 750;
 }
@@ -157,8 +157,6 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  color: #fff;
-  text-shadow: 0 1px 3px #00363899;
   font-size: clamp(1.125rem, 5vw, 2.125rem);
   line-height: 1.15;
 }
@@ -167,7 +165,6 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  color: #fff8e4;
   font-size: .875rem;
   font-weight: 650;
 }
@@ -175,7 +172,7 @@
   margin-block-start: 3px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: #fff0c4;
+  background: var(--cafe-button-gold);
   color: var(--umma-brand-on-primary);
   font-size: .75rem;
   font-weight: 750;
@@ -187,7 +184,7 @@
   aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
-  filter: drop-shadow(0 8px 13px #00363866);
+  filter: drop-shadow(0 8px 13px rgb(var(--umma-brand-on-primary-rgb) / .4));
 }
 .cafe-spotlight-controls {
   position: absolute;
@@ -206,7 +203,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #fff0c4;
+  color: var(--umma-brand-on-primary);
   pointer-events: auto;
 }
 .cafe-spotlight-controls button:focus-visible {
@@ -225,7 +222,7 @@
 }
 .cafe-spotlight-dots button[aria-current]::before {
   width: 16px;
-  background: currentColor;
+  background: var(--cafe-button-gold);
 }
 .cafe-spotlight-pause { position: absolute; inset-inline-end: 4px; width: 44px; }
 .cafe-spotlight-pause svg { width: 16px; height: 16px; fill: currentColor; }
