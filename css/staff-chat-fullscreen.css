@@ -17,3 +17,18 @@
 .web-work-app #webMessages.work-chat-open .work-thread form button.primary{border-radius:999px!important;background:#079fa4!important;color:#fff!important}
 .web-work-app #webMessages.work-chat-open .work-thread form .connect-composer{max-width:100%}
 }
+
+/* Customer-chat visual parity: shared wallpaper, bubbles, and composer */
+@media(max-width:760px){
+.web-work-app #webMessages.work-chat-open .work-thread{background:#25547b!important;position:relative}
+.web-work-app #webMessages.work-chat-open .work-thread::before{content:"";position:absolute;inset:70px 0 80px;pointer-events:none;opacity:.28;background:url('../assets/chat-wallpaper-mask.png') repeat;background-size:360px auto;z-index:0}
+.web-work-app #webMessages.work-chat-open .connect-thread{position:relative;z-index:1;display:flex!important;flex-direction:column!important;gap:12px!important;list-style:none!important}
+.web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble{position:relative;flex:0 0 auto;width:fit-content!important;max-width:88%!important;min-width:0;margin:0 auto 0 0!important;padding:12px 14px!important;border:0!important;border-radius:18px 18px 18px 5px!important;background:#f0fbf9!important;color:#163d3e!important;box-shadow:0 2px 6px #082b3822!important;white-space:pre-wrap;overflow-wrap:anywhere}
+.web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble[data-direction="customer"]{margin:0 0 0 auto!important;border-radius:18px 18px 5px 18px!important;background:#e0f8f2!important}
+.web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble small{color:#5e7b79!important;font-size:11px!important}
+.web-work-app #webMessages.work-chat-open .connect-compose{position:relative;z-index:2;display:flex!important;flex-direction:column!important;gap:7px!important;border-top:1px solid #c7e2dc!important;box-shadow:0 -5px 18px #092e3714!important}
+.web-work-app #webMessages.work-chat-open .connect-compose label{display:block!important}
+.web-work-app #webMessages.work-chat-open .connect-compose textarea{resize:none!important}
+.web-work-app #webMessages.work-chat-open .connect-compose .connect-send{min-height:44px!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading{position:relative;z-index:2}
+}
