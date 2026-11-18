@@ -395,7 +395,43 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
 
-#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:linear-gradient(135deg,#0ba9ad 0%,#07898e 100%)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=25"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=48"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:linear-gradient(135deg,#0ba9ad 0%,#07898e 100%)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=25"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=49"><link rel="stylesheet" href="css/connect-calls.css?v=2">
+<style id="umma-receipt-status-v49">
+/* Critical payment status styling: last in head to beat stale theme rules. */
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
+  position:relative!important;display:flex!important;align-items:center!important;
+  gap:14px!important;padding:18px!important;border:1px solid #b9e4df!important;
+  border-radius:24px!important;
+  background:linear-gradient(125deg,#e2f7f4 0%,#f4fcfa 75%,#fffdf6 100%)!important;
+  box-shadow:0 8px 26px rgba(11,99,100,.09)!important;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status::before {
+  content:"";position:absolute;top:0;left:24px;right:24px;height:3px;
+  background:linear-gradient(90deg,#0b9999,#d7b05a);border-radius:0 0 8px 8px;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status-icon {
+  display:grid!important;place-items:center!important;flex:0 0 52px!important;
+  width:52px!important;height:52px!important;border-radius:18px!important;
+  background:#fff9e9!important;border:1px solid #ead9ad!important;color:#95701e!important;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status-icon svg {
+  width:27px!important;height:27px!important;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) #successNumber {
+  color:#087c80!important;font-size:13px!important;font-weight:800!important;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) #orderState {
+  color:#123f3c!important;font-size:clamp(17px,4.6vw,21px)!important;
+  line-height:1.25!important;font-weight:800!important;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) #orderReserveUntil {
+  color:#587773!important;margin-top:8px!important;font-size:13px!important;
+}
+@media(max-width:360px){
+  .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status{gap:10px!important;padding:14px!important}
+  .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status-icon{flex-basis:44px!important;width:44px!important;height:44px!important}
+}
+</style></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
