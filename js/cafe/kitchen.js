@@ -11,7 +11,7 @@
   let orders = [], couriers = [], locations = [], actorTelegramId = null, filter = "active", busy = false, staffRole = "", staffLocationIds = [], staffMenu = [], staffCart = new Map(), editingBillId = null;
 
   const statusActions = new Map();
-  let ordersLoading = false, ordersRevision = 0;
+  let ordersLoading = false, ordersRevision = 0, boardLocation;
 
   function syncStatusButtons() {
     document.querySelectorAll("[data-order-id][data-new-status]").forEach(button => {
@@ -39,13 +39,21 @@
     const el = byId("cafeKitchenMessage");
     if (el) { el.textContent = text; el.hidden = !visible; }
   }
+  function showConnection(text = "") {
+    const status = byId("webBoardConnection");
+    if (status) {
+      status.textContent = text;
+      status.hidden = !text;
+    }
+  }
+  window.addEventListener("offline", () => showConnection("Нет интернета. Показаны последние полученные заказы."));
   function formatDate(value) {
     try { return new Intl.DateTimeFormat("ru-RU", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }).format(new Date(value)); }
     catch { return ""; }
   }
 
   const rubleAmount=order=>order.rub_payment_kopecks==null?'':new Intl.NumberFormat('ru',{style:'currency',currency:'RUB'}).format(Number(order.rub_payment_kopecks)/100);
-  const receivedPayment=order=>'Подтвердить получение оплаты по заказу №'+order.order_number+(rubleAmount(order)?' на Сбер: '+rubleAmount(order):'')+'?';
+  const receivedPayment=order=>'Подтвердить получение оплаты по заказу №'+order.order_number+' на '+(rubleAmount(order)||money(order.total_vnd))+'?';
   function paymentProofButton(order) {
     return order.canAcceptPayments===true && ['qr','bank_transfer'].includes(order.payment_method)
       ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Чеки оплаты</button>' : '';
@@ -118,7 +126,7 @@
     if (!root) return;
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
-    shown=shown.filter(o=>!hiddenFromPreparation(o));
+    shown=shown.filter(o=>!hiddenFromPreparation(o)&&(!boardLocation||o.location_id===boardLocation));
     const counter=document.body.dataset.workspace==="pos" && byId("counterIncoming")?.hidden===false;
     if(counter){
       const locationId=byId("posLocation").value;
@@ -129,23 +137,27 @@
     if (filter === "payment") shown=shown.filter(cashBoard
       ? o=>o.canAcceptPayments===true&&o.payment_status==="pending"&&!finished(o)&&o.payment_timing!=="on_delivery"
       : awaitingCounterPayment);
+    if (cashBoard) {
+      const number = byId("webCashSearch")?.value.replace(/^\s*№?\s*/, "").trim();
+      if (number) shown=shown.filter(o=>String(o.order_number).startsWith(number));
+    }
     if (filter === "new") shown=shown.filter(o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o));
     if (filter === "preparing") shown=shown.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o));
     if (filter === "ready") shown=shown.filter(o=>o.status==="ready");
     const webSummary=byId("webOrderSummary");
     if(webSummary){
       webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";
-      const visible=orders.filter(o=>(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!hiddenFromPreparation(o));
+      const visible=orders.filter(o=>(!boardLocation||o.location_id===boardLocation)&&(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!hiddenFromPreparation(o));
       const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
     shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
     if (!shown.length) {
       root.innerHTML = "";
-      showMessage(filter==="payment"?"Нет заказов, ожидающих оплаты.":filter==="active"?"Активных заказов пока нет.":"Заказов пока нет.");
+      showMessage(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет.");
       return;
     }
-    if (["Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
+    if (["Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
@@ -199,7 +211,8 @@
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
       const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
-      const secondary = cashBoard ? cancel : paymentProofButton(order) + cancel + (orderStaffRole === "courier" || awaitingCounterPayment(order) ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
+      const history=orderStaffRole==="manager"&&byId("webOverview")?'<button type="button" data-manager-history="'+esc(order.id)+'">История заказа</button>':"";
+      const secondary = cashBoard ? cancel : history + paymentProofButton(order) + cancel + (orderStaffRole === "courier" || awaitingCounterPayment(order) ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
       const courierHelp=orderStaffRole!=="courier"||["completed","cancelled"].includes(order.status)?"":'<section class="courier-task-guide"><ol aria-label="Этапы доставки">'+["Принять","Забрать","Доставить"].map((label,i)=>'<li '+(i===({courier_assigned:1,picked_up:2,delivered:3}[order.delivery_status]||0)?'aria-current="step"':'')+'>'+label+'</li>').join("")+'</ol><strong>'+esc(goingToCafe?"Забрать: "+(pickup?.name||"Кафе UMMA"):"Доставить: "+(order.delivery_address||"Уточните адрес у клиента"))+'</strong>'+(goingToCafe?'<p>'+esc(pickup?.address||"")+'</p><p>'+(order.status==="ready"?"Заказ готов. Сверьте блюда и сделайте фото при получении.":"Заказ ещё готовится. Дождитесь статуса «Готов».")+'</p>':'')+'<p class="courier-cash-guide">'+esc(order.payment_status==="paid"?"Оплачено · деньги за заказ получать не нужно":order.payment_timing==="on_delivery"?"Получить наличными: "+money(order.total_vnd):"Оплата через кафе · уточните оплату перед передачей")+'</p></section>';
       const safePhone=String(order.customer_phone||"").replace(/[^+0-9]/g,"");
@@ -266,7 +279,7 @@
   async function loadOrders(options = {}) {
     if (options?.afterMutation) { ordersRevision++; lastOrdersFingerprint = null; }
     if (busy || statusActions.size) {refreshQueued=true;return;}
-    if (ordersLoading) { if(options?.afterMutation) refreshQueued=true; return; }
+    if (ordersLoading) { if(options?.afterMutation || !options?.silent) refreshQueued=true; return; }
     const revision = ordersRevision;
     const silent = options?.silent === true;
     ordersLoading = true;
@@ -275,6 +288,7 @@
       const requestedWorkspace=courierWorkspace;
       const result = await api({ action:"list",workspace:requestedWorkspace?"courier":"staff" });
       if(requestedWorkspace!==courierWorkspace || revision!==ordersRevision || busy || statusActions.size){refreshQueued=true;return;}
+      showConnection();
       if (!silent) showMessage("", false);
       staffLocationIds = Array.isArray(result.locationIds) ? result.locationIds : [];
       couriers = Array.isArray(result.couriers) ? result.couriers : [];
@@ -298,12 +312,13 @@
       }
     } catch (error) {
       if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
-      else console.warn("Kitchen background refresh failed:", error);
+      else if (!byId("webBoardConnection")) console.warn("Kitchen background refresh failed:", error);
+      showConnection("Заказы пока не обновились. Повторим попытку автоматически.");
 
     } finally { ordersLoading = false;if(refreshQueued && !busy && !statusActions.size){refreshQueued=false;Promise.resolve().then(()=>loadOrders({silent:true}));} }
   }
 
-  async function updateStatus(orderId, status) {
+  async function updateStatus(orderId, status, note) {
     if (statusActions.has(orderId)) return;
     if (busy) { showMessage("Сохраняем предыдущее действие. Дождитесь подтверждения."); return; }
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
@@ -328,7 +343,7 @@
           throw new Error("Заказ принят, но начало приготовления не подтверждено. Нажмите «Начать готовить» ещё раз. "+(startError instanceof Error?startError.message:""));
         }
       } else {
-        await api({ action:"updateStatus", orderId, status });
+        await api({ action:"updateStatus", orderId, status, ...(note ? {note} : {}) });
       }
       applyStatus(status);
     } catch (error) {
@@ -359,8 +374,14 @@
     updateTableAvailability();
   }
 
-  function open(asCourier = false, initialFilter = "active") {
+  function open(asCourier = false, initialFilter = "active", locationId) {
     const cashBoard=initialFilter==="payment";
+    boardLocation=locationId;
+    ordersRevision++;
+    if(byId("webCashSearchLabel")){
+      byId("webCashSearchLabel").hidden=!cashBoard;
+      byId("webCashSearch").value="";
+    }
     courierWorkspace=asCourier === true;lastOrdersFingerprint=null;filter=initialFilter;
     byId("cafeKitchenPage")?.classList.toggle("courier-workspace",courierWorkspace);
     const desk=window.ummaCourierDesk;
@@ -374,12 +395,13 @@
     if(byId("courierOwnerSetup"))byId("courierOwnerSetup").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace||(cashBoard&&id!=="cafeCashToggle");
-    if(byId("kitchenOrderAudio"))byId("kitchenOrderAudio").hidden=courierWorkspace;
+    if(byId("kitchenOrderAudio"))byId("kitchenOrderAudio").hidden=courierWorkspace||cashBoard;
+    if(byId("webOverview")&&!document.body.classList.contains("work-cash-access")&&byId("cafeCashToggle"))byId("cafeCashToggle").hidden=true;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
     const cashToggle=byId("cafeCashToggle");
     if(cashToggle){cashToggle.setAttribute("aria-expanded","false");cashToggle.textContent="💰 Касса и смена";}
     const hint=byId("workBoardHint");if(hint)hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":cashBoard?"Выберите заказ и подтвердите фактическую оплату.":"Откройте заказ, проверьте блюда и отметьте следующий этап.";
-    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":"Заказы кухни";
+    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":document.body.classList.contains("work-waiter")?"Заказы гостей":"Заказы кухни";
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage"), inventory = byId("cafeInventoryPage"), locations = byId("locationAdminPage");
@@ -395,8 +417,12 @@
     orders=[];render();window.ummaCourierWorkflow?.renderOffers([],courierWorkspace?"courier":"manager");
     loadOrders();
     window.ummaKitchenLive?.start();
-    if(!courierWorkspace)loadCash();
-    else loadSelfCourier();
+    if(courierWorkspace)loadSelfCourier();
+    else if(!byId("webOverview"))loadCash();
+    else if(!byId("cafeCashToggle")?.hidden){
+      cashLocationId=boardLocation||"";
+      ensureCashPanel();
+    }
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
@@ -495,7 +521,11 @@
     if (typeof setActiveNav === "function") setActiveNav("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
-  byId("cafeKitchenRefresh")?.addEventListener("click", () => { loadOrders(); loadCash(); });
+  byId("webCashSearch")?.addEventListener("input", render);
+  byId("cafeKitchenRefresh")?.addEventListener("click", () => {
+    loadOrders();
+    if(!byId("cafeCashToggle")?.hidden && !byId("cafeCashPanel")?.hidden)loadCash();
+  });
   document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
     filter = button.getAttribute("data-kitchen-filter") || "active";
     document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
@@ -530,6 +560,56 @@
       showMessage(error instanceof Error ? error.message : "Не удалось обновить доставку");
     } finally { busy = false; render(); }
   }
+  function workDialog(title, content) {
+    const dialog=document.createElement("dialog");
+    dialog.className="work-order-dialog";
+    dialog.setAttribute("aria-label",title);
+    const heading=document.createElement("h2");
+    heading.textContent=title;
+    const close=document.createElement("button");
+    close.type="button"; close.textContent="Закрыть"; close.onclick=()=>dialog.close();
+    dialog.append(heading,content,close);
+    dialog.addEventListener("close",()=>dialog.remove());
+    document.body.append(dialog);
+    dialog.showModal();
+    return dialog;
+  }
+  function openCancellation(orderId) {
+    const order=orders.find(o=>o.id===orderId);
+    if(!order)return;
+    const form=document.createElement("form");
+    form.innerHTML='<label>Причина отмены<textarea required maxlength="500" rows="3"></textarea></label><button class="primary" type="submit">Отменить заказ</button>';
+    const dialog=workDialog("Отмена заказа №"+order.order_number,form);
+    form.onsubmit=event=>{
+      event.preventDefault();
+      const input=form.querySelector("textarea"), note=input.value.trim();
+      if(!note){input.focus();return;}
+      dialog.close();
+      void updateStatus(orderId,"cancelled",note);
+    };
+  }
+  async function openManagerHistory(orderId) {
+    const order=orders.find(o=>o.id===orderId);
+    if(!order)return;
+    const content=document.createElement("div");
+    content.textContent="Загружаем историю…";
+    workDialog("История заказа №"+order.order_number,content);
+    try {
+      const {events}=await api({action:"managerOrderHistory",orderId});
+      const list=document.createElement("ol");
+      for(const event of events){
+        const item=document.createElement("li");
+        item.textContent=formatDate(event.created_at)+" · "+(statusNames[event.to_status]||event.to_status)+(event.note?" · "+event.note:"");
+        list.append(item);
+      }
+      if(events.length)content.replaceChildren(list);
+      else content.textContent="Изменений статуса пока нет.";
+    }catch(error){content.textContent=error.message;}
+  }
+  byId("cafeKitchenOrders")?.addEventListener("click",event=>{
+    const button=event.target.closest?.("[data-manager-history]");
+    if(button)void openManagerHistory(button.dataset.managerHistory);
+  });
   function openCashPayment(order) {
     let modal=byId("cashPaymentModal");
     if(!modal){
@@ -576,13 +656,17 @@
     if (paymentButton) {
       const order=orders.find(o=>String(o.id)===paymentButton.getAttribute("data-order-id"));
       if(paymentButton.getAttribute("data-payment-status")==="paid" && order && order.payment_method==="cash"){openCashPayment(order);}
-      else if(!order||!rubleAmount(order)||window.confirm(receivedPayment(order)))updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
+      else if(order&&((!byId("webOverview")&&!rubleAmount(order))||window.confirm(receivedPayment(order))))updatePayment(paymentButton.getAttribute("data-order-id"), paymentButton.getAttribute("data-payment-status"));
       return;
     }
     const deliveryButton = target.closest("[data-order-id][data-delivery-status]");
     if (deliveryButton) { updateDelivery(deliveryButton.getAttribute("data-order-id"), deliveryButton.getAttribute("data-delivery-status"), deliveryButton); return; }
     const button = target.closest("[data-order-id][data-new-status]");
-    if (button) updateStatus(button.getAttribute("data-order-id"), button.getAttribute("data-new-status"));
+    if (button) {
+      const orderId=button.dataset.orderId, status=button.dataset.newStatus;
+      if(status==="cancelled"&&byId("webOverview"))openCancellation(orderId);
+      else updateStatus(orderId,status);
+    }
   });
 
  
@@ -604,7 +688,10 @@
       section.hidden = !section.hidden;
       cashToggle.setAttribute("aria-expanded", String(!section.hidden));
       cashToggle.textContent = section.hidden ? "💰 Касса и смена" : "↑ Скрыть кассу и смену";
-      if (!section.hidden) section.scrollIntoView({behavior:"smooth",block:"start"});
+      if (!section.hidden) {
+        if(byId("webOverview"))void loadCash();
+        section.scrollIntoView({behavior:"smooth",block:"start"});
+      }
     });
     byId("cashLocationSelect")?.addEventListener("change", () => { cashLocationId = byId("cashLocationSelect").value; loadCash(); });
     byId("cashHandoverForm")?.addEventListener("submit", createCashHandover);

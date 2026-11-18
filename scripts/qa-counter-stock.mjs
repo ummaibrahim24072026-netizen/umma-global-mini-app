@@ -21,6 +21,7 @@ w.fetch=async(url,o)=>{
 };
 w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));w.eval(read('js/cafe/web-operations.js'));
 await tick();await tick();
+d.querySelector('[data-cash-view=pos]').click();
 const card=id=>d.querySelector('[data-pos-product="'+id+'"]');
 assert.match(card('plov').textContent,/В наличии: 3/);
 assert.match(card('plov').textContent,/Следующая партия: 7/);

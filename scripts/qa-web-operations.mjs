@@ -2,7 +2,7 @@ import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert f
 const html=readFileSync('staff.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const tick=()=>new Promise(r=>setTimeout(r,20));
 for(const method of ['cash','qr']){
- const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html'}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
+ const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html'}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.eval(readFileSync('js/cafe/web-session.js','utf8'));w.ummaStaffAuth.save('a'.repeat(64));
  const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false;
  w.fetch=async(url,opts)=>{const b=opts?.body?JSON.parse(opts.body):{};requests.push({url,b});assert.equal(w.Telegram,undefined);
@@ -15,10 +15,13 @@ for(const method of ['cash','qr']){
  return new Response(JSON.stringify(out));};
  w.eval(readFileSync('js/cafe/order-requests.js','utf8'));w.eval(readFileSync('js/cafe/web-operations.js','utf8'));await tick();await tick();
  assert.equal(d.getElementById('webWorkspace').hidden,false);assert.equal(d.querySelector('[data-web-tab="courier"]').hidden,true);
+ assert.equal(d.body.dataset.workspace,'cashOrders');
+ d.querySelector('[data-cash-view=pos]').click();
+ assert.equal(d.body.dataset.workspace,'pos');
  d.querySelector('[data-pos-add]').click();assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('posMethod').value=method;d.getElementById('posMethod').dispatchEvent(new w.Event('change'));d.getElementById('posCash').value='50000';
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
  assert.equal(paid,method==='cash');assert.equal(d.getElementById('posConfirmQr').hidden,method==='cash');
- if(method==='qr'){assert.ok(d.getElementById('posQr').querySelector('svg'));d.getElementById('posConfirmQr').click();await tick();assert.equal(paid,true);assert.equal(d.getElementById('posConfirmQr').hidden,true);}
+ if(method==='qr'){assert.ok(d.getElementById('posQr').querySelector('svg'));w.confirm=()=>false;d.getElementById('posConfirmQr').click();await tick();assert.equal(paid,false);w.confirm=()=>true;d.getElementById('posConfirmQr').click();await tick();assert.equal(paid,true);assert.equal(d.getElementById('posConfirmQr').hidden,true);}
  assert.match(d.getElementById('posPaymentHint').textContent,/Оплачено/);assert.equal(d.getElementById('posCart').querySelector('[data-id]'),null);w.close();
 }
 // The client screen only reads; cancelled, paid and failed requests immediately hide the QR.

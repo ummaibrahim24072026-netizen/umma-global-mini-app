@@ -1,0 +1,142 @@
+/* Standalone staff cabinet. Brand values come from the public cafe menu. */
+.web-work-app {
+  --work-primary: var(--umma-button-gradient, var(--umma-brand-primary));
+  --work-action-text: #fff;
+  --work-header-height: calc(68px + env(safe-area-inset-top, 0px));
+}
+
+.web-work-app .web-header {
+  position: sticky;
+  inset-block-start: 0;
+  min-height: var(--work-header-height);
+  box-sizing: border-box;
+  padding-block: calc(8px + env(safe-area-inset-top, 0px)) 8px;
+  background: var(--umma-brand-white);
+  border-color: var(--umma-brand-line);
+}
+
+.web-work-app .web-tabs { top: var(--work-header-height); }
+.web-work-app .ready-stock-submit { top: calc(var(--work-header-height) + 72px); }
+.web-work-app .pos-basket { top: calc(var(--work-header-height) + 76px); }
+.web-work-app :is(#posBasket, #posSearch, #webInviteForm, #webStaffHeading, .work-thread h2) {
+  scroll-margin-top: calc(var(--work-header-height) + 86px);
+}
+
+.work-identity { margin-inline-start: auto; min-width: 0; }
+.web-work-app #webIdentity, .work-identity small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--umma-brand-ink);
+}
+
+.work-identity small { color: var(--umma-brand-muted); }
+.web-work-app .web-header .web-brand small { color: var(--umma-brand-muted); }
+
+.web-work-app .web-header .web-account-menu > summary,
+.web-work-app .web-tabs button,
+.web-work-app .work-section-switch button,
+.web-work-app .cafe-kitchen-filters button,
+.web-work-app .ready-stock-views button,
+.web-work-app .work-overview-actions button { border-radius: 999px; }
+
+.web-work-app :is(
+  button.primary,
+  .web-tabs button[aria-current=true],
+  .work-section-switch button[aria-pressed=true],
+  .cafe-kitchen-filters button.is-active,
+  .ready-stock-views button[aria-pressed=true],
+  .kitchen-order-actions .kitchen-action[data-new-status],
+  .kitchen-order-actions .kitchen-action[data-payment-status],
+  .kitchen-order-actions .kitchen-action[data-delivery-photo],
+  .kitchen-order-actions .kitchen-action[data-delivery-status],
+  button.ready-plan-finish,
+  #webInviteCopy, #posConfirmQr, #posCartJump, #cashPayConfirm
+):not(.kitchen-cancel) {
+  background: var(--work-primary);
+  border-color: var(--umma-button-edge, var(--umma-brand-primary));
+  color: var(--work-action-text);
+  -webkit-text-fill-color: var(--work-action-text);
+  border-radius: 999px;
+  text-shadow: 0 1px 2px var(--umma-brand-ink);
+}
+
+.web-work-app :is(.cafe-kitchen-orders, .staff-account, .ready-stock-panel, .courier-desk-panel) {
+  min-width: 0;
+}
+
+.work-overview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-block-end: 18px;
+}
+
+.work-overview-heading h1 { flex: 1 1 220px; margin: 0; }
+.work-overview-heading label { flex: 0 1 250px; margin: 0; }
+.work-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.work-overview-metrics > div, .work-overview-stock {
+  padding: 16px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 20px;
+  background: var(--umma-brand-white);
+  overflow-wrap: anywhere;
+}
+.work-overview-metrics dt { color: var(--umma-brand-muted); font-weight: 650; }
+.work-overview-metrics dd {
+  margin: 4px 0 0;
+  color: var(--umma-brand-ink);
+  font-size: clamp(20px, 4vw, 29px);
+  font-weight: 800;
+}
+.work-overview-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-end: 20px; }
+.work-overview-stock ul { padding-inline-start: 20px; margin-block-end: 0; }
+#webOverviewStatus:empty { display: none; }
+.work-board-connection {
+  padding: 10px 14px;
+  color: #654b18;
+  background: #fff7e5;
+  border: 1px solid #eddfbc;
+  border-radius: 14px;
+}
+
+@media (max-width: 760px) {
+  .work-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .web-work-app .ready-stock-submit { top: var(--work-header-height); }
+  .web-work-app :is(#posBasket, #posSearch, #webInviteForm, #webStaffHeading, .work-thread h2) {
+    scroll-margin-top: calc(var(--work-header-height) + 12px);
+  }
+  .web-work-app .web-tabs { top: auto; }
+  .web-work-app.work-owner .web-tabs:has(button[data-web-tab=overview]:not([hidden])) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .web-work-app.work-owner .web-tabs button { flex-direction: column; gap: 2px; padding-inline: 3px; }
+  .work-overview-metrics > div { padding: 12px; }
+}
+
+.web-work-app #webCashSearchLabel { max-width: 320px; }
+.work-order-dialog {
+  inline-size: min(480px, calc(100% - 28px));
+  max-block-size: calc(100dvh - 36px);
+  overflow: auto;
+  box-sizing: border-box;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 22px;
+  background: var(--umma-brand-white);
+  color: var(--umma-brand-ink);
+  padding: 20px;
+  overflow-wrap: anywhere;
+}
+.work-order-dialog::backdrop { background: #002d2e77; }
+.work-order-dialog > button { margin-block-start: 14px; border-radius: 999px; }
+.work-order-dialog ol { padding-inline-start: 20px; }
+.work-order-dialog li { margin-block: 8px; }
