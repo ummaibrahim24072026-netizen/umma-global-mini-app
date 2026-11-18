@@ -45,9 +45,9 @@
   const play=document.createElement('button');play.type='button';play.textContent='▶';
   play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
   play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;align-self:center;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;cursor:pointer';
-  const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:grid;gap:2px';
+  const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px';
   const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
-  wave.style.cssText='height:27px;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer';
+  wave.style.cssText='height:27px;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer;align-self:center';
   const heights=[7,13,19,11,21,16,8,14,22,12,18,9,16,21,10,14,19,8,15,12,20,11,17,9,14,19,10,16,12,7];
   const bars=heights.map(h=>{const bar=document.createElement('span');bar.style.cssText='flex:1;min-width:2px;height:'+h+'px;border-radius:3px;background:#76aaa5';wave.append(bar);return bar;});
   const dot=document.createElement('span');dot.style.cssText='position:absolute;left:0;top:50%;width:10px;height:10px;transform:translate(-1px,-50%);background:#0a9998;border:2px solid #d9f3ee;border-radius:50%;box-sizing:border-box;pointer-events:none';wave.append(dot);
