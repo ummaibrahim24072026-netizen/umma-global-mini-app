@@ -1580,3 +1580,32 @@
   #checkout[data-stage="receipt"] #success .receipt-status { gap: 10px; padding: 14px; }
   #checkout[data-stage="receipt"] #success .receipt-status-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 15px; }
 }
+
+/* Inner customer screens: rounded controls without changing their existing fills.
+   Deliberately excludes #cafePage and #customerDock (approved home UI). */
+.public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
+  :is(button, .plain-btn, .primary, .order-action, .cafe-preorder-action, .checkout-payment-options label, .order-mode-options label span) {
+  border-radius: 999px;
+}
+.public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
+  :is(button, .plain-btn, .primary, .order-action, .cafe-preorder-action) {
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
+  :is(.primary, .cafe-add, .cafe-preorder-action, .connect-send, .connect-record-send, #saveProfileName, #continueCheckout, #newOrder) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
+  :is(.primary, .cafe-add, .cafe-preorder-action, .connect-send, .connect-record-send, #saveProfileName, #continueCheckout, #newOrder) :is(svg, path) {
+  color: #fff;
+}
+.public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
+  :is(.plain-btn, .cart-clear, .cart-controls button, .customer-order-filters button) {
+  border-radius: 999px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog) button {
+    transition: none;
+  }
+}
