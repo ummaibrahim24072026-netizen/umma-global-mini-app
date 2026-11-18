@@ -351,8 +351,8 @@ function build(){
   dialog.dataset.chatTheme=savedChatTheme();
  }
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
-  close.textContent='←';
-  close.setAttribute('aria-label',t(1));
+  close.textContent=lang()==='ru'?'← Назад':lang()==='vi'?'← Quay lại':'← Back';
+  close.setAttribute('aria-label',lang()==='ru'?'Назад':lang()==='vi'?'Quay lại':'Back');
   const menuLabel=({ru:'Действия чата',vi:'Tùy chọn trò chuyện'})[lang()]||'Chat options';
   const clearLabel=({ru:'Очистить чат',vi:'Xóa lịch sử trò chuyện'})[lang()]||'Clear chat';
   const chatMenu=el('details',null,'connect-chat-menu');
