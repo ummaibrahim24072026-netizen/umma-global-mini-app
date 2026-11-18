@@ -4,6 +4,13 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='';
+const staffThemes=['light','turquoise','dark','beige','blue','lavender'];
+const staffThemeKey='umma:chat:theme:v1';
+const staffHiddenKey=id=>'umma:staff:chat:hidden:'+id;
+let hiddenStaffMessages=new Set();
+function loadStaffHidden(id){try{hiddenStaffMessages=new Set(JSON.parse(localStorage.getItem(staffHiddenKey(id))||'[]'));}catch{hiddenStaffMessages=new Set();}}
+function setStaffTheme(id){if(!staffThemes.includes(id))return;workspace.dataset.chatTheme=id;try{localStorage.setItem(staffThemeKey,id);}catch{}}
+
 const mobileChat=()=>window.matchMedia('(max-width:760px)').matches;
 function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',view==='inbox'&&!!thread&&mobileChat());}
 window.addEventListener('resize',syncChatScreen);
@@ -171,8 +178,8 @@ async function run(fn,feedback=status){
 function showMessages(data){
  const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
  const labels={album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'};
- window.ummaConnectMedia.render(messages,data.messages||[],m=>{
-  const li=node('li',null,'connect-chat-bubble');li.dataset.direction=m.direction;
+ window.ummaConnectMedia.render(messages,(data.messages||[]).filter(m=>!hiddenStaffMessages.has(m.id)),m=>{
+  const li=node('li',null,'connect-chat-bubble');li.dataset.direction=m.direction;li.dataset.messageId=m.id;
   li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
   if(m.body)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target,data.client.id))));
   if(m.media_kind){
@@ -201,7 +208,7 @@ async function readThread(id,background=false){
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
 async function openThread(id){
- if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;threadTitle.textContent='Загружаем переписку…';replyForm.hidden=true;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
+ if(thread!==id){loadStaffHidden(id);composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;threadTitle.textContent='Загружаем переписку…';replyForm.hidden=true;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
  syncChatScreen();
  await readThread(id);
@@ -279,9 +286,16 @@ function build(){
  replyBody.addEventListener('input',()=>{replyKey=null;replyStatus.textContent='';});
  const send=node('button','Отправить ответ','primary connect-send');send.type='submit';
  replyStatus=node('p');replyStatus.setAttribute('role','status');
- replyForm.append(label('Ответ',replyBody),send,replyStatus);
+ replyBody.placeholder='Сообщение';replyBody.rows=1;replyBody.setAttribute('aria-label','Сообщение');send.textContent='➤';send.setAttribute('aria-label','Отправить');replyForm.append(replyBody,send,replyStatus);
  composer=window.ummaConnectComposer({lang:'ru',el:node,form:replyForm,body:replyBody,send,status:replyStatus,
-  onChange:()=>{replyKey=null;},kinds:['video']});
+  compact:true,albums:true,onChange:()=>{replyKey=null;},
+  onInstantVideo:async file=>{
+   if(!thread||busy)throw Error('Чат недоступен');
+   const clientId=thread;
+   await window.ummaConnectMedia.upload(API,{'X-Umma-Staff':credential(),'X-Umma-Client':clientId},
+    {file,kind:'video'},crypto.randomUUID(),'◉ Видеосообщение',composer.error);
+   if(thread===clientId)await readThread(clientId);
+  }});
  replyForm.onsubmit=e=>{
   e.preventDefault();
   const body=replyBody.value.trim(),draft=composer.draft;
@@ -312,7 +326,38 @@ function build(){
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
  const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{composer?.close();thread=null;syncChatScreen();};threadHeading.prepend(back);
- const threadPanel=node('section',null,'work-thread');threadPanel.append(threadHeading,messages,replyForm);
+ const menu=node('details',null,'connect-chat-menu');
+ const toggle=node('summary','⋮','connect-chat-menu-toggle');toggle.setAttribute('aria-label','Действия чата');
+ const actions=node('div',null,'connect-chat-menu-panel');
+ const themeButton=node('button','Тема','connect-theme-menu-button');themeButton.type='button';
+ themeButton.onclick=()=>{
+  menu.open=false;
+  const modal=node('dialog',null,'connect-theme-dialog');
+  const heading=node('h3','Тема чата');
+  const grid=node('div',null,'connect-theme-grid');
+  for(const [id,name] of [['light','Светлый'],['turquoise','Бирюзовый'],['dark','Тёмно-бирюзовый'],['beige','Бежевый'],['blue','Синий (ночной)'],['lavender','Лавандовый']]){
+   const choice=node('button',null,'connect-theme-choice');choice.type='button';choice.dataset.chatTheme=id;
+   choice.append(node('span',null,'connect-theme-preview'),node('span',name));
+   choice.setAttribute('aria-pressed',String(workspace.dataset.chatTheme===id));
+   choice.onclick=()=>{setStaffTheme(id);modal.close();};
+   grid.append(choice);
+  }
+  const close=node('button','Закрыть','connect-theme-close');close.type='button';close.onclick=()=>modal.close();
+  modal.append(heading,grid,close);modal.addEventListener('close',()=>modal.remove(),{once:true});
+  document.body.append(modal);modal.showModal();
+ };
+ const clear=node('button','Очистить чат','connect-clear-chat');clear.type='button';
+ clear.onclick=()=>{
+  menu.open=false;
+  if(!thread||!confirm('Очистить переписку только на этом устройстве? У клиента сообщения останутся.'))return;
+  for(const item of messages.querySelectorAll('[data-message-id]'))hiddenStaffMessages.add(item.dataset.messageId);
+  try{localStorage.setItem(staffHiddenKey(thread),JSON.stringify([...hiddenStaffMessages]));}catch{}
+  messages.replaceChildren();
+ };
+ actions.append(themeButton,clear);menu.append(toggle,actions);threadHeading.append(menu);
+ const wallpaper=node('div',null,'connect-chat-wallpaper');wallpaper.append(messages);
+ const threadPanel=node('section',null,'work-thread umma-connect-chat');threadPanel.append(threadHeading,wallpaper,replyForm);
+ try{setStaffTheme(localStorage.getItem(staffThemeKey)||'light');}catch{setStaffTheme('light');}
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
  section.append(header,nav,connection,status,...Object.values(panels));selectView('inbox');
