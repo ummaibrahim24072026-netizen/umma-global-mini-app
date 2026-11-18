@@ -725,3 +725,12 @@ audio.connect-media{width:min(100%,300px)}
 .connect-theme-preview{display:block;aspect-ratio:3/4;border-radius:10px;--chat-tile-width:100%;}
 .connect-theme-close{margin-top:16px;width:100%;min-height:44px;border:1px solid #b9d9d6;border-radius:12px;background:#e7f7f4;color:#075f60;font-weight:700;}
 @media(max-width:360px){.connect-theme-dialog{padding:14px}.connect-theme-grid{gap:7px}.connect-theme-choice{padding:4px;overflow-wrap:anywhere}}
+
+/* Keep the full message composer visible above the persistent bottom dock. */
+.public-cafe-menu dialog.umma-connect-chat[open]{box-sizing:border-box!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;min-height:0!important;max-height:none!important;padding:0!important;inset:env(safe-area-inset-top) 0 calc(var(--customer-dock-height,80px) + var(--customer-keyboard-inset,0px))!important}
+.public-cafe-menu .umma-connect-chat .connect-chat-content{display:flex!important;flex-direction:column!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
+.public-cafe-menu .umma-connect-chat .connect-chat-wallpaper{flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
+.public-cafe-menu .umma-connect-chat .connect-thread{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain}
+.public-cafe-menu .umma-connect-chat .connect-compose{position:relative;z-index:3;flex:0 0 auto!important;min-height:62px!important;max-height:min(48dvh,340px);overflow-y:auto;box-sizing:border-box;width:100%;background:#fafffe!important;border-top:1px solid #b7dfd9!important;box-shadow:0 -5px 20px #063d3d14}
+.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-entry{border-radius:999px!important;background:#f0faf8!important}
+.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-attach,.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic{border-radius:50%!important}
