@@ -235,7 +235,7 @@ function open(){
  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
  save();
 }
-button.onclick=()=>window.ummaCustomerConnect?.open?.()||open();
+button.onclick=()=>{if(window.ummaCustomerConnect?.open)window.ummaCustomerConnect.open();else open();};
 if(inHub){button.hidden=true;button.setAttribute('aria-hidden','true');}
 window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,renderChatFeed,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
 })();
