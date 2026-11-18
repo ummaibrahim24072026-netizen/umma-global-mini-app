@@ -202,11 +202,8 @@
 
 .public-cafe-menu .customer-actions .dock-menu {
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 6.5A3.5 3.5 0 0 0 8.5 3H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4.5a3.5 3.5 0 0 1 3.5 3.5A3.5 3.5 0 0 1 15.5 18H20a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-4.5A3.5 3.5 0 0 0 12 6.5v15M6 8h3m-3 4h3m6-4h3m-3 4h3'/%3E%3C/svg%3E");
-  --dock-icon-surface: var(--umma-brand-primary);
-  color: var(--umma-brand-deep);
   text-decoration: none;
 }
-.public-cafe-menu .customer-actions .dock-menu::after { background: var(--umma-brand-white); }
 .public-cafe-menu .customer-actions #customerMessagesButton {
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-5l-4 3v-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Zm1 5h8m-8 3h5'/%3E%3C/svg%3E");
 }
@@ -235,6 +232,40 @@
 .public-cafe-menu dialog {
   background: #f5fbfa;
   box-shadow: 0 25px 82px #00343645;
+}
+.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"]) {
+  --dock-icon-surface: var(--umma-brand-primary);
+  color: var(--umma-brand-deep);
+}
+.public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"])::after {
+  background: var(--umma-brand-white);
+}
+.public-cafe-menu:has(.customer-section[open]) { overflow: hidden; }
+.public-cafe-menu:has(.customer-section[open], #checkout[data-stage="cart"][open]) #cafePage {
+  visibility: hidden;
+}
+.public-cafe-menu .customer-section[open] {
+  position: fixed;
+  inset: 0 0 var(--customer-dock-height, 80px);
+  z-index: 15;
+  width: 100%;
+  max-width: 680px;
+  height: auto;
+  max-height: none;
+  margin: 0 auto;
+  padding-block-start: env(safe-area-inset-top);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.public-cafe-menu #checkout[data-stage="cart"][open] {
+  position: fixed;
+  inset: 0 0 var(--customer-dock-height, 80px);
+  z-index: 15;
+  max-height: calc(100dvh - var(--customer-dock-height, 80px) - env(safe-area-inset-top)) !important;
+  overscroll-behavior: contain;
 }
 .public-cafe-menu .checkout-header {
   background: var(--cafe-header);
@@ -365,10 +396,6 @@
   box-shadow: 0 20px 64px rgb(var(--umma-brand-night-rgb) / .24);
   overscroll-behavior: contain;
 }
-#nearbyCafe::backdrop {
-  background: rgb(var(--umma-brand-night-rgb) / .43);
-  backdrop-filter: blur(4px);
-}
 .nearby-cafe-header {
   display: flex;
   align-items: center;
@@ -460,27 +487,12 @@
 #nearbyCafeRoute svg { flex: none; }
 #nearbyCafeRoute:hover { background: #004d51; }
 
-@media (max-width: 640px) {
-  #nearbyCafe {
-    position: fixed;
-    inset: auto 0 0;
-    width: 100%;
-    margin: 0;
-    border-radius: 28px 28px 0 0;
-  }
-  .nearby-cafe-body { padding-bottom: max(18px, calc(12px + env(safe-area-inset-bottom))); }
-}
-
 #customerMessages {
   width: min(calc(100% - 24px), 420px);
   border: 1px solid var(--umma-brand-line);
   border-radius: 24px;
   background: linear-gradient(160deg, var(--umma-brand-pale), white 70%);
   box-shadow: 0 20px 64px rgb(var(--umma-brand-night-rgb) / .24);
-}
-#customerMessages::backdrop {
-  background: rgb(var(--umma-brand-night-rgb) / .36);
-  backdrop-filter: blur(3px);
 }
 #customerMessages .checkout-header {
   gap: 12px;
@@ -689,18 +701,8 @@
 .order-step[data-state="current"] .order-step-mark { border: 5px solid var(--umma-brand-strong); background: white; }
 .orders-empty { margin: 0; padding: 24px 12px; color: var(--umma-brand-muted); text-align: center; }
 @media (max-width: 600px) {
-  #customerOrders {
-    position: fixed;
-    inset: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-  }
-  #customerOrders .orders-header { padding: calc(16px + env(safe-area-inset-top)) 14px 14px; }
-  #customerOrders .checkout-body { padding: 0 14px calc(18px + env(safe-area-inset-bottom)); }
+  #customerOrders .orders-header { padding: 16px 14px 14px; }
+  #customerOrders .checkout-body { padding: 0 14px 18px; }
 }
 
 #checkout[data-stage="receipt"] {

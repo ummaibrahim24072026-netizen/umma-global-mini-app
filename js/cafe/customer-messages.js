@@ -27,7 +27,7 @@
     showCount(totalBadge, total);
   }
 
-  trigger.addEventListener('click', () => dialog.showModal());
+  trigger.addEventListener('click', () => dialog.show());
   window.addEventListener('umma:messages-count', renderCounts);
   renderCounts();
 })();

@@ -74,7 +74,7 @@
   }
 
   $('nearbyCafeButton').onclick = () => {
-    dialog.showModal();
+    dialog.show();
     openMap();
   };
   $('closeNearbyCafe').onclick = () => dialog.close();

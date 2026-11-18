@@ -504,7 +504,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=18"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=21"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=19"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -540,11 +540,17 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div class="checkout-header"><h2 id="dishTitle"></h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body" id="dishDetailsBody"></div>
 </dialog>
-<dialog id="customerOrders" aria-labelledby="customerOrdersTitle">
+<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
+<div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
+<div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
+<div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
+<footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
+<p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
+<dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
     <div class="orders-heading">
       <img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42">
-      <div><span>UMMA CAFE</span><h2 id="customerOrdersTitle" data-i18n="Мои заказы">Мои заказы</h2></div>
+      <div><span>UMMA CAFE</span><h2 id="customerOrdersTitle" tabindex="-1" autofocus data-i18n="Мои заказы">Мои заказы</h2></div>
     </div>
     <button class="close" type="button" id="closeCustomerOrders" aria-label="Закрыть" data-i18n-label="Закрыть">×</button>
   </div>
@@ -557,16 +563,16 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     <div id="orderHistoryList" hidden></div>
   </div>
 </dialog>
-<dialog id="customerMessages" aria-labelledby="customerMessagesTitle">
-  <div class="checkout-header"><h2 id="customerMessagesTitle" data-i18n="Сообщения">Сообщения</h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+<dialog id="customerMessages" class="customer-section" closedby="closerequest" aria-labelledby="customerMessagesTitle">
+  <div class="checkout-header"><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body customer-message-sections">
     <div id="orderInboxHost"></div>
     <div id="customerConnectHost"></div>
   </div>
 </dialog>
-<dialog id="nearbyCafe" aria-labelledby="nearbyCafeTitle">
+<dialog id="nearbyCafe" class="customer-section" closedby="closerequest" aria-labelledby="nearbyCafeTitle">
   <div class="nearby-cafe-header">
-    <h2 id="nearbyCafeTitle" data-i18n="Кафе рядом">Кафе рядом</h2>
+    <h2 id="nearbyCafeTitle" tabindex="-1" autofocus data-i18n="Кафе рядом">Кафе рядом</h2>
     <button class="close" type="button" id="closeNearbyCafe" aria-label="Закрыть" data-i18n-label="Закрыть">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
@@ -588,22 +594,16 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     </a>
   </div>
 </dialog>
-<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
-<div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
-<div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
-<div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
-<footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
-<p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <div class="customer-dock" id="customerDock">
 <nav class="customer-actions" aria-label="Навигация кафе" data-i18n-label="Навигация кафе">
   <a class="plain-btn dock-menu" aria-current="page" href="menu/#products" data-i18n="Меню">Меню</a>
-  <button type="button" id="customerMessagesButton" class="plain-btn" aria-haspopup="dialog" aria-controls="customerMessages"><span data-i18n="Сообщения">Сообщения</span><span class="messages-unread" hidden></span></button>
-  <button type="button" id="nearbyCafeButton" class="plain-btn" aria-haspopup="dialog" aria-controls="nearbyCafe" data-i18n="Кафе рядом">Кафе рядом</button>
-  <button type="button" id="receiptButton" class="plain-btn" aria-haspopup="dialog" aria-controls="customerOrders" data-i18n="Заказы">Заказы</button>
-  <button type="button" id="openCart" class="plain-btn" aria-haspopup="dialog" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
+  <button type="button" id="customerMessagesButton" class="plain-btn" aria-expanded="false" aria-controls="customerMessages"><span data-i18n="Сообщения">Сообщения</span><span class="messages-unread" hidden></span></button>
+  <button type="button" id="nearbyCafeButton" class="plain-btn" aria-expanded="false" aria-controls="nearbyCafe" data-i18n="Кафе рядом">Кафе рядом</button>
+  <button type="button" id="receiptButton" class="plain-btn" aria-expanded="false" aria-controls="customerOrders" data-i18n="Заказы">Заказы</button>
+  <button type="button" id="openCart" class="plain-btn" aria-expanded="false" aria-controls="checkout"><span data-i18n="Корзина">Корзина</span><span id="cartCount" class="messages-unread" hidden></span></button>
 </nav>
 </div>
-<dialog id="checkout" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><img class="empty-cart-logo" src="logo/assets/umma-icon-192.png" alt="" width="44" height="44"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
+<dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="cart-heading"><img class="empty-cart-logo" src="logo/assets/umma-icon-192.png" alt="" width="44" height="44"><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню">×</button></div><div class="checkout-body">
 <div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
   <div class="umma-empty-illustration" aria-hidden="true">
     <svg viewBox="0 0 128 128" width="104" height="104" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -679,7 +679,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться к меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=5"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=13"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=13"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
 <script src="js/cafe/menu-audience.js?v=1"></script>
@@ -701,6 +701,7 @@ const I=window.ummaMenuI18n,t=I.t,num=I.number;
 $('openProfile').onclick=()=>$('customerProfile').showModal();
 document.querySelector('.dock-menu').onclick=event=>{
   event.preventDefault();
+  $('menuHeading').focus({preventScroll:true});
   $('products').scrollIntoView({block:'start'});
 };
 $('shareMenu').addEventListener('click',async()=>{
@@ -889,12 +890,37 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');
 $('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<span>UMMA · Halal</span>';}},true);
 $('searchToggle').onclick=()=>{const open=$('searchPanel').hidden;$('searchPanel').hidden=!open;$('searchToggle').setAttribute('aria-expanded',String(open));if(open)$('search').focus();else{query='';$('search').value='';renderProducts();}};
 $('search').oninput=e=>{query=e.target.value;renderProducts();};$('clearSearch').onclick=()=>{query='';$('search').value='';renderProducts();$('search').focus();};
-// Reserve the dock's actual height, including translated labels and the basket.
 $('dishDetails').addEventListener('close',()=>{
   const id=$('dishDetails').dataset.productId;
   if(id&&!$('checkout').open)document.querySelector('.dish-link[data-dish="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
 });
 const customerDock = $('customerDock');
+const dockMenu = customerDock.querySelector('.dock-menu');
+const dockButtons = [...customerDock.querySelectorAll('button[aria-controls]')];
+const dockSections = dockButtons.map(button => $(button.getAttribute('aria-controls')));
+function syncCustomerNavigation() {
+  const active = dockSections.find(section => section.open);
+  $('cafePage').inert = !!active;
+  for (const [index, button] of dockButtons.entries()) {
+    button.setAttribute('aria-expanded', String(dockSections[index] === active));
+  }
+  if (active) dockMenu.removeAttribute('aria-current');
+  else dockMenu.setAttribute('aria-current', 'page');
+}
+customerDock.addEventListener('click', event => {
+  const trigger = event.target.closest('.dock-menu, button[aria-controls]');
+  if (!trigger) return;
+  const nextId = trigger.getAttribute('aria-controls');
+  for (const section of dockSections) {
+    if (section.id !== nextId && section.open) section.close();
+  }
+  trigger.focus({preventScroll:true});
+  syncCustomerNavigation();
+}, true);
+customerDock.addEventListener('click', syncCustomerNavigation);
+for (const section of dockSections) section.addEventListener('close', syncCustomerNavigation);
+
+// Reserve the dock's actual height, including translated labels and the basket.
 function syncDockHeight() {
   document.body.style.setProperty('--customer-dock-height', customerDock.offsetHeight + 'px');
 }
@@ -956,11 +982,40 @@ $('undoClearCart').onclick=()=>{
   renderCart();
   $('clearCart').focus();
 };
-$('continueCheckout').onclick=()=>{checkoutStage('checkout');$('checkoutTitle').focus({preventScroll:true});};
-$('backToCart').onclick=()=>{checkoutStage('cart');$('continueCheckout').focus();};
+$('continueCheckout').onclick=()=>{
+  const checkout=$('checkout');
+  checkout.close();
+  checkoutStage('checkout');
+  checkout.showModal();
+  $('checkoutTitle').focus({preventScroll:true});
+};
+$('backToCart').onclick=()=>{
+  const checkout=$('checkout');
+  checkout.close();
+  checkoutStage('cart');
+  checkout.show();
+  $('continueCheckout').focus();
+};
 function closeCart(){if(!busy)$('checkout').close();}
-$('checkout').addEventListener('close',()=>{dismissCartFeedback();document.body.style.overflow='';});
-$('openCart').onclick=()=>{$('checkoutContent').hidden=false;$('success').hidden=true;checkoutStage(pending?'checkout':'cart');renderCart();$('checkout').showModal();document.body.style.overflow='hidden';};$('closeCart').onclick=closeCart;$('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();else document.body.style.overflow='';});$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
+$('checkout').addEventListener('close',()=>{
+  if($('checkout').open)return;
+  dismissCartFeedback();
+  document.body.style.overflow='';
+});
+$('openCart').onclick=()=>{
+  const checkout=$('checkout');
+  if(checkout.open)return;
+  $('checkoutContent').hidden=false;
+  $('success').hidden=true;
+  checkoutStage(pending?'checkout':'cart');
+  renderCart();
+  if(pending)checkout.showModal();
+  else checkout.show();
+  document.body.style.overflow='hidden';
+};
+$('closeCart').onclick=closeCart;
+$('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
 $('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};
 const terminal = order => ['cancelled','completed'].includes(order?.status);
@@ -1064,11 +1119,12 @@ function openReceipt(order){
   renderSuccess();
   checkoutStage('receipt');
   $('checkout').showModal();
+  syncCustomerNavigation();
   document.body.style.overflow='hidden';
 }
 $('receiptButton').onclick=()=>{
   showOrdersPanel(!activeReceipts().length&&receipts.size>0);
-  $('customerOrders').showModal();
+  $('customerOrders').show();
 };
 $('showActiveOrders').onclick=()=>showOrdersPanel(false);
 $('showOrderHistory').onclick=()=>showOrdersPanel(true);
@@ -1179,4 +1235,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=13"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=37"></script><script src="js/cafe/customer-messages.js?v=3"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=13"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=37"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=1"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>

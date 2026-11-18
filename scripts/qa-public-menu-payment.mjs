@@ -14,6 +14,7 @@ for(const method of ['cash','qr']){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
   w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
+  w.HTMLElement.prototype.scrollIntoView=()=>{};
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
   w.fetch=async(url,options)=>{if(!options?.body)return new Response(JSON.stringify({ok:true,products:[product]}));const b=JSON.parse(options.body);calls.push(b);if(b.action==='create'){created++;if(lost){lost=false;throw Error('Simulated lost response');}return new Response(JSON.stringify({ok:true,order:base,payment:method==='qr'?payment:null}));}return new Response(JSON.stringify({ok:true,order:{...base,status:terminal||(paid?'ready':'preparing'),paymentStatus:paid?'paid':'pending',cashReceipt:paid&&method==='cash'?{tenderedVnd:100000,changeVnd:10000}:null},payment:method==='qr'&&!paid?payment:null}));};
  }});
@@ -116,6 +117,19 @@ for(const method of ['cash','qr']){
  renderReceiptLinks();`);
  receiptButton.click();
  assert.equal(d.getElementById('customerOrders').open,true);
+ assert.equal(receiptButton.getAttribute('aria-expanded'),'true');
+ assert.equal(d.getElementById('cafePage').inert,true);
+ cartButton.click();
+ assert.equal(d.getElementById('customerOrders').open,false);
+ assert.equal(receiptButton.getAttribute('aria-expanded'),'false');
+ assert.equal(d.getElementById('checkout').open,true);
+ assert.equal(cartButton.getAttribute('aria-expanded'),'true');
+ const menuButton=d.querySelector('.dock-menu');
+ menuButton.click();
+ assert.equal(d.getElementById('checkout').open,false);
+ assert.equal(menuButton.getAttribute('aria-current'),'page');
+ assert.equal(d.getElementById('cafePage').inert,false);
+ receiptButton.click();
  const activeOrders=d.querySelectorAll('#activeOrdersList button');
  assert.equal(activeOrders.length,2);
  assert.match(activeOrders[0].textContent,/102/);

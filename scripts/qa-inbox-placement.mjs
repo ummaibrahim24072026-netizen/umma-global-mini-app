@@ -1,5 +1,5 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync,mkdirSync,cpSync} from 'node:fs';import assert from 'node:assert/strict';
-const html=readFileSync('menu/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/menu/'}),w=dom.window,d=w.document;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+const html=readFileSync('menu/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/menu/'}),w=dom.window,d=w.document;w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
 const inbox=d.getElementById('customerMessages');
 const trigger=d.getElementById('customerMessagesButton');
 w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
