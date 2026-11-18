@@ -98,15 +98,19 @@ try{
       screen+' '+JSON.stringify(result));
     layoutChecks++;
   }
-  async function whiteLabels(...selectors){
+  async function receiptButtons(...selectors){
     for(const selector of selectors){
-      const actual=await $(selector).first().evaluate(el=>getComputedStyle(el).color);
-      assert.equal(actual,'rgb(255, 255, 255)',selector+' label');
+      const actual=await $(selector).first().evaluate(el=>{
+        const style=getComputedStyle(el);
+        return {color:style.color,background:style.backgroundImage};
+      });
+      assert.equal(actual.color,'rgb(255, 255, 255)',selector+' label');
+      assert.equal(actual.background,'linear-gradient(135deg, rgb(10, 159, 163) 0%, rgb(8, 127, 134) 100%)',selector+' gradient');
     }
   }
   await page.goto(menu);
   await $('.dish-link').first().waitFor();
-  await whiteLabels('#shareMenu','#searchToggle','.cafe-category','.dish-link',
+  await receiptButtons('#shareMenu','#searchToggle','.cafe-category','.dish-link',
     '#customerMessagesButton','#nearbyCafeButton','#receiptButton','#openCart');
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
@@ -127,24 +131,26 @@ try{
     await $('#clearSearch').click();
     await $('.dish-link').first().click();
     await fits('#dishDetails');
-    if(width===390)await whiteLabels('#dishDetails .cafe-add');
+    if(width===390)await receiptButtons('#dishDetails .cafe-add');
     await $('#dishDetails .close').click();
     await $('#openProfile').click();
     await fits('#customerProfile');
-    if(width===390)await whiteLabels('#chooseProfileAvatar','#saveProfileName','#installApp .install-title');
+    if(width===390)await receiptButtons('#chooseProfileAvatar','#saveProfileName','#installApp');
     await $('#openChatSettings').click();
     await fits('#customerChatSettings');
+    if(width===390)await receiptButtons('#backChatSettings');
     await page.getByRole('button',{name:'Назад к профилю'}).click();
     await close('#customerProfile');
     await $('#nearbyCafeButton').click();
     await fits('#nearbyCafe');
     await $('#receiptButton').click();
     await fits('#customerOrders');
-    if(width===390)await whiteLabels('#showActiveOrders','#showOrderHistory','#activeOrdersList .order-action');
+    if(width===390)await receiptButtons('#showActiveOrders','#showOrderHistory','#activeOrdersList .order-action');
     await $('#showOrderHistory').click();
     assert.match(await $('#orderHistoryList').innerText(),/200/);
     await $('#openCart').click();
     await fits('#checkout');
+    if(width===390)await receiptButtons('#ummaBackToMenu');
     await $('#ummaBackToMenu').click();
     await $('#customerMessagesButton').click();
     await fits('#customerChatDialog');
@@ -169,10 +175,10 @@ try{
   await $('#customerChatDialog .connect-mic').click();
   const voicePanel=$('#customerChatDialog .connect-record-panel');
   await voicePanel.waitFor();
-  await whiteLabels('.connect-record-pause','.connect-translated-text > button:not([hidden])');
+  await receiptButtons('.connect-record-pause','.connect-translated-text > button:not([hidden])');
   await voicePanel.locator('.connect-record-pause').click();
   await voicePanel.getByText(/Продолжить/).waitFor();
-  await whiteLabels('.connect-record-main button:not([hidden])');
+  await receiptButtons('.connect-record-main button:not([hidden])');
   await voicePanel.locator('.connect-record-pause').click();
   await page.waitForFunction(()=>document.querySelector('.connect-record-time')?.textContent==='0:01');
   if(output){
@@ -205,12 +211,14 @@ try{
   await close('#customerProfile');
   await $('button#openCart').click();
   assert.equal(await $('#cartItems .cart-controls b').innerText(),'1');
+  await receiptButtons('#continueCheckout');
   await $('#continueCheckout').click();
   await fits('#checkout');
-  await whiteLabels('#submit','#backToCart');
+  await receiptButtons('#submit','#backToCart');
   await page.goto(menu+'?order=199');
   await $('#successNumber').waitFor();
   assert.match(await $('#successNumber').innerText(),/199/);
+  await receiptButtons('#newOrder');
   await page.goto(menu+'?order=201');
   await $('#orderLinkDialog').waitFor();
   assert.match(await $('#orderLinkStatus').innerText(),/недоступен/);

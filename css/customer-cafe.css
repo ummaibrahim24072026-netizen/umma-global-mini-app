@@ -1440,7 +1440,7 @@
 .public-cafe-menu #customerMessages .umma-notifications-back{
  display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;
  min-height:40px;padding:8px 12px;border:2px solid #e2ba5b;border-radius:999px;
- background:linear-gradient(135deg,#00a7a8,#007c83);color:#fff;
+ background:var(--umma-button-gradient);color:#fff;
  font:750 clamp(12px,3.4vw,15px)/1.2 system-ui,sans-serif;white-space:nowrap;
  box-shadow:0 2px 7px #005b6020;cursor:pointer;
 }
@@ -1461,7 +1461,7 @@
  min-height:42px!important;height:42px!important;
  margin:0!important;padding:8px 14px!important;
  border:2px solid #e4ba59!important;border-radius:999px!important;
- background:linear-gradient(135deg,#00a9a9 0%,#008b90 100%)!important;
+ background:var(--umma-button-gradient)!important;
  color:#fff!important;font:750 clamp(12px,3.4vw,15px)/1.1 system-ui,sans-serif!important;
  letter-spacing:.01em!important;white-space:nowrap!important;
  box-shadow:0 3px 9px #005d6024!important;cursor:pointer!important;
@@ -1489,7 +1489,7 @@
   box-sizing: border-box;
   border: 1px solid #078f91;
   border-radius: 999px;
-  background: linear-gradient(135deg, #0a9fa3 0%, #087f86 100%);
+  background: var(--umma-button-gradient);
   color: #ffffff;
   -webkit-text-fill-color: #ffffff;
   font: 750 clamp(15px, 4vw, 17px)/1.3 system-ui, sans-serif;
@@ -1589,8 +1589,8 @@
   min-height: var(--customer-control-size);
   border-radius: 999px;
   border-color: var(--customer-back-border);
-  background: var(--umma-brand-strong);
-  color: var(--umma-brand-white);
+  background: var(--umma-button-gradient);
+  color: #fff;
 }
 .customer-inline-notice:not(:empty) {
   margin: 0 0 10px;
@@ -1609,10 +1609,9 @@
 #orderLinkDialog .checkout-body { display: grid; gap: 12px; }
 #orderLinkDialog .checkout-body p { margin: 0; overflow-wrap: anywhere; }
 
-/* Filled customer controls use the dark brand shades for white labels. */
+/* Match the gradient of the return button on the order receipt. */
 .public-cafe-menu {
-  --customer-button-fill: var(--umma-brand-deep);
-  --customer-button-active: var(--umma-brand-strong);
+  --customer-button-fill: var(--umma-button-gradient);
   --customer-button-label: #fff;
 }
 .public-cafe-menu :is(button, a):is(.plain-btn, .primary, .dish-link, .cafe-preorder-action, .cart-clear, .connect-record-pause, .connect-voice-speed, .umma-inbox-button, .umma-connect-button),
@@ -1624,7 +1623,7 @@
 .public-cafe-menu :is(.cafe-spotlight-cta, .order-mode-options label span),
 .public-cafe-menu .umma-connect-chat :is(.connect-record-pause, .connect-voice-speed, .connect-record-main button, .connect-attachment-action, .connect-expression-tabs button) {
   background: var(--customer-button-fill);
-  border-color: var(--customer-button-fill);
+  border-color: var(--umma-button-edge);
   color: var(--customer-button-label);
 }
 .public-cafe-menu #cafePage .topbar-actions .share-menu-button {
@@ -1641,7 +1640,7 @@
   color: inherit;
 }
 .public-cafe-menu #customerOrders .orders-count {
-  background: var(--umma-brand-night);
+  background: var(--customer-button-fill);
   color: var(--customer-button-label);
 }
 .public-cafe-menu #customerDock .customer-actions .plain-btn {
@@ -1650,20 +1649,20 @@
   color: var(--customer-button-label);
 }
 .public-cafe-menu #customerDock .customer-actions .plain-btn:is([aria-current="page"], [aria-expanded="true"]) {
-  --dock-icon-surface: var(--customer-button-active);
-  background: var(--customer-button-active);
+  --dock-icon-surface: var(--customer-button-fill);
+  background: var(--customer-button-fill);
   color: var(--customer-button-label);
   box-shadow: inset 0 0 0 2px var(--customer-back-border);
 }
 .public-cafe-menu #cafePage .cafe-category[aria-pressed="true"],
 .public-cafe-menu #customerOrders .customer-order-filters button[aria-pressed="true"],
 .public-cafe-menu #checkout .order-mode-options label:has(:checked) span {
-  background: var(--customer-button-active);
+  background: var(--customer-button-fill);
   color: var(--customer-button-label);
   box-shadow: inset 0 0 0 2px var(--customer-back-border);
 }
 .public-cafe-menu .umma-connect-chat .connect-expression-tabs button[aria-pressed="true"] {
-  background: var(--customer-button-active);
+  background: var(--customer-button-fill);
   color: var(--customer-button-label);
   box-shadow: inset 0 0 0 2px var(--customer-back-border);
 }
@@ -1680,7 +1679,7 @@
   color: var(--customer-button-label);
 }
 .public-cafe-menu .umma-connect-chat .umma-chat-order-action {
-  border-color: var(--customer-button-fill);
+  border-color: var(--umma-button-edge);
   background: var(--customer-button-fill);
   color: var(--customer-button-label);
 }
@@ -1689,6 +1688,16 @@
   color: inherit;
 }
 .public-cafe-menu #checkout .checkout-payment-options label:has(:checked) {
-  background: var(--customer-button-active);
+  background: var(--customer-button-fill);
   box-shadow: inset 0 0 0 2px var(--customer-back-border);
+}
+
+.public-cafe-menu #checkout #ummaBackToMenu,
+.public-cafe-menu .umma-connect-chat :is(.connect-send, .connect-voice-play, .connect-record-send),
+.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic {
+  background: var(--customer-button-fill);
+  color: var(--customer-button-label);
+}
+body.public-cafe-menu #customerChatDialog .connect-hero .connect-close {
+  background: var(--customer-button-fill) !important;
 }

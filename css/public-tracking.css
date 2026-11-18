@@ -39,7 +39,7 @@ body{margin:0;background:var(--umma-brand-canvas);color:var(--umma-brand-ink);fo
   color: white;
   font-size: 13px;
 }
-.tracking-toolbar a { overflow-wrap: anywhere; border-radius: 999px; border-color: #e2ba5b; }
+.tracking-toolbar a { overflow-wrap: anywhere; border-radius: 999px; border-color: #e2ba5b; background: var(--umma-button-gradient); }
 .tracking-toolbar select { max-inline-size: 42%; }
 .tracking-toolbar option { background: #fff; color: #163d3e; }
 .tracking-brand { display: block; flex: none; margin-inline-start: auto; }
@@ -50,6 +50,6 @@ body{margin:0;background:var(--umma-brand-canvas);color:var(--umma-brand-ink);fo
   width: fit-content;
   padding-inline: 15px;
   border-radius: 999px;
-  background: var(--umma-brand-deep);
+  background: var(--umma-button-gradient);
   color: #fff;
 }
