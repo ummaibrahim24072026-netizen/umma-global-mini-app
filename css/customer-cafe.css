@@ -63,7 +63,23 @@
   outline-color: var(--umma-brand-on-primary);
 }
 .topbar-actions svg { width: 19px; height: 19px; flex: none; }
-.public-cafe-menu #cafePage #openProfile { width: 44px; height: 44px; padding: 5px; }
+.public-cafe-menu #cafePage #openProfile {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #fff0c4;
+  border-radius: 50%;
+  background: #fff0c4;
+}
+.public-cafe-menu #cafePage #openProfile:focus-visible {
+  outline-color: #fff0c4;
+}
+.public-cafe-menu #topbarAvatar {
+  width: 100%;
+  height: 100%;
+}
 .profile-avatar-image { display: block; object-fit: cover; border-radius: 50%; }
 .public-cafe-menu #cafePage .share-menu-status {
   position: absolute;
