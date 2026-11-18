@@ -4,8 +4,8 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=38"></script>
-<link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=6"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
+<script src="js/cafe/public-menu-i18n.js?v=39"></script>
+<link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=7"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
 *{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button,a,input,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--umma-brand-primary);outline-offset:3px}[hidden]{display:none!important}a{color:var(--umma-brand-strong)}
@@ -142,8 +142,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 52px;
   padding-inline: 46px;
   border-radius: 999px !important;
-  background: var(--umma-action) !important;
-  color: var(--umma-brand-on-primary) !important;
+  background: var(--umma-button-gradient) !important;
+  color: #fff !important;
   box-shadow: none;
   white-space: normal;
 }
@@ -189,8 +189,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   max-width: 100%;
   padding: 10px 20px;
   border: 0;
-  background: var(--umma-action);
-  color: var(--umma-brand-on-primary);
+  background: var(--umma-button-gradient);
+  color: #fff;
   box-shadow: none;
 }
 #checkout .umma-back-to-menu svg { flex: none; }
@@ -287,7 +287,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
 .checkout-payment-options input { flex: none; }
 #checkout[data-stage="checkout"] .optional-name { margin: 8px 0 0; padding: 0; border: 0; }
-#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: none; padding-inline: 0; }
+#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; border-radius: 999px; background: var(--umma-button-gradient); padding-inline: 14px; }
 #checkout .checkout-pay-footer {
   flex: none;
   padding: 9px 16px max(10px, env(safe-area-inset-bottom));
@@ -395,7 +395,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
 
-#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:linear-gradient(135deg,#0ba9ad 0%,#07898e 100%)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n
+#customerChatSettings #backChatSettings.chat-settings-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:44px;padding:0 17px 0 13px;margin-left:4px;border:1px solid #078d91;border-radius:9999px!important;background:var(--umma-button-gradient)!important;color:#fff;font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:800;line-height:1;letter-spacing:.015em;text-shadow:0 1px 1px #004d4d40;box-shadow:0 4px 12px #007e8530;cursor:pointer;transition:filter .15s,transform .15s}#customerChatSettings .chat-settings-back:hover{filter:brightness(1.06)}#customerChatSettings .chat-settings-back:active{filter:brightness(.92);transform:scale(.97)}#customerChatSettings .chat-settings-back svg{flex-shrink:0;stroke:#fff}#customerChatSettings .checkout-header{gap:8px}#customerChatSettings .customer-heading{min-width:0;flex:1}#customerChatSettings .customer-heading-copy{min-width:0}#customerChatSettings .customer-heading h2{font-size:clamp(18px,4.7vw,26px)}@media(max-width:360px){#customerChatSettings .chat-settings-back{padding-inline:10px;font-size:12px;gap:4px}#customerChatSettings .customer-heading h2{font-size:18px}}\n
 /* Cashier payment: clear next action for guests */
 #checkout #success[data-cash-pending="true"] .receipt-instructions{background:linear-gradient(135deg,#fff8e8,#fffdf6);border:2px solid #dfb74f;border-radius:22px;padding:18px 16px;box-shadow:0 7px 20px rgba(147,107,24,.12);text-align:left}
 #checkout #success[data-cash-pending="true"] #paymentState{color:#075b5c;font-weight:800;font-size:19px;line-height:1.3;margin:0 0 10px}
@@ -437,7 +437,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success[data-cash-pending="true"] #newOrder{
   border-radius:999px!important;min-height:54px;
-  background:linear-gradient(105deg,#0aa3a4,#087f82)!important;
+  background:var(--umma-button-gradient)!important;
   color:#fff!important;font-weight:800;box-shadow:0 8px 18px rgba(7,127,130,.18);
 }
 @media(max-width:360px){
@@ -446,7 +446,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=26"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=49"><link rel="stylesheet" href="css/connect-calls.css?v=2">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=27"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=52"><link rel="stylesheet" href="css/connect-calls.css?v=2">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
@@ -580,6 +580,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div class="checkout-body" id="dishDetailsBody"></div>
 </dialog>
 <div class="dish-detail-scrim" aria-hidden="true"></div>
+<dialog id="orderLinkDialog" aria-labelledby="orderLinkTitle">
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="orderLinkTitle" data-i18n="Ваш заказ">Ваш заказ</h2></div></div></div>
+  <div class="checkout-body"><p id="orderLinkStatus" role="status" data-i18n="Этот заказ недоступен на данном устройстве."></p><form method="dialog"><button class="primary" type="submit" data-i18n="Вернуться в меню">Вернуться в меню</button></form></div>
+</dialog>
 <template id="customerHeadingTemplate"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span></div></div></template>
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
@@ -636,7 +640,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </nav>
 </div>
 <dialog id="checkout" closedby="closerequest" aria-labelledby="checkoutTitle"><div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="checkoutTitle" tabindex="-1" data-i18n="Ваш заказ">Ваш заказ</h2><span id="checkoutCartSummary"></span></div></div><button type="button" class="close" id="closeCart" aria-label="Вернуться к меню" data-i18n-label="Вернуться к меню"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="checkout-body">
-<div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
+<div id="checkoutContent"><section id="cartStep"><div class="cart-scroll"><p id="catalogCartNotice" class="customer-inline-notice" role="status"></p><div id="cartItems"></div><button type="button" id="clearCart" class="cart-clear" hidden data-i18n="Очистить корзину">Очистить корзину</button><div id="ummaEmptyCart" class="umma-empty-cart" hidden>
   <div class="umma-empty-illustration" aria-hidden="true">
     <svg viewBox="0 0 128 128" width="104" height="104" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <ellipse cx="66" cy="106" rx="42" ry="7" fill="#b6ddd5"/>
@@ -711,7 +715,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=6"></script><script src="js/cafe/order-inbox.js?v=23"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=7"></script><script src="js/cafe/order-inbox.js?v=26"></script><script src="js/cafe/public-menu-extras.js?v=16"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=2"></script>
@@ -770,7 +774,7 @@ $('shareMenu').addEventListener('click',async()=>{
 const money=n=>new Intl.NumberFormat(I.locale(),{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(n)||0);
 const name=p=>I.field(p,'name');const description=p=>I.field(p,'description');
 let products=[],cart=new Map(),category='all',query='',busy=false,pending=null,lastOrder=null,receipts=new Map(),lastStatus=null,menuState='loading';
-let catalogRequest=0,loadingCatalog=false,availabilityBusy=false;
+let catalogRequest=0,loadingCatalog=false,availabilityBusy=false,queuedOrderLink='';
 let source='';
 try{
  const url=new URL(location.href);
@@ -949,7 +953,24 @@ function renderSpotlight(dishes) {
   });
 }
 function renderProducts(){const dishes=menuDishes();renderSpotlight(dishes);const terms=menuSearchTerms(query);const visible=dishes.filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&matchesMenuSearch(p,terms));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
-function renderCart(){ $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
+function saveCart(){
+ try{
+  if(cart.size)sessionStorage.setItem('umma-menu-cart',JSON.stringify([...cart]));
+  else sessionStorage.removeItem('umma-menu-cart');
+ }catch{}
+}
+function reconcileCart(){
+ if(pending)return;
+ const known=new Set(products.map(product=>product.id));
+ let removed=false;
+ for(const id of cart.keys())if(!known.has(id)){cart.delete(id);removed=true;}
+ if(removed){
+  const notice=$('catalogCartNotice');
+  notice.dataset.i18n='Недоступные позиции удалены из корзины.';
+  notice.textContent=t(notice.dataset.i18n);
+ }
+}
+function renderCart(){ saveCart(); $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
  const badge=$('cartCount');
  badge.hidden=n===0;
  badge.textContent=n?num(n):'';
@@ -1303,8 +1324,8 @@ $('ummaBackToMenu').onclick=closeCart;
 $('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
-$('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};
-const terminal = order => ['cancelled','completed'].includes(order?.status);
+$('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();if(queuedOrderLink){const requested=queuedOrderLink;queuedOrderLink='';openSpecificOrder(requested);}}};
+const terminal = order => ['cancelled','completed','delivered'].includes(order?.status)||order?.deliveryStatus==='delivered';
 const receiptKey = order => order.id || String(order.orderNumber);
 const activeReceipts = () => [...receipts.values()].reverse().filter(order => !terminal(order));
 function saveReceipt(order = lastOrder){
@@ -1344,7 +1365,7 @@ function renderReceiptList(list,orders,emptyKey){
     list.replaceChildren(empty);
     return;
   }
-  const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
+  const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',delivered:'Заказ доставлен',cancelled:'Заказ отменён'};
   const buttons=new Map([...list.querySelectorAll('button')].map(button=>[button.dataset.orderKey,button]));
   const next=orders.map(order=>{
     const key=String(receiptKey(order)),button=buttons.get(key)||document.createElement('button');
@@ -1389,6 +1410,9 @@ function renderReceiptList(list,orders,emptyKey){
   if(next.length!==list.children.length||next.some((button,index)=>button!==list.children[index]))list.replaceChildren(...next);
 }
 function resetReceipts(){
+  const notice=$('catalogCartNotice');
+  delete notice.dataset.i18n;
+  notice.textContent='';
   lastOrder=null;
   receipts.clear();
   window.ummaGuestExtras.clearReceipt();
@@ -1396,26 +1420,38 @@ function resetReceipts(){
   if(!$('success').hidden){closeCart();$('success').hidden=true;}
   renderReceiptLinks();
 }
-// Open only the order linked to a chat notification; never fall back to another receipt.
-window.addEventListener('umma:open-specific-order',event=>{
-  const requested=String(event.detail?.orderId??'');
+// A public order number identifies a receipt already stored on this device.
+function openSpecificOrder(requested){
   if(!requested)return;
+  if(busy){queuedOrderLink=requested;return;}
   const matched=[...receipts.values()].find(order=>String(receiptKey(order))===requested||String(order.orderNumber??'')===requested);
-  if(!matched){window.dispatchEvent(new CustomEvent('umma:order-not-found',{detail:{orderId:requested}}));return;}
-  document.getElementById('customerMessages')?.close();
+  const checkout=$('checkout');
+  for(const section of [...dockSections,customerChatSettings,customerProfile,dishDetails]){
+    if(section!==checkout&&section.open)section.close();
+  }
+  if($('ummaOrderInboxDialog')?.open)$('ummaOrderInboxDialog').close();
   window.ummaCustomerConnect?.close?.();
-  if($('customerOrders').open)$('customerOrders').close();
+  if(!matched){
+    $('orderLinkStatus').textContent=t('Этот заказ недоступен на данном устройстве.');
+    if(!$('orderLinkDialog').open)$('orderLinkDialog').showModal();
+    return;
+  }
+  if($('orderLinkDialog').open)$('orderLinkDialog').close();
   openReceipt(matched);
-});
+}
+window.addEventListener('umma:open-specific-order',event=>openSpecificOrder(String(event.detail?.orderId??'')));
 function openReceipt(order){
   if(!order)return;
+  const checkout=$('checkout');
+  if(checkout.open&&checkout.dataset.stage==='cart')checkout.close();
   lastOrder=order;
   $('checkoutContent').hidden=true;
   $('result').hidden=true;
   $('success').hidden=false;
   renderSuccess();
   checkoutStage('receipt');
-  $('checkout').showModal();
+  if(!checkout.open)checkout.showModal();
+  $('checkoutTitle').focus({preventScroll:true});
   syncCustomerNavigation();
   document.body.style.overflow='hidden';
 }
@@ -1462,7 +1498,7 @@ function renderSuccess(){
   }else $('receiptHint').textContent=receiptHint(lastOrder);
 }
 function renderLoadState(){if(menuState==='empty')$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
-async function load(){if(loadingCatalog||busy)return;loadingCatalog=true;catalogRequest++;menuState='loading';renderLoadState();try{const [base,rich]=await Promise.all([fetch(API+'cafe-guest-order?catalog=1',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error();return r.json();}),fetch(API+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>r.ok?r.json():null).catch(()=>null)]);if(!base.ok||!Array.isArray(base.products))throw Error();if(window.ummaCafeEpoch?.apply(base.cafeResetEpoch)){resetReceipts();pending=null;cart.clear();}const metadata=new Map((rich?.products||[]).map(p=>[p.id,p]));products=expandBatches(base.products.map(p=>({...p,image_url:metadata.get(p.id)?.image_url||p.image_url})),metadata);const loc=rich?.locations?.find(l=>l.id===locationId);window.ummaPublicDelivery?.setCafe(loc);window.ummaNearbyCafe?.setLocations(rich?.locations,locationId);if(loc?.address){$('location').innerHTML='<strong>'+esc(loc.name)+'</strong><a dir="ltr" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc.address)+'" target="_blank" rel="noopener">'+esc(loc.address)+' ↗</a>';delete $('pickupAddress').dataset.i18n;$('pickupAddress').dir='ltr';$('pickupAddress').textContent=loc.address;}menuState=products.some(p=>visibleDish(p))?'ready':'empty';renderCategories();renderProducts();renderCart();renderLoadState();if(lastOrder)renderSuccess();}catch{menuState='error';renderLoadState();}finally{loadingCatalog=false;}}
+async function load(){if(loadingCatalog||busy)return;loadingCatalog=true;catalogRequest++;menuState='loading';renderLoadState();try{const [base,rich]=await Promise.all([fetch(API+'cafe-guest-order?catalog=1',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error();return r.json();}),fetch(API+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>r.ok?r.json():null).catch(()=>null)]);if(!base.ok||!Array.isArray(base.products))throw Error();if(window.ummaCafeEpoch?.apply(base.cafeResetEpoch)){resetReceipts();pending=null;cart.clear();}const metadata=new Map((rich?.products||[]).map(p=>[p.id,p]));products=expandBatches(base.products.map(p=>({...p,image_url:metadata.get(p.id)?.image_url||p.image_url})),metadata);reconcileCart();const loc=rich?.locations?.find(l=>l.id===locationId);window.ummaPublicDelivery?.setCafe(loc);window.ummaNearbyCafe?.setLocations(rich?.locations,locationId);if(loc?.address){$('location').innerHTML='<strong>'+esc(loc.name)+'</strong><a dir="ltr" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc.address)+'" target="_blank" rel="noopener">'+esc(loc.address)+' ↗</a>';delete $('pickupAddress').dataset.i18n;$('pickupAddress').dir='ltr';$('pickupAddress').textContent=loc.address;}menuState=products.some(p=>visibleDish(p))?'ready':'empty';renderCategories();renderProducts();renderCart();renderLoadState();if(lastOrder)renderSuccess();}catch{menuState='error';renderLoadState();}finally{loadingCatalog=false;}}
 
 async function refreshAvailability(){
   if(availabilityBusy||loadingCatalog||busy||document.hidden||!['ready','empty'].includes(menuState))return;
@@ -1479,6 +1515,7 @@ async function refreshAvailability(){
     const focused=document.activeElement;
     const focusData={...focused?.dataset};
     products=next;
+    reconcileCart();
     menuState=products.some(visibleDish)?'ready':'empty';
     if(category!=='all'&&!products.some(p=>visibleDish(p)&&categoryFor(p)===category))category='all';
     renderCategories();renderProducts();renderCart();
@@ -1515,6 +1552,11 @@ for(const storage of [sessionStorage,localStorage]){
   }
 }
 lastOrder=activeReceipts()[0]||[...receipts.values()].at(-1)||null;
+try{
+ const saved=JSON.parse(sessionStorage.getItem('umma-menu-cart'));
+ if(Array.isArray(saved))cart=new Map(saved.filter(item=>Array.isArray(item)&&
+  typeof item[0]==='string'&&Number.isInteger(item[1])&&item[1]>0&&item[1]<=20));
+}catch{}
 try{const saved=JSON.parse(sessionStorage.getItem('umma-menu-pending'));if(saved?.action==='create'&&/^[a-f0-9-]{36}$/i.test(saved.requestKey)&&Array.isArray(saved.items)){pending=saved;cart=new Map(saved.items.map(p=>[p.productId+(p.planRevision?'~'+p.planRevision:''),p.quantity]));}}catch{}
 for(const [code,[label]] of Object.entries(I.languages)){const option=document.createElement('option');option.value=code;option.textContent=label;option.lang=code;option.dir='auto';$('menuLanguage').append(option);}
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
@@ -1535,6 +1577,13 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
  submit:()=>{$('form').requestSubmit($('submit'));}
 });
 window.ummaMenuAudience?.start(source);
-if (location.hash === '#orders') $('receiptButton').click();
+const orderLaunch = new URL(location.href);
+const linkedOrder = orderLaunch.searchParams.get('order');
+if (linkedOrder && /^[1-9][0-9]{0,17}$/.test(linkedOrder)) {
+  orderLaunch.searchParams.delete('order');
+  history.replaceState(history.state,'',orderLaunch);
+  try{sessionStorage.removeItem('umma:chat:open');}catch{}
+  openSpecificOrder(linkedOrder);
+} else if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=48"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=24"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=50"></script><script src="js/cafe/customer-messages.js?v=7"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>

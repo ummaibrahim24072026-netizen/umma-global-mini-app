@@ -15,6 +15,7 @@
     "test:workspace-layout": "node scripts/build-workspace-preview.mjs",
     "test:order-alerts": "node scripts/qa-order-alerts.mjs",
     "test:ready-stock": "node scripts/qa-ready-stock.mjs && node scripts/qa-stock-ui.mjs && node scripts/qa-screen-awake.mjs && node scripts/qa-inbox-placement.mjs && node scripts/qa-preorder-ui.mjs",
+    "test:client-browser": "node scripts/qa-public-client-browser.mjs",
     "test:connect": "node scripts/qa-cafe-connect.mjs"
   },
   "devDependencies": {
@@ -24,6 +25,7 @@
     "jsqr": "1.4.0",
     "parse5": "8.0.0",
     "pg": "8.23.1",
+    "playwright": "1.58.2",
     "pngjs": "7.0.0",
     "qrcode": "1.5.4",
     "web-push": "3.6.7"

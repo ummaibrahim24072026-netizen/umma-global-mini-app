@@ -549,15 +549,20 @@
   for(const album of container.querySelectorAll('.connect-inline-album'))album.releaseAlbum();
  }
  function render(list,messages,create,receipt){
-  const rows=new Map(Array.from(list.children,row=>[row.dataset.connectMessage,row]));
-  messages.forEach((message,index)=>{
+  const previous=[...list.children].filter(row=>!row.classList.contains('umma-chat-order-card'));
+  const rows=new Map(previous.filter(row=>row.dataset.connectMessage).map(row=>[row.dataset.connectMessage,row]));
+  for(const row of previous)if(!row.dataset.connectMessage)row.remove();
+  let anchor=list.firstElementChild;
+  for(const message of messages){
+   while(anchor?.classList.contains('umma-chat-order-card'))anchor=anchor.nextElementSibling;
    const row=rows.get(message.id)||create(message);
    row.dataset.connectMessage=message.id;
    const read=row.querySelector('.connect-receipt');
    if(read)read.textContent=receipt(message,row);
-   if(list.children[index]!==row)list.insertBefore(row,list.children[index]||null);
+   if(row===anchor)anchor=anchor.nextElementSibling;
+   else list.insertBefore(row,anchor);
    rows.delete(message.id);
-  });
+  }
   for(const row of rows.values()){
    releaseAlbums(row);
    row.remove();

@@ -49,7 +49,22 @@ function badge(count){
  else try{const p=count?navigator.setAppBadge?.(count):navigator.clearAppBadge?.();p?.catch(()=>{});}catch{}
 }
 function ingest(messages){if(ignoreHistory)return;for(const m of messages||[])if(m.order)window.ummaOrderInbox?.publish(m.order);}
-navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='UMMA_PUSH_RESET'){try{localStorage.setItem('umma:push-data-epoch',resetEpoch);}catch{}ignoreHistory=false;window.ummaOrderInbox?.reset();}else if(event.data?.type==='UMMA_ORDER_PUSH'){ingest([event.data.payload]);}else if(event.data?.type==='UMMA_PUSH_HISTORY'){ingest(event.data.messages);if(new URL(location.href).searchParams.has('messages'))window.ummaOrderInbox?.open();}else if(event.data?.type==='UMMA_OPEN_INBOX')window.ummaOrderInbox?.open();});
+function openMessages(){
+ if(window.ummaCustomerConnect?.open)void window.ummaCustomerConnect.open();
+ else window.ummaOrderInbox?.open();
+}
+navigator.serviceWorker?.addEventListener('message',({data})=>{
+ if(data?.type==='UMMA_PUSH_RESET'){
+  try{localStorage.setItem('umma:push-data-epoch',resetEpoch);}catch{}
+  ignoreHistory=false;
+  window.ummaOrderInbox?.reset();
+ }else if(data?.type==='UMMA_ORDER_PUSH')ingest([data.payload]);
+ else if(data?.type==='UMMA_PUSH_HISTORY')ingest(data.messages);
+ else if(data?.type==='UMMA_OPEN_INBOX')openMessages();
+ else if(data?.type==='UMMA_OPEN_ORDER'&&/^[1-9][0-9]{0,17}$/.test(String(data.orderNumber))){
+  window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(data.orderNumber)}}));
+ }
+});
 if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(()=>{workerMessage(ignoreHistory?'UMMA_RESET':'UMMA_GET_HISTORY');}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>workerMessage(ignoreHistory?'UMMA_RESET':'UMMA_GET_HISTORY'));}
 window.addEventListener('umma-menu:languagechange',render);
 window.ummaOrderAlerts={enableGranted(){if(window.Notification?.permission!=='granted')return;rememberEnabled();void register();},reset(){ignoreHistory=true;try{resetEpoch=localStorage.getItem('umma:cafe-data-epoch')||'';}catch{}order=null;subscribed='';workerMessage('UMMA_RESET');},setOrder(value){order=value;void register();},sound,badge,controls:root};render();

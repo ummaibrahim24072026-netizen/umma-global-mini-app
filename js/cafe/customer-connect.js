@@ -271,6 +271,7 @@ function renderThread(){
  });
  window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
+ if(publicChat&&dialog?.open&&!document.hidden)window.ummaOrderInbox?.markChatRead?.();
  if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;
  badge();
 }
@@ -328,10 +329,15 @@ async function connect(){
  }catch(error){token='';throw error;}
 }
 async function connectForMessage(){
+ const firstMessage=!token;
  await connect();
- const profileName=publicChat?window.ummaMenuProfileName?.():null;
- if(profileName!=null&&profileName!==(state?.client?.name||'')){
-  state=await api('preferences',{name:profileName,language:lang()});
+ if(!publicChat)return;
+ const profileName=window.ummaMenuProfileName?.();
+ const client=state?.client;
+ const nameChanged=profileName!=null&&profileName!==(client?.name||'');
+ const languageChanged=firstMessage||!!client?.language&&client.language!==lang();
+ if(nameChanged||languageChanged){
+  state=await api('preferences',{...(nameChanged?{name:profileName}:{}),language:lang()});
  }
 }
 function enablePush(feedback,enableOrderAlerts=feedback===status){
@@ -629,12 +635,9 @@ function build(){
   }else button.focus();
  });
  function update(){
-  join.hidden=!!token;
-  content.hidden=!token;
-  if(publicChat){
-   if(token)content.insertBefore(status,form);
-   else join.after(status);
-  }
+  join.hidden=publicChat||!!token;
+  content.hidden=!publicChat&&!token;
+  if(publicChat)content.insertBefore(status,form);
   if(name)name.value=state?.client?.name||'';
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
@@ -681,9 +684,10 @@ window.addEventListener('pageshow',refresh);window.addEventListener('online',ref
 let resumeChat=false;
 if(publicChat){try{resumeChat=sessionStorage.getItem(CHAT_OPEN_KEY)==='1';}catch{}}
 const launchURL=new URL(location.href);
-const openFromLink=launchURL.searchParams.has('connect');
+const openFromLink=launchURL.searchParams.has('connect')||(publicChat&&launchURL.searchParams.has('messages'));
 if(openFromLink){
  launchURL.searchParams.delete('connect');
+ launchURL.searchParams.delete('messages');
  history.replaceState(history.state,'',launchURL);
 }
 if(openFromLink||resumeChat)void open();

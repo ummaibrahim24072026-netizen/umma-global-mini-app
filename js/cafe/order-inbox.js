@@ -10,10 +10,12 @@ const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
 // Render order status cards inside the existing UMMA chat, without a second inbox screen.
+const orderCards=new WeakMap();
 function renderChatFeed(list){
  if(!list)return;
- list.querySelectorAll('.umma-chat-order-card').forEach(node=>node.remove());
- const language=document.documentElement.lang.split('-')[0];
+ const existing=new Map([...list.querySelectorAll('.umma-chat-order-card')].map(node=>[node.dataset.orderId,node]));
+ const timeline=[];
+ const language=document.documentElement.lang.split('-')[0]||'en';
  const dictionary={ru:{order:'Заказ',detail:'Детали заказа',cancel:'Отменён',expand:'Показать шкалу',collapse:'Свернуть',steps:['Принят','Готовится','Готов','Курьер','Доставлен'],pickup:['Принят','Готовится','Готов','Выдан']},en:{order:'Order',detail:'Order details',cancel:'Cancelled',expand:'Show progress',collapse:'Collapse',steps:['Accepted','Preparing','Ready','Courier','Delivered'],pickup:['Accepted','Preparing','Ready','Collected']},vi:{order:'Đơn hàng',detail:'Chi tiết đơn',cancel:'Đã hủy',expand:'Xem tiến độ',collapse:'Thu gọn',steps:['Đã nhận','Đang nấu','Đã xong','Tài xế','Đã giao'],pickup:['Đã nhận','Đang nấu','Đã xong','Đã lấy']}};
  const copy=dictionary[language]||dictionary.en;
  const groups=new Map();
@@ -27,25 +29,38 @@ function renderChatFeed(list){
   const finished=cancelled||['completed','delivered'].includes(status);
   const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
   const progress=delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
+  const latestEvent=messages.at(-1);
+  const statusText=cancelled?copy.cancel:translate(labels[state.delivery]||labels[status]||status);
+  const signature=JSON.stringify([language,latestEvent.number,latestEvent.at,statusText,progress,delivery,finished,cancelled]);
+  const orderTime=Number(messages[0].at)||0;
+  const previous=existing.get(id);
+  existing.delete(id);
+  if(previous&&orderCards.get(previous)===signature){
+   previous.dataset.timelineAt=String(orderTime);
+   timeline.push(previous);
+   continue;
+  }
+  const expanded=Boolean(previous?.querySelector('[aria-expanded=true]'));
+  previous?.remove();
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
-  card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid #c9e2df;border-radius:18px;background:#f5fbfa;color:#153b39;box-sizing:border-box;overflow-wrap:anywhere';
+  card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid var(--umma-brand-line,#c9e2df);border-radius:18px;background:var(--umma-brand-white,#f5fbfa);color:var(--umma-brand-ink,#153b39);box-sizing:border-box;overflow-wrap:anywhere';
   const head=document.createElement('strong');head.textContent=copy.order+' №'+(messages.at(-1).number||id);
-  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#137b7c;font-weight:650';
+  const statusLine=document.createElement('div');statusLine.textContent=statusText;statusLine.style.cssText='font-size:13px;color:#137b7c;font-weight:650';
   const progressBar=document.createElement('div');progressBar.style.cssText='display:grid;grid-template-columns:repeat('+steps.length+',minmax(0,1fr));gap:4px';
-  for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'#0a9b9b':'#d9e9e7');progressBar.append(segment);}
+  for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'var(--umma-brand-strong,#0a9b9b)':'var(--umma-brand-soft,#d9e9e7)');progressBar.append(segment);}
   const stageLabels=document.createElement('div');stageLabels.style.cssText='display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#55716e';
   const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
-  const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
+  const detail=document.createElement('button');detail.type='button';detail.className='umma-chat-order-action';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;font:700 13px system-ui;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
   if(finished){
     card.classList.add('umma-chat-order-card--finished');
     card.style.gap='7px';card.style.padding='12px 14px';
-    const toggle=document.createElement('button');toggle.type='button';
-    toggle.textContent=copy.expand;toggle.setAttribute('aria-expanded','false');
-    toggle.style.cssText='justify-self:start;border:0;background:transparent;color:#087c80;font:650 12px system-ui;padding:5px 0;cursor:pointer';
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='umma-chat-order-action';
+    toggle.textContent=expanded?copy.collapse:copy.expand;toggle.setAttribute('aria-expanded',String(expanded));
+    toggle.style.cssText='justify-self:start;border:0;border-radius:999px;font:650 12px system-ui;padding:5px 10px;cursor:pointer';
     const extras=[progressBar,stageLabels,latest,detail];
-    extras.forEach(el=>el.hidden=true);
+    extras.forEach(el=>el.hidden=!expanded);
     toggle.onclick=()=>{
       const expanded=toggle.getAttribute('aria-expanded')!=='true';
       toggle.setAttribute('aria-expanded',String(expanded));
@@ -54,17 +69,30 @@ function renderChatFeed(list){
     };
     card.append(head,statusLine,toggle,...extras);
   }else card.append(head,statusLine,progressBar,stageLabels,latest,detail);
-  // Order updates belong in the chronological chat stream, never in a pinned footer.
-  const orderTime=Number(messages[0].at)||0;
   card.dataset.timelineAt=String(orderTime);
-  const chatMessages=[...list.children].filter(node=>!node.classList.contains('umma-chat-order-card'));
-  const nextMessage=chatMessages.find(node=>{
-    const time=node.querySelector('time[datetime]')?.dateTime||node.dataset.createdAt;
-    return time&&Date.parse(time)>orderTime;
-  });
-  if(nextMessage)list.insertBefore(card,nextMessage);
-  else list.append(card);
+  orderCards.set(card,signature);
+  timeline.push(card);
  }
+ for(const node of existing.values())node.remove();
+ const messages=[...list.children].filter(node=>!node.classList.contains('umma-chat-order-card'));
+ let rowIndex=0;
+ let orderIndex=0;
+ let index=0;
+ while(rowIndex<messages.length||orderIndex<timeline.length){
+  const message=messages[rowIndex];
+  const order=timeline[orderIndex];
+  const time=message&&Date.parse(message.dataset.createdAt||message.querySelector('time[datetime]')?.dateTime);
+  const next=order&&(!message||(time>Number(order.dataset.timelineAt)))?
+   timeline[orderIndex++]:messages[rowIndex++];
+  if(list.children[index]!==next)list.insertBefore(next,list.children[index]||null);
+  index++;
+ }
+}
+function markChatRead(){
+ const latest=data.messages.at(-1);
+ if(!latest||latest.at<=data.readAt)return;
+ data.readAt=latest.at;
+ save();
 }
 function render(){
  const list=document.querySelector('dialog[data-umma-inbox][open] .umma-inbox-orders');
@@ -127,7 +155,7 @@ dialog.umma-inbox-fixed-header>.checkout-body{flex:1 1 auto;min-height:0;overflo
 `;
 
 function renderOrders(list){
- const language=document.documentElement.lang.split('-')[0];
+ const language=document.documentElement.lang.split('-')[0]||'en';
  const groups=new Map();
  for(const message of data.messages){
   const group=groups.get(message.orderId)||{number:message.orderId,values:new Set(),messages:[]};
@@ -244,5 +272,5 @@ function open(){
 }
 button.onclick=()=>{if(window.ummaCustomerConnect?.open)window.ummaCustomerConnect.open();else open();};
 if(inHub){button.hidden=true;button.setAttribute('aria-hidden','true');}
-window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,renderChatFeed,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
+window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,renderChatFeed,markChatRead,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
 })();

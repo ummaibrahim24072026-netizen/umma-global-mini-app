@@ -3,28 +3,19 @@
   const dialog = document.getElementById('customerMessages');
   const trigger = document.getElementById('customerMessagesButton');
   const totalBadge = trigger.querySelector('.messages-unread');
-  const sections = [...dialog.querySelectorAll('.customer-message-sections button')];
-  const badges = sections.map(() => {
-    const badge = document.createElement('span');
-    badge.className = 'messages-unread';
-    return badge;
-  });
-
-  function showCount(badge, count) {
-    badge.textContent = count ? String(count) : '';
-    badge.hidden = count === 0;
-  }
-
   function renderCounts() {
-    let total = 0;
-    sections.forEach((button, index) => {
-      const count = Number(button.dataset.unread) || 0;
-      const badge = badges[index];
-      showCount(badge, count);
-      button.append(badge);
-      total += count;
-    });
-    showCount(totalBadge, total);
+    let total=0;
+    for(const button of dialog.querySelectorAll('button[data-unread]')){
+      const count=Math.max(0,Number(button.dataset.unread)||0);
+      total+=count;
+      const badge=button.querySelector('.messages-unread')||document.createElement('span');
+      badge.className='messages-unread';
+      badge.textContent=count>99?'99+':count?String(count):'';
+      badge.hidden=!count;
+      if(!badge.parentNode)button.append(badge);
+    }
+    totalBadge.textContent=total>99?'99+':total?String(total):'';
+    totalBadge.hidden = !total;
   }
 
   trigger.addEventListener('click', () => {
