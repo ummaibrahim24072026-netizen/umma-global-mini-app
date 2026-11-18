@@ -57,6 +57,11 @@ const chatTitle=()=>publicChat?(chatTitles[lang()]||chatTitles.en):t(0);
 const profileSettingsButton=document.getElementById('openChatSettings');
 let settingsDialog;
 const chatSettings={ru:'Настройки чата',en:'Chat settings',vi:'Cài đặt trò chuyện'};
+const settingsCopy={
+ ru:['Имя для переписки','Необязательно','Сохранить имя','Акции и новые блюда','Получать новости и предложения кафе','Push-уведомления кафе','Ответы и звонки, даже когда UMMA закрыта'],
+ en:['Name in chat','Optional','Save name','Offers and new dishes','Get news and offers from the cafe','Cafe push notifications','Get replies and calls even when UMMA is closed'],
+ vi:['Tên trong cuộc trò chuyện','Không bắt buộc','Lưu tên','Ưu đãi và món mới','Nhận tin tức và ưu đãi từ quán','Thông báo đẩy của quán','Nhận phản hồi và cuộc gọi ngay cả khi đã đóng UMMA']
+};
 const button=el('button',chatTitle(),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (connectHost||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='voice'?115000:15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
@@ -451,9 +456,25 @@ function build(){
    }
   },settingsStatus);
  };
- const save=el('button',t(6),'connect-save');save.type='button';save.onclick=()=>run(async()=>{await connect();state=await api('preferences',{name:name.value,language:lang()});settingsStatus.textContent=t(13);update();},settingsStatus);
+ const save=el('button',t(6),'connect-save');save.type='button';
+ const savePreferences=()=>run(async()=>{
+  const submittedName=name.value;
+  await connect();
+  state=await api('preferences',{name:submittedName,language:lang()});
+  settingsStatus.textContent=t(13);
+  update(name.value===submittedName);
+ },settingsStatus);
+ save.onclick=savePreferences;
  push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(settingsStatus,true);
- const off=el('button',t(8),'connect-off');off.type='button';off.onclick=()=>run(async()=>{state=await api('preferences',{subscription:null});dismissSetup();settingsStatus.textContent=t(20);update();},settingsStatus);
+ const off=el('button',t(8),'connect-off');off.type='button';
+ const disablePush=()=>run(async()=>{
+  state=await api('preferences',{subscription:null});
+  dismissSetup();
+  settingsStatus.textContent=t(20);
+  update();
+ },settingsStatus);
+ off.onclick=disablePush;
+ let pushSwitch;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  if(publicChat)list.addEventListener('loadedmetadata',event=>{
   const latest=list.lastElementChild;
@@ -533,15 +554,58 @@ function build(){
    closeSettings.type='button';
    closeSettings.setAttribute('aria-label',t(1));
    closeSettings.onclick=()=>settingsDialog.close();
-   actions.append(save,push,off);
+   const [nameTitle,optional,saveName,offersTitle,offersHint,pushTitle,pushHint]=settingsCopy[lang()]||settingsCopy.en;
+   const nameForm=el('form',null,'chat-settings-name');
+   name.id='customerChatName';
+   name.dir='auto';
+   name.setAttribute('aria-describedby','customerChatNameOptional');
+   const nameLabel=el('label',nameTitle);
+   nameLabel.htmlFor=name.id;
+   const optionalText=el('span',optional);
+   optionalText.id='customerChatNameOptional';
+   nameLabel.append(optionalText);
+   const nameControls=el('div',null,'chat-settings-name-controls');
+   save.textContent=saveName;
+   save.type='submit';
+   save.onclick=null;
+   nameForm.onsubmit=event=>{event.preventDefault();void savePreferences();};
+   nameControls.append(name,save);
+   nameForm.append(nameLabel,nameControls);
+
+   const notificationText=(title,hint,id)=>{
+    const text=el('span',null,'chat-setting-copy');
+    const label=el('strong',title);label.id=id;
+    const description=el('small',hint);description.id=id+'Hint';
+    text.append(label,description);
+    return text;
+   };
+   const offersText=notificationText(offersTitle,offersHint,'customerChatOffers');
+   promotions.setAttribute('role','switch');
+   promotions.setAttribute('aria-labelledby','customerChatOffers');
+   promotions.setAttribute('aria-describedby','customerChatOffersHint');
+   check.className='chat-setting-row';
+   check.replaceChildren(offersText,promotions,el('span',null,'chat-setting-track'));
+
+   pushSwitch=el('button',null,'chat-setting-row');
+   pushSwitch.type='button';
+   pushSwitch.setAttribute('role','switch');
+   pushSwitch.setAttribute('aria-checked','false');
+   pushSwitch.setAttribute('aria-labelledby','customerChatPush');
+   pushSwitch.setAttribute('aria-describedby','customerChatPushHint');
+   pushSwitch.append(notificationText(pushTitle,pushHint,'customerChatPush'),el('span',null,'chat-setting-track'));
+   pushSwitch.onclick=()=>state?.client?.pushEnabled?disablePush():enablePush(settingsStatus,false);
+   const notifications=el('div',null,'chat-settings-notifications');
+   notifications.append(check,pushSwitch);
+   settings.className='chat-settings-body';
+   settings.replaceChildren(nameForm,notifications,settingsStatus);
    const brandTemplate=document.getElementById('customerHeadingTemplate');
    if(brandTemplate){
     const header=el('div',null,'customer-aux-header');
     const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
     brandHeading.querySelector('.customer-heading-copy').append(heading);
     header.append(brandHeading,closeSettings);
-    settingsDialog.append(header,settings,settingsStatus);
-   }else settingsDialog.append(closeSettings,heading,settings,settingsStatus);
+    settingsDialog.append(header,settings);
+   }else settingsDialog.append(closeSettings,heading,settings);
    document.body.append(settingsDialog);
   }
   content.className='connect-chat-content';
@@ -570,18 +634,19 @@ function build(){
    }
   }else button.focus();
  });
- function update(){
+ function update(syncName=!pushSwitch){
   join.hidden=!!token;
   content.hidden=!token;
   if(publicChat){
    if(token)content.insertBefore(status,form);
    else join.after(status);
   }
-  name.value=state?.client?.name||'';
+  if(syncName)name.value=state?.client?.name||'';
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
   off.hidden=!state?.client.pushEnabled;
   push.hidden=subscribed;
+  pushSwitch?.setAttribute('aria-checked',String(state?.client?.pushEnabled===true));
   renderThread();
  }
  dialog.update=update;
@@ -605,10 +670,12 @@ async function open(){
 button.onclick=open;window.ummaCustomerConnect={open};
 if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
  if(!dialog)build();
- settingsDialog.showModal();
+ dialog.update(true);
+ const initialName=name.value;
  settingsDialog.querySelector('[role=status]').textContent='';
+ settingsDialog.showModal();
  await refresh();
- dialog.update?.();
+ dialog.update(name.value===initialName);
 };
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
