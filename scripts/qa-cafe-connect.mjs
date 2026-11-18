@@ -241,14 +241,21 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  const w=app.window;
  const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  const messages=[{id:'reply',direction:'staff',body:'Hello',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'}];
- let offline=false,translations=0;
+ let offline=false,translationUnavailable=true,translations=0,localTranslations=0;
  w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
  w.AbortSignal=AbortSignal;
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
  w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
- w.ummaLocalTranslate={async translate(){translations++;return 'Здравствуйте';}};
+ w.ummaLocalTranslate={async translate(){localTranslations++;throw new Error('Local translation should not run');}};
  w.fetch=async(url,{signal,body})=>{
-  if(JSON.parse(body).action==='hidden'){
+  const payload=JSON.parse(body);
+  if(url.endsWith('/cafe-connect-translate')){
+   translations++;
+   assert.deepEqual(payload,{token:'a'.repeat(64),messageId:'reply',language:'ru'});
+   if(translationUnavailable)return new Response(JSON.stringify({ok:false}),{status:503});
+   return new Response(JSON.stringify({ok:true,text:'Здравствуйте'}));
+  }
+  if(payload.action==='hidden'){
    assert.ok(signal instanceof AbortSignal);
    throw new Error('Optional endpoint unavailable');
   }
@@ -264,12 +271,24 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(w.sessionStorage.getItem('umma:chat:open'),'1');
  assert.match(row.textContent,/Hello/);
  assert.equal(translations,0);
- [...row.querySelectorAll('button')].find(button=>button.textContent==='Перевести').click();
- await tick();
- assert.equal(translations,1);
- assert.match(row.textContent,/Здравствуйте/);
  const draft=dialog.querySelector('textarea');
  draft.value='Черновик';
+ const translate=[...row.querySelectorAll('button')].find(button=>button.textContent==='Перевести');
+ translate.click();
+ await tick();
+ assert.equal(translations,1);
+ assert.match(row.textContent,/Перевод временно недоступен/);
+ assert.equal(row.querySelector('.connect-translated-text > div').textContent,'Hello');
+ assert.ok(dialog.open);
+ assert.equal(draft.value,'Черновик');
+ assert.equal(translate.disabled,false);
+ translationUnavailable=false;
+ translate.click();
+ await tick();
+ assert.equal(translations,2);
+ assert.equal(localTranslations,0);
+ assert.equal(row.querySelector('.connect-translated-text > div').textContent,'Здравствуйте');
+ assert.doesNotMatch(row.textContent,/Перевод временно недоступен/);
  offline=true;
  w.document.dispatchEvent(new w.Event('visibilitychange'));
  await tick();
@@ -285,7 +304,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.match(dialog.textContent,/New reply/);
  assert.doesNotMatch(dialog.textContent,/Переподключаемся/);
  assert.equal(draft.value,'Черновик');
- assert.equal(translations,1);
+ assert.equal(translations,2);
+ assert.equal(localTranslations,0);
  dialog.close();
  assert.equal(w.sessionStorage.getItem('umma:chat:open'),null);
  app.window.close();

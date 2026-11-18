@@ -166,7 +166,7 @@
   return wrapper;
  }
  const textTranslations=new Map();
- function translatedText(original,language,load,translateLabel){
+ function translatedText(original,language,load,translateLabel,statusCopy){
   const wrapper=document.createElement('div');
   wrapper.className='connect-translated-text';
   const main=document.createElement('div');
@@ -182,12 +182,14 @@
   toggle.onclick=()=>{originalText.hidden=!originalText.hidden;toggle.textContent=originalText.hidden?'Показать оригинал':'Скрыть оригинал';};
   wrapper.append(main,toggle,originalText);
   const key=language+'|'+original;
-  const state=document.createElement('small');state.className='connect-local-status';state.textContent='';wrapper.append(state);
+  const state=document.createElement('small');state.className='connect-local-status';
+  if(statusCopy)state.setAttribute('role','status');
+  wrapper.append(state);
   const start=translateLabel?document.createElement('button'):null;
   async function translate(){
    if(start)start.disabled=true;
    try{
-    state.textContent='Перевод на устройстве · первая загрузка может занять несколько минут';
+    state.textContent=statusCopy?.loading||'Перевод на устройстве · первая загрузка может занять несколько минут';
     let work=textTranslations.get(key);
     if(!work){work=load();textTranslations.set(key,work);}
     const result=await work;
@@ -199,7 +201,7 @@
      state.textContent='';
     }else state.textContent='';
     if(start)start.hidden=true;
-   }catch{state.textContent='Перевод недоступен на этом устройстве. Показан оригинал.';textTranslations.delete(key);}
+   }catch{state.textContent=statusCopy?.error||'Перевод недоступен на этом устройстве. Показан оригинал.';textTranslations.delete(key);}
    finally{if(start)start.disabled=false;}
   }
   if(start){

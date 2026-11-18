@@ -45,7 +45,11 @@ const reconnectCopy={
  en:'Chat connection interrupted. Reconnecting…',
  vi:'Mất kết nối với cuộc trò chuyện. Đang kết nối lại…'
 };
-const translateCopy={ru:'Перевести',en:'Translate',vi:'Dịch'};
+const translateCopy={
+ ru:['Перевести','Переводим…','Перевод временно недоступен. Показан оригинал. Попробуйте ещё раз.'],
+ en:['Translate','Translating…','Translation is temporarily unavailable. The original is shown. Please try again.'],
+ vi:['Dịch','Đang dịch…','Tạm thời không thể dịch. Đang hiển thị bản gốc. Vui lòng thử lại.']
+};
 const chatTitles={ru:'Чат UMMA',en:'UMMA Chat',vi:'Trò chuyện UMMA'};
 const connectHost=document.getElementById('customerConnectHost');
 const inMessages=!!connectHost?.closest('#customerMessages');
@@ -96,11 +100,11 @@ const mediaCopy={
  vi:{album:'Mở ảnh và video',photo:'Mở ảnh',video:'Mở video',voice:'Nghe tin nhắn thoại',error:'Không mở được tệp. Hãy thử lại.'}
 };
 const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
-async function translateChat(messageId,language,clientId){
+async function translateChat(messageId,language){
  const payload={token,messageId,language};
  const response=await fetch(TRANSLATE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
  const result=await response.json();
- if(!response.ok||!result.ok)throw Error(result.error||'Translation unavailable');
+ if(!response.ok||!result.ok||typeof result.text!=='string'||!result.text.trim())throw Error('Translation unavailable');
  return result;
 }
 const ACTIONS='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-actions';
@@ -211,9 +215,10 @@ function renderThread(){
   if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body){
-   const translateLabel=publicChat?(translateCopy[lang()]||translateCopy.en):undefined;
+   const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
+   const load=publicChat?()=>translateChat(m.id,target):()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}));
    li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(
-    m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})),translateLabel));
+    m.body,target,load,publicChat?translateLabel:undefined,publicChat?{loading,error}:undefined));
   }
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
