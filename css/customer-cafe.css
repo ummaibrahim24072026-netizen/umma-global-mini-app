@@ -1641,3 +1641,9 @@
   color: #fff;
   -webkit-text-fill-color: #fff;
 }
+
+/* Orders: rounded rectangles, not pill-shaped cards. */
+.public-cafe-menu #customerOrders .order-summary {
+  border-radius: 22px !important;
+  overflow: hidden;
+}
