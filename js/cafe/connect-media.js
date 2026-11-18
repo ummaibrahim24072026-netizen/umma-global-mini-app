@@ -44,7 +44,7 @@
   wrapper.style.cssText='display:flex;align-items:center;gap:9px;width:min(78vw,315px);max-width:100%;padding:8px 10px;border-radius:16px;background:#d9f3ee;color:#125b59;box-sizing:border-box';
   const play=document.createElement('button');play.type='button';play.textContent='▶';
   play.setAttribute('aria-label','Воспроизвести голосовое сообщение');
-  play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;cursor:pointer';
+  play.style.cssText='flex:none;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#0a9998;font-size:25px;align-self:center;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;cursor:pointer';
   const middle=document.createElement('div');middle.style.cssText='flex:1;min-width:0;display:grid;gap:2px';
   const wave=document.createElement('div');wave.setAttribute('aria-hidden','true');
   wave.style.cssText='height:27px;display:flex;align-items:center;gap:2px;overflow:hidden;position:relative;cursor:pointer';
