@@ -1,0 +1,19 @@
+/* Full-screen mobile staff chat, matching UMMA customer chat layout */
+.web-work-app #webMessages .work-chat-back{display:none}
+@media(max-width:760px){
+.web-work-app #webMessages.work-chat-open{position:fixed!important;inset:0!important;z-index:900!important;display:flex!important;flex-direction:column!important;max-width:none!important;width:100%!important;height:100dvh!important;margin:0!important;padding:0!important;background:#25547b!important;overflow:hidden!important}
+.web-work-app:has(#webMessages.work-chat-open) .web-header,.web-work-app:has(#webMessages.work-chat-open) .web-tabs,.web-work-app:has(#webMessages.work-chat-open) #webNotice{display:none!important}
+.web-work-app #webMessages.work-chat-open>.work-messages-heading,.web-work-app #webMessages.work-chat-open>.work-section-switch,.web-work-app #webMessages.work-chat-open>.work-board-connection,.web-work-app #webMessages.work-chat-open>.work-inbox-sidebar,.web-work-app #webMessages.work-chat-open>.work-inbox> .work-inbox-sidebar{display:none!important}
+.web-work-app #webMessages.work-chat-open .work-inbox{display:flex!important;flex:1!important;min-height:0!important;margin:0!important;padding:0!important;gap:0!important}
+.web-work-app #webMessages.work-chat-open .work-thread{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#25547b url('../assets/chat-ornament.png') repeat!important;background-size:320px auto!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;min-height:70px!important;padding:10px 12px!important;background:#079fa4!important;color:#fff!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading h2{color:#fff!important;font-size:19px!important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0!important}
+.web-work-app #webMessages.work-chat-open .work-chat-back{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto;min-height:40px;padding:8px 13px;border:1px solid #d6b95e;border-radius:999px;background:transparent;color:#fff;font-weight:750}
+.web-work-app #webMessages.work-chat-open .connect-thread{flex:1!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;padding:18px 12px!important;margin:0!important;background:transparent!important;overscroll-behavior:contain}
+.web-work-app #webMessages.work-chat-open .connect-thread li{max-width:90%;border-radius:18px!important}
+.web-work-app #webMessages.work-chat-open .work-thread form{flex:0 0 auto!important;margin:0!important;padding:10px 12px max(12px,env(safe-area-inset-bottom))!important;background:#f9fdfd!important}
+.web-work-app #webMessages.work-chat-open .work-thread form label{font-size:0!important;margin:0!important}
+.web-work-app #webMessages.work-chat-open .work-thread form textarea{width:100%!important;min-height:48px!important;max-height:130px!important;border-radius:24px!important;background:#f0faf9!important;padding:12px 16px!important;font-size:16px!important}
+.web-work-app #webMessages.work-chat-open .work-thread form button.primary{border-radius:999px!important;background:#079fa4!important;color:#fff!important}
+.web-work-app #webMessages.work-chat-open .work-thread form .connect-composer{max-width:100%}
+}
