@@ -76,3 +76,22 @@
   .web-work-app #webMessages.work-chat-open .connect-compose .connect-send{flex:0 0 48px!important;width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important}
   .web-work-app #webMessages.work-chat-open .connect-compose label{min-width:0!important}
 }
+
+/* WhatsApp-like staff conversation: single toolbar and one-line message composer */
+@media(max-width:760px){
+.web-work-app #webMessages.work-chat-open .work-thread{height:100%;min-height:0!important;overflow:hidden!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading{width:100%;box-sizing:border-box;flex-wrap:nowrap!important;min-height:64px!important;gap:6px!important;padding:8px 10px!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading h2{font-size:18px!important;line-height:1.2!important}
+.web-work-app #webMessages.work-chat-open .work-call-heading button{flex-shrink:0;max-width:fit-content}
+.web-work-app #webMessages.work-chat-open .connect-chat-wallpaper{min-height:0!important;flex:1 1 0!important}
+.web-work-app #webMessages.work-chat-open .connect-thread{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;padding:12px 10px!important;gap:8px!important}
+.web-work-app #webMessages.work-chat-open .connect-thread>li{width:fit-content!important;max-width:86%!important;min-width:0!important;overflow-wrap:anywhere!important}
+.web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble{padding:9px 12px!important;border-radius:17px 17px 17px 5px!important}
+.web-work-app #webMessages.work-chat-open .connect-thread>.connect-chat-bubble[data-direction=customer]{border-radius:17px 17px 5px 17px!important}
+.web-work-app #webMessages.work-chat-open .connect-compose{display:flex!important;flex-flow:row nowrap!important;align-items:center!important;justify-content:stretch!important;gap:7px!important;width:100%!important;min-width:0!important;min-height:66px!important;max-height:180px!important;padding:8px 10px max(8px,env(safe-area-inset-bottom))!important}
+.web-work-app #webMessages.work-chat-open .connect-compose .connect-composer{display:flex!important;flex:1 1 0!important;min-width:0!important;max-width:none!important;flex-flow:row nowrap!important;align-items:center!important;gap:5px!important}
+.web-work-app #webMessages.work-chat-open .connect-compose textarea{flex:1 1 0!important;min-width:0!important;width:100%!important;min-height:44px!important;max-height:120px!important;padding:10px 12px!important;border-radius:24px!important;font-size:16px!important}
+.web-work-app #webMessages.work-chat-open .connect-compose button{flex-shrink:0!important}
+.web-work-app #webMessages.work-chat-open .connect-compose .connect-send{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;flex:0 0 48px!important;border-radius:50%!important;display:grid!important;place-items:center!important}
+.web-work-app #webMessages.work-chat-open .connect-compose label{font-size:0!important}
+}
