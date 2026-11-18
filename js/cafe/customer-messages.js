@@ -4,10 +4,17 @@
   const trigger = document.getElementById('customerMessagesButton');
   const totalBadge = trigger.querySelector('.messages-unread');
   function renderCounts() {
-    const total = [...dialog.querySelectorAll('button[data-unread]')].reduce(
-      (sum, button) => sum + Math.max(0, Number(button.dataset.unread) || 0), 0
-    );
-    totalBadge.textContent = total > 99 ? '99+' : total ? String(total) : '';
+    let total=0;
+    for(const button of dialog.querySelectorAll('button[data-unread]')){
+      const count=Math.max(0,Number(button.dataset.unread)||0);
+      total+=count;
+      const badge=button.querySelector('.messages-unread')||document.createElement('span');
+      badge.className='messages-unread';
+      badge.textContent=count>99?'99+':count?String(count):'';
+      badge.hidden=!count;
+      if(!badge.parentNode)button.append(badge);
+    }
+    totalBadge.textContent=total>99?'99+':total?String(total):'';
     totalBadge.hidden = !total;
   }
 

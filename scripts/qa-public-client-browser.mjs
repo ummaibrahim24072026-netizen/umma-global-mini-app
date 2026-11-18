@@ -35,12 +35,15 @@ const languages=['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
 const output=process.env.QA_OUTPUT_DIR;
 let browser;
 let layoutChecks=0;
+const sent=[];
+const voiceFiles=new Map();
 try{
   browser=await chromium.launch({
     executablePath:process.env.QA_CHROMIUM_PATH||undefined,
-    args:['--no-sandbox','--disable-dev-shm-usage'],
+    args:['--no-sandbox','--disable-dev-shm-usage','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream'],
   });
   const context=await browser.newContext({locale:'ru-RU'});
+  await context.grantPermissions(['microphone'],{origin});
   await context.addInitScript(items=>{
     if(!localStorage.getItem('qa-seeded-receipts')){
       localStorage.setItem('qa-seeded-receipts','1');
@@ -49,13 +52,33 @@ try{
   },receipts);
   await context.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url());
-    if(url.origin===origin)return route.continue();
+    if(url.origin===origin){
+      if(voiceFiles.has(url.pathname))return route.fulfill({contentType:'audio/webm',body:voiceFiles.get(url.pathname)});
+      return route.continue();
+    }
     if(!url.pathname.startsWith('/functions/v1/'))return route.abort();
     const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
     if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
     const endpoint=url.pathname.split('/').at(-1);
     if(endpoint==='cafe-guest-order'&&request.method()==='GET')return route.fulfill({headers,json:{ok:true,products:[dish]}});
     if(endpoint==='cafe-menu')return route.fulfill({headers,json:{ok:true,products:[dish],locations:[destination]}});
+    if(endpoint==='cafe-connect-actions')return route.fulfill({headers,json:{ok:true,ids:[]}});
+    if(endpoint==='cafe-connect'){
+      const client={name:'',promotions:false,pushEnabled:false};
+      const timestamp=()=>new Date().toISOString();
+      const mime=request.headers()['content-type'];
+      if(mime?.startsWith('audio/')){
+        const bytes=request.postDataBuffer();
+        const id='voice-'+sent.length;
+        voiceFiles.set('/qa-media/'+id,bytes.subarray(bytes.indexOf(10)+1));
+        sent.push({id,direction:'customer',media_kind:'voice',created_at:timestamp()});
+        return route.fulfill({headers,json:{ok:true,id}});
+      }
+      const {action,body,messageId}=request.postDataJSON();
+      if(action==='mediaGet')return route.fulfill({headers,json:{ok:true,url:origin+'/qa-media/'+messageId}});
+      if(action==='send')sent.push({id:'text-'+sent.length,direction:'customer',body,created_at:timestamp()});
+      return route.fulfill({headers,json:{ok:true,client,messages:sent}});
+    }
     return route.fulfill({status:404,headers,json:{ok:false}});
   });
   const page=await context.newPage();
@@ -126,6 +149,30 @@ try{
     }
     await $('#customerChatDialog .connect-close').click();
   }
+  await page.setViewportSize({width:390,height:844});
+  await $('#customerMessagesButton').click();
+  await page.getByRole('button',{name:'Начать переписку'}).click();
+  await $('#customerChatDialog textarea').fill('Проверка браузера');
+  await $('#customerChatDialog .connect-send').click();
+  await $('#customerChatDialog .connect-chat-bubble').filter({hasText:'Проверка браузера'}).waitFor();
+  await $('#customerChatDialog .connect-mic').click();
+  const voicePanel=$('#customerChatDialog .connect-record-panel');
+  await voicePanel.waitFor();
+  await voicePanel.locator('.connect-record-pause').click();
+  await voicePanel.getByText(/Продолжить/).waitFor();
+  await voicePanel.locator('.connect-record-pause').click();
+  await page.waitForFunction(()=>document.querySelector('.connect-record-time')?.textContent==='0:01');
+  if(output){
+    await mkdir(output,{recursive:true});
+    await page.screenshot({path:output+'/voice-recording-390.png'});
+  }
+  await voicePanel.locator('.connect-record-send').click();
+  await $('#customerChatDialog .connect-chat-voice').waitFor();
+  assert.equal(sent.length,2);
+  assert.ok([...voiceFiles.values()][0].length>100);
+  await $('#customerChatDialog .connect-voice-play').click();
+  await page.waitForFunction(()=>document.querySelector('.connect-chat-voice audio')?.currentTime>0);
+  await $('#customerChatDialog .connect-close').click();
   await $('#openProfile').click();
   await $('#profileDisplayName').fill('Гость UMMA');
   await $('#saveProfileName').click();
@@ -154,7 +201,7 @@ try{
   await $('#orderLinkDialog').waitFor();
   assert.match(await $('#orderLinkStatus').innerText(),/недоступен/);
   assert.deepEqual(errors,[]);
-  console.log('PASS public client Chromium: '+layoutChecks+' layout checks, twelve languages, search, navigation, basket reload, exact receipts and service worker.');
+  console.log('PASS public client Chromium: '+layoutChecks+' layout checks, twelve languages, search, navigation, text and voice sends, basket reload, exact receipts and service worker.');
 }finally{
   await browser?.close();
   await new Promise(done=>server.close(done));
