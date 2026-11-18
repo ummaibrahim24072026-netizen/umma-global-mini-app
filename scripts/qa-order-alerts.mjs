@@ -51,7 +51,7 @@ const inbox=w.ummaOrderInbox;
 inbox.publish({id:'single',orderNumber:199,status:'completed',eventId:'done-199',eventAt:'2026-11-18T12:01:00Z',changes:{status:'completed'}});
 const chatButton=d.createElement('button');chatButton.dataset.unread='2';d.querySelector('#customerConnectHost').append(chatButton);
 w.dispatchEvent(new w.Event('umma:messages-count'));
-assert.equal(d.querySelector('.messages-unread').textContent,'3');
+assert.equal(d.querySelector('#customerMessagesButton .messages-unread').textContent,'3');
 const list=d.querySelector('ol');
 inbox.renderChatFeed(list);
 const card=list.children[1];
@@ -64,7 +64,7 @@ inbox.renderChatFeed(list);
 assert.equal(list.children[1],card);
 assert.equal(toggle.getAttribute('aria-expanded'),'true');
 inbox.markChatRead();
-assert.equal(d.querySelector('.messages-unread').textContent,'2');
+assert.equal(d.querySelector('#customerMessagesButton .messages-unread').textContent,'2');
 w.close();
 }
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
