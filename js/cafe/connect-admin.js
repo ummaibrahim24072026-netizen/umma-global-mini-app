@@ -4,6 +4,9 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='';
+const mobileChat=()=>window.matchMedia('(max-width:760px)').matches;
+function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',view==='inbox'&&!!thread&&mobileChat());}
+window.addEventListener('resize',syncChatScreen);
 const workspace=document.getElementById('webMessages');
 const badge=document.getElementById('webInboxCount');
 const button=workspace?null:node('button','Сообщения клиентов','umma-connect-button');
@@ -156,6 +159,7 @@ function selectView(name){
  view=name;
  for(const [key,panel] of Object.entries(panels))panel.hidden=key!==name;
  for(const [key,control] of Object.entries(viewButtons))control.setAttribute('aria-pressed',String(key===name));
+ syncChatScreen();
 }
 async function run(fn,feedback=status){
  if(busy)return;
@@ -199,6 +203,7 @@ async function readThread(id,background=false){
 async function openThread(id){
  if(thread!==id){composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);messages.replaceChildren();thread=id;threadTitle.textContent='Загружаем переписку…';replyForm.hidden=true;if(callButtons)callButtons.hidden=true;replyKey=null;replyBody.value='';replyStatus.textContent='';}
  selectView('inbox');
+ syncChatScreen();
  await readThread(id);
  threadTitle.focus({preventScroll:true});
  threadTitle.scrollIntoView?.({block:'start'});
@@ -306,6 +311,7 @@ function build(){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
+ const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{thread=null;syncChatScreen();};threadHeading.prepend(back);
  const threadPanel=node('section',null,'work-thread');threadPanel.append(threadHeading,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
