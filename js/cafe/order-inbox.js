@@ -9,11 +9,43 @@ const inPublicMenu=inHub||!!host?.closest('.customer-actions');
 const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления':ui()[0];
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
+// Render order status cards inside the existing UMMA chat, without a second inbox screen.
+function renderChatFeed(list){
+ if(!list)return;
+ list.querySelectorAll('.umma-chat-order-card').forEach(node=>node.remove());
+ const language=document.documentElement.lang.split('-')[0];
+ const dictionary={ru:{order:'Заказ',detail:'Детали заказа',cancel:'Отменён',steps:['Принят','Готовится','Готов','Курьер','Доставлен'],pickup:['Принят','Готовится','Готов','Выдан']},en:{order:'Order',detail:'Order details',cancel:'Cancelled',steps:['Accepted','Preparing','Ready','Courier','Delivered'],pickup:['Accepted','Preparing','Ready','Collected']},vi:{order:'Đơn hàng',detail:'Chi tiết đơn',cancel:'Đã hủy',steps:['Đã nhận','Đang nấu','Đã xong','Tài xế','Đã giao'],pickup:['Đã nhận','Đang nấu','Đã xong','Đã lấy']}};
+ const copy=dictionary[language]||dictionary.en;
+ const groups=new Map();
+ for(const m of data.messages){const group=groups.get(m.orderId)||[];group.push(m);groups.set(m.orderId,group);}
+ for(const [id,messages] of [...groups].sort((a,b)=>b[1].at(-1).at-a[1].at(-1).at)){
+  const state=data.states[id]||{},values=new Set(messages.map(m=>m.value));
+  const delivery=state.orderType==='delivery'||['waiting_courier','courier_assigned','picked_up','delivered'].some(v=>values.has(v)||state.delivery===v);
+  const steps=delivery?copy.steps:copy.pickup;
+  const cancelled=state.status==='cancelled'||values.has('cancelled');
+  const status=state.delivery==='delivered'?'delivered':state.status||messages.at(-1).value;
+  const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
+  const progress=delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
+  const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
+  card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid #c9e2df;border-radius:18px;background:#f5fbfa;color:#153b39;box-sizing:border-box;overflow-wrap:anywhere';
+  const head=document.createElement('strong');head.textContent=copy.order+' №'+(messages.at(-1).number||id);
+  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#137b7c;font-weight:650';
+  const progressBar=document.createElement('div');progressBar.style.cssText='display:grid;grid-template-columns:repeat('+steps.length+',minmax(0,1fr));gap:4px';
+  for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'#0a9b9b':'#d9e9e7');progressBar.append(segment);}
+  const stageLabels=document.createElement('div');stageLabels.style.cssText='display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#55716e';
+  const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
+  const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
+  const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
+  detail.onclick=()=>{window.ummaCustomerConnect?.close?.();document.getElementById('receiptButton')?.click();let count=0;const find=()=>{const orders=document.getElementById('customerOrders');const match=[...orders?.querySelectorAll('[data-order-key]')||[]].find(n=>n.dataset.orderKey===id||n.textContent.includes('№'+id));if(match){match.scrollIntoView({block:'center'});return;}if(count===3)document.getElementById('showOrderHistory')?.click();if(++count<18)setTimeout(find,100);};setTimeout(find,0);};
+  card.append(head,statusLine,progressBar,stageLabels,latest,detail);list.append(card);
+ }
+}
 function render(){
  const list=document.querySelector('dialog[data-umma-inbox][open] .umma-inbox-orders');
  if(list)renderOrders(list);
  const unread=data.messages.filter(m=>m.at>data.readAt).length;
  window.ummaOrderAlerts?.badge(unread);
+ window.dispatchEvent(new Event('umma:order-feed-change'));
  button.textContent=(inPublicMenu?'':'🔔 ')+inboxTitle()+(unread&&!inHub?' · '+unread:'');
  if(inHub){
   button.dataset.unread=String(unread);
@@ -203,6 +235,7 @@ function open(){
  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
  save();
 }
-button.onclick=open;
-window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
+button.onclick=()=>window.ummaCustomerConnect?.open?.()||open();
+if(inHub){button.hidden=true;button.setAttribute('aria-hidden','true');}
+window.addEventListener('umma-menu:languagechange',render);window.ummaOrderInbox={publish,open,renderChatFeed,reset(){data={states:{},messages:[],readAt:0};save();document.querySelector('dialog[data-umma-inbox]')?.close();}};render();
 })();
