@@ -426,7 +426,44 @@
 .profile-avatar-preview .profile-avatar-image { width: 100%; height: 100%; }
 .profile-avatar-preview svg { width: 32px; height: 32px; }
 .profile-avatar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #installApp) {
+  border-radius: 999px;
+}
 .profile-avatar-actions button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+#removeProfileAvatar { border-color: transparent; background: transparent; }
+.profile-name-form {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding-block-start: 10px;
+  border-block-start: 1px solid var(--umma-brand-line);
+}
+.profile-name-form label {
+  color: var(--umma-brand-night);
+  font-size: 14px;
+  font-weight: 700;
+}
+.profile-name-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+#profileDisplayName {
+  flex: 1 1 140px;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  padding: 8px 13px;
+  border: 1px solid var(--umma-brand-line);
+  background: var(--umma-brand-canvas);
+  color: var(--umma-brand-night);
+  font-size: 16px;
+}
+#saveProfileName {
+  min-height: 44px;
+  max-width: 100%;
+  border-color: var(--umma-action);
+  background: var(--umma-action);
+  color: var(--umma-brand-on-primary);
+  overflow-wrap: anywhere;
+}
+#profileNameStatus { margin: 0; font-size: 13px; }
+#profileNameStatus:empty { display: none; }
 #chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
 #profileAvatarStatus { grid-column: 1 / -1; margin: 0; font-size: 13px; }
 #profileAvatarStatus:empty { display: none; }
@@ -449,6 +486,8 @@
 #customerProfile :is(#openChatSettings, .google-review-link) {
   width: 100%;
   min-height: 48px;
+  border-color: var(--umma-brand-line);
+  background: var(--umma-brand-pale);
 }
 #customerProfile .location {
   padding: 12px;

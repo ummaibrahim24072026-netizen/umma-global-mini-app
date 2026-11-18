@@ -3,6 +3,11 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Имя или ник":{"en":"Name or nickname","vi":"Tên hoặc biệt danh","ko":"이름 또는 별명","zh":"姓名或昵称","de":"Name oder Spitzname","fr":"Nom ou pseudo","th":"ชื่อหรือชื่อเล่น","ms":"Nama atau nama panggilan","id":"Nama atau nama panggilan","ar":"الاسم أو اللقب","pt":"Nome ou alcunha"},
+"Сохранить имя":{"en":"Save name","vi":"Lưu tên","ko":"이름 저장","zh":"保存姓名","de":"Name speichern","fr":"Enregistrer le nom","th":"บันทึกชื่อ","ms":"Simpan nama","id":"Simpan nama","ar":"حفظ الاسم","pt":"Guardar nome"},
+"Имя сохранено.":{"en":"Name saved.","vi":"Đã lưu tên."},
+"Имя удалено.":{"en":"Name removed.","vi":"Đã xóa tên."},
+"Не удалось сохранить имя на этом устройстве.":{"en":"Couldn't save the name on this device.","vi":"Không thể lưu tên trên thiết bị này."},
 "Добавить фото":{"en":"Add photo","vi":"Thêm ảnh","ko":"사진 추가","zh":"添加照片","de":"Foto hinzufügen","fr":"Ajouter une photo","th":"เพิ่มรูปภาพ","ms":"Tambah foto","id":"Tambah foto","ar":"إضافة صورة","pt":"Adicionar foto"},
 "Заменить фото":{"en":"Change photo","vi":"Đổi ảnh","ko":"사진 변경","zh":"更换照片","de":"Foto ändern","fr":"Changer la photo","th":"เปลี่ยนรูปภาพ","ms":"Tukar foto","id":"Ganti foto","ar":"تغيير الصورة","pt":"Alterar foto"},
 "Удалить фото":{"en":"Remove photo","vi":"Xóa ảnh","ko":"사진 삭제","zh":"删除照片","de":"Foto entfernen","fr":"Supprimer la photo","th":"ลบรูปภาพ","ms":"Buang foto","id":"Hapus foto","ar":"إزالة الصورة","pt":"Remover foto"},
