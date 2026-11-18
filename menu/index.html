@@ -451,7 +451,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <dialog id="customerProfile" class="customer-section" closedby="closerequest" aria-labelledby="profileTitle">
-  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" tabindex="-1" autofocus data-i18n="Профиль">Профиль</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" tabindex="-1" autofocus data-i18n="Профиль">Профиль</h2></div></div><form method="dialog" hidden><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body profile-body">
     <div class="profile-avatar-editor">
       <div class="profile-avatar-preview" aria-hidden="true">
@@ -496,7 +496,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
     <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerOrdersTitle" tabindex="-1" autofocus data-i18n="Мои заказы">Мои заказы</h2></div></div>
-    <button class="close" type="button" id="closeCustomerOrders" aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <button class="close" type="button" id="closeCustomerOrders" hidden aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="checkout-body">
     <div class="customer-order-filters">
@@ -508,7 +508,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
 </dialog>
 <dialog id="customerMessages" class="customer-section" closedby="closerequest" aria-labelledby="customerMessagesTitle">
-  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2></div></div><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerMessagesTitle" tabindex="-1" autofocus data-i18n="Сообщения">Сообщения</h2></div></div><form method="dialog" hidden><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form></div>
   <div class="checkout-body customer-message-sections">
     <div id="orderInboxHost"></div>
     <div id="customerConnectHost"></div>
@@ -517,7 +517,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <dialog id="nearbyCafe" class="customer-section" closedby="closerequest" aria-labelledby="nearbyCafeTitle">
   <div class="nearby-cafe-header">
     <div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="nearbyCafeTitle" tabindex="-1" autofocus data-i18n="Кафе рядом">Кафе рядом</h2></div></div>
-    <button class="close" type="button" id="closeNearbyCafe" aria-label="Закрыть" data-i18n-label="Закрыть">
+    <button class="close" type="button" id="closeNearbyCafe" hidden aria-label="Закрыть" data-i18n-label="Закрыть">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
   </div>
@@ -1143,6 +1143,7 @@ function renderCheckoutTitle(stage){
 }
 function checkoutStage(stage){
   $('checkout').dataset.stage=stage;
+  $('closeCart').hidden=stage==='cart';
   $('cartStep').hidden=stage!=='cart';
   $('checkoutStep').hidden=stage!=='checkout';
   renderCheckoutTitle(stage);
@@ -1210,6 +1211,7 @@ $('openCart').onclick=()=>{
   document.body.style.overflow='hidden';
 };
 $('closeCart').onclick=closeCart;
+$('ummaBackToMenu').onclick=closeCart;
 $('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
@@ -1431,4 +1433,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=43"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=2"></script><script>document.getElementById('ummaBackToMenu')?.addEventListener('click',()=>document.getElementById('closeCart')?.click());</script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=15"></script><script src="js/cafe/connect-composer.js?v=17"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/customer-connect.js?v=43"></script><script src="js/cafe/customer-messages.js?v=4"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
