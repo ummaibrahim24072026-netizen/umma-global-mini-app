@@ -36,7 +36,7 @@ function renderChatFeed(list){
   const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
   const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
-  detail.onclick=()=>{window.ummaCustomerConnect?.close?.();document.getElementById('receiptButton')?.click();let count=0;const find=()=>{const orders=document.getElementById('customerOrders');const match=[...orders?.querySelectorAll('[data-order-key]')||[]].find(n=>n.dataset.orderKey===id||n.textContent.includes('№'+id));if(match){match.scrollIntoView({block:'center'});return;}if(count===3)document.getElementById('showOrderHistory')?.click();if(++count<18)setTimeout(find,100);};setTimeout(find,0);};
+  detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
   card.append(head,statusLine,progressBar,stageLabels,latest,detail);list.append(card);
  }
 }
@@ -113,26 +113,7 @@ function renderOrders(list){
  const fragment=document.createDocumentFragment();
  let visible=0;
  const dateLabel=at=>new Date(at).toLocaleString(language,{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
- const openOrder=id=>{
-  document.querySelector('dialog[data-umma-inbox][open]')?.close();
-  document.getElementById('customerMessages')?.close();
-  const orders=document.getElementById('customerOrders');
-  document.getElementById('receiptButton')?.click();
-  // The orders view can render asynchronously after its navigation click.
-  // Wait for the matching card instead of querying the old view immediately.
-  let attempts=0,historyRequested=false;
-  const locate=()=>{
-   if(!orders?.isConnected)return;
-   const card=[...orders.querySelectorAll('[data-order-key]')].find(el=>el.dataset.orderKey===id||el.textContent.includes('№'+id));
-   if(card){card.scrollIntoView({block:'center'});card.focus({preventScroll:true});return;}
-   if(!historyRequested&&attempts>=3){
-    historyRequested=true;
-    document.getElementById('showOrderHistory')?.click();
-   }
-   if(++attempts<18)window.setTimeout(locate,100);
-  };
-  window.setTimeout(locate,0);
- };
+ const openOrder=id=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
  for(const [id,group] of [...groups].sort((a,b)=>Math.max(...b[1].messages.map(m=>m.at))-Math.max(...a[1].messages.map(m=>m.at)))){
   const state=data.states[id],values=group.values;
   if(state?.status)values.add(state.status);
