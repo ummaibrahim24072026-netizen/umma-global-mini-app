@@ -402,6 +402,50 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #success[data-cash-pending="true"] #paymentState:before{content:"💵";margin-right:9px}
 #checkout #success[data-cash-pending="true"] #receiptHint{color:#3e4f4d;font-size:14px;line-height:1.5;margin:0}
 @media(max-width:380px){#checkout #success[data-cash-pending="true"] #paymentState{font-size:17px}}
+
+/* UMMA 2026 — refined cash-payment receipt, teal and gold */
+.public-cafe-menu #checkout[data-stage="receipt"] #success[data-cash-pending="true"]{
+  --cash-teal:#087f82;--cash-ink:#123f3e;--cash-gold:#c49a35;
+}
+.public-cafe-menu #checkout #success[data-cash-pending="true"] .receipt-instructions{
+  position:relative;overflow:hidden;box-sizing:border-box;
+  display:flex;flex-direction:column;gap:9px;
+  background:linear-gradient(125deg,#f0fbf9 0%,#fffdf6 100%);
+  border:1.5px solid #d7b66b;border-radius:24px;
+  padding:20px 18px 19px 20px;
+  box-shadow:0 9px 24px rgba(10,95,92,.08),inset 0 1px rgba(255,255,255,.95);
+  text-align:left;
+}
+.public-cafe-menu #checkout #success[data-cash-pending="true"] .receipt-instructions:before{
+  content:"";position:absolute;inset:0 0 auto;height:4px;
+  background:linear-gradient(90deg,#009b9b 0%,#57b6a8 55%,#d6a83e 100%);
+}
+.public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState{
+  display:flex;align-items:flex-start;gap:12px;
+  margin:0!important;color:#075c5e;font-weight:800;font-size:clamp(17px,4.4vw,21px);
+  line-height:1.32;letter-spacing:-.025em;overflow-wrap:anywhere;
+}
+.public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{
+  content:"";flex:0 0 42px;width:42px;height:42px;margin:0;
+  border-radius:15px;border:1px solid #e7d09c;
+  background:#fff6df url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23916d20' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M6 9h.01M18 15h.01'/%3E%3C/svg%3E") center/24px no-repeat;
+  box-shadow:0 3px 10px rgba(133,102,29,.08);
+}
+.public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{
+  margin:0 0 0 54px!important;color:#41615e;font-size:clamp(13px,3.6vw,15px);
+  line-height:1.5;font-weight:600;overflow-wrap:anywhere;
+}
+.public-cafe-menu #checkout[data-stage="receipt"] #success[data-cash-pending="true"] #newOrder{
+  border-radius:999px!important;min-height:54px;
+  background:linear-gradient(105deg,#0aa3a4,#087f82)!important;
+  color:#fff!important;font-weight:800;box-shadow:0 8px 18px rgba(7,127,130,.18);
+}
+@media(max-width:360px){
+  .public-cafe-menu #checkout #success[data-cash-pending="true"] .receipt-instructions{padding:17px 13px}
+  .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState{gap:9px}
+  .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
+  .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
+}
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=25"><link rel="stylesheet" href="css/connect-video-circles.css?v=19"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=49"><link rel="stylesheet" href="css/connect-calls.css?v=2">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
