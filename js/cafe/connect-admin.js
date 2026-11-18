@@ -195,7 +195,7 @@ function showMessages(data){
 }
 async function readThread(id,background=false){
  const d=await api('staffThread',{clientId:id});
- if(thread!==id||document.hidden||!visible()||view!=='inbox'||(background&&busy))return;
+ if(thread!==id||document.hidden||view!=='inbox'||(background&&(busy||!visible())))return;
  showMessages(d);
  const latest=d.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
@@ -311,7 +311,7 @@ function build(){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
- const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{thread=null;syncChatScreen();};threadHeading.prepend(back);
+ const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{composer?.close();thread=null;syncChatScreen();};threadHeading.prepend(back);
  const threadPanel=node('section',null,'work-thread');threadPanel.append(threadHeading,messages,replyForm);
  const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'),clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
