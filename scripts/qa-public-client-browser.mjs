@@ -98,8 +98,16 @@ try{
       screen+' '+JSON.stringify(result));
     layoutChecks++;
   }
+  async function whiteLabels(...selectors){
+    for(const selector of selectors){
+      const actual=await $(selector).first().evaluate(el=>getComputedStyle(el).color);
+      assert.equal(actual,'rgb(255, 255, 255)',selector+' label');
+    }
+  }
   await page.goto(menu);
   await $('.dish-link').first().waitFor();
+  await whiteLabels('#shareMenu','#searchToggle','.cafe-category','.dish-link',
+    '#customerMessagesButton','#nearbyCafeButton','#receiptButton','#openCart');
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
   for(const language of languages){
@@ -119,9 +127,11 @@ try{
     await $('#clearSearch').click();
     await $('.dish-link').first().click();
     await fits('#dishDetails');
+    if(width===390)await whiteLabels('#dishDetails .cafe-add');
     await $('#dishDetails .close').click();
     await $('#openProfile').click();
     await fits('#customerProfile');
+    if(width===390)await whiteLabels('#chooseProfileAvatar','#saveProfileName','#installApp .install-title');
     await $('#openChatSettings').click();
     await fits('#customerChatSettings');
     await page.getByRole('button',{name:'Назад к профилю'}).click();
@@ -130,6 +140,7 @@ try{
     await fits('#nearbyCafe');
     await $('#receiptButton').click();
     await fits('#customerOrders');
+    if(width===390)await whiteLabels('#showActiveOrders','#showOrderHistory','#activeOrdersList .order-action');
     await $('#showOrderHistory').click();
     assert.match(await $('#orderHistoryList').innerText(),/200/);
     await $('#openCart').click();
@@ -158,6 +169,7 @@ try{
   await $('#customerChatDialog .connect-mic').click();
   const voicePanel=$('#customerChatDialog .connect-record-panel');
   await voicePanel.waitFor();
+  await whiteLabels('.connect-record-pause','.connect-translated-text > button:not([hidden])');
   await voicePanel.locator('.connect-record-pause').click();
   await voicePanel.getByText(/Продолжить/).waitFor();
   await voicePanel.locator('.connect-record-pause').click();
@@ -194,6 +206,7 @@ try{
   assert.equal(await $('#cartItems .cart-controls b').innerText(),'1');
   await $('#continueCheckout').click();
   await fits('#checkout');
+  await whiteLabels('#submit','#backToCart');
   await page.goto(menu+'?order=199');
   await $('#successNumber').waitFor();
   assert.match(await $('#successNumber').innerText(),/199/);

@@ -51,14 +51,14 @@ function renderChatFeed(list){
   const stageLabels=document.createElement('div');stageLabels.style.cssText='display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#55716e';
   const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
-  const detail=document.createElement('button');detail.type='button';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;background:#fff;color:#087c80;font:700 13px system-ui;cursor:pointer';
+  const detail=document.createElement('button');detail.type='button';detail.className='umma-chat-order-action';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;font:700 13px system-ui;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
   if(finished){
     card.classList.add('umma-chat-order-card--finished');
     card.style.gap='7px';card.style.padding='12px 14px';
-    const toggle=document.createElement('button');toggle.type='button';
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='umma-chat-order-action';
     toggle.textContent=expanded?copy.collapse:copy.expand;toggle.setAttribute('aria-expanded',String(expanded));
-    toggle.style.cssText='justify-self:start;border:0;background:transparent;color:#087c80;font:650 12px system-ui;padding:5px 0;cursor:pointer';
+    toggle.style.cssText='justify-self:start;border:0;border-radius:999px;font:650 12px system-ui;padding:5px 10px;cursor:pointer';
     const extras=[progressBar,stageLabels,latest,detail];
     extras.forEach(el=>el.hidden=!expanded);
     toggle.onclick=()=>{
