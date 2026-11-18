@@ -93,6 +93,88 @@ assert.equal(profileClient.pushEnabled,false);
 settings.querySelector('.connect-close').click();
 assert.ok(d.getElementById('customerProfile').open);
 w.ummaCafeNavigation.go('menu');
+// A failed background poll should neither block the timeline nor discard the draft.
+const replies=staffReplies;
+const testChat={name:'Тест',promotions:false,pushEnabled:false};
+const retryQueue=new Map();
+let timerId=0, failLists=0, listCalls=0, online=true, dropSend=true;
+const sends=[];
+let holdHidden;
+const originalTimer=w.setTimeout.bind(w),originalClear=w.clearTimeout.bind(w);
+w.setTimeout=(callback,delay,...args)=>{
+ if(delay===2000||delay===4000){retryQueue.set(--timerId,{callback,delay});return timerId;}
+ return originalTimer(callback,delay,...args);
+};
+w.clearTimeout=id=>id<0?retryQueue.delete(id):originalClear(id);
+Object.defineProperty(w.navigator,'onLine',{get:()=>online});
+w.fetch=async(url,options)=>{
+ const request=JSON.parse(options.body);
+ assert.equal(request.token,'a'.repeat(64));
+ if(url.endsWith('cafe-connect-actions')){
+  assert.equal(request.action,'hidden');
+  assert.ok(options.signal);
+  await new Promise(resolve=>{holdHidden=resolve;});
+  return Response.json({ok:true,ids:[]});
+ }
+ if(request.action==='list'){
+  listCalls++;
+  if(failLists-->0)throw new TypeError('Network error');
+ }
+ if(request.action==='send'){
+  sends.push(request);
+  if(dropSend){dropSend=false;throw new TypeError('Lost response');}
+ }
+ return Response.json({ok:true,client:testChat,messages:replies});
+};
+await w.ummaCustomerConnect.open();
+await flush();
+const thread=d.querySelector('.connect-thread');
+const notice=d.querySelector('.connect-connection-status');
+const composer=d.querySelector('.connect-compose');
+const draft=composer.querySelector('textarea');
+assert.ok(holdHidden,'The secondary request is still pending');
+assert.match(thread.textContent,/Первый ответ/,'The conversation loads independently');
+draft.value='Сохранённый черновик';
+failLists=2;
+w.dispatchEvent(new w.Event('online'));
+await flush();
+assert.equal(notice.textContent,'','A brief polling failure stays silent');
+async function fireRetry(delay){
+ const [id,task]=[...retryQueue].find(([,entry])=>entry.delay===delay);
+ retryQueue.delete(id);
+ task.callback();
+ await flush();
+}
+await fireRetry(2000);
+assert.match(notice.textContent,/Переподключаем/);
+assert.match(thread.textContent,/Первый ответ/);
+assert.equal(draft.value,'Сохранённый черновик');
+await fireRetry(4000);
+assert.equal(notice.textContent,'','A successful retry clears the connection banner');
+holdHidden();
+await flush();
+online=false;
+w.dispatchEvent(new w.Event('offline'));
+assert.match(notice.textContent,/Нет интернета/);
+const before=listCalls;
+w.dispatchEvent(new w.Event('pageshow'));
+await flush();
+assert.equal(listCalls,before);
+online=true;
+w.dispatchEvent(new w.Event('online'));
+await flush();
+assert.equal(notice.textContent,'');
+const submit=()=>composer.dispatchEvent(new w.Event('submit',{cancelable:true}));
+submit();
+await flush();
+assert.equal(draft.value,'Сохранённый черновик','A lost send response preserves the draft');
+submit();
+await flush();
+assert.equal(draft.value,'');
+assert.equal(sends.length,2);
+assert.equal(sends[0].requestKey,sends[1].requestKey,'Retry uses the same request ID');
+w.ummaCafeNavigation.go('menu');
+console.log('PASS chat reconnect: delayed secondary request, automatic backoff, offline/online, preserved thread and draft, idempotent send retry.');
 // Standalone render of the actual header, with no live server requests or order actions.
 d.getElementById('menuLanguage').innerHTML='<option>Русский</option>';d.getElementById('products').innerHTML='<div class="message">Готовые блюда появятся после приёма кухни.</div>';
 mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, independent unread counts, clear-on-read, and order timelines.');

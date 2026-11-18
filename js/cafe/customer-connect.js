@@ -49,7 +49,24 @@ let settingsDialog;
 const chatSettings={ru:'Настройки чата',en:'Chat settings',vi:'Cài đặt trò chuyện'};
 const button=el('button',chatTitle(),'umma-connect-button');button.type='button';button.setAttribute('aria-haspopup','dialog');
 (connectHost||document.querySelector('.menu-tools')||document.getElementById('cafeNotificationBar')||document.querySelector('header')||document.body).append(button);
-async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='voice'?115000:15000),body:JSON.stringify({action,token,...data})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||t(16));return d;}
+async function api(action,data={}){
+ const timeout=action==='voice'?115000:publicChat&&action==='list'?8000:15000;
+ let response;
+ try{
+  response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
+   signal:AbortSignal.timeout(timeout),body:JSON.stringify({action,token,...data})});
+ }catch(error){
+  if(publicChat)throw Error(t(16),{cause:error});
+  throw error;
+ }
+ const result=await response.json().catch(()=>null);
+ if(!response.ok||!result?.ok){
+  const error=Error(result?.error||t(16));
+  error.status=response.status;
+  throw error;
+ }
+ return result;
+}
 function unread(){return (state?.messages||[]).filter(m=>m.direction!=='customer'&&!m.read_at);}
 function badge(){
  const count=unread().length;
@@ -60,24 +77,66 @@ function badge(){
  }
  if(state)navigator.serviceWorker?.controller?.postMessage({type:'UMMA_CONNECT_BADGE',count});
 }
+const status=el('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+const connectionStatus=el('p',null,'connect-connection-status');
+connectionStatus.setAttribute('role','status');
+const connectionCopy={
+ ru:['Связь прервалась. Переподключаем чат…','Нет интернета. Чат обновится после восстановления связи.','Не удалось восстановить доступ к чату.'],
+ en:['Connection interrupted. Reconnecting chat…','You’re offline. Chat will update when you reconnect.','Could not restore access to the chat.'],
+ vi:['Mất kết nối. Đang kết nối lại cuộc trò chuyện…','Không có Internet. Cuộc trò chuyện sẽ cập nhật khi có kết nối.','Không thể khôi phục quyền truy cập cuộc trò chuyện.']
+};
+let retryTimer=0,failedRefreshes=0;
+function showConnection(index){
+ connectionStatus.textContent=(connectionCopy[lang()]||connectionCopy.en)[index]||'';
+}
+function scheduleRetry(){
+ clearTimeout(retryTimer);
+ if(!publicChat||document.hidden||navigator.onLine===false)return;
+ retryTimer=setTimeout(refresh,Math.min(15000,2000*2**Math.min(failedRefreshes-1,3)));
+}
 function refresh(){
  if(refreshing)return refreshing;
  if(!token||document.hidden||busy)return;
+ if(publicChat){
+  clearTimeout(retryTimer);
+  if(navigator.onLine===false){
+   showConnection(1);
+   return;
+  }
+  if(!hiddenReady||dialog?.open)void refreshHiddenInBackground();
+ }
  refreshing=(async()=>{
   try{
-   await refreshHidden();
+   if(!publicChat)await refreshHidden();
    const next=await api('list');
+   if(publicChat&&navigator.onLine!==false){
+    failedRefreshes=0;
+    showConnection();
+   }
    if(busy||document.hidden)return;
    state=next;
    renderSetup();
-   if(dialog?.open){renderThread();await markRead();}
-   else badge();
-  }catch{if(dialog?.open)status.textContent=t(16);}
-  finally{refreshing=null;}
+   if(dialog?.open){
+    renderThread();
+    await markRead();
+   }else badge();
+  }catch(error){
+   if(!publicChat){
+    if(dialog?.open)status.textContent=t(16);
+    return;
+   }
+   if(document.hidden||navigator.onLine===false)return;
+   failedRefreshes++;
+   if([401,403].includes(error.status)){
+    showConnection(2);
+    return;
+   }
+   if(failedRefreshes>=2||!state)showConnection(0);
+   scheduleRetry();
+  }finally{refreshing=null;}
  })();
  return refreshing;
 }
-const status=el('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
 let list,name,promotions,push;
 const mediaCopy={
  ru:{album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
@@ -94,13 +153,32 @@ async function translateChat(messageId,language,clientId){
 }
 const ACTIONS='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-actions';
 async function messageAction(action,messageId){
- const response=await fetch(ACTIONS,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,action,messageId})});
+ const response=await fetch(ACTIONS,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({token,action,messageId}),
+  ...(publicChat?{signal:AbortSignal.timeout(action==='hidden'?3000:8000)}:{})});
  const result=await response.json();
  if(!response.ok||!result.ok)throw Error(result.code==='READ_OR_NOT_OWN'?'Сообщение уже прочитано. Удалить у всех нельзя.':result.error||'Не удалось выполнить действие.');
  return result;
 }
+let hiddenRevision=0,hiddenRefresh=null,hiddenReady=false;
 async function refreshHidden(){
- try{const result=await messageAction('hidden');hiddenMessages=new Set(result.ids||[]);}catch{}
+ const revision=++hiddenRevision;
+ try{
+  const result=await messageAction('hidden');
+  if(revision!==hiddenRevision)return false;
+  const next=new Set(result.ids||[]);
+  const changed=next.size!==hiddenMessages.size||[...next].some(id=>!hiddenMessages.has(id));
+  hiddenMessages=next;
+  return changed;
+ }catch{return false;}
+}
+function refreshHiddenInBackground(){
+ if(!hiddenRefresh)hiddenRefresh=refreshHidden().then(changed=>{
+  const first=!hiddenReady;
+  hiddenReady=true;
+  if((first||changed)&&dialog?.open&&state)renderThread();
+ }).finally(()=>{hiddenRefresh=null;});
+ return hiddenRefresh;
 }
 function downloadAttachment(file){
  const url=URL.createObjectURL(file);
@@ -177,7 +255,12 @@ function messageMenu(li,m){
  };
  if(m.body&&m.body!=='◉ Видеосообщение')add({text:'▤'},l[0],async()=>navigator.clipboard.writeText(m.body));
  add({path:forwardIcon},l[1],()=>forwardMessage(m));
- add({path:deleteIcon},l[2],async()=>{await messageAction('hide',m.id);hiddenMessages.add(m.id);renderThread();});
+ add({path:deleteIcon},l[2],async()=>{
+  await messageAction('hide',m.id);
+  hiddenRevision++;
+  hiddenMessages.add(m.id);
+  renderThread();
+ });
  if(m.direction==='customer'&&!m.read_at)add({path:deleteIcon},l[3],async()=>{
   if(!confirm(l[3]+'?'))return;
   await messageAction('deleteAll',m.id);
@@ -186,7 +269,7 @@ function messageMenu(li,m){
  li.append(menu);
 }
 function renderThread(){
- if(!list)return;
+ if(!list||(publicChat&&!hiddenReady))return;
  const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
  const receipt=receiptCopy[lang()]||receiptCopy.en;
  const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
@@ -226,7 +309,7 @@ function renderThread(){
 }
 async function markRead(){
  const latest=unread().at(-1);
- if(reading||!latest||!dialog?.open||document.hidden)return;
+ if(reading||!latest||!dialog?.open||document.hidden||(publicChat&&navigator.onLine===false))return;
  reading=true;
  try{
   // The read endpoint serializes the cutoff to milliseconds. Round up only
@@ -275,6 +358,7 @@ async function connect(){
  try{
   state=await api('join');
   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
+  if(publicChat)void refreshHiddenInBackground();
  }catch(error){token='';throw error;}
 }
 function enablePush(feedback,enableOrderAlerts=feedback===status){
@@ -455,7 +539,7 @@ function build(){
    try{
     await connect();
     await window.ummaConnectMedia.upload(API,{'X-Umma-Token':token},{file,kind:'video'},requestKey,'◉ Видеосообщение',composer.error);
-    await refreshHidden();
+    void refreshHiddenInBackground();
     state=await api('list');
     renderThread();
     list.scrollTop=list.scrollHeight;
@@ -515,7 +599,7 @@ function build(){
   content.className='connect-chat-content';
   const wallpaper=el('div',null,'connect-chat-wallpaper');
   wallpaper.append(list);
-  content.append(wallpaper,status,form);
+  content.append(wallpaper,connectionStatus,status,form);
   dialog.append(join,content);
  }else{
   actions.append(save,off);
@@ -579,6 +663,16 @@ if(profileSettingsButton)profileSettingsButton.onclick=async()=>{
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;settingsDialog?.remove();settingsDialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
-window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();
+window.addEventListener('pageshow',refresh);
+window.addEventListener('online',refresh);
+if(publicChat)window.addEventListener('offline',()=>{
+ clearTimeout(retryTimer);
+ if(token)showConnection(1);
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&publicChat)clearTimeout(retryTimer);
+ else void refresh();
+});
+setInterval(refresh,15000);void refresh();installedSetup();
 if(new URL(location.href).searchParams.has('connect')&&!history.state?.ummaCafeView?.previous&&navigation?.view()==='menu')void open();
 })();
