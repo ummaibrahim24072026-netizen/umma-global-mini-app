@@ -329,10 +329,15 @@ async function connect(){
  }catch(error){token='';throw error;}
 }
 async function connectForMessage(){
+ const firstMessage=!token;
  await connect();
- const profileName=publicChat?window.ummaMenuProfileName?.():null;
- if(profileName!=null&&profileName!==(state?.client?.name||'')){
-  state=await api('preferences',{name:profileName,language:lang()});
+ if(!publicChat)return;
+ const profileName=window.ummaMenuProfileName?.();
+ const client=state?.client;
+ const nameChanged=profileName!=null&&profileName!==(client?.name||'');
+ const languageChanged=firstMessage||!!client?.language&&client.language!==lang();
+ if(nameChanged||languageChanged){
+  state=await api('preferences',{...(nameChanged?{name:profileName}:{}),language:lang()});
  }
 }
 function enablePush(feedback,enableOrderAlerts=feedback===status){
@@ -630,13 +635,9 @@ function build(){
   }else button.focus();
  });
  function update(){
-  join.hidden=!!token;
+  join.hidden=publicChat||!!token;
   content.hidden=!publicChat&&!token;
-  if(publicChat){
-   form.hidden=!token;
-   if(token)content.insertBefore(status,form);
-   else join.after(status);
-  }
+  if(publicChat)content.insertBefore(status,form);
   if(name)name.value=state?.client?.name||'';
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';

@@ -151,7 +151,7 @@ try{
   }
   await page.setViewportSize({width:390,height:844});
   await $('#customerMessagesButton').click();
-  await page.getByRole('button',{name:'Начать переписку'}).click();
+  assert.equal(await page.getByRole('button',{name:'Начать переписку'}).count(),0);
   await $('#customerChatDialog textarea').fill('Проверка браузера');
   await $('#customerChatDialog .connect-send').click();
   await $('#customerChatDialog .connect-chat-bubble').filter({hasText:'Проверка браузера'}).waitFor();
