@@ -27,7 +27,12 @@
     showCount(totalBadge, total);
   }
 
-  trigger.addEventListener('click', () => dialog.show());
+  trigger.addEventListener('click', () => {
+    // The bottom Messages tab opens the conversation directly, not an intermediate hub.
+    if (dialog.open) dialog.close();
+    if (window.ummaCustomerConnect?.open) window.ummaCustomerConnect.open();
+    else dialog.show(); // Graceful fallback if the chat module failed to load.
+  });
   window.addEventListener('umma:messages-count', renderCounts);
   renderCounts();
 })();
