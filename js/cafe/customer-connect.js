@@ -216,6 +216,7 @@ function renderThread(){
   const li=el('li');
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
+  li.dataset.createdAt=m.created_at||'';
   if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body){
