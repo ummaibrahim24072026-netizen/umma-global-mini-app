@@ -12,7 +12,9 @@ for(const method of ['cash','qr']){
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
   w.confirm=()=>assert.fail('Clearing the cart must not ask for browser confirmation');
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;w.CSS={escape:value=>value};
-  w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  w.HTMLDialogElement.prototype.show=function(){this.open=true;};
+  w.HTMLDialogElement.prototype.showModal=function(){this.dataset.testModal='true';this.open=true;};
+  w.HTMLDialogElement.prototype.close=function(){this.open=false;delete this.dataset.testModal;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
   w.HTMLElement.prototype.scrollIntoView=()=>{};
   w.eval(read('js/cafe/public-menu-i18n.js'));w.eval(read('js/cafe/product-photo.js'));w.eval(read('js/vendor/qrcode-generator.js'));w.eval(read('js/cafe/public-menu-extras.js'));
@@ -37,13 +39,22 @@ for(const method of ['cash','qr']){
  d.querySelector(method==='cash'?'.cafe-product-photo':'.dish-link').click();
  assert.equal(d.getElementById('dishDetails').open,true);
  assert.equal(d.getElementById('dishTitle').textContent,'Шурпа');
+ assert.equal(d.getElementById('dishDetails').dataset.testModal,undefined);
+ assert.equal(d.getElementById('cafePage').inert,true);
+ assert.equal(d.querySelector('#dishDetails .cafe-add').textContent,'В корзину');
  d.querySelector('#dishDetails [data-change="1"]').click();
  assert.equal(d.querySelector('#dishDetails .cafe-card-quantity strong').textContent,'1');
  assert.equal(cartCount.hidden,false);
  assert.equal(cartCount.textContent,'1');
  assert.equal(cartButton.classList.contains('has-items'),true);
- d.getElementById('dishDetails').close();
- d.getElementById('openCart').click();
+ receiptButton.click();
+ assert.equal(d.getElementById('dishDetails').open,false);
+ assert.equal(d.getElementById('customerOrders').open,true);
+ d.querySelector('.dock-menu').click();
+ assert.equal(d.getElementById('cafePage').inert,false);
+ d.querySelector('.dish-link').click();
+ cartButton.click();
+ assert.equal(d.getElementById('dishDetails').open,false);
  assert.equal(d.getElementById('cartStep').hidden,false);
  assert.equal(d.getElementById('checkoutStep').hidden,true);
  const clearCart=d.getElementById('clearCart'),feedback=d.getElementById('cartFeedback');

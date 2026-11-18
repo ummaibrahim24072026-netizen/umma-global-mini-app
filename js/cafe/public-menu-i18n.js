@@ -3,6 +3,7 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"В корзину":{"en":"Add to cart","vi":"Thêm vào giỏ hàng","ko":"장바구니에 담기","zh":"加入购物车","de":"In den Warenkorb","fr":"Ajouter au panier","th":"เพิ่มลงในตะกร้า","ms":"Tambah ke troli","id":"Tambah ke keranjang","ar":"أضف إلى السلة","pt":"Adicionar ao carrinho"},
 "Очистить корзину":{"en":"Clear cart","vi":"Xóa giỏ hàng","ko":"장바구니 비우기","zh":"清空购物车","de":"Warenkorb leeren","fr":"Vider le panier","th":"ล้างตะกร้า","ms":"Kosongkan troli","id":"Kosongkan keranjang","ar":"إفراغ السلة","pt":"Esvaziar carrinho"},
 "Корзина очищена":{"en":"Cart cleared","vi":"Đã xóa giỏ hàng","ko":"장바구니를 비웠습니다","zh":"购物车已清空","de":"Warenkorb geleert","fr":"Panier vidé","th":"ล้างตะกร้าแล้ว","ms":"Troli dikosongkan","id":"Keranjang dikosongkan","ar":"تم إفراغ السلة","pt":"Carrinho esvaziado"},
 "Отменить очистку":{"en":"Undo","vi":"Hoàn tác","ko":"실행 취소","zh":"撤销","de":"Rückgängig","fr":"Annuler","th":"เลิกทำ","ms":"Buat asal","id":"Urungkan","ar":"تراجع","pt":"Desfazer"},

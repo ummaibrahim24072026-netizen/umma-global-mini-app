@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=34"></script>
+<script src="js/cafe/public-menu-i18n.js?v=35"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=5"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -504,7 +504,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   #checkout #rubleBankLinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   #checkout #rubleBankLinks .bank-link { font-size: 11px; }
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=19"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=22"><link rel="stylesheet" href="css/connect-video-circles.css?v=17"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=20"><link rel="stylesheet" href="css/connect-calls.css?v=2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
@@ -536,16 +536,20 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     <a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
   </div>
 </dialog>
-<dialog id="dishDetails" aria-labelledby="dishTitle">
-  <div class="checkout-header"><h2 id="dishTitle"></h2><form method="dialog"><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
-  <div class="checkout-body" id="dishDetailsBody"></div>
-</dialog>
 <section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="search-toggle" type="button" aria-expanded="false" aria-controls="searchPanel"><span aria-hidden="true">⌕</span> <span data-i18n="Поиск">Поиск</span></button></div></div>
 <div id="searchPanel" class="searchbox" hidden><input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off"><button id="clearSearch" class="plain-btn" type="button" aria-label="Очистить поиск" data-i18n-label="Очистить поиск">×</button></div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
 <footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
+<dialog id="dishDetails" closedby="closerequest" aria-labelledby="dishTitle">
+  <div class="checkout-header">
+    <h2 id="dishTitle"></h2>
+    <form method="dialog"><button class="close" autofocus aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form>
+  </div>
+  <div class="checkout-body" id="dishDetailsBody"></div>
+</dialog>
+<div class="dish-detail-scrim" aria-hidden="true"></div>
 <dialog id="customerOrders" class="customer-section" closedby="closerequest" aria-labelledby="customerOrdersTitle">
   <div class="checkout-header orders-header">
     <div class="orders-heading">
@@ -796,15 +800,23 @@ function card(p,future){const n=name(p),img=safeImage(p);return '<article class=
 function showDish(p, focusSelector){
   const image=safeImage(p);
   const n=name(p);
+  const portion=weight(p);
+  const copy=description(p);
   const future=menuDishes().find(({dish})=>dish===p)?.batch;
   $('dishTitle').textContent=n;
   $('dishDetailsBody').innerHTML=(image?'<img class="dish-detail-photo" src="'+esc(image)+'" alt="">':'')+
-    '<div class="dish-detail-facts"><strong>'+money(p.price_vnd)+'</strong><span>'+esc(weight(p))+'</span></div>'+
-    (description(p)?'<p>'+esc(description(p))+'</p>':'')+stockSummary(p)+
-    ((stockLeft(p)>0||qty(p.id))?'<div class="dish-detail-order">'+cardQuantity(p,n)+'</div>':'')+
+    '<div class="dish-detail-facts"><strong>'+money(p.price_vnd)+'</strong>'+
+      (portion?'<span>'+esc(portion)+'</span>':'')+'</div>'+
+    (copy?'<p class="dish-detail-description">'+esc(copy)+'</p>':'')+
+    '<div class="dish-detail-order">'+stockSummary(p)+
+      ((stockLeft(p)>0||qty(p.id))?cardQuantity(p,n,true):'')+'</div>'+
     (future?preorderCard(future,n):'');
   $('dishDetails').dataset.productId=p.id;
-  if(!$('dishDetails').open)$('dishDetails').showModal();
+  if(!$('dishDetails').open){
+    $('dishDetails').show();
+    $('dishDetails').querySelector('.close').focus({preventScroll:true});
+    syncCustomerNavigation();
+  }
   lock();
   if(focusSelector){
     const restored=$('dishDetailsBody').querySelector(focusSelector+':not(:disabled)');
@@ -812,7 +824,15 @@ function showDish(p, focusSelector){
     target.focus({preventScroll:true});
   }
 }
-function cardQuantity(p,n){const q=qty(p.id);if(p.isPreorder)n+=' · '+batchLabel(p);return (q?'<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+p.id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+p.id+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>':'<button type="button" class="'+(p.isPreorder?'cafe-preorder-action':'cafe-add')+'" data-change="1" data-id="'+p.id+'" aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'">'+(p.isPreorder?esc(t('Предзаказать')):'+')+'</button>');}
+function cardQuantity(p,n,detail=false){
+  const q=qty(p.id), id=esc(p.id);
+  if(p.isPreorder)n+=' · '+batchLabel(p);
+  if(q)return '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+id+'" data-change="1" data-id="'+id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>';
+  const label=p.isPreorder?t('Предзаказать'):detail?t('В корзину'):'+';
+  const accessibleName=detail?'':' aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'"';
+  return '<button type="button" class="'+(p.isPreorder?'cafe-preorder-action':'cafe-add')+
+    '" data-change="1" data-id="'+id+'"'+accessibleName+'>'+esc(label)+'</button>';
+}
 function menuDishes(){
  const batches=new Map(products.filter(p=>p.isPreorder&&visibleDish(p)).map(p=>[p.productId,p]));
  return products.filter(p=>!p.isPreorder&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
@@ -899,9 +919,14 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');
 $('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<span>UMMA · Halal</span>';}},true);
 $('searchToggle').onclick=()=>{const open=$('searchPanel').hidden;$('searchPanel').hidden=!open;$('searchToggle').setAttribute('aria-expanded',String(open));if(open)$('search').focus();else{query='';$('search').value='';renderProducts();}};
 $('search').oninput=e=>{query=e.target.value;renderProducts();};$('clearSearch').onclick=()=>{query='';$('search').value='';renderProducts();$('search').focus();};
-$('dishDetails').addEventListener('close',()=>{
-  const id=$('dishDetails').dataset.productId;
-  if(id&&!$('checkout').open)document.querySelector('.dish-link[data-dish="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
+const dishDetails = $('dishDetails');
+document.querySelector('.dish-detail-scrim').addEventListener('click', () => dishDetails.close());
+dishDetails.addEventListener('close', () => {
+  syncCustomerNavigation();
+  const focus = document.activeElement;
+  if (dishDetails.open || $('cafePage').inert || (focus !== document.body && !dishDetails.contains(focus))) return;
+  const link = $('products').querySelector('.dish-link[data-dish="' + CSS.escape(dishDetails.dataset.productId) + '"]');
+  (link || $('menuHeading')).focus({preventScroll:true});
 });
 const customerDock = $('customerDock');
 const dockMenu = customerDock.querySelector('.dock-menu');
@@ -909,7 +934,7 @@ const dockButtons = [...customerDock.querySelectorAll('button[aria-controls]')];
 const dockSections = dockButtons.map(button => $(button.getAttribute('aria-controls')));
 function syncCustomerNavigation() {
   const active = dockSections.find(section => section.open);
-  $('cafePage').inert = !!active;
+  $('cafePage').inert = !!active || dishDetails.open;
   for (const [index, button] of dockButtons.entries()) {
     button.setAttribute('aria-expanded', String(dockSections[index] === active));
   }
@@ -920,6 +945,7 @@ customerDock.addEventListener('click', event => {
   const trigger = event.target.closest('.dock-menu, button[aria-controls]');
   if (!trigger) return;
   const nextId = trigger.getAttribute('aria-controls');
+  if (dishDetails.open) dishDetails.close();
   for (const section of dockSections) {
     if (section.id !== nextId && section.open) section.close();
   }

@@ -135,7 +135,7 @@
 .public-cafe-menu #cafePage .cafe-product > :is(.cafe-product-top, .cafe-product-bottom) { grid-column: 2; }
 .public-cafe-menu #cafePage .cafe-product > :is(.cafe-availability, .cafe-preorder-card) { grid-column: 1 / -1; }
 .public-cafe-menu #cafePage .cafe-product-bottom { min-height: 44px; }
-.public-cafe-menu #cafePage :is(.cafe-add, .cafe-qty-btn[data-add-product]), #dishDetails .cafe-add { border-radius: 50%; }
+.public-cafe-menu #cafePage :is(.cafe-add, .cafe-qty-btn[data-add-product]) { border-radius: 50%; }
 .public-cafe-menu #cafePage .cafe-card-quantity {
   grid-template-columns: 44px minmax(16px, 1fr) 44px;
   flex: 1 1 100%;
@@ -323,38 +323,128 @@
 }
 #customerChatSettings [role=status]:empty { display: none; }
 .public-cafe-menu #customerProfile .install-row #installApp { min-height: 56px; border-color: #b8d8d6; }
+/* Dish details and their scrim share the space above the existing dock. */
+.public-cafe-menu:has(#dishDetails[open]) { overflow: hidden; }
+.dish-detail-scrim { display: none; }
+#dishDetails[open] + .dish-detail-scrim {
+  position: fixed;
+  inset: 0 0 var(--customer-dock-height, 80px);
+  z-index: 13;
+  display: block;
+  background: #023d3e59;
+}
+.public-cafe-menu #dishDetails[open] {
+  --dish-top: max(10px, env(safe-area-inset-top));
+  --dish-bottom: calc(var(--customer-dock-height, 80px) + 10px);
+  position: fixed;
+  inset: var(--dish-top) 0 var(--dish-bottom);
+  z-index: 14;
+  margin: auto;
+  width: min(460px, calc(100% - 20px));
+  height: fit-content;
+  max-block-size: calc(100dvh - var(--dish-top) - var(--dish-bottom));
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 24px;
+  background: var(--umma-brand-white);
+  box-shadow: 0 20px 64px #023d3e38;
+}
+#dishDetails .checkout-header {
+  padding: 10px 16px;
+  background: var(--umma-brand-white);
+  color: var(--umma-brand-night);
+}
+#dishDetails .checkout-header h2 {
+  font-size: clamp(1.125rem, 4.7vw, 1.5rem);
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+#dishDetails .close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--umma-brand-pale);
+  color: var(--umma-brand-deep);
+}
+#dishDetailsBody {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
 #dishDetailsBody .dish-detail-photo {
   display: block;
   width: 100%;
-  height: min(37dvh, 290px);
+  height: clamp(118px, 31dvh, 280px);
   object-fit: contain;
-  background: white;
+  background: #fff;
+  border: 1px solid #e6efed;
   border-radius: 16px;
 }
-.dish-detail-facts { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-block: 12px; }
-.dish-detail-facts strong { font-size: 1.3rem; color: #8b3406; }
-.dish-detail-facts span { background: #e4f2f0; padding: 5px 10px; border-radius: 20px; }
-.dish-detail-facts span:empty { display: none; }
+.dish-detail-facts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dish-detail-facts strong {
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  color: #76531c;
+  font-variant-numeric: tabular-nums;
+}
+.dish-detail-facts span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--umma-brand-pale);
+  color: var(--umma-brand-deep);
+  font-size: .875rem;
+  font-weight: 650;
+}
+.dish-detail-description {
+  margin: 0;
+  color: var(--umma-brand-text);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.dish-detail-order {
+  display: grid;
+  gap: 8px;
+}
+.dish-detail-order:empty { display: none; }
+.dish-detail-order .cafe-availability { margin: 0; }
 #dishDetails .cafe-card-quantity {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 160px;
   gap: 10px;
+  width: min(100%, 170px);
+  padding: 3px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 16px;
+  background: var(--umma-brand-pale);
 }
-#dishDetails .cafe-qty-btn, #dishDetails :is(.cafe-add,.cafe-preorder-action) { min-width: 44px; min-height: 44px; }
 #dishDetails .cafe-qty-btn, #dishDetails .cafe-preorder-action {
-  border: 1px solid #b8d8d6;
-  border-radius: 11px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 12px;
   background: #fff;
-  color: #00595b;
+  color: var(--umma-brand-deep);
 }
-#dishDetails .cafe-add, #dishDetails [data-change="1"].cafe-qty-btn {
+#dishDetails :is(.cafe-add, [data-change="1"].cafe-qty-btn) {
   border: 0;
   background: var(--umma-action);
-  color: var(--umma-brand-on-primary);
-  font-size: 22px;
+  color: #fff;
 }
+#dishDetails .cafe-add {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 750;
+}
+#dishDetails [data-change="1"].cafe-qty-btn { font-size: 22px; }
 .public-cafe-menu .umma-connect .connect-hero { background: var(--cafe-header); }
 .public-cafe-menu .umma-connect .connect-hero :is(h2, p, .connect-close) { color: var(--umma-brand-on-primary); }
 .public-cafe-menu .umma-connect .connect-hero-icon { width: 42px; height: 42px; object-fit: contain; background: transparent; }
