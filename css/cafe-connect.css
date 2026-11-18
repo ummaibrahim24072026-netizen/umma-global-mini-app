@@ -797,3 +797,240 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
  body.public-cafe-menu #customerChatDialog .connect-hero .connect-close{min-width:69px;padding-inline:8px!important}
  body.public-cafe-menu #customerChatDialog .connect-hero-icon{flex-basis:30px;width:30px!important;height:30px!important}
 }
+
+/* Public chat messages and voice composer. */
+.public-cafe-menu .umma-connect-chat .connect-thread > .connect-chat-bubble {
+  box-sizing:border-box;
+  padding:7px 10px 4px;
+  border:1px solid #dceae6;
+  border-radius:5px 17px 17px;
+  background:#fbfdfc;
+  box-shadow:0 1px 3px #0b333022;
+  color:#173b3b;
+}
+.public-cafe-menu .umma-connect-chat .connect-thread > .connect-chat-bubble[data-direction=customer] {
+  border-color:#b5ded5;
+  border-radius:17px 5px 17px 17px;
+  background:#dcf3ed;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-meta {
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:4px;
+  color:#486765;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-meta small {
+  margin:0;
+  color:inherit;
+  white-space:nowrap;
+  font-size:11px;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble :is(.connect-original-text,.connect-translated-text > button,.connect-message-actions:not([open]) > summary) {
+  color:#486765;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-receipt[data-read=true] {
+  color:#007578;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-actions {
+  margin:0;
+  align-self:center;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-action-list {
+  position:absolute;
+  z-index:1;
+  inset-inline-end:0;
+  bottom:100%;
+  border:1px solid #d4e6e2;
+  border-radius:13px;
+  box-shadow:0 6px 20px #123e3e25;
+  background:#fff;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble:not([data-direction=customer]) .connect-message-action-list {
+  inset-inline:0 auto;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble:not([data-direction=customer]) .connect-message-actions[open] {
+  position:static;
+  z-index:auto;
+}
+.public-cafe-menu .umma-connect-chat .connect-chat-bubble:has(.connect-message-actions[open]) {z-index:5}
+.public-cafe-menu .umma-connect-chat .connect-thread > .connect-chat-voice {
+  width:min(100%,338px);
+}
+.connect-public-voice {
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 39px;
+  grid-template-rows:44px auto;
+  align-items:center;
+  gap:0 5px;
+}
+.connect-public-voice:has(.connect-voice-avatar) {
+  grid-template-columns:36px 44px minmax(0,1fr) 39px;
+}
+.connect-voice-avatar {
+  grid-row:1;
+  box-sizing:border-box;
+  width:34px;
+  height:34px;
+  padding:1px;
+  border:1px solid #c69d53;
+  border-radius:50%;
+}
+.connect-voice-avatar img {
+  display:block;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  object-fit:cover;
+}
+.umma-connect-chat .connect-public-voice :is(.connect-voice-play,.connect-voice-speed) {
+  display:grid;
+  place-items:center;
+  min-width:0;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-radius:999px;
+  box-shadow:none;
+}
+.umma-connect-chat .connect-public-voice .connect-voice-play {
+  width:44px;
+  background:#096f72;
+  color:#fff;
+  font-size:16px;
+}
+.umma-connect-chat .connect-public-voice .connect-voice-speed {
+  width:39px;
+  min-height:32px;
+  background:#c7e9e1;
+  color:#165d5c;
+  font-size:12px;
+}
+.connect-voice-track {
+  position:relative;
+  display:grid;
+  align-items:center;
+  min-width:0;
+  height:44px;
+}
+.connect-voice-bars,.connect-record-wave {
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(0,1fr);
+  align-items:center;
+  justify-items:center;
+  gap:1px;
+}
+.connect-voice-bars span {
+  width:min(100%,3px);
+  height:calc(3px + var(--level,0) * 24px);
+  border-radius:9px;
+  background:#81a9a4;
+}
+.connect-voice-bars .is-played {background:#097c80}
+.connect-voice-position {
+  position:absolute;
+  inset-inline-start:clamp(4px,var(--position,0%),calc(100% - 4px));
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#8d6828;
+  pointer-events:none;
+}
+.umma-connect-chat .connect-public-voice .connect-voice-seek {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  margin:0;
+  opacity:0;
+  cursor:pointer;
+}
+.connect-voice-track:focus-within {
+  outline:2px solid #af8537;
+  border-radius:6px;
+}
+.umma-connect-chat .connect-public-voice .connect-voice-duration {
+  grid-column:2;
+  grid-row:2;
+  margin:0;
+  color:#486765;
+  font-variant-numeric:tabular-nums;
+}
+.connect-public-voice:has(.connect-voice-avatar) .connect-voice-duration {grid-column:3}
+.connect-public-voice .connect-message-meta {
+  grid-column:2 / -1;
+  grid-row:2;
+  justify-self:end;
+}
+.umma-connect-chat .connect-chat-bubble .connect-translated-text > button {
+  min-height:24px;
+  box-shadow:none;
+}
+.umma-connect-chat .connect-public-voice .connect-voice-error {
+  grid-column:1 / -1;
+  grid-row:3;
+  color:#972f3b;
+  background:transparent;
+}
+.public-cafe-menu .umma-connect-chat .connect-compose-voice .connect-entry {
+  display:none;
+}
+.umma-connect-chat .connect-record-panel:not([hidden]) {
+  grid-area:3 / 1 / 4 / -1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:10px 4px 4px;
+  color:#184d4d;
+}
+.connect-record-main:not([hidden]) {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+}
+.umma-connect-chat .connect-record-main .connect-record-time::before {display:none}
+.umma-connect-chat .connect-record-main .connect-record-wave {
+  display:grid;
+  max-width:none;
+  height:38px;
+  color:#097c80;
+}
+.umma-connect-chat .connect-record-main .connect-record-wave span {width:min(100%,3px)}
+.connect-record-main button[hidden] {display:none}
+.connect-record-preview:empty {display:none}
+.umma-connect-chat .connect-record-preview .connect-draft-thumbnail {width:100%}
+.connect-record-actions {
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 44px;
+  align-items:center;
+  gap:8px;
+}
+.umma-connect-chat .connect-record-panel :is(.connect-record-delete,.connect-record-send) {
+  display:grid;
+  place-items:center;
+  width:44px;
+  padding:0;
+  border-radius:50%;
+}
+.umma-connect-chat .connect-record-panel .connect-record-delete {
+  color:#9f3847;
+  background:#f9e8e9;
+  border-color:#efd5da;
+}
+.umma-connect-chat .connect-record-panel .connect-record-send {
+  grid-column:3;
+  color:#fff;
+  background:#096f72;
+  border-color:#096f72;
+}
+.umma-connect-chat .connect-record-panel .connect-record-pause {
+  border-radius:999px;
+}
+.connect-record-pause[hidden] {display:none}
+@media(prefers-reduced-motion:reduce) {
+  .umma-connect-chat .connect-record-wave span {transition:none}
+}

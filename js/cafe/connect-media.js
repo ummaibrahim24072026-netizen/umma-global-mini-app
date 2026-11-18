@@ -87,6 +87,149 @@
   speed.onclick=()=>{const speeds=[1,1.5,2];const next=speeds[(speeds.indexOf(audio.playbackRate)+1)%speeds.length];audio.playbackRate=next;speed.textContent=next+'×';};
   return wrapper;
  }
+ let activeVoice;
+ function formatVoiceTime(seconds){
+  const value=Math.max(0,Math.floor(seconds));
+  return Math.floor(value/60)+':'+String(value%60).padStart(2,'0');
+ }
+ function publicVoice(load,errorText,{lang,avatar,levels=[],duration=0}){
+  const words=({
+   ru:['Воспроизвести','Пауза','Перемотать запись','Скорость воспроизведения'],
+   vi:['Phát','Tạm dừng','Tua tin nhắn thoại','Tốc độ phát']
+  })[lang]||['Play','Pause','Seek voice message','Playback speed'];
+  const node=(tag,className)=>Object.assign(document.createElement(tag),{className});
+  const button=(className,label,value)=>{
+   const control=node('button',className);
+   control.type='button';control.textContent=value;control.setAttribute('aria-label',label);
+   return control;
+  };
+  const wrapper=node('div','connect-public-voice');
+  const play=button('connect-voice-play',words[0],'▶');
+  const track=node('div','connect-voice-track');
+  const bars=node('div','connect-voice-bars');
+  bars.setAttribute('aria-hidden','true');
+  const columns=Array.from({length:40},()=>node('span',''));
+  bars.append(...columns);
+  const seek=node('input','connect-voice-seek');
+  seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.disabled=true;
+  seek.setAttribute('aria-label',words[2]);
+  const thumb=node('span','connect-voice-position');
+  thumb.setAttribute('aria-hidden','true');
+  track.append(bars,thumb,seek);
+  const time=node('small','connect-voice-duration');
+  const speed=button('connect-voice-speed',words[3],'1×');
+  const status=node('small','connect-voice-error');
+  status.setAttribute('role','status');
+  const audio=node('audio','');
+  audio.preload='metadata';
+  wrapper.append(play,track,speed,time,status,audio);
+  if(avatar){
+   const badge=node('span','connect-voice-avatar');
+   const image=node('img','');
+   image.src=avatar;image.alt='';
+   badge.append(image);
+   wrapper.prepend(badge);
+  }
+  let loading,url,decoding,pendingSeek;
+  function draw(samples){
+   columns.forEach((column,index)=>{
+    const start=Math.floor(index*samples.length/columns.length);
+    const end=Math.max(start+1,Math.floor((index+1)*samples.length/columns.length));
+    let peak=0;
+    for(let i=start;i<end;i++)peak=Math.max(peak,samples[i]||0);
+    column.style.setProperty('--level',String(peak));
+   });
+  }
+  draw(levels);
+  function update(){
+   const length=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:duration;
+   if(pendingSeek!==undefined&&length&&audio.readyState>=1){
+    try{audio.currentTime=length*pendingSeek;pendingSeek=undefined;}catch{}
+   }
+   seek.disabled=!length||audio.readyState<1;
+   const fraction=pendingSeek??(length?Math.min(1,audio.currentTime/length):0);
+   seek.value=String(Math.round(fraction*1000));
+   thumb.style.setProperty('--position',fraction*100+'%');
+   columns.forEach((column,i)=>column.classList.toggle('is-played',(i+.5)/columns.length<=fraction));
+   time.textContent=length?formatVoiceTime(!audio.paused||audio.currentTime>0?audio.currentTime:length):'–:––';
+  }
+  async function decode(source){
+   const AudioContext=window.AudioContext||window.webkitAudioContext;
+   if(!AudioContext)return;
+   let context;
+   try{
+    const response=await fetch(source,{signal:AbortSignal.timeout(15000)});
+    if(!response.ok||!wrapper.isConnected)return;
+    const bytes=await response.arrayBuffer();
+    context=new AudioContext();
+    const buffer=await context.decodeAudioData(bytes);
+    if(!wrapper.isConnected)return;
+    const peaks=new Array(80).fill(0);
+    for(let channel=0;channel<buffer.numberOfChannels;channel++){
+     const samples=buffer.getChannelData(channel);
+     for(let index=0;index<samples.length;index+=4){
+      const bin=Math.floor(index/samples.length*peaks.length);
+      peaks[bin]=Math.max(peaks[bin],Math.abs(samples[index]));
+     }
+    }
+    const max=Math.max(.12,...peaks);
+    draw(peaks.map(peak=>Math.sqrt(peak/max)));
+    duration=buffer.duration;
+    update();
+   }catch{}finally{
+    if(context)void context.close().catch(()=>{});
+   }
+  }
+  function prepare(){
+   if(url)return Promise.resolve(true);
+   if(loading)return loading;
+   loading=(async()=>{
+    try{
+     const source=await load();
+     if(!wrapper.isConnected)return false;
+     url=source;
+     audio.src=source;
+     status.textContent='';
+     if(!levels.length&&decoding!==source){decoding=source;void decode(source);}
+     return true;
+    }catch{status.textContent=errorText;return false;}
+    finally{loading=null;}
+   })();
+   return loading;
+  }
+  play.onclick=async()=>{
+   if(!(await prepare()))return;
+   try{if(audio.paused)await audio.play();else audio.pause();}
+   catch{status.textContent=errorText;}
+  };
+  for(const event of ['loadedmetadata','durationchange','timeupdate'])audio.addEventListener(event,update);
+  audio.addEventListener('play',()=>{
+   if(activeVoice&&activeVoice!==audio)activeVoice.pause();
+   activeVoice=audio;
+   play.textContent='Ⅱ';play.setAttribute('aria-label',words[1]);update();
+  });
+  audio.addEventListener('pause',()=>{
+   if(activeVoice===audio)activeVoice=null;
+   play.textContent='▶';play.setAttribute('aria-label',words[0]);update();
+  });
+  audio.addEventListener('ended',()=>{audio.currentTime=0;update();});
+  audio.addEventListener('error',()=>{url=null;status.textContent=errorText;});
+  seek.oninput=()=>{pendingSeek=Number(seek.value)/1000;update();};
+  speed.onclick=()=>{
+   const speeds=[1,1.5,2];
+   audio.playbackRate=speeds[(speeds.indexOf(audio.playbackRate)+1)%speeds.length];
+   speed.textContent=audio.playbackRate+'×';
+  };
+  update();
+  if(window.IntersectionObserver){
+   const observer=new IntersectionObserver(entries=>{
+    if(!entries.some(entry=>entry.isIntersecting))return;
+    observer.disconnect();void prepare();
+   });
+   observer.observe(wrapper);
+  }
+  return wrapper;
+ }
  function inlineAttachment(kind,label,load,errorText){
   if(kind==='voice')return voiceBubble(load,errorText);
   if(kind!=='photo'&&kind!=='video')return attachment(kind,label,load,errorText);
@@ -411,7 +554,7 @@
    const row=rows.get(message.id)||create(message);
    row.dataset.connectMessage=message.id;
    const read=row.querySelector('.connect-receipt');
-   if(read)read.textContent=receipt(message);
+   if(read)read.textContent=receipt(message,row);
    if(list.children[index]!==row)list.insertBefore(row,list.children[index]||null);
    rows.delete(message.id);
   });
@@ -420,5 +563,5 @@
    row.remove();
   }
  }
- window.ummaConnectMedia={player,attachment,inlineAttachment,inlineAlbum,albumFiles,releaseAlbums,videoCircle,translatedText,render,language,voiceTranslation,upload};
+ window.ummaConnectMedia={player,attachment,publicVoice,formatVoiceTime,inlineAttachment,inlineAlbum,albumFiles,releaseAlbums,videoCircle,translatedText,render,language,voiceTranslation,upload};
 })();

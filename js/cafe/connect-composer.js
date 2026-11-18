@@ -17,6 +17,11 @@
   en:['Attach photo or video','Take photo','Record video','Cancel recording'],
   vi:['Đính kèm ảnh hoặc video','Chụp ảnh','Quay video','Hủy ghi âm']
  };
+ const voiceActions={
+  ru:['Пауза','Продолжить','Прослушать','Отправить голосовое','Удалить запись'],
+  en:['Pause','Resume','Preview','Send voice message','Delete recording'],
+  vi:['Tạm dừng','Tiếp tục','Nghe thử','Gửi tin nhắn thoại','Xóa bản ghi']
+ };
  const cameraCopy={
   ru:['Отмена','Выбрать из галереи','Открываем камеру…','Камера недоступна. Разрешите доступ к камере или выберите фото из галереи.','Не удалось сделать снимок. Попробуйте ещё раз.'],
   en:['Cancel','Choose from gallery','Opening camera…','Camera unavailable. Allow camera access or choose a photo from the gallery.','Could not take the photo. Try again.'],
@@ -56,7 +61,8 @@
  const icons={
   clip:'M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8-8',
   mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v4 M9 23h6',
-  stop:'M6 6h12v12H6z',
+  trash:'M3 6h18M9 6V3h6v3M5 6l1 14h12l1-14M10 10v6m4-6v6',
+  send:'M3 3l18 9-18 9 3-9-3-9zm3 9h15',
   gallery:'M3 7V3h15m-8 9h.01M7 8h14v13H7z M7 18l4-4 3 3 2-2 5 5',
   video:'M3 6h13v12H3z M16 10l5-3v10l-5-3',
   flash:'M13 2L4 14h7l-1 8 10-12h-7l1-8z',
@@ -79,10 +85,10 @@
    control.title=label;
   }
  }
- function showWaveform(stream,bars){
+ function showWaveform(stream,bars,session){
   for(const bar of bars)bar.style.removeProperty('height');
   const AudioContext=window.AudioContext||window.webkitAudioContext;
-  if(!AudioContext||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  if(!AudioContext)return;
   let context,timer;
   const stop=()=>{
    clearInterval(timer);
@@ -98,13 +104,14 @@
    const levels=bars.map(()=>0);
    void context.resume().catch(()=>{});
    timer=setInterval(()=>{
-    if(context.state!=='running')return;
+    if(context.state!=='running'||session.recorder.state!=='recording')return;
     analyser.getByteTimeDomainData(samples);
     let energy=0;
     for(const sample of samples)energy+=((sample-128)/128)**2;
     const level=Math.sqrt(energy/samples.length);
     levels.shift();
     levels.push(Math.min(1,level*4));
+    session.levels.push(levels.at(-1));
     bars.forEach((bar,index)=>{bar.style.height=Math.round(3+levels[index]*23)+'px';});
    },70);
    return stop;
@@ -114,6 +121,7 @@
  }
  window.ummaConnectComposer=({lang,el,form,body,send,status,onChange,kinds=['photo','video'],compact=false,onInstantVideo=null,albums=false})=>{
   const labels=copy[lang]||copy.en, compactLabels=compactCopy[lang]||compactCopy.en;
+  const actionsCopy=voiceActions[lang]||voiceActions.en;
   const bar=el('div',null,'connect-media-tools'),preview=el('div',null,'connect-media-preview');
   let drafts=[],recording=null,generation=0,starting=false,working=false;
   const pickers=[];
@@ -128,6 +136,7 @@
   let cameraSession=null,cameraPanel,cameraPreview,cameraTimer,shutter,flipCamera,torch,cancelCamera;
   const modeButtons=new Map();
   const cameraModes=({ru:['Видео','Фото','Видеозаметка','Фонарик'],vi:['Video','Ảnh','Tin nhắn video','Đèn pin']})[lang]||['Video','Photo','Video note','Torch'];let circleFacing='user';
+  let recordMain,recordDelete,recordPause,recordListen,recordSend,recordPreview;
   let attach,expression,camera,expressionPanel,recordPanel,elapsed,waveBars,circleButton,circlePanel,circlePreview,circleTimer,circleSession=null,circleStop,circleSend,circleCancel,circleRing;
   function showExpressions(open){
    if(!expression)return;
@@ -163,10 +172,21 @@
      showAttachments(false);
      showExpressions(false);
     }
-    send.hidden=active||!canSend;
-    mic.hidden=!!cameraSession||(!active&&canSend);
-    recordPanel.hidden=!recording;
-    iconButton(mic,recording?'stop':'mic',micLabel);
+    const hasVoiceDraft=drafts[0]?.kind==='voice';
+    const voicePanel=!!recording||hasVoiceDraft;
+    const paused=recording?.recorder.state==='paused';
+    form.classList.toggle('connect-compose-voice',voicePanel);
+    send.hidden=active||!canSend||voicePanel;
+    mic.hidden=voicePanel||!!cameraSession||(!active&&canSend);
+    recordPanel.hidden=!voicePanel;
+    recordMain.hidden=!recording;
+    recordPause.hidden=!recording;
+    recordPause.textContent=paused?'▶  '+actionsCopy[1]:'Ⅱ  '+actionsCopy[0];
+    recordListen.hidden=!paused;
+    recordDelete.disabled=recordPause.disabled=recordListen.disabled=recordSend.disabled=working||!!recording?.stopping;
+    recordDelete.setAttribute('aria-label',recording?compactLabels[3]:actionsCopy[4]);
+    recordSend.setAttribute('aria-busy',String(working));
+    iconButton(mic,'mic',labels[2]);
    }else mic.textContent=micLabel;
   }
   function sizeError(kind){return labels[9]+' '+limits[kind]+' MB.';}
@@ -175,14 +195,20 @@
    onChange();
    preview.style.display=drafts.length>1?'grid':'';
    preview.style.gridTemplateColumns=drafts.length>1?'repeat(2,minmax(0,1fr))':'';
-   preview.replaceChildren(...drafts.map(item=>item.thumbnail));
+   const voiceDraft=compact&&drafts[0]?.kind==='voice';
+   if(recordPreview)recordPreview.replaceChildren(...(voiceDraft?[drafts[0].thumbnail]:[]));
+   preview.replaceChildren(...(voiceDraft?[]:drafts.map(item=>item.thumbnail)));
    controls();
   }
   function clearDrafts(){
-   for(const item of drafts)URL.revokeObjectURL(item.url);
+   for(const item of drafts){
+    const audio=item.kind==='voice'&&item.thumbnail.querySelector('audio');
+    if(audio&&!audio.paused)audio.pause();
+    URL.revokeObjectURL(item.url);
+   }
    drafts=[];
   }
-  function addDrafts(items){
+  function addDrafts(items,voiceDetails){
    const batch=albums&&items[0].kind!=='voice'&&drafts[0]?.kind!=='voice';
    const existing=batch?drafts:[];
    const combined=[...existing,...items];
@@ -196,13 +222,15 @@
     const thumbnail=el('div',null,'connect-draft-thumbnail');
     Object.assign(thumbnail.style,{position:'relative',display:'inline-block',maxWidth:'100%',verticalAlign:'top'});
     const item={file,kind,url,thumbnail};
-    thumbnail.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),removeButton(item));
+    if(compact&&kind==='voice'){
+     thumbnail.append(window.ummaConnectMedia.publicVoice(()=>url,labels[10],{lang,...voiceDetails}));
+    }else thumbnail.append(window.ummaConnectMedia.player(kind,url,labels[kind==='photo'?0:kind==='video'?1:2]),removeButton(item));
     drafts.push(item);
    }
    status.textContent='';
    renderDrafts();
   }
-  function setDraft(file,kind){addDrafts([{file,kind}]);}
+  function setDraft(file,kind,voiceDetails){addDrafts([{file,kind}],voiceDetails);}
   function addPicker(kind,label){
    const input=el('input');
    input.type='file';
@@ -542,16 +570,46 @@
    }
   }
   function release(r){
+   if(r.released)return;
+   r.released=true;
    clearTimeout(r.timer);
    clearInterval(r.clock);
    r.stopWaveform?.();
    r.stopWaveform=null;
    r.stream.getTracks().forEach(track=>track.stop());
   }
-  function stop(r,discard=false){
-   r.discard=r.discard||discard;
+  function voiceDuration(r){
+   return Math.min(60000,r.elapsed+(r.started===null?0:performance.now()-r.started));
+  }
+  function setVoiceTimer(r){
+   clearTimeout(r.timer);
+   r.timer=setTimeout(()=>stop(r),60000-r.elapsed);
+  }
+  function stop(r,discard=false,sendNow=false){
+   r.discard ||= discard;
+   if(r.stopping)return;
+   r.elapsed=voiceDuration(r);
+   r.started=null;
+   r.stopping=true;
+   r.sendNow=sendNow;
    if(r.recorder.state!=='inactive')r.recorder.stop();
    release(r);
+   if(compact)controls();
+  }
+  function toggleVoicePause(){
+   const r=recording;
+   if(!r||r.stopping)return;
+   if(r.recorder.state==='recording'){
+    r.recorder.pause();
+    r.elapsed=voiceDuration(r);
+    r.started=null;
+    clearTimeout(r.timer);
+   }else if(r.recorder.state==='paused'){
+    r.recorder.resume();
+    r.started=performance.now();
+    setVoiceTimer(r);
+   }
+   controls();
   }
   async function record(){
    if(recording){stop(recording);return;}
@@ -567,40 +625,46 @@
     stream=await navigator.mediaDevices.getUserMedia({audio:true});
     if(current!==generation){stream.getTracks().forEach(track=>track.stop());return;}
     const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks=[];
-    const r={recorder,stream,timer:null,discard:false};
+    const r={recorder,stream,elapsed:0,started:null,levels:[]};
     recording=r;
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
     recorder.onerror=()=>{status.textContent=labels[7];stop(r,true);};
     recorder.onstop=()=>{
      release(r);
      if(recording!==r)return;
+     const duration=voiceDuration(r)/1000;
      recording=null;
      controls();
-     if(r.discard)return;
+     if(r.discard){if(compact)mic.focus();return;}
      const type=(recorder.mimeType||mime).split(';')[0];
      const audio=new Blob(chunks,{type});
      if(!audio.size||!formats.voice.includes(type)){status.textContent=labels[10];return;}
      if(audio.size>limits.voice*1024*1024){status.textContent=sizeError('voice');return;}
-     setDraft(audio,'voice');
-     status.textContent=labels[8];
+     setDraft(audio,'voice',{duration,levels:r.levels});
+     if(r.sendNow)form.requestSubmit();
+     else if(compact)recordPreview.querySelector('button')?.focus();
+     else status.textContent=labels[8];
     };
     recorder.start();
-    r.timer=setTimeout(()=>stop(r),60000);
+    r.started=performance.now();
+    setVoiceTimer(r);
     if(compact){
-     const started=performance.now();
      elapsed.textContent='0:00';
-     r.stopWaveform=showWaveform(stream,waveBars);
+     r.stopWaveform=showWaveform(stream,waveBars,r);
      r.clock=setInterval(()=>{
-      const seconds=Math.min(60,Math.floor((performance.now()-started)/1000));
-      elapsed.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+      elapsed.textContent=window.ummaConnectMedia.formatVoiceTime(voiceDuration(r)/1000);
      },250);
-    }
-    status.textContent=labels[5];
+     status.textContent='';
+    }else status.textContent=labels[5];
    }catch{
     stream?.getTracks().forEach(track=>track.stop());
     if(current===generation){recording=null;status.textContent=labels[7];}
    }finally{
-    if(current===generation){starting=false;controls();}
+    if(current===generation){
+     starting=false;
+     controls();
+     if(compact&&recording)recordPause.focus();
+    }
    }
   }
 
@@ -880,14 +944,33 @@
    mic.className='primary connect-mic';
    elapsed=el('span','0:00','connect-record-time');
    recordPanel=el('div',null,'connect-record-panel');
+   recordMain=el('div',null,'connect-record-main');
    const waveform=el('div',null,'connect-record-wave');
    waveform.setAttribute('aria-hidden','true');
-   waveBars=Array.from({length:22},()=>el('span'));
+   waveBars=Array.from({length:38},()=>el('span'));
    waveform.append(...waveBars);
-   recordPanel.append(elapsed,waveform,button(compactLabels[3],()=>{
+   recordListen=button(actionsCopy[2],()=>stop(recording));
+   recordMain.append(elapsed,waveform,recordListen);
+   recordPreview=el('div',null,'connect-record-preview');
+   const voiceControls=el('div',null,'connect-record-actions');
+   const discardVoice=()=>{
     if(recording)stop(recording,true);
+    else{clearDrafts();renderDrafts();mic.focus();}
     status.textContent='';
-   }));
+   };
+   recordDelete=button(null,discardVoice);
+   recordDelete.className='connect-record-delete';
+   iconButton(recordDelete,'trash',compactLabels[3]);
+   recordPause=button(null,toggleVoicePause);
+   recordPause.className='connect-record-pause';
+   recordSend=button(null,()=>{
+    if(recording)stop(recording,false,true);
+    else form.requestSubmit();
+   });
+   recordSend.className='connect-record-send';
+   iconButton(recordSend,'send',actionsCopy[3]);
+   voiceControls.append(recordDelete,recordPause,recordSend);
+   recordPanel.append(recordMain,recordPreview,voiceControls);
    const entry=el('div',null,'connect-entry');
    entry.append(expression,body,attach,circleButton||camera);
    if(circleButton)form.prepend(circlePanel);
@@ -912,6 +995,11 @@
      return;
     }
     if(event.key!=='Escape')return;
+    if(!recordPanel.hidden&&!recordDelete.disabled){
+     event.preventDefault();
+     discardVoice();
+     return;
+    }
     if(cameraSession){
      event.preventDefault();
      closeCamera();
@@ -946,7 +1034,7 @@
     generation++;
     starting=false;
     if(recording){stop(recording,true);recording=null;}
-    for(const media of preview.querySelectorAll('audio,video'))media.pause();
+    for(const media of form.querySelectorAll('.connect-media-preview audio,.connect-media-preview video,.connect-record-preview audio'))media.pause();
     controls();
    },
    error(code,kind){return code==='MEDIA_SIZE'?sizeError(kind):code==='MEDIA_FORMAT'?labels[10]:labels[11];}

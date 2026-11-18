@@ -270,6 +270,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(w.location.search,'');
  assert.equal(w.sessionStorage.getItem('umma:chat:open'),'1');
  assert.match(row.textContent,/Hello/);
+ assert.ok(row.classList.contains('connect-chat-bubble'));
  assert.equal(translations,0);
  const draft=dialog.querySelector('textarea');
  draft.value='Черновик';
@@ -337,6 +338,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   mimeType='audio/webm';
   state='inactive';
   start(){this.state='recording';}
+  pause(){this.state='paused';}
+  resume(){this.state='recording';}
   stop(){
    this.state='inactive';
    this.ondataavailable({data:new Blob([Uint8Array.of(26,69,223,163)])});
@@ -486,7 +489,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  guest.navigator.mediaDevices.getUserMedia=originalMedia;
  mic.click();
  await tick();
- assert.equal(mic.getAttribute('aria-label'),'Остановить запись');
+ assert.equal(mic.hidden,true);
  const recorder=form.querySelector('.connect-record-panel');
  assert.equal(recorder.hidden,false);
  const waveform=recorder.querySelector('.connect-record-wave');
@@ -494,7 +497,17 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await new Promise(resolve=>setTimeout(resolve,160));
  assert.ok(parseInt(waveform.lastElementChild.style.height)>3);
  assert.equal(waveform.firstElementChild.style.height,'3px');
- recorder.querySelector('button').click();
+ const pause=recorder.querySelector('.connect-record-pause');
+ const discard=recorder.querySelector('.connect-record-delete');
+ const sendVoice=recorder.querySelector('.connect-record-send');
+ const listen=[...recorder.querySelectorAll('button')].find(button=>button.textContent==='Прослушать');
+ pause.click();
+ assert.match(pause.textContent,/Продолжить/);
+ assert.equal(listen.hidden,false);
+ pause.click();
+ assert.match(pause.textContent,/Пауза/);
+ assert.equal(listen.hidden,true);
+ discard.click();
  await tick();
  assert.equal(recorder.hidden,true);
  assert.equal(contexts[0].state,'closed');
@@ -502,26 +515,31 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(writes.length,0);
  mic.click();
  await tick();
- mic.click();
+ pause.click();
+ listen.click();
  await tick();
  assert.ok(tracks.length);
  assert.equal(contexts[1].state,'closed');
- assert.ok(guest.document.querySelector('.connect-media-preview audio'));
+ assert.ok(form.querySelector('.connect-record-preview audio'));
  assert.equal(writes.length,0);
- assert.equal(send.hidden,false);
+ assert.equal(sendVoice.disabled,false);
+ assert.equal(send.hidden,true);
  body.value='Голос';
- const submit=()=>form.dispatchEvent(new guest.Event('submit',{cancelable:true}));
- submit();
+ sendVoice.click();
  await tick();
- assert.ok(guest.document.querySelector('.connect-media-preview audio'));
- submit();
+ assert.ok(form.querySelector('.connect-record-preview audio'));
+ sendVoice.click();
  await tick();
  assert.equal(writes[0].headers['X-Umma-Request'],writes[1].headers['X-Umma-Request']);
  assert.equal(writes[1].headers['X-Umma-Token'],credential);
  assert.equal(writes[1].headers['Content-Type'],'audio/webm');
  assert.ok((await writes[1].body.text()).startsWith('"Голос"\n'));
- assert.equal(guest.document.querySelector('.connect-media-preview audio'),null);
- assert.match(guest.document.querySelector('.connect-thread').textContent,/Прослушать голосовое/);
+ assert.equal(form.querySelector('.connect-record-preview audio'),null);
+ const submit=()=>form.dispatchEvent(new guest.Event('submit',{cancelable:true}));
+ const voice=guest.document.querySelector('.connect-chat-voice');
+ assert.ok(voice.querySelector('.connect-public-voice .connect-voice-play'));
+ assert.equal(voice.querySelector('.connect-receipt').textContent,'✓');
+ assert.equal(voice.querySelector('.connect-receipt').getAttribute('aria-label'),'Отправлено');
  for(const [i,type,element] of [[0,'image/jpeg','img'],[1,'video/mp4','video']]){
   const input=bar.querySelectorAll('input')[i];
   const file=new Blob(['synthetic attachment'],{type});
@@ -692,7 +710,9 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.document.querySelector('[data-client-thread]').click();
  await tick();
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
- [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='Прослушать голосовое').click();
+ staff.HTMLMediaElement.prototype.load=function(){};
+ staff.HTMLMediaElement.prototype.play=async function(){};
+ staff.document.querySelector('.connect-voice-bubble button[aria-label^="Воспроизвести"]').click();
  await tick();
  [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='🌐 Перевести голос').click();
  await tick();

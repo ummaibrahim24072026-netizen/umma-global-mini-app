@@ -160,7 +160,7 @@ async function forwardMessage(m){
  if(navigator.share)await navigator.share({text});
  else if(navigator.clipboard){await navigator.clipboard.writeText(text);alert('Текст скопирован');}
 }
-function messageMenu(li,m){
+function messageMenu(li,m,compact=false){
  const ru=lang()==='ru';
  const labels={ru:['Копировать','Переслать','Удалить у себя','Удалить у всех'],en:['Copy','Forward','Delete for me','Delete for everyone'],vi:['Sao chép','Chuyển tiếp','Xóa phía tôi','Xóa với mọi người']};
  const l=labels[lang()]||labels.en;
@@ -168,6 +168,8 @@ function messageMenu(li,m){
  const summary=el('summary','⋯');
  summary.setAttribute('aria-label',ru?'Действия с сообщением':'Message actions');
  menu.append(summary);
+ const actions=compact?el('div',null,'connect-message-action-list'):menu;
+ if(compact)menu.append(actions);
  const forwardIcon='M14 4l7 7-7 7v-4h-3c-3.5 0-6 1.5-8 4.5.5-6.5 4-10.5 11-10.5z';
  const deleteIcon='M3 6h18M9 6V4h6v2M5 6l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M10 10v7m4-7v7';
  const add=(icon,label,action,danger=false)=>{
@@ -193,7 +195,7 @@ function messageMenu(li,m){
    try{await action();}
    catch(error){if(error?.name!=='AbortError')alert(error?.message||'Не удалось выполнить действие');}
   };
-  menu.append(button);
+  actions.append(button);
  };
  if(m.body&&m.body!=='◉ Видеосообщение')add({text:'▤'},l[0],async()=>navigator.clipboard.writeText(m.body));
  add({path:forwardIcon},l[1],()=>forwardMessage(m));
@@ -209,7 +211,9 @@ function renderThread(){
  if(!list)return;
  const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
  const receipt=receiptCopy[lang()]||receiptCopy.en;
- const dateTime=new Intl.DateTimeFormat(document.documentElement.lang||'en',{dateStyle:'short',timeStyle:'short'});
+ const locale=document.documentElement.lang||'en';
+ const dateTime=new Intl.DateTimeFormat(locale,{dateStyle:'short',timeStyle:'short'});
+ const clock=new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit'});
  const media=mediaCopy[lang()]||mediaCopy.en;
  const target=window.ummaConnectMedia.language(lang());
  window.ummaConnectMedia.render(list,(state?.messages||[]).filter(m=>!hiddenMessages.has(m.id)),m=>{
@@ -217,7 +221,11 @@ function renderThread(){
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
   li.dataset.createdAt=m.created_at||'';
-  if(!publicChat||!outgoing)li.append(el('strong',outgoing?t(18):m.title||t(19)));
+  const voice=publicChat&&m.media_kind==='voice';
+  const bubble=publicChat&&((m.body&&!m.media_kind)||voice);
+  if(bubble)li.classList.add('connect-chat-bubble');
+  if(voice)li.classList.add('connect-chat-voice');
+  if(!publicChat||(!outgoing&&!voice))li.append(el('strong',outgoing?t(18):m.title||t(19)));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body){
    const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
@@ -225,11 +233,14 @@ function renderThread(){
    li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(
     m.body,target,load,publicChat?translateLabel:undefined,publicChat?{loading,error}:undefined));
   }
+  let voicePlayer;
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
-   li.append(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.media_kind==='video'&&m.body==='◉ Видеосообщение'
+   const avatar=outgoing?document.querySelector('#topbarAvatar:not([hidden])')?.src:'logo/assets/umma-icon-192.png';
+   if(voice)voicePlayer=window.ummaConnectMedia.publicVoice(load,media.error,{lang:lang(),avatar});
+   li.append(voicePlayer||(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.media_kind==='video'&&m.body==='◉ Видеосообщение'
     ?window.ummaConnectMedia.videoCircle(load,media.error)
-    :window.ummaConnectMedia.inlineAttachment(m.media_kind,media[m.media_kind],load,media.error));
+    :window.ummaConnectMedia.inlineAttachment(m.media_kind,media[m.media_kind],load,media.error)));
   }
   if(!outgoing&&m.media_kind==='voice'&&typeof state.voiceTranslation==='boolean'){
    li.append(window.ummaConnectMedia.voiceTranslation(lang(),target,
@@ -237,13 +248,25 @@ function renderThread(){
   }
   const timestamp=Number.isFinite(Date.parse(m.created_at))?dateTime.format(new Date(m.created_at)):'';
   const meta=publicChat?el('div',null,'connect-message-meta'):li;
-  meta.append(el('small',timestamp));
+  const time=el('small',bubble&&timestamp?clock.format(new Date(m.created_at)):timestamp);
+  time.title=timestamp;
+  meta.append(time);
   if(outgoing)meta.append(el('small',null,'connect-receipt'));
-  if(publicChat)li.append(meta);
-  if(publicChat)messageMenu(li,m);
+  if(publicChat)(voicePlayer||li).append(meta);
+  if(publicChat)messageMenu(bubble?meta:li,m,bubble);
   return li;
- },m=>{
-  if(publicChat)return m.read_at?'✓✓ '+receipt[1]:'✓ '+receipt[0];
+ },(m,row)=>{
+  if(publicChat){
+   const marker=row.querySelector('.connect-receipt');
+   const label=m.read_at?receipt[1]:receipt[0];
+   if(marker){
+    marker.title=label;
+    marker.setAttribute('aria-label',label);
+    marker.dataset.read=String(Boolean(m.read_at));
+   }
+   const check=m.read_at?'✓✓':'✓';
+   return row.classList.contains('connect-chat-bubble')?check:check+' '+label;
+  }
   return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
  });
  window.ummaOrderInbox?.renderChatFeed?.(list);
@@ -512,7 +535,7 @@ function build(){
   if(value){
    status.textContent='';
    send.setAttribute('aria-busy','true');
-   send.hidden=false;
+   if(composer.draft?.kind!=='voice')send.hidden=false;
   }else send.removeAttribute('aria-busy');
  }
  form.onsubmit=e=>{
