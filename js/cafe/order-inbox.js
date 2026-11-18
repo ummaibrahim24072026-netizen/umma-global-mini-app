@@ -155,7 +155,16 @@ function open(){
   const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
   heading.removeAttribute('style');
   brandHeading.querySelector('.customer-heading-copy').append(heading);
-  // Navigation is handled by the persistent bottom menu; no duplicate close button.
+  // The inbox is a nested screen: Back returns to the Messages hub.
+  if(inHub){
+   const back=document.createElement('button');
+   back.type='button';
+   back.className='umma-notifications-back';
+   back.textContent=document.documentElement.lang.startsWith('ru')?'← Назад':document.documentElement.lang.startsWith('vi')?'← Quay lại':'← Back';
+   back.setAttribute('aria-label',back.textContent.replace(/^←\\s*/, ''));
+   back.onclick=()=>dialog.close();
+   header.append(back);
+  }
   header.append(brandHeading);
   dialog.classList.add('umma-inbox-fixed-header');
   const body=document.createElement('div');
