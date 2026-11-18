@@ -1516,3 +1516,67 @@
 @media (prefers-reduced-motion: reduce) {
   #checkout[data-stage="receipt"] #success #newOrder { transition: none; }
 }
+
+
+/* Refined order-payment status: compact, readable and unmistakably UMMA. */
+#checkout[data-stage="receipt"] #success .receipt-status {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: clamp(16px, 4.5vw, 22px);
+  border: 1px solid #b9e4df;
+  border-radius: 24px;
+  background: linear-gradient(125deg, #e2f7f4 0%, #f4fcfa 75%, #fffdf6 100%);
+  box-shadow: 0 8px 26px rgba(11, 99, 100, .07);
+}
+#checkout[data-stage="receipt"] #success .receipt-status::before {
+  content: "";
+  position: absolute;
+  inset-inline: 23px;
+  top: 0;
+  height: 3px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(90deg, #0b9999, #d7b05a);
+}
+#checkout[data-stage="receipt"] #success .receipt-status-icon {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  border: 1px solid #ead9ad;
+  border-radius: 18px;
+  background: #fff9e9;
+  color: #95701e;
+  box-shadow: 0 3px 12px rgba(154, 118, 38, .09);
+}
+#checkout[data-stage="receipt"] #success .receipt-status-icon svg {
+  width: 27px;
+  height: 27px;
+}
+#checkout[data-stage="receipt"] #success .receipt-status-copy {
+  flex: 1;
+  min-width: 0;
+}
+#checkout[data-stage="receipt"] #success #successNumber {
+  color: #087c80;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+#checkout[data-stage="receipt"] #success #orderState {
+  color: #123f3c;
+  font-size: clamp(17px, 4.6vw, 21px);
+  line-height: 1.25;
+  font-weight: 800;
+  text-wrap: pretty;
+}
+#checkout[data-stage="receipt"] #success #orderReserveUntil {
+  margin-top: 8px;
+  color: #587773;
+  font-size: 13px;
+  font-weight: 550;
+}
+@media (max-width: 360px) {
+  #checkout[data-stage="receipt"] #success .receipt-status { gap: 10px; padding: 14px; }
+  #checkout[data-stage="receipt"] #success .receipt-status-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 15px; }
+}
