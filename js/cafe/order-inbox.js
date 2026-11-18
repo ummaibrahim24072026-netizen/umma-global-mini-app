@@ -40,6 +40,13 @@ const shortLabels={
 const inTransit={ru:'В пути',en:'On the way',vi:'Đang giao'};
 const stageKeys=['pending','confirmed','preparing','ready','picked_up','completed','delivered','cancelled'];
 const inboxStyles=`
+/* The order list scrolls beneath an opaque, stationary heading. */
+dialog.umma-inbox-fixed-header{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100dvh - 120px);padding:0!important}
+dialog.umma-inbox-fixed-header:not([open]){display:none}
+dialog.umma-inbox-fixed-header>.checkout-header{position:relative;top:auto;flex:0 0 auto;z-index:5;background:#f4faf9;isolation:isolate;border-radius:20px 20px 0 0;padding:16px 20px;box-shadow:0 2px 8px #153b3910}
+dialog.umma-inbox-fixed-header>.checkout-header .customer-heading-copy{min-width:0}
+dialog.umma-inbox-fixed-header>.checkout-header h2{margin:0;max-width:none}
+dialog.umma-inbox-fixed-header>.checkout-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:16px 20px 24px;scrollbar-gutter:stable}
 .umma-inbox-orders,.umma-inbox-stages{list-style:none;margin:0;padding:0}
 .umma-inbox-order{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:6px;padding:12px 0;border-bottom:1px solid #d9e8e4}
 .umma-inbox-number{font-size:12px;line-height:20px;color:#153b39;white-space:nowrap}
@@ -160,7 +167,9 @@ function open(){
   const brandHeading=brandTemplate.content.firstElementChild.cloneNode(true);
   heading.removeAttribute('style');
   brandHeading.querySelector('.customer-heading-copy').append(heading);
-  header.append(brandHeading,close);
+  // Navigation is handled by the persistent bottom menu; no duplicate close button.
+  header.append(brandHeading);
+  dialog.classList.add('umma-inbox-fixed-header');
   const body=document.createElement('div');
   body.className='checkout-body';
   body.append(empty,list);
