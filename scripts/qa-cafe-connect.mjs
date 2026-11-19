@@ -235,12 +235,15 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
 }
 // The public chat stays on the same screen and recovers after a failed poll.
 {
- const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><header></header></body></html>',{
+ const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><header><img id="topbarAvatar" hidden></header></body></html>',{
   url:'https://qa.invalid/app/menu/?connect=1',runScripts:'outside-only',pretendToBeVisual:true
  });
  const w=app.window;
  const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
- const messages=[{id:'reply',direction:'staff',body:'Hello',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'}];
+ const messages=[
+  {id:'question',direction:'customer',body:'Есть плов?',created_at:'2026-11-07T11:59:00Z'},
+  {id:'reply',direction:'staff',body:'Hello',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'}
+ ];
  let offline=false,translationUnavailable=true,translations=0,localTranslations=0;
  w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
  w.AbortSignal=AbortSignal;
@@ -260,12 +263,32 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
    throw new Error('Optional endpoint unavailable');
   }
   if(offline)throw new TypeError('Failed to fetch');
-  return new Response(JSON.stringify({ok:true,client:{},messages}));
+  return new Response(JSON.stringify({ok:true,client:{name:'Ibrahim'},messages}));
  };
  loadConnect(w,'customer-connect');
  await w.ummaCustomerConnect.open();
  const dialog=w.document.querySelector('.umma-connect-chat');
  const row=dialog.querySelector('[data-connect-message="reply"]');
+ const question=dialog.querySelector('[data-connect-message="question"]');
+ const questionPhoto=question.querySelector('.connect-text-avatar img');
+ const profile=w.document.getElementById('topbarAvatar');
+ const avatar='data:image/png;base64,iVBORw0KGgo=';
+ assert.equal(row.querySelector('.connect-text-avatar img').getAttribute('src'),'logo/assets/umma-icon-192.png');
+ assert.equal(question.querySelector('.connect-text-author strong').textContent,'Вы');
+ assert.equal(questionPhoto.previousElementSibling.textContent,'IB');
+ assert.equal(questionPhoto.hasAttribute('src'),false);
+ profile.src=avatar;
+ profile.hidden=false;
+ await tick();
+ assert.equal(questionPhoto.getAttribute('src'),avatar);
+ questionPhoto.dispatchEvent(new w.Event('load'));
+ assert.equal(questionPhoto.hidden,false);
+ profile.hidden=true;
+ profile.removeAttribute('src');
+ await tick();
+ assert.equal(questionPhoto.hidden,true);
+ assert.equal(questionPhoto.hasAttribute('src'),false);
+ assert.equal(dialog.querySelector('[data-connect-message="question"]'),question);
  assert.ok(dialog.open);
  assert.equal(w.location.search,'');
  assert.equal(w.sessionStorage.getItem('umma:chat:open'),'1');
@@ -298,7 +321,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(draft.value,'Черновик');
  assert.equal(dialog.querySelector('[data-connect-message="reply"]'),row);
  offline=false;
- messages.push({...messages[0],id:'new-reply',body:'New reply'});
+ messages.push({...messages[1],id:'new-reply',body:'New reply'});
  w.dispatchEvent(new w.Event('online'));
  await tick();
  assert.ok(dialog.open);

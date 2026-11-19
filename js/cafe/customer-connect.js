@@ -23,6 +23,9 @@ const lang=()=>document.documentElement.lang.split('-')[0],t=i=>(copy[lang()]||c
 const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const publicChat=document.body.classList.contains('public-cafe-menu');
+const profileAvatar=publicChat?document.getElementById('topbarAvatar'):null;
+const brandAvatar='logo/assets/umma-icon-192.png';
+const profilePhoto=()=>profileAvatar&&!profileAvatar.hidden?profileAvatar.getAttribute('src'):null;
 const calls=publicChat?window.ummaConnectCalls?.({identity:()=>token?{token}:null,language:lang,prepare:connect}):null;
 const CHAT_THEME_KEY='umma:customer:chat:theme:v1';
 const chatThemes=[
@@ -208,6 +211,41 @@ function messageMenu(li,m,compact=false){
  },true);
  li.append(menu);
 }
+function setTextAvatarPhoto(image,photo){
+ if(image.getAttribute('src')===photo)return;
+ image.hidden=true;
+ if(photo)image.src=photo;
+ else image.removeAttribute('src');
+}
+function textAuthor(label,outgoing){
+ const header=el('div',null,'connect-text-author');
+ const avatar=el('span',null,'connect-text-avatar');
+ avatar.setAttribute('aria-hidden','true');
+ const image=el('img');
+ image.alt='';
+ image.hidden=true;
+ image.onload=()=>{image.hidden=false;};
+ image.onerror=()=>{image.hidden=true;};
+ avatar.append(el('span',outgoing?t(18):'U'),image);
+ if(!outgoing)setTextAvatarPhoto(image,brandAvatar);
+ header.append(avatar,el('strong',label));
+ return header;
+}
+function refreshTextAvatars(){
+ if(!list)return;
+ const photo=profilePhoto();
+ const name=window.ummaMenuProfileName?.()?.trim()||state?.client?.name?.trim()||t(18);
+ const initials=Array.from(name).slice(0,2).join('').toLocaleUpperCase();
+ for(const avatar of list.querySelectorAll('[data-direction=customer] .connect-text-avatar')){
+  avatar.firstElementChild.textContent=initials;
+  setTextAvatarPhoto(avatar.querySelector('img'),photo);
+ }
+}
+if(profileAvatar){
+ new MutationObserver(()=>{if(dialog?.open)refreshTextAvatars();}).observe(profileAvatar,{
+  attributes:true,attributeFilter:['src','hidden']
+ });
+}
 function renderThread(){
  if(!list)return;
  const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
@@ -223,10 +261,13 @@ function renderThread(){
   li.dataset.direction=m.direction;
   li.dataset.createdAt=m.created_at||'';
   const voice=publicChat&&m.media_kind==='voice';
-  const bubble=publicChat&&((m.body&&!m.media_kind)||voice);
+  const textBubble=publicChat&&m.body&&!m.media_kind;
+  const bubble=textBubble||voice;
+  const author=outgoing?t(18):m.title||t(19);
   if(bubble)li.classList.add('connect-chat-bubble');
   if(voice)li.classList.add('connect-chat-voice');
-  if(!publicChat||(!outgoing&&!voice))li.append(el('strong',outgoing?t(18):m.title||t(19)));
+  if(textBubble)li.append(textAuthor(author,outgoing));
+  else if(!publicChat||(!outgoing&&!voice))li.append(el('strong',author));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body){
    const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
@@ -237,7 +278,7 @@ function renderThread(){
   let voicePlayer;
   if(m.media_kind){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
-   const avatar=outgoing?document.querySelector('#topbarAvatar:not([hidden])')?.src:'logo/assets/umma-icon-192.png';
+   const avatar=outgoing?profilePhoto():brandAvatar;
    if(voice)voicePlayer=window.ummaConnectMedia.publicVoice(load,media.error,{lang:lang(),avatar});
    li.append(voicePlayer||(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.media_kind==='video'&&m.body==='◉ Видеосообщение'
     ?window.ummaConnectMedia.videoCircle(load,media.error)
@@ -270,6 +311,7 @@ function renderThread(){
   }
   return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
  });
+ if(publicChat)refreshTextAvatars();
  window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
  if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;

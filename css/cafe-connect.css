@@ -813,6 +813,36 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
   border-radius:17px 5px 17px 17px;
   background:#dcf3ed;
 }
+.umma-connect-chat .connect-text-author {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.umma-connect-chat [data-direction=customer] .connect-text-author {
+  flex-direction:row-reverse;
+  justify-content:space-between;
+}
+.umma-connect-chat .connect-text-avatar {
+  position:relative;
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#c7e9e1;
+  color:#165d5c;
+  font-size:10px;
+  font-weight:750;
+}
+.umma-connect-chat .connect-text-avatar img {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border-radius:inherit;
+  object-fit:cover;
+}
 .public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-meta {
   align-items:center;
   flex-wrap:nowrap;
