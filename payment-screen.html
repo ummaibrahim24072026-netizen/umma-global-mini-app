@@ -1,1 +1,33 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#03A2A5"><title>UMMA · Оплата заказа</title><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/web-operations.css?v=5"><link rel="stylesheet" href="css/staff-operations.css?v=brand-1"><script defer src="js/core/screen-awake.js?v=1"></script></head><body class="work-payment-screen"><main class="web-screen"><div class="screen-brand"><img src="logo/assets/umma-icon-192.png" alt="UMMA"></div><p class="screen-order" id="screenNumber">Добро пожаловать · Welcome · Xin chào</p><h1 id="screenTotal" class="screen-total">UMMA CAFE</h1><div id="screenQr"></div><p id="screenStatus" class="screen-status" role="status" aria-live="polite">Ожидаем заказ от кассира</p><p id="screenBank" class="screen-bank"></p><p id="screenConnection" role="status"></p></main><script src="js/vendor/qrcode-generator.js"></script><script src="js/cafe/payment-screen.js?v=1"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#03A2A5">
+  <title>UMMA · Ваш заказ</title>
+  <link rel="stylesheet" href="css/brand.css?v=8">
+  <link rel="stylesheet" href="css/payment-screen.css?v=1">
+  <script defer src="js/core/screen-awake.js?v=1"></script>
+</head>
+<body class="work-payment-screen">
+  <main class="customer-display">
+    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="48" height="48"><strong>HALAL UMMA</strong></header>
+    <section class="display-order" aria-label="Ваш заказ">
+      <h1 id="screenNumber">Добро пожаловать · Welcome · Xin chào</h1>
+      <ul id="screenItems" hidden aria-label="Позиции заказа"></ul>
+    </section>
+    <section class="display-payment" aria-label="Оплата заказа">
+      <p id="screenTotalLabel" hidden>К оплате · Total</p>
+      <strong id="screenTotal" hidden></strong>
+      <p id="screenMethod" hidden></p>
+      <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира · Waiting for your order</p>
+      <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
+      <p id="screenBank" hidden></p>
+      <p id="screenConnection" role="status" hidden></p>
+    </section>
+  </main>
+  <script src="js/vendor/qrcode-generator.js"></script>
+  <script src="js/cafe/payment-screen.js?v=live-cart"></script>
+</body>
+</html>

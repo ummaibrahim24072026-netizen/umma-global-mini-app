@@ -11,6 +11,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  w.fetch=async(url,opts)=>{const b=opts?.body?JSON.parse(opts.body):{};requests.push({url,b});assert.equal(w.Telegram,undefined);
  let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000}],inventory:[]};
  else{assert.ok(b.initData?.startsWith('web:'));if(b.action==='me')out={ok:true,user:{id:1000000000001,name:'Cashier',role:'employee'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]};
+ else if(b.action==='screenCreate')out={ok:true,id:'client-screen',screenToken:'b'.repeat(64)};
  else if(b.action==='options')out.methods={rub:true,sber:true,tenge:true,kaspi:true,usdt:true};
  else if(b.staffOrder){
   created++;assert.equal(b.items.length,1);assert.equal(b.items[0].quantity,1);
@@ -35,10 +36,24 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  assert.equal(d.body.dataset.workspace,'pos');
  assert.equal(d.getElementById('webCashViews').hidden,true);
  assert.deepEqual([...d.querySelectorAll('[data-counter-view]')].map(b=>b.textContent.trim()),['Продажа','Оплата','Заказы','Выдача']);
- d.querySelector('[data-pos-add]').click();assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('counterCheckout').click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
+ if(method==='qr'){
+  d.getElementById('screenPair').click();await tick();
+  assert.match(d.getElementById('screenPairLink').href,/payment-screen.html#screen=/);
+ }
+ d.querySelector('[data-pos-add]').click();
+ if(method==='qr'){
+  await new Promise(resolve=>setTimeout(resolve,135));
+  const draft=requests.filter(r=>r.b.action==='screenDraft').at(-1).b;
+  assert.deepEqual(draft.lines,[{name:'Лепёшка',quantity:1,unitPrice:25000}]);
+  assert.equal(draft.method,null);
+ }assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('counterCheckout').click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
  assert.equal(paid,method==='cash');assert.equal(d.getElementById('posConfirmQr').hidden,method==='cash');
  if(method==='qr'){
+  await new Promise(resolve=>setTimeout(resolve,135));
+  const presentation=requests.filter(r=>r.b.action==='screenSelect').at(-1).b;
+  assert.equal(presentation.orderId,order.id);
+  assert.ok(presentation.revision>requests.find(r=>r.b.action==='screenDraft').b.revision);
   const byId=id=>d.getElementById(id);
   const switchTo=async id=>{
    byId('counterSwitchPayment').click();
@@ -119,11 +134,45 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  assert.equal(d.querySelector('#posCart [data-id]'),null);
  w.close();
 }
-// The client screen only reads; cancelled, paid and failed requests immediately hide the QR.
+// The customer screen tracks the draft, switches payment method with the same order and removes old QR codes.
 {
- const dom=new JSDOM(readFileSync('payment-screen.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',url:'https://qa.invalid/payment-screen.html#screen='+'b'.repeat(64)}),w=dom.window,d=w.document;w.AbortSignal=AbortSignal;let state='pending',fail=false,callback;
- w.setTimeout=fn=>{callback=fn;return 1;};w.clearTimeout=()=>{};w.qrcode=()=>({addData(p){assert.equal(p,'QR amount 25000');},make(){},createSvgTag(){return '<svg></svg>';}});
- w.fetch=async(u,o)=>{const b=JSON.parse(o.body);assert.deepEqual(Object.keys(b).sort(),['action','screenToken']);assert.equal(b.action,'screenPoll');if(fail)throw Error('offline');return new Response(JSON.stringify({ok:true,order:{number:10,total:25000,paymentStatus:state,status:'pending',method:'qr'},payment:state==='pending'?{qrPayload:'QR amount 25000',bankName:'VCB',account:'123',reference:'UMMA 10'}:null}));};
- w.eval(readFileSync('js/cafe/payment-screen.js','utf8'));await tick();assert.ok(d.querySelector('#screenQr svg'));state='paid';await callback();assert.equal(d.querySelector('#screenQr svg'),null);assert.match(d.getElementById('screenStatus').textContent,/Paid/);state='pending';await callback();assert.ok(d.querySelector('#screenQr svg'));fail=true;await callback();assert.equal(d.querySelector('#screenQr svg'),null);w.close();
+ const dom=new JSDOM(readFileSync('payment-screen.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',url:'https://qa.invalid/payment-screen.html#screen='+'b'.repeat(64)});
+ const w=dom.window,d=w.document;
+ w.AbortSignal=AbortSignal;
+ let callback,fail=false;
+ const lines=[{name:'Лепёшка <из печи>',quantity:2,unitPrice:25000}];
+ let view={draft:{total:50000,method:null,lines},order:null};
+ w.setTimeout=fn=>{callback=fn;return 1;};w.clearTimeout=()=>{};
+ w.qrcode=()=>({addData(p){assert.equal(p,'QR amount 50000');},make(){},createSvgTag(){return '<svg></svg>';}});
+ w.fetch=async(url,options)=>{
+  const body=JSON.parse(options.body);
+  assert.deepEqual(Object.keys(body).sort(),['action','screenToken']);
+  assert.equal(body.action,'screenPoll');
+  if(fail)throw Error('offline');
+  return new Response(JSON.stringify({ok:true,...view}));
+ };
+ w.eval(readFileSync('js/cafe/payment-screen.js','utf8'));await tick();
+ assert.match(d.getElementById('screenItems').textContent,/Лепёшка <из печи> × 2/);
+ assert.match(d.getElementById('screenTotal').textContent,/50/);
+ assert.equal(d.getElementById('screenQr').hidden,true);
+ view={order:{number:10,total:50000,paymentStatus:'pending',status:'pending',method:'qr',lines},
+  payment:{qrPayload:'QR amount 50000',bankName:'VCB',account:'123',reference:'UMMA 10'}};
+ await callback();
+ assert.ok(d.querySelector('#screenQr svg'));
+ assert.match(d.getElementById('screenStatus').textContent,/Unpaid/);
+ view={order:{...view.order,method:'cash'}};
+ await callback();
+ assert.equal(d.querySelector('#screenQr svg'),null);
+ assert.match(d.getElementById('screenMethod').textContent,/Наличными/);
+ view.order.paymentStatus='paid';
+ await callback();
+ assert.match(d.getElementById('screenNumber').textContent,/№10/);
+ assert.match(d.getElementById('screenStatus').textContent,/Payment successful/);
+ view.order.paymentStatus='pending';view.order.method='qr';
+ view.payment={qrPayload:'QR amount 50000'};
+ await callback();assert.ok(d.querySelector('#screenQr svg'));
+ fail=true;await callback();
+ assert.equal(d.querySelector('#screenQr svg'),null);assert.equal(d.getElementById('screenItems').hidden,true);
+ w.close();
 }
-console.log('PASS standalone web POS without Telegram: cash/change receipt, QR, RUB, KZT and USDT remain pending until inline confirmation, duplicate-tap guard and idempotent order recovery, role-specific navigation; client screen is read-only and hides stale QR after payment/failure.');
+console.log('PASS counter payment and customer display: live basket, exact draft total, method switching, QR cleanup, successful order receipt, idempotent recovery and read-only customer capability.');

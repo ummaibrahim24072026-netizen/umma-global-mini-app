@@ -16,7 +16,55 @@ const screenKey=()=> 'umma:pos-screen:'+auth.actorId()+':'+$('posLocation').valu
 function screen(){try{return JSON.parse(localStorage.getItem(screenKey())||'null');}catch{return null;}}
 function showPair(value){$('screenUnpair').hidden=!value;$('screenPairLink').hidden=!value;$('screenPairQr').replaceChildren();if(!value)return;const url=new URL('payment-screen.html',location.href);url.hash=new URLSearchParams({screen:value.token});$('screenPairLink').href=url.href;drawQr($('screenPairQr'),url.href);$('screenPairState').textContent='Откройте эту ссылку на планшете или отсканируйте QR. Экран привязан к выбранному кафе.';}
 function drawQr(root,payload){const qr=qrcode(0,'M');qr.addData(payload);qr.make();root.innerHTML=qr.createSvgTag({cellSize:5,margin:20,scalable:true});}
-async function displayOrder(orderId){const s=screen();if(!s)throw Error('Подключите клиентский планшет.');await api('screenSelect',{screenId:s.id,orderId});}
+let screenTimer,screenRevision=0;
+const publishedScreens=new Map();
+function screenSnapshot(){
+ if(currentTab!=='pos')return null;
+ if(payOrder&&(counterView==='payment'||!cart.size))return {orderId:payOrder.id};
+ if(cart.size)return {
+  lines:[...cart.values()].map(({product,quantity})=>({
+   name:String(product.name_ru||product.name_en||product.name_vi||'Блюдо').slice(0,160),quantity,unitPrice:Number(product.price_vnd),
+  })),
+  method:counterView==='payment'?selectedMethod:null,
+ };
+ return null;
+}
+async function publishScreen(client,snapshot,force=false){
+ const previous=publishedScreens.get(client.id);
+ const key=JSON.stringify(snapshot);
+ if(!force&&(previous===key||(!snapshot&&previous===undefined)))return;
+ publishedScreens.set(client.id,key);
+ screenRevision=Math.max(Date.now()*1000,screenRevision+1);
+ const request=snapshot?.orderId?{action:'screenSelect',body:snapshot}:{action:'screenDraft',body:snapshot||{lines:[],method:null}};
+ try{
+  await api(request.action,{screenId:client.id,revision:screenRevision,...request.body});
+  if(screen()?.id===client.id&&$('screenPairState').dataset.syncError){
+   delete $('screenPairState').dataset.syncError;
+   $('screenPairState').textContent='Клиентский экран подключён.';
+  }
+ }catch(error){
+  if(publishedScreens.get(client.id)===key)publishedScreens.delete(client.id);
+  throw error;
+ }
+}
+function syncCustomerScreen(clear=false){
+ clearTimeout(screenTimer);
+ const client=screen();
+ if(!client)return;
+ screenTimer=setTimeout(()=>{
+  if(screen()?.id!==client.id||currentTab!=='pos')return;
+  const snapshot=screenSnapshot();
+  void publishScreen(client,snapshot,clear&&!snapshot).catch(()=>{
+   $('screenPairState').dataset.syncError='true';
+   $('screenPairState').textContent='Не удалось обновить клиентский экран. Повторим после восстановления связи.';
+  });
+ },100);
+}
+async function displayOrder(orderId){
+ const client=screen();
+ if(!client)throw Error('Подключите клиентский планшет.');
+ await publishScreen(client,{orderId},true);
+}
 async function loadAvailability(){
  const id=$('posLocation').value;
  if(!me?.locations?.find(l=>l.id===id)?.ready_stock_enabled){catalog=null;catalogLocation='';return;}
@@ -149,6 +197,7 @@ function renderCart(){
  $('posCartJump').textContent='Корзина · '+money(amount());
  updateCartJump();
  paymentFields();
+ syncCustomerScreen();
 }
 function updateCartJump(){
  $('posCartJump').hidden=!cart.size||currentTab!=='pos'||counterView!=='sale'||basketInView;
@@ -237,6 +286,7 @@ function showPayment(order,payment=null){
    :'Сверьте фактическое поступление в банке.';
  }
  paymentFields();
+ syncCustomerScreen();
 }
 async function paymentDetails(order){
  if(order.paymentStatus!=='pending'||closedOrder(order))return null;
@@ -276,7 +326,6 @@ async function switchOrderPayment(){
   showPayment(next,changed.payment);
   if(next.paymentMethod==='qr'){
    showPayment(next,await paymentDetails(next));
-   if(screen())await displayOrder(next.id);
   }
   result('Способ оплаты изменён.');
  }catch(error){result(error.message);}
@@ -331,9 +380,6 @@ async function sell(event){
   }else{
    showPayment(created,details||await paymentDetails(created));
    result('');
-  }
-  if(screen()&&!foreign){
-   try{await displayOrder(created.id);}catch{result('Заказ сохранён. Повторите отправку на клиентский экран.');}
   }
  }catch(error){result((created?'Заказ №'+created.orderNumber+' уже создан. ':'')+error.message);}
  finally{busy=false;paymentFields();void refreshCounterOrders();}
@@ -421,6 +467,7 @@ function setCounterView(view,{draft=false}={}){
  }
  if(view==='orders'||view==='issue'){renderCounterOrders();void refreshCounterOrders();}
  updateCartJump();
+ syncCustomerScreen();
  window.scrollTo({top:0,behavior:'instant'});
 }
 async function counterOrderAction(event){
@@ -465,6 +512,7 @@ $('counterMethodLabel').onclick=event=>{
  result('');
  paymentFields();
  if(foreignMethods.has(selectedMethod)&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
+ syncCustomerScreen();
 };
 $('posCash').oninput=paymentFields;
 $('posSearch').oninput=menu;
@@ -480,6 +528,7 @@ function changeQuantity(id,delta){
  const current=cart.get(id);
  const quantity=(current?.quantity||0)+delta;
  if(delta>0&&(!product||quantity>Math.min(99,product.available)))return;
+ if(delta>0&&!cart.size&&payOrder)showPayment(null);
  if(quantity<=0)cart.delete(id);
  else cart.set(id,{product:current?.product||product,quantity});
  renderCart();
@@ -528,10 +577,8 @@ $('screenPair').onclick=async()=>{
   const data=await api('screenCreate',{locationId:locationId()});
   const value={id:data.id,token:data.screenToken};
   localStorage.setItem(screenKey(),JSON.stringify(value));showPair(value);
-  if(payOrder&&payOrder.paymentMethod==='qr'&&payOrder.paymentStatus==='pending'&&!closedOrder(payOrder)){
-   await displayOrder(payOrder.id);
-   $('posShowScreen').hidden=false;
-  }
+  await publishScreen(value,screenSnapshot(),true);
+  if(payOrder?.paymentMethod==='qr'&&payOrder.paymentStatus==='pending'&&!closedOrder(payOrder))$('posShowScreen').hidden=false;
  }catch(error){$('screenPairState').textContent=error.message;}
  finally{busy=false;$('screenPair').disabled=false;paymentFields();}
 };
@@ -550,7 +597,7 @@ $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
 $('counterIssueRefresh').onclick=refreshCounterOrders;
 $('counterCheckout').onclick=()=>setCounterView('payment',{draft:true});
-$('counterNewSale').onclick=()=>setCounterView('sale',{draft:true});
+$('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});syncCustomerScreen(true);};
 document.querySelectorAll('[data-counter-view]').forEach(button=>{
  button.onclick=()=>{if(!busy)setCounterView(button.dataset.counterView);};
 });
@@ -836,5 +883,6 @@ document.addEventListener('visibilitychange',refreshCounterOrders);
 window.addEventListener('online',refreshCounterOrders);
 setInterval(refreshStock,5000);
 setInterval(refreshCounterOrders,5000);
+setInterval(()=>{if($('screenPairState').dataset.syncError)syncCustomerScreen(true);},5000);
 if(auth.credential()&&!invite)void boot().catch(e=>{$('webLoginError').textContent=e.message;notice(e.message);if(e.status===401)auth.clear();});
 })();

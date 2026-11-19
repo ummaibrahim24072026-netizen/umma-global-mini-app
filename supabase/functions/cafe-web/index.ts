@@ -6,6 +6,19 @@ const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const secret=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
 const validSecret=(s:unknown)=>typeof s==='string'&&/^[a-f0-9]{64}$/.test(s);
+const screenMethods=new Set(['cash','qr','rub','tenge','kaspi','sber','usdt']);
+type ScreenLine={name:string,quantity:number,unitPrice:number};
+function screenDraft(value:unknown,method:unknown){
+ if(!Array.isArray(value)||value.length>99||(method!==null&&(typeof method!=='string'||!screenMethods.has(method))))return undefined;
+ const lines:ScreenLine[]=[];
+ for(const line of value){
+  if(typeof line?.name!=='string'||!line.name.trim()||line.name.length>160||
+     !Number.isInteger(line.quantity)||line.quantity<1||line.quantity>99||
+     !Number.isSafeInteger(line.unitPrice)||line.unitPrice<=0||line.unitPrice>100000000)return undefined;
+  lines.push({name:line.name.trim(),quantity:line.quantity,unitPrice:line.unitPrice});
+ }
+ return lines.length?{lines,method,total:lines.reduce((sum,line)=>sum+line.quantity*line.unitPrice,0)}:null;
+}
 async function password(value:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(value),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:600000,hash:'SHA-256'},key,256)),v=>v.toString(16).padStart(2,'0')).join('');}
 function same(a:string,b:string){let diff=a.length^b.length;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^(b.charCodeAt(i)||0);return diff===0;}
 Deno.serve(async req=>{
@@ -36,10 +49,31 @@ Deno.serve(async req=>{
  }
  if(b.action==='screenPoll'){
   if(!validSecret(b.screenToken))return reply({ok:false},404);
-  const {data:s,error}=await db.from('cafe_payment_screens').select('order_id,location_id').eq('token_hash',await sha256(b.screenToken)).eq('active',true).maybeSingle();if(error)throw error;if(!s)return reply({ok:false},404);
-  if(!s.order_id)return reply({ok:true,order:null});
-  const {data:o,error:oe}=await db.from('cafe_orders').select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status').eq('id',s.order_id).eq('location_id',s.location_id).maybeSingle();if(oe)throw oe;
-  return reply({ok:true,order:o?{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method:o.payment_method}:null,payment:o?paymentFor(o):null});
+  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at')
+   .eq('token_hash',await sha256(b.screenToken)).eq('active',true).maybeSingle();
+  if(error)throw error;
+  if(!s)return reply({ok:false},404);
+  if(!s.order_id){
+   const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
+   return reply({ok:true,order:null,draft});
+  }
+  const {data:o,error:oe}=await db.from('cafe_orders')
+   .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd)')
+   .eq('id',s.order_id).eq('location_id',s.location_id).order('id',{referencedTable:'cafe_order_items',ascending:true}).maybeSingle();
+  if(oe)throw oe;
+  if(!o)return reply({ok:true,order:null});
+  let method=o.payment_method,foreignTotal=null;
+  if(method==='bank_transfer'){
+   const {data:foreign,error:foreignError}=await db.rpc('cafe_screen_payment_amount',{p_screen_id:s.id,p_order_id:o.id});
+   if(foreignError)throw foreignError;
+   if(foreign){
+    method=foreign.channel;
+    foreignTotal={amount:foreign.amount,currency:foreign.currency};
+   }
+  }
+  const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd}));
+  return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
+   payment:paymentFor(o)});
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
@@ -190,12 +224,28 @@ Deno.serve(async req=>{
   const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId}).select('id').single();if(error)throw error;
   return reply({ok:true,id:data.id,screenToken:token});
  }
- if(['screenSelect','screenRevoke'].includes(b.action)){
+ if(['screenSelect','screenRevoke','screenDraft'].includes(b.action)){
   const {data:s,error}=await db.from('cafe_payment_screens').select('id,actor_id,location_id').eq('id',b.screenId).eq('active',true).maybeSingle();if(error)throw error;
   if(!s||(!isOwner&&Number(s.actor_id)!==actor)||!canSell(s.location_id))return reply({ok:false,error:'Нет доступа к экрану'},403);
   if(b.action==='screenRevoke'){const {error:e}=await db.from('cafe_payment_screens').update({active:false}).eq('id',s.id);if(e)throw e;return reply({ok:true});}
-  if(b.orderId){const {data:o}=await db.from('cafe_orders').select('id').eq('id',b.orderId).eq('location_id',s.location_id).maybeSingle();if(!o)return reply({ok:false,error:'Заказ другого кафе'},403);}
-  const {error:e}=await db.from('cafe_payment_screens').update({order_id:b.orderId||null,updated_at:new Date().toISOString()}).eq('id',s.id);if(e)throw e;return reply({ok:true});
+  const revision=b.revision;
+  if((revision!==undefined||b.action==='screenDraft')&&(!Number.isSafeInteger(revision)||revision<1||revision>Date.now()*1000+300000000)){
+   return reply({ok:false,error:'Не удалось обновить данные экрана.'},400);
+  }
+  const draft=b.action==='screenDraft'?screenDraft(b.lines,b.method):null;
+  if(draft===undefined)return reply({ok:false,error:'Неверные данные корзины.'},400);
+  const orderId=b.action==='screenSelect'?b.orderId||null:null;
+  if(orderId){
+   const {data:o}=await db.from('cafe_orders').select('id').eq('id',orderId).eq('location_id',s.location_id).maybeSingle();
+   if(!o)return reply({ok:false,error:'Заказ другого кафе'},403);
+  }
+  let update=db.from('cafe_payment_screens')
+   .update({order_id:orderId,draft,updated_at:new Date().toISOString(),...(revision===undefined?{}:{display_revision:revision})})
+   .eq('id',s.id).eq('active',true);
+  if(revision!==undefined)update=update.lt('display_revision',revision);
+  const {error:e}=await update;
+  if(e)throw e;
+  return reply({ok:true});
  }
  if(b.action==='payment'){
   const {data:o,error}=await db.from('cafe_orders').select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status').eq('id',b.orderId).maybeSingle();if(error)throw error;if(!o||!canSell(o.location_id))return reply({ok:false},403);return reply({ok:true,payment:paymentFor(o)});
