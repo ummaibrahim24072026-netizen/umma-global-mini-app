@@ -300,14 +300,18 @@ function renderThread(){
  },(m,row)=>{
   if(publicChat){
    const marker=row.querySelector('.connect-receipt');
-   const label=m.read_at?receipt[1]:receipt[0];
+   const read=!!m.read_at,delivered=!!m.delivered_at;
+   const label=read?receipt[1]:delivered?'Доставлено':receipt[0];
    if(marker){
     marker.title=label;
     marker.setAttribute('aria-label',label);
-    marker.dataset.read=String(Boolean(m.read_at));
+    marker.dataset.read=String(read);
+    marker.style.color=read?'#34B7F1':'#89979B';
+    marker.style.fontWeight='700';
+    marker.style.letterSpacing='-3px';
+    marker.style.paddingRight='3px';
    }
-   const check=m.read_at?'✓✓':'✓';
-   return row.classList.contains('connect-chat-bubble')?check:check+' '+label;
+   return read||delivered?'✓✓':'✓';
   }
   return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
  });
