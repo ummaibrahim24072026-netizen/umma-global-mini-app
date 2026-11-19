@@ -55,6 +55,7 @@ function renderItems(lines=[]){
   const name=document.createElement('strong');
   const units=document.createElement('small');
   const total=document.createElement('strong');
+  total.className='display-item-price';
   const photo=window.ummaCafeProductPhoto?.(line);
   if(photo){
    const image=document.createElement('img');
@@ -63,7 +64,8 @@ function renderItems(lines=[]){
    image.src=photo;item.classList.add('has-photo');item.append(image);
   }
   name.textContent=line['name_'+language]||line.name_ru||line.name_en||line.name_vi||line.name;
-  units.textContent='× '+line.quantity+' '+(language==='ru'?'порц.':language==='vi'?'phần':'portion'+(line.quantity===1?'':'s'));
+  units.className='display-item-quantity';
+  units.textContent=String(line.quantity)+' '+(language==='ru'?(line.quantity%10===1&&line.quantity%100!==11?'порция':line.quantity%10>=2&&line.quantity%10<=4&&(line.quantity%100<12||line.quantity%100>14)?'порции':'порций'):language==='vi'?'phần':line.quantity===1?'portion':'portions');
   total.textContent=money(line.unitPrice*line.quantity);
   label.append(name,units);
   item.append(label,total);
