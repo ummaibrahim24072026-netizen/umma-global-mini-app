@@ -76,7 +76,7 @@ Deno.serve(async req=>{
   if(!s.order_id){
    const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
    const cashChange=draft?.method==='cash'?previewCashChange(s.cash_received_preview,draft.total):null;
-   return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'en',cashChange});
+   return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'ru',cashChange});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
    .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url))')
@@ -256,7 +256,7 @@ Deno.serve(async req=>{
   const layout=b.layout??'auto';
   if(!screenLayouts.has(layout))return reply({ok:false,error:'Выберите размер табло.'},400);
   const token=secret();
-  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId,display_layout:layout,display_language:screenLanguages.has(b.language)?b.language:'en'}).select('id').single();if(error)throw error;
+  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId,display_layout:layout,display_language:screenLanguages.has(b.language)?b.language:'ru'}).select('id').single();if(error)throw error;
   return reply({ok:true,id:data.id,screenToken:token});
  }
  if(['screenSelect','screenRevoke','screenDraft','screenSettings'].includes(b.action)){
