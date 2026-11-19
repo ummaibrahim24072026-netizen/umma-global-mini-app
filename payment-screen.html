@@ -26,9 +26,10 @@
     <section class="display-payment" aria-label="Оплата заказа">
       <div class="display-total-row"><p id="screenTotalLabel" hidden>К оплате · Total</p><strong id="screenTotal" hidden></strong></div>
       <p id="screenMethod" hidden></p>
-      <div id="screenChange" hidden aria-live="polite">
-        <span>Сдача · Change · Tiền thừa</span>
-        <strong id="screenChangeAmount"></strong>
+      <div id="screenCashSummary" class="display-cash-summary" hidden aria-live="polite">
+        <div><span id="screenCashReceivedLabel">Получено</span><strong id="screenCashReceivedAmount"></strong></div>
+        <div><span id="screenCashDueLabel">К оплате</span><strong id="screenCashDueAmount"></strong></div>
+        <div id="screenChange"><span id="screenChangeLabel">Сдача</span><strong id="screenChangeAmount"></strong></div>
       </div>
       <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира · Waiting for your order</p>
       <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
@@ -45,6 +46,6 @@
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
   <script src="js/cafe/product-photo.js"></script>
-  <script src="js/cafe/payment-screen.js?v=translated-dishes-5"></script>
+  <script src="js/cafe/payment-screen.js?v=cash-summary-9"></script>
 </body>
 </html>
