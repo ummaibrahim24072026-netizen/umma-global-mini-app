@@ -81,7 +81,7 @@
   width:44px;
   height:44px;
   border-radius:50%;
-  color:var(--umma-brand-on-primary,#fff);
+  color:#fff;
   list-style:none;
   cursor:pointer;
 }

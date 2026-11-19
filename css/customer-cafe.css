@@ -926,6 +926,9 @@
   background: var(--umma-action);
   color: var(--umma-brand-on-primary);
 }
+.public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic {
+  color: #fff;
+}
 .public-cafe-menu .umma-connect .connect-hero { background: var(--cafe-header); }
 .public-cafe-menu .umma-connect .connect-hero :is(h2, p, .connect-close) { color: var(--umma-brand-on-primary); }
 .public-cafe-menu .umma-connect .connect-hero-icon { width: 42px; height: 42px; object-fit: contain; background: transparent; }

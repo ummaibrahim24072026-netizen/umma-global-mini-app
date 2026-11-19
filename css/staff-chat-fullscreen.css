@@ -54,15 +54,11 @@
   visibility:hidden;
 }
 
-#webMessages .connect-chat-header .connect-chat-menu-toggle {
-  color:var(--work-chat-action-color);
-}
-
 #webMessages .connect-chat-header .umma-call-buttons button {
   height:44px;
   min-height:44px;
   padding:0;
-  color:var(--work-chat-action-color);
+  color:#fff;
 }
 
 #webMessages .connect-chat-header .umma-call-buttons button:is(:hover,:focus-visible) {
@@ -310,6 +306,10 @@
   border-radius:50%;
   background:var(--umma-brand-primary);
   color:var(--umma-brand-on-primary);
+}
+
+#webMessages .work-thread form.connect-compose .connect-mic {
+  color:#fff;
 }
 
 #webMessages .connect-compose > p[role=status] {
