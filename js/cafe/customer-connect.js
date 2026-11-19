@@ -78,12 +78,12 @@ function refresh(){
  if(refreshing)return refreshing;
  if(!token||document.hidden||busy)return;
  if(navigator.onLine===false){showReconnect();return;}
+ if(publicChat)void window.ummaMenuSyncChatAvatar?.();
  refreshing=(async()=>{
   try{
    const [next]=await Promise.all([api('list'),refreshHidden()]);
    if(busy||document.hidden)return;
    state=next;
-   if(publicChat)void window.ummaMenuSyncChatAvatar?.();
    renderSetup();
    if(dialog?.open){renderThread();await markRead();}
    else badge();
@@ -331,6 +331,7 @@ async function connect(){
 }
 async function connectForMessage(){
  await connect();
+ if(publicChat)void window.ummaMenuSyncChatAvatar?.();
  const profileName=publicChat?window.ummaMenuProfileName?.():null;
  if(profileName!=null&&profileName!==(state?.client?.name||'')){
   state=await api('preferences',{name:profileName,language:lang()});

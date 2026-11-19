@@ -353,7 +353,7 @@ async function readThread(id,background=false){
   const latestIds=new Set(data.messages.map(message=>message.id));
   history.push(...latestThread.messages.filter(message=>!latestIds.has(message.id)));
  }
- if(includeAvatar&&Object.hasOwn(data.client,'avatar'))avatarCheckedAt=Date.now();
+ if(includeAvatar)avatarCheckedAt=typeof data.client.avatar==='string'?Date.now():0;
  latestThread=data;
  showMessages(data,firstLoad);
  const latest=data.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);

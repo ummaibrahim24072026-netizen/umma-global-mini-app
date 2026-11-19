@@ -784,7 +784,39 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(headerAvatar.hidden,false);
  assert.equal(avatarImage.hidden,true);
  assert.equal(headerAvatar.querySelector('span').textContent,'КЛ');
+ currentAvatar=avatar;
+ await poll();
+ await tick();
+ assert.equal(avatarImage.getAttribute('src'),avatar);
  staff.close();
+}
+// An existing profile photo syncs on menu startup even before the chat loads.
+{
+ const app=new JSDOM('<input id="profileAvatarFile"><button id="chooseProfileAvatar"></button><button id="removeProfileAvatar"></button><p id="profileAvatarStatus"></p><img id="topbarAvatar"><img id="profileAvatar"><span id="topbarAvatarPlaceholder"></span><span id="profileAvatarPlaceholder"></span>',{url:'https://qa.invalid/menu/',runScripts:'outside-only'});
+ const w=app.window,requests=[];
+ const avatar='data:image/png;base64,iVBORw0KGgo=';
+ w.ummaMenuI18n={t:s=>s};
+ w.localStorage.setItem('umma-menu-avatar',avatar);
+ w.localStorage.setItem('umma:connect:token:v1',a);
+ w.fetch=async(url,init)=>{
+  requests.push(JSON.parse(init.body));
+  return {ok:requests.length>1,json:async()=>({ok:true})};
+ };
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ w.eval(source('js/cafe/public-menu-avatar.js'));
+ await tick();
+ assert.deepEqual(requests[0],{action:'avatar',token:a,avatar});
+ // Simulate a transient failure, then retry after regaining connectivity.
+ w.dispatchEvent(new w.Event('online'));
+ await tick();
+ assert.deepEqual(requests[1],requests[0]);
+ await w.ummaMenuSyncChatAvatar();
+ assert.equal(requests.length,2);
+ w.document.getElementById('removeProfileAvatar').click();
+ await tick();
+ assert.deepEqual(requests[2],{action:'avatar',token:a,avatar:null});
+ assert.equal(w.localStorage.getItem('umma-menu-avatar-remove'),null);
+ w.close();
 }
 // Installed app: reuse an existing browser grant for a new chat, prompt only on a tap,
 // and respect the previous choice for an existing chat or a dismissed setup.

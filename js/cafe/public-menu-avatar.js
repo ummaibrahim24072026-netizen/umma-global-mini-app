@@ -16,6 +16,7 @@
   const avatarPattern = /^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
   let avatar = '';
   let syncedPhoto;
+  let syncedToken;
   let syncingPhoto = false;
   let saving = false;
   let statusKey = '';
@@ -26,29 +27,34 @@
 
   async function syncChatAvatar() {
     if (syncingPhoto || navigator.onLine === false) return;
-    let photo, latest;
+    let token, photo, latest;
     try {
-      const token = localStorage.getItem(chatTokenKey);
+      token = localStorage.getItem(chatTokenKey);
       latest = localStorage.getItem(storageKey);
       photo = latest && avatarPattern.test(latest) ? latest : null;
-      if (photo === syncedPhoto) return;
+      if (token === syncedToken && photo === syncedPhoto) return;
       if (!token || (!photo && !localStorage.getItem(pendingRemovalKey))) return;
       syncingPhoto = true;
+      const body = JSON.stringify({action:'avatar',token,avatar:photo});
       const response = await fetch(chatApi, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'avatar',token,avatar:photo}),
-        signal:AbortSignal.timeout(15000)
+        body,
+        keepalive:body.length <= 60_000,
+        signal:AbortSignal.timeout?.(15000)
       });
       if (response.ok && (await response.json()).ok) {
         syncedPhoto = photo;
+        syncedToken = token;
         if (!photo && !localStorage.getItem(storageKey)) localStorage.removeItem(pendingRemovalKey);
       }
     } catch {} finally {
       if (syncingPhoto) {
         syncingPhoto = false;
         try {
-          if (latest !== localStorage.getItem(storageKey)) void syncChatAvatar();
+          if (latest !== localStorage.getItem(storageKey) || token !== localStorage.getItem(chatTokenKey)) {
+            void syncChatAvatar();
+          }
         } catch {}
       }
     }
@@ -135,10 +141,21 @@
     choose.focus();
   });
   window.addEventListener('storage', event => {
+    if (event.key === chatTokenKey) {
+      void syncChatAvatar();
+      return;
+    }
     if (event.key !== storageKey) return;
     avatar = event.newValue && avatarPattern.test(event.newValue) ? event.newValue : '';
     render();
+    void syncChatAvatar();
+  });
+  window.addEventListener('pageshow', syncChatAvatar);
+  window.addEventListener('online', syncChatAvatar);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void syncChatAvatar();
   });
   window.addEventListener('umma-menu:languagechange', render);
   render();
+  void syncChatAvatar();
 })();
