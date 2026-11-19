@@ -378,7 +378,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(picker.querySelector('[aria-pressed=true]').dataset.chatTheme,'light');
  picker.querySelector('[data-chat-theme=blue]').click();
  assert.equal(guest.document.querySelector('.umma-connect-chat').dataset.chatTheme,'blue');
- assert.equal(guest.localStorage.getItem('umma:chat:theme:v1'),'blue');
+ assert.equal(guest.localStorage.getItem('umma:customer:chat:theme:v1'),'blue');
  assert.equal(guest.document.querySelector('.connect-theme-dialog'),null);
  menuToggle.click();
  assert.equal(guest.document.querySelector('.connect-clear-confirm'),null);
@@ -669,7 +669,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
 }
 // Staff inbox updates the receipt while the current conversation stays open.
 {
- const app=new JSDOM('<header></header><main><section id="webMessages"></section></main>',{
+ const app=new JSDOM('<body class="public-cafe-menu"><header></header><main><section id="webMessages"></section></main></body>',{
   url:'https://qa.invalid/app/staff.html',runScripts:'outside-only',pretendToBeVisual:true
  });
  const staff=app.window;
@@ -684,7 +684,11 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
    return {status:'ready',text:'Bản dịch',url:null,local:true,transcript:'Вопрос',source:'ru'};
   }
  };
- staff.ummaStaffAuth={credential:()=> 'web:test'};
+ let staffActor=10;
+ staff.ummaStaffAuth={credential:()=> 'web:test',actorId:()=>staffActor};
+ staff.HTMLDialogElement.prototype.show=staff.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ staff.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new staff.Event('close'));};
+ staff.localStorage.setItem('umma:chat:theme:v1','beige');
  let poll;
  staff.setInterval=callback=>{poll=callback;};
  const messages=[
@@ -709,6 +713,39 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.document.dispatchEvent(new staff.CustomEvent('umma:staff-tab',{detail:'messages'}));
  await tick();
  staff.document.querySelector('[data-client-thread]').click();
+ await tick();
+ const staffChat=staff.document.getElementById('webMessages');
+ const chooseTheme=(chat,theme)=>{
+  chat.querySelector('.connect-theme-menu-button').click();
+  const picker=staff.document.querySelector('.connect-theme-dialog[open]');
+  assert.equal(picker.querySelector('[aria-pressed=true]').dataset.chatTheme,chat.dataset.chatTheme);
+  picker.querySelector('[data-chat-theme='+theme+']').click();
+ };
+ staff.setInterval=()=>{};
+ staff.eval(source('js/cafe/customer-connect.js'));
+ await staff.ummaCustomerConnect.open();
+ const customerChat=staff.document.getElementById('customerChatDialog');
+ assert.equal(staffChat.dataset.chatTheme,'light');
+ assert.equal(customerChat.dataset.chatTheme,'light');
+ chooseTheme(customerChat,'lavender');
+ assert.equal(staffChat.dataset.chatTheme,'light');
+ chooseTheme(staffChat,'dark');
+ assert.equal(customerChat.dataset.chatTheme,'lavender');
+ assert.equal(staff.localStorage.getItem('umma:customer:chat:theme:v1'),'lavender');
+ const changeStaff=actor=>{
+  staffActor=actor;
+  staff.document.dispatchEvent(new staff.CustomEvent('umma:staff-ready',{detail:{assignments:[]}}));
+ };
+ changeStaff(11);
+ assert.equal(staffChat.dataset.chatTheme,'light');
+ chooseTheme(staffChat,'blue');
+ changeStaff(10);
+ assert.equal(staffChat.dataset.chatTheme,'dark');
+ changeStaff(11);
+ assert.equal(staffChat.dataset.chatTheme,'blue');
+ assert.equal(customerChat.dataset.chatTheme,'lavender');
+ assert.equal(staff.localStorage.getItem('umma:chat:theme:v1'),'beige');
+ customerChat.close();
  await tick();
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  staff.HTMLMediaElement.prototype.load=function(){};

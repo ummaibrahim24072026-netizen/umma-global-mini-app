@@ -28,7 +28,12 @@ const staffThemes=[
  ['blue','Синий (ночной)'],
  ['lavender','Лавандовый']
 ];
-const staffThemeKey='umma:chat:theme:v1';
+const staffThemeKey=()=>{
+ const actor=workspace
+  ?window.ummaStaffAuth?.actorId?.()
+  :window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+ return actor?'umma:staff:chat:theme:v1:'+actor:null;
+};
 const staffHiddenKey=id=>'umma:staff:chat:hidden:'+String(window.ummaStaffAuth?.actorId?.()||'owner')+':'+id;
 let hiddenBefore='';
 function loadStaffHidden(id){
@@ -36,7 +41,14 @@ function loadStaffHidden(id){
 }
 const compareTimestamp=(a,b)=>Date.parse(a)-Date.parse(b)||a.localeCompare(b);
 const compareMessages=(a,b)=>compareTimestamp(a.created_at,b.created_at)||a.id.localeCompare(b.id);
-function setStaffTheme(id){if(!staffThemes.some(([theme])=>theme===id))id='light';root().dataset.chatTheme=id;try{localStorage.setItem(staffThemeKey,id);}catch{}}
+function restoreStaffTheme(){
+ const section=root();
+ if(!section)return;
+ const key=staffThemeKey();
+ let id;
+ try{if(key)id=localStorage.getItem(key);}catch{}
+ section.dataset.chatTheme=staffThemes.some(([theme])=>theme===id)?id:'light';
+}
 
 const mobileChat=()=>window.matchMedia?.('(max-width:760px)')?.matches===true;
 function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',visible()&&view==='inbox'&&!!thread&&mobileChat());}
@@ -529,6 +541,7 @@ function build(){
  themeButton.onclick=()=>{
   menu.open=false;
   const modal=node('dialog',null,'connect-theme-dialog');modal.setAttribute('aria-label','Тема чата');
+  const key=staffThemeKey();
   const heading=node('h3','Тема чата');
   const grid=node('div',null,'connect-theme-grid');
   for(const [id,name] of staffThemes){
@@ -536,7 +549,13 @@ function build(){
    choice.append(node('span',null,'connect-theme-preview'),node('span',name));
    choice.setAttribute('aria-label',name);
    choice.setAttribute('aria-pressed',String(root().dataset.chatTheme===id));
-   choice.onclick=()=>{setStaffTheme(id);modal.close();};
+   choice.onclick=()=>{
+    if(key===staffThemeKey()){
+     root().dataset.chatTheme=id;
+     try{if(key)localStorage.setItem(key,id);}catch{}
+    }
+    modal.close();
+   };
    grid.append(choice);
   }
   const close=node('button','Закрыть','connect-theme-close');close.type='button';close.onclick=()=>modal.close();
@@ -567,7 +586,6 @@ function build(){
   if(event.key!=='Escape'||!menu.open)return;
   event.preventDefault();menu.open=false;toggle.focus();
  });
- try{setStaffTheme(localStorage.getItem(staffThemeKey)||'light');}catch{setStaffTheme('light');}
  const listPanel=node('section',null,'work-inbox-sidebar');
  if(workspace){
   listPanel.setAttribute('aria-label','Переписки');
@@ -591,6 +609,7 @@ function build(){
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
 function openInbox(){
  if(!panels)build();
+ restoreStaffTheme();
  if(workspace)selectView('inbox');
  if(dialog&&!dialog.open)dialog.showModal();
  void run(refreshView);
@@ -624,6 +643,7 @@ document.addEventListener('umma:staff-inbox-filter',event=>{
 });
 document.addEventListener('umma:staff-ready',event=>{
  inboxAccess=Boolean(event.detail?.assignments?.some(a=>['manager','cashier','waiter'].includes(a.staff_role)));
+ restoreStaffTheme();
  syncVisibility();void poll();
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});

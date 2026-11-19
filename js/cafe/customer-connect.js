@@ -24,7 +24,7 @@ const notice=i=>(notificationCopy[lang()]||notificationCopy.en)[i];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const publicChat=document.body.classList.contains('public-cafe-menu');
 const calls=publicChat?window.ummaConnectCalls?.({identity:()=>token?{token}:null,language:lang,prepare:connect}):null;
-const CHAT_THEME_KEY='umma:chat:theme:v1';
+const CHAT_THEME_KEY='umma:customer:chat:theme:v1';
 const chatThemes=[
  ['light','Светлый','Light','Sáng'],
  ['turquoise','Бирюзовый','Turquoise','Xanh ngọc'],
