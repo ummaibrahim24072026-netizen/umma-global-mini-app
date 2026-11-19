@@ -155,10 +155,10 @@ assert.equal(document.querySelector('[data-overview=payment]').textContent, '1')
 assert.equal(document.getElementById('webOverviewCafeName').textContent, locations[0].name);
 assert.equal(document.querySelector('[data-order-filter=payment]').hasAttribute('data-has-items'), true);
 assert.equal(document.querySelector('[data-order-filter=new]').hasAttribute('data-has-items'), false);
-document.dispatchEvent(new w.CustomEvent('umma:staff-inbox-counts', { detail: { unread: 3, attention: 0 } }));
+document.dispatchEvent(new w.CustomEvent('umma:staff-inbox-counts', { detail: { unread: 3 } }));
 assert.equal(document.querySelector('[data-inbox-metric=unread]').textContent, '3');
 assert.equal(document.querySelector('[data-inbox-filter=unread]').hasAttribute('data-has-items'), true);
-assert.equal(document.querySelector('[data-inbox-filter=attention]').hasAttribute('data-has-items'), false);
+assert.equal(document.querySelector('[data-inbox-filter=attention]'), null);
 
 let inboxFilter;
 document.addEventListener('umma:staff-inbox-filter', event => { inboxFilter = event.detail; });

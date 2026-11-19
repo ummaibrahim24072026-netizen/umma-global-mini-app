@@ -4,7 +4,7 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='',inboxClients=[],filter='all',inboxAccess=false;
-let inboxFilter,inboxSearch,quickFilters,workflowButton,workflow,threadMenu,alertAudio;
+let inboxSearch,quickFilters,assigneeButton,workflow,threadMenu,alertAudio;
 let inboxLoaded=false,avatarRefreshAt=0;
 const inboxAvatars=new Map();
 const translationLanguages=['ru','vi','en'];
@@ -23,7 +23,6 @@ function announceUnread(clients){
  gain.gain.exponentialRampToValueAtTime(.001,time+.22);
  tone.connect(gain);gain.connect(alertAudio.destination);tone.start(time);tone.stop(time+.24);
 }
-const stages={all:'Все переписки',unread:'Непрочитанные',attention:'Требуют внимания',new:'Новые',active:'В работе',waiting:'Ожидают',closed:'Завершённые'};
 const mediaNames={voice:'Голосовое сообщение',photo:'Фото',video:'Видео',album:'Фото и видео'};
 const orderStates={pending:'Принят',confirmed:'Подтверждён',preparing:'Готовится',ready:'Готов',completed:'Завершён',cancelled:'Отменён',paid:'Оплата подтверждена',assigned:'Курьер назначен',courier_assigned:'Курьер назначен',picked_up:'Курьер забрал заказ',in_transit:'Курьер в пути',delivered:'Доставлен'};
 const staffThemes=[
@@ -363,7 +362,7 @@ function showMessages(data,forceBottom=false){
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
  if(nearBottom)messages.scrollTop=messages.scrollHeight;
  oldestButton.hidden=!workspace||historyFinished||(history.length===0&&(data.messages||[]).length<100);
- workflowButton.hidden=!workflow;
+ assigneeButton.hidden=!workflow?.canAssign;
  threadMenu.hidden=false;
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
  if(workspace){
@@ -449,12 +448,10 @@ function renderClients(){
  if(snapshot===clientSnapshot)return;
  const focused=document.activeElement?.dataset.clientThread;
  clientSnapshot=snapshot;clients.replaceChildren();
- if(inboxFilter)inboxFilter.value=filter==='unread'?'all':filter;
  for(const button of quickFilters||[])button.setAttribute('aria-pressed',String(button.dataset.filter===filter));
  const sorted=inboxClients.filter(c=>{
-  const matchesStatus=filter==='all'||c.stage===filter||
-   (filter==='unread'&&c.unread>0)||(filter==='attention'&&(c.stage==='new'||c.unread>0));
-  if(!matchesStatus||!query.length)return matchesStatus;
+  if(filter==='unread'&&!(c.unread>0))return false;
+  if(!query.length)return true;
   const searchable=searchText([c.name,c.last_message,mediaNames[c.last_media],c.order_number&&'№'+c.order_number].filter(Boolean).join(' '));
   return query.every(word=>searchable.includes(word));
  }).sort((a,b)=>(workspace?0:Number(!!b.unread)-Number(!!a.unread))||
@@ -491,7 +488,7 @@ function renderClients(){
   description.append(heading,workspace?preview:last);
   if(workspace){
    const assigned=c.assignee_name||(c.assigned?'Сотрудник':null);
-   const metadata=[c.order_number?'№'+c.order_number:null,stages[c.stage],assigned].filter(Boolean);
+   const metadata=[c.order_number?'№'+c.order_number:null,assigned].filter(Boolean);
    if(metadata.length)description.append(node('small',metadata.join(' · '),'work-thread-context'));
   }
   b.prepend(avatar,description);
@@ -501,7 +498,7 @@ function renderClients(){
  if(focused&&!clients.contains(document.activeElement))inboxSearch?.focus({preventScroll:true});
  if(!sorted.length){
   const empty=!inboxLoaded&&workspace?'Загружаем переписки…':query.length?'Ничего не найдено.':
-   filter==='all'?'Здесь появятся обращения клиентов.':'Нет переписок с этим статусом.';
+   filter==='all'?'Здесь появятся обращения клиентов.':'Нет непрочитанных переписок.';
   clients.append(node('li',empty,'work-inbox-empty'));
  }
 }
@@ -521,30 +518,22 @@ async function refresh(){
  if(badge){badge.hidden=!unread;badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label','Непрочитанных: '+unread);}
  if(button)button.textContent='Сообщения клиентов'+(unread?' · '+unread:'');
  if(workspace)announceUnread(d.clients);
- if(workspace)document.dispatchEvent(new CustomEvent('umma:staff-inbox-counts',{detail:{
-  unread,attention:d.clients.filter(c=>c.stage==='new'||c.unread>0).length
- }}));
+ if(workspace)document.dispatchEvent(new CustomEvent('umma:staff-inbox-counts',{detail:{unread}}));
  if(stats&&d.subscribers!==undefined)stats.textContent='Подписаны на новости: '+d.subscribers+' · Подписчики с push: '+d.pushDevices;
  inboxClients=d.clients;
  inboxLoaded=true;
  renderClients();
 }
-function openWorkflow(){
- if(!thread||!workflow)return;
+function openAssignee(){
+ if(!thread||!workflow?.canAssign)return;
  const clientId=thread,details=workflow;
  const panel=node('dialog',null,'work-chat-dialog'),form=node('form');
- const stage=node('select'),assignee=node('select'),feedback=node('p');
- stage.setAttribute('aria-label','Статус');assignee.setAttribute('aria-label','Ответственный');
+ const assignee=node('select'),feedback=node('p');
  feedback.setAttribute('role','status');
- for(const key of ['active','waiting','closed'])stage.add(new Option(stages[key],key));
- stage.value=details.stage==='new'?'active':details.stage;
- if(details.canAssign){
-  assignee.add(new Option('Без ответственного',''));
-  for(const person of details.assignees)assignee.add(new Option(person.name,person.id));
-  assignee.value=details.assignee||'';
-  form.append(label('Ответственный',assignee));
- }
- form.append(label('Статус',stage));
+ assignee.add(new Option('Без ответственного',''));
+ for(const person of details.assignees)assignee.add(new Option(person.name,person.id));
+ assignee.value=details.assignee||'';
+ form.append(label('Ответственный',assignee));
  const save=node('button','Сохранить','primary'),cancel=node('button','Закрыть');
  cancel.type='button';cancel.onclick=()=>panel.close();
  save.type='submit';
@@ -552,14 +541,13 @@ function openWorkflow(){
  form.onsubmit=async event=>{
   event.preventDefault();save.disabled=true;
   try{
-   await api('staffInboxUpdate',{clientId,revision:details.revision,stage:stage.value,
-    ...(details.canAssign?{assignee:assignee.value||null}:{})});
+   await api('staffInboxUpdate',{clientId,revision:details.revision,assignee:assignee.value||null});
    panel.close();
    await refreshView();
   }catch(error){feedback.textContent=error.message;}
   finally{save.disabled=false;}
  };
- panel.append(node('h2','Обращение'),form);
+ panel.append(node('h2','Назначить ответственного'),form);
  panel.addEventListener('close',()=>panel.remove(),{once:true});
  document.body.append(panel);panel.showModal();
 }
@@ -605,6 +593,23 @@ function build(){
  }
  if(workspace){
   const settings=node('details',null,'work-inbox-settings');
+  const languagePicker=node('select');
+  for(const [code,name] of [['ru','Русский'],['vi','Tiếng Việt'],['en','English']]){
+   languagePicker.add(new Option(name,code));
+  }
+  languagePicker.value=translationLanguage;
+  languagePicker.onchange=()=>{
+   translationLanguage=languagePicker.value;
+   try{localStorage.setItem(translationPreferenceKey,translationLanguage);}catch{}
+   if(latestThread){
+    for(const translation of messages.querySelectorAll('.connect-translated-text,.connect-voice-translation')){
+     const row=translation.closest('[data-connect-message]');
+     row.dataset.connectMessage+=':previous-language';
+    }
+    showMessages(latestThread);
+   }
+  };
+  tools.append(label('Язык перевода сообщений',languagePicker));
   settings.append(node('summary','Настройки'),tools);
   header.append(settings);
  }else header.append(tools);
@@ -686,16 +691,6 @@ function build(){
   threadAvatar.append(avatarInitials,avatarImage);threadHeading.append(threadAvatar);
  }
  threadHeading.append(threadTitle);
- if(workspace){
-  const languagePicker=node('select',null,'work-chat-translation-language');
-  languagePicker.setAttribute('aria-label','Язык перевода сообщений');languagePicker.title='Язык перевода';
-  for(const [code,name] of [['ru','RU'],['vi','VI'],['en','EN']]){const option=node('option',name);option.value=code;languagePicker.append(option);}
-  languagePicker.value=translationLanguage;
-  languagePicker.style.cssText='max-width:64px;min-width:54px;margin-left:auto;border:1px solid #ffffff88;border-radius:12px;padding:5px 3px;background:#ffffff22;color:white;font:600 12px system-ui;';
-  languagePicker.querySelectorAll('option').forEach(option=>option.style.color='#123b39');
-  languagePicker.onchange=()=>{translationLanguage=languagePicker.value;try{localStorage.setItem(translationPreferenceKey,translationLanguage);}catch{}if(latestThread)showMessages(latestThread,true);};
-  threadHeading.append(languagePicker);
- }
  if(calls){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
@@ -741,9 +736,9 @@ function build(){
   try{localStorage.setItem(staffHiddenKey(thread),hiddenBefore);}catch{}
   if(latestThread)showMessages(latestThread,true);
  };
- workflowButton=node('button','Статус и ответственный');workflowButton.type='button';workflowButton.hidden=true;
- workflowButton.onclick=()=>{menu.open=false;openWorkflow();};
- actions.append(workflowButton,themeButton,clear);menu.append(toggle,actions);threadHeading.append(menu);
+ assigneeButton=node('button','Ответственный');assigneeButton.type='button';assigneeButton.hidden=true;
+ assigneeButton.onclick=()=>{menu.open=false;openAssignee();};
+ actions.append(assigneeButton,themeButton,clear);menu.append(toggle,actions);threadHeading.append(menu);
  const wallpaper=node('div',null,'connect-chat-wallpaper');wallpaper.append(messages);
  oldestButton=node('button','Загрузить более ранние сообщения','work-chat-older');
  oldestButton.type='button';oldestButton.hidden=true;oldestButton.onclick=()=>void loadEarlier();
@@ -772,14 +767,7 @@ function build(){
    button.onclick=()=>setInboxFilter(key);
    return button;
   });
-  inboxFilter=node('select');
-  inboxFilter.setAttribute('aria-label','Статус обращения');
-  for(const [key,title] of Object.entries(stages)){
-   if(key==='unread')continue;
-   const option=node('option',key==='all'?'Статус':title);option.value=key;inboxFilter.append(option);
-  }
-  inboxFilter.onchange=()=>setInboxFilter(inboxFilter.value);
-  filters.append(...quickFilters,inboxFilter);
+  filters.append(...quickFilters);
   controls.append(search,filters);
   listPanel.append(controls);
  }else listPanel.append(node('h2','Переписки'));
@@ -823,7 +811,7 @@ document.addEventListener('umma:staff-tab',e=>{
  else closeThread();
 });
 document.addEventListener('umma:staff-inbox-filter',event=>{
- if(!Object.hasOwn(stages,event.detail))return;
+ if(event.detail!=='all'&&event.detail!=='unread')return;
  if(inboxSearch)inboxSearch.value='';
  setInboxFilter(event.detail);
 });

@@ -65,6 +65,12 @@
  box-shadow:0 8px 22px #123d3c21;
 }
 #webMessages .work-inbox-tools button { font-size:14px; text-align:start; }
+#webMessages .work-inbox-tools label {
+ margin:4px;
+ color:#185f61;
+ font-size:13px;
+}
+#webMessages .work-inbox-tools select { min-height:44px; padding:6px 8px; }
 #webMessages .work-inbox-tools button[aria-pressed="true"] {
  background:#087b80;
  border-color:#087b80;
@@ -146,7 +152,7 @@
  flex-wrap:wrap;
  gap:6px;
 }
-#webMessages .work-inbox-filters :is(button,select) {
+#webMessages .work-inbox-filters button {
  width:auto;
  max-width:100%;
  min-height:44px;
@@ -164,7 +170,6 @@
  background:#def3f1;
  color:#075d61;
 }
-#webMessages .work-inbox-filters select { flex:1; min-width:0; }
 .web-work-app #webMessages .work-inbox-list {
  display:block;
  width:100%;
