@@ -291,6 +291,29 @@
   }
 }
 
+@media (max-width: 380px) {
+  .web-work-app[data-workspace=overview] .web-header { flex-wrap: nowrap; }
+}
+
+@media (max-width: 350px) {
+  .web-work-app[data-workspace=overview] .web-tabs button { font-size: 10px; }
+  .web-work-app[data-workspace=overview] .web-tabs button span {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+  .web-work-app .work-overview-order-links .work-overview-link {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .work-overview-order-links .work-overview-link::after { display: none; }
+  .web-work-app .work-overview-actions button {
+    flex-basis: 0;
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+}
+
 .web-work-app #webCashSearchLabel { max-width: 320px; }
 .work-order-dialog {
   inline-size: min(480px, calc(100% - 28px));
