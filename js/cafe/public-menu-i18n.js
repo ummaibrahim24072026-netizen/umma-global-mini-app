@@ -12,6 +12,7 @@ const copy={
 "Заменить фото":{"en":"Change photo","vi":"Đổi ảnh","ko":"사진 변경","zh":"更换照片","de":"Foto ändern","fr":"Changer la photo","th":"เปลี่ยนรูปภาพ","ms":"Tukar foto","id":"Ganti foto","ar":"تغيير الصورة","pt":"Alterar foto"},
 "Удалить фото":{"en":"Remove photo","vi":"Xóa ảnh","ko":"사진 삭제","zh":"删除照片","de":"Foto entfernen","fr":"Supprimer la photo","th":"ลบรูปภาพ","ms":"Buang foto","id":"Hapus foto","ar":"إزالة الصورة","pt":"Remover foto"},
 "Фото сохранено.":{"en":"Photo saved.","vi":"Đã lưu ảnh."},
+"Сотрудники кафе увидят это фото в чате.":{"en":"Cafe staff will see this photo in the chat.","vi":"Nhân viên quán sẽ thấy ảnh này trong cuộc trò chuyện.","ko":"카페 직원이 채팅에서 이 사진을 볼 수 있습니다.","zh":"咖啡馆员工会在聊天中看到这张照片。","de":"Das Cafépersonal sieht dieses Foto im Chat.","fr":"Le personnel du café verra cette photo dans la conversation.","th":"พนักงานร้านจะเห็นรูปนี้ในแชต","ms":"Kakitangan kafe akan melihat foto ini dalam sembang.","id":"Staf kafe akan melihat foto ini di obrolan.","ar":"ستظهر هذه الصورة لموظفي المقهى في المحادثة.","pt":"Os funcionários do café verão esta foto na conversa."},
 "Фото удалено.":{"en":"Photo removed.","vi":"Đã xóa ảnh."},
 "Выберите фото размером до 20 МБ.":{"en":"Choose a photo up to 20 MB.","vi":"Chọn ảnh có dung lượng tối đa 20 MB."},
 "Не удалось открыть фото. Попробуйте JPG, PNG или WebP.":{"en":"Couldn't open the photo. Try JPG, PNG or WebP.","vi":"Không mở được ảnh. Hãy thử ảnh JPG, PNG hoặc WebP."},

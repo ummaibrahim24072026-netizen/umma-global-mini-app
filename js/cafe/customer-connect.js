@@ -83,6 +83,7 @@ function refresh(){
    const [next]=await Promise.all([api('list'),refreshHidden()]);
    if(busy||document.hidden)return;
    state=next;
+   if(publicChat)void window.ummaMenuSyncChatAvatar?.();
    renderSetup();
    if(dialog?.open){renderThread();await markRead();}
    else badge();
@@ -325,6 +326,7 @@ async function connect(){
  try{
   state=await api('join');
   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
+  if(publicChat)void window.ummaMenuSyncChatAvatar?.();
  }catch(error){token='';throw error;}
 }
 async function connectForMessage(){

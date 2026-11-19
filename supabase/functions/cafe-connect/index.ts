@@ -3,10 +3,13 @@ import webpush from 'npm:web-push@3.6.7';
 import {sha256,verifyWebStaffSession} from '../_shared/web-staff-auth.ts';
 import {verifyTelegramInitData} from '../cafe-kiosk/auth.ts';
 import {connectMedia} from './media.ts';
-import {languageNames,transcribeMessage,translateMessage,speakMessage} from '../delivery-chat/translation.ts';
+import {languageNames,transcribeMessage,translateMessage,speakMessage,validMedia} from '../delivery-chat/translation.ts';
 const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'content-type,x-umma-push-key,x-umma-token,x-umma-request,x-umma-staff,x-umma-client','Content-Type':'application/json','Cache-Control':'no-store'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+const avatarPattern=/^data:(image\/(?:webp|png|jpeg));base64,([A-Za-z0-9+/]+={0,2})$/;
+const avatarLimit=400000;
+const avatarPath=(clientId:string)=>clientId+'/profile-avatar';
 function subscriptionValid(s:any){try{const u=new URL(s.endpoint);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&['fcm.googleapis.com','updates.push.services.mozilla.com','web.push.apple.com','wns2-par02p.wns.windows.com'].includes(u.hostname)&&u.href.length<4096&&/^[A-Za-z0-9_-]{87}$/.test(s.keys?.p256dh||'')&&/^[A-Za-z0-9_-]{22}$/.test(s.keys?.auth||'');}catch{return false;}}
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});if(req.method!=='POST')return reply({ok:false},405);
@@ -37,8 +40,9 @@ Deno.serve(async(req:Request)=>{
    if(saved.error)throw Error(saved.error.message);
    return reply({ok:true,id:saved.data.id});
   }
-  const raw=await req.text();if(raw.length>14000)return reply({ok:false},413);const b=JSON.parse(raw);
-  if(!['join','list','read','preferences','send','staffList','staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
+  const raw=await req.text();if(raw.length>avatarLimit)return reply({ok:false},413);const b=JSON.parse(raw);
+  if(raw.length>14000&&b.action!=='avatar')return reply({ok:false},413);
+  if(!['join','list','read','preferences','avatar','send','staffList','staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
 
   if(b.action==='news')return reply(await rpc('cafe_connect',{p_action:'news'}));
   if(b.action==='dispatch'){
@@ -59,6 +63,25 @@ Deno.serve(async(req:Request)=>{
     const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
     if(!await rpc('cafe_web_rate_allow',{p_identity:await sha256('connect-join:'+ip)}))return reply({ok:false,error:'Слишком много попыток. Повторите позже.'},429);
    }
+  }
+  if(b.action==='avatar'){
+   let photo:Blob|null=null;
+   if(b.avatar!==null){
+    const match=typeof b.avatar==='string'&&avatarPattern.exec(b.avatar);
+    if(!match)return reply({ok:false},400);
+    const [,type,encoded]=match;
+    const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));
+    if(!validMedia(bytes.subarray(0,64),type))return reply({ok:false},415);
+    photo=new Blob([bytes],{type});
+   }
+   const result=await rpc('cafe_connect',{p_action:'list',p_hash:hash});
+   if(!result?.ok||!uuid(result.client?.id))return reply({ok:false},403);
+   const path=avatarPath(result.client.id);
+   const saved=photo
+    ?await bucket.upload(path,photo,{contentType:photo.type,cacheControl:'0',upsert:true})
+    :await bucket.remove([path]);
+   if(saved.error)throw Error('MEDIA_UPLOAD');
+   return reply({ok:true});
   }
   if(b.action==='visit'){
    if(typeof b.point!=='string'||!/^[a-zA-Z0-9_-]{0,80}$/.test(b.point)||typeof b.installed!=='boolean')return reply({ok:false},400);
@@ -159,6 +182,17 @@ Deno.serve(async(req:Request)=>{
    return reply({ok:true,status:'ready',text:result.text,url:signed.data?.signedUrl||null});
   }
   const result=await rpc('cafe_connect',{p_action:b.action,p_hash:hash,p_actor:actor,p_data:data});
+  if(b.action==='staffThread'&&b.includeAvatar===true&&result?.ok&&result.client?.id===data.clientId){
+   try{
+    const photo=await bucket.download(avatarPath(result.client.id),{}, {cache:'no-store'});
+    if(photo.data&&photo.data.size<=avatarLimit*3/4&&/^image\/(webp|png|jpeg)$/.test(photo.data.type)){
+     const bytes=new Uint8Array(await photo.data.arrayBuffer());
+     result.client.avatar='data:'+photo.data.type+';base64,'+btoa(Array.from(bytes,c=>String.fromCharCode(c)).join(''));
+    }else if(String(photo.error?.statusCode)==='404'){
+     result.client.avatar=null;
+    }
+   }catch{}
+  }
   if(result?.messages)result.voiceTranslation=!!voiceKey;
   return reply(result);
  }catch(e){const msg=String(e);

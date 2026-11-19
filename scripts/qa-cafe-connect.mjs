@@ -695,6 +695,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   {id:'staff-view-question',direction:'customer',body:'Вопрос',media_kind:'voice',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
   {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',created_at:'2026-11-07T12:02:00Z',read_at:null}
  ];
+ const avatar='data:image/png;base64,iVBORw0KGgo=';
+ let currentAvatar=avatar;
  staff.fetch=async(url,init)=>{
   const request=JSON.parse(init.body);
   assert.equal(request.initData,'web:test');
@@ -706,7 +708,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
   }
   return new Response(JSON.stringify(request.action==='staffInbox'?
    {ok:true,clients:[client]}:request.action==='staffInboxDetails'?
-   {ok:true,stage:'new',revision:0,orders:[]}:{ok:true,client,messages,voiceTranslation:true}));
+   {ok:true,stage:'new',revision:0,orders:[]}:{ok:true,client:request.includeAvatar?{...client,avatar:currentAvatar}:client,messages,voiceTranslation:true}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
  loadConnect(staff,'connect-admin');
@@ -715,6 +717,14 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.document.querySelector('[data-client-thread]').click();
  await tick();
  const staffChat=staff.document.getElementById('webMessages');
+ const header=staffChat.querySelector('.connect-chat-header');
+ const headerAvatar=header.querySelector('.work-chat-avatar');
+ const avatarImage=headerAvatar.querySelector('img');
+ assert.equal(header.querySelector('h2').textContent,'Клиент');
+ assert.equal(headerAvatar.querySelector('span').textContent,'КЛ');
+ assert.equal(avatarImage.getAttribute('src'),avatar);
+ avatarImage.dispatchEvent(new staff.Event('load'));
+ assert.equal(avatarImage.hidden,false);
  const chooseTheme=(chat,theme)=>{
   chat.querySelector('.connect-theme-menu-button').click();
   const picker=staff.document.querySelector('.connect-theme-dialog[open]');
@@ -765,6 +775,15 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(staff.document.querySelector('.connect-thread audio'),audio);
  assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
+ header.querySelector('.work-chat-back').click();
+ assert.equal(headerAvatar.hidden,true);
+ assert.equal(avatarImage.hasAttribute('src'),false);
+ currentAvatar=null;
+ staff.document.querySelector('[data-client-thread]').click();
+ await tick();
+ assert.equal(headerAvatar.hidden,false);
+ assert.equal(avatarImage.hidden,true);
+ assert.equal(headerAvatar.querySelector('span').textContent,'КЛ');
  staff.close();
 }
 // Installed app: reuse an existing browser grant for a new chat, prompt only on a tap,
@@ -865,17 +884,29 @@ menu.close();
 // Edge: forged operator payloads never choose an actor; malformed subscriptions/URLs fail closed.
 let handler;
 const uploaded=[];
+const profilePhoto='data:image/png;base64,iVBORw0KGgo=';
+const profilePath=ca+'/profile-avatar';
+const avatarObjects=new Map();
 const edgeDb={
  rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:
   args.p_action==='mediaPrepare'?{clientId:ca}:
   args.p_action==='mediaSend'?{id:'media-message',path:args.p_data.path}:
+  args.p_action==='list'||args.p_action==='staffThread'?{ok:true,client:{id:ca},messages:[]}:
   {ok:true}}),
- storage:{from:()=>({upload:async(...args)=>{uploaded.push(args);return {};}})}
+ storage:{from:()=>({
+  upload:async(...args)=>{
+   if(args[0]===profilePath)avatarObjects.set(args[0],args[1]);
+   else uploaded.push(args);
+   return {};
+  },
+  download:async path=>avatarObjects.has(path)?{data:avatarObjects.get(path)}:{error:{statusCode:'404'}},
+  remove:async paths=>{paths.forEach(path=>avatarObjects.delete(path));return {};}
+ })}
 };
 const mediaSources=['supabase/functions/delivery-chat/translation.ts','supabase/functions/cafe-connect/media.ts',
  'supabase/functions/cafe-connect/index.ts'];
 
-vm.runInNewContext(stripTypeScriptTypes(mediaSources.map(source).join('\n').replace(/^import .*;\n/gm,'').replace(/^export /gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async()=>{throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date,TextDecoder,Uint8Array});
+vm.runInNewContext(stripTypeScriptTypes(mediaSources.map(source).join('\n').replace(/^import .*;\n/gm,'').replace(/^export /gm,'')),{Deno:{env:{get:()=>''},serve:f=>handler=f},createClient:()=>edgeDb,webpush:{},verifyWebStaffSession:async(db,value)=>{if(value==='web:avatar-staff')return 1;throw Error('Web session invalid');},verifyTelegramInitData:async()=>{throw Error('Telegram signature');},sha256:async()=>a,crypto:webcrypto,Request,Response,URL,JSON,Promise,Date,TextDecoder,Uint8Array,Blob,atob,btoa});
 const call=data=>handler(new Request('https://qa.invalid',{method:'POST',body:JSON.stringify(data)}));
 assert.equal((await call({action:'staffList',initData:'web:forged',actor:1})).status,403);
 assert.equal((await call({action:'preferences',token:a,subscription:{endpoint:'https://127.0.0.1/internal'}})).status,400);
@@ -886,6 +917,15 @@ assert.equal((await call({action:'staffAudience',initData:'web:forged',segment:'
 assert.equal((await call({action:'visit',token:a,point:'<invalid>',installed:false})).status,400);
 assert.equal((await call({action:'visit',token:a,point:'',installed:false,orderId:firstOrder})).status,400);
 assert.equal((await call({action:'visit',token:a,point:'neighbor-cafe-01',installed:false})).status,200);
+const staffPhoto={action:'staffThread',initData:'web:avatar-staff',clientId:ca,includeAvatar:true};
+assert.equal((await call({action:'avatar',token:a,avatar:'data:image/png;base64,PHN2Zy8+'})).status,415);
+assert.equal((await call({action:'avatar',token:a,clientId:cb,avatar:profilePhoto})).status,200);
+assert.deepEqual([...avatarObjects.keys()],[profilePath]);
+assert.equal((await call({...staffPhoto,initData:'web:forged'})).status,403);
+assert.equal((await (await call(staffPhoto)).json()).client.avatar,profilePhoto);
+assert.equal((await (await call({...staffPhoto,includeAvatar:false})).json()).client.avatar,undefined);
+assert.equal((await call({action:'avatar',token:a,avatar:null})).status,200);
+assert.equal((await (await call(staffPhoto)).json()).client.avatar,null);
 const sendAttachment=(mime,file)=>handler(new Request('https://qa.invalid',{method:'POST',
  headers:{'content-type':mime,'x-umma-token':a,'x-umma-request':randomUUID()},
  body:Buffer.concat([Buffer.from(JSON.stringify('Подпись 🌿')+'\n'),Buffer.from(file)])

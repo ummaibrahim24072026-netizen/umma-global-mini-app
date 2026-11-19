@@ -2,6 +2,9 @@
   'use strict';
 
   const storageKey = 'umma-menu-avatar';
+  const pendingRemovalKey = 'umma-menu-avatar-remove';
+  const chatTokenKey = 'umma:connect:token:v1';
+  const chatApi = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
   const get = id => document.getElementById(id);
   const input = get('profileAvatarFile');
   const choose = get('chooseProfileAvatar');
@@ -12,12 +15,45 @@
   const t = window.ummaMenuI18n.t;
   const avatarPattern = /^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
   let avatar = '';
+  let syncedPhoto;
+  let syncingPhoto = false;
   let saving = false;
   let statusKey = '';
   try {
     const stored = localStorage.getItem(storageKey);
     if (stored && avatarPattern.test(stored)) avatar = stored;
   } catch {}
+
+  async function syncChatAvatar() {
+    if (syncingPhoto || navigator.onLine === false) return;
+    let photo, latest;
+    try {
+      const token = localStorage.getItem(chatTokenKey);
+      latest = localStorage.getItem(storageKey);
+      photo = latest && avatarPattern.test(latest) ? latest : null;
+      if (photo === syncedPhoto) return;
+      if (!token || (!photo && !localStorage.getItem(pendingRemovalKey))) return;
+      syncingPhoto = true;
+      const response = await fetch(chatApi, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'avatar',token,avatar:photo}),
+        signal:AbortSignal.timeout(15000)
+      });
+      if (response.ok && (await response.json()).ok) {
+        syncedPhoto = photo;
+        if (!photo && !localStorage.getItem(storageKey)) localStorage.removeItem(pendingRemovalKey);
+      }
+    } catch {} finally {
+      if (syncingPhoto) {
+        syncingPhoto = false;
+        try {
+          if (latest !== localStorage.getItem(storageKey)) void syncChatAvatar();
+        } catch {}
+      }
+    }
+  }
+  window.ummaMenuSyncChatAvatar = syncChatAvatar;
 
   function render() {
     avatars.forEach((image, index) => {
@@ -74,6 +110,7 @@
         localStorage.setItem(storageKey, photo);
         avatar = photo;
         statusKey = 'Фото сохранено.';
+        void syncChatAvatar();
       } catch {
         statusKey = 'Не удалось сохранить фото на этом устройстве.';
       }
@@ -86,14 +123,21 @@
   });
   remove.addEventListener('click', () => {
     try {
+      localStorage.setItem(pendingRemovalKey, '1');
       localStorage.removeItem(storageKey);
       avatar = '';
       statusKey = 'Фото удалено.';
+      void syncChatAvatar();
     } catch {
       statusKey = 'Не удалось сохранить фото на этом устройстве.';
     }
     render();
     choose.focus();
+  });
+  window.addEventListener('storage', event => {
+    if (event.key !== storageKey) return;
+    avatar = event.newValue && avatarPattern.test(event.newValue) ? event.newValue : '';
+    render();
   });
   window.addEventListener('umma-menu:languagechange', render);
   render();

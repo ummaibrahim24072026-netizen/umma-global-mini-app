@@ -136,7 +136,30 @@ async function translateChat(messageId,language,clientId){
 }
 const connection=node('p',null,'work-board-connection');connection.hidden=true;connection.setAttribute('role','status');
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,composer;
+let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,threadAvatar,avatarInitials,avatarImage,composer;
+let avatarCheckedAt=0;
+const clientInitials=name=>Array.from(name?.trim()||'').slice(0,2).join('').toLocaleUpperCase()||'U';
+function renderThreadAvatar(client){
+ threadAvatar.hidden=!client;
+ if(!client){
+  avatarCheckedAt=0;
+  avatarImage.hidden=true;
+  avatarImage.removeAttribute('src');
+  return;
+ }
+ avatarInitials.textContent=clientInitials(client.name);
+ if(!Object.hasOwn(client,'avatar'))return;
+ const photo=client.avatar;
+ if(typeof photo==='string'&&/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(photo)){
+  if(avatarImage.getAttribute('src')!==photo){
+   avatarImage.hidden=true;
+   avatarImage.src=photo;
+  }
+ }else{
+  avatarImage.hidden=true;
+  avatarImage.removeAttribute('src');
+ }
+}
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
 const dateTime=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
 
@@ -282,6 +305,7 @@ function showMessages(data,forceBottom=false){
  workflowButton.hidden=!workflow;
  threadMenu.hidden=false;
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
+ if(workspace)renderThreadAvatar(data.client);
  replyForm.hidden=false;
  if(callButtons)callButtons.hidden=false;
 }
@@ -309,12 +333,14 @@ function closeThread(){
  replyStatus.textContent='';replyForm.hidden=true;threadMenu.open=false;threadMenu.hidden=true;
  if(callButtons)callButtons.hidden=true;
  threadTitle.textContent='Выберите переписку';
+ if(workspace)renderThreadAvatar(null);
  syncChatScreen();renderClients();
 }
 async function readThread(id,background=false){
  let data,details;
+ const includeAvatar=!!workspace&&Date.now()-avatarCheckedAt>=30000;
  try{
-  [data,details]=await Promise.all([api('staffThread',{clientId:id}),
+  [data,details]=await Promise.all([api('staffThread',{clientId:id,...(includeAvatar&&{includeAvatar:true})}),
    workspace?api('staffInboxDetails',{clientId:id}):null]);
  }catch(error){
   if(error.status===403&&thread===id)closeThread();
@@ -327,6 +353,7 @@ async function readThread(id,background=false){
   const latestIds=new Set(data.messages.map(message=>message.id));
   history.push(...latestThread.messages.filter(message=>!latestIds.has(message.id)));
  }
+ if(includeAvatar&&Object.hasOwn(data.client,'avatar'))avatarCheckedAt=Date.now();
  latestThread=data;
  showMessages(data,firstLoad);
  const latest=data.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);
@@ -355,7 +382,7 @@ function renderClients(){
   const li=node('li'),b=node('button',null,'work-thread-choice');
   b.type='button';b.dataset.clientThread=c.id;b.setAttribute('aria-pressed',String(thread===c.id));
   const name=c.name||'Клиент '+c.id.slice(0,8);
-  const avatar=node('span',c.name?.trim().slice(0,2).toLocaleUpperCase()||'U','work-thread-avatar');avatar.setAttribute('aria-hidden','true');
+  const avatar=node('span',clientInitials(c.name),'work-thread-avatar');avatar.setAttribute('aria-hidden','true');
   const description=node('span',null,'work-thread-description');
   const heading=node('span',null,'work-thread-summary');heading.append(node('strong',name));
   if(c.last_at)heading.append(node('time',dateTime.format(new Date(c.last_at))));
@@ -526,7 +553,17 @@ function build(){
    void refresh().catch(()=>{});
   },replyStatus).finally(()=>composer.busy(false));
  };
- const threadHeading=node('header',null,'work-call-heading connect-chat-header');threadHeading.append(threadTitle);
+ const threadHeading=node('header',null,'work-call-heading connect-chat-header');
+ if(workspace){
+  threadAvatar=node('span',null,'work-chat-avatar');
+  threadAvatar.hidden=true;threadAvatar.setAttribute('aria-hidden','true');
+  avatarInitials=node('span');
+  avatarImage=node('img');avatarImage.alt='';avatarImage.hidden=true;
+  avatarImage.onload=()=>{avatarImage.hidden=false;};
+  avatarImage.onerror=()=>{avatarImage.hidden=true;};
+  threadAvatar.append(avatarInitials,avatarImage);threadHeading.append(threadAvatar);
+ }
+ threadHeading.append(threadTitle);
  if(calls){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
