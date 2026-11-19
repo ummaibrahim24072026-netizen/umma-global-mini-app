@@ -108,7 +108,7 @@ function menu(){
       '<span class="pos-product-media">'+
       (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
       '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
-      '<strong>'+esc(name)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+'</span>'+
+      '<strong>'+esc(name)+'</strong>'+
       (details?'<details class="pos-product-description"><summary>Состав и описание</summary><p>'+esc(details)+'</p></details>':'')+
       stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
       '<div class="pos-product-quantity"><button type="button" data-pos-remove="'+esc(p.id)+'" aria-label="Убрать '+esc(name)+'" hidden>−</button>'+
