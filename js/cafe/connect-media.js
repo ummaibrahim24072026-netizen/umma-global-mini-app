@@ -92,7 +92,7 @@
   const value=Math.max(0,Math.floor(seconds));
   return Math.floor(value/60)+':'+String(value%60).padStart(2,'0');
  }
- function publicVoice(load,errorText,{lang,avatar,levels=[],duration=0}){
+ function publicVoice(load,errorText,{lang,avatar,levels=[],duration=0,defer=false}){
   const words=({
    ru:['Воспроизвести','Пауза','Перемотать запись','Скорость воспроизведения'],
    vi:['Phát','Tạm dừng','Tua tin nhắn thoại','Tốc độ phát']
@@ -121,7 +121,7 @@
   const status=node('small','connect-voice-error');
   status.setAttribute('role','status');
   const audio=node('audio','');
-  audio.preload='metadata';
+  audio.preload=defer?'none':'metadata';
   wrapper.append(play,track,speed,time,status,audio);
   if(avatar){
    const badge=node('span','connect-voice-avatar');
@@ -190,7 +190,7 @@
      url=source;
      audio.src=source;
      status.textContent='';
-     if(!levels.length&&decoding!==source){decoding=source;void decode(source);}
+     if(!defer&&!levels.length&&decoding!==source){decoding=source;void decode(source);}
      return true;
     }catch{status.textContent=errorText;return false;}
     finally{loading=null;}
@@ -221,7 +221,7 @@
    speed.textContent=audio.playbackRate+'×';
   };
   update();
-  if(window.IntersectionObserver){
+  if(!defer&&window.IntersectionObserver){
    const observer=new IntersectionObserver(entries=>{
     if(!entries.some(entry=>entry.isIntersecting))return;
     observer.disconnect();void prepare();
@@ -230,7 +230,7 @@
   }
   return wrapper;
  }
- function inlineAttachment(kind,label,load,errorText){
+ function inlineAttachment(kind,label,load,errorText,{defer=false}={}){
   if(kind==='voice')return voiceBubble(load,errorText);
   if(kind!=='photo'&&kind!=='video')return attachment(kind,label,load,errorText);
   const wrapper=document.createElement('div');
@@ -244,6 +244,12 @@
   const retry=document.createElement('button');
   retry.type='button';retry.textContent='↻';retry.hidden=true;
   retry.setAttribute('aria-label','Повторить загрузку');
+  if(defer){
+   media.hidden=true;
+   retry.hidden=false;
+   retry.textContent=label;
+   retry.removeAttribute('aria-label');
+  }
   wrapper.append(media,status,retry);
   let loading=null,loaded=false;
   async function prepare(){
@@ -256,15 +262,16 @@
      const url=await load();
      if(!wrapper.isConnected)return;
      media.src=url;
+     media.hidden=false;
      if(kind==='video')media.load();
      loaded=true;
-    }catch{status.textContent=errorText;retry.hidden=false;}
+   }catch{status.textContent=errorText;retry.hidden=false;}
     finally{loading=null;}
    })();
    return loading;
   }
   retry.onclick=()=>{loaded=false;void prepare();};
-  media.addEventListener('error',()=>{loaded=false;status.textContent=errorText;retry.hidden=false;});
+  media.addEventListener('error',()=>{loaded=false;status.textContent=errorText;retry.hidden=false;if(defer)media.hidden=true;});
   if(kind==='photo'){
    const enlarge=()=>{
     if(!media.src)return;
@@ -283,6 +290,7 @@
    media.addEventListener('click',enlarge);
    media.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enlarge();}});
   }
+  if(defer)return wrapper;
   if('IntersectionObserver'in window){
    const observer=new IntersectionObserver(entries=>{
     if(!entries.some(entry=>entry.isIntersecting))return;
@@ -292,13 +300,13 @@
   }else void prepare();
   return wrapper;
  }
- function videoCircle(load,errorText){
+ function videoCircle(load,errorText,{defer=false}={}){
   const wrapper=document.createElement('div');
   wrapper.className='connect-video-circle';
   const video=document.createElement('video');
   video.className='connect-media connect-video-circle-player';
   video.playsInline=true;
-  video.preload='auto';
+  video.preload=defer?'none':'auto';
   video.muted=true;
   video.setAttribute('aria-label','Видеосообщение');
   const toggle=document.createElement('button');
@@ -348,6 +356,7 @@
    }catch{message.textContent=errorText;}
   };
   // Load the first video frame automatically when the message is on screen.
+  if(defer)return wrapper;
   if('IntersectionObserver'in window){
    const observer=new IntersectionObserver(entries=>{
     if(!entries.some(entry=>entry.isIntersecting))return;
@@ -430,7 +439,7 @@
   }
  }):null;
  const voiceRequests=new Map();
- function voiceTranslation(locale,target,load,enabled){
+ function voiceTranslation(locale,target,load,enabled,{local=true}={}){
   const labels=voiceCopy[locale]||voiceCopy.en;
   const section=document.createElement('div'),button=document.createElement('button'),status=document.createElement('small');
   section.className='connect-voice-translation';
@@ -439,12 +448,13 @@
   status.setAttribute('role','status');
   const source=document.createElement('select');source.className='connect-voice-language';source.setAttribute('aria-label','Язык голосового сообщения');
   for(const [code,name] of [['auto','Автоязык'],['ru','Русский'],['vi','Tiếng Việt'],['en','English']]){const option=document.createElement('option');option.value=code;option.textContent=name;source.append(option);}
+  source.hidden=!local;
   section.append(source,button,status);
   if(!enabled){button.hidden=true;status.textContent=labels[2];return section;}
   let timer=null,attempts=0,loading=false;
   const request=async()=>{
    if(loading||!section.isConnected)return;
-   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent='Загружаем модели и распознаём речь на телефоне. Первый запуск может занять несколько минут…';
+   loading=true;button.disabled=true;button.textContent=labels[1];status.textContent=local?'Загружаем модели и распознаём речь на телефоне. Первый запуск может занять несколько минут…':labels[7];
    try{
     const result=await load(source.value);
     if(!section.isConnected)return;
@@ -471,7 +481,7 @@
      button.textContent='Повторить перевод';
     }
    }catch(error){
-    console.warn('UMMA local voice translation',error);
+    console.warn('UMMA voice translation',error);
     const details=String(error?.message||error||'').slice(0,100);
     status.textContent=labels[2]+(details?' · '+details:'');
     button.textContent='Повторить перевод';
@@ -479,7 +489,7 @@
   };
   button.onclick=()=>{if(timer)clearTimeout(timer);attempts=0;void request();};
   source.onchange=()=>{button.hidden=false;button.disabled=false;button.textContent='🌐 Перевести голос';status.textContent='Выбран язык: '+source.options[source.selectedIndex].textContent;};
-  status.textContent='Бесплатный перевод на телефоне. Нажмите кнопку; при первом запуске загрузятся модели.';
+  if(local)status.textContent='Бесплатный перевод на телефоне. Нажмите кнопку; при первом запуске загрузятся модели.';
   return section;
  }
  const albumType='application/octet-stream';
@@ -503,7 +513,7 @@
   if(offset!==blob.size)throw Error('Invalid album');
   return files;
  }
- function inlineAlbum(labels,load){
+ function inlineAlbum(labels,load,options){
   const wrapper=document.createElement('div'),open=document.createElement('button'),status=document.createElement('small');
   open.type='button';
   open.textContent=labels.album;
@@ -522,7 +532,7 @@
     for(const file of files){
      const url=URL.createObjectURL(file),kind=file.type.startsWith('image/')?'photo':'video';
      urls.push(url);
-     const media=inlineAttachment(kind,labels[kind],async()=>url,labels.error);
+     const media=inlineAttachment(kind,labels[kind],async()=>url,labels.error,kind==='video'?options:undefined);
      media.style.minWidth='0';
      grid.append(media);
     }

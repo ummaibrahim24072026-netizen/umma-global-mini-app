@@ -697,15 +697,19 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  ];
  const avatar='data:image/png;base64,iVBORw0KGgo=';
  let currentAvatar=avatar;
+ const mobileRequests=[];
  staff.fetch=async(url,init)=>{
   const request=JSON.parse(init.body);
   assert.equal(request.initData,'web:test');
+  mobileRequests.push(request.action);
   const client={id:ca,name:'Клиент',unread:0,last_message:'Ответ'};
   if(request.action==='staffMediaGet'){
    assert.equal(request.clientId,ca);
-   assert.equal(request.messageId,'staff-view-question');
+   assert.ok(['staff-view-question','staff-view-video'].includes(request.messageId));
    return new Response(JSON.stringify({ok:true,url:'https://qa.invalid/signed'}));
   }
+  if(request.action==='staffVoice')return Response.json({ok:true,status:'ready',text:'Bản dịch từ máy chủ'});
+  if(url.endsWith('/cafe-connect-translate'))return Response.json({ok:true,text:'Перевод текста'});
   return new Response(JSON.stringify(request.action==='staffInbox'?
    {ok:true,clients:[client]}:request.action==='staffInboxDetails'?
    {ok:true,stage:'new',revision:0,orders:[]}:{ok:true,client:request.includeAvatar?{...client,avatar:currentAvatar}:client,messages,voiceTranslation:true}));
@@ -760,6 +764,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  staff.HTMLMediaElement.prototype.load=function(){};
  staff.HTMLMediaElement.prototype.play=async function(){};
+ staff.HTMLMediaElement.prototype.pause=function(){};
  staff.document.querySelector('.connect-public-voice button[aria-label^="Воспроизвести"]').click();
  await tick();
  [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='🌐 Перевести голос').click();
@@ -788,6 +793,43 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await poll();
  await tick();
  assert.equal(avatarImage.getAttribute('src'),avatar);
+
+ // Opening a chat on a phone must not initialize browser models or preload attachments.
+ header.querySelector('.work-chat-back').click();
+ staff.matchMedia=()=>({matches:true});
+ let localCalls=0;
+ staff.ummaLocalTranslate={
+  translate(){localCalls++;throw Error('Unexpected local model');},
+  voice(){localCalls++;throw Error('Unexpected local model');}
+ };
+ messages.push(
+  {id:'staff-view-text',direction:'customer',body:'Mobile translation fixture',created_at:'2026-11-07T12:03:00Z',read_at:'2026-11-07T12:04:00Z'},
+  {id:'staff-view-video',direction:'customer',body:'◉ Видеосообщение',media_kind:'video',created_at:'2026-11-07T12:04:00Z',read_at:'2026-11-07T12:05:00Z'}
+ );
+ mobileRequests.length=0;
+ staff.document.querySelector('[data-client-thread]').click();
+ await tick();
+ const threadPanel=staffChat.querySelector('.work-thread');
+ const mobileVoice=threadPanel.querySelector('audio');
+ const circle=threadPanel.querySelector('.connect-video-circle');
+ assert.equal(mobileVoice.preload,'none');
+ assert.equal(mobileVoice.hasAttribute('src'),false);
+ assert.equal(circle.querySelector('video').hasAttribute('src'),false);
+ assert.equal(mobileRequests.includes('staffMediaGet'),false);
+ assert.equal(mobileRequests.includes('staffVoice'),false);
+ assert.equal(mobileRequests.includes(undefined),false);
+ assert.equal(localCalls,0);
+ threadPanel.querySelector('[data-message-id="staff-view-text"] .connect-translated-text button:not([hidden])').click();
+ threadPanel.querySelector('.connect-voice-translation button').click();
+ circle.querySelector('button').click();
+ await tick();
+ assert.equal(mobileRequests.includes('staffVoice'),true);
+ assert.equal(mobileRequests.includes('staffMediaGet'),true);
+ assert.equal(localCalls,0);
+ assert.match(threadPanel.textContent,/Bản dịch từ máy chủ/);
+ assert.match(threadPanel.textContent,/Перевод текста/);
+ header.querySelector('.work-chat-back').click();
+ assert.equal(circle.querySelector('video').hasAttribute('src'),false);
  staff.close();
 }
 // An existing profile photo syncs on menu startup even before the chat loads.

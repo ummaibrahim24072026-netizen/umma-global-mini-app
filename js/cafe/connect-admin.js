@@ -51,6 +51,7 @@ function restoreStaffTheme(){
 }
 
 const mobileChat=()=>window.matchMedia?.('(max-width:760px)')?.matches===true;
+const limitedChat=()=>!!workspace&&(mobileChat()||navigator.userAgentData?.mobile||/Android|iPhone|iPad/.test(navigator.userAgent));
 function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',visible()&&view==='inbox'&&!!thread&&mobileChat());}
 window.addEventListener('resize',syncChatScreen);
 const workspace=document.getElementById('webMessages');
@@ -264,6 +265,8 @@ function showMessages(data,forceBottom=false){
  entries.sort((a,b)=>compareTimestamp(a.created_at,b.created_at)||Number(!!b.order&&!b.event)-Number(!!a.order&&!a.event)
   ||Number(b.event?.to_status==='paid')-Number(a.event?.to_status==='paid')||a.id.localeCompare(b.id));
  const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
+ const defer=limitedChat();
+ const playback={defer};
  const labels={album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'};
  window.ummaConnectMedia.render(messages,entries,m=>{
   if(m.order){
@@ -280,18 +283,25 @@ function showMessages(data,forceBottom=false){
   if(videoNote)li.classList.add('connect-video-note');
   if(voice)li.classList.add('connect-chat-voice');
   if(!voice&&!videoNote)li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
-  if(m.body&&!videoNote)li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target,data.client.id))));
+  if(m.body&&!videoNote){
+   const serverTranslation=()=>translateChat(m.id,target,data.client.id);
+   const textTranslation=defer?serverTranslation:
+    ()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(serverTranslation);
+   li.append(m.media_kind?node('div',m.body):window.ummaConnectMedia.translatedText(m.body,target,textTranslation,
+    defer?'Перевести':undefined,defer?{loading:'Переводим…',error:'Перевод временно недоступен. Показан оригинал.'}:undefined));
+  }
   let voicePlayer;
   if(m.media_kind){
    const load=async()=> (await api('staffMediaGet',{clientId:data.client.id,messageId:m.id})).url;
-   if(voice)voicePlayer=window.ummaConnectMedia.publicVoice(load,labels.error,{lang:'ru'});
-   li.append(voicePlayer||(videoNote?window.ummaConnectMedia.videoCircle(load,labels.error)
-    :m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(labels,load)
-    :window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],load,labels.error)));
+   if(voice)voicePlayer=window.ummaConnectMedia.publicVoice(load,labels.error,{lang:'ru',defer});
+   li.append(voicePlayer||(videoNote?window.ummaConnectMedia.videoCircle(load,labels.error,playback)
+    :m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(labels,load,playback)
+    :window.ummaConnectMedia.inlineAttachment(m.media_kind,labels[m.media_kind],load,labels.error,playback)));
   }
   if(m.direction==='customer'&&m.media_kind==='voice'&&typeof data.voiceTranslation==='boolean'){
-   li.append(window.ummaConnectMedia.voiceTranslation('ru',target,
-    async(source)=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target,source);},true));
+   const voiceTranslation=defer?()=>api('staffVoice',{clientId:data.client.id,messageId:m.id,language:target}):
+    async(source)=>{const media=await api('staffMediaGet',{clientId:data.client.id,messageId:m.id});return window.ummaLocalTranslate.voice(media.url,target,source);};
+   li.append(window.ummaConnectMedia.voiceTranslation('ru',target,voiceTranslation,true,{local:!defer}));
   }
   const meta=node('div',null,'connect-message-meta');
   meta.append(node('small',dateTime.format(new Date(m.created_at))));
@@ -328,6 +338,11 @@ async function loadEarlier(){
 function closeThread(){
  if(!thread)return;
  composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);
+ for(const media of messages.querySelectorAll('audio[src],video[src]')){
+  media.pause();
+  media.removeAttribute('src');
+  media.load();
+ }
  messages.replaceChildren();thread=null;workflow=null;replyKey=null;replyBody.value='';
  history=[];latestThread=null;historyFinished=false;oldestButton.hidden=true;
  replyStatus.textContent='';replyForm.hidden=true;threadMenu.open=false;threadMenu.hidden=true;
