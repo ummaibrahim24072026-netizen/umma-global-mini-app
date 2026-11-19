@@ -750,6 +750,6 @@ window.addEventListener('offline',()=>{
  }
 });
 window.addEventListener('online',()=>void poll());
-setInterval(()=>{syncVisibility();void poll();},8000);
+document.addEventListener('umma:connect-realtime',()=>void poll());setInterval(()=>{syncVisibility();void poll();},8000);
 syncVisibility();
 })();
