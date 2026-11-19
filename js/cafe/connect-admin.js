@@ -597,7 +597,7 @@ function build(){
     try{data=await api('staffThread',{clientId});}catch{}
    }
    if(data&&thread===clientId){latestThread=data;showMessages(data,true);}
-   replyStatus.textContent=data?.client.pushEnabled?'Ответ отправлен в чат. Уведомление поставлено в очередь.':'Ответ отправлен в чат.';
+   replyStatus.textContent=''; // Successful sends are reflected in the thread; keep the status area for errors only.
    void refresh().catch(()=>{});
   },replyStatus).finally(()=>composer.busy(false));
  };
