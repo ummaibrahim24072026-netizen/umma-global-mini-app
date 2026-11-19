@@ -37,8 +37,14 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  assert.equal(d.getElementById('webCashViews').hidden,true);
  assert.deepEqual([...d.querySelectorAll('[data-counter-view]')].map(b=>b.textContent.trim()),['Продажа','Оплата','Заказы','Выдача']);
  if(method==='qr'){
+  d.getElementById('screenLayout').value='tablet-large';
   d.getElementById('screenPair').click();await tick();
+  assert.equal(requests.find(r=>r.b.action==='screenCreate').b.layout,'tablet-large');
   assert.match(d.getElementById('screenPairLink').href,/payment-screen.html#screen=/);
+  const layout=d.getElementById('screenLayout');
+  layout.value='monitor';layout.dispatchEvent(new w.Event('change'));
+  await tick();
+  assert.equal(requests.find(r=>r.b.action==='screenSettings').b.layout,'monitor');
  }
  d.querySelector('[data-pos-add]').click();
  if(method==='qr'){
@@ -140,8 +146,8 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  const w=dom.window,d=w.document;
  w.AbortSignal=AbortSignal;
  let callback,fail=false;
- const lines=[{name:'Лепёшка <из печи>',quantity:2,unitPrice:25000}];
- let view={draft:{total:50000,method:null,lines},order:null};
+ const lines=[{name:'Лепёшка <из печи>',quantity:2,unitPrice:25000,sku:'UMMA-CAFE-FLATBREAD'}];
+ let view={draft:{total:50000,method:null,lines},order:null,layout:'tablet-small'};
  w.setTimeout=fn=>{callback=fn;return 1;};w.clearTimeout=()=>{};
  w.qrcode=()=>({addData(p){assert.equal(p,'QR amount 50000');},make(){},createSvgTag(){return '<svg></svg>';}});
  w.fetch=async(url,options)=>{
@@ -151,19 +157,31 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
   if(fail)throw Error('offline');
   return new Response(JSON.stringify({ok:true,...view}));
  };
+ w.eval(readFileSync('js/cafe/product-photo.js','utf8'));
  w.eval(readFileSync('js/cafe/payment-screen.js','utf8'));await tick();
  assert.match(d.getElementById('screenItems').textContent,/Лепёшка <из печи> × 2/);
  assert.match(d.getElementById('screenTotal').textContent,/50/);
+ assert.match(d.querySelector('#screenItems img').src,/flatbread-white-v2/);
+ assert.match(d.querySelector('#screenItems small').textContent,/25/);
+ assert.equal(w.localStorage.getItem('umma:customer-display-token'),'b'.repeat(64));
+ assert.equal(d.documentElement.dataset.displayLayout,'tablet-small');
  assert.equal(d.getElementById('screenQr').hidden,true);
  view={order:{number:10,total:50000,paymentStatus:'pending',status:'pending',method:'qr',lines},
   payment:{qrPayload:'QR amount 50000',bankName:'VCB',account:'123',reference:'UMMA 10'}};
  await callback();
  assert.ok(d.querySelector('#screenQr svg'));
  assert.match(d.getElementById('screenStatus').textContent,/Unpaid/);
- view={order:{...view.order,method:'cash'}};
+ view={order:{...view.order,method:'kaspi',foreignTotal:{amount:1000,currency:'KZT'}},transfer:{phone:'+77000000001',bank:'Kaspi',recipient:'QA'}};
+ await callback();
+ assert.equal(d.getElementById('screenTransfer').hidden,false);
+ assert.equal(d.getElementById('screenTransferPhone').textContent,'+77000000001');
+ assert.match(d.getElementById('screenTransferBank').textContent,/Kaspi/);
+ view={order:{...view.order,method:'cash',foreignTotal:null}};
+
  await callback();
  assert.equal(d.querySelector('#screenQr svg'),null);
  assert.match(d.getElementById('screenMethod').textContent,/Наличными/);
+ assert.equal(d.getElementById('screenTransferPhone').textContent,'');
  view.order.paymentStatus='paid';
  await callback();
  assert.match(d.getElementById('screenNumber').textContent,/№10/);

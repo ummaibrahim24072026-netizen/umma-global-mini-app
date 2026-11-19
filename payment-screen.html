@@ -7,12 +7,14 @@
   <meta name="theme-color" content="#03A2A5">
   <title>UMMA · Ваш заказ</title>
   <link rel="stylesheet" href="css/brand.css?v=8">
-  <link rel="stylesheet" href="css/payment-screen.css?v=1">
-  <script defer src="js/core/screen-awake.js?v=1"></script>
+  <link rel="stylesheet" href="css/payment-screen.css?v=board-2">
+  <link rel="manifest" href="assets/umma-customer-display.webmanifest">
+  <script defer src="js/core/screen-awake.js?v=customer-display"></script>
+  <script defer src="js/core/pwa-registration.js?v=1"></script>
 </head>
 <body class="work-payment-screen">
   <main class="customer-display">
-    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="48" height="48"><strong>HALAL UMMA</strong></header>
+    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="48" height="48"><strong>HALAL UMMA</strong><button id="screenFullscreen" type="button" hidden>На весь экран</button></header>
     <section class="display-order" aria-label="Ваш заказ">
       <h1 id="screenNumber">Добро пожаловать · Welcome · Xin chào</h1>
       <ul id="screenItems" hidden aria-label="Позиции заказа"></ul>
@@ -23,11 +25,19 @@
       <p id="screenMethod" hidden></p>
       <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира · Waiting for your order</p>
       <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
+      <div id="screenTransfer" hidden>
+        <p id="screenTransferBank"></p>
+        <p class="display-transfer-label">Номер для перевода · Phone number</p>
+        <strong id="screenTransferPhone" dir="ltr"></strong>
+        <p id="screenTransferRecipient"></p>
+      </div>
       <p id="screenBank" hidden></p>
       <p id="screenConnection" role="status" hidden></p>
+      <p id="screenDeviceHint" role="status" hidden></p>
     </section>
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
-  <script src="js/cafe/payment-screen.js?v=live-cart"></script>
+  <script src="js/cafe/product-photo.js"></script>
+  <script src="js/cafe/payment-screen.js?v=board-2"></script>
 </body>
 </html>

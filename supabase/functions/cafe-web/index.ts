@@ -7,7 +7,20 @@ const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status
 const secret=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
 const validSecret=(s:unknown)=>typeof s==='string'&&/^[a-f0-9]{64}$/.test(s);
 const screenMethods=new Set(['cash','qr','rub','tenge','kaspi','sber','usdt']);
-type ScreenLine={name:string,quantity:number,unitPrice:number};
+const screenAssets='https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/';
+const screenLayouts=new Set(['auto','phone','tablet-small','tablet-large','monitor']);
+type ScreenLine={name:string,quantity:number,unitPrice:number,sku?:string,image_url?:string};
+function screenPhotoFields(product:any){
+ const sku=typeof product?.sku==='string'&&/^[A-Z0-9_-]{1,80}$/i.test(product.sku)?product.sku:undefined;
+ const image=product?.image_url;
+ if(typeof image==='string'&&image.length<=700){
+  try{
+   const url=new URL(image,screenAssets);
+   if(url.href.startsWith(screenAssets)&&!url.username&&!url.password)return {sku,image_url:image};
+  }catch{}
+ }
+ return {sku};
+}
 function screenDraft(value:unknown,method:unknown){
  if(!Array.isArray(value)||value.length>99||(method!==null&&(typeof method!=='string'||!screenMethods.has(method))))return undefined;
  const lines:ScreenLine[]=[];
@@ -15,7 +28,7 @@ function screenDraft(value:unknown,method:unknown){
   if(typeof line?.name!=='string'||!line.name.trim()||line.name.length>160||
      !Number.isInteger(line.quantity)||line.quantity<1||line.quantity>99||
      !Number.isSafeInteger(line.unitPrice)||line.unitPrice<=0||line.unitPrice>100000000)return undefined;
-  lines.push({name:line.name.trim(),quantity:line.quantity,unitPrice:line.unitPrice});
+  lines.push({name:line.name.trim(),quantity:line.quantity,unitPrice:line.unitPrice,...screenPhotoFields(line)});
  }
  return lines.length?{lines,method,total:lines.reduce((sum,line)=>sum+line.quantity*line.unitPrice,0)}:null;
 }
@@ -49,31 +62,32 @@ Deno.serve(async req=>{
  }
  if(b.action==='screenPoll'){
   if(!validSecret(b.screenToken))return reply({ok:false},404);
-  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at')
+  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at,display_layout')
    .eq('token_hash',await sha256(b.screenToken)).eq('active',true).maybeSingle();
   if(error)throw error;
   if(!s)return reply({ok:false},404);
   if(!s.order_id){
    const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
-   return reply({ok:true,order:null,draft});
+   return reply({ok:true,order:null,draft,layout:s.display_layout});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
-   .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd)')
+   .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url))')
    .eq('id',s.order_id).eq('location_id',s.location_id).order('id',{referencedTable:'cafe_order_items',ascending:true}).maybeSingle();
   if(oe)throw oe;
-  if(!o)return reply({ok:true,order:null});
-  let method=o.payment_method,foreignTotal=null;
+  if(!o)return reply({ok:true,order:null,layout:s.display_layout});
+  let method=o.payment_method,foreignTotal=null,transfer=null;
   if(method==='bank_transfer'){
    const {data:foreign,error:foreignError}=await db.rpc('cafe_screen_payment_amount',{p_screen_id:s.id,p_order_id:o.id});
    if(foreignError)throw foreignError;
    if(foreign){
     method=foreign.channel;
     foreignTotal={amount:foreign.amount,currency:foreign.currency};
+    if(foreign.phone)transfer={phone:foreign.phone,bank:foreign.bank,recipient:foreign.recipient};
    }
   }
-  const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd}));
+  const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
   return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
-   payment:paymentFor(o)});
+   layout:s.display_layout,transfer,payment:paymentFor(o)});
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
@@ -220,14 +234,23 @@ Deno.serve(async req=>{
   await db.from('cafe_web_sessions').update({revoked_at:new Date().toISOString()}).eq('actor_id',b.actorId);await db.from('cafe_payment_screens').update({active:false}).eq('actor_id',b.actorId);return reply({ok:true});
  }
  if(b.action==='screenCreate'){
-  if(!canSell(b.locationId))return reply({ok:false,error:'Нет доступа к кассе'},403);const token=secret();
-  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId}).select('id').single();if(error)throw error;
+  if(!canSell(b.locationId))return reply({ok:false,error:'Нет доступа к кассе'},403);
+  const layout=b.layout??'auto';
+  if(!screenLayouts.has(layout))return reply({ok:false,error:'Выберите размер табло.'},400);
+  const token=secret();
+  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId,display_layout:layout}).select('id').single();if(error)throw error;
   return reply({ok:true,id:data.id,screenToken:token});
  }
- if(['screenSelect','screenRevoke','screenDraft'].includes(b.action)){
+ if(['screenSelect','screenRevoke','screenDraft','screenSettings'].includes(b.action)){
   const {data:s,error}=await db.from('cafe_payment_screens').select('id,actor_id,location_id').eq('id',b.screenId).eq('active',true).maybeSingle();if(error)throw error;
   if(!s||(!isOwner&&Number(s.actor_id)!==actor)||!canSell(s.location_id))return reply({ok:false,error:'Нет доступа к экрану'},403);
   if(b.action==='screenRevoke'){const {error:e}=await db.from('cafe_payment_screens').update({active:false}).eq('id',s.id);if(e)throw e;return reply({ok:true});}
+  if(b.action==='screenSettings'){
+   if(!screenLayouts.has(b.layout))return reply({ok:false,error:'Выберите размер табло.'},400);
+   const {error:e}=await db.from('cafe_payment_screens').update({display_layout:b.layout}).eq('id',s.id).eq('active',true);
+   if(e)throw e;
+   return reply({ok:true});
+  }
   const revision=b.revision;
   if((revision!==undefined||b.action==='screenDraft')&&(!Number.isSafeInteger(revision)||revision<1||revision>Date.now()*1000+300000000)){
    return reply({ok:false,error:'Не удалось обновить данные экрана.'},400);
