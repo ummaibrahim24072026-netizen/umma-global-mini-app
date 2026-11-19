@@ -28,7 +28,9 @@ function screenSnapshot(){
  };
  if(cart.size)return {
   lines:[...cart.values()].map(({product,quantity})=>({
-   name:String(product.name_ru||product.name_en||product.name_vi||'Блюдо').slice(0,160),quantity,unitPrice:Number(product.price_vnd),
+   name:String(product.name_ru||product.name_en||product.name_vi||'Блюдо').slice(0,160),
+   name_ru:String(product.name_ru||'').slice(0,160),name_en:String(product.name_en||'').slice(0,160),name_vi:String(product.name_vi||'').slice(0,160),
+   quantity,unitPrice:Number(product.price_vnd),
    sku:product.sku,image_url:product.image_url,
   })),
   method:counterView==='payment'?selectedMethod:null,cashReceived,
