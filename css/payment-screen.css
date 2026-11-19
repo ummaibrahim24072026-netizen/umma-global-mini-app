@@ -325,3 +325,19 @@ body.display-qr-active #screenQr svg {width:min(100%,43dvh)!important;max-height
  body.display-qr-active #screenItems li {padding:3px 0;}
  body.display-qr-active .display-brand img {width:30px;height:30px;}
 }
+
+
+/* Center the QR exactly between the left and right edges on phone displays. */
+body.display-qr-active #screenQr {box-sizing:border-box;min-width:0;width:100%;margin-inline:auto;justify-items:center;align-items:center;}
+body.display-qr-active #screenQr svg {display:block;margin-inline:auto;justify-self:center;flex-shrink:0;}
+@media (orientation:portrait) {
+ body.display-qr-active .customer-display:not(.is-idle) {
+  width:100%;margin-inline:auto;
+  padding-left:max(12px,env(safe-area-inset-left));
+  padding-right:max(12px,env(safe-area-inset-right));
+ }
+ body.display-qr-active .display-order,
+ body.display-qr-active .display-payment {width:100%;min-width:0;margin-inline:0;}
+ body.display-qr-active #screenQr {display:flex;justify-content:center;align-items:center;padding-inline:0;}
+ body.display-qr-active #screenQr svg {margin-inline:auto;max-width:100%;}
+}
