@@ -421,7 +421,7 @@ function build(){
   dialog.dataset.chatTheme=savedChatTheme();
  }
  const close=el('button',t(1),'connect-close');close.type='button';close.onclick=()=>dialog.close();const hero=el('div',null,'connect-hero');const heroIcon=el('span','☏','connect-hero-icon');if(connectHost){const logo=el('img');logo.src='logo/assets/umma-icon-192.png';logo.alt='';logo.width=42;logo.height=42;heroIcon.replaceChildren(logo);}heroIcon.setAttribute('aria-hidden','true');const heroText=el('div',null,'connect-hero-copy');heroText.append(el('h2',chatTitle()));if(publicChat){
-  close.textContent=lang()==='ru'?'← Назад':lang()==='vi'?'← Quay lại':'← Back';
+  close.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5\"/><path d=\"m12 19-7-7 7-7\"/></svg>"; for(const [key,value] of Object.entries({display:'inline-flex',alignItems:'center',justifyContent:'center',width:'44px',minWidth:'44px',height:'44px',minHeight:'44px',padding:'0',border:'0',borderRadius:'0',background:'transparent',color:'#fff',flex:'0 0 44px'}))close.style.setProperty(key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),value,'important');
   close.setAttribute('aria-label',lang()==='ru'?'Назад':lang()==='vi'?'Quay lại':'Back');
   const menuLabel=({ru:'Действия чата',vi:'Tùy chọn trò chuyện'})[lang()]||'Chat options';
   const clearLabel=({ru:'Очистить чат',vi:'Xóa lịch sử trò chuyện'})[lang()]||'Clear chat';
