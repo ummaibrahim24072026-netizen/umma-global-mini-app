@@ -23,11 +23,10 @@ for(const owner of [true,false]){
   assert.equal(calls.find(b=>b.action==='staffRead').clientId,'customer-id');
   assert.equal(d.querySelector('#webInboxCount').hidden,true);
   d.querySelector('[data-web-tab=pos]').click();
-  assert.equal(d.querySelector('#webCashViews').hidden,false);
-  d.querySelector('[data-cash-view=cashOrders]').click();
-  assert.equal(d.body.dataset.workspace,'cashOrders');
-  assert.equal(d.querySelector('[data-web-tab=pos]').getAttribute('aria-current'),'true');
-  assert.deepEqual(boardMode,[false,'payment']);
+  assert.equal(d.querySelector('#webCashViews').hidden,true);
+  assert.equal(d.querySelector('#cafeKitchenPage').hidden,true);
+  d.getElementById('counterExit').click();
+  assert.equal(d.body.dataset.workspace,'messages');
   d.querySelector('[data-web-tab=orders]').click();
   assert.deepEqual(boardMode,[false,'active']);
   d.querySelector('[data-web-tab=admin]').click();await tick();assert.equal(d.querySelectorAll('.staff-account').length,3);

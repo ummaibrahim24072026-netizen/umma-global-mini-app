@@ -93,32 +93,17 @@
       '" width="44" height="44" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : "";
   }
 
-  for (const id of ["counterIncomingItems", "cafeKitchenOrders"]) {
-    byId(id)?.addEventListener("error", event => {
-      if (event.target.matches(".work-order-item-photo")) event.target.hidden = true;
-    }, true);
-  }
+  byId("cafeKitchenOrders")?.addEventListener("error", event => {
+    if (event.target.matches(".work-order-item-photo")) event.target.hidden = true;
+  }, true);
 
-  function renderCounterIncoming(activeOrders) {
-    const panel = byId("counterIncoming");
-    if (!panel || panel.hidden || courierWorkspace) return;
-    const locationId = byId("posLocation").value;
-    const online = activeOrders.filter(order => order.location_id === locationId && order.created_via === "customer");
+  function renderAppOrderBadge(activeOrders) {
     const badge = byId("counterOrderCount");
-    badge.hidden = online.length === 0;
-    if (badge.textContent !== String(online.length)) badge.textContent = String(online.length);
-    if (document.body.dataset.workspace !== "pos") return;
-    const latest = online.reduce((newest, order) =>
-      !newest || Date.parse(order.created_at) > Date.parse(newest.created_at) ? order : newest, null);
-    const title = latest ? "Из приложения · " + online.length + " · №" + latest.order_number : "Заказы из приложения";
-    const items = latest?.cafe_order_items?.map(item => '<span class="work-order-item-name">' +
-      orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + ' × ' + Number(item.quantity) + '</span></span>').join("");
-    const status = latest && (waitingBatch(latest) ? "Ждёт партию" :
-      awaitingCounterPayment(latest) ? "Ждёт оплаты" : statusNames[latest.status]);
-    const markup = latest ? (items || "") + (status ? "<span>" + esc(status) + "</span>" : "") : "Активных заказов пока нет";
-    const heading = byId("counterIncomingTitle"), content = byId("counterIncomingItems");
-    if (heading.textContent !== title) heading.textContent = title;
-    if (content.innerHTML !== markup) content.innerHTML = markup;
+    if (!badge || courierWorkspace || !document.body.classList.contains("work-counter-alerts")) return;
+    const locationId = byId("posLocation").value;
+    const count = activeOrders.filter(order => order.location_id === locationId && order.created_via === "customer").length;
+    badge.hidden = count === 0;
+    badge.textContent = String(count);
   }
 
   function render() {
@@ -127,12 +112,7 @@
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
     shown=shown.filter(o=>!hiddenFromPreparation(o)&&(!boardLocation||o.location_id===boardLocation));
-    const counter=document.body.dataset.workspace==="pos" && byId("counterIncoming")?.hidden===false;
-    if(counter){
-      const locationId=byId("posLocation").value;
-      shown=shown.filter(order=>order.location_id===locationId);
-    }
-    renderCounterIncoming(orders.filter(order=>!finished(order)));
+    renderAppOrderBadge(orders.filter(order=>!finished(order)));
     const cashBoard=document.body.dataset.workspace==="cashOrders";
     if (filter === "payment") shown=shown.filter(cashBoard
       ? o=>o.canAcceptPayments===true&&o.payment_status==="pending"&&!finished(o)&&o.payment_timing!=="on_delivery"
@@ -148,7 +128,7 @@
     const webSummary=byId("webOrderSummary");
     if(webSummary){
       webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";
-      const visible=orders.filter(o=>(!boardLocation||o.location_id===boardLocation)&&(!counter||o.location_id===byId("posLocation").value)&&!finished(o)&&!hiddenFromPreparation(o));
+      const visible=orders.filter(o=>(!boardLocation||o.location_id===boardLocation)&&!finished(o)&&!hiddenFromPreparation(o));
       const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
@@ -223,7 +203,7 @@
         waitingBatch(order)?'<strong class="ready-plan-summary">Предзаказ · партия готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(order.preorder_expected_at)))+' · Нячанг. Сначала примите партию в плане готовки.</strong>':'',
         order.customer_name ? '<span>👤 ' + esc(order.customer_name) + '</span>' : "",
         order.customer_phone ? '<span class="order-phone">☎ ' + esc(order.customer_phone) + '</span>' : "",
-        byId("counterIncoming") && ["staff","customer"].includes(order.created_via)
+        byId("webPos") && ["staff","customer"].includes(order.created_via)
           ? '<span class="order-origin">' + (order.created_via==="staff" ? "У стойки" : "Из приложения") + '</span>' : "",
         '<span class="order-type">📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
         '<span class="order-payment">💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',

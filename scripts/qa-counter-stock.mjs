@@ -7,7 +7,7 @@ const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staf
 const w=dom.window,d=w.document;
 w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};
 let refresh;
-w.setInterval=fn=>{if(String(fn).includes('refreshStock'))refresh=fn;return 1;};
+w.setInterval=fn=>{if(fn.name==='refreshStock')refresh=fn;return 1;};
 const dishes=[{id:'plov',name_ru:'Плов',price_vnd:120000},{id:'manti',name_ru:'Манты',price_vnd:150000}];
 let stock=[{id:'plov',available:3,plannedQuantity:12,plannedAvailable:7,plannedReadyAt:'2026-11-11T11:30:00Z',planRevision:'batch-1'},
  {id:'manti',available:0,plannedQuantity:8,plannedAvailable:6,plannedReadyAt:'2026-11-11T12:00:00Z',planRevision:'batch-2'}];

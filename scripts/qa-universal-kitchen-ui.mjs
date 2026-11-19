@@ -5,7 +5,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
  const fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
- else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders};
+ else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders:orders.map(order=>({...order,staffRole:assigned}))};
  else if(b.action==='updateStatus')orders=orders.map(order=>order.id===b.orderId?{...order,status:b.status}:order);
  else if(b.action==='stockList')out={ok:true,products:[{id:'bread',name:'Лепёшка',quantity:2,reserved:0,available:2,confirmed:true,state:'ready'}]};
  else if(b.staffOrder)out={ok:true,order:{id:'order',orderNumber:25,totalVnd:25000}};
@@ -24,7 +24,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  const staff=await openWorkspace('staff.html');
  {
  const w=staff.window,d=w.document;
- assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':role==='cashier'?'cashOrders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
  assert.equal(d.getElementById('readyStockPanel').hidden,true,'order and counter views exclude planning');
  assert.equal(d.querySelector('[data-web-tab=kitchen]').hidden,role==='cashier');
  if(role!=='cashier'){
@@ -52,7 +52,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   w.speechSynthesis={speak(utterance){speech.push(utterance);utterance.onend();}};
   w.eval(read('js/cafe/kitchen.js'));
   w.eval(read('js/cafe/kitchen-live.js'));
-  const existingOrder={id:'already-open',location_id:'cafe',created_via:'customer',order_number:164,
+  const existingOrder={order_type:'pickup',id:'already-open',location_id:'cafe',created_via:'customer',order_number:164,
     status:'pending',created_at:'2026-11-10T09:00:00Z',cafe_order_items:[]};
   orders=[existingOrder];
   d.querySelector('[data-web-tab=pos]').click();
@@ -61,13 +61,12 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   await new Promise(resolve=>setTimeout(resolve,400));
   assert.deepEqual(tones,[660,880]);
   assert.match(speech[0].text,/Проверка звука/);
-  assert.equal(d.getElementById('counterIncoming').hidden,false);
   const breadPhoto=d.querySelector('[data-pos-product="bread"] img');
   assert.match(breadPhoto.src,/logo\/assets\/menu\/flatbread-white-v2.webp$/);
   assert.match(d.querySelector('[data-pos-product="dessert"] img').src,/assets\/cafe\/dessert-2-white.webp$/);
   const description=d.querySelector('[data-pos-product="bread"] details');
   assert.equal(description.open,false);
-  assert.equal(description.querySelector('summary').textContent,'Описание');
+  assert.equal(description.querySelector('summary').textContent,'Состав и описание');
   assert.equal(description.querySelector('p').textContent,'Лепёшка <из печи>');
   assert.equal(d.querySelector('[data-pos-product="dessert"] details p').textContent,'Honey cake');
   description.querySelector('summary').click();
@@ -78,66 +77,60 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   assert.equal(w.ummaCafeProductPhoto({image_url:'javascript:alert(1)'}),'');
   breadPhoto.dispatchEvent(new w.Event('error'));
   assert.equal(breadPhoto.hidden,true);
-  assert.equal(d.getElementById('cafeKitchenPage').hidden,false);
+  assert.equal(d.getElementById('cafeKitchenPage').hidden,true);
   d.querySelector('[data-pos-add]').click();
   const online={id:'online',location_id:'cafe',created_via:'customer',order_number:165,order_type:'pickup',
     status:'pending',payment_status:'pending',payment_method:'cash',requires_prepayment:true,canAcceptPayments:true,
     created_at:'2026-11-10T10:00:00Z',total_vnd:50000,cafe_order_items:[{product_name_ru:'Плов',quantity:2,line_total_vnd:50000,product:{sku:'UMMA-CAFE-PLOV'}},{product_name_ru:'Архивное блюдо',quantity:1,line_total_vnd:0,product:null}]};
   orders=[online,{...online,id:'other-location',location_id:'other',order_number:166},{...online,id:'staff-sale',created_via:'staff',order_number:167}];
-  await new Promise(resolve=>setTimeout(resolve,2450));
+  d.dispatchEvent(new w.Event('umma:cafe-events'));
+  await new Promise(resolve=>setTimeout(resolve,450));
   assert.deepEqual(tones,[660,880,660,880]);
   assert.deepEqual(speech.map(entry=>entry.lang),['ru-RU','ru-RU']);
   assert.equal(speech[1].text,'Новый заказ номер 165. Плов — 2. Архивное блюдо — 1.');
-  assert.match(d.getElementById('counterIncomingTitle').textContent,/№165/);
-  const preview=d.getElementById('counterIncomingItems');
-  assert.match(preview.textContent,/Плов × 2/);
-  assert.match(preview.textContent,/Ждёт оплаты/);
-  assert.match(preview.querySelector('img').src,/logo\/assets\/menu\/plov-white-v2.webp$/);
-  const orderItems=d.querySelector('[data-kitchen-order="online"] .kitchen-order-items');
-  assert.equal(orderItems.querySelector('img').src,preview.querySelector('img').src);
-  assert.equal(orderItems.querySelectorAll('img').length,1);
-  assert.match(orderItems.textContent,/Архивное блюдо × 1/);
-  const orderPhoto=orderItems.querySelector('img');
-  orderPhoto.dispatchEvent(new w.Event('error'));
-  assert.equal(orderPhoto.hidden,true);
-  assert.equal(d.getElementById('counterOrderCount').textContent,'1');
-  assert.ok(d.querySelector('[data-kitchen-order="online"] [data-payment-status="paid"]'));
-  assert.equal(d.querySelector('[data-kitchen-order="other-location"]'),null);
-  d.getElementById('counterOpenOrders').click();
-  assert.equal(d.body.dataset.workspace,'orders');
-  d.querySelector('[data-web-tab=pos]').click();
-  assert.match(d.getElementById('posCart').textContent,/Лепёшка/);
+  assert.match(d.getElementById('counterOnline').textContent,/Из приложения/);
+  d.getElementById('counterOnline').click();
   await tick();
-  assert.equal(tones.length,4);
-  const voice=d.getElementById('kitchenOrderVoice');
-  voice.click();
+  const orderCard=id=>d.querySelector('#counterOrderList [data-counter-order="'+id+'"]');
+  assert.match(orderCard('online').textContent,/Плов × 2/);
+  assert.match(orderCard('online').textContent,/Ожидает оплаты/);
+  assert.equal(orderCard('other-location'),null);
+  assert.equal(d.querySelector('#counterOrderList article').dataset.counterOrder,'staff-sale');
+  assert.ok(orderCard('online').querySelector('[data-counter-action=pay]'));
+  d.querySelector('[data-counter-view=sale]').click();
+  assert.match(d.getElementById('posCart').textContent,/Лепёшка/);
+  d.getElementById('kitchenOrderVoice').click();
   assert.equal(w.localStorage.getItem('umma_kitchen_order_voice'),'off');
   orders=[...orders,{...online,id:'another-online',order_number:168}];
-  await w.ummaKitchen.refresh();
+  d.dispatchEvent(new w.Event('umma:cafe-events'));
   await tick();
   assert.deepEqual(tones,[660,880,660,880,660,880]);
   assert.equal(speech.length,2);
-  orders=orders.map(order=>['online','another-online'].includes(order.id)?{...order,status:'ready',payment_status:'paid'}:order);
-  d.getElementById('counterOpenOrders').click();
+  orders=orders.map(order=>order.id==='online'?{...order,status:'ready',payment_status:'paid'}:
+   order.id==='another-online'?{...order,status:'ready',payment_status:'pending'}:order);
+  d.querySelector('[data-counter-view=issue]').click();
   await tick();
-  assert.equal(d.body.dataset.workspace,'orders');
-  const badge=d.getElementById('counterOrderCount');
-  assert.equal(badge.textContent,'2');
-  d.querySelector('[data-kitchen-order="online"] [data-new-status="completed"]').click();
+  const issueCard=id=>d.querySelector('#counterIssueList [data-counter-order="'+id+'"]');
+  assert.equal(issueCard('another-online'),null,'unpaid ready orders cannot be handed over');
+  w.confirm=()=>false;
+  issueCard('online').querySelector('[data-counter-action=issue]').click();
+  assert.equal(requests.some(b=>b.action==='updateStatus'),false);
+  w.confirm=()=>true;
+  issueCard('online').querySelector('[data-counter-action=issue]').click();
   await tick();
-  assert.equal(d.querySelector('[data-kitchen-order="online"]'),null);
-  assert.equal(badge.textContent,'1');
-  assert.equal(badge.hidden,false);
-  d.querySelector('[data-kitchen-order="another-online"] [data-new-status="completed"]').click();
-  await tick();
-  assert.equal(d.querySelector('[data-kitchen-order="another-online"]'),null);
-  assert.equal(badge.textContent,'0');
-  assert.equal(badge.hidden,true);
-  d.querySelector('[data-web-tab=pos]').click();
-  await tick();
-  assert.equal(badge.hidden,true);
+  assert.equal(issueCard('online'),null);
+  d.querySelector('[data-counter-view=orders]').click();
+  const filter=d.getElementById('counterOrderFilter');
+  filter.value='closed';filter.dispatchEvent(new w.Event('change'));
+  assert.match(orderCard('online').textContent,/Выдан/);
+  d.querySelector('[data-counter-view=sale]').click();
+  d.getElementById('counterCheckout').click();
+  d.getElementById('posCash').value='50000';
+  d.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+  await tick();await tick();
+  assert.equal(requests.filter(b=>b.staffOrder).length,1);
+  assert.equal(requests.find(b=>b.action==='updatePayment').paymentStatus,'paid');}
 
-d.getElementById('posCash').value='50000';d.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(requests.filter(b=>b.staffOrder).length,1);assert.equal(requests.find(b=>b.action==='updatePayment').paymentStatus,'paid');}
  }
  staff.window.close();
  const dom=await openWorkspace('staff.html?work=stock'),w=dom.window,d=w.document;

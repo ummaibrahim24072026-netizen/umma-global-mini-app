@@ -11,7 +11,7 @@
   try { voiceEnabled=localStorage.getItem(voiceKey)!=="off"; } catch {}
   const page=()=>document.getElementById("cafeKitchenPage");
   const visible=()=>page()?.hidden===false||document.getElementById("cafeWaiterPage")?.hidden===false;
-  const canAnnounce=()=>!document.hidden&&visible()&&!page()?.classList.contains("courier-workspace");
+  const canAnnounce=()=>!document.hidden&&(document.body.dataset.workspace==="pos"||visible()&&!page()?.classList.contains("courier-workspace"));
   const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const save=()=>{try{localStorage.setItem(key,JSON.stringify(seen));}catch{}};
   async function unlockAudio(){
