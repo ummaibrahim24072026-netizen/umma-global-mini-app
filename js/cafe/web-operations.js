@@ -14,7 +14,7 @@ function notice(s){$('webNotice').textContent=s;}
 async function api(action,extra={},endpoint='cafe-web'){const response=await fetch(base+endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,initData:auth.credential(),...extra}),cache:'no-store',signal:AbortSignal.timeout(20000)});const data=await response.json();if(!response.ok||!data.ok){const e=Error(data.error||'Нет связи с кафе');e.status=response.status;throw e;}return data;}
 const screenKey=()=> 'umma:pos-screen:'+auth.actorId()+':'+$('posLocation').value;
 function screen(){try{return JSON.parse(localStorage.getItem(screenKey())||'null');}catch{return null;}}
-function showPair(value){$('screenLayout').value=value?.layout||'auto';$('screenLanguageSetting').value=value?.language||'en';$('screenUnpair').hidden=!value;$('screenPairLink').hidden=!value;$('screenPairQr').replaceChildren();if(!value)return;const url=new URL('payment-screen.html',location.href);url.hash=new URLSearchParams({screen:value.token});$('screenPairLink').href=url.href;drawQr($('screenPairQr'),url.href);$('screenPairState').textContent='Откройте эту ссылку на планшете или отсканируйте QR. Экран привязан к выбранному кафе.';}
+function showPair(value){$('screenLayout').value=value?.layout||'auto';$('screenLanguageSetting').value=value?.language||'ru';$('screenUnpair').hidden=!value;$('screenPairLink').hidden=!value;$('screenPairQr').replaceChildren();if(!value)return;const url=new URL('payment-screen.html',location.href);url.hash=new URLSearchParams({screen:value.token});$('screenPairLink').href=url.href;drawQr($('screenPairQr'),url.href);$('screenPairState').textContent='Откройте эту ссылку на планшете или отсканируйте QR. Экран привязан к выбранному кафе.';}
 function drawQr(root,payload){const qr=qrcode(0,'M');qr.addData(payload);qr.make();root.innerHTML=qr.createSvgTag({cellSize:5,margin:20,scalable:true});}
 let screenTimer,screenRevision=0;
 const publishedScreens=new Map();
@@ -606,14 +606,15 @@ $('screenLayout').onchange=async()=>{
   $('screenPairState').textContent=error.message;
  }finally{field.disabled=false;}
 };
-$('screenLanguageSetting').onchange=async()=>{
+async function setCustomerLanguage(language){
  const client=screen();if(!client)return;
- const field=$('screenLanguageSetting'),language=field.value,key=screenKey();field.disabled=true;
+ const field=$('screenLanguageSetting'),key=screenKey();field.disabled=true;
  try{await api('screenSettings',{screenId:client.id,layout:client.layout||'auto',language});
   if(screenKey()===key&&screen()?.id===client.id){localStorage.setItem(key,JSON.stringify({...client,language}));$('screenPairState').textContent='Язык клиентского табло обновлён.';}}
- catch(error){field.value=client.language||'en';$('screenPairState').textContent=error.message;}
+ catch(error){field.value=client.language||'ru';$('screenPairState').textContent=error.message;}
  finally{field.disabled=false;}
-};
+}
+$('screenLanguageSetting').onchange=()=>void setCustomerLanguage($('screenLanguageSetting').value);
 $('screenUnpair').onclick=async()=>{
  const client=screen();if(!client||busy)return;
  try{
@@ -629,7 +630,7 @@ $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
 $('counterIssueRefresh').onclick=refreshCounterOrders;
 $('counterCheckout').onclick=()=>setCounterView('payment',{draft:true});
-$('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});syncCustomerScreen(true);};
+$('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});$('screenLanguageSetting').value='ru';void setCustomerLanguage('ru');syncCustomerScreen(true);};
 document.querySelectorAll('[data-counter-view]').forEach(button=>{
  button.onclick=()=>{if(!busy)setCounterView(button.dataset.counterView);};
 });
