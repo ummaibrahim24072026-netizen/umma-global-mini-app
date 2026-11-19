@@ -20,7 +20,14 @@ function announceUnread(clients){
 const stages={all:'Все переписки',unread:'Непрочитанные',attention:'Требуют внимания',new:'Новые',active:'В работе',waiting:'Ожидают',closed:'Завершённые'};
 const mediaNames={voice:'Голосовое сообщение',photo:'Фото',video:'Видео',album:'Фото и видео'};
 const orderStates={pending:'Принят',confirmed:'Подтверждён',preparing:'Готовится',ready:'Готов',completed:'Завершён',cancelled:'Отменён',paid:'Оплата подтверждена',assigned:'Курьер назначен',courier_assigned:'Курьер назначен',picked_up:'Курьер забрал заказ',in_transit:'Курьер в пути',delivered:'Доставлен'};
-const staffThemes=['light','turquoise','dark','beige','blue','lavender'];
+const staffThemes=[
+ ['light','Светлый'],
+ ['turquoise','Бирюзовый'],
+ ['dark','Тёмно-бирюзовый'],
+ ['beige','Бежевый'],
+ ['blue','Синий (ночной)'],
+ ['lavender','Лавандовый']
+];
 const staffThemeKey='umma:chat:theme:v1';
 const staffHiddenKey=id=>'umma:staff:chat:hidden:'+String(window.ummaStaffAuth?.actorId?.()||'owner')+':'+id;
 let hiddenBefore='';
@@ -29,7 +36,7 @@ function loadStaffHidden(id){
 }
 const compareTimestamp=(a,b)=>Date.parse(a)-Date.parse(b)||a.localeCompare(b);
 const compareMessages=(a,b)=>compareTimestamp(a.created_at,b.created_at)||a.id.localeCompare(b.id);
-function setStaffTheme(id){if(!staffThemes.includes(id))return;root().dataset.chatTheme=id;try{localStorage.setItem(staffThemeKey,id);}catch{}}
+function setStaffTheme(id){if(!staffThemes.some(([theme])=>theme===id))id='light';root().dataset.chatTheme=id;try{localStorage.setItem(staffThemeKey,id);}catch{}}
 
 const mobileChat=()=>window.matchMedia?.('(max-width:760px)')?.matches===true;
 function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',visible()&&view==='inbox'&&!!thread&&mobileChat());}
@@ -287,7 +294,7 @@ function closeThread(){
  composer.close();composer.clear();window.ummaConnectMedia.releaseAlbums(messages);
  messages.replaceChildren();thread=null;workflow=null;replyKey=null;replyBody.value='';
  history=[];latestThread=null;historyFinished=false;oldestButton.hidden=true;
- replyStatus.textContent='';replyForm.hidden=true;threadMenu.hidden=true;
+ replyStatus.textContent='';replyForm.hidden=true;threadMenu.open=false;threadMenu.hidden=true;
  if(callButtons)callButtons.hidden=true;
  threadTitle.textContent='Выберите переписку';
  syncChatScreen();renderClients();
@@ -514,29 +521,33 @@ function build(){
  }
  const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxFilter;target?.focus();};threadHeading.prepend(back);
  const menu=node('details',null,'connect-chat-menu');threadMenu=menu;menu.hidden=true;
- const toggle=node('summary','⋮','connect-chat-menu-toggle');toggle.setAttribute('aria-label','Действия чата');
+ const toggle=node('summary',null,'connect-chat-menu-toggle');
+ toggle.setAttribute('aria-label','Действия чата');toggle.title='Действия чата';
  const actions=node('div',null,'connect-chat-menu-panel');
- const themeButton=node('button','Тема','connect-theme-menu-button');themeButton.type='button';
+ const themeButton=node('button','Тема','connect-theme-menu-button');
+ themeButton.type='button';themeButton.setAttribute('aria-haspopup','dialog');
  themeButton.onclick=()=>{
   menu.open=false;
-  const modal=node('dialog',null,'connect-theme-dialog');
+  const modal=node('dialog',null,'connect-theme-dialog');modal.setAttribute('aria-label','Тема чата');
   const heading=node('h3','Тема чата');
   const grid=node('div',null,'connect-theme-grid');
-  for(const [id,name] of [['light','Светлый'],['turquoise','Бирюзовый'],['dark','Тёмно-бирюзовый'],['beige','Бежевый'],['blue','Синий (ночной)'],['lavender','Лавандовый']]){
+  for(const [id,name] of staffThemes){
    const choice=node('button',null,'connect-theme-choice');choice.type='button';choice.dataset.chatTheme=id;
    choice.append(node('span',null,'connect-theme-preview'),node('span',name));
+   choice.setAttribute('aria-label',name);
    choice.setAttribute('aria-pressed',String(root().dataset.chatTheme===id));
    choice.onclick=()=>{setStaffTheme(id);modal.close();};
    grid.append(choice);
   }
   const close=node('button','Закрыть','connect-theme-close');close.type='button';close.onclick=()=>modal.close();
-  modal.append(heading,grid,close);modal.addEventListener('close',()=>modal.remove(),{once:true});
+  modal.append(heading,grid,close);
+  modal.addEventListener('close',()=>{modal.remove();toggle.focus();},{once:true});
   document.body.append(modal);modal.showModal();
  };
  const clear=node('button','Очистить чат','connect-clear-chat');clear.type='button';
  clear.onclick=()=>{
-  menu.open=false;
-  if(!thread||!confirm('Очистить переписку только на этом устройстве? У клиента сообщения останутся.'))return;
+  menu.open=false;toggle.focus();
+  if(!thread||!window.confirm('Очистить переписку только на этом устройстве? У клиента сообщения останутся.'))return;
   const latest=[...(latestThread?.messages||[])].sort(compareMessages).at(-1);
   if(latest)hiddenBefore=latest.created_at;
   try{localStorage.setItem(staffHiddenKey(thread),hiddenBefore);}catch{}
@@ -549,6 +560,13 @@ function build(){
  oldestButton=node('button','Загрузить более ранние сообщения','work-chat-older');
  oldestButton.type='button';oldestButton.hidden=true;oldestButton.onclick=()=>void loadEarlier();
  const threadPanel=node('section',null,'work-thread umma-connect-chat');threadPanel.append(threadHeading,oldestButton,wallpaper,replyForm);
+ threadPanel.addEventListener('click',event=>{
+  if(menu.open&&!menu.contains(event.target))menu.open=false;
+ });
+ threadPanel.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||!menu.open)return;
+  event.preventDefault();menu.open=false;toggle.focus();
+ });
  try{setStaffTheme(localStorage.getItem(staffThemeKey)||'light');}catch{setStaffTheme('light');}
  const listPanel=node('section',null,'work-inbox-sidebar');
  if(workspace){

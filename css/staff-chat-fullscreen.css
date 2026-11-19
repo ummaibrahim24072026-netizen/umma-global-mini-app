@@ -37,17 +37,28 @@
   background:#ffffff30;
 }
 
-#webMessages .connect-chat-menu-toggle {
-  /* Only the shared three-dot icon occupies space. */
-  grid-template-rows:1fr 0;
-  font-size:0;
-  line-height:0;
-}
-
 #webMessages .connect-chat-menu-panel button {
   width:100%;
   min-height:44px;
+  padding:8px 12px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:#135d60;
+  font-size:14px;
   text-align:start;
+}
+
+#webMessages .connect-chat-menu-panel button:is(:hover,:focus-visible) {
+  background:#e7f7f4;
+}
+
+#webMessages .connect-chat-menu-panel .connect-clear-chat {
+  color:#973640;
+}
+
+#webMessages .connect-chat-menu-panel .connect-clear-chat:is(:hover,:focus-visible) {
+  background:#fbf0f0;
 }
 
 #webMessages .connect-chat-wallpaper {
@@ -217,7 +228,7 @@
   .web-work-app #webMessages.work-chat-open {
     position:fixed;
     z-index:900;
-    inset:env(safe-area-inset-top) 0 0;
+    inset:env(safe-area-inset-top,0px) 0 0!important;
     display:flex;
     flex-direction:column;
     box-sizing:border-box;
