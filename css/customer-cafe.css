@@ -381,13 +381,27 @@
 .public-cafe-menu #cafePage .cafe-product > :is(.cafe-product-top, .cafe-product-bottom) { grid-column: 2; }
 .public-cafe-menu #cafePage .cafe-product > :is(.cafe-availability, .cafe-preorder-card) { grid-column: 1 / -1; }
 .public-cafe-menu #cafePage .cafe-product-bottom { min-height: 44px; }
-.public-cafe-menu #cafePage :is(.cafe-add, .cafe-qty-btn[data-add-product]) { border-radius: 50%; }
 .public-cafe-menu #cafePage .cafe-card-quantity {
   grid-template-columns: 44px minmax(16px, 1fr) 44px;
   flex: 1 1 100%;
 }
-.public-cafe-menu #cafePage .cafe-qty-btn { min-width: 44px; width: 44px; }
-.public-cafe-menu #cafePage :is(.cafe-add, .cafe-qty-btn[data-add-product], .cafe-preorder-action) {
+.public-cafe-menu :is(#cafePage, #dishDetails) .cafe-qty-btn,
+.public-cafe-menu #cafePage .cafe-add,
+.public-cafe-menu #checkout .cart-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--umma-action);
+  border-radius: 50%;
+  background: var(--umma-action);
+  color: #fff;
+  font: 700 22px/1 Inter, system-ui, sans-serif;
+}
+.public-cafe-menu #cafePage .cafe-preorder-action {
   background: var(--umma-action);
   color: var(--umma-brand-on-primary);
   border-color: var(--umma-action);
@@ -469,8 +483,8 @@
 .public-cafe-menu .customer-actions #openCart {
   --dock-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 11 2 8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l2-8M3 11h18M7 11l3-6m7 6-3-6m-4 10v2m4-2v2'/%3E%3C/svg%3E");
 }
-.public-cafe-menu .customer-actions #receiptButton.has-active-orders {
-  --dock-icon-surface: #f8edce;
+.public-cafe-menu .customer-actions :is(#receiptButton.has-active-orders, #openCart.has-items) {
+  --dock-icon-surface: var(--umma-brand-tint);
   color: var(--umma-brand-deep);
 }
 .public-cafe-menu .customer-actions :is(a, button):not(.dock-menu):active,
@@ -609,7 +623,6 @@
 .public-cafe-menu #checkout .cart-row:not(:has(.cart-photo)) .cart-copy,
 .public-cafe-menu #checkout .cart-controls { grid-column: 1 / -1; }
 .public-cafe-menu #checkout .cart-controls { justify-self: end; }
-.public-cafe-menu #checkout .cart-controls button { width: 44px; height: 44px; }
 #cartTotal { color: #8b3406; }
 #backToCart { width: 100%; margin-top: 10px; }
 .public-cafe-menu .payment-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -897,7 +910,7 @@
   border-radius: 16px;
   background: var(--umma-brand-pale);
 }
-#dishDetails .cafe-qty-btn, #dishDetails .cafe-preorder-action {
+#dishDetails .cafe-preorder-action {
   min-width: 44px;
   min-height: 44px;
   border: 1px solid var(--umma-brand-line);
@@ -905,7 +918,7 @@
   background: #fff;
   color: var(--umma-brand-deep);
 }
-#dishDetails :is(.cafe-add, .cafe-preorder-action, [data-change="1"].cafe-qty-btn) {
+#dishDetails :is(.cafe-add, .cafe-preorder-action) {
   border: 0;
   background: var(--umma-action);
   color: var(--umma-brand-on-primary);
@@ -918,7 +931,6 @@
   font-size: 1rem;
   font-weight: 750;
 }
-#dishDetails [data-change="1"].cafe-qty-btn { font-size: 22px; }
 /* The main chat actions use the same fill as the selected bottom tab. */
 .public-cafe-menu .umma-connect button.primary,
 .public-cafe-menu .umma-connect-chat .connect-compose-compact .connect-mic {
@@ -1152,10 +1164,6 @@
   border: 1px solid white;
 }
 
-.public-cafe-menu .customer-actions #openCart.has-items {
-  --dock-icon-surface: #c4eeee;
-  color: var(--umma-brand-deep);
-}
 #cartCount { background: #00747a; }
 
 /* Customer orders share the guest receipt and payment flow. */
@@ -1604,7 +1612,7 @@
   color: #fff;
 }
 .public-cafe-menu :is(#customerProfile, #customerChatSettings, #dishDetails, #customerOrders, #customerMessages, #checkout, #customerChatDialog)
-  :is(.plain-btn, .cart-clear, .cart-controls button, .customer-order-filters button) {
+  :is(.plain-btn, .cart-clear, .customer-order-filters button) {
   border-radius: 999px;
 }
 @media (prefers-reduced-motion: reduce) {

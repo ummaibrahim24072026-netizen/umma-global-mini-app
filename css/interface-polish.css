@@ -238,11 +238,6 @@ body{max-inline-size:100%;overflow-x:clip}
   font-size: clamp(11px, 3vw, 14px);
   line-height: 1.3;
 }
-.customer-actions #receiptButton {
-  border-color: var(--gold);
-  background: var(--umma-brand-deep);
-  color: white;
-}
 .public-cafe-menu dialog {
   inset-block-end: var(--customer-keyboard-inset, 0px);
   max-block-size: min(90dvh, calc(100dvh - var(--customer-keyboard-inset, 0px) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))));

@@ -30,7 +30,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #cafePage .cafe-product-media,#cafePage .cafe-product-no-photo .cafe-product-placeholder{aspect-ratio:4/3;max-height:none}
 #cafePage .cafe-product h3{font-size:14px;min-height:2.7em}
 #cafePage .cafe-card-quantity{width:100%;flex:1 1 100%;grid-template-columns:40px minmax(16px,1fr) 40px;padding:2px;gap:0}
-#cafePage .cafe-qty-btn,#cafePage .cafe-qty-btn[data-add-product]{min-width:40px;width:40px}
 .language-control{flex-wrap:wrap}.language-control label{font-size:12px;font-weight:650}.language-control select{max-width:128px}
 .install-row{margin:2px 0 16px}.install-row #installApp{display:flex;align-items:center;gap:12px;width:100%;min-height:82px;padding:16px;border:1px solid var(--gold);border-radius:16px;background:var(--umma-action);color:var(--umma-brand-on-primary);text-align:start;box-shadow:0 6px 18px #007c8026;white-space:normal}.install-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.install-title{font-size:15px;line-height:1.4;font-weight:800;overflow-wrap:anywhere}.install-subtitle{font-size:12px;line-height:1.5;font-weight:500;color:#ffffffed}.install-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #ffffff70;border-radius:12px;background:#ffffff1a}.install-icon svg{width:24px;height:24px}.install-row p{margin:8px 0}.install-row:has(#installApp[hidden]){display:none}@media(max-width:359px){.install-row #installApp{padding:13px;gap:10px}.install-title{font-size:14px}}
 .payment-choice{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.payment-choice legend{font-size:13px;font-weight:650;margin-bottom:8px}.payment-choice label{display:flex;align-items:center;gap:6px;padding:12px;border:1px solid var(--umma-brand-line);border-radius:12px;background:#fff;font-size:14px}.payment-choice input{accent-color:var(--umma-brand-strong);width:18px;height:18px;margin:0}.payment-choice label:has(:checked){border-color:var(--umma-brand-strong);background:var(--umma-brand-pale)}
@@ -108,12 +107,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   margin-top: 8px;
   border-radius: 999px;
   background: var(--cart-tint);
-}
-#checkout[data-stage="cart"][data-filled] .cart-controls button {
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--cart-action);
 }
 #checkout[data-stage="cart"][data-filled] .cart-clear {
   margin: 0;
@@ -446,7 +439,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=6"><link rel="stylesheet" href="css/cafe-connect.css?v=28"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=56"><link rel="stylesheet" href="css/connect-calls.css?v=3">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=28"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=57"><link rel="stylesheet" href="css/connect-calls.css?v=3">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
