@@ -334,7 +334,7 @@ function showMessages(data,forceBottom=false){
   if(m.direction!=='customer')meta.append(node('small',null,'connect-receipt'));
   (voicePlayer||li).append(meta);
   return li;
- },m=>m.read_at?'Прочитано клиентом · '+dateTime.format(new Date(m.read_at)):'Отправлено');
+ },(m,row)=>{const marker=row.querySelector('.connect-receipt');const read=!!m.read_at,delivered=!!m.delivered_at;const label=read?'Прочитано клиентом':delivered?'Доставлено клиенту':'Отправлено';if(marker){marker.style.color=read?'#34B7F1':'#89979B';marker.style.fontWeight='700';marker.style.letterSpacing='-3px';marker.style.paddingRight='3px';marker.title=label+(read?' · '+dateTime.format(new Date(m.read_at)):'');marker.setAttribute('aria-label',label);}return read||delivered?'✓✓':'✓';});
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
  if(nearBottom)messages.scrollTop=messages.scrollHeight;
  oldestButton.hidden=!workspace||historyFinished||(history.length===0&&(data.messages||[]).length<100);
