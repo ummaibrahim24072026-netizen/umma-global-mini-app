@@ -7,13 +7,17 @@
   <meta name="theme-color" content="#03A2A5">
   <title>UMMA · Ваш заказ</title>
   <link rel="stylesheet" href="css/brand.css?v=8">
-  <link rel="stylesheet" href="css/payment-screen.css?v=cash-change">
+  <link rel="stylesheet" href="css/payment-screen.css?v=welcome-display">
   <link rel="manifest" href="assets/umma-customer-display.webmanifest">
   <script defer src="js/core/screen-awake.js?v=customer-display"></script>
   <script defer src="js/core/pwa-registration.js?v=1"></script>
 </head>
 <body class="work-payment-screen">
   <main class="customer-display">
+    <div id="screenWelcome" class="display-welcome" hidden>
+      <img src="assets/umma-customer-welcome.jpg" width="823" height="1536"
+        alt="HALAL UMMA · Welcome! · Chào mừng Quý khách! · Добро пожаловать!">
+    </div>
     <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="48" height="48"><strong>HALAL UMMA</strong><button id="screenFullscreen" type="button" hidden>На весь экран</button></header>
     <section class="display-order" aria-label="Ваш заказ">
       <h1 id="screenNumber">Добро пожаловать · Welcome · Xin chào</h1>
@@ -42,6 +46,6 @@
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
   <script src="js/cafe/product-photo.js"></script>
-  <script src="js/cafe/payment-screen.js?v=cash-change"></script>
+  <script src="js/cafe/payment-screen.js?v=welcome-display"></script>
 </body>
 </html>

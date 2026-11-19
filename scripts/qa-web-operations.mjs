@@ -147,7 +147,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  w.AbortSignal=AbortSignal;
  let callback,fail=false;
  const lines=[{name:'Лепёшка <из печи>',quantity:2,unitPrice:25000,sku:'UMMA-CAFE-FLATBREAD'}];
- let view={draft:{total:50000,method:null,lines},order:null,layout:'tablet-small'};
+ let view={order:null,draft:null,layout:'tablet-small'};
  w.setTimeout=fn=>{callback=fn;return 1;};w.clearTimeout=()=>{};
  w.qrcode=()=>({addData(p){assert.equal(p,'QR amount 50000');},make(){},createSvgTag(){return '<svg></svg>';}});
  w.fetch=async(url,options)=>{
@@ -159,6 +159,10 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  };
  w.eval(readFileSync('js/cafe/product-photo.js','utf8'));
  w.eval(readFileSync('js/cafe/payment-screen.js','utf8'));await tick();
+ assert.equal(d.getElementById('screenWelcome').hidden,false);
+ view={draft:{total:50000,method:null,lines},order:null,layout:'tablet-small'};
+ await callback();
+ assert.equal(d.getElementById('screenWelcome').hidden,true);
  assert.match(d.getElementById('screenItems').textContent,/Лепёшка <из печи> × 2/);
  assert.match(d.getElementById('screenTotal').textContent,/50/);
  assert.match(d.querySelector('#screenItems img').src,/flatbread-white-v2/);
@@ -192,6 +196,12 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  view.cashChange=0;await callback();
  assert.equal(d.getElementById('screenChange').hidden,false);
  assert.match(d.getElementById('screenChangeAmount').textContent,/^0/);
+ assert.equal(d.getElementById('screenWelcome').hidden,true,'keep the paid receipt during handoff');
+ view.order.status='completed';await callback();
+ assert.equal(d.getElementById('screenWelcome').hidden,false,'return to the welcome poster after handoff');
+ assert.equal(d.getElementById('screenChange').hidden,true);
+ assert.equal(d.getElementById('screenItems').hidden,true);
+ view.order.status='pending';
  view.order.paymentStatus='pending';view.order.method='qr';
  view.payment={qrPayload:'QR amount 50000'};
  await callback();assert.ok(d.querySelector('#screenQr svg'));

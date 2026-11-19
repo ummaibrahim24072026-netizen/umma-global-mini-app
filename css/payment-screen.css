@@ -141,3 +141,28 @@ body {
   line-height: 1.12;
   overflow-wrap: anywhere;
 }
+
+.customer-display.is-idle .display-order,
+.customer-display.is-idle .display-payment,
+.customer-display.is-idle .display-brand img,
+.customer-display.is-idle .display-brand strong { display: none; }
+.customer-display.is-idle .display-brand {
+  position: fixed;
+  z-index: 1;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+}
+.display-welcome {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #07575b;
+}
+.display-welcome img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  object-fit: contain;
+}

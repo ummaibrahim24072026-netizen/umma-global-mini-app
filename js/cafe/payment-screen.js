@@ -79,10 +79,15 @@ function status(value,state='idle'){
  text('screenStatus',value);
  $('screenStatus').dataset.state=state;
 }
-function render(data){
- const {order,draft,payment,transfer,layout,cashChange}=data;
+function render(data,connected=true){
+ const {order:currentOrder,draft,payment,transfer,layout,cashChange}=data;
  if(layouts.has(layout))document.documentElement.dataset.displayLayout=layout;
+ const handedOut=currentOrder?.status==='completed'&&currentOrder.paymentStatus==='paid';
+ const order=handedOut?null:currentOrder;
  const view=order||draft;
+ const idle=connected&&!view;
+ $('screenWelcome').hidden=!idle;
+ $('screenWelcome').parentElement.classList.toggle('is-idle',idle);
  const paid=order?.paymentStatus==='paid';
  const cancelled=order?.status==='cancelled'||order?.paymentStatus==='refunded';
  const qr=order&&!paid&&!cancelled&&order.method==='qr'&&payment?.qrPayload;
@@ -129,7 +134,7 @@ async function poll(){
   optional('screenConnection','');
   render(data);
  }catch(error){
-  render({});
+  render({},false);
   optional('screenConnection',error.message);
   status('Обратитесь к кассиру · Please ask the cashier');
  }finally{
