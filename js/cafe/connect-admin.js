@@ -294,7 +294,7 @@ function showMessages(data,forceBottom=false){
   if(videoNote)li.classList.add('connect-video-note');
   if(voice)li.classList.add('connect-chat-voice');
   if(!voice&&!videoNote){
-   const author=node('strong',incoming?'Клиент':m.title||'UMMA');
+   const author=node('strong',incoming?(data.client.name?.trim()||'Клиент'):m.title||'UMMA');
    if(workspace&&!m.media_kind){
     const header=node('div',null,'work-text-author');
     header.append(messageAvatar(incoming,'text'),author);
