@@ -621,7 +621,7 @@ function build(){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
- const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxFilter;target?.focus();};threadHeading.prepend(back);
+ const back=node('button',null,'work-chat-back');back.type='button';back.setAttribute('aria-label','Назад');back.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5\"/><path d=\"m12 19-7-7 7-7\"/></svg>";for(const [key,value] of Object.entries({display:'inline-flex',alignItems:'center',justifyContent:'center',width:'44px',minWidth:'44px',height:'44px',minHeight:'44px',padding:'0',border:'0',borderRadius:'0',background:'transparent',color:'#fff',flex:'0 0 44px'}))back.style.setProperty(key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),value,'important');back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxFilter;target?.focus();};threadHeading.prepend(back);
  const menu=node('details',null,'connect-chat-menu');threadMenu=menu;menu.hidden=true;
  const toggle=node('summary',null,'connect-chat-menu-toggle');
  toggle.setAttribute('aria-label','Действия чата');toggle.title='Действия чата';
