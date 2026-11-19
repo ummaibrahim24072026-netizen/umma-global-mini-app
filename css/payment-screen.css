@@ -2,6 +2,8 @@
 [hidden] { display: none !important; }
 
 body {
+  --shore-width: min(100vw, 920px, 140dvh);
+  --shore-height: calc(var(--shore-width) * 219 / 758);
   margin: 0;
   color: #122f39;
   background: radial-gradient(ellipse at 50% 28%, #f9ffff 0%, #e4f7f8 65%, #caedef 100%) fixed;
@@ -12,10 +14,16 @@ body::after {
   position: fixed;
   z-index: -1;
   inset: auto 0 0;
-  height: clamp(62px, 14dvh, 164px);
-  background: url("../assets/umma-counter-shore.svg") center bottom / 100% 100% no-repeat;
+  width: var(--shore-width);
+  height: var(--shore-height);
+  margin-inline: auto;
+  background: url("../assets/umma-counter-shore.webp") center bottom / contain no-repeat;
   pointer-events: none;
   content: "";
+}
+
+@media (min-width: 921px), (min-width: 720px) and (min-aspect-ratio: 7/5) {
+  body::after { mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
 }
 
 .customer-display {
@@ -35,7 +43,7 @@ body::after {
   min-height: 100dvh;
   margin-inline: auto;
   padding: max(var(--gap), env(safe-area-inset-top)) var(--side-inset)
-    max(clamp(72px, 15dvh, 174px), env(safe-area-inset-bottom));
+    max(var(--shore-height), env(safe-area-inset-bottom));
 }
 
 .display-brand {
