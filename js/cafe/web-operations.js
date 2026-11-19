@@ -141,9 +141,16 @@ $('webInviteForm').onsubmit=async e=>{e.preventDefault();const button=e.target.q
 setInterval(()=>{if(me&&currentTab==='admin'&&!document.hidden&&!$('webStaffList').querySelector('[data-role-dirty]')&&!$('webStaffList').contains(document.activeElement))void staffList().catch(e=>$('webStaffStatus').textContent=e.message);},10000);
 const overview = $('webOverview');
 const overviewLocation = $('webOverviewLocation');
-let overviewRequest;
+let overviewRequest, overviewHasMetrics = false;
+function setOverviewCounter(field, label, hasItems) {
+ field.textContent = label;
+ field.closest('.work-overview-link')?.toggleAttribute('data-has-items', hasItems);
+}
 function clearOverview() {
- $('webOverviewMetrics').hidden = true;
+ overviewHasMetrics = false;
+ for (const field of overview.querySelectorAll('[data-overview]')) {
+  setOverviewCounter(field, '—', false);
+ }
  $('webOverviewStock').hidden = true;
 }
 async function loadOverview() {
@@ -153,14 +160,15 @@ async function loadOverview() {
  const request = {id};
  overviewRequest = request;
  const status = $('webOverviewStatus');
- if ($('webOverviewMetrics').hidden) status.textContent = 'Загружаем сводку…';
+ if (!overviewHasMetrics) status.textContent = 'Загружаем сводку…';
  $('webOverviewRefresh').disabled = true;
  try {
   const {metrics, soldOut} = await api('managerOverview', {locationId:id});
   if (overviewRequest !== request) return;
   for (const field of overview.querySelectorAll('[data-overview]')) {
    const value = metrics[field.dataset.overview];
-   field.textContent = value == null ? '—' : field.dataset.overview === 'revenue' ? money(value) : String(value);
+   const label = value == null ? '—' : field.dataset.overview === 'revenue' ? money(value) : String(value);
+   setOverviewCounter(field, label, Number(value) > 0);
   }
   $('webOverviewStockList').replaceChildren(...soldOut.map(name => {
    const item = document.createElement('li');
@@ -168,12 +176,12 @@ async function loadOverview() {
    return item;
   }));
   $('webOverviewStock').hidden = soldOut.length === 0;
-  $('webOverviewMetrics').hidden = false;
+  overviewHasMetrics = true;
   status.textContent = '';
  } catch (error) {
   if (overviewRequest !== request) return;
   if (error.status === 401 || error.status === 403) clearOverview();
-  status.textContent = ($('webOverviewMetrics').hidden ? '' : 'Показаны последние полученные данные. ') + error.message;
+  status.textContent = (overviewHasMetrics ? 'Показаны последние полученные данные. ' : '') + error.message;
  } finally {
   if (overviewRequest === request) {
    overviewRequest = null;
@@ -194,7 +202,8 @@ overviewLocation.onchange = () => {
 $('webOverviewRefresh').onclick = loadOverview;
 document.addEventListener('umma:staff-inbox-counts',event=>{
  for(const field of overview.querySelectorAll('[data-inbox-metric]')){
-  field.textContent=String(event.detail[field.dataset.inboxMetric]);
+  const value = event.detail[field.dataset.inboxMetric];
+  setOverviewCounter(field, String(value), Number(value) > 0);
  }
 });
 overview.querySelectorAll('[data-overview-tab]').forEach(button => {
@@ -269,7 +278,10 @@ const managerLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id
 overviewLocation.replaceChildren(...managerLocations.map(l=>{
  const option=document.createElement('option');option.value=l.id;option.textContent=l.name;return option;
 }));
-overviewLocation.closest('label').hidden=managerLocations.length===1;
+const hasSingleCafe=managerLocations.length===1;
+overviewLocation.closest('label').hidden=hasSingleCafe;
+$('webOverviewCafeName').hidden=!hasSingleCafe;
+$('webOverviewCafeName').textContent=hasSingleCafe?managerLocations[0].name:'';
 updateOverviewLinks();
 const stockLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&['kitchen','manager'].includes(a.staff_role)));
 $('webStockLink').hidden=requested==='stock'||!stockLocations.length;
