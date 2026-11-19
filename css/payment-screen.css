@@ -434,3 +434,27 @@ body.display-qr-active #screenQr svg {
  body.display-qr-active #screenItems li:not(.has-photo)>strong {grid-column:1;}
  body.display-qr-active #screenQr svg {width:min(100%,32dvh)!important;}
 }
+
+/* v15: elegant order line with a quantity pill, no multiplication sign. */
+#screenItems li>div {display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;}
+#screenItems .display-item-quantity {
+ display:inline-flex;align-items:center;justify-content:center;
+ width:max-content;max-width:100%;margin:0;
+ padding:3px 10px;border-radius:999px;
+ border:1px solid #a9deda;background:#e8f8f6;
+ color:#087a7c;font-size:clamp(11px,1.6vw,16px);font-weight:750;
+ line-height:1.3;white-space:nowrap;
+}
+#screenItems .display-item-price {color:#075f66;font-weight:850;font-variant-numeric:tabular-nums;}
+body.display-qr-active #screenItems li>div {gap:clamp(1px,.6vh,5px);}
+body.display-qr-active #screenItems .display-item-quantity {
+ font-size:max(7px,calc(var(--item-font,16px) * .78))!important;
+ padding:clamp(1px,.25vh,3px) clamp(4px,.9vw,10px);
+ border-radius:999px;line-height:1.12;
+}
+body.display-qr-active #screenItems .display-item-price {font-size:var(--item-font,16px)!important;white-space:nowrap;}
+@media (orientation:portrait) {
+ body.display-qr-active #screenItems li>div {gap:2px;}
+ body.display-qr-active #screenItems .display-item-price {grid-column:2;justify-self:start;}
+ body.display-qr-active #screenItems li:not(.has-photo) .display-item-price {grid-column:1;}
+}
