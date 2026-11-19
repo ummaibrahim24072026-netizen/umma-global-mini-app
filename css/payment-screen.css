@@ -166,3 +166,42 @@ body {
   max-height: 100dvh;
   object-fit: contain;
 }
+
+/* Modern HALAL UMMA customer display: cashier-only language selection. */
+body {background:linear-gradient(145deg,#e4fbfa 0%,#f7fefd 55%,#c8f2f0 100%);color:#123c45;}
+.customer-display {--photo-size:76px;--display-gap:18px;--panel-padding:clamp(16px,3vw,30px);position:relative;max-width:1600px;margin:0 auto;align-content:start;padding:clamp(16px,3vw,34px);padding-bottom:clamp(70px,10vh,130px);}
+.customer-display:not(.is-idle)::after {content:"";position:fixed;z-index:-1;pointer-events:none;left:0;right:0;bottom:0;height:clamp(42px,9vh,110px);background:linear-gradient(170deg,transparent 25%,#f7d675 26%,#f7d675 31%,#03a2a5 32%,#00666e 100%);opacity:.9;}
+.display-brand {justify-content:center;gap:16px;margin:4px 0 6px;}
+.display-brand img {width:clamp(56px,8vw,82px);height:clamp(56px,8vw,82px);object-fit:contain;}
+.display-brand-title {display:flex;flex-direction:column;line-height:1.12;}
+.display-brand-title strong {font-size:clamp(22px,3.4vw,38px);font-weight:850;letter-spacing:.015em;}
+.display-brand-title span {font-size:clamp(14px,2vw,22px);margin-top:5px;}
+#screenFullscreen {position:absolute;right:clamp(16px,3vw,34px);top:clamp(16px,3vw,34px);background:#fff;border:0;box-shadow:0 5px 18px #006c7220;}
+.display-order,.display-payment {border:0;border-radius:clamp(22px,3vw,34px);background:#ffffffed;box-shadow:0 8px 22px #006b751c;}
+.display-order {align-self:start;}
+#screenNumber {width:max-content;max-width:100%;margin:0 auto 12px;padding:8px 25px;border:2px solid #e3b94e;border-radius:999px;text-align:center;background:#fffaf0;box-shadow:0 3px 8px #d8a83c25;font-weight:850;color:#123b47;font-size:clamp(21px,3vw,36px);}
+#screenItems {margin:0;}
+#screenItems li {padding:clamp(12px,2vw,20px) 0;gap:10px 16px;border-bottom:1px solid #e4eded;}
+#screenItems li > div > strong {display:block;font-size:clamp(16px,2.2vw,25px);font-weight:800;color:#172a35;}
+#screenItems li > strong {font-size:clamp(15px,2.2vw,24px);font-weight:800;color:#172a35;}
+#screenItems small {font-size:.87em;color:#45565b;margin-top:5px;}
+.display-food-photo {border-radius:50%;object-fit:cover;border:3px solid #f5fbfb;box-shadow:0 2px 9px #005b6020;}
+.display-payment {align-self:start;display:flex;flex-direction:column;gap:12px;}
+.display-total-row {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+#screenTotalLabel {margin:0;font-weight:800;font-size:clamp(18px,2.4vw,27px);}
+#screenTotal {font-size:clamp(27px,4.3vw,57px);font-weight:850;line-height:1.16;color:#fff;background:linear-gradient(110deg,#05aeb4,#00656d);border:2px solid #d8b64b;border-radius:999px;padding:12px 22px;box-shadow:0 5px 12px #007c8028;}
+#screenMethod {font-size:clamp(17px,2.5vw,27px);margin:0;font-weight:850;}
+#screenStatus {font-size:clamp(15px,2vw,21px);margin:0;}
+#screenTransfer {margin-top:4px;background:#fff;border:0;padding:0;gap:12px;}
+#screenTransferBank {font-size:clamp(18px,2.5vw,27px);}
+.display-transfer-label {font-size:clamp(15px,1.8vw,20px);color:#316b70;}
+#screenTransferPhone {display:block;text-align:center;white-space:nowrap;overflow-wrap:normal;font-size:clamp(22px,4.4vw,50px);color:#fff;background:linear-gradient(110deg,#04aab1,#00636b);border-radius:999px;padding:13px 10px;letter-spacing:.02em;font-weight:850;}
+#screenTransferRecipient {text-align:center;font-size:clamp(16px,2vw,23px);}
+#screenChange {background:#e4f8f6;border:1px solid #9cd8d5;border-radius:22px;}
+#screenQr {max-width:100%;overflow:hidden;}
+@media (min-width:680px) {.customer-display:not(.is-idle) {grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;max-width:900px;} .display-brand {grid-column:1;} .display-order,.display-payment {grid-column:1;} }
+@media (min-width:1100px) {.customer-display:not(.is-idle) {max-width:1500px;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);grid-template-rows:auto 1fr;} .display-brand {grid-column:1/-1;} .display-order {grid-column:1;} .display-payment {grid-column:2;}}
+@media (max-width:430px) {.customer-display {--photo-size:56px;--display-gap:13px;padding:12px;padding-bottom:70px;} .display-brand {justify-content:flex-start;padding-left:8px;} .display-brand-title strong {font-size:21px;} #screenNumber {font-size:20px;} #screenTransferPhone {font-size:clamp(20px,6vw,28px);} #screenItems li {gap:8px;} #screenItems li > strong {font-size:14px;} }
+.customer-display.is-idle {padding:0;display:block;}
+.customer-display.is-idle .display-brand-title {display:none;}
+.customer-display.is-idle .display-brand {margin:0;}
