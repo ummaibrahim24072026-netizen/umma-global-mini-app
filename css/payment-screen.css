@@ -207,3 +207,46 @@ body {background:linear-gradient(145deg,#e4fbfa 0%,#f7fefd 55%,#c8f2f0 100%);col
 .customer-display.is-idle .display-brand {margin:0;}
 
 .display-cash-summary{display:grid;gap:10px;margin:14px 0;padding:14px;background:#f0fbfa;border:1px solid #9bd8d4;border-radius:22px}.display-cash-summary[hidden]{display:none!important}.display-cash-summary>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border-radius:15px;background:#fff}.display-cash-summary span{font-size:clamp(15px,2vw,22px);color:#23656a;font-weight:650}.display-cash-summary strong{font-size:clamp(18px,2.5vw,30px);font-variant-numeric:tabular-nums;text-align:right;color:#0c6267}.display-cash-summary #screenChange{background:#d7f5ee;border:1px solid #91d3c5}.display-cash-summary #screenChange strong{color:#006f66}.display-cash-summary #screenChange.is-short{background:#fff2e5;border-color:#f3c89c}.display-cash-summary #screenChange.is-short strong{color:#a65a13}@media(max-width:390px){.display-cash-summary>div{padding:8px}.display-cash-summary span{font-size:14px}.display-cash-summary strong{font-size:18px}}
+
+/* Single-viewport QR checkout: keep the scannable code and amount visible together. */
+body.display-qr-active {height:100dvh;overflow:hidden;}
+body.display-qr-active .customer-display:not(.is-idle) {
+ --display-gap:clamp(6px,1.1vh,12px);--panel-padding:clamp(9px,1.4vh,16px);--photo-size:clamp(32px,6vh,56px);
+ height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;
+ padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:var(--display-gap);max-width:none;align-content:stretch;
+}
+body.display-qr-active .display-brand {grid-column:1/-1;margin:0;min-height:0;gap:8px;justify-content:flex-start;}
+body.display-qr-active .display-brand img {width:clamp(30px,5.5vh,48px);height:clamp(30px,5.5vh,48px);}
+body.display-qr-active .display-brand-title strong {font-size:clamp(15px,2.5vh,23px);}
+body.display-qr-active .display-brand-title span {font-size:clamp(10px,1.8vh,14px);margin-top:0;}
+body.display-qr-active .display-order,body.display-qr-active .display-payment {min-height:0;overflow:hidden;align-self:stretch;border-radius:clamp(12px,2vh,22px);box-shadow:0 3px 12px #006b7515;}
+body.display-qr-active .display-order {grid-column:1;grid-row:2;display:flex;flex-direction:column;}
+body.display-qr-active .display-payment {grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:clamp(4px,1vh,10px);align-items:stretch;justify-content:flex-start;}
+body.display-qr-active #screenNumber {font-size:clamp(14px,2.7vh,24px);padding:4px 12px;margin-bottom:5px;flex:none;}
+body.display-qr-active #screenItems {min-height:0;overflow:hidden;margin:0;}
+body.display-qr-active #screenItems li {padding:clamp(3px,.7vh,7px) 0;gap:5px;}
+body.display-qr-active #screenItems li>div>strong {font-size:clamp(12px,1.9vh,18px);}
+body.display-qr-active #screenItems li>strong {font-size:clamp(11px,1.9vh,17px);}
+body.display-qr-active #screenItems small {font-size:clamp(10px,1.6vh,14px);margin-top:0;}
+body.display-qr-active #screenTotalLabel {font-size:clamp(12px,2vh,18px);}
+body.display-qr-active #screenTotal {font-size:clamp(20px,4.4vh,38px);padding:clamp(5px,1vh,10px) 12px;border-width:1px;}
+body.display-qr-active #screenMethod {font-size:clamp(12px,2vh,18px);}
+body.display-qr-active #screenStatus {font-size:clamp(11px,1.8vh,16px);margin:0;}
+body.display-qr-active #screenQr {min-height:0;flex:1 1 auto;display:grid;place-items:center;overflow:hidden;}
+body.display-qr-active #screenQr svg {width:auto!important;height:auto!important;max-width:100%;max-height:100%;aspect-ratio:1/1;min-width:0;min-height:0;background:#fff;}
+body.display-qr-active #screenBank {font-size:clamp(10px,1.6vh,14px);margin:0;max-height:2.8em;overflow:hidden;}
+body.display-qr-active #screenConnection,body.display-qr-active #screenDeviceHint {display:none!important;}
+body.display-qr-active .customer-display:not(.is-idle)::after {display:none;}
+@media (orientation:portrait) {
+ body.display-qr-active .customer-display:not(.is-idle) {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,.32fr) minmax(0,.68fr);}
+ body.display-qr-active .display-order {grid-column:1;grid-row:2;}
+ body.display-qr-active .display-payment {grid-column:1;grid-row:3;}
+ body.display-qr-active #screenItems {display:flex;flex-wrap:wrap;align-content:flex-start;gap:2px 9px;}
+ body.display-qr-active #screenItems li {flex:1 1 42%;min-width:0;}
+ body.display-qr-active .display-food-photo {display:none;}
+}
+@media (max-height:480px) and (orientation:landscape) {
+ body.display-qr-active .customer-display:not(.is-idle) {grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);}
+ body.display-qr-active #screenItems li:nth-child(n+5) {display:none;}
+}
