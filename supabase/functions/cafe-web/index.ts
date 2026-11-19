@@ -9,6 +9,7 @@ const validSecret=(s:unknown)=>typeof s==='string'&&/^[a-f0-9]{64}$/.test(s);
 const screenMethods=new Set(['cash','qr','rub','tenge','kaspi','sber','usdt']);
 const screenAssets='https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/';
 const screenLayouts=new Set(['auto','phone','tablet-small','tablet-large','monitor']);
+const screenLanguages=new Set(['ru','en','vi']);
 type ScreenLine={name:string,quantity:number,unitPrice:number,sku?:string,image_url?:string};
 function screenPhotoFields(product:any){
  const sku=typeof product?.sku==='string'&&/^[A-Z0-9_-]{1,80}$/i.test(product.sku)?product.sku:undefined;
@@ -68,20 +69,20 @@ Deno.serve(async req=>{
  }
  if(b.action==='screenPoll'){
   if(!validSecret(b.screenToken))return reply({ok:false},404);
-  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at,display_layout,cash_received_preview')
+  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at,display_layout,display_language,cash_received_preview')
    .eq('token_hash',await sha256(b.screenToken)).eq('active',true).maybeSingle();
   if(error)throw error;
   if(!s)return reply({ok:false},404);
   if(!s.order_id){
    const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
    const cashChange=draft?.method==='cash'?previewCashChange(s.cash_received_preview,draft.total):null;
-   return reply({ok:true,order:null,draft,layout:s.display_layout,cashChange});
+   return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'en',cashChange});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
    .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url))')
    .eq('id',s.order_id).eq('location_id',s.location_id).order('id',{referencedTable:'cafe_order_items',ascending:true}).maybeSingle();
   if(oe)throw oe;
-  if(!o)return reply({ok:true,order:null,layout:s.display_layout});
+  if(!o)return reply({ok:true,order:null,layout:s.display_layout,language:s.display_language||'en'});
   let method=o.payment_method,foreignTotal=null,transfer=null;
   if(method==='bank_transfer'){
    const {data:foreign,error:foreignError}=await db.rpc('cafe_screen_payment_amount',{p_screen_id:s.id,p_order_id:o.id});
@@ -104,7 +105,7 @@ Deno.serve(async req=>{
   }
   const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
   return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
-   layout:s.display_layout,transfer,cashChange,payment:paymentFor(o)});
+   layout:s.display_layout,language:s.display_language||'en',transfer,cashChange,payment:paymentFor(o)});
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
@@ -255,7 +256,7 @@ Deno.serve(async req=>{
   const layout=b.layout??'auto';
   if(!screenLayouts.has(layout))return reply({ok:false,error:'Выберите размер табло.'},400);
   const token=secret();
-  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId,display_layout:layout}).select('id').single();if(error)throw error;
+  const {data,error}=await db.from('cafe_payment_screens').insert({token_hash:await sha256(token),actor_id:actor,location_id:b.locationId,display_layout:layout,display_language:screenLanguages.has(b.language)?b.language:'en'}).select('id').single();if(error)throw error;
   return reply({ok:true,id:data.id,screenToken:token});
  }
  if(['screenSelect','screenRevoke','screenDraft','screenSettings'].includes(b.action)){
@@ -264,7 +265,8 @@ Deno.serve(async req=>{
   if(b.action==='screenRevoke'){const {error:e}=await db.from('cafe_payment_screens').update({active:false}).eq('id',s.id);if(e)throw e;return reply({ok:true});}
   if(b.action==='screenSettings'){
    if(!screenLayouts.has(b.layout))return reply({ok:false,error:'Выберите размер табло.'},400);
-   const {error:e}=await db.from('cafe_payment_screens').update({display_layout:b.layout}).eq('id',s.id).eq('active',true);
+   if(b.language!==undefined&&!screenLanguages.has(b.language))return reply({ok:false,error:'Неверный язык табло.'},400);
+   const {error:e}=await db.from('cafe_payment_screens').update({display_layout:b.layout,...(b.language===undefined?{}:{display_language:b.language})}).eq('id',s.id).eq('active',true);
    if(e)throw e;
    return reply({ok:true});
   }
