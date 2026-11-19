@@ -88,10 +88,13 @@
  font-size:14px;
  font-weight:700;
 }
-#webMessages .work-section-switch > button[aria-pressed="true"] {
+.web-work-app #webMessages .work-section-switch > button[aria-pressed="true"] {
  border-bottom-color:#087b80;
+ border-radius:0;
  background:transparent;
  color:#075d61;
+ -webkit-text-fill-color:currentColor;
+ text-shadow:none;
 }
 .web-work-app #webMessages :is(.work-inbox-sidebar,.work-thread,.work-campaign) {
  border:1px solid var(--work-line);
