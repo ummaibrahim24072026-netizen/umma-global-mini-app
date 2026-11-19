@@ -254,7 +254,7 @@ function renderThread(){
  const dateTime=new Intl.DateTimeFormat(locale,{dateStyle:'short',timeStyle:'short'});
  const clock=new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit'});
  const media=mediaCopy[lang()]||mediaCopy.en;
- const target=window.ummaConnectMedia.language(lang());
+ const target=(navigator.languages||[navigator.language]).map(value=>value?.split('-')[0]?.toLowerCase()).find(value=>['ru','vi','en'].includes(value))||'en';
  window.ummaConnectMedia.render(list,(state?.messages||[]).filter(m=>!hiddenMessages.has(m.id)),m=>{
   const li=el('li');
   const outgoing=m.direction==='customer';
@@ -271,9 +271,9 @@ function renderThread(){
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body){
    const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
-   const load=publicChat?()=>translateChat(m.id,target):()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text}));
+   const load=publicChat?()=>translateChat(m.id,target):()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target));
    li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(
-    m.body,target,load,publicChat?translateLabel:undefined,publicChat?{loading,error}:undefined));
+    m.body,target,load,undefined,{loading,error}));
   }
   let voicePlayer;
   if(m.media_kind){
