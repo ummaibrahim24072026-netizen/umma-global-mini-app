@@ -1,0 +1,33 @@
+/* UMMA quick counter: presentation only; existing authenticated order/payment flow remains authoritative. */
+.web-work-app #webPos{--counter-teal:#03a2a5;padding-top:12px;padding-bottom:calc(130px + env(safe-area-inset-bottom));}
+#webPos .web-pos-heading{margin:8px 0 14px;align-items:flex-start}
+#webPos .web-pos-heading h1{font-size:clamp(23px,4vw,30px);margin:0 0 4px}
+#webPos .web-pos-heading p{font-size:13px;margin:0;color:#587470}
+#webPos .web-pos-heading>label{display:none}
+#webPos .web-pos-grid{gap:14px;grid-template-columns:minmax(0,1fr) minmax(290px,340px)}
+#webPos .web-pos-grid>section>label{font-size:0;margin:0 0 12px}
+#webPos #posSearch{font-size:16px;border-radius:999px;min-height:52px;padding:12px 20px;border-color:#c6dedb;background:#fff}
+#webPos .pos-products{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+#webPos .pos-product{padding:9px;border:1px solid #d5e6e3;border-radius:20px;gap:6px;min-height:0;overflow:hidden;box-shadow:none}
+#webPos .pos-product-media{display:block;width:100%;aspect-ratio:1.6;overflow:hidden;border-radius:13px;background:#f2f8f7}
+#webPos .pos-product-media img{width:100%;height:100%;object-fit:contain}
+#webPos .pos-product-no-photo{font-size:12px}
+#webPos .pos-product strong{font-size:15px;line-height:1.25}
+#webPos .pos-product>span:not(.pos-product-media){font-size:11px}
+#webPos .pos-product-description{font-size:13px;width:100%}
+#webPos .pos-product-description summary{color:#087e82;cursor:pointer;font-weight:700}
+#webPos .pos-product-description p{margin:5px 0}
+#webPos .pos-product-bottom{width:100%;display:flex;align-items:center;justify-content:space-between;gap:5px}
+#webPos .pos-product-bottom b{font-size:15px;color:#164d4b}
+#webPos .pos-product-add{min-width:42px;min-height:42px;padding:0;border-radius:50%;font-size:25px;background:var(--counter-teal);color:#fff}
+#webPos .pos-basket{border-radius:22px;padding:15px;top:78px}
+#webPos .pos-basket-heading h2{margin:0 0 10px}
+#webPos button,#webCashViews button{border-radius:999px}
+#webPos #posSubmit,#webPos #posConfirmQr{background:var(--counter-teal);color:white;border-color:var(--counter-teal);font-weight:800}
+#webPos .pos-total{font-size:21px;padding:12px 0;margin-bottom:10px}
+#webPos #posReceipt{scroll-margin-top:90px}
+#webPos #posCartJump{position:fixed;bottom:calc(106px + env(safe-area-inset-bottom));left:12px;right:12px;width:calc(100% - 24px);z-index:35;min-height:56px;background:var(--counter-teal);color:#fff;border:0;border-radius:999px;box-shadow:0 7px 22px #045d6060}
+#webPos .pos-row button{border-radius:50%;min-width:40px}
+#webPos .counter-quick-hint{font-size:12px;color:#55746e;margin:0 0 10px}
+@media(max-width:900px){#webPos .web-pos-grid{grid-template-columns:1fr}#webPos .pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}#webPos .pos-basket{position:static}#webPos .web-pos-heading{margin-bottom:10px}#webPos .pos-product-media{aspect-ratio:1.7}}
+@media(min-width:901px){#webPos #posCartJump{display:none!important}}
