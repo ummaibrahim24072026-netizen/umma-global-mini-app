@@ -726,7 +726,7 @@ if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
 navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
-window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);void refresh();installedSetup();
+window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);document.addEventListener('umma:connect-realtime',()=>void refresh());setInterval(refresh,15000);void refresh();installedSetup();
 let resumeChat=false;
 if(publicChat){try{resumeChat=sessionStorage.getItem(CHAT_OPEN_KEY)==='1';}catch{}}
 const launchURL=new URL(location.href);
