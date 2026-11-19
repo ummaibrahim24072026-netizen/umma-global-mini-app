@@ -1,49 +1,161 @@
-/* UMMA staff messages — aligned with customer UI, 2026-11-18 */
-.web-work-app[data-workspace="messages"]{--work-accent:#079fa4;--work-line:#d8e9e6;background:#f1fafb;color:#153c3c}
-.web-work-app[data-workspace="messages"] #webMessages{margin:0 auto!important;padding:16px 14px 24px!important;min-height:0!important;max-width:900px;width:100%;box-sizing:border-box}
-.web-work-app[data-workspace="messages"] .work-messages{margin:0!important;padding:0!important;width:100%;max-width:none}
-.web-work-app[data-workspace="messages"] .work-messages-heading{margin:0 0 14px;gap:10px;align-items:center}
-.web-work-app[data-workspace="messages"] .work-messages-heading h1{font-size:clamp(23px,5.5vw,30px);letter-spacing:-.04em;line-height:1.15;color:#123d3c}
-.web-work-app[data-workspace="messages"] .work-messages-heading button{min-height:42px;border-radius:999px;padding:9px 17px;background:#079fa4;color:#fff;border:1px solid #079fa4;font-weight:750}
-.web-work-app[data-workspace="messages"] .work-section-switch{display:flex;flex-wrap:nowrap;gap:8px;margin:0 0 16px;overflow-x:auto;scrollbar-width:none}
-.web-work-app[data-workspace="messages"] .work-section-switch::-webkit-scrollbar{display:none}
-.web-work-app[data-workspace="messages"] .work-section-switch button{flex:1 0 auto;min-height:44px;border-radius:999px;background:#fff;color:#226a69;border:1px solid #d1e6e3;font-weight:750}
-.web-work-app[data-workspace="messages"] .work-section-switch button[aria-pressed="true"]{background:#079fa4;border-color:#079fa4;color:#fff}
-.web-work-app[data-workspace="messages"] :is(.work-inbox-sidebar,.work-thread,.work-campaign){border-radius:20px;border:1px solid #d9e9e6;background:#fff;box-shadow:0 4px 18px rgba(9,75,76,.045)}
-.web-work-app[data-workspace="messages"] .work-inbox-sidebar{padding:14px}
-.web-work-app[data-workspace="messages"] .work-inbox-list{gap:0;max-height:none;overflow:visible}
-.web-work-app[data-workspace="messages"] .work-inbox-list li+li{border-top:1px solid #e9f1f0}
-.web-work-app[data-workspace="messages"] .work-thread-choice{border:0;border-radius:12px;background:#fff;box-shadow:none;padding:14px 12px;min-height:76px;gap:5px;color:#143f40}
-.web-work-app[data-workspace="messages"] .work-thread-choice[data-unread="true"]{background:#effafa}
-.web-work-app[data-workspace="messages"] .work-thread-choice[aria-pressed="true"]{background:#e5f7f6;box-shadow:inset 3px 0 #079fa4}
-.web-work-app[data-workspace="messages"] .work-thread-choice small{color:#65817e;font-weight:500}
-.web-work-app[data-workspace="messages"] .work-thread-unread{color:#087e81;font-weight:800}
-.web-work-app[data-workspace="messages"] .work-thread{padding:14px;overflow:hidden}
-.web-work-app[data-workspace="messages"] .work-thread button.primary,.web-work-app[data-workspace="messages"] .work-campaign button.primary{background:#079fa4;color:#fff;border-radius:999px}
-.web-work-app[data-workspace="messages"] .web-tabs button[aria-selected="true"],.web-work-app[data-workspace="messages"] .web-tabs button.active{background:#079fa4;color:#fff;border-radius:999px}
-@media(max-width:760px){
-.web-work-app[data-workspace="messages"] .work-inbox{grid-template-columns:minmax(0,1fr);gap:12px}
-.web-work-app[data-workspace="messages"] .work-inbox-list{max-height:none}
+/* Staff inbox layout. The shared .umma-connect styles also serve modal dialogs. */
+.web-work-app[data-workspace="messages"] {
+ --work-accent:#087b80;
+ --work-line:#d8e9e6;
+ background:#f1fafb;
+ color:#153c3c;
 }
-@media(max-width:650px){
-.web-work-app[data-workspace="messages"] #webMessages{padding:12px 12px 20px!important}
-.web-work-app[data-workspace="messages"] .work-messages-heading h1{font-size:24px}
-.web-work-app[data-workspace="messages"] .web-tabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}
-.web-work-app[data-workspace="messages"] .web-tabs button{flex-direction:column!important;gap:4px!important;min-height:56px!important;padding:6px 2px!important;font-size:10px!important;border-radius:16px!important}
-.web-work-app[data-workspace="messages"] .web-tabs .work-nav-icon{width:21px!important;height:21px!important;flex-basis:21px!important}
-.web-work-app[data-workspace="messages"] .work-inbox-sidebar{padding:10px}
-.web-work-app[data-workspace="messages"] .work-thread-choice{min-height:72px}
+.web-work-app[data-workspace="messages"] #webMessages {
+ position:static;
+ width:100%;
+ max-width:1120px;
+ max-height:none;
+ min-height:0;
+ margin:0 auto;
+ padding:20px clamp(12px,3vw,28px) 24px;
+ overflow:visible;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ box-shadow:none;
 }
-
-#webMessages .work-inbox-tools,
-#webMessages .work-inbox-filters{display:flex;flex-wrap:wrap;gap:6px}
-#webMessages .work-inbox-filters{margin:8px 0 12px}
-#webMessages .work-inbox-filters button{
- min-height:42px;padding:6px 10px;border:1px solid #d1e6e3;border-radius:999px;
- background:#fff;color:#185f61;font-size:.84rem;font-weight:700
+#webMessages::before { content:none; }
+#webMessages > :not(.connect-thread) { margin-inline:0; }
+#webMessages > :first-child { margin-top:0; }
+#webMessages > :last-child { margin-bottom:0; }
+#webMessages .work-messages-heading {
+ display:flex;
+ flex-wrap:nowrap;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+ margin-bottom:12px;
 }
-#webMessages :is(.work-inbox-filters,.work-inbox-tools) button[aria-pressed="true"]{
- background:#087b80;border-color:#087b80;color:#fff
+#webMessages .work-messages-heading h1 {
+ font-size:clamp(24px,4vw,30px);
+ line-height:1.15;
+ color:#123d3c;
+}
+#webMessages .work-inbox-settings { position:relative; flex:none; z-index:5; }
+#webMessages .work-inbox-settings > summary {
+ display:flex;
+ align-items:center;
+ min-height:44px;
+ padding:0 13px;
+ border:1px solid #d1e6e3;
+ border-radius:999px;
+ background:#fff;
+ color:#185f61;
+ font-size:14px;
+ font-weight:700;
+ cursor:pointer;
+ list-style:none;
+}
+#webMessages .work-inbox-settings > summary::-webkit-details-marker { display:none; }
+#webMessages .work-inbox-tools {
+ position:absolute;
+ inset:calc(100% + 6px) 0 auto auto;
+ display:grid;
+ gap:5px;
+ min-width:180px;
+ padding:6px;
+ border:1px solid #d1e6e3;
+ border-radius:14px;
+ background:#fff;
+ box-shadow:0 8px 22px #123d3c21;
+}
+#webMessages .work-inbox-tools button { font-size:14px; text-align:start; }
+#webMessages .work-inbox-tools button[aria-pressed="true"] {
+ background:#087b80;
+ border-color:#087b80;
+ color:#fff;
+}
+#webMessages .work-section-switch {
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:3px;
+ margin-bottom:12px;
+ padding:3px;
+ border:1px solid #d8e9e6;
+ border-radius:16px;
+ background:#e4f3f2;
+}
+#webMessages .work-section-switch > button {
+ min-height:44px;
+ padding:6px 4px;
+ border:0;
+ border-radius:12px;
+ background:transparent;
+ color:#185f61;
+ font-size:14px;
+ font-weight:700;
+}
+#webMessages .work-section-switch > button[aria-pressed="true"] {
+ background:#087b80;
+ color:#fff;
+}
+.web-work-app #webMessages :is(.work-inbox-sidebar,.work-thread,.work-campaign) {
+ border:1px solid #d9e9e6;
+ border-radius:16px;
+ background:#fff;
+}
+.web-work-app #webMessages .work-inbox-sidebar { padding:0; }
+#webMessages .work-inbox-filter {
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin:0;
+ padding:6px 12px;
+ border-bottom:1px solid #e3efed;
+}
+#webMessages .work-inbox-filter select {
+ min-height:44px;
+ flex:1;
+ width:auto;
+ padding:6px 8px;
+ background:#f2faf9;
+ font-size:16px;
+}
+.web-work-app #webMessages .work-inbox-list {
+ display:block;
+ max-height:none;
+ overflow:visible;
+}
+#webMessages .work-inbox-list > li { max-width:none; border-radius:0; }
+#webMessages .work-inbox-list > li + li { border-top:1px solid #e9f1f0; }
+#webMessages .work-inbox-list .work-inbox-empty { padding:20px 12px; color:#456767; }
+.web-work-app #webMessages .work-thread-choice {
+ min-height:72px;
+ padding:9px 12px;
+ border:0;
+ border-radius:0;
+ background:#fff;
+ box-shadow:none;
+ color:#143f40;
+}
+.web-work-app #webMessages .work-thread-choice[data-unread="true"] { background:#effafa; }
+.web-work-app #webMessages .work-thread-choice[aria-pressed="true"] {
+ background:#def3f1;
+ box-shadow:inset 3px 0 #087b80;
+}
+#webMessages .work-thread-choice:focus-visible { outline-offset:-3px; }
+#webMessages .work-thread-choice small { margin:0; color:#456767; font-weight:500; }
+.web-work-app #webMessages .work-thread { padding:14px; overflow:hidden; }
+#webMessages :is(.work-thread,.work-campaign) button.primary {
+ background:#087b80;
+ color:#fff;
+ border-radius:999px;
+}
+@media (max-width:760px) {
+ #webMessages:not(.work-chat-open) .work-thread { display:none; }
+}
+@media (max-width:650px) {
+ .web-work-app[data-workspace="messages"].work-owner {
+  --work-bottom-nav:calc(106px + env(safe-area-inset-bottom,0px));
+ }
+ .web-work-app[data-workspace="messages"] #webMessages { padding:10px 10px 16px; }
+ .web-work-app[data-workspace="messages"] .web-tabs { padding-block:4px calc(4px + env(safe-area-inset-bottom,0px)); }
+ .web-work-app[data-workspace="messages"] .web-tabs button { min-height:46px; padding-block:3px; }
 }
 #webMessages .work-thread-choice{display:flex;align-items:center;text-align:left;gap:10px;width:100%}
 #webMessages .work-thread-avatar{
@@ -53,7 +165,7 @@
 #webMessages .work-thread-description{display:grid;flex:1;min-width:0;gap:3px}
 #webMessages .work-thread-description :is(small,strong){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #webMessages .work-thread-summary{display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:8px}
-#webMessages .work-thread-summary time{flex:none;font-size:.69rem;color:#456767}
+#webMessages .work-thread-summary time{flex:none;font-size:.75rem;color:#456767}
 #webMessages .work-thread-unread{
  min-width:22px;min-height:22px;display:grid;place-items:center;border-radius:999px;
  background:#087b80;color:#fff;padding:1px 5px;font-size:.72rem
@@ -75,11 +187,6 @@
 #webOverview .work-overview-metrics dt button{
  min-height:36px;padding:0;border:0;text-align:left;background:transparent;color:#126268;
  font:inherit;text-decoration:underline;text-underline-offset:3px
-}
-@media(max-width:460px){
- #webMessages .work-messages-heading{align-items:flex-start;flex-direction:column}
- #webMessages .work-thread-choice{padding-inline:7px;gap:8px}
- #webMessages .work-thread-summary time{font-size:.64rem}
 }
 #webMessages .work-chat-older{
  position:relative;z-index:2;align-self:center;min-height:40px;padding:5px 12px;

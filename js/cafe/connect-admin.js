@@ -4,7 +4,7 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='',inboxClients=[],filter='all',inboxAccess=false;
-let filters,workflowButton,workflow,threadMenu,alertAudio;
+let inboxFilter,workflowButton,workflow,threadMenu,alertAudio;
 let inboxSeen=null,oldestButton,history=[],latestThread=null,historyFinished=false;
 function announceUnread(clients){
  const next=new Map(clients.filter(c=>c.last_id).map(c=>[c.id,c.last_id]));
@@ -17,7 +17,7 @@ function announceUnread(clients){
  gain.gain.exponentialRampToValueAtTime(.001,time+.22);
  tone.connect(gain);gain.connect(alertAudio.destination);tone.start(time);tone.stop(time+.24);
 }
-const stages={all:'Все',new:'Новые',active:'В работе',waiting:'Ожидают',closed:'Завершённые'};
+const stages={all:'Все переписки',unread:'Непрочитанные',attention:'Требуют внимания',new:'Новые',active:'В работе',waiting:'Ожидают',closed:'Завершённые'};
 const mediaNames={voice:'Голосовое сообщение',photo:'Фото',video:'Видео',album:'Фото и видео'};
 const orderStates={pending:'Принят',confirmed:'Подтверждён',preparing:'Готовится',ready:'Готов',completed:'Завершён',cancelled:'Отменён',paid:'Оплата подтверждена',assigned:'Курьер назначен',courier_assigned:'Курьер назначен',picked_up:'Курьер забрал заказ',in_transit:'Курьер в пути',delivered:'Доставлен'};
 const staffThemes=['light','turquoise','dark','beige','blue','lavender'];
@@ -328,7 +328,7 @@ function renderClients(){
  if(snapshot===clientSnapshot)return;
  const focused=document.activeElement?.dataset.clientThread;
  clientSnapshot=snapshot;clients.replaceChildren();
- for(const [stage,control] of Object.entries(filters||{}))control.setAttribute('aria-pressed',String(filter===stage));
+ if(inboxFilter)inboxFilter.value=filter;
  const sorted=inboxClients.filter(c=>filter==='all'||c.stage===filter||
   (filter==='unread'&&c.unread>0)||(filter==='attention'&&(c.stage==='new'||c.unread>0)))
   .sort((a,b)=>Number(!!b.unread)-Number(!!a.unread)||(Date.parse(b.last_at)||0)-(Date.parse(a.last_at)||0));
@@ -344,14 +344,14 @@ function renderClients(){
   description.append(heading,last);
   if(workspace){
    const assigned=c.assignee_name||(c.assigned?'Сотрудник':'Без ответственного');
-   description.append(node('small',[c.order_number?'№'+c.order_number:null,assigned].filter(Boolean).join(' · ')));
+   description.append(node('small',[c.order_number?'№'+c.order_number:null,stages[c.stage],assigned].filter(Boolean).join(' · ')));
   }
   b.append(avatar,description);
   if(c.unread){b.dataset.unread='true';b.append(node('span',String(c.unread),'work-thread-unread'));}
   b.onclick=()=>run(()=>openThread(c.id));li.append(b);clients.append(li);
   if(c.id===focused)b.focus({preventScroll:true});
  }
- if(!sorted.length)clients.append(node('li',filter==='all'?'Здесь появятся обращения клиентов.':'В этой папке пока нет обращений.'));
+ if(!sorted.length)clients.append(node('li',filter==='all'?'Здесь появятся обращения клиентов.':'Нет переписок с этим статусом.','work-inbox-empty'));
 }
 async function refresh(){
  const d=await api(workspace?'staffInbox':'staffList');
@@ -419,13 +419,17 @@ function build(){
  if(dialog){
   const close=node('button','Закрыть','connect-close');close.type='button';close.onclick=()=>dialog.close();header.append(close);
  }
- const heading=node(workspace?'h1':'h2','Сообщения клиентов');
- const refreshButton=node('button','Обновить');refreshButton.type='button';refreshButton.onclick=()=>run(refreshView);
+ const heading=node(workspace?'h1':'h2',workspace?'Сообщения':'Сообщения клиентов');
+ const refreshButton=node('button','Обновить');refreshButton.type='button';refreshButton.onclick=()=>{
+  refreshButton.closest('details')?.removeAttribute('open');
+  if(workspace)header.querySelector('summary').focus({preventScroll:true});
+  void run(refreshView);
+ };
  header.append(heading);
  const tools=node('div',null,'work-inbox-tools');tools.append(refreshButton);
  const Audio=window.AudioContext||window.webkitAudioContext;
  if(workspace&&Audio){
-  const sound=node('button','Звук');sound.type='button';sound.setAttribute('aria-pressed','false');
+  const sound=node('button','Звук уведомлений');sound.type='button';sound.setAttribute('aria-pressed','false');
   sound.onclick=async()=>{
    try{
     alertAudio ||= new Audio();
@@ -436,7 +440,11 @@ function build(){
   };
   tools.append(sound);
  }
- header.append(tools);
+ if(workspace){
+  const settings=node('details',null,'work-inbox-settings');
+  settings.append(node('summary','Настройки'),tools);
+  header.append(settings);
+ }else header.append(tools);
  const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
  panels={inbox:node('section',null,'work-inbox'),audience:buildAudience(),campaign:node('section',null,'work-campaign')};
  viewButtons={};
@@ -504,7 +512,7 @@ function build(){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
- const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{const id=thread;closeThread();[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)?.focus();};threadHeading.prepend(back);
+ const back=node('button','← Назад','work-chat-back');back.type='button';back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxFilter;target?.focus();};threadHeading.prepend(back);
  const menu=node('details',null,'connect-chat-menu');threadMenu=menu;menu.hidden=true;
  const toggle=node('summary','⋮','connect-chat-menu-toggle');toggle.setAttribute('aria-label','Действия чата');
  const actions=node('div',null,'connect-chat-menu-panel');
@@ -542,20 +550,24 @@ function build(){
  oldestButton.type='button';oldestButton.hidden=true;oldestButton.onclick=()=>void loadEarlier();
  const threadPanel=node('section',null,'work-thread umma-connect-chat');threadPanel.append(threadHeading,oldestButton,wallpaper,replyForm);
  try{setStaffTheme(localStorage.getItem(staffThemeKey)||'light');}catch{setStaffTheme('light');}
- const listPanel=node('section',null,'work-inbox-sidebar');listPanel.append(node('h2','Переписки'));
+ const listPanel=node('section',null,'work-inbox-sidebar');
  if(workspace){
-  const filterBar=node('nav',null,'work-inbox-filters');filterBar.setAttribute('aria-label','Статус обращения');
-  filters={};
+  listPanel.setAttribute('aria-label','Переписки');
+  inboxFilter=node('select');
   for(const [key,title] of Object.entries(stages)){
-   const button=node('button',title);button.type='button';filters[key]=button;
-   button.onclick=()=>{filter=key;renderClients();};
-   filterBar.append(button);
+   const option=node('option',title);option.value=key;inboxFilter.append(option);
   }
-  listPanel.append(filterBar);
- }
+  inboxFilter.value=filter;
+  inboxFilter.onchange=()=>{filter=inboxFilter.value;renderClients();};
+  const filterControl=label('Статус',inboxFilter);
+  filterControl.className='work-inbox-filter';
+  listPanel.append(filterControl);
+ }else listPanel.append(node('h2','Переписки'));
  listPanel.append(clients);
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
- section.append(header,nav,connection,status,...Object.values(panels));selectView('inbox');
+ section.append(header);
+ if(!workspace||owner())section.append(nav);
+ section.append(connection,status,...Object.values(panels));selectView('inbox');
  if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
@@ -589,7 +601,7 @@ document.addEventListener('umma:staff-tab',e=>{
  else closeThread();
 });
 document.addEventListener('umma:staff-inbox-filter',event=>{
- if(!Object.hasOwn(stages,event.detail)&&!['attention','unread'].includes(event.detail))return;
+ if(!Object.hasOwn(stages,event.detail))return;
  filter=event.detail;renderClients();
 });
 document.addEventListener('umma:staff-ready',event=>{
