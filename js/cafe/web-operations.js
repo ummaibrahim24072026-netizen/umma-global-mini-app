@@ -20,13 +20,18 @@ let screenTimer,screenRevision=0;
 const publishedScreens=new Map();
 function screenSnapshot(){
  if(currentTab!=='pos')return null;
- if(payOrder&&(counterView==='payment'||!cart.size))return {orderId:payOrder.id};
+ const received=Number($('posCash').value);
+ const cashReceived=counterView==='payment'&&!switchingPayment&&paymentMethod()==='cash'&&
+  $('posCash').value!==''&&Number.isSafeInteger(received)&&received>=0&&received<=2147483647?received:null;
+ if(payOrder&&(counterView==='payment'||!cart.size))return {
+  orderId:payOrder.id,cashReceived:payOrder.paymentStatus==='pending'?cashReceived:null,
+ };
  if(cart.size)return {
   lines:[...cart.values()].map(({product,quantity})=>({
    name:String(product.name_ru||product.name_en||product.name_vi||'Блюдо').slice(0,160),quantity,unitPrice:Number(product.price_vnd),
    sku:product.sku,image_url:product.image_url,
   })),
-  method:counterView==='payment'?selectedMethod:null,
+  method:counterView==='payment'?selectedMethod:null,cashReceived,
  };
  return null;
 }
@@ -64,7 +69,8 @@ function syncCustomerScreen(clear=false){
 async function displayOrder(orderId){
  const client=screen();
  if(!client)throw Error('Подключите клиентский планшет.');
- await publishScreen(client,{orderId},true);
+ const snapshot=screenSnapshot();
+ await publishScreen(client,snapshot?.orderId===orderId?snapshot:{orderId},true);
 }
 async function loadAvailability(){
  const id=$('posLocation').value;
@@ -515,7 +521,7 @@ $('counterMethodLabel').onclick=event=>{
  if(foreignMethods.has(selectedMethod)&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
  syncCustomerScreen();
 };
-$('posCash').oninput=paymentFields;
+$('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
 $('posSearch').oninput=menu;
 $('posLocation').onchange=()=>{
  cart.clear();counterOrders=[];loadedLocation='';result('');counterStatus('');

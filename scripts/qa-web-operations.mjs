@@ -176,19 +176,26 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  assert.equal(d.getElementById('screenTransfer').hidden,false);
  assert.equal(d.getElementById('screenTransferPhone').textContent,'+77000000001');
  assert.match(d.getElementById('screenTransferBank').textContent,/Kaspi/);
- view={order:{...view.order,method:'cash',foreignTotal:null}};
+ view={order:{...view.order,method:'cash',foreignTotal:null},cashChange:25000};
 
  await callback();
  assert.equal(d.querySelector('#screenQr svg'),null);
  assert.match(d.getElementById('screenMethod').textContent,/Наличными/);
  assert.equal(d.getElementById('screenTransferPhone').textContent,'');
+ assert.equal(d.getElementById('screenChange').hidden,false);
+ assert.match(d.getElementById('screenChangeAmount').textContent,/25[.\s]000/);
  view.order.paymentStatus='paid';
  await callback();
  assert.match(d.getElementById('screenNumber').textContent,/№10/);
  assert.match(d.getElementById('screenStatus').textContent,/Payment successful/);
+ assert.match(d.getElementById('screenChangeAmount').textContent,/25[.\s]000/);
+ view.cashChange=0;await callback();
+ assert.equal(d.getElementById('screenChange').hidden,false);
+ assert.match(d.getElementById('screenChangeAmount').textContent,/^0/);
  view.order.paymentStatus='pending';view.order.method='qr';
  view.payment={qrPayload:'QR amount 50000'};
  await callback();assert.ok(d.querySelector('#screenQr svg'));
+ assert.equal(d.getElementById('screenChange').hidden,true);
  fail=true;await callback();
  assert.equal(d.querySelector('#screenQr svg'),null);assert.equal(d.getElementById('screenItems').hidden,true);
  w.close();

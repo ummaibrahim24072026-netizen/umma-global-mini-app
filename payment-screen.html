@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#03A2A5">
   <title>UMMA · Ваш заказ</title>
   <link rel="stylesheet" href="css/brand.css?v=8">
-  <link rel="stylesheet" href="css/payment-screen.css?v=board-2">
+  <link rel="stylesheet" href="css/payment-screen.css?v=cash-change">
   <link rel="manifest" href="assets/umma-customer-display.webmanifest">
   <script defer src="js/core/screen-awake.js?v=customer-display"></script>
   <script defer src="js/core/pwa-registration.js?v=1"></script>
@@ -23,6 +23,10 @@
       <p id="screenTotalLabel" hidden>К оплате · Total</p>
       <strong id="screenTotal" hidden></strong>
       <p id="screenMethod" hidden></p>
+      <div id="screenChange" hidden aria-live="polite">
+        <span>Сдача · Change · Tiền thừa</span>
+        <strong id="screenChangeAmount"></strong>
+      </div>
       <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира · Waiting for your order</p>
       <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
       <div id="screenTransfer" hidden>
@@ -38,6 +42,6 @@
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
   <script src="js/cafe/product-photo.js"></script>
-  <script src="js/cafe/payment-screen.js?v=board-2"></script>
+  <script src="js/cafe/payment-screen.js?v=cash-change"></script>
 </body>
 </html>

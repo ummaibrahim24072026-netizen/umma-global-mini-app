@@ -32,6 +32,12 @@ function screenDraft(value:unknown,method:unknown){
  }
  return lines.length?{lines,method,total:lines.reduce((sum,line)=>sum+line.quantity*line.unitPrice,0)}:null;
 }
+function validCashReceived(value:unknown):value is number{
+ return typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=2147483647;
+}
+function previewCashChange(received:unknown,total:number){
+ return validCashReceived(received)&&received>=total?received-total:null;
+}
 async function password(value:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(value),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:600000,hash:'SHA-256'},key,256)),v=>v.toString(16).padStart(2,'0')).join('');}
 function same(a:string,b:string){let diff=a.length^b.length;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^(b.charCodeAt(i)||0);return diff===0;}
 Deno.serve(async req=>{
@@ -62,13 +68,14 @@ Deno.serve(async req=>{
  }
  if(b.action==='screenPoll'){
   if(!validSecret(b.screenToken))return reply({ok:false},404);
-  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at,display_layout')
+  const {data:s,error}=await db.from('cafe_payment_screens').select('id,order_id,location_id,draft,updated_at,display_layout,cash_received_preview')
    .eq('token_hash',await sha256(b.screenToken)).eq('active',true).maybeSingle();
   if(error)throw error;
   if(!s)return reply({ok:false},404);
   if(!s.order_id){
    const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
-   return reply({ok:true,order:null,draft,layout:s.display_layout});
+   const cashChange=draft?.method==='cash'?previewCashChange(s.cash_received_preview,draft.total):null;
+   return reply({ok:true,order:null,draft,layout:s.display_layout,cashChange});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
    .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url))')
@@ -85,9 +92,19 @@ Deno.serve(async req=>{
     if(foreign.phone)transfer={phone:foreign.phone,bank:foreign.bank,recipient:foreign.recipient};
    }
   }
+  let cashChange=null;
+  if(method==='cash'&&!['cancelled','completed'].includes(o.status)&&o.payment_status==='pending'){
+   cashChange=previewCashChange(s.cash_received_preview,Number(o.total_vnd));
+  }else if(method==='cash'&&o.status!=='cancelled'&&o.payment_status==='paid'){
+   const {data:receipt,error:receiptError}=await db.from('cafe_payment_receipts').select('change_given_vnd')
+    .eq('order_id',o.id).eq('payment_method','cash').eq('receipt_status','confirmed')
+    .order('collected_at',{ascending:false}).order('id',{ascending:false}).limit(1).maybeSingle();
+   if(receiptError)throw receiptError;
+   cashChange=receipt?.change_given_vnd??null;
+  }
   const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
   return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
-   layout:s.display_layout,transfer,payment:paymentFor(o)});
+   layout:s.display_layout,transfer,cashChange,payment:paymentFor(o)});
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
@@ -262,8 +279,10 @@ Deno.serve(async req=>{
    const {data:o}=await db.from('cafe_orders').select('id').eq('id',orderId).eq('location_id',s.location_id).maybeSingle();
    if(!o)return reply({ok:false,error:'Заказ другого кафе'},403);
   }
+  if(b.cashReceived!=null&&!validCashReceived(b.cashReceived))return reply({ok:false,error:'Некорректная сумма наличных.'},400);
+  const cashReceived=orderId||draft?.method==='cash'?b.cashReceived??null:null;
   let update=db.from('cafe_payment_screens')
-   .update({order_id:orderId,draft,updated_at:new Date().toISOString(),...(revision===undefined?{}:{display_revision:revision})})
+   .update({order_id:orderId,draft,cash_received_preview:cashReceived,updated_at:new Date().toISOString(),...(revision===undefined?{}:{display_revision:revision})})
    .eq('id',s.id).eq('active',true);
   if(revision!==undefined)update=update.lt('display_revision',revision);
   const {error:e}=await update;

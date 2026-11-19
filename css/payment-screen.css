@@ -125,3 +125,19 @@ body {
 @media (max-width: 420px) {
   :root .customer-display { --photo-size: 50px; }
 }
+
+#screenChange {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid #96d2d1;
+  border-radius: 16px;
+  background: #e7f8f7;
+  color: #075e65;
+}
+#screenChangeAmount {
+  font-size: clamp(26px, 5vw, 52px);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}

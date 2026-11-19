@@ -80,7 +80,7 @@ function status(value,state='idle'){
  $('screenStatus').dataset.state=state;
 }
 function render(data){
- const {order,draft,payment,transfer,layout}=data;
+ const {order,draft,payment,transfer,layout,cashChange}=data;
  if(layouts.has(layout))document.documentElement.dataset.displayLayout=layout;
  const view=order||draft;
  const paid=order?.paymentStatus==='paid';
@@ -96,6 +96,9 @@ function render(data){
  text('screenNumber',order?'Заказ · Order · Đơn hàng №'+order.number:draft?'Ваш заказ · Your order · Đơn hàng':'Добро пожаловать · Welcome · Xin chào');
  optional('screenTotalLabel',view?(paid?'Оплачено · Paid':cancelled?'Сумма заказа · Order total':'К оплате · Total'):'');
  optional('screenTotal',view?amount(view):'');
+ const showChange=view?.method==='cash'&&!cancelled&&Number.isSafeInteger(cashChange)&&cashChange>=0;
+ $('screenChange').hidden=!showChange;
+ text('screenChangeAmount',showChange?money(cashChange):'');
  optional('screenMethod',view?(methods[view.method]||'Способ оплаты уточняет кассир · Payment method pending'):'');
  if(!view){status('Ожидаем заказ от кассира · Waiting for your order');return;}
  if(!order){status(draft.method?'Ожидает оплаты · Unpaid':'Кассир оформляет заказ · Order in progress','pending');return;}
