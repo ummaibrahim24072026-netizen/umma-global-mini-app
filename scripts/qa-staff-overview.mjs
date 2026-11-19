@@ -152,6 +152,27 @@ for (const name of ['kitchen','web-operations']) w.eval(read('js/cafe/' + name +
 await settle();
 assert.equal(document.body.dataset.workspace, 'overview');
 assert.equal(document.querySelector('[data-overview=payment]').textContent, '1');
+assert.equal(document.getElementById('webOverviewCafeName').textContent, locations[0].name);
+assert.equal(document.querySelector('[data-order-filter=payment]').hasAttribute('data-has-items'), true);
+assert.equal(document.querySelector('[data-order-filter=new]').hasAttribute('data-has-items'), false);
+document.dispatchEvent(new w.CustomEvent('umma:staff-inbox-counts', { detail: { unread: 3, attention: 0 } }));
+assert.equal(document.querySelector('[data-inbox-metric=unread]').textContent, '3');
+assert.equal(document.querySelector('[data-inbox-filter=unread]').hasAttribute('data-has-items'), true);
+assert.equal(document.querySelector('[data-inbox-filter=attention]').hasAttribute('data-has-items'), false);
+
+let inboxFilter;
+document.addEventListener('umma:staff-inbox-filter', event => { inboxFilter = event.detail; });
+document.querySelector('[data-inbox-metric=unread]').click();
+assert.equal(document.body.dataset.workspace, 'messages');
+assert.equal(inboxFilter, 'unread');
+document.querySelector('[data-web-tab=overview]').click();
+await settle();
+document.querySelector('[data-overview=payment]').click();
+await settle();
+assert.equal(document.body.dataset.workspace, 'orders');
+assert.equal(document.querySelector('[data-kitchen-filter=payment]').classList.contains('is-active'), true);
+document.querySelector('[data-web-tab=overview]').click();
+await settle();
 assert.equal(document.getElementById('webOverviewStockList').textContent, '<QA Манты>');
 assert.equal(document.getElementById('webOverviewStockList').querySelector('qa'), null);
 unavailable = true;
