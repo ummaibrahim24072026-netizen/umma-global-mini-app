@@ -4,7 +4,9 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='',inboxClients=[],filter='all',inboxAccess=false;
-let inboxFilter,workflowButton,workflow,threadMenu,alertAudio;
+let inboxFilter,inboxSearch,quickFilters,workflowButton,workflow,threadMenu,alertAudio;
+let inboxLoaded=false,avatarRefreshAt=0;
+const inboxAvatars=new Map();
 const translationLanguages=['ru','vi','en'];
 const deviceTranslationLanguage=()=>navigator.languages?.map(x=>x.split('-')[0].toLowerCase()).find(x=>translationLanguages.includes(x))||'en';
 const translationPreferenceKey='umma:staff:translation-language:'+String(window.ummaStaffAuth?.actorId?.()||'staff');
@@ -177,6 +179,25 @@ function messageAvatar(incoming,kind){
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
 const dateTime=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
 const clock=new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Ho_Chi_Minh'});
+const localDay=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
+const searchText=value=>String(value??'').normalize('NFC').toLocaleLowerCase().replaceAll('ё','е');
+
+function conversationTime(value,now){
+ const date=new Date(value);
+ if(!value||!Number.isFinite(+date))return null;
+ const day=localDay.format(date);
+ const label=day===localDay.format(now)?clock.format(date):
+  day===localDay.format(now-86400000)?'Вчера':day;
+ const time=node('time',label);
+ time.dateTime=date.toISOString();
+ time.title=dateTime.format(date);
+ return time;
+}
+
+function setInboxFilter(value){
+ filter=value;
+ renderClients();
+}
 
 async function refreshAudience(){
  const data=await api('staffAudience',{segment:segment.value,offset});
@@ -422,37 +443,80 @@ async function openThread(id){
 }
 function renderClients(){
  if(!clients)return;
- const snapshot=JSON.stringify([thread,filter,inboxClients]);
+ const query=searchText(inboxSearch?.value).trim().split(/\s+/).filter(Boolean);
+ const now=Date.now();
+ const snapshot=JSON.stringify([thread,filter,query,inboxLoaded,localDay.format(now),inboxClients,[...inboxAvatars]]);
  if(snapshot===clientSnapshot)return;
  const focused=document.activeElement?.dataset.clientThread;
  clientSnapshot=snapshot;clients.replaceChildren();
- if(inboxFilter)inboxFilter.value=filter;
- const sorted=inboxClients.filter(c=>filter==='all'||c.stage===filter||
-  (filter==='unread'&&c.unread>0)||(filter==='attention'&&(c.stage==='new'||c.unread>0)))
-  .sort((a,b)=>Number(!!b.unread)-Number(!!a.unread)||(Date.parse(b.last_at)||0)-(Date.parse(a.last_at)||0));
+ if(inboxFilter)inboxFilter.value=filter==='unread'?'all':filter;
+ for(const button of quickFilters||[])button.setAttribute('aria-pressed',String(button.dataset.filter===filter));
+ const sorted=inboxClients.filter(c=>{
+  const matchesStatus=filter==='all'||c.stage===filter||
+   (filter==='unread'&&c.unread>0)||(filter==='attention'&&(c.stage==='new'||c.unread>0));
+  if(!matchesStatus||!query.length)return matchesStatus;
+  const searchable=searchText([c.name,c.last_message,mediaNames[c.last_media],c.order_number&&'№'+c.order_number].filter(Boolean).join(' '));
+  return query.every(word=>searchable.includes(word));
+ }).sort((a,b)=>(workspace?0:Number(!!b.unread)-Number(!!a.unread))||
+  (Date.parse(b.last_at)||0)-(Date.parse(a.last_at)||0));
  for(const c of sorted){
   const li=node('li'),b=node('button',null,'work-thread-choice');
   b.type='button';b.dataset.clientThread=c.id;b.setAttribute('aria-pressed',String(thread===c.id));
   const name=c.name||'Клиент '+c.id.slice(0,8);
   const avatar=node('span',clientInitials(c.name),'work-thread-avatar');avatar.setAttribute('aria-hidden','true');
+  const photo=inboxAvatars.get(c.id);
+  if(photo){
+   const image=node('img');
+   image.alt='';image.loading='lazy';image.decoding='async';
+   image.onload=()=>image.classList.add('is-loaded');
+   image.onerror=()=>image.remove();
+   image.src=photo;
+   avatar.append(image);
+  }
   const description=node('span',null,'work-thread-description');
   const heading=node('span',null,'work-thread-summary');heading.append(node('strong',name));
-  if(c.last_at)heading.append(node('time',dateTime.format(new Date(c.last_at))));
-  const last=node('small',c.last_message||mediaNames[c.last_media]||'Переписка ещё не началась');
-  description.append(heading,last);
-  if(workspace){
-   const assigned=c.assignee_name||(c.assigned?'Сотрудник':'Без ответственного');
-   description.append(node('small',[c.order_number?'№'+c.order_number:null,stages[c.stage],assigned].filter(Boolean).join(' · ')));
+  const time=workspace?conversationTime(c.last_at,now):c.last_at?node('time',dateTime.format(new Date(c.last_at))):null;
+  if(time)heading.append(time);
+  const preview=node('span',null,'work-thread-preview');
+  const media=mediaNames[c.last_media];
+  const last=node('small',(workspace?media||c.last_message:c.last_message||media)||'Переписка ещё не началась');
+  preview.append(last);
+  if(Number(c.unread)>0){
+   b.dataset.unread='true';
+   const count=node('span',c.unread>99?'99+':String(c.unread),'work-thread-unread');
+   count.setAttribute('aria-label','Непрочитанных сообщений: '+c.unread);
+   if(workspace)preview.append(count);
+   else b.append(count);
   }
-  b.append(avatar,description);
-  if(c.unread){b.dataset.unread='true';b.append(node('span',String(c.unread),'work-thread-unread'));}
+  description.append(heading,workspace?preview:last);
+  if(workspace){
+   const assigned=c.assignee_name||(c.assigned?'Сотрудник':null);
+   const metadata=[c.order_number?'№'+c.order_number:null,stages[c.stage],assigned].filter(Boolean);
+   if(metadata.length)description.append(node('small',metadata.join(' · '),'work-thread-context'));
+  }
+  b.prepend(avatar,description);
   b.onclick=()=>run(()=>openThread(c.id));li.append(b);clients.append(li);
   if(c.id===focused)b.focus({preventScroll:true});
  }
- if(!sorted.length)clients.append(node('li',filter==='all'?'Здесь появятся обращения клиентов.':'Нет переписок с этим статусом.','work-inbox-empty'));
+ if(focused&&!clients.contains(document.activeElement))inboxSearch?.focus({preventScroll:true});
+ if(!sorted.length){
+  const empty=!inboxLoaded&&workspace?'Загружаем переписки…':query.length?'Ничего не найдено.':
+   filter==='all'?'Здесь появятся обращения клиентов.':'Нет переписок с этим статусом.';
+  clients.append(node('li',empty,'work-inbox-empty'));
+ }
 }
 async function refresh(){
- const d=await api(workspace?'staffInbox':'staffList');
+ const includeAvatars=!!workspace&&visible()&&view==='inbox'&&
+  (Date.now()>=avatarRefreshAt||inboxClients.some(c=>!inboxAvatars.has(c.id)));
+ const d=await api(workspace?'staffInbox':'staffList',includeAvatars?{includeAvatars:true}:{});
+ if(workspace){
+  const ids=new Set(d.clients.map(c=>c.id));
+  for(const id of inboxAvatars.keys())if(!ids.has(id))inboxAvatars.delete(id);
+  if(includeAvatars){
+   avatarRefreshAt=Date.now()+300000;
+   for(const c of d.clients)inboxAvatars.set(c.id,typeof c.avatar_url==='string'&&c.avatar_url.startsWith('https://')?c.avatar_url:null);
+  }
+ }
  const unread=d.clients.reduce((total,c)=>total+(Number(c.unread)||0),0);
  if(badge){badge.hidden=!unread;badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label','Непрочитанных: '+unread);}
  if(button)button.textContent='Сообщения клиентов'+(unread?' · '+unread:'');
@@ -462,6 +526,7 @@ async function refresh(){
  }}));
  if(stats&&d.subscribers!==undefined)stats.textContent='Подписаны на новости: '+d.subscribers+' · Подписчики с push: '+d.pushDevices;
  inboxClients=d.clients;
+ inboxLoaded=true;
  renderClients();
 }
 function openWorkflow(){
@@ -635,7 +700,7 @@ function build(){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
  }
- const back=node('button',null,'work-chat-back');back.type='button';back.setAttribute('aria-label','Назад');back.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5\"/><path d=\"m12 19-7-7 7-7\"/></svg>";for(const [key,value] of Object.entries({display:'inline-flex',alignItems:'center',justifyContent:'center',width:'44px',minWidth:'44px',height:'44px',minHeight:'44px',padding:'0',border:'0',borderRadius:'0',background:'transparent',color:'#fff',flex:'0 0 44px'}))back.style.setProperty(key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),value,'important');back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxFilter;target?.focus();};threadHeading.prepend(back);
+ const back=node('button',null,'work-chat-back');back.type='button';back.setAttribute('aria-label','Назад');back.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 12H5\"/><path d=\"m12 19-7-7 7-7\"/></svg>";for(const [key,value] of Object.entries({display:'inline-flex',alignItems:'center',justifyContent:'center',width:'44px',minWidth:'44px',height:'44px',minHeight:'44px',padding:'0',border:'0',borderRadius:'0',background:'transparent',color:'#fff',flex:'0 0 44px'}))back.style.setProperty(key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),value,'important');back.onclick=()=>{const id=thread;closeThread();const target=[...clients.querySelectorAll('button')].find(b=>b.dataset.clientThread===id)||inboxSearch;target?.focus();};threadHeading.prepend(back);
  const menu=node('details',null,'connect-chat-menu');threadMenu=menu;menu.hidden=true;
  const toggle=node('summary',null,'connect-chat-menu-toggle');
  toggle.setAttribute('aria-label','Действия чата');toggle.title='Действия чата';
@@ -693,17 +758,33 @@ function build(){
  const listPanel=node('section',null,'work-inbox-sidebar');
  if(workspace){
   listPanel.setAttribute('aria-label','Переписки');
+  const controls=node('div',null,'work-inbox-controls');
+  const search=node('div',null,'work-inbox-search');
+  search.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4 4"/></svg>';
+  inboxSearch=node('input');
+  inboxSearch.type='search';inboxSearch.placeholder='Найти переписку';
+  inboxSearch.setAttribute('aria-label','Поиск по имени, номеру заказа и последнему сообщению');
+  inboxSearch.addEventListener('input',renderClients);
+  search.append(inboxSearch);
+  const filters=node('div',null,'work-inbox-filters');
+  quickFilters=[['all','Все'],['unread','Непрочитанные']].map(([key,title])=>{
+   const button=node('button',title);button.type='button';button.dataset.filter=key;
+   button.onclick=()=>setInboxFilter(key);
+   return button;
+  });
   inboxFilter=node('select');
+  inboxFilter.setAttribute('aria-label','Статус обращения');
   for(const [key,title] of Object.entries(stages)){
-   const option=node('option',title);option.value=key;inboxFilter.append(option);
+   if(key==='unread')continue;
+   const option=node('option',key==='all'?'Статус':title);option.value=key;inboxFilter.append(option);
   }
-  inboxFilter.value=filter;
-  inboxFilter.onchange=()=>{filter=inboxFilter.value;renderClients();};
-  const filterControl=label('Статус',inboxFilter);
-  filterControl.className='work-inbox-filter';
-  listPanel.append(filterControl);
+  inboxFilter.onchange=()=>setInboxFilter(inboxFilter.value);
+  filters.append(...quickFilters,inboxFilter);
+  controls.append(search,filters);
+  listPanel.append(controls);
  }else listPanel.append(node('h2','Переписки'));
  listPanel.append(clients);
+ renderClients();
  panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
  section.append(header);
  if(!workspace||owner())section.append(nav);
@@ -743,7 +824,8 @@ document.addEventListener('umma:staff-tab',e=>{
 });
 document.addEventListener('umma:staff-inbox-filter',event=>{
  if(!Object.hasOwn(stages,event.detail))return;
- filter=event.detail;renderClients();
+ if(inboxSearch)inboxSearch.value='';
+ setInboxFilter(event.detail);
 });
 document.addEventListener('umma:staff-ready',event=>{
  inboxAccess=Boolean(event.detail?.assignments?.some(a=>['manager','cashier','waiter'].includes(a.staff_role)));

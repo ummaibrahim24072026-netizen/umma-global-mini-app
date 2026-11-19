@@ -117,7 +117,18 @@ Deno.serve(async(req:Request)=>{
     }
     if(!('stage'in data)&&!('assignee'in data))return reply({ok:false},400);
    }
-   return reply(await rpc('cafe_staff_inbox',{p_actor:actor,p_action:b.action,p_data:data}));
+   const result=await rpc('cafe_staff_inbox',{p_actor:actor,p_action:b.action,p_data:data});
+   if(b.action==='staffInbox'&&b.includeAvatars===true&&result?.ok&&result.clients?.length){
+    // Sign only paths derived from the authorized inbox response.
+    try{
+     const paths=result.clients.map((client:{id:string})=>avatarPath(client.id));
+     const signed=await bucket.createSignedUrls(paths,600);
+     if(signed.error)throw signed.error;
+     const urls=new Map(signed.data.map(file=>[file.path,file.signedUrl]));
+     for(const client of result.clients)client.avatar_url=urls.get(avatarPath(client.id))||null;
+    }catch{console.warn('Could not load inbox avatars from storage');}
+   }
+   return reply(result);
   }
   if(b.action==='staffAudience'){
    if(!['all','new','returning','regular','viewed','push'].includes(b.segment)||!Number.isInteger(b.offset)||b.offset<0||b.offset>100000)return reply({ok:false},400);
