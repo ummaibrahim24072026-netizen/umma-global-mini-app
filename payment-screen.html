@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#03A2A5">
   <title>UMMA · Ваш заказ</title>
   <link rel="stylesheet" href="css/brand.css?v=8">
-  <link rel="stylesheet" href="css/payment-screen.css?v=welcome-display">
+  <link rel="stylesheet" href="css/payment-screen.css?v=modern-display-3">
   <link rel="manifest" href="assets/umma-customer-display.webmanifest">
   <script defer src="js/core/screen-awake.js?v=customer-display"></script>
   <script defer src="js/core/pwa-registration.js?v=1"></script>
@@ -18,14 +18,13 @@
       <img src="assets/umma-customer-welcome.jpg" width="823" height="1536"
         alt="HALAL UMMA · Welcome! · Chào mừng Quý khách! · Добро пожаловать!">
     </div>
-    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="48" height="48"><strong>HALAL UMMA</strong><button id="screenFullscreen" type="button" hidden>На весь экран</button></header>
+    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="64" height="64"><div class="display-brand-title"><strong>HALAL UMMA</strong><span>Nha Trang</span></div><button id="screenFullscreen" type="button" hidden>На весь экран</button></header>
     <section class="display-order" aria-label="Ваш заказ">
       <h1 id="screenNumber">Добро пожаловать · Welcome · Xin chào</h1>
       <ul id="screenItems" hidden aria-label="Позиции заказа"></ul>
     </section>
     <section class="display-payment" aria-label="Оплата заказа">
-      <p id="screenTotalLabel" hidden>К оплате · Total</p>
-      <strong id="screenTotal" hidden></strong>
+      <div class="display-total-row"><p id="screenTotalLabel" hidden>К оплате · Total</p><strong id="screenTotal" hidden></strong></div>
       <p id="screenMethod" hidden></p>
       <div id="screenChange" hidden aria-live="polite">
         <span>Сдача · Change · Tiền thừa</span>
@@ -46,6 +45,6 @@
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
   <script src="js/cafe/product-photo.js"></script>
-  <script src="js/cafe/payment-screen.js?v=language-2"></script>
+  <script src="js/cafe/payment-screen.js?v=cashier-language-3"></script>
 </body>
 </html>
