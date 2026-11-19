@@ -10,7 +10,7 @@ const screenMethods=new Set(['cash','qr','rub','tenge','kaspi','sber','usdt']);
 const screenAssets='https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/';
 const screenLayouts=new Set(['auto','phone','tablet-small','tablet-large','monitor']);
 const screenLanguages=new Set(['ru','en','vi']);
-type ScreenLine={name:string,quantity:number,unitPrice:number,sku?:string,image_url?:string};
+type ScreenLine={name:string,name_ru?:string,name_en?:string,name_vi?:string,quantity:number,unitPrice:number,sku?:string,image_url?:string};
 function screenPhotoFields(product:any){
  const sku=typeof product?.sku==='string'&&/^[A-Z0-9_-]{1,80}$/i.test(product.sku)?product.sku:undefined;
  const image=product?.image_url;
@@ -29,7 +29,12 @@ function screenDraft(value:unknown,method:unknown){
   if(typeof line?.name!=='string'||!line.name.trim()||line.name.length>160||
      !Number.isInteger(line.quantity)||line.quantity<1||line.quantity>99||
      !Number.isSafeInteger(line.unitPrice)||line.unitPrice<=0||line.unitPrice>100000000)return undefined;
-  lines.push({name:line.name.trim(),quantity:line.quantity,unitPrice:line.unitPrice,...screenPhotoFields(line)});
+  const names:Record<string,string>={};
+  for(const locale of ['ru','en','vi']){
+   const field='name_'+locale;
+   if(typeof line[field]==='string'&&line[field].trim()&&line[field].length<=160)names[field]=line[field].trim();
+  }
+  lines.push({name:line.name.trim(),...names,quantity:line.quantity,unitPrice:line.unitPrice,...screenPhotoFields(line)});
  }
  return lines.length?{lines,method,total:lines.reduce((sum,line)=>sum+line.quantity*line.unitPrice,0)}:null;
 }
@@ -79,7 +84,7 @@ Deno.serve(async req=>{
    return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'ru',cashChange});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
-   .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url))')
+   .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url,name_ru,name_en,name_vi))')
    .eq('id',s.order_id).eq('location_id',s.location_id).order('id',{referencedTable:'cafe_order_items',ascending:true}).maybeSingle();
   if(oe)throw oe;
   if(!o)return reply({ok:true,order:null,layout:s.display_layout,language:s.display_language||'en'});
@@ -103,7 +108,7 @@ Deno.serve(async req=>{
    if(receiptError)throw receiptError;
    cashChange=receipt?.change_given_vnd??null;
   }
-  const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
+  const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,name_ru:line.product_name_ru,name_en:line.product?.name_en||'',name_vi:line.product?.name_vi||'',quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
   return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
    layout:s.display_layout,language:s.display_language||'en',transfer,cashChange,payment:paymentFor(o)});
  }
