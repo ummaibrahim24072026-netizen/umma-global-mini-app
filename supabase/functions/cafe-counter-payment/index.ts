@@ -18,6 +18,8 @@ const messages:Record<string,[number,string]>={
   COUNTER_UNAVAILABLE:[409,'Для этого способа оплаты ещё не настроены реквизиты.'],
   COUNTER_KZT_RATE:[409,'Курс тенге в Google Finance недоступен. Повторите позже или выберите другой способ оплаты.'],
   COUNTER_RATE:[409,'Курс рубля или реквизиты недоступны. Выберите другой способ оплаты или повторите позже.'],
+  COUNTER_METHOD_CHANGED:[409,'Способ оплаты уже изменился. Откройте заказ заново.'],
+  COUNTER_PAYMENT_PROOF:[409,'К заказу приложен чек. Сначала проверьте поступление оплаты.'],
   COUNTER_REFERENCE:[400,'Подтвердите поступление и укажите номер операции.'],
   COUNTER_CLOSED:[409,'Заказ уже оплачен или закрыт.'],
   COUNTER_DUPLICATE_REFERENCE:[409,'Этот номер операции уже использован для другого заказа.'],
@@ -30,7 +32,7 @@ Deno.serve(async req=>{
     if(raw.length>16000)return reply({ok:false,error:'Слишком большой запрос.'},413);
     const body=JSON.parse(raw);
     const {action,locationId,orderId,method,requestKey,items}=body;
-    if(!['options','create','details','confirm'].includes(action)||
+    if(!['options','create','details','confirm','switch','settle'].includes(action)||
        !(action==='options'||action==='create'?isUuid(locationId):isUuid(orderId))){
       return reply({ok:false,error:messages.COUNTER_INVALID[1]},400);
     }
@@ -41,11 +43,16 @@ Deno.serve(async req=>{
     }
     const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
     const actor=await verifyWebStaffSession(db,String(body.initData||''));
-    const quote=action==='create'&&['rub','sber'].includes(method)?await googleRubleQuote():null;
-    const tenge=action==='create'&&['tenge','kaspi'].includes(method)?await googleTengeQuote():null;
+    const needsQuote=action==='create'||action==='switch';
+    const quote=needsQuote&&['rub','sber'].includes(method)?await googleRubleQuote():null;
+    const tenge=needsQuote&&['tenge','kaspi'].includes(method)?await googleTengeQuote():null;
     const {data,error}=await db.rpc('cafe_counter_foreign_payment',{
       p_actor:actor,p_action:action,
       p_args:{locationId,orderId,method,requestKey,items,vndPerRub:quote?.vndPerRub,vndPerKzt:tenge?.vndPerKzt,quotedAt:(quote||tenge)?.quotedAt,
+        expectedMethod:typeof body.expectedMethod==='string'?body.expectedMethod:undefined,
+        expectedAmount:typeof body.expectedAmount==='number'&&Number.isFinite(body.expectedAmount)?body.expectedAmount:undefined,
+        tenderedAmountVnd:Number.isSafeInteger(body.tenderedAmountVnd)?body.tenderedAmountVnd:undefined,
+        changeGivenVnd:Number.isSafeInteger(body.changeGivenVnd)?body.changeGivenVnd:undefined,
         verified:body.verified===true,reference:typeof body.reference==='string'?body.reference.slice(0,101):undefined},
     });
     if(error){

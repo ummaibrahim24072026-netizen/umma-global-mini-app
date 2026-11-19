@@ -28,6 +28,7 @@ try {
   await db.exec("insert into umma_private.cafe_web_rub_recipient values(true,'Сбербанк QA','QA recipient','+79000000000');");
   await db.exec(file('supabase/migrations/20261119104311_cafe_counter_foreign_payments.sql'));
   await db.exec(file('supabase/migrations/20261119111555_cafe_counter_google_tenge.sql'));
+  await db.exec(file('supabase/migrations/20261119112418_cafe_counter_switch_payment.sql'));
   await db.exec("insert into telegram_users(telegram_id,role) values (13,'employee'), (14,'employee'); insert into umma_runtime_settings(id,inventory_control_enabled) values(true,false)");
   await q("insert into locations(id,name,location_type,self_service_enabled) values($1,'QA','cafe',true)", [cafe]);
   await q("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments) values(13,$1,'cashier',true),(14,$1,'kitchen',false)", [cafe]);
@@ -73,6 +74,26 @@ try {
     assert.equal(item.payment.amount, method==='usdt'?4.738588:2400);
     assert.equal(item.payment.network, method==='usdt'?'QA network':null);
   }
+  const sameOrder = kaspiOrder.order.id;
+  const switchTo = (method, expectedMethod, rate = 50) => action('switch', {
+    orderId: sameOrder, method, expectedMethod, vndPerKzt: rate, quotedAt: new Date().toISOString(),
+  });
+  const beforeSwitch = await orderCount();
+  const cash = await switchTo('cash', 'kaspi');
+  assert.equal(cash.paymentMethod, 'cash');
+  assert.equal(cash.paymentStatus, 'pending');
+  await assert.rejects(action('confirm', { orderId: sameOrder, expectedMethod:'kaspi', expectedAmount:2400, verified:true, reference:'KASPI-1234' }), /COUNTER_METHOD_CHANGED/);
+  await assert.rejects(action('settle', { orderId:sameOrder, expectedMethod:'qr' }), /COUNTER_METHOD_CHANGED/);
+  await assert.rejects(switchTo('tenge', 'cash', null), /COUNTER_KZT_RATE/);
+  assert.equal((await q('select payment_method from cafe_orders where id=$1',[sameOrder])).rows[0].payment_method,'cash');
+  const tenge = await switchTo('tenge', 'cash');
+  assert.equal(tenge.payment.amount,2400);
+  assert.equal((await switchTo('tenge','cash',60)).payment.amount,2400);
+  await switchTo('qr','tenge');
+  await action('settle', { orderId:sameOrder, expectedMethod:'qr' });
+  assert.deepEqual(await state(sameOrder), {payment_status:'paid',status:'preparing'});
+  await assert.rejects(switchTo('cash','qr'), /COUNTER_CLOSED/);
+  assert.equal(await orderCount(),beforeSwitch);
   const grants = await q("select has_function_privilege('anon','public.cafe_counter_foreign_payment(bigint,text,jsonb)','execute') as anon, has_function_privilege('authenticated','public.cafe_counter_foreign_payment(bigint,text,jsonb)','execute') as authenticated");
   assert.deepEqual(grants.rows[0], {anon:false,authenticated:false});
   console.log('PASS PostgreSQL counter payments: frozen RUB/KZT/USDT amount, role and branch scope, rollback without setup, same-order retry, confirmation guard, one bank payment per reference and paid-to-kitchen transition.');

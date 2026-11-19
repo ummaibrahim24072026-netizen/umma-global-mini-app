@@ -4,7 +4,7 @@ const tick=()=>new Promise(r=>setTimeout(r,20));
 for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html'}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.eval(readFileSync('js/cafe/web-session.js','utf8'));w.ummaStaffAuth.save('a'.repeat(64));
- const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false;
+ const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false,currentMethod=method;
  const foreign=!['cash','qr'].includes(method);
  const currency=method==='usdt'?'USDT':['tenge','kaspi'].includes(method)?'KZT':'RUB';
  w.confirm=()=>assert.fail('Payment confirmation must stay on the page');
@@ -22,7 +22,11 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
   }
  }
  else if(b.action==='confirm'){assert.equal(foreign,true);assert.equal(b.reference,'QA-7777');assert.equal(b.verified,true);paid=true;}
- else if(b.action==='updatePayment'){assert.equal(b.paymentStatus,'paid');if(method==='cash'){assert.equal(b.tenderedAmountVnd,50000);assert.equal(b.changeGivenVnd,25000);}paid=true;}
+ else if(b.action==='switch'){
+  assert.equal(b.orderId,order.id);assert.equal(b.expectedMethod,currentMethod);currentMethod=b.method;
+  out={ok:true,paymentMethod:b.method,paymentStatus:'pending',status:'pending'};
+ }
+ else if(b.action==='settle'){assert.equal(b.expectedMethod,currentMethod);if(method==='cash'){assert.equal(b.tenderedAmountVnd,50000);assert.equal(b.changeGivenVnd,25000);}paid=true;}
  else if(b.action==='payment')out={ok:true,payment:{qrPayload:'test-vietqr-with-25000',bankName:'Vietcombank',account:'123',reference:'UMMA 444'}};
  }
  return new Response(JSON.stringify(out));};
@@ -34,6 +38,23 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  d.querySelector('[data-pos-add]').click();assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('counterCheckout').click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
  assert.equal(paid,method==='cash');assert.equal(d.getElementById('posConfirmQr').hidden,method==='cash');
+ if(method==='qr'){
+  const byId=id=>d.getElementById(id);
+  const switchTo=async id=>{
+   byId('counterSwitchPayment').click();
+   assert.equal(byId('posQr').closest('#posReceipt').hidden,true);
+   d.querySelector('[data-counter-method='+id+']').click();
+   byId('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+   await tick();
+   assert.match(byId('posOrderNumber').textContent,/444/);
+   assert.equal(created,1);
+   assert.equal(paid,false);
+  };
+  await switchTo('cash');
+  assert.equal(byId('posCashLabel').hidden,false);
+  assert.equal(byId('posQr').querySelector('svg'),null);
+  await switchTo('qr');
+ }
  if(method!=='cash'){
   const byId=id=>d.getElementById(id);
   assert.equal(Boolean(byId('posQr').querySelector('svg')),method==='qr');
@@ -68,7 +89,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
    if(keys.length===1)throw Error('Response lost');
    out.order={id:'recovered',orderNumber:445,totalVnd:50000};
   }
-  if(body.action==='updatePayment')assert.fail('Recovering the order must not mark it paid');
+  if(body.action==='settle')assert.fail('Recovering the order must not mark it paid');
   return new Response(JSON.stringify(out));
  };
  for(const script of ['web-session','order-requests','web-operations']){

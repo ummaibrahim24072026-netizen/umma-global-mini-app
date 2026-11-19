@@ -129,7 +129,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
   await tick();await tick();
   assert.equal(requests.filter(b=>b.staffOrder).length,1);
-  assert.equal(requests.find(b=>b.action==='updatePayment').paymentStatus,'paid');}
+  assert.equal(requests.find(b=>b.action==='settle').expectedMethod,'cash');}
 
  }
  staff.window.close();
