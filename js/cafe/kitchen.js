@@ -144,6 +144,7 @@
     if (filter === "new") shown=shown.filter(o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o));
     if (filter === "preparing") shown=shown.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o));
     if (filter === "ready") shown=shown.filter(o=>o.status==="ready");
+    if (filter === "delivery") shown=shown.filter(o=>!finished(o)&&o.order_type==="delivery"&&o.delivery_status==="picked_up");
     const webSummary=byId("webOrderSummary");
     if(webSummary){
       webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";

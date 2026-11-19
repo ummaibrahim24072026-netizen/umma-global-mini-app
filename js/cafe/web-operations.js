@@ -192,9 +192,15 @@ overviewLocation.onchange = () => {
  void loadOverview();
 };
 $('webOverviewRefresh').onclick = loadOverview;
+document.addEventListener('umma:staff-inbox-counts',event=>{
+ for(const field of overview.querySelectorAll('[data-inbox-metric]')){
+  field.textContent=String(event.detail[field.dataset.inboxMetric]);
+ }
+});
 overview.querySelectorAll('[data-overview-tab]').forEach(button => {
  button.onclick = () => {
-  tab(button.dataset.overviewTab, overviewLocation.value);
+  tab(button.dataset.overviewTab, overviewLocation.value,button.dataset.orderFilter);
+  if(button.dataset.inboxFilter)document.dispatchEvent(new CustomEvent('umma:staff-inbox-filter',{detail:button.dataset.inboxFilter}));
   window.scrollTo({top:0,behavior:'instant'});
  };
 });
@@ -202,7 +208,7 @@ window.addEventListener('online', loadOverview);
 document.addEventListener('visibilitychange', loadOverview);
 setInterval(loadOverview, 15000);
 
-function tab(name, cafeId){
+function tab(name, cafeId, orderFilter){
  const cash=name==='pos'||name==='cashOrders';
  const counter=name==='pos'&&openKitchen;
  const nav=document.querySelector('[data-web-tab="'+(cash?'pos':name)+'"]');
@@ -219,7 +225,7 @@ function tab(name, cafeId){
  document.querySelectorAll('[data-web-tab]').forEach(b=>b.setAttribute('aria-current',String(b===nav)));
  document.querySelectorAll('[data-cash-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cashView===name)));
  if(!$('cafeKitchenPage').hidden){
-  const boardArgs=[name==='courier',name==='cashOrders'?'payment':'active'];
+  const boardArgs=[name==='courier',name==='cashOrders'?'payment':orderFilter||'active'];
   if(cafeId)boardArgs.push(cafeId);
   window.ummaKitchen.open(...boardArgs);
  }
@@ -258,6 +264,7 @@ async function boot(){me=await api('me');window.ummaCafeEpoch?.apply(me.cafeRese
 const owner=me.user.role==='super_admin',roles=me.assignments||[],sell=owner||roles.some(a=>['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments),courier=owner||roles.some(a=>a.staff_role==='courier'),kitchen=owner||roles.some(a=>a.staff_role!=='courier');
 const roleLabels={manager:'Менеджер',cashier:'Кассир',kitchen:'Кухня',waiter:'Официант',courier:'Курьер'};
 $('webRole').textContent=owner?'Владелец':Array.from(new Set(roles.map(a=>roleLabels[a.staff_role]).filter(Boolean))).join(' · ');
+const canMessage=owner||roles.some(a=>['manager','cashier','waiter'].includes(a.staff_role));
 const managerLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&a.staff_role==='manager'));
 overviewLocation.replaceChildren(...managerLocations.map(l=>{
  const option=document.createElement('option');option.value=l.id;option.textContent=l.name;return option;
@@ -283,7 +290,7 @@ if(openKitchen){
   document.querySelector('[data-web-tab="orders"] span').firstChild.textContent='Заказы ';
   $('posHeading').textContent='Новый заказ со стойки';
 }
-for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',!!managerLocations.length],['messages',owner]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
+for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',!!managerLocations.length],['messages',canMessage]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
 $('webInvitePanel').hidden=!owner;
 $('webStaffDescription').textContent=owner?'Управляйте ролями и доступом сотрудников к рабочему кабинету.':'Сотрудники, назначенные в ваши кафе.';
@@ -291,7 +298,7 @@ document.body.classList.toggle('work-owner',owner);
 document.body.classList.toggle('work-waiter',roles.some(a=>a.staff_role==='waiter')&&!owner&&!managerLocations.length);
 document.body.classList.toggle('work-cash-access', sell||!!managerLocations.length||roles.some(a=>a.staff_role==='waiter'&&a.can_accept_payments));
 document.dispatchEvent(new CustomEvent('umma:staff-ready',{detail:me}));
-tab(owner&&requested==='messages'?'messages':managerLocations.length?'overview':openKitchen?'pos':!owner&&roles.some(a=>a.staff_role==='kitchen')?'orders':sell?'cashOrders':courier?'courier':'orders');
+tab(canMessage&&requested==='messages'?'messages':managerLocations.length?'overview':openKitchen?'pos':!owner&&roles.some(a=>a.staff_role==='kitchen')?'orders':sell?'cashOrders':courier?'courier':'orders');
 if(sell){
  try{
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();

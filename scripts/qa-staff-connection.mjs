@@ -8,7 +8,7 @@ for(const owner of [true,false]){
  if(url.endsWith('cafe-connect')){
   const msg={id:'qa-message',direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
   if(b.action==='staffRead')unread=false;
-  const result=b.action==='staffList'?{clients:[{id:'customer-id',name:'Гость QA',unread:unread?1:0,last_message:msg.body}],total:1,subscribers:0,pushDevices:0}:b.action==='staffThread'?{client:{id:'customer-id',name:'Гость QA'},messages:[msg]}:{};
+  const result=b.action==='staffInbox'?{clients:[{id:'customer-id',name:'Гость QA',unread:unread?1:0,last_message:msg.body}],total:1,subscribers:0,pushDevices:0}:b.action==='staffThread'?{client:{id:'customer-id',name:'Гость QA'},messages:[msg]}:{};
   return new Response(JSON.stringify({ok:true,...result}));
  }
  const out=url.endsWith('cafe-menu')?{ok:true,products:[],inventory:[]}:b.action==='me'?{ok:true,user:{id:10,name:'QA',role:owner?'super_admin':'employee'},assignments:owner?[]:[{staff_role:'kitchen',location_id:'cafe',can_accept_payments:false}],locations:[{id:'cafe',name:'HALAL UMMA'}]}:b.action==='staffList'?{ok:true,accounts:[],employees:employees.filter(e=>!calls.some(c=>c.action==='staffDismissExpiredInvite'&&c.actorId===e.actor_id))}:b.action==='inviteExisting'?{ok:true,invite:'b'.repeat(64)}:{ok:true};return new Response(JSON.stringify(out));};

@@ -2,11 +2,11 @@
 (() => {
  'use strict';
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/delivery-chat';
- const language=()=>window.ummaI18n?.language||window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code?.split('-')[0]||'en';
+ const language=()=>window.ummaI18n?.language||window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code?.split('-')[0]||(window.ummaStaffAuth?'ru':'en');
  const t=s=>window.ummaI18n?.t(s)||s;
  let view=null,recording=null,recordGeneration=0;
  async function api(v,action,args={}){
-  const initData=window.Telegram?.WebApp?.initData;if(!initData)throw Error(t('Откройте приложение через Telegram'));
+  const initData=window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData;if(!initData)throw Error(t('Войдите в приложение снова.'));
   const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,orderId:v.id,language:language(),...args,initData}),signal:AbortSignal.timeout(action==='translate'?100000:20000)});
   const data=await r.json();if(!r.ok||!data.ok){const e=Error(t(data.error||'Не удалось открыть чат.'));e.code=data.code;throw e;}return data;
  }

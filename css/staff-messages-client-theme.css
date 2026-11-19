@@ -34,3 +34,54 @@
 .web-work-app[data-workspace="messages"] .work-inbox-sidebar{padding:10px}
 .web-work-app[data-workspace="messages"] .work-thread-choice{min-height:72px}
 }
+
+#webMessages .work-inbox-tools,
+#webMessages .work-inbox-filters{display:flex;flex-wrap:wrap;gap:6px}
+#webMessages .work-inbox-filters{margin:8px 0 12px}
+#webMessages .work-inbox-filters button{
+ min-height:42px;padding:6px 10px;border:1px solid #d1e6e3;border-radius:999px;
+ background:#fff;color:#185f61;font-size:.84rem;font-weight:700
+}
+#webMessages :is(.work-inbox-filters,.work-inbox-tools) button[aria-pressed="true"]{
+ background:#087b80;border-color:#087b80;color:#fff
+}
+#webMessages .work-thread-choice{display:flex;align-items:center;text-align:left;gap:10px;width:100%}
+#webMessages .work-thread-avatar{
+ display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:50%;
+ background:#d8f2ef;color:#116267;font-weight:750
+}
+#webMessages .work-thread-description{display:grid;flex:1;min-width:0;gap:3px}
+#webMessages .work-thread-description :is(small,strong){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#webMessages .work-thread-summary{display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:8px}
+#webMessages .work-thread-summary time{flex:none;font-size:.69rem;color:#456767}
+#webMessages .work-thread-unread{
+ min-width:22px;min-height:22px;display:grid;place-items:center;border-radius:999px;
+ background:#087b80;color:#fff;padding:1px 5px;font-size:.72rem
+}
+.work-chat-dialog{
+ width:min(380px,calc(100% - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;
+ padding:18px;border:1px solid #d8e9e6;border-radius:20px;background:#fff;color:#123d3c
+}
+.work-chat-dialog::backdrop{background:#0a333666}
+.work-chat-dialog form,.work-chat-dialog label{display:grid;gap:8px}
+.work-chat-dialog :is(select,button){min-height:42px;border-radius:12px}
+#webMessages .work-chat-order{
+ align-self:center;margin-inline:auto!important;text-align:center;display:grid;gap:4px;padding:8px 12px;
+ background:#f7f1df;border:1px solid #e2d5ac;border-radius:14px;color:#344344
+}
+#webMessages .work-chat-order button{
+ border:0;background:transparent;color:#126268;text-decoration:underline;min-height:42px;font-weight:750
+}
+#webOverview .work-overview-metrics dt button{
+ min-height:36px;padding:0;border:0;text-align:left;background:transparent;color:#126268;
+ font:inherit;text-decoration:underline;text-underline-offset:3px
+}
+@media(max-width:460px){
+ #webMessages .work-messages-heading{align-items:flex-start;flex-direction:column}
+ #webMessages .work-thread-choice{padding-inline:7px;gap:8px}
+ #webMessages .work-thread-summary time{font-size:.64rem}
+}
+#webMessages .work-chat-older{
+ position:relative;z-index:2;align-self:center;min-height:40px;padding:5px 12px;
+ background:#fff;color:#126268;border:1px solid #d1e6e3;border-radius:999px
+}

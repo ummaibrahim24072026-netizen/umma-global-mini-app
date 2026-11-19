@@ -1,5 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.99.1';
 import {verifyTelegramInitData} from './auth.ts';
+import {verifyWebStaffSession} from '../_shared/web-staff-auth.ts';
 import {translateMessage,transcribeMessage,speakMessage,validMedia,languageNames} from './translation.ts';
 import {dispatchCustomerNotifications} from '../_shared/customer-notifications.ts';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,x-client-info,apikey,content-type','Access-Control-Allow-Methods':'GET,POST,OPTIONS'};
@@ -15,9 +16,16 @@ Deno.serve(async req=>{
   const token=Deno.env.get('TELEGRAM_BOT_TOKEN'),url=Deno.env.get('SUPABASE_URL'),service=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if(!token||!url||!service)return reply({ok:false,error:'Server configuration error'},503);
   if(typeof body.initData!=='string'||body.initData.length>10000)return reply({ok:false,error:'Откройте приложение через Telegram'},401);
-  const actor=await verifyTelegramInitData(body.initData,token);
+  const web=body.initData.startsWith('web:');
+  const db=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
+  const actor=web?await verifyWebStaffSession(db,body.initData):await verifyTelegramInitData(body.initData,token);
   if(!uuid(body.orderId)||!['list','send','prepare','finish','translate'].includes(body.action)||!languageNames[body.language])return reply({ok:false,error:errors.CHAT_INPUT},400);
-  const db=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}}),bucket=db.storage.from('delivery-chat');
+  if(web){
+   const assigned=await db.from('cafe_orders').select('id')
+    .eq('id',body.orderId).eq('order_type','delivery').eq('courier_telegram_id',actor).maybeSingle();
+   if(assigned.error||!assigned.data)throw Error('CHAT_ACCESS');
+  }
+  const bucket=db.storage.from('delivery-chat');
   async function rpc(action:string,args:any={}){const r=await db.rpc('delivery_chat_action',{p_actor:actor,p_action:action,p_order:body.orderId,p_body:{...args,language:body.language}});if(r.error){if(r.error.message==='CHAT_ACCESS'&&action==='list'){const own=await db.from('cafe_orders').select('id').eq('id',body.orderId).eq('customer_telegram_id',actor).eq('courier_telegram_id',actor).maybeSingle();if(own.data)throw Error('CHAT_SELF');}throw Error(r.error.message);}return r.data;}
   async function notify(){try{await dispatchCustomerNotifications(db,token!);}catch{console.error('Chat notification deferred');}}
   if(body.action==='list'){
@@ -60,5 +68,5 @@ Deno.serve(async req=>{
    if(m.kind==='voice'){const audio=await speakMessage(key,translated,t.language);audioPath=body.orderId+'/translations/'+m.id+'/'+t.language+'/'+t.lease+'.mp3';const saved=await bucket.upload(audioPath,audio,{contentType:'audio/mpeg',upsert:true});if(saved.error)throw Error('Speech upload unavailable');}
    await rpc('complete',{messageId:m.id,lease:t.lease,translatedText:translated,transcript:m.kind==='voice'?original:null,audioPath});return reply({ok:true,state:'ready'});
   }catch{await rpc('fail',{messageId:m.id,lease:t.lease});return reply({ok:false,code:'TRANSLATION_FAILED',error:'Не удалось перевести сообщение. Оригинал сохранён.'},502);}
- }catch(e){const message=e instanceof Error?e.message:'';if(/Telegram|signature/i.test(message))return reply({ok:false,error:'Не удалось проверить Telegram'},401);if(errors[message])return reply({ok:false,code:message,error:errors[message]},message==='CHAT_ACCESS'?403:message==='CHAT_RATE'?429:409);console.error('Delivery chat request rejected');return reply({ok:false,error:'Не удалось выполнить действие в чате. Повторите попытку.'},400);}
+ }catch(e){const message=e instanceof Error?e.message:'';if(/Web (session|access)/i.test(message))return reply({ok:false,code:'CHAT_ACCESS',error:'Войдите в рабочий кабинет снова.'},401);if(/Telegram|signature/i.test(message))return reply({ok:false,error:'Не удалось проверить Telegram'},401);if(errors[message])return reply({ok:false,code:message,error:errors[message]},message==='CHAT_ACCESS'?403:message==='CHAT_RATE'?429:409);console.error('Delivery chat request rejected');return reply({ok:false,error:'Не удалось выполнить действие в чате. Повторите попытку.'},400);}
 });

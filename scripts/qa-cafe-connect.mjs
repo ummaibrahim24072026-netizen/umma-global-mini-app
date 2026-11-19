@@ -700,8 +700,9 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
    assert.equal(request.messageId,'staff-view-question');
    return new Response(JSON.stringify({ok:true,url:'https://qa.invalid/signed'}));
   }
-  return new Response(JSON.stringify(request.action==='staffList'?
-   {ok:true,clients:[client],subscribers:0,pushDevices:0}:{ok:true,client,messages,voiceTranslation:true}));
+  return new Response(JSON.stringify(request.action==='staffInbox'?
+   {ok:true,clients:[client]}:request.action==='staffInboxDetails'?
+   {ok:true,stage:'new',revision:0,orders:[]}:{ok:true,client,messages,voiceTranslation:true}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
  loadConnect(staff,'connect-admin');
@@ -712,7 +713,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
  staff.HTMLMediaElement.prototype.load=function(){};
  staff.HTMLMediaElement.prototype.play=async function(){};
- staff.document.querySelector('.connect-voice-bubble button[aria-label^="Воспроизвести"]').click();
+ staff.document.querySelector('.connect-public-voice button[aria-label^="Воспроизвести"]').click();
  await tick();
  [...staff.document.querySelectorAll('.connect-thread button')].find(b=>b.textContent==='🌐 Перевести голос').click();
  await tick();
@@ -721,7 +722,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  const audio=staff.document.querySelector('.connect-thread audio');
  assert.equal(audio.src,'https://qa.invalid/signed');
  assert.ok(staff.document.querySelector('input[type=file][accept^="video/"]'));
- assert.ok([...staff.document.querySelectorAll('.work-thread form button')].some(b=>b.textContent==='Записать голосовое'));
+ assert.ok([...staff.document.querySelectorAll('.work-thread form button')].some(b=>b.getAttribute('aria-label')==='Записать голосовое'));
  messages[1].read_at='2026-11-07T12:03:00Z';
  await poll();
  await tick();
@@ -894,7 +895,7 @@ vm.runInNewContext(stripTypeScriptTypes(mediaSources.map(source).join('\n').repl
   providerCalls.push(url);
   assert.equal(init.headers.Authorization,'Bearer test-secret');
   if(url.endsWith('/transcriptions')){
-   assert.equal(init.body.get('model'),'gpt-transcribe');
+   assert.equal(init.body.get('model'),'gpt-4o-mini-transcribe');
    assert.equal(init.body.get('file').name,'voice.webm');
    return Response.json({text:'Привет'});
   }

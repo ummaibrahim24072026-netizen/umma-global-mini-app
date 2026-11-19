@@ -27,18 +27,18 @@ Deno.serve(async(req:Request)=>{
    const prepare=await rpc('cafe_connect',{p_action:staff?'staffMediaPrepare':'mediaPrepare',...identity,p_data:mediaData});
    if(prepare.id)return reply({ok:true,id:prepare.id});
    const {bytes,kind,body}=await connectMedia(req,mime);
-   if(staff&&(kind==='photo'||kind==='album'))return reply({ok:false,code:'MEDIA_FORMAT'},415);
    const path=prepare.clientId+'/'+crypto.randomUUID();
    const upload=await bucket.upload(path,bytes,{contentType:mime,cacheControl:'0',upsert:false});
    if(upload.error)throw Error('MEDIA_UPLOAD');
-   const saved=await db.rpc('cafe_connect',{p_action:staff?'staffMediaSend':'mediaSend',...identity,p_data:{...mediaData,body,kind,path}});
+   const saved=await db.rpc('cafe_connect',{p_action:staff?'staffMediaSend':'mediaSend',...identity,p_data:{...mediaData,body,kind,path,
+    ...(staff&&kind==='video'&&body==='◉ Видеосообщение'?{videoNote:true}:{})}});
    // Delete only after a definitive rejection or when a concurrent request already sent it.
    if((saved.error?.code==='P0001')||(!saved.error&&saved.data.path!==path))await bucket.remove([path]);
    if(saved.error)throw Error(saved.error.message);
    return reply({ok:true,id:saved.data.id});
   }
   const raw=await req.text();if(raw.length>14000)return reply({ok:false},413);const b=JSON.parse(raw);
-  if(!['join','list','read','preferences','send','staffList','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
+  if(!['join','list','read','preferences','send','staffList','staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
 
   if(b.action==='news')return reply(await rpc('cafe_connect',{p_action:'news'}));
   if(b.action==='dispatch'){
@@ -65,6 +65,31 @@ Deno.serve(async(req:Request)=>{
    if(('orderId'in b||'requestKey'in b)&&(!uuid(b.orderId)||!uuid(b.requestKey)))return reply({ok:false},400);
    return reply(await rpc('cafe_menu_visit',{p_hash:hash,p_point:b.point,p_installed:b.installed,p_order_id:b.orderId??null,p_request_key:b.requestKey??null}));
   }
+  if(['staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory'].includes(b.action)){
+   const data:Record<string,unknown>={};
+   if(b.action!=='staffInbox'){
+    if(!uuid(b.clientId))return reply({ok:false},400);
+    data.clientId=b.clientId;
+   }
+   if(b.action==='staffInboxHistory'){
+    if(!uuid(b.beforeId))return reply({ok:false},400);
+    data.beforeId=b.beforeId;
+   }
+   if(b.action==='staffInboxUpdate'){
+    if(!Number.isInteger(b.revision)||b.revision<0||b.revision>2147483647)return reply({ok:false},400);
+    data.revision=b.revision;
+    if('stage'in b){
+     if(!['active','waiting','closed'].includes(b.stage))return reply({ok:false},400);
+     data.stage=b.stage;
+    }
+    if('assignee'in b){
+     if(b.assignee!==null&&(typeof b.assignee!=='string'||!/^\d{1,16}$/.test(b.assignee)))return reply({ok:false},400);
+     data.assignee=b.assignee;
+    }
+    if(!('stage'in data)&&!('assignee'in data))return reply({ok:false},400);
+   }
+   return reply(await rpc('cafe_staff_inbox',{p_actor:actor,p_action:b.action,p_data:data}));
+  }
   if(b.action==='staffAudience'){
    if(!['all','new','returning','regular','viewed','push'].includes(b.segment)||!Number.isInteger(b.offset)||b.offset<0||b.offset>100000)return reply({ok:false},400);
    return reply(await rpc('cafe_menu_audience',{p_actor:actor,p_segment:b.segment,p_offset:b.offset}));
@@ -80,7 +105,7 @@ Deno.serve(async(req:Request)=>{
    data.title=b.title.trim();data.language=b.language;data.installedOnly=b.installedOnly===true;data.publicNews=b.publicNews===true;
   }
   if(['read','staffRead'].includes(b.action)){
-   if(typeof b.before!=='string'||!Number.isFinite(Date.parse(b.before)))return reply({ok:false},400);data.before=new Date(b.before).toISOString();
+   if(typeof b.before!=='string'||!Number.isFinite(Date.parse(b.before)))return reply({ok:false},400);data.before=b.action==='staffRead'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(b.before)?b.before:new Date(b.before).toISOString();
   }
   if(b.action==='preferences'){
    if(typeof b.name==='string')data.name=b.name.slice(0,80);
@@ -113,7 +138,7 @@ Deno.serve(async(req:Request)=>{
      if(original.error)throw Error('Voice unavailable');
      const extension=({'audio/webm':'webm','audio/mp4':'m4a','audio/ogg':'ogg'} as Record<string,string>)[original.data.type.split(';')[0]];
      if(!extension)throw Error('Voice format');
-     const transcript=await transcribeMessage(voiceKey,original.data,'voice.'+extension,fetch,'gpt-transcribe');
+     const transcript=await transcribeMessage(voiceKey,original.data,'voice.'+extension,fetch,'gpt-4o-mini-transcribe');
      const translation=await translateMessage(voiceKey,transcript,b.language);
      if(translation.trim()!==transcript.trim()){
       const audio=await speakMessage(voiceKey,translation,b.language);
@@ -125,7 +150,7 @@ Deno.serve(async(req:Request)=>{
      result={status:'ready',text:translation,audioPath};
     }catch(error){
      console.warn('Connect voice translation failed',String(error).replace(/[^a-zA-Z0-9 _-]/g,'').slice(0,120));
-     return reply({ok:true,status:'failed'});
+     return reply({ok:true,status:'failed',reason:/credit_balance_exhausted|insufficient_quota|provider 429/i.test(String(error))?'service_unavailable':'processing_error'});
     }
    }
    if(result.status!=='ready')return reply({ok:true,status:result.status});
