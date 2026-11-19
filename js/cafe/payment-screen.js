@@ -37,7 +37,7 @@ picker.innerHTML='<option value="ru">RU</option><option value="en">EN</option><o
 picker.value=language;
 picker.style.cssText='margin-left:auto;border:1px solid #d8ad45;border-radius:999px;background:#e8fbfb;color:#07565a;padding:9px 14px;font:700 16px system-ui;cursor:pointer';
 document.querySelector('.display-brand')?.append(picker);
-picker.addEventListener('change',()=>{language=picker.value;localStorage.setItem(languageKey,language);lastItems='';if(latestData)render(latestData);});
+picker.addEventListener('change',()=>{language=picker.value;localStorage.setItem(languageKey,language);lastItems='';if(latestData)render({...latestData,language});});
 
 const money=v=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(v));
 const text=(id,value)=>{
@@ -97,7 +97,7 @@ function status(value,state='idle'){
  $('screenStatus').dataset.state=state;
 }
 function render(data,connected=true){
- latestData=data;document.documentElement.lang=language;const {order:currentOrder,draft,payment,transfer,layout,cashChange}=data;
+ latestData=data;if(['ru','en','vi'].includes(data.language)){language=data.language;picker.value=language;}document.documentElement.lang=language;const {order:currentOrder,draft,payment,transfer,layout,cashChange}=data;
  if(layouts.has(layout))document.documentElement.dataset.displayLayout=layout;
  const handedOut=currentOrder?.status==='completed'&&currentOrder.paymentStatus==='paid';
  const order=handedOut?null:currentOrder;
