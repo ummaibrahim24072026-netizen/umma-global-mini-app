@@ -45,7 +45,7 @@ function amount(order){
  return money(order.total);
 }
 function renderItems(lines=[]){
- const key=JSON.stringify(lines);
+ const key=language+JSON.stringify(lines);
  $('screenItems').hidden=!lines.length;
  if(key===lastItems)return;
  lastItems=key;
@@ -62,7 +62,7 @@ function renderItems(lines=[]){
    image.addEventListener('error',()=>{image.remove();item.classList.remove('has-photo');},{once:true});
    image.src=photo;item.classList.add('has-photo');item.append(image);
   }
-  name.textContent=line.name;
+  name.textContent=line['name_'+language]||line.name_ru||line.name_en||line.name_vi||line.name;
   units.textContent='× '+line.quantity+' '+(language==='ru'?'порц.':language==='vi'?'phần':'portion'+(line.quantity===1?'':'s'));
   total.textContent=money(line.unitPrice*line.quantity);
   label.append(name,units);
