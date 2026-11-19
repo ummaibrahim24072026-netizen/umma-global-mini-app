@@ -793,6 +793,15 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await poll();
  await tick();
  assert.equal(avatarImage.getAttribute('src'),avatar);
+ avatarImage.dispatchEvent(new staff.Event('error'));
+ assert.equal(avatarImage.hasAttribute('src'),false);
+ await poll();
+ await tick();
+ assert.equal(avatarImage.getAttribute('src'),avatar);
+ currentAvatar='data:image/jpeg;base64,/9j/4A==';
+ staff.dispatchEvent(new staff.Event('pageshow'));
+ await tick();
+ assert.equal(avatarImage.getAttribute('src'),currentAvatar);
 
  // Opening a chat on a phone must not initialize browser models or preload attachments.
  header.querySelector('.work-chat-back').click();
@@ -959,6 +968,7 @@ menu.close();
 let handler;
 const uploaded=[];
 const profilePhoto='data:image/png;base64,iVBORw0KGgo=';
+const webpPhoto='data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACwAQCdASoCAAIAAUAmJaACdLoABGaAAP7lCv/O1sMQVL/+7zf/bzf/bzf78gAA';
 const profilePath=ca+'/profile-avatar';
 const avatarObjects=new Map();
 const edgeDb={
@@ -998,6 +1008,10 @@ assert.deepEqual([...avatarObjects.keys()],[profilePath]);
 assert.equal((await call({...staffPhoto,initData:'web:forged'})).status,403);
 assert.equal((await (await call(staffPhoto)).json()).client.avatar,profilePhoto);
 assert.equal((await (await call({...staffPhoto,includeAvatar:false})).json()).client.avatar,undefined);
+assert.equal((await call({action:'avatar',token:a,avatar:webpPhoto})).status,200);
+avatarObjects.set(profilePath,new Blob([avatarObjects.get(profilePath)],{type:'application/octet-stream'}));
+assert.equal((await (await call(staffPhoto)).json()).client.avatar,webpPhoto);
+assert.equal((await (await call({action:'list',token:a,includeAvatar:true})).json()).client.avatar,undefined);
 assert.equal((await call({action:'avatar',token:a,avatar:null})).status,200);
 assert.equal((await (await call(staffPhoto)).json()).client.avatar,null);
 const sendAttachment=(mime,file)=>handler(new Request('https://qa.invalid',{method:'POST',

@@ -10,6 +10,12 @@ const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{
 const avatarPattern=/^data:(image\/(?:webp|png|jpeg));base64,([A-Za-z0-9+/]+={0,2})$/;
 const avatarLimit=400000;
 const avatarPath=(clientId:string)=>clientId+'/profile-avatar';
+function avatarDataUrl(bytes:Uint8Array){
+ const signature=bytes.subarray(0,12);
+ const mime=['image/webp','image/png','image/jpeg'].find(type=>validMedia(signature,type));
+ if(!mime)return null;
+ return 'data:'+mime+';base64,'+btoa(Array.from(bytes,c=>String.fromCharCode(c)).join(''));
+}
 function subscriptionValid(s:any){try{const u=new URL(s.endpoint);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&['fcm.googleapis.com','updates.push.services.mozilla.com','web.push.apple.com','wns2-par02p.wns.windows.com'].includes(u.hostname)&&u.href.length<4096&&/^[A-Za-z0-9_-]{87}$/.test(s.keys?.p256dh||'')&&/^[A-Za-z0-9_-]{22}$/.test(s.keys?.auth||'');}catch{return false;}}
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});if(req.method!=='POST')return reply({ok:false},405);
@@ -182,16 +188,15 @@ Deno.serve(async(req:Request)=>{
    return reply({ok:true,status:'ready',text:result.text,url:signed.data?.signedUrl||null});
   }
   const result=await rpc('cafe_connect',{p_action:b.action,p_hash:hash,p_actor:actor,p_data:data});
-  if(b.action==='staffThread'&&b.includeAvatar===true&&result?.ok&&result.client?.id===data.clientId){
+  if(b.action==='staffThread'&&b.includeAvatar===true&&result?.ok&&result.client?.id===String(data.clientId).toLowerCase()){
    try{
     const photo=await bucket.download(avatarPath(result.client.id),{}, {cache:'no-store'});
-    if(photo.data&&photo.data.size<=avatarLimit*3/4&&/^image\/(webp|png|jpeg)$/.test(photo.data.type)){
-     const bytes=new Uint8Array(await photo.data.arrayBuffer());
-     result.client.avatar='data:'+photo.data.type+';base64,'+btoa(Array.from(bytes,c=>String.fromCharCode(c)).join(''));
-    }else if(String(photo.error?.statusCode)==='404'){
+    if(photo.data&&photo.data.size<=avatarLimit*3/4){
+     result.client.avatar=avatarDataUrl(new Uint8Array(await photo.data.arrayBuffer()));
+    }else if(String(photo.error?.statusCode)==='404'||photo.error?.message==='Object not found'){
      result.client.avatar=null;
     }
-   }catch{}
+   }catch{console.warn('Could not read the chat avatar from storage');}
   }
   if(result?.messages)result.voiceTranslation=!!voiceKey;
   return reply(result);

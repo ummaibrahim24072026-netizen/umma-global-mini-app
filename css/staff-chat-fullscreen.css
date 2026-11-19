@@ -29,6 +29,7 @@
 }
 
 #webMessages .work-chat-avatar {
+  position:relative;
   display:grid;
   place-items:center;
   flex:0 0 34px;
@@ -41,11 +42,9 @@
   font-weight:750;
 }
 
-#webMessages .work-chat-avatar > * {
-  grid-area:1 / 1;
-}
-
 #webMessages .work-chat-avatar img {
+  position:absolute;
+  inset:0;
   width:100%;
   height:100%;
   object-fit:cover;

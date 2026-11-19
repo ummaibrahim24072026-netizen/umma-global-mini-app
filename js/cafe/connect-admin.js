@@ -574,8 +574,13 @@ function build(){
   threadAvatar.hidden=true;threadAvatar.setAttribute('aria-hidden','true');
   avatarInitials=node('span');
   avatarImage=node('img');avatarImage.alt='';avatarImage.hidden=true;
+  avatarImage.width=avatarImage.height=34;
   avatarImage.onload=()=>{avatarImage.hidden=false;};
-  avatarImage.onerror=()=>{avatarImage.hidden=true;};
+  avatarImage.onerror=()=>{
+   avatarImage.hidden=true;
+   avatarImage.removeAttribute('src');
+   avatarCheckedAt=0;
+  };
   threadAvatar.append(avatarInitials,avatarImage);threadHeading.append(threadAvatar);
  }
  threadHeading.append(threadTitle);
@@ -698,7 +703,13 @@ document.addEventListener('umma:staff-ready',event=>{
  restoreStaffTheme();
  syncVisibility();void poll();
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
+function resumeMessages(){
+ if(document.hidden)return;
+ if(workspace&&thread&&visible())avatarCheckedAt=0;
+ void poll();
+}
+document.addEventListener('visibilitychange',resumeMessages);
+window.addEventListener('pageshow',resumeMessages);
 window.addEventListener('offline',()=>{
  if(visible()){
   connection.textContent='Нет интернета. Открыта последняя полученная переписка.';
