@@ -4,48 +4,68 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#03A2A5">
-  <title>UMMA · Ваш заказ</title>
+  <meta name="theme-color" content="#e5f6f6">
+  <title>HALAL UMMA · Ваш заказ</title>
   <link rel="stylesheet" href="css/brand.css?v=8">
-  <link rel="stylesheet" href="css/payment-screen.css?v=order-pills-15">
+  <link rel="stylesheet" href="css/payment-screen.css?v=counter-display-16">
   <link rel="manifest" href="assets/umma-customer-display.webmanifest">
   <script defer src="js/core/screen-awake.js?v=customer-display"></script>
   <script defer src="js/core/pwa-registration.js?v=1"></script>
 </head>
 <body class="work-payment-screen">
   <main class="customer-display">
+    <header class="display-brand">
+      <img src="logo/assets/umma-icon-192.png" alt="" width="64" height="64">
+      <div class="display-brand-title"><strong>HALAL UMMA</strong><span>Nha Trang</span></div>
+    </header>
+    <button id="screenFullscreen" type="button" aria-label="На весь экран" title="На весь экран" hidden>
+      <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg>
+    </button>
     <div id="screenWelcome" class="display-welcome" hidden>
       <img src="assets/umma-customer-welcome.jpg" width="823" height="1536"
         alt="HALAL UMMA · Welcome! · Chào mừng Quý khách! · Добро пожаловать!">
     </div>
-    <header class="display-brand"><img src="logo/assets/umma-icon-192.png" alt="" width="64" height="64"><div class="display-brand-title"><strong>HALAL UMMA</strong><span>Nha Trang</span></div><button id="screenFullscreen" type="button" hidden>На весь экран</button></header>
-    <section class="display-order" aria-label="Ваш заказ">
-      <h1 id="screenNumber">Добро пожаловать · Welcome · Xin chào</h1>
+    <div class="display-heading"><h1 id="screenNumber">Добро пожаловать</h1></div>
+    <section class="display-order display-card" aria-label="Ваш заказ" hidden>
       <ul id="screenItems" hidden aria-label="Позиции заказа"></ul>
     </section>
     <section class="display-payment" aria-label="Оплата заказа">
-      <div class="display-total-row"><p id="screenTotalLabel" hidden>К оплате · Total</p><strong id="screenTotal" hidden></strong></div>
-      <p id="screenMethod" hidden></p>
-      <div id="screenCashSummary" class="display-cash-summary" hidden aria-live="polite">
-        <div><span id="screenCashReceivedLabel">Получено</span><strong id="screenCashReceivedAmount"></strong></div>
-        <div><span id="screenCashDueLabel">К оплате</span><strong id="screenCashDueAmount"></strong></div>
-        <div id="screenChange"><span id="screenChangeLabel">Сдача</span><strong id="screenChangeAmount"></strong></div>
+      <div class="display-total-row display-card" hidden>
+        <p id="screenTotalLabel" hidden>К оплате</p>
+        <div class="display-amount">
+          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="21.5" cy="7.5" rx="7.5" ry="3.5"/><path d="M14 7.5v4m15-4v12c0 2-3.4 3.5-7.5 3.5m0-8c4.1 0 7.5-1.5 7.5-3.5m-7.5 7.5c4.1 0 7.5-1.5 7.5-3.5"/><ellipse cx="10.5" cy="16.5" rx="7.5" ry="3.5"/><path d="M3 16.5v8c0 2 3.4 3.5 7.5 3.5s7.5-1.5 7.5-3.5v-8m-15 4c0 2 3.4 3.5 7.5 3.5s7.5-1.5 7.5-3.5"/></svg>
+          <strong id="screenTotal" hidden></strong>
+        </div>
       </div>
-      <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира · Waiting for your order</p>
-      <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
-      <div id="screenTransfer" hidden>
-        <p id="screenTransferBank"></p>
-        <p class="display-transfer-label">Номер для перевода · Phone number</p>
-        <strong id="screenTransferPhone" dir="ltr"></strong>
-        <p id="screenTransferRecipient"></p>
+      <div class="display-payment-card display-card">
+        <div class="display-method-row" hidden>
+          <span class="display-method-icon" aria-hidden="true">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M4 10l8-6 8 6M6 10v8m6-8v8m6-8v8M3 20h18"/></svg>
+          </span>
+          <p id="screenMethod" hidden></p>
+        </div>
+        <p id="screenStatus" role="status" aria-live="polite">Ожидаем заказ от кассира</p>
+        <p id="screenInstruction" hidden></p>
+        <div id="screenQr" aria-label="QR-код для оплаты" hidden></div>
+        <div id="screenTransfer" hidden>
+          <div class="display-transfer-number">
+            <svg aria-hidden="true" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3H5a2 2 0 0 0-2 2c0 8.8 7.2 16 16 16a2 2 0 0 0 2-2v-2l-5-2-1.7 2a13 13 0 0 1-7.3-7.3L9 8 7 3Z"/></svg>
+            <strong id="screenTransferPhone" dir="ltr"></strong>
+          </div>
+          <p id="screenTransferRecipient" hidden></p>
+        </div>
+        <div id="screenCashSummary" class="display-cash-summary" hidden aria-live="polite">
+          <div><span id="screenCashReceivedLabel">Получено</span><strong id="screenCashReceivedAmount"></strong></div>
+          <div id="screenChange"><span id="screenChangeLabel">Сдача</span><strong id="screenChangeAmount"></strong></div>
+        </div>
+        <p id="screenBank" hidden></p>
+        <p id="screenConnection" role="status" hidden></p>
       </div>
-      <p id="screenBank" hidden></p>
-      <p id="screenConnection" role="status" hidden></p>
-      <p id="screenDeviceHint" role="status" hidden></p>
     </section>
+    <p id="screenDeviceHint" class="display-card" role="status" hidden></p>
   </main>
   <script src="js/vendor/qrcode-generator.js"></script>
   <script src="js/cafe/product-photo.js"></script>
-  <script src="js/cafe/payment-screen.js?v=order-pills-15"></script>
+  <script src="js/cafe/payment-screen.js?v=counter-display-16"></script>
 </body>
 </html>

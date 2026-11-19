@@ -50,7 +50,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  if(method==='qr'){
   await new Promise(resolve=>setTimeout(resolve,135));
   const draft=requests.filter(r=>r.b.action==='screenDraft').at(-1).b;
-  assert.deepEqual(draft.lines,[{name:'Лепёшка',quantity:1,unitPrice:25000}]);
+  assert.deepEqual(draft.lines,[{name:'Лепёшка',name_ru:'Лепёшка',name_en:'',name_vi:'Bánh mì',quantity:1,unitPrice:25000}]);
   assert.equal(draft.method,null);
  }assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('counterCheckout').click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
@@ -142,7 +142,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
 }
 // The customer screen tracks the draft, switches payment method with the same order and removes old QR codes.
 {
- const dom=new JSDOM(readFileSync('payment-screen.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',url:'https://qa.invalid/payment-screen.html#screen='+'b'.repeat(64)});
+ const dom=new JSDOM(readFileSync('payment-screen.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/payment-screen.html#screen='+'b'.repeat(64)});
  const w=dom.window,d=w.document;
  w.AbortSignal=AbortSignal;
  let callback,fail=false;
@@ -163,10 +163,10 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  view={draft:{total:50000,method:null,lines},order:null,layout:'tablet-small'};
  await callback();
  assert.equal(d.getElementById('screenWelcome').hidden,true);
- assert.match(d.getElementById('screenItems').textContent,/Лепёшка <из печи> × 2/);
+ assert.match(d.getElementById('screenItems').textContent,/Лепёшка <из печи>2 порции/);
  assert.match(d.getElementById('screenTotal').textContent,/50/);
  assert.match(d.querySelector('#screenItems img').src,/flatbread-white-v2/);
- assert.match(d.querySelector('#screenItems small').textContent,/25/);
+ assert.equal(d.querySelector('#screenItems small').textContent,'2 порции');
  assert.equal(w.localStorage.getItem('umma:customer-display-token'),'b'.repeat(64));
  assert.equal(d.documentElement.dataset.displayLayout,'tablet-small');
  assert.equal(d.getElementById('screenQr').hidden,true);
@@ -174,38 +174,39 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
   payment:{qrPayload:'QR amount 50000',bankName:'VCB',account:'123',reference:'UMMA 10'}};
  await callback();
  assert.ok(d.querySelector('#screenQr svg'));
- assert.match(d.getElementById('screenStatus').textContent,/Unpaid/);
+ assert.match(d.getElementById('screenStatus').textContent,/Ожидает оплаты/);
+ assert.match(d.getElementById('screenInstruction').textContent,/Сканируйте QR-код/);
  view={order:{...view.order,method:'kaspi',foreignTotal:{amount:1000,currency:'KZT'}},transfer:{phone:'+77000000001',bank:'Kaspi',recipient:'QA'}};
  await callback();
  assert.equal(d.getElementById('screenTransfer').hidden,false);
- assert.equal(d.getElementById('screenTransferPhone').textContent,'+77000000001');
- assert.match(d.getElementById('screenTransferBank').textContent,/Kaspi/);
- view={order:{...view.order,method:'cash',foreignTotal:null},cashChange:25000};
+ assert.equal(d.getElementById('screenTransferPhone').textContent,'+7 700 000 00 01');
+ assert.match(d.getElementById('screenMethod').textContent,/Kaspi · KZT/);
+ view={order:{...view.order,method:'cash',foreignTotal:null},cashReceived:75000,cashChange:25000};
 
  await callback();
  assert.equal(d.querySelector('#screenQr svg'),null);
  assert.match(d.getElementById('screenMethod').textContent,/Наличными/);
  assert.equal(d.getElementById('screenTransferPhone').textContent,'');
- assert.equal(d.getElementById('screenChange').hidden,false);
+ assert.equal(d.getElementById('screenCashSummary').hidden,false);
  assert.match(d.getElementById('screenChangeAmount').textContent,/25[.\s]000/);
  view.order.paymentStatus='paid';
  await callback();
  assert.match(d.getElementById('screenNumber').textContent,/№10/);
- assert.match(d.getElementById('screenStatus').textContent,/Payment successful/);
+ assert.match(d.getElementById('screenStatus').textContent,/Оплата прошла успешно/);
  assert.match(d.getElementById('screenChangeAmount').textContent,/25[.\s]000/);
- view.cashChange=0;await callback();
- assert.equal(d.getElementById('screenChange').hidden,false);
+ view.cashReceived=50000;view.cashChange=0;await callback();
+ assert.equal(d.getElementById('screenCashSummary').hidden,false);
  assert.match(d.getElementById('screenChangeAmount').textContent,/^0/);
  assert.equal(d.getElementById('screenWelcome').hidden,true,'keep the paid receipt during handoff');
  view.order.status='completed';await callback();
  assert.equal(d.getElementById('screenWelcome').hidden,false,'return to the welcome poster after handoff');
- assert.equal(d.getElementById('screenChange').hidden,true);
+ assert.equal(d.getElementById('screenCashSummary').hidden,true);
  assert.equal(d.getElementById('screenItems').hidden,true);
  view.order.status='pending';
  view.order.paymentStatus='pending';view.order.method='qr';
  view.payment={qrPayload:'QR amount 50000'};
  await callback();assert.ok(d.querySelector('#screenQr svg'));
- assert.equal(d.getElementById('screenChange').hidden,true);
+ assert.equal(d.getElementById('screenCashSummary').hidden,true);
  fail=true;await callback();
  assert.equal(d.querySelector('#screenQr svg'),null);assert.equal(d.getElementById('screenItems').hidden,true);
  w.close();
