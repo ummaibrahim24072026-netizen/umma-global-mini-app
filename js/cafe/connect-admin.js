@@ -140,29 +140,39 @@ const status=node('p');status.setAttribute('role','status');status.setAttribute(
 let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,threadAvatar,avatarInitials,avatarImage,composer;
 let avatarCheckedAt=0;
 const clientInitials=name=>Array.from(name?.trim()||'').slice(0,2).join('').toLocaleUpperCase()||'U';
+function setAvatarPhoto(image,photo){
+ if(image.getAttribute('src')===photo)return;
+ image.hidden=true;
+ if(photo)image.src=photo;
+ else image.removeAttribute('src');
+}
 function renderThreadAvatar(client){
  threadAvatar.hidden=!client;
  if(!client){
   avatarCheckedAt=0;
-  avatarImage.hidden=true;
-  avatarImage.removeAttribute('src');
+  setAvatarPhoto(avatarImage,null);
   return;
  }
  avatarInitials.textContent=clientInitials(client.name);
  if(!Object.hasOwn(client,'avatar'))return;
  const photo=client.avatar;
- if(typeof photo==='string'&&/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(photo)){
-  if(avatarImage.getAttribute('src')!==photo){
-   avatarImage.hidden=true;
-   avatarImage.src=photo;
-  }
- }else{
-  avatarImage.hidden=true;
-  avatarImage.removeAttribute('src');
- }
+ setAvatarPhoto(avatarImage,typeof photo==='string'&&/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(photo)?photo:null);
+}
+function voiceAvatar(incoming){
+ const badge=node('span',null,'work-voice-avatar');
+ badge.setAttribute('aria-hidden','true');
+ const image=node('img');
+ image.alt='';
+ image.hidden=true;
+ image.onload=()=>{image.hidden=false;};
+ image.onerror=()=>{image.hidden=true;};
+ badge.append(node('span',incoming?'':'U'),image);
+ if(!incoming)setAvatarPhoto(image,'logo/assets/umma-icon-192.png');
+ return badge;
 }
 let audienceStats,audiencePoints,audienceList,segment,previousPage,nextPage,pageStatus,offset=0;
 const dateTime=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'});
+const clock=new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Ho_Chi_Minh'});
 
 async function refreshAudience(){
  const data=await api('staffAudience',{segment:segment.value,offset});
@@ -304,7 +314,15 @@ function showMessages(data,forceBottom=false){
    li.append(window.ummaConnectMedia.voiceTranslation('ru',target,voiceTranslation,true,{local:!defer}));
   }
   const meta=node('div',null,'connect-message-meta');
-  meta.append(node('small',dateTime.format(new Date(m.created_at))));
+  const sentAt=new Date(m.created_at);
+  const time=node('small',dateTime.format(sentAt));
+  if(workspace&&voicePlayer){
+   voicePlayer.append(voiceAvatar(m.direction==='customer'));
+   meta.append(voicePlayer.querySelector('.connect-voice-duration'));
+   time.title=time.textContent;
+   time.textContent=clock.format(sentAt);
+  }
+  meta.append(time);
   if(m.direction!=='customer')meta.append(node('small',null,'connect-receipt'));
   (voicePlayer||li).append(meta);
   return li;
@@ -315,7 +333,14 @@ function showMessages(data,forceBottom=false){
  workflowButton.hidden=!workflow;
  threadMenu.hidden=false;
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
- if(workspace)renderThreadAvatar(data.client);
+ if(workspace){
+  renderThreadAvatar(data.client);
+  // Refresh existing cards without rebuilding the players or interrupting audio.
+  for(const badge of messages.querySelectorAll('[data-direction=customer] .work-voice-avatar')){
+   badge.firstElementChild.textContent=avatarInitials.textContent;
+   setAvatarPhoto(badge.querySelector('img'),avatarImage.getAttribute('src'));
+  }
+ }
  replyForm.hidden=false;
  if(callButtons)callButtons.hidden=false;
 }

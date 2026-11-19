@@ -693,7 +693,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.setInterval=callback=>{poll=callback;};
  const messages=[
   {id:'staff-view-question',direction:'customer',body:'Вопрос',media_kind:'voice',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
-  {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',created_at:'2026-11-07T12:02:00Z',read_at:null}
+  {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',media_kind:'voice',created_at:'2026-11-07T12:02:00Z',read_at:null}
  ];
  const avatar='data:image/png;base64,iVBORw0KGgo=';
  let currentAvatar=avatar;
@@ -729,6 +729,10 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(avatarImage.getAttribute('src'),avatar);
  avatarImage.dispatchEvent(new staff.Event('load'));
  assert.equal(avatarImage.hidden,false);
+ const voicePhoto=()=>staffChat.querySelector('[data-direction=customer] .work-voice-avatar img');
+ assert.equal(voicePhoto().getAttribute('src'),avatar);
+ assert.equal(staffChat.querySelector('[data-direction=staff] .work-voice-avatar img').getAttribute('src'),'logo/assets/umma-icon-192.png');
+ assert.equal(staffChat.querySelector('[data-direction=staff] .connect-message-meta [title]').textContent,'19:02');
  const chooseTheme=(chat,theme)=>{
   chat.querySelector('.connect-theme-menu-button').click();
   const picker=staff.document.querySelector('.connect-theme-dialog[open]');
@@ -779,6 +783,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await poll();
  await tick();
  assert.equal(staff.document.querySelector('.connect-thread audio'),audio);
+ assert.equal(voicePhoto().getAttribute('src'),avatar);
  assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
  header.querySelector('.work-chat-back').click();
  assert.equal(headerAvatar.hidden,true);
@@ -789,6 +794,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(headerAvatar.hidden,false);
  assert.equal(avatarImage.hidden,true);
  assert.equal(headerAvatar.querySelector('span').textContent,'КЛ');
+ assert.equal(voicePhoto().hasAttribute('src'),false);
+ assert.equal(voicePhoto().previousElementSibling.textContent,'КЛ');
  currentAvatar=avatar;
  await poll();
  await tick();
@@ -802,6 +809,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.dispatchEvent(new staff.Event('pageshow'));
  await tick();
  assert.equal(avatarImage.getAttribute('src'),currentAvatar);
+ assert.equal(voicePhoto().getAttribute('src'),currentAvatar);
 
  // Opening a chat on a phone must not initialize browser models or preload attachments.
  header.querySelector('.work-chat-back').click();

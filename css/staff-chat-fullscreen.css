@@ -138,13 +138,71 @@
 
 #webMessages .connect-thread > .connect-chat-voice {
   width:min(100%,338px);
+  max-width:100%;
+}
+
+#webMessages .connect-public-voice:has(.work-voice-avatar) {
+  grid-template-columns:44px minmax(0,1fr) 39px 42px;
+  grid-template-areas:"play track speed avatar" "meta meta meta meta" "error error error error";
+}
+
+#webMessages [data-direction=staff] .connect-public-voice:has(.work-voice-avatar) {
+  grid-template-columns:42px 44px minmax(0,1fr) 39px;
+  grid-template-areas:"avatar play track speed" "meta meta meta meta" "error error error error";
+}
+
+#webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-play {grid-area:play}
+#webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-track {grid-area:track}
+#webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-speed {grid-area:speed}
+#webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-error {grid-area:error}
+
+#webMessages .work-voice-avatar {
+  grid-area:avatar;
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:42px;
+  aspect-ratio:1;
+  border-radius:50%;
+  background:#c7e9e1;
+  color:#165d5c;
+  font-size:12px;
+  font-weight:750;
+}
+
+#webMessages .work-voice-avatar img {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border-radius:inherit;
+  object-fit:cover;
+}
+
+#webMessages .work-voice-avatar::after {
+  content:"";
+  position:absolute;
+  inset-inline-end:-2px;
+  inset-block-end:-2px;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#f5fffc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300777a' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0z M5 11v1a7 7 0 0 0 14 0v-1 M12 19v3'/%3E%3C/svg%3E") center / 12px no-repeat;
 }
 
 #webMessages .connect-public-voice .connect-message-meta {
   align-items:center;
-  flex-wrap:nowrap;
-  gap:4px;
+  gap:0 6px;
   color:#486765;
+}
+
+#webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-message-meta {
+  grid-area:meta;
+  justify-self:stretch;
+}
+
+#webMessages .connect-public-voice .connect-message-meta .connect-voice-duration {
+  margin-inline-end:auto;
 }
 
 #webMessages .connect-public-voice small {
