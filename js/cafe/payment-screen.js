@@ -121,7 +121,7 @@ function render(data,connected=true){
  const showChange=view?.method==='cash'&&!cancelled&&Number.isSafeInteger(cashChange)&&cashChange>=0;
  $('screenChange').hidden=!showChange;
  text('screenChangeAmount',showChange?money(cashChange):'');document.querySelector('#screenChange span').textContent=tr('change');document.querySelector('.display-transfer-label').textContent=tr('phone');
- optional('screenMethod',view?(tr(view.method)||tr('cashier')):'');
+ optional('screenMethod',view?(translations[language][view.method]||methods[view.method]||tr('cashier')):'');
  if(!view){status(tr('wait'));return;}
  if(!order){status(tr(draft.method?'pending':'inProgress'),'pending');return;}
  if(cancelled){status(tr('closed'));return;}
