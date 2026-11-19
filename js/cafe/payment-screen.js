@@ -47,7 +47,7 @@ function amount(order){
 function renderItems(lines=[]){
  const key=language+JSON.stringify(lines);
  $('screenItems').hidden=!lines.length;
- if(key===lastItems)return;
+ if(key===lastItems){scheduleFit();return;}
  lastItems=key;
  $('screenItems').replaceChildren(...lines.map(line=>{
   const item=document.createElement('li');
@@ -69,7 +69,38 @@ function renderItems(lines=[]){
   item.append(label,total);
   return item;
  }));
+ scheduleFit();
 }
+function fitOrderToScreen(){
+ const list=$('screenItems');const panel=list.closest('.display-order');
+ if(!document.body.classList.contains('display-qr-active')||list.hidden){list.style.removeProperty('--item-font');list.style.removeProperty('--item-photo');list.style.removeProperty('--item-pad');list.style.removeProperty('--item-gap');return;}
+ const count=list.children.length;
+ // Recalculate from a clean baseline after every change of order or viewport.
+ list.style.setProperty('--item-font','18px');list.style.setProperty('--item-photo','56px');list.style.setProperty('--item-pad','8px');list.style.setProperty('--item-gap','8px');
+ const available=Math.max(0,panel.clientHeight-parseFloat(getComputedStyle(panel).paddingTop)-parseFloat(getComputedStyle(panel).paddingBottom)-$('screenNumber').offsetHeight-8);
+ if(!available||!count)return;
+ const columns=matchMedia('(orientation: portrait)').matches?2:1;
+ const rows=Math.ceil(count/columns);
+ const rowBudget=available/rows;
+ const font=Math.max(7,Math.min(18,rowBudget*.34));
+ const photo=Math.max(0,Math.min(56,rowBudget-3));
+ list.style.setProperty('--item-font',font+'px');
+ list.style.setProperty('--item-photo',photo+'px');
+ list.style.setProperty('--item-pad',Math.max(0,Math.min(7,rowBudget*.06))+'px');
+ list.style.setProperty('--item-gap',Math.max(1,Math.min(8,rowBudget*.08))+'px');
+ // Keep all lines in the DOM. For unusually large orders use the full area,
+ // and let the font shrink further rather than clipping entries.
+ let size=font;
+ for(let i=0;i<9&&list.scrollHeight>list.clientHeight+1&&size>5;i++){
+  size=Math.max(5,size-1.5);
+  list.style.setProperty('--item-font',size+'px');
+  list.style.setProperty('--item-photo',Math.max(0,Math.min(photo,rowBudget*.65))+'px');
+ }
+}
+let fitFrame=0;
+function scheduleFit(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(fitOrderToScreen);}
+addEventListener('resize',scheduleFit);
+addEventListener('orientationchange',scheduleFit);
 function renderQr(payment){
  const payload=payment?.qrPayload||'';
  $('screenQr').hidden=!payload;
@@ -100,6 +131,7 @@ function render(data,connected=true){
  const cancelled=order?.status==='cancelled'||order?.paymentStatus==='refunded';
  const qr=order&&!paid&&!cancelled&&order.method==='qr'&&payment?.qrPayload;
  document.body.classList.toggle('display-qr-active',Boolean(qr));
+ scheduleFit();
  renderQr(qr?payment:null);
  const rawPhone=String(transfer?.phone||'').replace(/[\s()\-]/g,'');
  const phone=order&&!paid&&!cancelled&&order.paymentStatus==='pending'&&/^\+?7[0-9]{10}$/.test(rawPhone)?rawPhone:'';
