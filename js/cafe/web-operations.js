@@ -243,6 +243,9 @@ function paymentFields(){
  $('posCash').disabled=!activeCash||busy;
  $('posLocation').disabled=busy;
  $('counterCheckout').disabled=busy||!cart.size||unavailable;
+ $('counterAddProducts').disabled=busy||!!payOrder;
+ $('counterAddProductsHint').hidden=!payOrder;
+ $('counterAddProductsHint').textContent=payOrder?'Заказ уже создан. Для дополнительных блюд оформите отдельную продажу.':'';
  $('posSubmit').disabled=busy||
   (switchingPayment?(!pending||!selectedAvailable||selectedMethod===orderMethod(payOrder))
    :(!payOrder&&(!draft||unavailable||!selectedAvailable))||(cash&&payOrder&&!pending));
@@ -631,7 +634,12 @@ $('counterIssueList').onclick=counterOrderAction;
 $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
 $('counterIssueRefresh').onclick=refreshCounterOrders;
-$('counterCheckout').onclick=()=>setCounterView('payment',{draft:true});
+$('counterCheckout').onclick=()=>setCounterView('payment');
+$('counterAddProducts').onclick=()=>{
+ if(busy||payOrder)return;
+ setCounterView('sale');
+ $('posSearch').focus({preventScroll:true});
+};
 $('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});$('screenLanguageSetting').value='ru';void setCustomerLanguage('ru');syncCustomerScreen(true);};
 document.querySelectorAll('[data-counter-view]').forEach(button=>{
  button.onclick=()=>{if(!busy)setCounterView(button.dataset.counterView);};
