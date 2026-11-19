@@ -22,6 +22,23 @@ const methods={
  bank_transfer:'Банковский перевод · Bank transfer',
 };
 let timer,busy=false,stopped=false,lastQr='',lastItems='';
+const languageKey='umma:customer-display-language';
+const translations={
+ ru:{order:'Заказ №',draft:'Ваш заказ',welcome:'Добро пожаловать',total:'К оплате',paid:'Оплачено',orderTotal:'Сумма заказа',change:'Сдача',each:'за шт.',pending:'Ожидает оплаты',inProgress:'Кассир оформляет заказ',closed:'Заказ закрыт',success:'Оплата прошла успешно',cash:'Наличными',rub:'Рубли · RUB',sber:'Сбербанк · RUB',tenge:'Тенге · KZT',kaspi:'Kaspi · KZT',bank_transfer:'Банковский перевод',wait:'Ожидаем заказ от кассира',scan:'Сканируйте QR-код в приложении банка',payCash:'Передайте наличные кассиру',transfer:'Переведите указанную сумму по номеру',cashier:'Ожидайте подтверждения кассира',phone:'Номер для перевода',ask:'Обратитесь к кассиру'},
+ en:{order:'Order #',draft:'Your order',welcome:'Welcome',total:'Total to pay',paid:'Paid',orderTotal:'Order total',change:'Change',each:'each',pending:'Awaiting payment',inProgress:'Cashier is preparing your order',closed:'Order closed',success:'Payment successful',cash:'Cash',rub:'Rubles · RUB',sber:'Sberbank · RUB',tenge:'Tenge · KZT',kaspi:'Kaspi · KZT',bank_transfer:'Bank transfer',wait:'Waiting for cashier',scan:'Scan QR with your banking app',payCash:'Pay cash at the counter',transfer:'Transfer the amount to the number shown',cashier:'Waiting for cashier confirmation',phone:'Transfer phone number',ask:'Please ask the cashier'},
+ vi:{order:'Đơn hàng số ',draft:'Đơn hàng của bạn',welcome:'Chào mừng quý khách',total:'Tổng thanh toán',paid:'Đã thanh toán',orderTotal:'Tổng đơn hàng',change:'Tiền thừa',each:'mỗi phần',pending:'Chờ thanh toán',inProgress:'Nhân viên đang nhập đơn',closed:'Đơn hàng đã đóng',success:'Thanh toán thành công',cash:'Tiền mặt',rub:'Rúp · RUB',sber:'Sberbank · RUB',tenge:'Tenge · KZT',kaspi:'Kaspi · KZT',bank_transfer:'Chuyển khoản',wait:'Đang chờ nhân viên',scan:'Quét mã QR bằng ứng dụng ngân hàng',payCash:'Thanh toán tiền mặt tại quầy',transfer:'Chuyển số tiền trên đến số điện thoại',cashier:'Đang chờ nhân viên xác nhận',phone:'Số điện thoại chuyển khoản',ask:'Vui lòng liên hệ nhân viên'}
+};
+let language=['ru','en','vi'].includes(localStorage.getItem(languageKey))?localStorage.getItem(languageKey):'en';
+const tr=key=>translations[language][key]||key;
+let latestData=null;
+const picker=document.createElement('select');
+picker.id='screenLanguage';picker.setAttribute('aria-label','Display language');
+picker.innerHTML='<option value="ru">RU</option><option value="en">EN</option><option value="vi">VI</option>';
+picker.value=language;
+picker.style.cssText='margin-left:auto;border:1px solid #d8ad45;border-radius:999px;background:#e8fbfb;color:#07565a;padding:9px 14px;font:700 16px system-ui;cursor:pointer';
+document.querySelector('.display-brand')?.append(picker);
+picker.addEventListener('change',()=>{language=picker.value;localStorage.setItem(languageKey,language);lastItems='';if(latestData)render(latestData);});
+
 const money=v=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(v));
 const text=(id,value)=>{
  const node=$(id);
@@ -55,7 +72,7 @@ function renderItems(lines=[]){
    image.src=photo;item.classList.add('has-photo');item.append(image);
   }
   name.textContent=line.name+' × '+line.quantity;
-  units.textContent=money(line.unitPrice)+' за шт. · each';
+  units.textContent=money(line.unitPrice)+' '+tr('each');
   total.textContent=money(line.unitPrice*line.quantity);
   label.append(name,units);
   item.append(label,total);
@@ -80,7 +97,7 @@ function status(value,state='idle'){
  $('screenStatus').dataset.state=state;
 }
 function render(data,connected=true){
- const {order:currentOrder,draft,payment,transfer,layout,cashChange}=data;
+ latestData=data;document.documentElement.lang=language;const {order:currentOrder,draft,payment,transfer,layout,cashChange}=data;
  if(layouts.has(layout))document.documentElement.dataset.displayLayout=layout;
  const handedOut=currentOrder?.status==='completed'&&currentOrder.paymentStatus==='paid';
  const order=handedOut?null:currentOrder;
@@ -98,24 +115,22 @@ function render(data,connected=true){
  text('screenTransferBank',phone?transfer.bank||'':'');
  text('screenTransferRecipient',phone?transfer.recipient||'':'');
  renderItems(view?.lines||[]);
- text('screenNumber',order?'Заказ · Order · Đơn hàng №'+order.number:draft?'Ваш заказ · Your order · Đơn hàng':'Добро пожаловать · Welcome · Xin chào');
- optional('screenTotalLabel',view?(paid?'Оплачено · Paid':cancelled?'Сумма заказа · Order total':'К оплате · Total'):'');
+ text('screenNumber',order?tr('order')+order.number:draft?tr('draft'):tr('welcome'));
+ optional('screenTotalLabel',view?(paid?tr('paid'):cancelled?tr('orderTotal'):tr('total')):'');
  optional('screenTotal',view?amount(view):'');
  const showChange=view?.method==='cash'&&!cancelled&&Number.isSafeInteger(cashChange)&&cashChange>=0;
  $('screenChange').hidden=!showChange;
- text('screenChangeAmount',showChange?money(cashChange):'');
- optional('screenMethod',view?(methods[view.method]||'Способ оплаты уточняет кассир · Payment method pending'):'');
- if(!view){status('Ожидаем заказ от кассира · Waiting for your order');return;}
- if(!order){status(draft.method?'Ожидает оплаты · Unpaid':'Кассир оформляет заказ · Order in progress','pending');return;}
- if(cancelled){status('Заказ закрыт · Order closed');return;}
+ text('screenChangeAmount',showChange?money(cashChange):'');document.querySelector('#screenChange span').textContent=tr('change');document.querySelector('.display-transfer-label').textContent=tr('phone');
+ optional('screenMethod',view?(tr(view.method)||tr('cashier')):'');
+ if(!view){status(tr('wait'));return;}
+ if(!order){status(tr(draft.method?'pending':'inProgress'),'pending');return;}
+ if(cancelled){status(tr('closed'));return;}
  if(paid){
-  status('✓ Оплата прошла успешно · Payment successful · Đã thanh toán','paid');
+  status('✓ '+tr('success'),'paid');
   return;
  }
- const instruction=qr?'Сканируйте QR-код в приложении банка · Scan with your bank app':
-  order.method==='cash'?'Передайте наличные кассиру · Pay cash at the counter':
-  phone?'Переведите указанную сумму по номеру · Transfer using the number shown':'Ожидайте подтверждения кассира · Waiting for the cashier';
- status('Ожидает оплаты · Unpaid. '+instruction,'pending');
+ const instruction=qr?tr('scan'):order.method==='cash'?tr('payCash'):phone?tr('transfer'):tr('cashier');
+ status(tr('pending')+'. '+instruction,'pending');
 }
 async function poll(){
  if(busy||stopped)return;
@@ -136,7 +151,7 @@ async function poll(){
  }catch(error){
   render({},false);
   optional('screenConnection',error.message);
-  status('Обратитесь к кассиру · Please ask the cashier');
+  status(tr('ask'));
  }finally{
   busy=false;
   if(!stopped)timer=setTimeout(poll,document.hidden?4000:1200);
