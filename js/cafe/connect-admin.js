@@ -5,6 +5,10 @@ const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textCo
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
 let panels,viewButtons,clientSnapshot='',inboxClients=[],filter='all',inboxAccess=false;
 let inboxFilter,workflowButton,workflow,threadMenu,alertAudio;
+const translationLanguages=['ru','vi','en'];
+const deviceTranslationLanguage=()=>navigator.languages?.map(x=>x.split('-')[0].toLowerCase()).find(x=>translationLanguages.includes(x))||'en';
+const translationPreferenceKey='umma:staff:translation-language:'+String(window.ummaStaffAuth?.actorId?.()||'staff');
+let translationLanguage=(()=>{try{const saved=localStorage.getItem(translationPreferenceKey);return translationLanguages.includes(saved)?saved:deviceTranslationLanguage();}catch{return deviceTranslationLanguage();}})();
 let inboxSeen=null,oldestButton,history=[],latestThread=null,historyFinished=false;
 function announceUnread(clients){
  const next=new Map(clients.filter(c=>c.last_id).map(c=>[c.id,c.last_id]));
@@ -274,7 +278,7 @@ function showMessages(data,forceBottom=false){
  const entries=[...timeline,...[...allMessages.values()].filter(m=>!hiddenBefore||compareTimestamp(m.created_at,hiddenBefore)>0)];
  entries.sort((a,b)=>compareTimestamp(a.created_at,b.created_at)||Number(!!b.order&&!b.event)-Number(!!a.order&&!a.event)
   ||Number(b.event?.to_status==='paid')-Number(a.event?.to_status==='paid')||a.id.localeCompare(b.id));
- const target=window.ummaConnectMedia.language(document.documentElement.lang||navigator.language);
+ const target=translationLanguage;
  const defer=limitedChat();
  const playback={defer};
  const labels={album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'};
@@ -617,6 +621,16 @@ function build(){
   threadAvatar.append(avatarInitials,avatarImage);threadHeading.append(threadAvatar);
  }
  threadHeading.append(threadTitle);
+ if(workspace){
+  const languagePicker=node('select',null,'work-chat-translation-language');
+  languagePicker.setAttribute('aria-label','Язык перевода сообщений');languagePicker.title='Язык перевода';
+  for(const [code,name] of [['ru','RU'],['vi','VI'],['en','EN']]){const option=node('option',name);option.value=code;languagePicker.append(option);}
+  languagePicker.value=translationLanguage;
+  languagePicker.style.cssText='max-width:64px;min-width:54px;margin-left:auto;border:1px solid #ffffff88;border-radius:12px;padding:5px 3px;background:#ffffff22;color:white;font:600 12px system-ui;';
+  languagePicker.querySelectorAll('option').forEach(option=>option.style.color='#123b39');
+  languagePicker.onchange=()=>{translationLanguage=languagePicker.value;try{localStorage.setItem(translationPreferenceKey,translationLanguage);}catch{}if(latestThread)showMessages(latestThread,true);};
+  threadHeading.append(languagePicker);
+ }
  if(calls){
   callButtons=calls.buttons(()=>({clientId:thread,name:threadTitle.textContent}));
   callButtons.hidden=true;threadHeading.append(callButtons);
