@@ -90,38 +90,32 @@ function available(){
   return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),stockManaged:ready||stockControl,available:c?Math.max(0,Number(c.available)||0):quantity,plannedQuantity:c?.plannedQuantity||0,plannedAvailable:Math.max(0,Number(c?.plannedAvailable)||0),plannedReadyAt:c?.plannedReadyAt,planRevision:c?.planRevision};
  });
 }
-const customerLang=()=>['ru','en','vi'].includes($('screenLanguageSetting')?.value)?$('screenLanguageSetting').value:'ru';
-const productName=p=>p['name_'+customerLang()]||p.name_ru||p.name_en||p.name_vi||'Блюдо';
-const customerCopy={ru:{stock:'В наличии',next:'Следующая партия',description:'Состав и описание',noPhoto:'Фото пока нет',noResults:'По этому запросу ничего нет.',noProducts:'Сейчас нет блюд, доступных для продажи.'},en:{stock:'Available',next:'Next batch',description:'Ingredients and description',noPhoto:'Photo unavailable',noResults:'No matching dishes.',noProducts:'No dishes available for sale.'},vi:{stock:'Còn lại',next:'Mẻ tiếp theo',description:'Thành phần và mô tả',noPhoto:'Chưa có ảnh',noResults:'Không tìm thấy món ăn.',noProducts:'Hiện không có món ăn để bán.'}};
-const customerText=k=>customerCopy[customerLang()][k];
 function stockLabel(p){
- const ready=p.stockManaged?'<small class="pos-stock-ready">'+customerText('stock')+': '+p.available+'</small>':'';
+ const ready=p.stockManaged?'<small class="pos-stock-ready">В наличии: '+p.available+'</small>':'';
  const planned=p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt));
  const time=planned?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(p.plannedReadyAt)):'';
- return '<div class="pos-stock-info">'+ready+(planned?'<small class="pos-stock-plan">'+customerText('next')+': '+p.plannedAvailable+' · '+esc(time)+' · время Нячанга</small>':'')+'</div>';
+ return '<div class="pos-stock-info">'+ready+(planned?'<small class="pos-stock-plan">Следующая партия: '+p.plannedAvailable+' · '+esc(time)+' · время Нячанга</small>':'')+'</div>';
 }
 let lastMenuMarkup;
 function menu(){
   const query=$('posSearch').value.trim().toLocaleLowerCase();
   const cards=available().filter(p=>p.available>0||p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))).filter(p=>[p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en,p.ingredients_ru].join(' ').toLocaleLowerCase().includes(query)).map(p=>{
     const photo=window.ummaCafeProductPhoto?.(p);
-    const lang=customerLang();
-    const description=p['description_'+lang]||p.description_ru||p.description_en||p.description_vi;
-    const ingredients=p['ingredients_'+lang]||p.ingredients_ru||'';
-    const details=[description,ingredients].filter(Boolean).join('\n');
-    const name=productName(p);
+    const description=p.description_ru||p.description_en||p.description_vi;
+    const details=[description,p.ingredients_ru].filter(Boolean).join('\n');
+    const name=p.name_ru||p.name_en||p.name_vi;
     return '<article class="pos-product" data-pos-product="'+esc(p.id)+'">'+
       '<span class="pos-product-media">'+
       (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
-      '<span class="pos-product-no-photo">'+customerText('noPhoto')+'</span></span>'+
-      '<strong>'+esc(name)+'</strong>'+
-      (details?'<details class="pos-product-description"><summary>'+customerText('description')+'</summary><p>'+esc(details)+'</p></details>':'')+
+      '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
+      '<strong>'+esc(name)+'</strong><span>'+esc(p.name_vi||p.name_en||'')+'</span>'+
+      (details?'<details class="pos-product-description"><summary>Состав и описание</summary><p>'+esc(details)+'</p></details>':'')+
       stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
       '<div class="pos-product-quantity"><button type="button" data-pos-remove="'+esc(p.id)+'" aria-label="Убрать '+esc(name)+'" hidden>−</button>'+
       '<b data-pos-count hidden></b><button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0?' disabled':'')+
       ' aria-label="Добавить '+esc(name)+'">+</button></div></div></article>';
   });
-  const markup=cards.join('')||(query?'<p>'+customerText('noResults')+'</p>':'<p>'+customerText('noProducts')+'</p>');
+  const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
   if(markup!==lastMenuMarkup){
     const expanded=new Set(Array.from($('posProducts').querySelectorAll('details[open]'),node=>node.closest('[data-pos-product]').dataset.posProduct));
     $('posProducts').innerHTML=markup;
@@ -205,7 +199,7 @@ function renderProductCounts(){
 function renderCart(){
  renderProductCounts();
  $('posCart').innerHTML=cart.size?[...cart].map(([id,{product,quantity}])=>{
-  const name=productName(product);
+  const name=product.name_ru||product.name_en||product.name_vi;
   return '<div class="pos-row"><strong>'+esc(name)+'</strong><span>'+money(product.price_vnd*quantity)+'</span><div><button type="button" data-pos-delta="-1" data-id="'+esc(id)+'" aria-label="Уменьшить количество: '+esc(name)+'">−</button><b>'+quantity+'</b><button type="button" data-pos-delta="1" data-id="'+esc(id)+'" aria-label="Добавить: '+esc(name)+'">+</button></div></div>';
  }).join(''):'<p>Добавьте хотя бы один товар.</p>';
  $('posTotal').textContent=money(amount());
@@ -619,10 +613,10 @@ async function setCustomerLanguage(language){
  const field=$('screenLanguageSetting'),key=screenKey();field.disabled=true;
  try{await api('screenSettings',{screenId:client.id,layout:client.layout||'auto',language});
   if(screenKey()===key&&screen()?.id===client.id){localStorage.setItem(key,JSON.stringify({...client,language}));$('screenPairState').textContent='Язык клиентского табло обновлён.';}}
- catch(error){field.value=client.language||'ru';lastMenuMarkup=null;menu();renderCart();$('screenPairState').textContent=error.message;}
+ catch(error){field.value=client.language||'ru';$('screenPairState').textContent=error.message;}
  finally{field.disabled=false;}
 }
-$('screenLanguageSetting').onchange=()=>{lastMenuMarkup=null;menu();renderCart();void setCustomerLanguage($('screenLanguageSetting').value);};
+$('screenLanguageSetting').onchange=()=>void setCustomerLanguage($('screenLanguageSetting').value);
 $('screenUnpair').onclick=async()=>{
  const client=screen();if(!client||busy)return;
  try{
