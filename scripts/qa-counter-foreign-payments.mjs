@@ -12,7 +12,7 @@ const action = async (name, args, actor = 13) =>
 const file = path => readFileSync(path, 'utf8');
 const sale = method => ({
   method, locationId: cafe, requestKey: randomUUID(), items: [{ productId: product, quantity: 1 }],
-  vndPerRub: 300, quotedAt: new Date().toISOString(),
+  vndPerRub: 300, vndPerKzt: 50, quotedAt: new Date().toISOString(),
 });
 const state = async id => (await q('select payment_status,status from cafe_orders where id=$1', [id])).rows[0];
 const orderCount = async () => (await q('select count(*)::int n from cafe_orders')).rows[0].n;
@@ -27,6 +27,7 @@ try {
   await db.exec("create table umma_private.cafe_web_rub_recipient(singleton boolean primary key,bank text,recipient text,phone text);");
   await db.exec("insert into umma_private.cafe_web_rub_recipient values(true,'Сбербанк QA','QA recipient','+79000000000');");
   await db.exec(file('supabase/migrations/20261119104311_cafe_counter_foreign_payments.sql'));
+  await db.exec(file('supabase/migrations/20261119111555_cafe_counter_google_tenge.sql'));
   await db.exec("insert into telegram_users(telegram_id,role) values (13,'employee'), (14,'employee'); insert into umma_runtime_settings(id,inventory_control_enabled) values(true,false)");
   await q("insert into locations(id,name,location_type,self_service_enabled) values($1,'QA','cafe',true)", [cafe]);
   await q("insert into cafe_staff(telegram_id,location_id,staff_role,can_accept_payments) values(13,$1,'cashier',true),(14,$1,'kitchen',false)", [cafe]);
@@ -56,7 +57,16 @@ try {
   const sber = await action('create', sale('sber'));
   await assert.rejects(action('confirm', { ...receipt, orderId: sber.order.id }), /COUNTER_DUPLICATE_REFERENCE/);
   assert.equal((await state(sber.order.id)).payment_status, 'pending');
-  await q("insert into umma_private.cafe_counter_recipients values($1,'kaspi','QA KZ','QA123456',null,50),($1,'usdt','QA wallet','QA654321','QA network',25324)", [cafe]);
+  await q("insert into umma_private.cafe_counter_recipients values($1,'kaspi','QA KZ','QA123456',null,null),($1,'usdt','QA wallet','QA654321','QA network',25324)", [cafe]);
+  const beforeInvalid = await orderCount();
+  await assert.rejects(action('create', { ...sale('kaspi'), vndPerKzt: undefined }), /COUNTER_KZT_RATE/);
+  await assert.rejects(action('create', { ...sale('tenge'), quotedAt: '2000-01-01T00:00:00Z' }), /COUNTER_KZT_RATE/);
+  assert.equal(await orderCount(), beforeInvalid);
+  const kaspiDraft = sale('kaspi');
+  const kaspiOrder = await action('create', kaspiDraft);
+  const kaspiReplay = await action('create', { ...kaspiDraft, vndPerKzt: 60 });
+  assert.equal(kaspiReplay.order.id, kaspiOrder.order.id);
+  assert.equal(kaspiReplay.payment.amount, kaspiOrder.payment.amount);
   for (const method of ['tenge','kaspi','usdt']) {
     const item = await action('create', sale(method));
     assert.equal(item.payment.currency, method==='usdt'?'USDT':'KZT');

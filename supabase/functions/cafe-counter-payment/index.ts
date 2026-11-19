@@ -1,6 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.99.1';
 import {verifyWebStaffSession} from '../_shared/web-staff-auth.ts';
-import {googleRubleQuote} from '../cafe-guest-order/ruble-rate.ts';
+import {googleRubleQuote,googleTengeQuote} from '../cafe-guest-order/ruble-rate.ts';
 
 const headers={
   'Access-Control-Allow-Origin':'*',
@@ -16,6 +16,7 @@ const messages:Record<string,[number,string]>={
   COUNTER_INVALID:[400,'Проверьте данные заказа.'],
   COUNTER_ACCESS:[403,'Нет доступа к оплате этого заказа.'],
   COUNTER_UNAVAILABLE:[409,'Для этого способа оплаты ещё не настроены реквизиты.'],
+  COUNTER_KZT_RATE:[409,'Курс тенге в Google Finance недоступен. Повторите позже или выберите другой способ оплаты.'],
   COUNTER_RATE:[409,'Курс рубля или реквизиты недоступны. Выберите другой способ оплаты или повторите позже.'],
   COUNTER_REFERENCE:[400,'Подтвердите поступление и укажите номер операции.'],
   COUNTER_CLOSED:[409,'Заказ уже оплачен или закрыт.'],
@@ -41,9 +42,10 @@ Deno.serve(async req=>{
     const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
     const actor=await verifyWebStaffSession(db,String(body.initData||''));
     const quote=action==='create'&&['rub','sber'].includes(method)?await googleRubleQuote():null;
+    const tenge=action==='create'&&['tenge','kaspi'].includes(method)?await googleTengeQuote():null;
     const {data,error}=await db.rpc('cafe_counter_foreign_payment',{
       p_actor:actor,p_action:action,
-      p_args:{locationId,orderId,method,requestKey,items,vndPerRub:quote?.vndPerRub,quotedAt:quote?.quotedAt,
+      p_args:{locationId,orderId,method,requestKey,items,vndPerRub:quote?.vndPerRub,vndPerKzt:tenge?.vndPerKzt,quotedAt:(quote||tenge)?.quotedAt,
         verified:body.verified===true,reference:typeof body.reference==='string'?body.reference.slice(0,101):undefined},
     });
     if(error){
