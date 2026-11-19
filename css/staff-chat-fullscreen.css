@@ -136,6 +136,17 @@
   background:#dcf3ed;
 }
 
+#webMessages .work-text-author {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+#webMessages [data-direction=staff] .work-text-author {
+  flex-direction:row-reverse;
+  justify-content:space-between;
+}
+
 #webMessages .connect-thread > .connect-chat-voice {
   width:min(100%,338px);
   max-width:100%;
@@ -156,12 +167,10 @@
 #webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-speed {grid-area:speed}
 #webMessages .connect-public-voice:has(.work-voice-avatar) > .connect-voice-error {grid-area:error}
 
-#webMessages .work-voice-avatar {
-  grid-area:avatar;
+#webMessages .work-message-avatar {
   position:relative;
   display:grid;
   place-items:center;
-  width:42px;
   aspect-ratio:1;
   border-radius:50%;
   background:#c7e9e1;
@@ -170,13 +179,24 @@
   font-weight:750;
 }
 
-#webMessages .work-voice-avatar img {
+#webMessages .work-message-avatar img {
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   border-radius:inherit;
   object-fit:cover;
+}
+
+#webMessages .work-text-avatar {
+  flex:none;
+  width:24px;
+  font-size:10px;
+}
+
+#webMessages .work-voice-avatar {
+  grid-area:avatar;
+  width:42px;
 }
 
 #webMessages .work-voice-avatar::after {

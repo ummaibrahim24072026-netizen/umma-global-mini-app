@@ -158,8 +158,8 @@ function renderThreadAvatar(client){
  const photo=client.avatar;
  setAvatarPhoto(avatarImage,typeof photo==='string'&&/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(photo)?photo:null);
 }
-function voiceAvatar(incoming){
- const badge=node('span',null,'work-voice-avatar');
+function messageAvatar(incoming,kind){
+ const badge=node('span',null,'work-message-avatar work-'+kind+'-avatar');
  badge.setAttribute('aria-hidden','true');
  const image=node('img');
  image.alt='';
@@ -290,9 +290,17 @@ function showMessages(data,forceBottom=false){
   const li=node('li',null,'connect-chat-bubble');li.dataset.direction=m.direction;li.dataset.messageId=m.id;
   const videoNote=m.media_kind==='video'&&(m.video_note===true||m.body==='◉ Видеосообщение');
   const voice=m.media_kind==='voice';
+  const incoming=m.direction==='customer';
   if(videoNote)li.classList.add('connect-video-note');
   if(voice)li.classList.add('connect-chat-voice');
-  if(!voice&&!videoNote)li.append(node('strong',m.direction==='customer'?'Клиент':m.title||'UMMA'));
+  if(!voice&&!videoNote){
+   const author=node('strong',incoming?'Клиент':m.title||'UMMA');
+   if(workspace&&!m.media_kind){
+    const header=node('div',null,'work-text-author');
+    header.append(messageAvatar(incoming,'text'),author);
+    li.append(header);
+   }else li.append(author);
+  }
   if(m.body&&!videoNote){
    const serverTranslation=()=>translateChat(m.id,target,data.client.id);
    const textTranslation=defer?serverTranslation:
@@ -317,7 +325,7 @@ function showMessages(data,forceBottom=false){
   const sentAt=new Date(m.created_at);
   const time=node('small',dateTime.format(sentAt));
   if(workspace&&voicePlayer){
-   voicePlayer.append(voiceAvatar(m.direction==='customer'));
+   voicePlayer.append(messageAvatar(incoming,'voice'));
    meta.append(voicePlayer.querySelector('.connect-voice-duration'));
    time.title=time.textContent;
    time.textContent=clock.format(sentAt);
@@ -335,8 +343,8 @@ function showMessages(data,forceBottom=false){
  threadTitle.textContent=data.client.name||'Клиент '+data.client.id.slice(0,8);
  if(workspace){
   renderThreadAvatar(data.client);
-  // Refresh existing cards without rebuilding the players or interrupting audio.
-  for(const badge of messages.querySelectorAll('[data-direction=customer] .work-voice-avatar')){
+  // Refresh existing message avatars without rebuilding the cards or players.
+  for(const badge of messages.querySelectorAll('[data-direction=customer] .work-message-avatar')){
    badge.firstElementChild.textContent=avatarInitials.textContent;
    setAvatarPhoto(badge.querySelector('img'),avatarImage.getAttribute('src'));
   }

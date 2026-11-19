@@ -693,7 +693,9 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  staff.setInterval=callback=>{poll=callback;};
  const messages=[
   {id:'staff-view-question',direction:'customer',body:'Вопрос',media_kind:'voice',created_at:'2026-11-07T12:00:00Z',read_at:'2026-11-07T12:01:00Z'},
-  {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',media_kind:'voice',created_at:'2026-11-07T12:02:00Z',read_at:null}
+  {id:'staff-view-answer',direction:'staff',title:'UMMA',body:'Ответ',media_kind:'voice',created_at:'2026-11-07T12:02:00Z',read_at:null},
+  {id:'staff-text-question',direction:'customer',body:'Есть плов?',created_at:'2026-11-07T12:02:10Z'},
+  {id:'staff-text-answer',direction:'staff',body:'Да',created_at:'2026-11-07T12:02:20Z'}
  ];
  const avatar='data:image/png;base64,iVBORw0KGgo=';
  let currentAvatar=avatar;
@@ -730,8 +732,11 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  avatarImage.dispatchEvent(new staff.Event('load'));
  assert.equal(avatarImage.hidden,false);
  const voicePhoto=()=>staffChat.querySelector('[data-direction=customer] .work-voice-avatar img');
+ const textPhoto=()=>staffChat.querySelector('[data-message-id=staff-text-question] .work-text-avatar img');
  assert.equal(voicePhoto().getAttribute('src'),avatar);
+ assert.equal(textPhoto().getAttribute('src'),avatar);
  assert.equal(staffChat.querySelector('[data-direction=staff] .work-voice-avatar img').getAttribute('src'),'logo/assets/umma-icon-192.png');
+ assert.equal(staffChat.querySelector('[data-message-id=staff-text-answer] .work-text-avatar img').getAttribute('src'),'logo/assets/umma-icon-192.png');
  assert.equal(staffChat.querySelector('[data-direction=staff] .connect-message-meta [title]').textContent,'19:02');
  const chooseTheme=(chat,theme)=>{
   chat.querySelector('.connect-theme-menu-button').click();
@@ -765,7 +770,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(staff.localStorage.getItem('umma:chat:theme:v1'),'beige');
  customerChat.close();
  await tick();
- assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено']);
+ assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено','Отправлено']);
  staff.HTMLMediaElement.prototype.load=function(){};
  staff.HTMLMediaElement.prototype.play=async function(){};
  staff.HTMLMediaElement.prototype.pause=function(){};
@@ -796,6 +801,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(headerAvatar.querySelector('span').textContent,'КЛ');
  assert.equal(voicePhoto().hasAttribute('src'),false);
  assert.equal(voicePhoto().previousElementSibling.textContent,'КЛ');
+ assert.equal(textPhoto().hasAttribute('src'),false);
+ assert.equal(textPhoto().previousElementSibling.textContent,'КЛ');
  currentAvatar=avatar;
  await poll();
  await tick();
@@ -810,6 +817,7 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(avatarImage.getAttribute('src'),currentAvatar);
  assert.equal(voicePhoto().getAttribute('src'),currentAvatar);
+ assert.equal(textPhoto().getAttribute('src'),currentAvatar);
 
  // Opening a chat on a phone must not initialize browser models or preload attachments.
  header.querySelector('.work-chat-back').click();
