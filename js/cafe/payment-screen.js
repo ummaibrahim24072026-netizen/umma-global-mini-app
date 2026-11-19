@@ -99,6 +99,7 @@ function render(data,connected=true){
  const paid=order?.paymentStatus==='paid';
  const cancelled=order?.status==='cancelled'||order?.paymentStatus==='refunded';
  const qr=order&&!paid&&!cancelled&&order.method==='qr'&&payment?.qrPayload;
+ document.body.classList.toggle('display-qr-active',Boolean(qr));
  renderQr(qr?payment:null);
  const rawPhone=String(transfer?.phone||'').replace(/[\s()\-]/g,'');
  const phone=order&&!paid&&!cancelled&&order.paymentStatus==='pending'&&/^\+?7[0-9]{10}$/.test(rawPhone)?rawPhone:'';
