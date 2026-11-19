@@ -81,7 +81,7 @@ Deno.serve(async req=>{
   if(!s.order_id){
    const draft=Date.now()-Date.parse(s.updated_at)<30*60*1000?s.draft:null;
    const cashChange=draft?.method==='cash'?previewCashChange(s.cash_received_preview,draft.total):null;
-   return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'ru',cashChange});
+   return reply({ok:true,order:null,draft,layout:s.display_layout,language:s.display_language||'ru',cashReceived:draft?.method==='cash'&&validCashReceived(s.cash_received_preview)?s.cash_received_preview:null,cashChange});
   }
   const {data:o,error:oe}=await db.from('cafe_orders')
    .select('id,location_id,order_number,total_vnd,currency,payment_method,payment_status,status,cafe_order_items(id,product_name_ru,quantity,unit_price_vnd,product:products!cafe_order_items_product_id_fkey(sku,image_url,name_ru,name_en,name_vi))')
@@ -98,19 +98,21 @@ Deno.serve(async req=>{
     if(foreign.phone)transfer={phone:foreign.phone,bank:foreign.bank,recipient:foreign.recipient};
    }
   }
-  let cashChange=null;
+  let cashChange=null,cashReceived=null;
   if(method==='cash'&&!['cancelled','completed'].includes(o.status)&&o.payment_status==='pending'){
-   cashChange=previewCashChange(s.cash_received_preview,Number(o.total_vnd));
+   cashReceived=validCashReceived(s.cash_received_preview)?s.cash_received_preview:null;
+   cashChange=previewCashChange(cashReceived,Number(o.total_vnd));
   }else if(method==='cash'&&o.status!=='cancelled'&&o.payment_status==='paid'){
-   const {data:receipt,error:receiptError}=await db.from('cafe_payment_receipts').select('change_given_vnd')
+   const {data:receipt,error:receiptError}=await db.from('cafe_payment_receipts').select('change_given_vnd,tendered_amount_vnd')
     .eq('order_id',o.id).eq('payment_method','cash').eq('receipt_status','confirmed')
     .order('collected_at',{ascending:false}).order('id',{ascending:false}).limit(1).maybeSingle();
    if(receiptError)throw receiptError;
    cashChange=receipt?.change_given_vnd??null;
+   cashReceived=receipt?.tendered_amount_vnd??null;
   }
   const lines=(o.cafe_order_items??[]).map(line=>({name:line.product_name_ru,name_ru:line.product_name_ru,name_en:line.product?.name_en||'',name_vi:line.product?.name_vi||'',quantity:line.quantity,unitPrice:line.unit_price_vnd,...screenPhotoFields(line.product)}));
   return reply({ok:true,order:{number:o.order_number,total:o.total_vnd,paymentStatus:o.payment_status,status:o.status,method,lines,foreignTotal},
-   layout:s.display_layout,language:s.display_language||'en',transfer,cashChange,payment:paymentFor(o)});
+   layout:s.display_layout,language:s.display_language||'ru',transfer,cashReceived,cashChange,payment:paymentFor(o)});
  }
  // A signed Telegram owner can create an invitation once; all routine work uses web sessions.
  let actor:number;
