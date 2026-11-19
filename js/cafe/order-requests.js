@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const base='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/';
-  const allowed=new Set([base+'create-cafe-order',base+'cafe-kitchen']);
+  const allowed=new Set([base+'create-cafe-order',base+'cafe-kitchen',base+'cafe-counter-payment']);
   let inFlight=false;
   const storageKey=()=>{
     const id=(window.ummaStaffAuth?.actorId()||window.Telegram?.WebApp?.initDataUnsafe?.user?.id);

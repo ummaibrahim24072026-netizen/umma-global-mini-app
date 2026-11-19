@@ -82,22 +82,37 @@ const readyToIssue=order=>order.payment_status==='paid'&&!order.preorder_waiting
 );
 const canTakePayment=order=>order.canAcceptPayments===true&&order.payment_status==='pending'&&!closedOrder(order);
 const locationId=()=>$('posLocation').value;
-const manualKey=()=> 'umma:counter-transfer:'+auth.actorId()+':'+locationId();
-function manualTransfer(orderId){
- try{return JSON.parse(sessionStorage.getItem(manualKey())||'[]').includes(orderId);}catch{return false;}
-}
-function rememberManualTransfer(orderId){
+const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
+const foreignApi=(action,body)=>api(action,body,'cafe-counter-payment');
+let selectedMethod='cash',options=null,optionsLocation='',optionsError=false;
+async function refreshMethods(){
+ const id=locationId();
+ if(!id)return;
+ options=null;optionsLocation=id;optionsError=false;paymentFields();
  try{
-  const ids=JSON.parse(sessionStorage.getItem(manualKey())||'[]');
-  sessionStorage.setItem(manualKey(),JSON.stringify([orderId,...ids.filter(id=>id!==orderId)].slice(0,50)));
- }catch{}
+  const {methods}=await foreignApi('options',{locationId:id});
+  if(locationId()!==id)return;
+  options=methods||{};
+ }catch{
+  if(locationId()!==id)return;
+  optionsError=true;
+ }
+ paymentFields();
 }
 const result=message=>{$('posResult').textContent=message;};
 const counterStatus=message=>{$('counterStatus').textContent=message;};
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
-const paymentMethod=()=>payOrder?.paymentMethod||$('posMethod').value;
+const paymentMethod=()=>payOrder?.paymentMethod||selectedMethod;
 const paymentDue=()=>Number(payOrder?.totalVnd??amount());
 const rubles=kopecks=>new Intl.NumberFormat('ru',{style:'currency',currency:'RUB'}).format(kopecks/100);
+const foreignAmount=payment=>payment.currency==='USDT'
+ ? new Intl.NumberFormat('ru',{maximumFractionDigits:6}).format(payment.amount)+' USDT'
+ : new Intl.NumberFormat('ru',{style:'currency',currency:payment.currency}).format(payment.amount);
+const paymentTotal=()=>payOrder?.foreignPayment?foreignAmount(payOrder.foreignPayment)
+ :payOrder?.rubKopecks!=null?rubles(payOrder.rubKopecks):money(paymentDue());
+const confirmationReady=()=>$('counterPaymentVerified').checked&&(
+ !payOrder?.foreignPayment||$('counterPaymentReference').value.trim().length>=4
+);
 const paymentLabel=order=>order.payment_status==='paid'?'Оплачено':order.payment_status==='refunded'?'Возврат':'Ожидает оплаты';
 function orderLabel(order){
  if(order.status==='completed')return 'Выдан';
@@ -138,24 +153,39 @@ function paymentFields(){
  const validCash=Number.isSafeInteger(received)&&received>=due;
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
  const activeCash=cash&&(draft||pending);
+ const foreign=foreignMethods.has(selectedMethod);
+ const selectedAvailable=!foreign||options?.[selectedMethod]===true;
+ const status=$('counterMethodStatus');
+ status.hidden=!draft||selectedAvailable;
+ status.textContent=optionsError?'Не удалось проверить реквизиты. Откройте вкладку оплаты повторно.'
+  :!options?'Проверяем реквизиты…'
+  :'Для этого способа оплаты ещё не настроены реквизиты.';
+ for(const button of $('counterMethodLabel').querySelectorAll('[data-counter-method]')){
+  button.disabled=busy||!draft;
+  button.setAttribute('aria-pressed',String(button.dataset.counterMethod===selectedMethod));
+ }
  $('posForm').hidden=!draft&&!(pending&&cash);
  $('counterMethodLabel').hidden=!draft;
  $('posCashLabel').hidden=!activeCash;
  $('posCash').required=activeCash;
  $('posCash').disabled=!activeCash||busy;
- $('posMethod').disabled=!draft||busy;
  $('posLocation').disabled=busy;
  $('counterCheckout').disabled=busy||!cart.size||unavailable;
- $('posSubmit').disabled=busy||(!payOrder&&(!draft||unavailable))||(cash&&payOrder&&!pending);
- $('posSubmit').textContent=cash?'Принять наличные':paymentMethod()==='transfer'?'Показать реквизиты':'Показать QR';
+ $('posSubmit').disabled=busy||(!payOrder&&(!draft||unavailable||!selectedAvailable))||(cash&&payOrder&&!pending);
+ $('posSubmit').textContent=cash?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
  $('posChange').textContent=activeCash&&$('posCash').value?(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received))):'';
  $('counterPaymentSummary').innerHTML=payOrder||draft
   ? '<h2 id="posOrderNumber">'+(payOrder?'Заказ №'+esc(payOrder.orderNumber):'Текущий заказ')+'</h2>'+
-   itemsMarkup(payOrder?.items||cartItems())+'<div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(payOrder?.rubKopecks!=null?rubles(payOrder.rubKopecks):money(due))+'</strong></div>'
+   itemsMarkup(payOrder?.items||cartItems())+'<div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(paymentTotal())+'</strong></div>'
   : '<p>Добавьте блюда в разделе «Продажа» или выберите заказ в разделе «Заказы».</p>';
 }
 function showPayment(order,payment=null){
+ if(order?.id!==payOrder?.id||order?.paymentStatus!=='pending'){
+  $('counterPaymentVerified').checked=false;
+  $('counterPaymentReference').value='';
+ }
  payOrder=order;
+ if(order?.paymentMethod==='bank_transfer'&&payment)order.foreignPayment=payment;
  $('posReceipt').hidden=!order;
  $('posQr').replaceChildren();
  const bank=$('counterBankDetails');
@@ -164,27 +194,43 @@ function showPayment(order,payment=null){
  if(order){
   const pending=order.paymentStatus==='pending'&&!closedOrder(order);
   const electronic=order.paymentMethod==='qr'||order.paymentMethod==='bank_transfer';
-  if(pending&&payment){
-   if(!order.manual&&payment.qrPayload)drawQr($('posQr'),payment.qrPayload);
-   if(payment.account&&payment.reference){
-    bank.hidden=false;
-    bank.textContent=(payment.bankName||'Vietcombank')+'\nСчёт '+payment.account+'\nНазначение '+payment.reference;
-   }
-  }
-  $('posConfirmQr').hidden=!(pending&&electronic&&(order.paymentMethod==='bank_transfer'||payment));
-  $('posReloadQr').hidden=!(pending&&order.paymentMethod==='qr'&&!payment);
+  if(pending&&payment?.account){
+   bank.hidden=false;
+   if(payment.qrPayload)drawQr($('posQr'),payment.qrPayload);
+   bank.textContent=[payment.bankName,payment.recipient,
+    payment.network?'Сеть '+payment.network:null,
+    (payment.network?'Кошелёк ':payment.currency?'Реквизиты ':'Счёт ')+payment.account,
+    payment.reference?'Назначение '+payment.reference:null,
+   ].filter(Boolean).join('\n');
+  }else if(pending&&payment?.qrPayload)drawQr($('posQr'),payment.qrPayload);
+  const canConfirm=pending&&electronic&&(Boolean(payment)||order.legacyTransfer===true);
+  $('counterPaymentVerification').hidden=!canConfirm;
+  $('counterPaymentReferenceLabel').hidden=!order.foreignPayment;
+  $('counterPaymentReferenceLabel').firstChild.textContent=order.foreignPayment?.currency==='USDT'?'Хеш транзакции':'Номер операции';
+  $('posConfirmQr').hidden=!canConfirm;
+  $('posConfirmQr').disabled=busy||!confirmationReady();
+  $('posReloadQr').hidden=!(pending&&electronic&&!canConfirm);
   $('posShowScreen').hidden=!(pending&&order.paymentMethod==='qr'&&payment&&screen());
   $('counterNewSale').hidden=pending;
   $('posPaymentHint').textContent=order.paymentStatus==='paid'?'Оплачено. Назовите гостю номер заказа.'
    :!pending?'Заказ закрыт.'
    :order.paymentMethod==='cash'?'Оплата ещё не записана. Сверьте сумму и подтвердите получение наличных.'
-   :order.paymentMethod==='qr'&&!payment?'Платёжные реквизиты пока недоступны.'
-   :'Подтвердите оплату после сверки поступления в банке.';
+   :!canConfirm?'Платёжные реквизиты пока недоступны.'
+   :order.foreignPayment?.currency==='USDT'?'Сверьте поступление в кошельке в указанной сети.'
+   :'Сверьте фактическое поступление в банке.';
  }
  paymentFields();
 }
 async function paymentDetails(order){
- if(order.paymentMethod!=='qr'||order.paymentStatus!=='pending'||closedOrder(order))return null;
+ if(order.paymentStatus!=='pending'||closedOrder(order))return null;
+ if(order.paymentMethod==='bank_transfer'){
+  const info=await foreignApi('details',{orderId:order.id});
+  order.legacyTransfer=info.counter===false;
+  if(info.paymentStatus)order.paymentStatus=info.paymentStatus;
+  if(info.status)order.status=info.status;
+  return info.payment;
+ }
+ if(order.paymentMethod!=='qr')return null;
  const {payment}=await api('payment',{orderId:order.id});
  if(!payment)throw Error('Не удалось получить реквизиты для этого заказа. Обновите статус заказа.');
  return payment;
@@ -200,25 +246,25 @@ async function acceptCash(order,received){
 async function sell(event){
  event.preventDefault();
  if(busy||$('posSubmit').disabled)return;
- const method=paymentMethod(),cash=method==='cash',due=paymentDue(),received=Number($('posCash').value);
+ const method=paymentMethod(),cash=method==='cash',foreign=foreignMethods.has(method),due=paymentDue(),received=Number($('posCash').value);
  if(cash&&(!$('posCash').value||!Number.isSafeInteger(received)||received<due)){result('Введите полученную сумму не меньше '+money(due));return;}
  busy=true;
  paymentFields();
  result(payOrder?'Сохраняем оплату…':'Создаём заказ…');
- let created=payOrder;
+ let created=payOrder,details=null;
  try{
   if(!created){
    const items=cartItems();
-   const response=await window.ummaCafeRequests.request(base+'create-cafe-order',{
-    initData:auth.credential(),staffOrder:true,locationId:locationId(),items:[...cart].map(([productId,line])=>({productId,quantity:line.quantity})),
-    orderType:'pickup',paymentMethod:cash?'cash':'qr',paymentTiming:'now',customerName:'Гость',customerPhone:'',customerNote:'',dispatchMode:'nearest',
-    ...(method==='transfer'?{counterPaymentMode:'transfer'}:{}),
-   });
+   const common={initData:auth.credential(),staffOrder:true,locationId:locationId(),
+    items:[...cart].map(([productId,line])=>({productId,quantity:line.quantity}))};
+   const response=await window.ummaCafeRequests.request(base+(foreign?'cafe-counter-payment':'create-cafe-order'),foreign
+    ? {...common,action:'create',method}
+    : {...common,orderType:'pickup',paymentMethod:method,paymentTiming:'now',customerName:'Гость',customerPhone:'',customerNote:'',dispatchMode:'nearest'});
    const data=await response.json();
    if(!response.ok||!data.ok||!data.order)throw Error(data.error||'Заказ не подтверждён');
-   created={...data.order,items,paymentMethod:cash?'cash':'qr',manual:method==='transfer',paymentStatus:'pending'};
+   created={...data.order,items,paymentMethod:foreign?'bank_transfer':method,paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
+   details=data.payment;
    // Creation committed. Keep the server order even if a later payment or display call fails.
-   if(created.manual)rememberManualTransfer(created.id);
    cart.clear();
    renderCart();
    showPayment(created);
@@ -227,10 +273,10 @@ async function sell(event){
    if(Number(created.totalVnd)!==due)throw Error('Цена изменилась. Сверьте новый итог и подтвердите оплату.');
    await acceptCash(created,received);
   }else{
-   showPayment(created,await paymentDetails(created));
+   showPayment(created,details||await paymentDetails(created));
    result('');
   }
-  if(screen()){
+  if(screen()&&!foreign){
    try{await displayOrder(created.id);}catch{result('Заказ сохранён. Повторите отправку на клиентский экран.');}
   }
  }catch(error){result((created?'Заказ №'+created.orderNumber+' уже создан. ':'')+error.message);}
@@ -305,8 +351,11 @@ function setCounterView(view,{draft=false}={}){
   if(button.dataset.counterView===view)button.setAttribute('aria-current','page');
   else button.removeAttribute('aria-current');
  });
- if(draft){$('posCash').value='';result('');showPayment(null);}
- if(view==='payment')paymentFields();
+ if(draft){selectedMethod='cash';$('posCash').value='';result('');showPayment(null);}
+ if(view==='payment'){
+  paymentFields();
+  if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
+ }
  if(view==='orders'||view==='issue'){renderCounterOrders();void refreshCounterOrders();}
  updateCartJump();
  window.scrollTo({top:0,behavior:'instant'});
@@ -332,7 +381,7 @@ async function counterOrderAction(event){
    counterStatus('Заказ №'+order.order_number+' выдан.');
   }else{
    const target={id:order.id,orderNumber:order.order_number,totalVnd:order.total_vnd,paymentStatus:order.payment_status,
-    paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,manual:manualTransfer(order.id)};
+    paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks};
    $('posCash').value='';
    result('');
    setCounterView('payment');
@@ -346,7 +395,14 @@ async function counterOrderAction(event){
 }
 
 $('posForm').onsubmit=sell;
-$('posMethod').onchange=paymentFields;
+$('counterMethodLabel').onclick=event=>{
+ const button=event.target.closest('[data-counter-method]');
+ if(!button||busy)return;
+ selectedMethod=button.dataset.counterMethod;
+ result('');
+ paymentFields();
+ if(foreignMethods.has(selectedMethod)&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
+};
 $('posCash').oninput=paymentFields;
 $('posSearch').oninput=menu;
 $('posLocation').onchange=()=>{
@@ -373,19 +429,21 @@ $('posCart').onclick=event=>{
  const button=event.target.closest('[data-pos-delta]');
  if(button)changeQuantity(button.dataset.id,Number(button.dataset.posDelta));
 };
+$('counterPaymentVerification').oninput=()=>{$('posConfirmQr').disabled=busy||!confirmationReady();};
 $('posConfirmQr').onclick=async()=>{
- if(busy||!payOrder)return;
+ if(busy||!payOrder||!confirmationReady())return;
  const order=payOrder;
- const expected=order.rubKopecks!=null?rubles(order.rubKopecks):money(order.totalVnd);
- if(!confirm('Деньги за заказ №'+order.orderNumber+' на сумму '+expected+' поступили на счёт?'))return;
  busy=true;$('posConfirmQr').disabled=true;paymentFields();
  try{
-  await api('updatePayment',{orderId:order.id,paymentStatus:'paid',paymentMethod:order.paymentMethod},'cafe-kitchen');
+  if(order.foreignPayment)await foreignApi('confirm',{
+   orderId:order.id,verified:true,reference:$('counterPaymentReference').value.trim(),
+  });
+  else await api('updatePayment',{orderId:order.id,paymentStatus:'paid',paymentMethod:order.paymentMethod},'cafe-kitchen');
   order.paymentStatus='paid';
   showPayment(order);
   result('Оплата подтверждена.');
  }catch(error){result(error.message);}
- finally{busy=false;$('posConfirmQr').disabled=false;paymentFields();void refreshCounterOrders();}
+ finally{busy=false;$('posConfirmQr').disabled=!confirmationReady();paymentFields();void refreshCounterOrders();}
 };
 $('posReloadQr').onclick=async()=>{
  if(busy||!payOrder)return;
@@ -690,11 +748,11 @@ document.addEventListener('umma:cafe-operation-recovered',async event=>{
   const product=products.find(item=>item.id===line.productId);
   return {product_name_ru:product?.name_ru||product?.name_en||'Блюдо',quantity:line.quantity};
  });
- const recoveredSale={...recovered.order,items,paymentMethod:payload.paymentMethod,paymentStatus:'pending',manual:payload.counterPaymentMode==='transfer'};
- if(recoveredSale.manual)rememberManualTransfer(recoveredSale.id);
+ const recoveredSale={...recovered.order,items,paymentMethod:payload.action==='create'?'bank_transfer':payload.paymentMethod,
+  paymentStatus:recovered.paymentStatus||'pending',status:recovered.status||recovered.order.status};
  cart.clear();$('posCash').value='';renderCart();
  setCounterView('payment');showPayment(recoveredSale);
- try{showPayment(recoveredSale,await paymentDetails(recoveredSale));result('Прежний заказ восстановлен. Проверьте оплату.');}
+ try{showPayment(recoveredSale,recovered.payment||await paymentDetails(recoveredSale));result('Прежний заказ восстановлен. Проверьте оплату.');}
  catch(error){result(error.message);}
  void refreshCounterOrders();
 });

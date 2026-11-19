@@ -91,3 +91,14 @@
 @media (max-width: 360px) {
   #webPos .counter-nav button { font-size: 12px; }
 }
+
+#counterMethodLabel { border: 0; margin: 0 0 14px; min-inline-size: 0; padding: 0; }
+#counterMethodLabel legend { margin-bottom: 8px; padding: 0; font-weight: 750; }
+.counter-payment-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#webPos .counter-payment-methods button { min-height: 49px; padding: 8px; line-height: 1.2; }
+#webPos .counter-payment-methods button[aria-pressed="true"] {
+  background: var(--counter-teal); border-color: var(--counter-teal); color: white; text-shadow: 0 1px 2px #07595c;
+}
+#counterMethodStatus { margin-bottom: 0; }
+#webPos .counter-confirm-check { display: flex; align-items: center; gap: 9px; min-height: 44px; }
+#webPos .counter-confirm-check input { appearance: auto; width: 20px; height: 20px; min-height: 20px; margin: 0; accent-color: var(--counter-teal); }
