@@ -170,7 +170,7 @@ audio.connect-media{width:min(100%,300px)}
   gap:8px;
   padding:10px 12px;
   border-radius:0;
-  background:var(--umma-brand-strong);
+  background:var(--umma-brand-primary);
 }
 .public-cafe-menu .umma-connect-chat .connect-hero h2 {
   color:#fff0cd;
@@ -265,8 +265,8 @@ audio.connect-media{width:min(100%,300px)}
   width:44px;
   padding:0;
   border-radius:50%;
-  background:var(--umma-brand-strong);
-  border-color:var(--umma-brand-strong);
+  background:var(--umma-brand-primary);
+  border-color:var(--umma-brand-primary);
   font-size:21px;
 }
 .umma-connect-chat .connect-compose .connect-send[aria-busy=true] {
@@ -361,8 +361,8 @@ audio.connect-media{width:min(100%,300px)}
   border-radius:50%;
 }
 .umma-connect-chat .connect-compose-compact .connect-mic {
-  border-color:var(--umma-brand-strong);
-  background:var(--umma-brand-strong);
+  border-color:var(--umma-brand-primary);
+  background:var(--umma-brand-primary);
 }
 .umma-connect-chat .connect-compose-compact .connect-mic[hidden] {display:none}
 .umma-connect-chat .connect-compose-compact svg {
@@ -497,7 +497,7 @@ audio.connect-media{width:min(100%,300px)}
 }
 .umma-connect-chat .connect-expression-tabs button[aria-pressed=true] {
   background:var(--umma-brand-soft);
-  border-color:var(--umma-brand-strong);
+  border-color:var(--umma-brand-primary);
 }
 .umma-connect-chat .connect-expression-choices {
   display:grid;
@@ -847,7 +847,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
   align-items:center;
   flex-wrap:nowrap;
   gap:4px;
-  color:#486765;
+  color:#45676d;
 }
 .public-cafe-menu .umma-connect-chat .connect-chat-bubble .connect-message-meta small {
   margin:0;
@@ -924,7 +924,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
 }
 .umma-connect-chat .connect-public-voice .connect-voice-play {
   width:44px;
-  background:#096f72;
+  background:var(--umma-brand-primary);
   color:#fff;
   font-size:16px;
 }
@@ -932,7 +932,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
   width:39px;
   min-height:32px;
   background:#c7e9e1;
-  color:#165d5c;
+  color:#45676d;
   font-size:12px;
 }
 .connect-voice-track {
@@ -1054,8 +1054,8 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
 .umma-connect-chat .connect-record-panel .connect-record-send {
   grid-column:3;
   color:#fff;
-  background:#096f72;
-  border-color:#096f72;
+  background:var(--umma-brand-primary);
+  border-color:var(--umma-brand-primary);
 }
 .umma-connect-chat .connect-record-panel .connect-record-pause {
   border-radius:999px;

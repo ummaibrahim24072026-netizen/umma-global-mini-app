@@ -39,7 +39,7 @@ body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
   color: white;
   font-size: 13px;
 }
-.tracking-toolbar a { overflow-wrap: anywhere; border-radius: 999px; border-color: #e2ba5b; background: var(--umma-button-gradient); }
+.tracking-toolbar a { overflow-wrap: anywhere; border-radius: 999px; border-color: #e2ba5b; background: var(--umma-brand-primary); }
 .tracking-toolbar option { background: #fff; color: #163d3e; }
 .tracking-brand { display: block; flex: none; margin-inline-start: auto; }
 #eta { background: #d9f3ef; color: #00595b; }
@@ -49,6 +49,6 @@ body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
   width: fit-content;
   padding-inline: 15px;
   border-radius: 999px;
-  background: var(--umma-button-gradient);
+  background: var(--umma-brand-primary);
   color: #fff;
 }

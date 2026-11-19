@@ -1,10 +1,9 @@
-/* UMMA screen palette, sampled from supplied artwork: RGB 3 / 162 / 165.
- * Print reference: C81 M13 Y38 K0. CMYK requires a print profile for conversion.
- * Strong shades carry small white text; primary is the brand accent. */
+/* Approved UMMA web accent: #03A2A5 (RGB 3 / 162 / 165), matching the chat microphone.
+ * Use --umma-brand-primary for primary control fills in customer and staff screens.
+ * Strong and muted colors provide contrast for text and secondary UI.
+ * Print reference: C81 M13 Y38 K0. CMYK requires a print profile for conversion. */
 :root{
   --umma-brand-primary:#03A2A5;
-  --umma-button-edge:#087f86;
-  --umma-button-gradient:linear-gradient(135deg,#0a9fa3 0%,var(--umma-button-edge) 100%);
   --umma-brand-on-primary:#002D2E;
   --umma-brand-on-primary-rgb:0,45,46;
   --umma-brand-primary-rgb:3,162,165;
@@ -73,7 +72,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* UMMA Cafe — refined checkout/cart modal, scoped to the public web menu. */
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])){border:1px solid #d9b965!important;border-radius:28px!important;overflow:hidden!important;background:linear-gradient(160deg,#f6ffff,#fffdf7)!important;box-shadow:0 24px 85px #003f4566!important;max-width:min(94vw,540px)!important;width:100%;max-height:min(88dvh,800px)!important;padding:0!important;color:#123d40}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"]))::backdrop{background:#002f35a8;backdrop-filter:blur(5px)}
-#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{position:sticky;top:0;z-index:2;background:linear-gradient(125deg,#006b70,#08afb2)!important;border-bottom:3px solid #d7b75f!important;padding:15px 18px!important;min-height:82px;gap:12px}
+#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{position:sticky;top:0;z-index:2;background:var(--umma-brand-primary)!important;border-bottom:3px solid #d7b75f!important;padding:15px 18px!important;min-height:82px;gap:12px}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{content:"✦";display:grid;place-items:center;flex:none;width:42px;height:42px;border:2px solid #eac976;border-radius:50%;color:#ffe6a2;font-size:23px;background:#005c62}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header h2{flex:1;color:#ffe5a0!important;font-weight:800!important;font-size:clamp(21px,5vw,27px)!important;text-shadow:0 1px 2px #00474d;letter-spacing:-.025em}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header .close{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #ffffff80;background:#ffffffeb;color:#005e64;font-size:28px;line-height:1}
@@ -87,7 +86,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #checkout:not([data-stage="receipt"]) .cart-controls button{border:1px solid #a7dbd7;border-radius:12px;background:#effcfb;color:#007f83;font-weight:700}
 #checkout:not([data-stage="receipt"]) .cart-total{margin-top:14px;padding:18px 2px;border-top:1px solid #d7b75f;color:#103d40;font-size:20px;gap:12px}
 #checkout:not([data-stage="receipt"]) .cart-total span:last-child{color:#aa751c;font-variant-numeric:tabular-nums}
-#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:var(--umma-button-gradient)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
+#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:var(--umma-brand-primary)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
 #checkout:not([data-stage="receipt"]) #continueCheckout:disabled{background:#8dd1d0!important;color:#eaf7f7!important;box-shadow:none;opacity:.75}
 #checkout:not([data-stage="receipt"]) .cart-clear{border-radius:12px}
 @media(max-width:420px){#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])){max-width:calc(100vw - 24px)!important;border-radius:24px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{min-height:74px;padding:12px 15px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{width:36px;height:36px}#checkout:not([data-stage="receipt"]) .checkout-body{padding:14px 16px 20px!important}}
@@ -95,7 +94,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* Empty basket visual — UMMA turquoise/gold reference, responsive. */
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])){border:2px solid #e2b955!important;background:linear-gradient(155deg,#e6faf9,#fffefa 60%,#e5f8f7)!important}
-#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header{min-height:105px;background:radial-gradient(circle at 50% 10%,#11bcb9,#00747a 75%)!important;border-bottom:4px solid #e6b755!important;justify-content:center}
+#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header{min-height:105px;background:var(--umma-brand-primary)!important;border-bottom:4px solid #e6b755!important;justify-content:center}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header::before{content:"U";font-family:Georgia,serif;font-weight:900;position:absolute;left:50%;top:9px;transform:translateX(-50%);width:40px;height:40px;border:3px solid #e8ba53;border-radius:12px;box-shadow:0 0 0 3px #006a71;color:#ffd67e;background:#007b80}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header h2{margin-top:40px;text-align:center;flex:none;font-family:Georgia,serif;font-size:clamp(25px,6vw,34px)!important}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header .close{position:absolute;right:15px;top:15px}

@@ -1,6 +1,6 @@
 /* Standalone staff cabinet. Brand values come from the public cafe menu. */
 .web-work-app {
-  --work-primary: var(--umma-button-gradient, var(--umma-brand-primary));
+  --work-primary: var(--umma-brand-primary);
   --work-action-text: #fff;
   --work-header-height: calc(68px + env(safe-area-inset-top, 0px));
 }
@@ -55,7 +55,7 @@
   #webInviteCopy, #posConfirmQr, #posCartJump, #cashPayConfirm
 ):not(.kitchen-cancel) {
   background: var(--work-primary);
-  border-color: var(--umma-button-edge, var(--umma-brand-primary));
+  border-color: var(--work-primary);
   color: var(--work-action-text);
   -webkit-text-fill-color: var(--work-action-text);
   border-radius: 999px;

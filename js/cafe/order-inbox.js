@@ -28,22 +28,22 @@ function renderChatFeed(list){
   const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
   const progress=delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
-  card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid #c9e2df;border-radius:18px;background:#f5fbfa;color:#153b39;box-sizing:border-box;overflow-wrap:anywhere';
+  card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid #c9e2df;border-radius:18px;background:#f5fbfa;color:#30494e;box-sizing:border-box;overflow-wrap:anywhere';
   const head=document.createElement('strong');head.textContent=copy.order+' №'+(messages.at(-1).number||id);
-  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#137b7c;font-weight:650';
+  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#45676d;font-weight:650';
   const progressBar=document.createElement('div');progressBar.style.cssText='display:grid;grid-template-columns:repeat('+steps.length+',minmax(0,1fr));gap:4px';
-  for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'#0a9b9b':'#d9e9e7');progressBar.append(segment);}
+  for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'var(--umma-brand-primary, #03a2a5)':'#d9e9e7');progressBar.append(segment);}
   const stageLabels=document.createElement('div');stageLabels.style.cssText='display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#55716e';
   const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
-  const detail=document.createElement('button');detail.type='button';detail.className='umma-chat-order-action';detail.textContent=copy.detail;detail.style.cssText='border:1px solid #0a9b9b;border-radius:999px;padding:10px 12px;font:700 13px system-ui;cursor:pointer';
+  const detail=document.createElement('button');detail.type='button';detail.className='umma-chat-order-action';detail.textContent=copy.detail;detail.style.cssText='border:1px solid var(--umma-brand-primary, #03a2a5);border-radius:999px;padding:10px 12px;font:700 13px system-ui;color:#45676d;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
   if(finished){
     card.classList.add('umma-chat-order-card--finished');
     card.style.gap='7px';card.style.padding='12px 14px';
     const toggle=document.createElement('button');toggle.type='button';toggle.className='umma-chat-order-action';
     toggle.textContent=copy.expand;toggle.setAttribute('aria-expanded','false');
-    toggle.style.cssText='justify-self:start;border:0;border-radius:999px;font:650 12px system-ui;padding:5px 10px;cursor:pointer';
+    toggle.style.cssText='justify-self:start;border:0;border-radius:999px;font:650 12px system-ui;padding:5px 10px;color:#45676d;cursor:pointer';
     const extras=[progressBar,stageLabels,latest,detail];
     extras.forEach(el=>el.hidden=true);
     toggle.onclick=()=>{
