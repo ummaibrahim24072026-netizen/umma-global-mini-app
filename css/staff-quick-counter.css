@@ -31,6 +31,20 @@
 .counter-brand img { border-radius: 50%; }
 #webPos #counterCafeLabel { margin: 0; font-size: 14px; }
 #webPos #counterExit { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+.counter-ready-strip:has(button:not([hidden])) {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex: 1 0 100%; min-width: 0; padding: 4px 6px 4px 12px;
+  border: 1px solid #8ccfc9; border-radius: 18px; background: #def7f3; color: #075b60;
+  font-size: 14px; font-weight: 750;
+}
+.counter-ready-strip:not(:has(button:not([hidden]))) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+}
+#counterReadyMessage { min-width: 0; overflow-wrap: anywhere; }
+#webPos #counterReadyOpen {
+  flex: none; min-height: 44px; padding: 6px 12px; border-color: #087276;
+  color: #fff; background: #087276; font-weight: 750;
+}
 #webPos .web-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(270px, 335px); }
 #webPos :is(.web-pos-grid, .counter-payment-grid) > * { min-width: 0; }
 #webPos #posSearch { min-height: 48px; margin: 0 0 12px; padding: 10px 16px; border-radius: 999px; background: white; }

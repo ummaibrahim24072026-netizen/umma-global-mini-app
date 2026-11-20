@@ -9,6 +9,8 @@
   const kitchenOrders={known:new Set(),loaded:false};
   const voiceKey="umma_kitchen_order_voice";
   let voiceEnabled=true,playback=Promise.resolve();
+  let counterIssues=[],counterInteracted=false;
+  const issueQueued=new Set(),issueAnnounced=new Set();
   try { voiceEnabled=localStorage.getItem(voiceKey)!=="off"; } catch {}
   const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
   const speechEnabled=()=>isKitchenQueue()||voiceEnabled;
@@ -69,6 +71,30 @@
     return playback;
   }
 
+  function announceCounterIssues(){
+    const atCounter=()=>!document.hidden&&document.body.dataset.workspace==="pos";
+    if(!atCounter()||(!counterInteracted&&!navigator.userActivation?.hasBeenActive))return;
+    for(const order of counterIssues){
+      const id=order.id;
+      if(issueQueued.has(id)||issueAnnounced.has(id))continue;
+      issueQueued.add(id);
+      playback=playback.then(async()=>{
+        issueQueued.delete(id);
+        if(!atCounter()||!counterIssues.some(ready=>ready.id===id))return;
+        issueAnnounced.add(id);
+        beep(true);
+        if(window.SpeechSynthesisUtterance&&window.speechSynthesis){
+          await speak("Выдать заказ номер "+order.order_number+".");
+        }
+      });
+    }
+  }
+
+  function updateCounterIssues(next){
+    counterIssues=next;
+    announceCounterIssues();
+  }
+
   function updateIncomingOrders(){
     const kitchen=isKitchenQueue();
     const history=kitchen?kitchenOrders:appOrders;
@@ -102,6 +128,10 @@
   }
   function unlockOnInteraction(){
     if(canAnnounce()&&audio?.state!=="running")void unlockAudio();
+    if(document.body.dataset.workspace==="pos"){
+      counterInteracted=true;
+      announceCounterIssues();
+    }
   }
   document.addEventListener("click",unlockOnInteraction);
   document.addEventListener("keydown",unlockOnInteraction);
@@ -187,5 +217,5 @@
   }
   const refreshVisible=()=>{if(!document.hidden&&visible())window.ummaKitchen?.refresh({silent:true});};
   document.addEventListener("umma:cafe-events",refreshVisible);document.addEventListener("visibilitychange",refreshVisible);window.addEventListener("online",refreshVisible);
-  window.ummaKitchenLive={update,notice,start};
+  window.ummaKitchenLive={update,notice,start,updateCounterIssues};
 })();

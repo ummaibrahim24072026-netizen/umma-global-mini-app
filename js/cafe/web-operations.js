@@ -475,6 +475,16 @@ function counterOrderMarkup(order,issue){
   itemsMarkup(order.cafe_order_items||[])+'<div class="pos-total"><span>Итого</span><strong>'+money(order.total_vnd)+'</strong></div>'+
   (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+green+(window.ummaGreenSm?.transfer(order,auth.actorId())||'')+'</article>';
 }
+function renderCounterReady(orders){
+ const ready=orders.filter(readyToIssue);
+ const numbers=ready.slice(0,3).map(order=>'№'+order.order_number).join(', ');
+ const message=ready.length===1?'Выдать заказ '+numbers
+  :ready.length?'К выдаче: '+numbers+(ready.length>3?' и ещё '+(ready.length-3):''):'';
+ const label=$('counterReadyMessage');
+ if(label.textContent!==message)label.textContent=message;
+ $('counterReadyOpen').hidden=!ready.length;
+ window.ummaKitchenLive?.updateCounterIssues?.(ready);
+}
 function renderCounterOrders(){
  const search=$('counterOrderSearch').value.trim().replace(/^№\s*/,'');
  const filter=$('counterOrderFilter').value;
@@ -490,7 +500,8 @@ function renderCounterOrders(){
   if(filter==='ready')return readyToIssue(order);
   return true;
  });
- const issue=counterOrders.filter(canIssue);
+ const issue=counterOrders.filter(canIssue).sort((a,b)=>Number(readyToIssue(b))-Number(readyToIssue(a)));
+ renderCounterReady(issue);
  const online=counterOrders.filter(order=>order.created_via==='customer'&&!closedOrder(order));
  $('counterOnline').hidden=!online.length;
  $('counterOnline').textContent='Из приложения · '+online.length;
@@ -605,6 +616,7 @@ $('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
 $('posSearch').oninput=menu;
 $('posLocation').onchange=()=>{
  cart.clear();resetSaleService();counterOrders=[];loadedLocation='';result('');counterStatus('');
+ renderCounterReady([]);
  showPayment(null);renderCart();menu();showPair(screen());
  void loadAvailability().then(()=>{menu();paymentFields();}).catch(error=>counterStatus(error.message));
  void refreshCounterOrders();
@@ -710,6 +722,7 @@ $('counterIssueList').onclick=counterOrderAction;
 $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
 $('counterIssueRefresh').onclick=refreshCounterOrders;
+$('counterReadyOpen').onclick=()=>{setCounterView('issue');$('counterIssueHeading').focus({preventScroll:true});};
 $('posService').onclick=event=>{
  const button=event.target.closest('[data-pos-service]');
  if(!button||busy)return;
@@ -899,6 +912,7 @@ function tab(name, cafeId, orderFilter){
  $('webCashViews').hidden=name!=='cashOrders';
  $('cafeKitchenPage').hidden=!['cashOrders','orders','kitchen','courier'].includes(name);
  if(counter){setCounterView('sale');void refreshCounterOrders();}
+ else window.ummaKitchenLive?.updateCounterIssues?.([]);
  document.querySelectorAll('[data-web-tab]').forEach(b=>b.setAttribute('aria-current',String(b===nav)));
  document.querySelectorAll('[data-cash-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cashView===name)));
  if(!$('cafeKitchenPage').hidden){

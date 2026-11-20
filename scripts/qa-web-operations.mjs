@@ -167,6 +167,66 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.querySelector('#posCart [data-id]'),null);
  w.close();
 }
+// Kitchen readiness reaches the open counter and remains visible until handoff.
+{
+ const dom=new JSDOM(html,{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/staff.html'});
+ const w=dom.window,d=w.document,spoken=[];
+ w.AbortSignal=AbortSignal;
+ w.scrollTo=()=>{};
+ w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+ w.speechSynthesis={speak(utterance){spoken.push(utterance.text);utterance.onend();}};
+ w.localStorage.setItem('umma_kitchen_order_voice','off');
+ const pickup={id:'pickup',order_number:165,order_type:'pickup',location_id:'cafe',staffRole:'cashier',
+  created_via:'staff',payment_status:'paid',status:'preparing',cafe_order_items:[]};
+ const dineIn={...pickup,id:'dine-in',order_number:166,order_type:'dine_in',payment_status:'pending'};
+ const delivery={...pickup,id:'delivery',order_number:167,order_type:'delivery'};
+ const otherCafe={...pickup,id:'other-cafe',order_number:168,location_id:'other'};
+ const orders=[pickup,dineIn,delivery,otherCafe];
+ w.fetch=async(url,options)=>{
+  const body=options?.body?JSON.parse(options.body):{};
+  if(url.endsWith('cafe-menu'))return Response.json({ok:true,products:[],inventory:[],locations:[{id:'cafe'}]});
+  if(body.action==='me')return Response.json({ok:true,user:{id:1000000000001,role:'employee'},
+   assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]});
+  if(body.action==='updateStatus'){
+   assert.equal(body.status,'completed');
+   orders.find(order=>order.id===body.orderId).status=body.status;
+  }
+  return Response.json({ok:true,orders});
+ };
+ for(const script of ['web-session','order-requests','kitchen-live','web-operations']){
+  w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
+  if(script==='web-session')w.ummaStaffAuth.save('a'.repeat(64));
+ }
+ await tick();
+ const refresh=async()=>{d.dispatchEvent(new w.Event('umma:fulfillment-realtime'));await tick();};
+ const label=d.getElementById('counterReadyMessage');
+ const open=d.getElementById('counterReadyOpen');
+ assert.equal(d.body.dataset.workspace,'pos');
+ assert.equal(open.hidden,true);
+ for(const order of orders)order.status='ready';
+ await refresh();
+ assert.equal(label.textContent,'Выдать заказ №165');
+ assert.equal(d.getElementById('counterSale').hidden,false);
+ assert.deepEqual(spoken,[]);
+ open.click();
+ await tick();
+ assert.equal(d.getElementById('counterIssue').hidden,false);
+ assert.deepEqual(spoken,['Выдать заказ номер 165.']);
+ dineIn.payment_status='paid';
+ await refresh();
+ assert.equal(label.textContent,'К выдаче: №165, №166');
+ await refresh();
+ assert.deepEqual(spoken,['Выдать заказ номер 165.','Выдать заказ номер 166.']);
+ d.querySelector('[data-counter-action="issue"][data-order-id="pickup"]').click();
+ await tick();
+ assert.equal(label.textContent,'Выдать заказ №166');
+ d.querySelector('[data-counter-action="issue"][data-order-id="dine-in"]').click();
+ await tick();
+ assert.equal(open.hidden,true);
+ assert.equal(label.textContent,'');
+ assert.equal(spoken.length,2);
+ w.close();
+}
 // The customer screen tracks the draft, switches payment method with the same order and removes old QR codes.
 {
  const dom=new JSDOM(readFileSync('payment-screen.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',pretendToBeVisual:true,url:'https://qa.invalid/payment-screen.html#screen='+'b'.repeat(64)});
