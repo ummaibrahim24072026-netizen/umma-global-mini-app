@@ -148,11 +148,21 @@
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const green = window.ummaGreenSm?.handles(order);
       const completionAllowed = order.payment_status === "paid" && (order.order_type !== "delivery" || (green || order.delivery_status === "delivered"));
-      const action = next && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + (green && next.status === 'completed' ? 'Подтвердить доставку' : next.label) + '</button>' : "";
+      const webBoard = !!byId("webOverview");
+      const counterRole = ["manager", "cashier", "waiter"].includes(orderStaffRole);
+      const ownPreparation = order.status !== "preparing" || !order.accepted_by_telegram_id ||
+        String(order.accepted_by_telegram_id) === String(actorTelegramId);
+      const canIssue = webBoard && counterRole && !waitingBatch(order) && ownPreparation &&
+        order.payment_status === "paid" && ["dine_in", "pickup"].includes(order.order_type) &&
+        ["pending", "confirmed", "preparing"].includes(order.status);
+      const quickIssue = canIssue ? '<button type="button" class="kitchen-action" data-order-id="' +
+        esc(order.id) + '" data-new-status="completed">Выдать</button>' : "";
+      const kitchenCompletion = !webBoard || orderStaffRole !== "kitchen";
+      const action = next && (!webBoard || (ownPreparation && (next.status !== "completed" || kitchenCompletion))) && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + (green && next.status === 'completed' ? 'Подтвердить доставку' : webBoard ? ({preparing:'Взять в работу',ready:'Готово',completed:'Выдать'}[next.status] || next.label) : next.label) + '</button>' : "";
       const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
-      const type = { pickup:"С собой", dine_in:"В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+      const type = { pickup:"С собой", dine_in: webBoard ? "На месте" : "В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
       const paymentMethod = rubleAmount(order)?"Сбер · "+rubleAmount(order):{ cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
       const paymentStatus = order.payment_status === "paid" ? "Оплачено" : order.payment_status === "refunded" ? "Возвращено" : "Ожидает оплаты";
       const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
@@ -174,7 +184,7 @@
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
       const availableCouriers = couriers.filter(c => String(c.location_id) === String(order.location_id));
       const pickup=locations.find(l=>String(l.id)===String(order.location_id));
-      const greenAction = green && allowedForRole ? window.ummaGreenSm.card(order, pickup) : "";
+      const greenAction = green && allowedForRole && (!webBoard || counterRole) ? window.ummaGreenSm.card(order, pickup) : "";
       const goingToCafe=orderStaffRole==="courier"&&order.delivery_status==="courier_assigned";
       const routeAddress=goingToCafe?(pickup?.latitude!=null&&pickup?.longitude!=null?"Точка доставки: "+pickup.latitude+","+pickup.longitude:pickup?.address||pickup?.name||""):order.delivery_address;
       const routeAction = !green && orderStaffRole !== "courier" && order.order_type === "delivery" && routeAddress
@@ -183,7 +193,7 @@
         && ["courier_assigned", "picked_up"].includes(order.delivery_status) && !["completed", "cancelled"].includes(order.status)
         && order.order_type === "delivery" && routeAddress
         ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">' + (goingToCafe?'Маршрут к кафе':'Маршрут к клиенту') + '</button>' : "";
-      const courierAssignAction = !green && !waitingBatch(order) && order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
+      const courierAssignAction = (!webBoard || counterRole) && !green && !waitingBatch(order) && order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
         && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
@@ -206,6 +216,9 @@
         byId("webPos") && ["staff","customer"].includes(order.created_via)
           ? '<span class="order-origin">' + (order.created_via==="staff" ? "У стойки" : "Из приложения") + '</span>' : "",
         '<span class="order-type">📦 ' + esc(window.ummaDeliveryProviders?.provider(order)?'Выдача курьеру '+window.ummaDeliveryProviders.providers[window.ummaDeliveryProviders.provider(order)].name:type) + '</span>',
+        webBoard && orderStaffRole === "kitchen" ? '<span>' + esc({
+          dine_in:"Подготовить к подаче",pickup:"Упаковать для самовывоза",delivery:"Упаковать и проверить комплектность"
+        }[order.order_type] || "") + '</span>' : "",
         '<span class="order-payment">💳 ' + esc(paymentMethod) + ' · ' + esc(paymentStatus) + '</span>',
         order.order_type === "delivery" ? '<span class="order-delivery-state">🛵 ' + esc(green && order.delivery_status !== "delivered" ? "Green SM · доставка за счёт кафе" : deliveryNames[order.delivery_status] || "Ожидает курьера") + '</span>' : "",
         order.payment_timing ? '<span class="order-payment-timing">🕒 '+esc({now:"Оплата до передачи заказа",later:"Оплата после трапезы",on_delivery:"Наличные курьеру при получении"}[order.payment_timing]||order.payment_timing)+'</span>' : "",
@@ -214,7 +227,7 @@
         order.customer_note ? '<span>💬 ' + esc(order.customer_note) + '</span>' : ""
       ].filter(Boolean).join("");
       const primaryActions=cashBoard ? paymentProofButton(order)+(counterPaymentButton(order)||paymentAction)
-        : counterPaymentButton(order) + (waitingBatch(order)?'<small>Сборка после приёма готовой партии. Оплата доступна заранее.</small>':awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + greenAction + action;
+        : counterPaymentButton(order) + (waitingBatch(order)?'<small>Сборка после приёма готовой партии. Оплата доступна заранее.</small>':awaitingCounterPayment(order)?'<small>Приготовление и сборка начнутся после оплаты.</small>':'') + greenAction + action + quickIssue;
       return '<article data-kitchen-order="' + esc(order.id) + '" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card status-' + esc(order.status) + '">' + notice + courierStage + courierHelp + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) + '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status">' + esc(waitingBatch(order)?"Предзаказ · ждёт партию":awaitingCounterPayment(order)?"Ожидает оплаты у кассира":statusNames[order.status] || order.status) + '</span></div><div class="kitchen-order-details">' + details + '</div><ul class="kitchen-order-items">' + itemHtml + '</ul><div class="kitchen-order-total"><span>Итого</span><strong>' + money(order.total_vnd) + '</strong></div><div class="kitchen-order-actions">' + primaryActions + (order.order_type==='delivery'&&Number(order.courier_telegram_id)===Number(actorTelegramId)&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':'') + callCustomer + courierRoute + deliveryAction + courierPayment + '<small role="status" aria-live="polite" data-courier-step-status="' + esc(order.id) + '"></small>' + secondaryMenu + '</div></article>';
     }).join("");
     // Keep unchanged cards and their buttons mounted during background polling.
@@ -315,7 +328,7 @@
       render(); renderStaffActiveOrders(); syncStatusButtons();
     };
     try {
-      if(status==="preparing" && current?.status==="pending"){
+      if(status==="preparing" && current?.status==="pending" && !byId("webOverview")){
         await api({ action:"updateStatus", orderId, status:"confirmed" });
         applyStatus("confirmed");
         try {
