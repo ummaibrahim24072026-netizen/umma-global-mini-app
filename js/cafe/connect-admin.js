@@ -3,25 +3,54 @@
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
-let panels,viewButtons,clientSnapshot='',inboxClients=[],filter='all',inboxAccess=false;
-let inboxSearch,quickFilters,assigneeButton,workflow,threadMenu,alertAudio;
+let panels,viewButtons,clientSnapshot='',inboxClients=[],inboxAccess=false;
+let inboxSearch,assigneeButton,workflow,threadMenu,alertAudio,soundButton;
+const Audio=window.AudioContext||window.webkitAudioContext;
 let inboxLoaded=false,avatarRefreshAt=0;
 const inboxAvatars=new Map();
 const translationLanguages=['ru','vi','en'];
 const deviceTranslationLanguage=()=>navigator.languages?.map(x=>x.split('-')[0].toLowerCase()).find(x=>translationLanguages.includes(x))||'en';
 const translationPreferenceKey='umma:staff:translation-language:'+String(window.ummaStaffAuth?.actorId?.()||'staff');
 let translationLanguage=(()=>{try{const saved=localStorage.getItem(translationPreferenceKey);return translationLanguages.includes(saved)?saved:deviceTranslationLanguage();}catch{return deviceTranslationLanguage();}})();
-let inboxSeen=null,oldestButton,history=[],latestThread=null,historyFinished=false;
+let inboxSeen=null,pendingSound=false,oldestButton,history=[],latestThread=null,historyFinished=false;
 function announceUnread(clients){
  const next=new Map(clients.filter(c=>c.last_id).map(c=>[c.id,c.last_id]));
  const incoming=inboxSeen&&clients.some(c=>c.unread>0&&c.last_id&&inboxSeen.get(c.id)!==c.last_id);
  inboxSeen=next;
- if(!incoming||alertAudio?.state!=='running')return;
+ if(incoming)pendingSound=true;
+ if(pendingSound&&!clients.some(client=>client.unread>0))pendingSound=false;
+ playPendingSound();
+}
+function playPendingSound(){
+ if(!pendingSound||alertAudio?.state!=='running')return;
+ pendingSound=false;
+ playMessageSound();
+}
+function playMessageSound(){
+ if(alertAudio?.state!=='running')return;
  const tone=alertAudio.createOscillator(),gain=alertAudio.createGain(),time=alertAudio.currentTime;
  tone.frequency.value=720;
  gain.gain.setValueAtTime(.1,time);
  gain.gain.exponentialRampToValueAtTime(.001,time+.22);
  tone.connect(gain);gain.connect(alertAudio.destination);tone.start(time);tone.stop(time+.24);
+}
+function updateSoundButton(){
+ if(soundButton)soundButton.textContent=alertAudio?.state==='running'?'Проверить звук':'Включить звук';
+}
+async function enableMessageSound(){
+ if(!Audio)return;
+ try{
+  if(!alertAudio||alertAudio.state==='closed'){
+   alertAudio=new Audio();
+   alertAudio.addEventListener('statechange',()=>{
+    updateSoundButton();
+    playPendingSound();
+   });
+  }
+  if(alertAudio.state!=='running')await alertAudio.resume();
+  updateSoundButton();
+  playPendingSound();
+ }catch{}
 }
 const mediaNames={voice:'Голосовое сообщение',photo:'Фото',video:'Видео',album:'Фото и видео'};
 const orderStates={pending:'Принят',confirmed:'Подтверждён',preparing:'Готовится',ready:'Готов',completed:'Завершён',cancelled:'Отменён',paid:'Оплата подтверждена',assigned:'Курьер назначен',courier_assigned:'Курьер назначен',picked_up:'Курьер забрал заказ',in_transit:'Курьер в пути',delivered:'Доставлен'};
@@ -192,11 +221,6 @@ function conversationTime(value,now){
  time.dateTime=date.toISOString();
  time.title=dateTime.format(date);
  return time;
-}
-
-function setInboxFilter(value){
- filter=value;
- renderClients();
 }
 
 async function refreshAudience(){
@@ -445,13 +469,11 @@ function renderClients(){
  if(!clients)return;
  const query=searchText(inboxSearch?.value).trim().split(/\s+/).filter(Boolean);
  const now=Date.now();
- const snapshot=JSON.stringify([thread,filter,query,inboxLoaded,localDay.format(now),inboxClients,[...inboxAvatars]]);
+ const snapshot=JSON.stringify([thread,query,inboxLoaded,localDay.format(now),inboxClients,[...inboxAvatars]]);
  if(snapshot===clientSnapshot)return;
  const focused=document.activeElement?.dataset.clientThread;
  clientSnapshot=snapshot;clients.replaceChildren();
- for(const button of quickFilters||[])button.setAttribute('aria-pressed',String(button.dataset.filter===filter));
  const sorted=inboxClients.filter(c=>{
-  if(filter==='unread'&&!(c.unread>0))return false;
   if(!query.length)return true;
   const searchable=searchText([c.name,c.last_message,mediaNames[c.last_media],c.order_number&&'№'+c.order_number].filter(Boolean).join(' '));
   return query.every(word=>searchable.includes(word));
@@ -498,8 +520,7 @@ function renderClients(){
  }
  if(focused&&!clients.contains(document.activeElement))inboxSearch?.focus({preventScroll:true});
  if(!sorted.length){
-  const empty=!inboxLoaded&&workspace?'Загружаем переписки…':query.length?'Ничего не найдено.':
-   filter==='all'?'Здесь появятся обращения клиентов.':'Нет непрочитанных переписок.';
+  const empty=!inboxLoaded&&workspace?'Загружаем переписки…':query.length?'Ничего не найдено.':'Здесь появятся обращения клиентов.';
   clients.append(node('li',empty,'work-inbox-empty'));
  }
 }
@@ -604,25 +625,24 @@ function build(){
   const close=node('button','Закрыть','connect-close');close.type='button';close.onclick=()=>dialog.close();header.append(close);
  }
  const heading=node(workspace?'h1':'h2',workspace?'Сообщения':'Сообщения клиентов');
- const refreshButton=node('button','Обновить');refreshButton.type='button';refreshButton.onclick=()=>{
-  refreshButton.closest('details')?.removeAttribute('open');
-  if(workspace)header.querySelector('summary').focus({preventScroll:true});
-  void run(refreshView);
- };
  header.append(heading);
- const tools=node('div',null,'work-inbox-tools');tools.append(refreshButton);
- const Audio=window.AudioContext||window.webkitAudioContext;
+ const tools=node('div',null,'work-inbox-tools');
+ if(dialog){
+  const refreshButton=node('button','Обновить');
+  refreshButton.type='button';
+  refreshButton.onclick=()=>void run(refreshView);
+  tools.append(refreshButton);
+ }
  if(workspace&&Audio){
-  const sound=node('button','Звук уведомлений');sound.type='button';sound.setAttribute('aria-pressed','false');
-  sound.onclick=async()=>{
-   try{
-    alertAudio ||= new Audio();
-    if(alertAudio.state==='running')await alertAudio.suspend();
-    else await alertAudio.resume();
-    sound.setAttribute('aria-pressed',String(alertAudio.state==='running'));
-   }catch{status.textContent='Звук недоступен в этом браузере.';}
+  soundButton=node('button');
+  soundButton.type='button';
+  updateSoundButton();
+  soundButton.onclick=async()=>{
+   await enableMessageSound();
+   if(alertAudio?.state==='running')playMessageSound();
+   else status.textContent='Звук недоступен в этом браузере.';
   };
-  tools.append(sound);
+  tools.append(soundButton);
  }
  if(workspace){
   const settings=node('details',null,'work-inbox-settings');
@@ -774,14 +794,7 @@ function build(){
   inboxSearch.setAttribute('aria-label','Поиск по имени, номеру заказа и последнему сообщению');
   inboxSearch.addEventListener('input',renderClients);
   search.append(inboxSearch);
-  const filters=node('div',null,'work-inbox-filters');
-  quickFilters=[['all','Все'],['unread','Непрочитанные']].map(([key,title])=>{
-   const button=node('button',title);button.type='button';button.dataset.filter=key;
-   button.onclick=()=>setInboxFilter(key);
-   return button;
-  });
-  filters.append(...quickFilters);
-  controls.append(search,filters);
+  controls.append(search);
   listPanel.append(controls);
  }else listPanel.append(node('h2','Переписки'));
  listPanel.append(clients);
@@ -823,11 +836,13 @@ document.addEventListener('umma:staff-tab',e=>{
  if(e.detail==='messages'&&(inboxAccess||owner()))openInbox();
  else closeThread();
 });
-document.addEventListener('umma:staff-inbox-filter',event=>{
- if(event.detail!=='all'&&event.detail!=='unread')return;
- if(inboxSearch)inboxSearch.value='';
- setInboxFilter(event.detail);
-});
+if(workspace&&Audio){
+ const unlock=()=>{
+  if((inboxAccess||owner())&&alertAudio?.state!=='running')void enableMessageSound();
+ };
+ document.addEventListener('click',unlock,true);
+ document.addEventListener('keydown',unlock,true);
+}
 document.addEventListener('umma:staff-ready',event=>{
  inboxAccess=Boolean(event.detail?.assignments?.some(a=>['manager','cashier','waiter'].includes(a.staff_role)));
  restoreStaffTheme();
@@ -836,6 +851,7 @@ document.addEventListener('umma:staff-ready',event=>{
 function resumeMessages(){
  if(document.hidden)return;
  if(workspace&&thread&&visible())avatarCheckedAt=0;
+ if(alertAudio)void enableMessageSound();
  void poll();
 }
 document.addEventListener('visibilitychange',resumeMessages);

@@ -810,7 +810,6 @@ document.addEventListener('umma:staff-inbox-counts',event=>{
 overview.querySelectorAll('[data-overview-tab]').forEach(button => {
  button.onclick = () => {
   tab(button.dataset.overviewTab, overviewLocation.value,button.dataset.orderFilter);
-  if(button.dataset.inboxFilter)document.dispatchEvent(new CustomEvent('umma:staff-inbox-filter',{detail:button.dataset.inboxFilter}));
   window.scrollTo({top:0,behavior:'instant'});
  };
 });

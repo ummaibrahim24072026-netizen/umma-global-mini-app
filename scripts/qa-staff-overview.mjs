@@ -157,14 +157,9 @@ assert.equal(document.querySelector('[data-order-filter=payment]').hasAttribute(
 assert.equal(document.querySelector('[data-order-filter=new]').hasAttribute('data-has-items'), false);
 document.dispatchEvent(new w.CustomEvent('umma:staff-inbox-counts', { detail: { unread: 3 } }));
 assert.equal(document.querySelector('[data-inbox-metric=unread]').textContent, '3');
-assert.equal(document.querySelector('[data-inbox-filter=unread]').hasAttribute('data-has-items'), true);
-assert.equal(document.querySelector('[data-inbox-filter=attention]'), null);
-
-let inboxFilter;
-document.addEventListener('umma:staff-inbox-filter', event => { inboxFilter = event.detail; });
+assert.equal(document.querySelector('[data-overview-tab=messages]').hasAttribute('data-has-items'), true);
 document.querySelector('[data-inbox-metric=unread]').click();
 assert.equal(document.body.dataset.workspace, 'messages');
-assert.equal(inboxFilter, 'unread');
 document.querySelector('[data-web-tab=overview]').click();
 await settle();
 document.querySelector('[data-overview=payment]').click();

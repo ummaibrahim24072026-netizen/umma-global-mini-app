@@ -85,11 +85,6 @@
  font-size:13px;
 }
 #webMessages .work-inbox-tools select { min-height:44px; padding:6px 8px; }
-#webMessages .work-inbox-tools button[aria-pressed="true"] {
- background:#087b80;
- border-color:#087b80;
- color:#fff;
-}
 .web-work-app #webMessages :is(.work-inbox-sidebar,.work-thread) {
  border:1px solid var(--work-line);
  border-radius:16px;
@@ -133,30 +128,6 @@
  background:transparent;
  color:#153c3c;
  font-size:16px;
-}
-#webMessages .work-inbox-filters {
- display:flex;
- align-items:center;
- flex-wrap:wrap;
- gap:6px;
-}
-#webMessages .work-inbox-filters button {
- width:auto;
- max-width:100%;
- min-height:44px;
- margin:0;
- padding:4px 9px;
- border:1px solid #d4e7e6;
- border-radius:10px;
- background:#fff;
- color:#185f61;
- font-size:13px;
- font-weight:700;
-}
-#webMessages .work-inbox-filters button[aria-pressed="true"] {
- border-color:#a9d7d5;
- background:#def3f1;
- color:#075d61;
 }
 .web-work-app #webMessages .work-inbox-list {
  display:block;

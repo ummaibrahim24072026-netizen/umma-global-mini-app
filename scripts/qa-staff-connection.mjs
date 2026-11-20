@@ -4,10 +4,17 @@ const expiredAt=new Date(Date.now()-3600000).toISOString();
 const employees=[{actor_id:21,name:'QA Kitchen',login:null,assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'invited'},{actor_id:22,name:'QA Active',login:'qa-kitchen',assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'active'},{actor_id:23,name:'QA Expired',login:null,assignments:[],status:'expired',inviteExpiresAt:expiredAt}];
 for(const owner of [true,false]){
  const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=[0,0];w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+ let notificationTones=0;
+ w.AudioContext=class extends w.EventTarget{
+  state='suspended';
+  async resume(){this.state='running';this.dispatchEvent(new w.Event('statechange'));}
+  createOscillator(){return {frequency:{},connect(){},start(){notificationTones++;},stop(){}};}
+  createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}
+ };
  w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
  if(url.endsWith('cafe-connect')){
   const people=['Гость QA','Второй клиент'];
-  const conversations=people.map((name,index)=>({id:'customer-'+index,name,unread:unread[index],last_message:'Проверка связи'}));
+  const conversations=people.map((name,index)=>({id:'customer-'+index,name,unread:unread[index],last_id:'last-'+index+'-'+unread[index],last_message:'Проверка связи'}));
   const index=conversations.findIndex(c=>c.id===b.clientId);
   if(b.action==='staffRead')unread[index]=0;
   const result=b.action==='staffInbox'?{clients:conversations}:b.action==='staffThread'?{
@@ -28,17 +35,28 @@ for(const owner of [true,false]){
   const inbox=d.getElementById('webMessages');
   assert.equal(inbox.querySelector('.work-section-switch, .work-campaign'),null);
   assert.equal(inbox.querySelector('input[type=search]').placeholder,'Найти переписку');
-  assert.deepEqual([...inbox.querySelectorAll('.work-inbox-filters button')].map(button=>button.textContent),['Все','Непрочитанные']);
+  assert.equal(inbox.querySelector('.work-inbox-controls button'),null);
+  const settings=inbox.querySelector('.work-inbox-settings');
+  const sound=settings.querySelector('button');
+  assert.equal(settings.querySelectorAll('button').length,1);
+  assert.equal(settings.querySelector('select').value,'en');
+  assert.equal(sound.textContent,'Включить звук');
+  unread=[1,0];
+  d.dispatchEvent(new w.Event('umma:connect-realtime'));await tick();
+  assert.equal(notificationTones,0);
   assert.equal(calls.some(b=>b.action==='staffRead'),false);
   const tab=d.querySelector('[data-web-tab=messages]');
   const row=index=>inbox.querySelector('[data-client-thread=customer-'+index+']');
   const unreadBadge=index=>row(index).querySelector('.work-thread-unread');
   d.querySelector('[data-web-tab=overview]').click();
   assert.equal(inbox.hidden,true);
+  assert.equal(sound.textContent,'Проверить звук');
+  assert.equal(notificationTones,1);
   unread=[2,1];
   d.dispatchEvent(new w.Event('umma:connect-realtime'));await tick();
   assert.equal(badge.hidden,false);
   assert.equal(badge.textContent,'3');
+  assert.equal(notificationTones,2);
   assert.equal(tab.getAttribute('aria-label'),'Сообщения, непрочитанных: 3');
   tab.click();await tick();
   assert.equal(unreadBadge(0).textContent,'2');
@@ -52,6 +70,8 @@ for(const owner of [true,false]){
   row(1).click();await tick();
   assert.equal(unreadBadge(1),null);
   assert.equal(badge.hidden,true);
+  sound.click();await tick();
+  assert.equal(notificationTones,3);
   d.querySelector('[data-web-tab=pos]').click();
   assert.equal(d.querySelector('#webCashViews').hidden,true);
   assert.equal(d.querySelector('#cafeKitchenPage').hidden,true);
