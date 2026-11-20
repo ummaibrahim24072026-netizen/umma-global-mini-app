@@ -273,6 +273,7 @@ function renderThread(){
  const clock=new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit'});
  const media=mediaCopy[lang()]||mediaCopy.en;
  const target=(navigator.languages||[navigator.language]).map(value=>value?.split('-')[0]?.toLowerCase()).find(value=>['ru','vi','en'].includes(value))||'en';
+ const textTarget=translateCopy[lang()]?lang():target;
  window.ummaConnectMedia.render(list,(state?.messages||[]).filter(m=>!hiddenMessages.has(m.id)),m=>{
   const li=el('li');
   const outgoing=m.direction==='customer';
@@ -287,11 +288,11 @@ function renderThread(){
   if(textBubble)li.append(textAuthor(author,outgoing));
   else if(!publicChat||(!outgoing&&!voice))li.append(el('strong',author));
   if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
+  else if(m.body&&(m.media_kind||outgoing))li.append(el('div',m.body));
   else if(m.body){
    const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
-   const load=publicChat?()=>translateChat(m.id,target):()=>window.ummaLocalTranslate.translate(m.body,target).then(text=>({text})).catch(()=>translateChat(m.id,target));
-   li.append(m.media_kind?el('div',m.body):window.ummaConnectMedia.translatedText(
-    m.body,target,load,undefined,{loading,error}));
+   const load=publicChat?()=>translateChat(m.id,textTarget):()=>window.ummaLocalTranslate.translate(m.body,textTarget).then(text=>({text})).catch(()=>translateChat(m.id,textTarget));
+   li.append(window.ummaConnectMedia.translatedText(m.body,textTarget,load,translateLabel,{loading,error}));
   }
   let voicePlayer;
   if(m.media_kind){

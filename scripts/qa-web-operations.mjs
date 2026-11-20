@@ -319,4 +319,121 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.querySelector('#screenQr svg'),null);assert.equal(d.getElementById('screenItems').hidden,true);
  w.close();
 }
+{
+ const order={id:'shared-order',order_number:501,location_id:'cafe',created_via:'customer',order_type:'pickup',
+  status:'pending',payment_status:'pending',payment_method:'cash',requires_prepayment:true,canAcceptPayments:true,
+  staffRole:'kitchen',created_at:'2026-11-20T10:00:00Z',total_vnd:50000,cafe_order_items:[{product_name_ru:'Плов',quantity:1}]};
+ const payments=[],handoffs=[];
+ let holdCounterList=false,releaseCounterList;
+ const respond=(data,status=200)=>Response.json(data,{status});
+ const actorFrom=body=>body.initData==='web:'+'a'.repeat(64)?11:12;
+ async function fetchShared(url,options){
+  const body=JSON.parse(options?.body||'{}');
+  const actor=actorFrom(body);
+  if(url.endsWith('cafe-menu'))return respond({ok:true,products:[{id:'pilaf',name_ru:'Плов',price_vnd:50000}]});
+  if(body.action==='me')return respond({ok:true,user:{id:actor,role:'employee'},locations:[{id:'cafe',name:'UMMA'}],
+   assignments:[{location_id:'cafe',staff_role:'kitchen',can_accept_payments:true}]});
+  if(body.action==='list'){
+   const snapshot=respond({ok:true,orders:[{...order}],staffRole:'kitchen',locationIds:['cafe'],actorTelegramId:actor});
+   if(actor===11&&holdCounterList&&!body.workspace){
+    holdCounterList=false;
+    await new Promise(resolve=>{releaseCounterList=resolve;});
+   }
+   return snapshot;
+  }
+  if(body.action==='updatePayment'){
+   if(order.payment_status==='pending'){
+    payments.push({actor,tendered:body.tenderedAmountVnd});
+    Object.assign(order,{payment_status:'paid',status:'confirmed',paid_by_telegram_id:actor});
+   }
+   return respond({ok:true,order:{paidByTelegramId:order.paid_by_telegram_id}});
+  }
+  if(body.action==='updateStatus'){
+   if(body.status===order.status)return respond({ok:false,error:'Order already has this status'},400);
+   if(body.status==='preparing'){
+    Object.assign(order,{status:'preparing',accepted_by_telegram_id:actor,preparation_station:'kitchen',preparationActor:'Кухня QA'});
+   }else if(body.status==='ready'){
+    assert.equal(actor,order.accepted_by_telegram_id);
+    order.status='ready';
+   }else if(body.status==='completed'){
+    assert.equal(order.status,'ready');
+    assert.equal(body.note,'counter_pickup_call');
+    order.status='completed';
+    handoffs.push(actor);
+   }
+  }
+  return respond({ok:true});
+ }
+ function openPhone(token){
+  const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html',pretendToBeVisual:true});
+  const w=dom.window;
+  w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.fetch=fetchShared;
+  for(const script of ['web-session','kitchen','web-operations']){
+   w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
+   if(script==='web-session')w.ummaStaffAuth.save(token.repeat(64));
+  }
+  return w;
+ }
+ const [first,second]=[openPhone('a'),openPhone('b')];
+ const click=(w,selector)=>w.document.querySelector(selector).click();
+ const text=(w,id)=>w.document.getElementById(id).textContent;
+ const feed=w=>w.document.dispatchEvent(new w.Event('umma:fulfillment-realtime'));
+ const kitchenCard=()=>second.document.querySelector('[data-kitchen-order="shared-order"]');
+ const issueButton=w=>w.document.querySelector('#counterIssueList [data-counter-action=issue]');
+ try{
+  await tick();
+  for(const w of [first,second]){
+   click(w,'[data-work-mode=pos]');
+   click(w,'[data-counter-view=orders]');
+  }
+  await tick();
+  for(const w of [first,second])click(w,'#counterOrderList [data-counter-action=pay]');
+  await tick();
+  for(const [w,received] of [[first,60000],[second,90000]]){
+   w.document.getElementById('posCash').value=String(received);
+   w.document.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+  }
+  await tick();
+  assert.deepEqual(payments,[{actor:11,tendered:60000}]);
+  assert.match(text(first,'posResult'),/Получено.*Сдача/);
+  assert.match(text(second,'posResult'),/Заказ уже оплачен/);
+  assert.doesNotMatch(text(second,'posResult'),/Сдача/);
+  click(first,'[data-counter-view=issue]');
+  assert.equal(issueButton(first).textContent,'Собрать и выдать');
+  click(second,'#counterExit');
+  await tick();
+  assert.equal(first.document.body.dataset.workspace,'pos');
+  assert.equal(second.document.body.dataset.workspace,'kitchen');
+  kitchenCard().querySelector('[data-new-status=preparing]').click();
+  await tick();
+  feed(first);
+  await tick();
+  assert.equal(issueButton(first),null,'another employee is preparing the order');
+  kitchenCard().querySelector('[data-new-status=ready]').click();
+  await tick();
+  feed(first);
+  await tick();
+  assert.equal(kitchenCard(),null);
+  assert.match(text(first,'counterReadyMessage'),/Выдать заказ №501/);
+  assert.equal(issueButton(first).textContent,'Выдать');
+  click(second,'[data-web-tab=pos]');
+  click(second,'[data-counter-view=issue]');
+  await tick();
+  holdCounterList=true;
+  feed(first);
+  assert.equal(typeof releaseCounterList,'function');
+  issueButton(first).click();
+  issueButton(second).click();
+  await tick();
+  assert.deepEqual(handoffs,[11]);
+  assert.match(text(second,'counterStatus'),/Заказ №501 уже выдан/);
+  releaseCounterList();
+  await tick();
+  for(const w of [first,second]){
+   assert.equal(issueButton(w),null);
+   assert.equal(text(w,'counterReadyMessage'),'');
+  }
+  console.log('PASS two staff sessions: shared cash payment winner, counter-to-kitchen handoff, one issue, and stale response reconciliation.');
+ }finally{first.close();second.close();}
+}
 console.log('PASS counter payment and customer display: live basket, exact draft total, method switching, QR cleanup, successful order receipt, idempotent recovery and read-only customer capability.');

@@ -793,7 +793,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(staff.localStorage.getItem('umma:chat:theme:v1'),'beige');
  customerChat.close();
  await tick();
- assert.deepEqual([...staff.document.querySelectorAll('.connect-receipt')].map(n=>n.textContent),['Отправлено','Отправлено']);
+ const staffReceipts=()=>[...staff.document.querySelectorAll('.connect-receipt')];
+ assert.deepEqual(staffReceipts().map(n=>[n.textContent,n.getAttribute('aria-label')]),[['✓','Отправлено'],['✓','Отправлено']]);
  staff.HTMLMediaElement.prototype.load=function(){};
  staff.HTMLMediaElement.prototype.play=async function(){};
  staff.HTMLMediaElement.prototype.pause=function(){};
@@ -812,7 +813,8 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  await tick();
  assert.equal(staff.document.querySelector('.connect-thread audio'),audio);
  assert.equal(voicePhoto().getAttribute('src'),avatar);
- assert.match(staff.document.querySelector('.connect-receipt').textContent,/^Прочитано клиентом · .*19:03/);
+ assert.equal(staffReceipts()[0].textContent,'✓✓');
+ assert.match(staffReceipts()[0].title,/^Прочитано клиентом · .*19:03/);
  header.querySelector('.work-chat-back').click();
  assert.equal(headerAvatar.hidden,true);
  assert.equal(avatarImage.hasAttribute('src'),false);

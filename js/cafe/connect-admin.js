@@ -9,7 +9,8 @@ const Audio=window.AudioContext||window.webkitAudioContext;
 let inboxLoaded=false,avatarRefreshAt=0;
 const inboxAvatars=new Map();
 const translationLanguages=['ru','vi','en'];
-const deviceTranslationLanguage=()=>navigator.languages?.map(x=>x.split('-')[0].toLowerCase()).find(x=>translationLanguages.includes(x))||'en';
+const deviceTranslationLanguage=()=>[navigator.language,...(navigator.languages||[])]
+ .map(value=>value?.split('-')[0].toLowerCase()).find(code=>translationLanguages.includes(code))||'en';
 const translationPreferenceKey='umma:staff:translation-language:'+String(window.ummaStaffAuth?.actorId?.()||'staff');
 let translationLanguage=(()=>{try{const saved=localStorage.getItem(translationPreferenceKey);return translationLanguages.includes(saved)?saved:deviceTranslationLanguage();}catch{return deviceTranslationLanguage();}})();
 let inboxSeen=null,pendingSound=false,oldestButton,history=[],latestThread=null,historyFinished=false;
