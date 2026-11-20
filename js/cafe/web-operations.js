@@ -388,7 +388,8 @@ async function sell(event){
  event.preventDefault();
  if(busy||$('posSubmit').disabled)return;
  if(switchingPayment){await switchOrderPayment();return;}
- const method=paymentMethod(),cash=method==='cash',foreign=foreignMethods.has(method),due=paymentDue(),received=Number($('posCash').value);
+ const method=paymentMethod(),cash=method==='cash',fx=fxMethods.has(method),foreign=foreignMethods.has(method),due=paymentDue(),received=Number($('posCash').value);
+ if(fx&&(!fxReady()||!$('posCash').value||!Number.isFinite(received)||Math.round(received*100)/100!==received||Math.floor(received*fxQuote.vndPerUnit)<due)){result('Проверьте курс и полученную сумму в '+fxCurrency());return;}
  if(cash&&(!$('posCash').value||!Number.isSafeInteger(received)||received<due)){result('Введите полученную сумму не меньше '+money(due));return;}
  busy=true;
  paymentFields();
@@ -401,7 +402,7 @@ async function sell(event){
     items:[...cart].map(([productId,line])=>({productId,quantity:line.quantity}))};
    const response=await window.ummaCafeRequests.request(base+(foreign?'cafe-counter-payment':'create-cafe-order'),foreign
     ? {...common,action:'create',method}
-    : {...common,orderType:'pickup',paymentMethod:method,paymentTiming:'now',customerName:'Гость',customerPhone:'',customerNote:'',dispatchMode:'nearest'});
+    : {...common,orderType:'pickup',paymentMethod:fx?'cash':method,paymentTiming:'now',customerName:'Гость',customerPhone:'',customerNote:'',dispatchMode:'nearest'});
    const data=await response.json();
    if(!response.ok||!data.ok||!data.order)throw Error(data.error||'Заказ не подтверждён');
    created={...data.order,items,staffPickup:true,paymentMethod:data.paymentMethod||(foreign?'bank_transfer':method),paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
@@ -411,7 +412,10 @@ async function sell(event){
    renderCart();
    showPayment(created);
   }
-  if(cash){
+  if(fx){
+   if(Number(created.totalVnd)!==due)throw Error('Цена изменилась. Сверьте итог и повторите оплату.');
+   await acceptFxCash(created,received);
+  }else if(cash){
    if(Number(created.totalVnd)!==due)throw Error('Цена изменилась. Сверьте новый итог и подтвердите оплату.');
    await acceptCash(created,received);
   }else{
@@ -497,7 +501,7 @@ function setCounterView(view,{draft=false}={}){
   if(button.dataset.counterView===view)button.setAttribute('aria-current','page');
   else button.removeAttribute('aria-current');
  });
- if(draft){selectedMethod='cash';$('posCash').value='';result('');showPayment(null);}
+ if(draft){selectedMethod='cash';fxQuote=null;$('posCash').value='';result('');showPayment(null);}
  if(view==='payment'){
   paymentFields();
   if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
@@ -549,6 +553,7 @@ $('counterMethodLabel').onclick=event=>{
  result('');
  paymentFields();
  if(foreignMethods.has(selectedMethod)&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
+  if(fxCash())void refreshFxQuote();
  syncCustomerScreen();
 };
 $('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
