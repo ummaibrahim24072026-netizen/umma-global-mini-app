@@ -133,10 +133,13 @@ const amount=()=>[...cart.values()].reduce((sum,line)=>sum+line.quantity*line.pr
 const cartItems=()=>[...cart.values()].map(({product,quantity})=>({product_name_ru:product.name_ru||product.name_en||product.name_vi,quantity}));
 const itemsMarkup=items=>'<ul>'+items.map(item=>'<li>'+esc(item.product_name_ru)+' × '+esc(item.quantity)+'</li>').join('')+'</ul>';
 const closedOrder=order=>['completed','cancelled'].includes(order.status);
-const readyToIssue=order=>order.payment_status==='paid'&&!order.preorder_waiting&&(
- order.status==='ready'||(!closedOrder(order)&&order.created_via==='staff'&&order.cafe_order_items?.length>0&&
- order.cafe_order_items.every(item=>['reserved','sold'].includes(item.ready_stock_state)))
-);
+const counterCanIssue = order => ["manager", "cashier", "waiter"].includes(order.staffRole) ||
+ (order.staffRole === "kitchen" && order.canAcceptPayments === true);
+const readyToIssue = order => order.payment_status === "paid" && !order.preorder_waiting && order.status === "ready";
+const canIssue = order => counterCanIssue(order) && order.order_type !== "delivery" && (readyToIssue(order) ||
+ (order.payment_status === "paid" && !order.preorder_waiting && ["pending", "confirmed", "preparing"].includes(order.status) &&
+  (order.status !== "preparing" || !order.accepted_by_telegram_id ||
+   String(order.accepted_by_telegram_id) === String(auth.actorId()))));
 const canTakePayment=order=>order.canAcceptPayments===true&&order.payment_status==='pending'&&!closedOrder(order);
 const locationId=()=>$('posLocation').value;
 const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
@@ -426,28 +429,37 @@ async function sell(event){
  finally{busy=false;paymentFields();void refreshCounterOrders();}
 }
 function counterOrderMarkup(order,issue){
- const mayPay=canTakePayment(order)&&['cash','qr','bank_transfer'].includes(order.payment_method);
- const mayIssue=readyToIssue(order)&&['manager','cashier','kitchen','waiter'].includes(order.staffRole);
+ const mayPay=order.payment_timing!=='on_delivery'&&canTakePayment(order)&&['cash','qr','bank_transfer'].includes(order.payment_method);
+ const mayIssue=canIssue(order);
+ const delivery=order.order_type==='delivery';
+ const green=delivery&&counterCanIssue(order)&&window.ummaGreenSm?.handles(order)
+  ? window.ummaGreenSm.card(order,me.locations.find(location=>location.id===order.location_id)) : '';
+ const destination=delivery?'<p>'+[order.customer_name,order.customer_phone,order.delivery_address,order.customer_note]
+  .filter(Boolean).map(esc).join(' · ')+'</p>':'';
  const action=issue&&mayIssue?['issue','Выдать']:!issue&&mayPay?['pay','К оплате']:!issue&&mayIssue?['pickup','К выдаче']:null;
  return '<article class="counter-card" data-counter-order="'+esc(order.id)+'"><h2>№'+esc(order.order_number)+'</h2>'+
   '<div class="counter-labels"><span>'+esc(orderLabel(order))+'</span><span>'+paymentLabel(order)+'</span><span>'+
    (order.created_via==='staff'?'У стойки':'Из приложения')+'</span></div>'+
+  '<p>'+esc({dine_in:'На месте',pickup:'С собой',delivery:'Доставка'}[order.order_type]||'')+'</p>'+destination+
   itemsMarkup(order.cafe_order_items||[])+'<div class="pos-total"><span>Итого</span><strong>'+money(order.total_vnd)+'</strong></div>'+
-  (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+'</article>';
+  (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+green+'</article>';
 }
 function renderCounterOrders(){
  const search=$('counterOrderSearch').value.trim().replace(/^№\s*/,'');
  const filter=$('counterOrderFilter').value;
+ const type=$('counterOrderType').value;
  const shown=counterOrders.filter(order=>{
+  if(type&&order.order_type!==type)return false;
   if(search)return String(order.order_number).includes(search);
   if(filter==='closed')return closedOrder(order);
   if(closedOrder(order))return false;
-  if(filter==='payment')return order.payment_status==='pending';
+  if(filter==='payment')return order.payment_status==='pending'&&order.payment_timing!=='on_delivery';
+  if(filter==='paid')return order.payment_status==='paid'&&['pending','confirmed'].includes(order.status);
   if(filter==='preparing')return order.status==='preparing'&&!readyToIssue(order);
   if(filter==='ready')return readyToIssue(order);
   return true;
  });
- const issue=counterOrders.filter(readyToIssue);
+ const issue=counterOrders.filter(canIssue);
  const online=counterOrders.filter(order=>order.created_via==='customer'&&!closedOrder(order));
  $('counterOnline').hidden=!online.length;
  $('counterOnline').textContent='Из приложения · '+online.length;
@@ -466,7 +478,7 @@ async function refreshCounterOrders(){
  try{
   const {orders}=await api('list',{},'cafe-kitchen');
   if(currentTab!=='pos'||locationId()!==selected||!Array.isArray(orders))return;
-  counterOrders=orders.filter(order=>order.location_id===selected&&['pickup','dine_in'].includes(order.order_type)&&
+  counterOrders=orders.filter(order=>order.location_id===selected&&['pickup','dine_in','delivery'].includes(order.order_type)&&
    (order.source_module??'cafe')==='cafe'&&!order.cafe_order_items?.some(item=>item.product_name_ru?.startsWith('Market · ')))
    .sort((a,b)=>Number(b.created_via==='staff')-Number(a.created_via==='staff')||Date.parse(b.created_at)-Date.parse(a.created_at));
   loadedLocation=selected;
@@ -518,16 +530,14 @@ async function counterOrderAction(event){
  if(!order)return;
  const action=button.dataset.counterAction;
  if(action==='pickup'){setCounterView('issue');return;}
- if(action==='issue'&&!readyToIssue(order))return;
+ if(action==='issue'&&!canIssue(order))return;
  if(action==='pay'&&!canTakePayment(order))return;
  busy=true;
  paymentFields();
  renderCounterOrders();
  try{
   if(action==='issue'){
-   // Reserved, ready-stock counter orders can be handed out without a separate kitchen visit.
-   const transitions=order.status==='ready'?['completed']:order.status==='preparing'?['ready','completed']:['preparing','ready','completed'];
-   for(const status of transitions)await api('updateStatus',{orderId:order.id,status},'cafe-kitchen');
+   await api('updateStatus',{orderId:order.id,status:'completed'},'cafe-kitchen');
    order.status='completed';
    counterStatus('Заказ №'+order.order_number+' выдан.');
   }else{
@@ -660,6 +670,7 @@ $('screenUnpair').onclick=async()=>{
 };
 $('counterOrderSearch').oninput=renderCounterOrders;
 $('counterOrderFilter').onchange=renderCounterOrders;
+$('counterOrderType').onchange=renderCounterOrders;
 $('counterOrderList').onclick=counterOrderAction;
 $('counterIssueList').onclick=counterOrderAction;
 $('counterOnline').onclick=()=>setCounterView('orders');

@@ -25,7 +25,7 @@
       ...(order.customer_phone ? [['Телефон клиента', order.customer_phone]] : []),
       ['Комментарий для курьера', `Đơn HALAL UMMA #${order.order_number}. Tiền món đã thanh toán. Không thu tiền người nhận. Bên gửi trả phí giao hàng.`],
     ];
-    return `<a class="kitchen-action" href="${launchUrl}" target="_blank" rel="noopener noreferrer">Открыть Green SM</a>
+    return `<a class="kitchen-action" href="${launchUrl}" target="_blank" rel="noopener noreferrer">Вызвать Green SM</a>
     <details class="kitchen-secondary-actions"><summary>Адреса и телефон для Green SM</summary>
       <p>Скопируйте данные в «Giao hàng». Выберите «Tiền mặt» (наличные), плательщик — «Người gửi» (отправитель). Оплатите доставку, когда курьер заберёт заказ. Оформите без наложенного платежа.</p>
       ${fields.map(([label, value]) => `<label class="field">${escape(label)}<input readonly value="${escape(value)}"></label>
