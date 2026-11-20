@@ -81,17 +81,15 @@
   const awaitingWebPayment=o=>awaitingCounterPayment(o)&&o.created_via==="customer"&&o.chat_available===false;
   const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
   const isNewOrder=o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o);
-  const kitchenStatuses={pending:"Новый",confirmed:"Новый",preparing:"Готовится",ready:"Готов"};
-  const kitchenEmptyMessages={
-    active:"На кухне пока нет активных заказов.",
-    new:"Нет новых заказов.",
-    preparing:"Сейчас ничего не готовится.",
-    ready:"Нет заказов, готовых к передаче."
+  const kitchenStatuses={pending:"Новый",confirmed:"Новый",preparing:"Готовится"};
+  const kitchenEmptyMessage="На кухне пока нет заказов.";
+  const hiddenFromPreparation=o=>{
+    if(isKitchenQueue())return !Object.hasOwn(kitchenStatuses,o.status)||awaitingCounterPayment(o);
+    return awaitingCounterPayment(o)&&(
+      ((o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)||
+      (document.body.dataset.workspace==="orders"&&awaitingWebPayment(o))
+    );
   };
-  const hiddenFromPreparation=o=>awaitingCounterPayment(o)&&(
-    ((o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)||
-    isKitchenQueue() || (document.body.dataset.workspace==="orders"&&awaitingWebPayment(o))
-  );
   const preparationAlerts=()=>orders.filter(o=>!hiddenFromPreparation(o)&&!(
     ["orders","pos","cashOrders"].includes(document.body.dataset.workspace)&&awaitingWebPayment(o)
   ));
@@ -149,7 +147,7 @@
       const number = byId("webCashSearch")?.value.replace(/^\s*№?\s*/, "").trim();
       if (number) shown=shown.filter(o=>String(o.order_number).startsWith(number));
     }
-    if (filter === "new") shown=shown.filter(o=>isNewOrder(o)&&(!kitchenQueue||!waitingBatch(o)));
+    if (filter === "new") shown=shown.filter(o=>isNewOrder(o));
     if (filter === "preparing") shown=shown.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o));
     if (filter === "ready") shown=shown.filter(o=>o.status==="ready");
     if (filter === "delivery") shown=shown.filter(o=>!finished(o)&&o.order_type==="delivery"&&o.delivery_status==="picked_up");
@@ -161,7 +159,7 @@
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
     if(kitchenQueue){
-      const rank=order=>waitingBatch(order)?3:order.status==="ready"?2:order.status==="preparing"?1:0;
+      const rank=order=>waitingBatch(order)?2:order.status==="preparing"?1:0;
       shown.sort((a,b)=>rank(a)-rank(b)||Date.parse(a.created_at)-Date.parse(b.created_at));
     }else{
       shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
@@ -175,11 +173,11 @@
         if(message)message.dataset.courierEmpty="true";
         return;
       }
-      showMessage((kitchenQueue&&kitchenEmptyMessages[filter])||(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет."));
+      showMessage(kitchenQueue?kitchenEmptyMessage:(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет."));
       return;
     }
     if (webCourier && byId("cafeKitchenMessage")?.dataset.courierEmpty) showMessage("", false);
-    if ([...Object.values(kitchenEmptyMessages), "Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
+    if ([kitchenEmptyMessage, "Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
@@ -198,7 +196,7 @@
       const quickIssue = canIssue ? '<button type="button" class="kitchen-action" data-order-id="' +
         esc(order.id) + '" data-new-status="completed">Выдать</button>' : "";
       const kitchenCompletion = !kitchenQueue && (!webBoard || orderStaffRole !== "kitchen");
-      const action = next && !(green && next.status === "completed") && (!webBoard || (ownPreparation && (next.status !== "completed" || kitchenCompletion))) && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + (green && next.status === 'completed' ? 'Подтвердить доставку' : webBoard ? ({preparing:'Взять в работу',ready:'Готово',completed:'Выдать'}[next.status] || next.label) : next.label) + '</button>' : "";
+      const action = next && !(green && next.status === "completed") && (!webBoard || (ownPreparation && (next.status !== "completed" || kitchenCompletion))) && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + (green && next.status === 'completed' ? 'Подтвердить доставку' : webBoard ? ({preparing:kitchenQueue?'Принять':'Взять в работу',ready:'Готово',completed:'Выдать'}[next.status] || next.label) : next.label) + '</button>' : "";
       const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
@@ -437,29 +435,27 @@
   }
 
   function open(asCourier = false, initialFilter = "active", locationId) {
-    const cashBoard=initialFilter==="payment";
     const kitchenQueue=isKitchenQueue();
+    const cashBoard=!kitchenQueue&&initialFilter==="payment";
     boardLocation=locationId;
     ordersRevision++;
     if(byId("webCashSearchLabel")){
       byId("webCashSearchLabel").hidden=!cashBoard;
       byId("webCashSearch").value="";
     }
-    courierWorkspace=asCourier === true;lastOrdersFingerprint=null;filter=initialFilter;
+    courierWorkspace=asCourier === true;lastOrdersFingerprint=null;filter=kitchenQueue?"active":initialFilter;
     byId("cafeKitchenPage")?.classList.toggle("courier-workspace",courierWorkspace);
     const desk=window.ummaCourierDesk;
     if(byId("cafeKitchenOrders"))byId("cafeKitchenOrders").hidden=false;
-    const filters=document.querySelector(".cafe-kitchen-filters");if(filters)filters.hidden=cashBoard||(courierWorkspace&&!!desk);
+    const filters=document.querySelector(".cafe-kitchen-filters");if(filters)filters.hidden=kitchenQueue||cashBoard||(courierWorkspace&&!!desk);
     const toolsLabel=document.querySelector('.kitchen-board-tools>summary');
     if(toolsLabel)toolsLabel.textContent=courierWorkspace?"Ещё":cashBoard?"Действия кассы":"Настройки кухни";
     const closedFilter=byId("courierClosedFilter");if(closedFilter)closedFilter.hidden=!courierWorkspace;
     const allFilter=document.querySelector('[data-kitchen-filter="all"]');if(allFilter)allFilter.hidden=courierWorkspace;
     document.querySelectorAll('[data-kitchen-filter]').forEach(button=>{
       const name=button.dataset.kitchenFilter;
-      button.classList.toggle("is-active",name===initialFilter);
-      button.setAttribute("aria-pressed",String(name===initialFilter));
-      if(!byId("webOverview") || button.id==="courierClosedFilter")return;
-      button.hidden=kitchenQueue&&!Object.hasOwn(kitchenEmptyMessages,name);
+      button.classList.toggle("is-active",name===filter);
+      button.setAttribute("aria-pressed",String(name===filter));
     });
     if(byId("courierOwnerSetup"))byId("courierOwnerSetup").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
@@ -597,6 +593,7 @@
     if(!byId("cafeCashToggle")?.hidden && !byId("cafeCashPanel")?.hidden)loadCash();
   });
   document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
+    if(isKitchenQueue())return;
     filter = button.getAttribute("data-kitchen-filter") || "active";
     document.querySelectorAll("[data-kitchen-filter]").forEach(other => {
       other.classList.toggle("is-active", other === button);

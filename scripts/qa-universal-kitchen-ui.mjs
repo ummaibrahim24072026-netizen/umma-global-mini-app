@@ -1,12 +1,15 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync,mkdirSync,cpSync} from 'node:fs';import assert from 'node:assert/strict';
 const read=p=>readFileSync(p,'utf8'),html=read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),tick=()=>new Promise(r=>setTimeout(r,20));
 for(const role of ['kitchen','cashier','kitchen_cashier']){
- const requests=[],receipts=new Map();let qty=0,lost=true,orders=[];
+ const requests=[],receipts=new Map();let qty=0,lost=true,orders=[],rejectReady=false;
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
  const fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
  else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders:orders.map(order=>({...order,staffRole:assigned}))};
- else if(b.action==='updateStatus')orders=orders.map(order=>order.id===b.orderId?{...order,status:b.status}:order);
+ else if(b.action==='updateStatus'){
+  if(rejectReady&&b.status==='ready')return new Response(JSON.stringify({ok:false,error:'Повторите попытку'}),{status:503});
+  orders=orders.map(order=>order.id===b.orderId?{...order,status:b.status}:order);
+ }
  else if(b.action==='stockList')out={ok:true,products:[{id:'bread',name:'Лепёшка',quantity:2,reserved:0,available:2,confirmed:true,state:'ready'}]};
  else if(b.staffOrder)out={ok:true,order:{id:'order',orderNumber:25,totalVnd:25000}};
  else if(b.action==='ingredientList')out={ok:true,stock:[{id:'raw',name:'Мука',unit:'kg',quantity:qty,averageCostVnd:20000}],purchases:qty?[{id:'receipt',date:b.date,note:'QA store',totalVnd:40000,items:[{name:'Мука',unit:'kg',quantity:2,unitCostVnd:20000,totalVnd:40000}]}]:[],dayTotalVnd:qty?40000:0};
@@ -49,14 +52,15 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   orders=[pickup,{...pickup,id:'dine-in',order_type:'dine_in',order_number:26},
     {...pickup,id:'delivery',order_type:'delivery',order_number:27},
     {...pickup,id:'unpaid',created_via:'customer',payment_status:'pending'},
+    {...pickup,id:'already-ready',status:'ready'},
     {...pickup,id:'preorder',order_number:28,preorder_waiting:true,preorder_expected_at:'2026-11-20T10:00:00Z'}];
   d.querySelector('[data-web-tab=kitchen]').click();
   await tick();
   const card=id=>d.querySelector('[data-kitchen-order="'+id+'"]');
-  const filter=name=>d.querySelector('[data-kitchen-filter="'+name+'"]');
   assert.equal(d.querySelector('#cafeKitchenPage h1').textContent,'Кухня');
   assert.equal(d.getElementById('cafeCashToggle').hidden,true);
-  assert.equal(filter('payment').hidden,true);
+  assert.equal(d.querySelector('.cafe-kitchen-filters').hidden,true);
+  assert.equal(card('already-ready'),null);
   assert.equal(card('unpaid'),null);
   assert.match(card('pickup').textContent,/С собой.*Манты× 2.*Соус отдельно/);
   assert.match(card('dine-in').textContent,/На месте/);
@@ -64,17 +68,23 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   assert.match(card('preorder').textContent,/Ждёт партию/);
   assert.equal(card('preorder').querySelector('[data-new-status]'),null);
   assert.equal(card('pickup').querySelector('.kitchen-order-total'),null);
-  filter('new').click();
-  assert.equal(card('preorder'),null);
-  card('pickup').querySelector('[data-new-status=preparing]').click();
+  const accept=card('pickup').querySelector('[data-new-status=preparing]');
+  assert.equal(accept.textContent,'Принять');
+  accept.click();
+  await tick();
+  assert.match(card('pickup').textContent,/Готовится/);
+  const ready=()=>card('pickup').querySelector('[data-new-status=ready]');
+  assert.equal(ready().textContent,'Готово');
+  rejectReady=true;
+  ready().click();
+  await tick();
+  assert.ok(ready(),'failed handoff keeps the order actionable');
+  rejectReady=false;
+  ready().click();
   await tick();
   assert.equal(card('pickup'),null);
-  filter('preparing').click();
-  card('pickup').querySelector('[data-new-status=ready]').click();
-  await tick();
-  filter('ready').click();
-  assert.match(card('pickup').textContent,/Готов/);
-  assert.equal(card('pickup').querySelector('[data-new-status=completed]'),null);
+  await w.ummaKitchen.refresh({silent:true});
+  assert.equal(card('pickup'),null,'a server refresh does not bring back a ready order');
  }
  assert.equal(d.getElementById('webIngredients').hidden,true);
  assert.equal(d.getElementById('webStockLink').hidden,role==='cashier');
@@ -145,8 +155,25 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   await tick();
   assert.deepEqual(tones,[660,880,660,880,660,880]);
   assert.equal(speech.length,2);
-  orders=orders.map(order=>order.id==='online'?{...order,status:'ready',payment_status:'paid'}:
+  orders=orders.map(order=>order.id==='online'?{...order,status:'preparing',payment_status:'paid'}:
    order.id==='another-online'?{...order,status:'ready',payment_status:'pending'}:order);
+  orders.push({...online,id:'delivery-handoff',created_via:'staff',order_type:'delivery',
+   order_number:169,status:'preparing',payment_status:'paid'});
+  d.getElementById('counterExit').click();
+  d.querySelector('[data-web-tab=kitchen]').click();
+  await tick();
+  for(const id of ['online','delivery-handoff']){
+   const kitchenCard=()=>d.querySelector('[data-kitchen-order="'+id+'"]');
+   kitchenCard().querySelector('[data-new-status=ready]').click();
+   await tick();
+   assert.equal(kitchenCard(),null);
+  }
+  d.querySelector('[data-web-tab=orders]').click();
+  assert.equal(d.querySelector('.cafe-kitchen-filters').hidden,false);
+  d.querySelector('[data-web-tab=pos]').click();
+  d.querySelector('[data-counter-view=orders]').click();
+  await tick();
+  assert.match(orderCard('delivery-handoff').textContent,/Готов.*Доставка/);
   d.querySelector('[data-counter-view=issue]').click();
   await tick();
   const issueCard=id=>d.querySelector('#counterIssueList [data-counter-order="'+id+'"]');

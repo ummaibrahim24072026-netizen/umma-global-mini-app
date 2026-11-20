@@ -356,16 +356,6 @@
 }
 
 .web-work-app[data-workspace=kitchen] .work-board-title h1 { margin: 0; }
-.web-work-app[data-workspace=kitchen] .cafe-kitchen-filters {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin: 12px 0;
-}
-.web-work-app[data-workspace=kitchen] .cafe-kitchen-filters button {
-  min-width: 0;
-  padding-inline: 4px;
-}
 .web-work-app[data-workspace=kitchen] .kitchen-order-top .kitchen-status {
   background: var(--umma-brand-pale);
   color: var(--umma-brand-ink);
@@ -396,11 +386,6 @@
   min-height: 48px;
 }
 @media (max-width: 650px) {
-  .web-work-app[data-workspace=kitchen] .cafe-kitchen-filters button {
-    font-size: clamp(11px, 3.2vw, 13px);
-  }
-}
-@media (max-width: 650px) {
   .web-work-app:not(.work-owner):has(.web-tabs button:nth-child(5 of :not([hidden]))) {
     --work-bottom-nav: calc(126px + env(safe-area-inset-bottom, 0px));
   }
@@ -412,7 +397,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    margin-bottom: 0;
+    margin-bottom: 14px;
   }
   .web-work-app[data-workspace=kitchen] .kitchen-board-tools {
     width: auto;
