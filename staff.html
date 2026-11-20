@@ -111,8 +111,8 @@
             <legend>Способ оплаты</legend>
             <div class="counter-payment-methods">
               <button type="button" data-counter-method="cash" aria-pressed="true">Наличные</button>
-              <button type="button" disabled title="Скоро: приём наличных USD со сдачей в донгах" aria-label="Наличные USD — скоро">Наличные USD · скоро</button>
-              <button type="button" disabled title="Скоро: приём наличных EUR со сдачей в донгах" aria-label="Наличные EUR — скоро">Наличные EUR · скоро</button>
+              <button type="button" data-counter-method="usd" aria-pressed="false">Наличные USD</button>
+              <button type="button" data-counter-method="eur" aria-pressed="false">Наличные EUR</button>
               <button type="button" data-counter-method="qr" aria-pressed="false">QR Vietcombank</button>
               <button type="button" data-counter-method="kaspi" aria-pressed="false">Перевод на Kaspi</button>
               <button type="button" data-counter-method="sber" aria-pressed="false">Перевод на Сбербанк</button>
@@ -121,6 +121,7 @@
             <p id="counterMethodStatus" role="status" hidden></p>
           </fieldset>
           <label id="posCashLabel">Получено наличными, ₫<input id="posCash" aria-describedby="posChange" type="number" min="0" step="1" inputmode="numeric" placeholder="Сколько дал клиент"></label>
+          <p id="posFxInfo" aria-live="polite" hidden></p>
           <p id="posChange" aria-live="polite"></p>
           <button class="primary" id="posSubmit" disabled>Принять наличные</button>
           <button id="counterCancelSwitch" type="button" hidden>Отмена</button>
