@@ -247,13 +247,19 @@ if(profileAvatar){
  });
 }
 // Scroll after layout settles: order cards may be inserted after message rendering.
+// Keep the newest content visible through asynchronous order-card and font layout.
+// A scroll request is bounded: it must never fight a customer reading older messages.
+let latestScrollGeneration=0;
 function scrollToLatestMessage(){
  if(!publicChat||!dialog?.open||!list)return;
- const scroll=()=>{if(dialog?.open&&list?.isConnected)list.scrollTop=list.scrollHeight;};
+ const generation=++latestScrollGeneration;
+ const scroll=()=>{
+  if(generation!==latestScrollGeneration||!dialog?.open||!list?.isConnected)return;
+  list.scrollTop=Math.max(0,list.scrollHeight-list.clientHeight);
+ };
  scroll();
  requestAnimationFrame(()=>requestAnimationFrame(scroll));
- setTimeout(scroll,120);
- setTimeout(scroll,350);
+ [80,200,450,850,1400].forEach(delay=>setTimeout(scroll,delay));
 }
 function renderThread(){
  if(!list)return;
@@ -555,6 +561,9 @@ function build(){
  off.onclick=disablePush;
  let pushSwitch,name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
+ // User scrolling cancels delayed automatic positioning.
+ if(publicChat)list.addEventListener('wheel',()=>{latestScrollGeneration++;},{passive:true});
+ if(publicChat)list.addEventListener('touchstart',()=>{latestScrollGeneration++;},{passive:true});
  if(publicChat)list.addEventListener('loadedmetadata',event=>{
   const latest=list.lastElementChild;
   if(!event.target.matches('.connect-inline-video video')||!latest?.contains(event.target))return;
