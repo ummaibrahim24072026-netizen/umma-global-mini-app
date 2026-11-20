@@ -40,7 +40,7 @@ const product = {
   price_vnd: 120000, stockManaged: true, available: 10,
 };
 const sizes = [[320,568],[360,800],[375,812],[390,844],[412,915],[430,932],[768,1024],[1024,768],
-  [1440,900],[1920,1080],[1080,1920],[720,1280],[844,390]];
+  [1440,900],[1920,1080],[2560,1440],[1080,1920],[720,1280],[844,390]];
 const languages = ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
 let available = 10;
 let catalogCalls = 0;
@@ -75,7 +75,8 @@ try {
     executablePath: process.env.QA_CHROMIUM_PATH || undefined,
     args: ['--no-sandbox','--disable-dev-shm-usage','--single-process'],
   });
-  const context = await browser.newContext({ locale: 'de-DE' });
+  const context = await browser.newContext({ locale: 'de-DE', isMobile: true, hasTouch: true });
+  context.setDefaultTimeout(12000);
   await context.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -125,12 +126,17 @@ try {
   await page.locator('[data-card]').first().waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'), 'de', 'device language');
   await page.locator('[data-change="1"]').first().click();
-  for (const language of languages) {
+  async function selectLanguage(language) {
+    await page.locator('#openProfile').click();
     await page.locator('#menuLanguage').selectOption(language);
+    await page.locator('.dock-menu').click();
+  }
+  for (const language of languages) {
+    await selectLanguage(language);
     assert.equal(await page.locator('html').getAttribute('dir'), language === 'ar' ? 'rtl' : 'ltr');
     for (const [width,height] of sizes) {
       await page.setViewportSize({ width, height });
-      await fits(page, 'Menu ' + language, ['.cafe-product','#openCart','.menu-actions','.customer-dock','.customer-actions']);
+      await fits(page, 'Menu ' + language, ['#cafePage','.topbar','.brand','.topbar-actions','.cafe-intro','.menu-sticky','.cafe-product','#openCart','.menu-actions','.customer-dock','.customer-actions']);
     }
     await page.setViewportSize({width:320,height:568});
     await page.evaluate(async () => {
@@ -146,23 +152,42 @@ try {
     await page.locator('#openCart').click();
     await fits(page, 'Checkout ' + language, ['#checkout','.cart-row','.payment-choice']);
     if (language === 'ar') await page.screenshot({path:output+'/checkout-ar-320.png'});
-    await page.keyboard.press('Escape');
+    await page.locator('.dock-menu').click();
     assert.equal(await page.locator('#checkout').evaluate(dialog => dialog.open), false);
   }
-  await page.locator('#menuLanguage').selectOption('ru');
+  await selectLanguage('ru');
   await page.setViewportSize({width:390,height:844});
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({path:output+'/menu-390.png'});
-  const summary = page.locator('[data-card] summary').first();
-  await summary.click();
-  await summary.focus();
+  const viewport = await page.evaluate(() => ({
+    width: document.documentElement.clientWidth,
+    visualWidth: window.visualViewport.width,
+    scale: window.visualViewport.scale,
+    start: window.visualViewport.offsetLeft,
+    doubleTap: getComputedStyle(document.body).touchAction,
+  }));
+  assert.deepEqual(viewport, {width: 390, visualWidth: 390, scale: 1, start: 0, doubleTap: 'manipulation'});
+  const session = await context.newCDPSession(page);
+  await session.send('Emulation.setPageScaleFactor', { pageScaleFactor: 1.5 });
+  assert.equal(await page.evaluate(() => window.visualViewport.scale), 1.5);
+  await session.send('Emulation.setPageScaleFactor', { pageScaleFactor: 1 });
+  await page.setViewportSize({width:844,height:390});
+  await page.setViewportSize({width:390,height:844});
+  await fits(page, 'Menu after zoom and rotation', ['.topbar','.cafe-intro','.customer-dock']);
+  await page.locator('[data-card] .dish-link').first().click();
+  await page.locator('#dishDetails[open]').waitFor();
   const before = catalogCalls;
   available = 9;
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await page.waitForFunction(() => document.querySelector('.cafe-stock-count')?.textContent.includes('9'));
   assert.ok(catalogCalls > before);
-  assert.equal(await summary.evaluate(node => node.parentElement.open && node === document.activeElement), true,
-    'catalog refresh preserves opened description and keyboard focus');
+  assert.equal(await page.locator('#dishDetails').evaluate(dialog => dialog.open), true,
+    'catalog refresh preserves the opened description');
+  await page.locator('.dock-menu').click();
   await page.locator('#openCart').click();
+  await page.locator('#continueCheckout').click();
+  await page.setViewportSize({width:320,height:568});
+  await fits(page, 'Checkout form', ['#checkout','.checkout-body']);
   await page.locator('#submit').click();
   await page.locator('#successNumber').waitFor();
   assert.match(await page.locator('#successNumber').textContent(), /71/);
@@ -187,14 +212,17 @@ try {
   await page.locator('#webLoginName').fill('qa');
   await page.locator('#webPassword').fill('test-only-password');
   await page.locator('#webLoginSubmit').click();
+  await page.locator('[data-web-tab=pos]').click();
   await page.locator('.pos-product').first().waitFor();
   await page.locator('.pos-product').first().click();
-  for (const tab of ['pos','orders','messages','courier','ingredients','admin']) {
+  await page.locator('#counterExit').click();
+  for (const tab of ['overview','pos','kitchen','portions','orders','messages','courier','admin']) {
     await page.locator('[data-web-tab='+tab+']').click();
     for (const [width,height] of sizes) {
       await page.setViewportSize({width,height});
       await fits(page, 'Work ' + tab, ['.web-header','.web-tabs','.web-panel','.pos-row']);
     }
+    if (tab === 'pos') await page.locator('#counterExit').click();
   }
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:output+'/staff-admin-390.png'});
@@ -215,7 +243,7 @@ try {
   await page.setViewportSize({width:1080,height:1920});
   await page.screenshot({path:output+'/kiosk-checkout-portrait.png'});
 
-  for (const path of ['delivery-tracking.html','payment-screen.html','market-print.html']) {
+  for (const path of ['delivery-tracking.html','payment-screen.html','pickup-board.html','market-print.html']) {
     await page.goto(base + path);
     for (const [width,height] of sizes) {
       await page.setViewportSize({width,height});
@@ -224,7 +252,7 @@ try {
   }
   assert.deepEqual(errors, []);
   assert.ok(requests.some(([endpoint, action]) => endpoint === 'cafe-web' && action === 'staffList'));
-  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, counter checkout, catalog focus, offline fallback and recovery, six staff tabs and kiosk. Isolated API fixtures.');
+  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, counter checkout, catalog refresh, offline fallback and recovery, eight staff tabs and kiosk. Isolated API fixtures.');
 } finally {
   await browser?.close();
   server.closeAllConnections();

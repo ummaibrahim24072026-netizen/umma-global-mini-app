@@ -1,0 +1,14 @@
+/* Keep the layout at device width during ordinary taps. Pinch zoom remains available. */
+html, body, dialog { touch-action: manipulation; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iOS magnifies fields smaller than 16px on focus. */
+@media (any-pointer: coarse) {
+  body :is(input:not([type="file"]), textarea, select) {
+    font-size: max(16px, 1rem);
+  }
+}

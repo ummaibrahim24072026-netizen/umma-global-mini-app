@@ -8,6 +8,7 @@
   background: radial-gradient(ellipse at top, var(--umma-brand-soft), var(--umma-brand-canvas) 550px);
 }
 .public-cafe-menu #cafePage {
+  width: 100%;
   max-width: 1060px;
   --menu-topbar-height: 68px;
   padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
@@ -21,7 +22,14 @@
   background: var(--cafe-header);
   color: var(--umma-brand-on-primary);
 }
-.public-cafe-menu #cafePage .brand { flex: 1 1 auto; }
+.public-cafe-menu #cafePage .brand {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+.public-cafe-menu #cafePage .brand > span {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
 .public-cafe-menu #cafePage .brand span,
 .public-cafe-menu #cafePage .brand small,
 .public-cafe-menu .cafe-intro-copy {
@@ -31,7 +39,7 @@
   paint-order: stroke fill;
 }
 .public-cafe-menu #cafePage .topbar-actions {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
   gap: 6px;
 }

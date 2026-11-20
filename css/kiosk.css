@@ -7,6 +7,16 @@ header{
   min-height:88px;
   padding-block-start:max(12px,env(safe-area-inset-top));
 }
+header { --kiosk-side: 32px; }
+main { --kiosk-side: 28px; }
+header, main {
+  padding-left: max(var(--kiosk-side), env(safe-area-inset-left));
+  padding-right: max(var(--kiosk-side), env(safe-area-inset-right));
+}
+@media (orientation: portrait), (max-width: 760px) {
+  header { --kiosk-side: 12px; }
+  main { --kiosk-side: 18px; }
+}
 header>div,.layout>*{min-inline-size:0;overflow-wrap:anywhere}
 header nav{margin-inline-start:auto;margin-left:0}
 .menu-head{flex-wrap:wrap}
@@ -19,7 +29,7 @@ dialog{max-width:min(560px,calc(100% - 24px));max-height:85dvh;overflow:auto}
   header>div{flex:1}
   header nav{order:1;flex-basis:100%;margin-inline-start:0}
   header nav button{flex:1}
-  main{padding:12px}
+  main{padding-block:12px;--kiosk-side:12px}
   .welcome,.receipt,.setup,.checkout-section,.basket{padding:16px}
   .product h2,.product small{padding-inline:10px}
   .product footer{padding:10px}

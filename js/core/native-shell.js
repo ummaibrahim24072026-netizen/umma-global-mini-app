@@ -32,9 +32,11 @@
  function geometry(){
   const focused=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'');
   const visual=window.visualViewport,stable=Number(sdk?.viewportStableHeight)||window.innerHeight;
+  const unzoomed=visual&&Math.abs((visual.scale||1)-1)<.01;
   if(!focused)restingHeight=stable;
-  const keyboard=focused&&visual&&Math.max(stable,restingHeight)-visual.height>140;
-  const height=keyboard?visual.height:(Number(sdk?.viewportStableHeight)||visual?.height||window.innerHeight);
+  // A pinch changes the visual viewport without resizing the layout or opening the keyboard.
+  const keyboard=focused&&unzoomed&&Math.max(stable,restingHeight)-visual.height>140;
+  const height=keyboard?visual.height:(Number(sdk?.viewportStableHeight)||(unzoomed?visual.height:stable));
   const root=document.documentElement.style;
   if(height>0)root.setProperty('--umma-viewport-height',Math.round(height)+'px');
   root.setProperty('--umma-keyboard-offset',Math.max(0,keyboard?window.innerHeight-visual.height-(visual.offsetTop||0):0)+'px');
