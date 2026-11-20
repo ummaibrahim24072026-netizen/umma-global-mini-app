@@ -1064,3 +1064,8 @@ body.public-cafe-menu #customerChatDialog .connect-compose{
 @media(prefers-reduced-motion:reduce) {
   .umma-connect-chat .connect-record-wave span {transition:none}
 }
+
+/* Ensure the final message/order card clears the fixed composer on mobile. */
+body.public-cafe-menu #customerChatDialog .connect-chat-wallpaper{min-height:0!important;overflow:hidden!important}
+body.public-cafe-menu #customerChatDialog .connect-thread{box-sizing:border-box!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important;scroll-padding-bottom:24px!important;overscroll-behavior-y:contain!important}
+body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!important}
