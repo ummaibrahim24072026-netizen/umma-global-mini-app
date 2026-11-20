@@ -180,13 +180,26 @@ async function refreshMethods(){
 }
 const result=message=>{$('posResult').textContent=message;};
 const counterStatus=message=>{$('counterStatus').textContent=message;};
+const serviceLabels={pickup:'С собой',dine_in:'Здесь',delivery:'Доставка'};
+let saleService='',saleDeliveryPoint=null,cafeLocations=[];
+const deliveryDetails=()=>saleService==='delivery'?{
+ deliveryAddress:$('posDeliveryAddress').value.trim(),customerPhone:$('posDeliveryPhone').value.trim(),
+}:{};
+function resetSaleService(){
+ saleService='';
+ saleDeliveryPoint=null;
+ $('posDeliveryMapStatus').textContent='';
+ $('posDeliveryMap').textContent='Указать точку на карте';
+ $('posDeliveryAddress').value='';
+ $('posDeliveryPhone').value='';
+}
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
 const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?selectedMethod:payOrder?.paymentMethod||selectedMethod;
 const orderMethod=order=>order.foreignPayment?.channel||order.paymentMethod;
-const canSwitchPayment=order=>order?.staffPickup&&order.paymentStatus==='pending'&&!closedOrder(order)&&
+const canSwitchPayment=order=>order?.staffCounter&&order.paymentStatus==='pending'&&!closedOrder(order)&&
  (order.paymentMethod!=='bank_transfer'||order.foreignPayment||order.legacyTransfer);
 function settlePayment(order,amounts={}){
- if(order.staffPickup&&['cash','qr'].includes(order.paymentMethod))return foreignApi('settle',{orderId:order.id,expectedMethod:order.paymentMethod,...amounts});
+ if(order.staffCounter&&['cash','qr'].includes(order.paymentMethod))return foreignApi('settle',{orderId:order.id,expectedMethod:order.paymentMethod,...amounts});
  return api('updatePayment',{orderId:order.id,paymentStatus:'paid',paymentMethod:order.paymentMethod,...amounts},'cafe-kitchen');
 }
 const paymentDue=()=>Number(payOrder?.totalVnd??amount());
@@ -236,6 +249,14 @@ function updateCartJump(){
 function paymentFields(){
  const cash=paymentMethod()==='cash',fx=fxCash()&&!switchingPayment,due=paymentDue(),received=Number($('posCash').value);
  const draft=!payOrder&&cart.size>0;
+ const isDelivery=saleService==='delivery';
+ const {deliveryAddress,customerPhone}=deliveryDetails();
+ const serviceReady=Boolean(saleService)&&(!isDelivery||(deliveryAddress&&customerPhone&&saleDeliveryPoint));
+ $('posDeliveryFields').hidden=!isDelivery;
+ $('posService').disabled=busy;
+ for(const button of $('posService').querySelectorAll('[data-pos-service]')){
+  button.setAttribute('aria-pressed',String(button.dataset.posService===saleService));
+ }
  const pending=payOrder?.paymentStatus==='pending'&&!closedOrder(payOrder);
  const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.abs(Math.round(received*100)/100-received)<1e-8&&Math.floor(received*fxQuote.vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
@@ -270,17 +291,18 @@ function paymentFields(){
   if(fx)fxInfo.textContent=fxReady()?'К оплате ≈ '+fxFormat(Math.ceil(due/fxQuote.vndPerUnit*100)/100)+' · 1 '+fxCurrency()+' = '+money(fxQuote.vndPerUnit)+' · Google Finance · '+new Date(fxQuote.quotedAt).toLocaleString('ru-RU'):'Ожидаем актуальный курс Google Finance';
  $('posCash').disabled=!activeCash||busy;
  $('posLocation').disabled=busy;
- $('counterCheckout').disabled=busy||!cart.size||unavailable;
+ $('counterCheckout').disabled=busy||!cart.size||unavailable||!serviceReady;
  $('counterAddProducts').disabled=busy||!!payOrder;
  $('counterAddProductsHint').hidden=!payOrder;
  $('counterAddProductsHint').textContent=payOrder?'Заказ уже создан. Для дополнительных блюд оформите отдельную продажу.':'';
  $('posSubmit').disabled=busy||
   (switchingPayment?(!pending||!selectedAvailable||selectedMethod===orderMethod(payOrder))
-   :(!payOrder&&(!draft||unavailable||!selectedAvailable))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
+   :(!payOrder&&(!draft||unavailable||!selectedAvailable||!serviceReady))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
  $('posSubmit').textContent=switchingPayment?'Сменить способ оплаты':(cash||fx)?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
  $('posChange').textContent=activeCash&&$('posCash').value?(fx?(fxReady()?(validCash?'Сдача '+money(Math.floor(received*fxQuote.vndPerUnit)-due):'Не хватает '+money(Math.max(0,due-Math.floor(received*fxQuote.vndPerUnit)))):'Курс недоступен'):(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received)))):'';
  $('counterPaymentSummary').innerHTML=payOrder||draft
   ? '<h2 id="posOrderNumber">'+(payOrder?'Заказ №'+esc(payOrder.orderNumber):'Текущий заказ')+'</h2>'+
+   '<p>'+[serviceLabels[payOrder?payOrder.orderType:saleService],payOrder?payOrder.deliveryAddress?.split('\nТочка доставки: ')[0]:deliveryAddress].filter(Boolean).map(esc).join(' · ')+'</p>'+
    itemsMarkup(payOrder?.items||cartItems())+'<div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(paymentTotal())+'</strong></div>'
   : '<p>Добавьте блюда в разделе «Продажа» или выберите заказ в разделе «Заказы».</p>';
 }
@@ -401,19 +423,26 @@ async function sell(event){
  try{
   if(!created){
    const items=cartItems();
-   const common={initData:auth.credential(),staffOrder:true,locationId:locationId(),
+   const fulfillment={orderType:saleService,...deliveryDetails()};
+   if(saleDeliveryPoint&&saleService==='delivery'){
+    fulfillment.deliveryAddress=fulfillment.deliveryAddress.replace(/^Точка доставки:.*$/gm,'').trim()+
+     '\nТочка доставки: '+window.ummaMapLinks.coords(saleDeliveryPoint);
+    fulfillment.dispatchMode='manual';
+   }
+   const common={initData:auth.credential(),staffOrder:true,locationId:locationId(),...fulfillment,
     items:[...cart].map(([productId,line])=>({productId,quantity:line.quantity}))};
    const response=await window.ummaCafeRequests.request(base+(foreign?'cafe-counter-payment':'create-cafe-order'),foreign
     ? {...common,action:'create',method}
-    : {...common,orderType:'pickup',paymentMethod:fx?'cash':method,paymentTiming:'now',customerName:'Гость',customerPhone:'',customerNote:'',dispatchMode:'nearest'});
+    : {...common,paymentMethod:fx?'cash':method,paymentTiming:'now',customerName:'Гость',customerPhone:common.customerPhone||'',customerNote:''});
    const data=await response.json();
    if(!response.ok||!data.ok||!data.order)throw Error(data.error||'Заказ не подтверждён');
-   created={...data.order,items,staffPickup:true,paymentMethod:data.paymentMethod||(foreign?'bank_transfer':method),paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
+   created={...fulfillment,...data.order,items,staffCounter:true,paymentMethod:data.paymentMethod||(foreign?'bank_transfer':fx?'cash':method),paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
    details=data.payment;
    // Creation committed. Keep the server order even if a later payment or display call fails.
    cart.clear();
-   renderCart();
+   resetSaleService();
    showPayment(created);
+   renderCart();
   }
   if(fx){
    if(Number(created.totalVnd)!==due)throw Error('Цена изменилась. Сверьте итог и повторите оплату.');
@@ -515,7 +544,7 @@ function setCounterView(view,{draft=false}={}){
   if(button.dataset.counterView===view)button.setAttribute('aria-current','page');
   else button.removeAttribute('aria-current');
  });
- if(draft){selectedMethod='cash';fxQuote=null;$('posCash').value='';result('');showPayment(null);}
+ if(draft){resetSaleService();selectedMethod='cash';fxQuote=null;$('posCash').value='';result('');showPayment(null);}
  if(view==='payment'){
   paymentFields();
   if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
@@ -544,7 +573,10 @@ async function counterOrderAction(event){
    counterStatus('Заказ №'+order.order_number+' выдан.');
   }else{
    const target={id:order.id,orderNumber:order.order_number,totalVnd:order.total_vnd,paymentStatus:order.payment_status,
-    paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,staffPickup:order.created_via==='staff'&&order.order_type==='pickup'};
+    paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,orderType:order.order_type,
+    deliveryAddress:order.delivery_address,staffCounter:order.created_via==='staff'&&
+     (order.order_type==='pickup'||order.order_type==='dine_in'&&order.payment_timing==='now'||
+      order.order_type==='delivery'&&order.dispatch_mode==='manual'&&order.requires_prepayment)};
    $('posCash').value='';
    result('');
    setCounterView('payment');
@@ -572,7 +604,7 @@ $('counterMethodLabel').onclick=event=>{
 $('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
 $('posSearch').oninput=menu;
 $('posLocation').onchange=()=>{
- cart.clear();counterOrders=[];loadedLocation='';result('');counterStatus('');
+ cart.clear();resetSaleService();counterOrders=[];loadedLocation='';result('');counterStatus('');
  showPayment(null);renderCart();menu();showPair(screen());
  void loadAvailability().then(()=>{menu();paymentFields();}).catch(error=>counterStatus(error.message));
  void refreshCounterOrders();
@@ -678,6 +710,32 @@ $('counterIssueList').onclick=counterOrderAction;
 $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
 $('counterIssueRefresh').onclick=refreshCounterOrders;
+$('posService').onclick=event=>{
+ const button=event.target.closest('[data-pos-service]');
+ if(!button||busy)return;
+ saleService=button.dataset.posService;
+ paymentFields();
+};
+$('posDeliveryFields').oninput=paymentFields;
+$('posDeliveryMap').onclick=()=>{
+ if(busy)return;
+ const cafe=cafeLocations.find(location=>location.id===locationId());
+ const status=$('posDeliveryMapStatus');
+ if(!Array.isArray(cafe?.delivery_zone)){
+  status.textContent='Для этого кафе зона доставки недоступна.';
+  return;
+ }
+ if(!window.ummaDeliveryLocation){
+  status.textContent='Карта не загрузилась. Обновите страницу.';
+  return;
+ }
+ window.ummaDeliveryLocation.chooseForLocation(cafe,point=>{
+  saleDeliveryPoint=point;
+  status.textContent='Точка доставки отмечена';
+  $('posDeliveryMap').textContent='Изменить точку на карте';
+  paymentFields();
+ },$('posDeliveryMap'),{point:saleDeliveryPoint});
+};
 $('counterCheckout').onclick=()=>setCounterView('payment');
 $('counterAddProducts').onclick=()=>{
  if(busy||payOrder)return;
@@ -938,7 +996,7 @@ if(sell){
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();
   if(!r.ok||!d.ok)throw Error('Не удалось загрузить меню');
   products=(d.products||[]).filter(p=>p.is_active!==false&&p.price_vnd!=null&&!p.catalog_preview&&!p.photo_only);
-  inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;try{await loadAvailability();}catch(error){notice(error.message);}renderCart();menu();showPair(screen());
+  cafeLocations=d.locations||[];inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;try{await loadAvailability();}catch(error){notice(error.message);}renderCart();menu();showPair(screen());
  }catch(error){$('posProducts').textContent=error.message+'. Обновите страницу для повторной загрузки.';}
 }
 }
@@ -956,9 +1014,9 @@ document.addEventListener('umma:cafe-operation-recovered',async event=>{
   const product=products.find(item=>item.id===line.productId);
   return {product_name_ru:product?.name_ru||product?.name_en||'Блюдо',quantity:line.quantity};
  });
- const recoveredSale={...recovered.order,items,staffPickup:true,paymentMethod:recovered.paymentMethod||(payload.action==='create'?'bank_transfer':payload.paymentMethod),
+ const recoveredSale={orderType:payload.orderType||'pickup',deliveryAddress:payload.deliveryAddress,...recovered.order,items,staffCounter:true,paymentMethod:recovered.paymentMethod||(payload.action==='create'?'bank_transfer':payload.paymentMethod),
   paymentStatus:recovered.paymentStatus||'pending',status:recovered.status||recovered.order.status};
- cart.clear();$('posCash').value='';renderCart();
+ cart.clear();resetSaleService();$('posCash').value='';renderCart();
  setCounterView('payment');showPayment(recoveredSale);
  try{showPayment(recoveredSale,recovered.payment||await paymentDetails(recoveredSale));result('Прежний заказ восстановлен. Проверьте оплату.');}
  catch(error){result(error.message);}
@@ -971,7 +1029,7 @@ async function refreshStock(){
  try{
   const response=await fetch(base+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(12000)});
   const data=await response.json();
-  if(response.ok&&data.ok){inventory=data.inventory||[];await loadAvailability();menu();paymentFields();}
+  if(response.ok&&data.ok){cafeLocations=data.locations||[];inventory=data.inventory||[];await loadAvailability();menu();paymentFields();}
  }catch{}finally{stockRefreshing=false;}
 }
 document.addEventListener('umma:stock-changed',refreshStock);

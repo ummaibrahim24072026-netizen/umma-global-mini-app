@@ -1,25 +1,37 @@
 import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
 const html=readFileSync('staff.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const tick=()=>new Promise(r=>setTimeout(r,20));
-for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
+for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','delivery'],['sber','dine_in'],['kaspi','delivery'],['usdt','pickup']]){
  const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html'}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.eval(readFileSync('js/cafe/web-session.js','utf8'));w.ummaStaffAuth.save('a'.repeat(64));
  const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false,currentMethod=method;
  const foreign=!['cash','qr'].includes(method);
+ const point={lat:12.25,lng:109.19};
+ const zones=[[12.24,109.18],[12.26,109.18],[12.25,109.20]];
+ w.ummaDeliveryLocation={chooseForLocation(location,confirm){assert.deepEqual(location.delivery_zone,zones);confirm(point);}};
+ w.ummaMapLinks={coords:point=>point.lat.toFixed(6)+','+point.lng.toFixed(6)};
  const currency=method==='usdt'?'USDT':['tenge','kaspi'].includes(method)?'KZT':'RUB';
  w.confirm=()=>assert.fail('Payment confirmation must stay on the page');
  w.fetch=async(url,opts)=>{const b=opts?.body?JSON.parse(opts.body):{};requests.push({url,b});assert.equal(w.Telegram,undefined);
- let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000}],inventory:[]};
+ let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000}],inventory:[],locations:[{id:'cafe',delivery_zone:zones}]};
  else{assert.ok(b.initData?.startsWith('web:'));if(b.action==='me')out={ok:true,user:{id:1000000000001,name:'Cashier',role:'employee'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]};
  else if(b.action==='screenCreate')out={ok:true,id:'client-screen',screenToken:'b'.repeat(64)};
  else if(b.action==='options')out.methods={rub:true,sber:true,tenge:true,kaspi:true,usdt:true};
  else if(b.staffOrder){
   created++;assert.equal(b.items.length,1);assert.equal(b.items[0].quantity,1);
+  assert.equal(b.orderType,service);
+  if(service==='delivery'){
+   assert.equal(b.dispatchMode,'manual');
+   assert.equal(b.deliveryAddress,'Nha Trang 012\nТочка доставки: 12.250000,109.190000');
+   assert.equal(b.customerPhone,'0901234567');
+  }else{
+   assert.equal(b.deliveryAddress,undefined);
+  }
   if(foreign){
    assert.match(url,/cafe-counter-payment$/);assert.equal(b.method,method);assert.equal(b.action,'create');
    out={ok:true,order,payment:{currency,amount:currency==='USDT'?0.95431:82.15,bankName:'QA Bank',account:'QA-112233',network:currency==='USDT'?'Test network':null}};
   }else{
-   assert.equal(b.orderType,'pickup');assert.equal(b.customerPhone,'');assert.equal(b.paymentMethod,method);out={ok:true,order};
+   assert.equal(b.customerPhone,service==='delivery'?'0901234567':'');assert.equal(b.paymentMethod,method);out={ok:true,order};
   }
  }
  else if(b.action==='confirm'){assert.equal(foreign,true);assert.equal(b.reference,'QA-7777');assert.equal(b.verified,true);paid=true;}
@@ -52,7 +64,21 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
   const draft=requests.filter(r=>r.b.action==='screenDraft').at(-1).b;
   assert.deepEqual(draft.lines,[{name:'Лепёшка',name_ru:'Лепёшка',name_en:'',name_vi:'Bánh mì',quantity:1,unitPrice:25000}]);
   assert.equal(draft.method,null);
- }assert.match(d.getElementById('posTotal').textContent,/25/);d.getElementById('counterCheckout').click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
+ }
+ assert.match(d.getElementById('posTotal').textContent,/25/);
+ const checkout=d.getElementById('counterCheckout');
+ assert.equal(checkout.disabled,true);
+ d.querySelector('[data-pos-service='+service+']').click();
+ if(service==='delivery'){
+  assert.equal(d.getElementById('posDeliveryFields').hidden,false);
+  d.getElementById('posDeliveryAddress').value='Nha Trang 012';
+  d.getElementById('posDeliveryPhone').value='0901234567';
+  d.getElementById('posDeliveryPhone').dispatchEvent(new w.Event('input',{bubbles:true}));
+  assert.equal(checkout.disabled,true);
+  d.getElementById('posDeliveryMap').click();
+ }
+ assert.equal(checkout.disabled,false);
+ checkout.click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
  assert.equal(paid,method==='cash');assert.equal(d.getElementById('posConfirmQr').hidden,method==='cash');
  if(method==='qr'){
@@ -119,6 +145,7 @@ for(const method of ['cash','qr','rub','sber','tenge','kaspi','usdt']){
  }
  await tick();
  d.querySelector('[data-pos-add]').click();
+ d.querySelector('[data-pos-service=pickup]').click();
  d.getElementById('counterCheckout').click();
  d.querySelector('[data-counter-method=usdt]').click();
  await tick();

@@ -228,6 +228,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   filter.value='closed';filter.dispatchEvent(new w.Event('change'));
   assert.match(orderCard('online').textContent,/Выдан/);
   d.querySelector('[data-counter-view=sale]').click();
+  d.querySelector('[data-pos-service=pickup]').click();
   d.getElementById('counterCheckout').click();
   d.getElementById('posCash').value='50000';
   d.getElementById('posForm').dispatchEvent(new w.Event('submit',{cancelable:true}));

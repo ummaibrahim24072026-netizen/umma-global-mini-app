@@ -14,6 +14,9 @@ const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const isUuid=(value:unknown)=>typeof value==='string'&&uuid.test(value);
 const messages:Record<string,[number,string]>={
   COUNTER_INVALID:[400,'Проверьте данные заказа.'],
+  DELIVERY_POINT_REQUIRED:[400,'Выберите точку доставки на карте.'],
+  DELIVERY_UNAVAILABLE:[400,'Доставка из выбранного кафе недоступна.'],
+  DELIVERY_OUTSIDE_ZONE:[400,'Этот адрес вне зоны доставки выбранного кафе.'],
   COUNTER_ACCESS:[403,'Нет доступа к оплате этого заказа.'],
   COUNTER_UNAVAILABLE:[409,'Для этого способа оплаты ещё не настроены реквизиты.'],
   COUNTER_KZT_RATE:[409,'Курс тенге в Google Finance недоступен. Повторите позже или выберите другой способ оплаты.'],
@@ -36,7 +39,12 @@ Deno.serve(async req=>{
        !(action==='options'||action==='create'?isUuid(locationId):isUuid(orderId))){
       return reply({ok:false,error:messages.COUNTER_INVALID[1]},400);
     }
-    if(action==='create'&&(!isUuid(requestKey)||!['rub','sber','tenge','kaspi','usdt'].includes(method)||
+    const orderType=body.orderType??'pickup';
+    const deliveryAddress=typeof body.deliveryAddress==='string'?body.deliveryAddress.trim().slice(0,500):'';
+    const customerPhone=typeof body.customerPhone==='string'?body.customerPhone.trim().slice(0,40):'';
+    if(action==='create'&&(!['pickup','dine_in','delivery'].includes(orderType)||
+       (orderType==='delivery'&&(!deliveryAddress||!customerPhone))||
+       !isUuid(requestKey)||!['rub','sber','tenge','kaspi','usdt'].includes(method)||
        !Array.isArray(items)||items.length<1||items.length>50||
        items.some((item:{productId:unknown,quantity:number})=>!item||!isUuid(item.productId)||!Number.isInteger(item.quantity)||item.quantity<1||item.quantity>99))){
       return reply({ok:false,error:messages.COUNTER_INVALID[1]},400);
@@ -48,7 +56,7 @@ Deno.serve(async req=>{
     const tenge=needsQuote&&['tenge','kaspi'].includes(method)?await googleTengeQuote():null;
     const {data,error}=await db.rpc('cafe_counter_foreign_payment',{
       p_actor:actor,p_action:action,
-      p_args:{locationId,orderId,method,requestKey,items,vndPerRub:quote?.vndPerRub,vndPerKzt:tenge?.vndPerKzt,quotedAt:(quote||tenge)?.quotedAt,
+      p_args:{locationId,orderId,method,requestKey,items,orderType,deliveryAddress,customerPhone,vndPerRub:quote?.vndPerRub,vndPerKzt:tenge?.vndPerKzt,quotedAt:(quote||tenge)?.quotedAt,
         expectedMethod:typeof body.expectedMethod==='string'?body.expectedMethod:undefined,
         expectedAmount:typeof body.expectedAmount==='number'&&Number.isFinite(body.expectedAmount)?body.expectedAmount:undefined,
         tenderedAmountVnd:Number.isSafeInteger(body.tenderedAmountVnd)?body.tenderedAmountVnd:undefined,

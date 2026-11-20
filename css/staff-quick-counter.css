@@ -125,3 +125,67 @@
 .counter-add-products:hover:not(:disabled){background:#c8f1eb!important}
 .counter-add-products:disabled{opacity:.45;cursor:not-allowed}
 .counter-add-products-hint{color:#7b6262;font-size:13px;margin:0 0 8px}
+
+#webPos #posService {
+  min-inline-size: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+#webPos #posService legend { margin-bottom: 7px; font-weight: 750; }
+#webPos .pos-service-options { display: flex; flex-wrap: wrap; gap: 6px; }
+#webPos .pos-service-options button {
+  flex: 1 0 auto;
+  min-height: 44px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid var(--counter-line);
+  color: var(--counter-ink);
+}
+#webPos .pos-service-options button[aria-pressed="true"] {
+  background: #d8f5f2;
+  border-color: #0c7778;
+  color: #075b60;
+  font-weight: 750;
+}
+#webPos #posDeliveryFields:not([hidden]) { display: grid; gap: 8px; margin-top: 10px; }
+#webPos #posDeliveryFields input { width: 100%; min-height: 44px; font-size: 16px; }
+#posDeliveryMapStatus { margin: 0; font-size: 14px; }
+#posDeliveryMapStatus:empty { display: none; }
+#cafeDeliveryMapDialog {
+  width: min(620px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  border: 1px solid #d2e5e4;
+  border-radius: 18px;
+  background: white;
+  color: #163c3d;
+}
+#cafeDeliveryMapDialog::backdrop { background: #163c3d88; }
+#cafeDeliveryMapDialog .delivery-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#cafeDeliveryMapDialog .delivery-map-heading h2 { margin: 0; font-size: 19px; }
+#cafeDeliveryMapDialog button { min-height: 44px; border-radius: 999px; }
+#cafeDeliveryMapDialog .delivery-map-tools { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px; }
+#cafeDeliveryMap { height: min(46dvh, 420px); border-radius: 12px; background: #eaf7f6; }
+#cafeDeliveryMapConfirm { width: 100%; }
+#cafeDeliveryMap .delivery-destination-marker span {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  background: #0c7778;
+  box-shadow: 0 2px 5px #0005;
+  transform: rotate(-45deg);
+}
+#cafeDeliveryMap .umma-cafe-marker span {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  color: white;
+  background: #075b60;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.1;
+}

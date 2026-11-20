@@ -1,4 +1,4 @@
-/* Staff handoff for prepaid deliveries placed through the standalone menu. */
+/* Staff handoff for prepaid cafe deliveries. */
 (() => {
   'use strict';
   const launchUrl = 'https://vn.greensm.com/3eCA/8li1xfm7';
@@ -7,7 +7,7 @@
 
   function handles(order) {
     return order.order_type === 'delivery' && order.dispatch_mode === 'manual' &&
-      order.created_via === 'customer' && order.customer_telegram_id == null && order.chat_available !== true &&
+      ['customer','staff'].includes(order.created_via) && order.customer_telegram_id == null && order.chat_available !== true &&
       order.requires_prepayment === true && order.courier_telegram_id == null;
   }
 
