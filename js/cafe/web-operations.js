@@ -880,6 +880,15 @@ $('webCashShift').onclick=()=>{
 $('webInviteCopy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('webInviteLink').href);$('webInviteResult').textContent='Приглашение скопировано. Передайте его сотруднику.';}catch{$('webInviteResult').textContent='Нажмите и удерживайте ссылку приглашения, затем выберите «Копировать ссылку».';}});
 function syncWorkKeyboard(){const viewport=window.visualViewport;const field=document.activeElement;const editing=field&&/^(INPUT|TEXTAREA|SELECT)$/.test(field.tagName);const closedHeight=document.documentElement.clientHeight||window.innerHeight;document.body.classList.toggle('work-keyboard-open',Boolean(viewport&&editing&&closedHeight-viewport.height>140));}
 window.visualViewport?.addEventListener('resize',syncWorkKeyboard);document.addEventListener('focusin',syncWorkKeyboard);document.addEventListener('focusout',()=>document.body.classList.remove('work-keyboard-open'));
+const counterPanel=$('webPos');
+const counterHeader=counterPanel.querySelector('.counter-header');
+if(counterHeader&&typeof ResizeObserver==='function'){
+ const headerObserver=new ResizeObserver(()=>{
+  const height=counterHeader.getBoundingClientRect().height;
+  if(height)counterPanel.style.setProperty('--counter-header-height',height+'px');
+ });
+ headerObserver.observe(counterHeader,{box:'border-box'});
+}
 if('IntersectionObserver'in window&&$('posBasket')){const basketObserver=new IntersectionObserver(entries=>{basketInView=entries[0].isIntersecting;updateCartJump();},{threshold:0.15});basketObserver.observe($('posBasket'));}
 $('posCartJump')?.addEventListener('click',()=>$('posBasket').scrollIntoView({behavior:'smooth',block:'start'}));
 $('posBackToProducts')?.addEventListener('click',()=>{$('posSearch').scrollIntoView({behavior:'smooth',block:'start'});$('posSearch').focus({preventScroll:true});});
