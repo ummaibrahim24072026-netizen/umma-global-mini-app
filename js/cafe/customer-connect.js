@@ -255,11 +255,34 @@ function scrollToLatestMessage(){
  const generation=++latestScrollGeneration;
  const scroll=()=>{
   if(generation!==latestScrollGeneration||!dialog?.open||!list?.isConnected)return;
-  list.scrollTop=Math.max(0,list.scrollHeight-list.clientHeight);
+  // Force the actual scroll container to its maximum; order cards can resize after insertion.
+  list.scrollTop=list.scrollHeight;
  };
  scroll();
  requestAnimationFrame(()=>requestAnimationFrame(scroll));
  [80,200,450,850,1400].forEach(delay=>setTimeout(scroll,delay));
+}
+// Track late-rendering order cards and viewport changes while the conversation is open.
+function installChatBottomTracking(){
+ if(!publicChat||!list||list.dataset.bottomTracking)return;
+ list.dataset.bottomTracking='1';
+ let lastHeight=0;
+ const observer=new ResizeObserver(()=>{
+  if(!dialog?.open)return;
+  const height=list.scrollHeight;
+  if(height===lastHeight)return;
+  lastHeight=height;
+  if(list.dataset.followBottom==='1')scrollToLatestMessage();
+ });
+ observer.observe(list);
+ const mutation=new MutationObserver(()=>{
+  if(dialog?.open&&list.dataset.followBottom==='1')scrollToLatestMessage();
+ });
+ mutation.observe(list,{childList:true,subtree:true});
+ list.addEventListener('scroll',()=>{
+  if(!dialog?.open)return;
+  if(list.scrollHeight-list.clientHeight-list.scrollTop<28)list.dataset.followBottom='1';
+ },{passive:true});
 }
 function renderThread(){
  if(!list)return;
@@ -562,8 +585,9 @@ function build(){
  let pushSwitch,name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  // User scrolling cancels delayed automatic positioning.
- if(publicChat)list.addEventListener('wheel',()=>{latestScrollGeneration++;},{passive:true});
- if(publicChat)list.addEventListener('touchstart',()=>{latestScrollGeneration++;},{passive:true});
+ if(publicChat)list.addEventListener('wheel',()=>{latestScrollGeneration++;list.dataset.followBottom='0';},{passive:true});
+ if(publicChat)list.addEventListener('touchstart',()=>{latestScrollGeneration++;list.dataset.followBottom='0';},{passive:true});
+ installChatBottomTracking();
  if(publicChat)list.addEventListener('loadedmetadata',event=>{
   const latest=list.lastElementChild;
   if(!event.target.matches('.connect-inline-video video')||!latest?.contains(event.target))return;
@@ -724,7 +748,7 @@ async function open(){
   }else dialog.showModal();
   status.textContent='';
   dialog.update();
-  if(publicChat)scrollToLatestMessage();
+  if(publicChat){list.dataset.followBottom='1';scrollToLatestMessage();}
  }
  await refresh();
  if(publicChat)scrollToLatestMessage();
