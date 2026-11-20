@@ -246,6 +246,15 @@ if(profileAvatar){
   attributes:true,attributeFilter:['src','hidden']
  });
 }
+// Scroll after layout settles: order cards may be inserted after message rendering.
+function scrollToLatestMessage(){
+ if(!publicChat||!dialog?.open||!list)return;
+ const scroll=()=>{if(dialog?.open&&list?.isConnected)list.scrollTop=list.scrollHeight;};
+ scroll();
+ requestAnimationFrame(()=>requestAnimationFrame(scroll));
+ setTimeout(scroll,120);
+ setTimeout(scroll,350);
+}
 function renderThread(){
  if(!list)return;
  const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
@@ -318,7 +327,7 @@ function renderThread(){
  if(publicChat)refreshTextAvatars();
  window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
- if(publicChat&&nearBottom)list.scrollTop=list.scrollHeight;
+ if(publicChat&&nearBottom)scrollToLatestMessage();
  badge();
 }
 async function markRead(){
@@ -706,9 +715,10 @@ async function open(){
   }else dialog.showModal();
   status.textContent='';
   dialog.update();
-  if(publicChat)list.scrollTop=list.scrollHeight;
+  if(publicChat)scrollToLatestMessage();
  }
  await refresh();
+ if(publicChat)scrollToLatestMessage();
 }
 button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
