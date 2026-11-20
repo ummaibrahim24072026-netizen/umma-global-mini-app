@@ -1,6 +1,21 @@
 /* Persistent order updates with optional sound, installed-app badge and Web Push. */
 (()=>{'use strict';const storeKey='umma:order-inbox:v1';let data={states:{},messages:[],readAt:0},translate=x=>(window.ummaMenuI18n?.t||window.ummaI18n?.t||(s=>s))(x);
-try{const saved=JSON.parse(localStorage.getItem(storeKey)||'null');if(saved&&saved.states&&Array.isArray(saved.messages))data=saved;}catch{}
+// Polling and push can report the same milestone hours apart.
+const eventValue=value=>value==='green_delivered'?'delivered':value;
+const messageKey=(orderId,value)=>JSON.stringify([orderId,eventValue(value)]);
+try{
+ const saved=JSON.parse(localStorage.getItem(storeKey)||'null');
+ if(saved?.states&&Array.isArray(saved.messages)){
+  const unique=new Map();
+  for(const message of saved.messages){
+   const key=messageKey(message.orderId,message.value);
+   const previous=unique.get(key);
+   if(!previous||message.at<previous.at)unique.set(key,message);
+  }
+  data={...saved,messages:[...unique.values()].sort((a,b)=>a.at-b.at)};
+  if(data.messages.length!==saved.messages.length)localStorage.setItem(storeKey,JSON.stringify(data));
+ }
+}catch{}
 const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здесь появятся обновления ваших заказов."], "en": ["Order updates", "Close", "Order updates will appear here."], "vi": ["Thông báo", "Đóng", "Thông tin cập nhật đơn hàng sẽ xuất hiện ở đây."], "ko": ["주문 알림", "닫기", "주문 업데이트가 여기에 표시됩니다."], "zh": ["订单消息", "关闭", "订单更新将在此显示。"], "de": ["Bestellmeldungen", "Schließen", "Hier erscheinen Neuigkeiten zu Ihren Bestellungen."], "fr": ["Mes notifications", "Fermer", "Les mises à jour de vos commandes apparaîtront ici."], "th": ["แจ้งเตือนคำสั่งซื้อ", "ปิด", "ข้อมูลอัปเดตคำสั่งซื้อจะแสดงที่นี่"], "ms": ["Kemas kini pesanan", "Tutup", "Kemas kini pesanan anda akan muncul di sini."], "id": ["Notifikasi pesanan", "Tutup", "Pembaruan pesanan Anda akan muncul di sini."], "ar": ["إشعارات الطلبات", "إغلاق", "ستظهر تحديثات طلباتك هنا."], "pt": ["Notificações", "Fechar", "As atualizações dos seus pedidos aparecerão aqui."]};
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
 const greenStages=['booked','assigned','arrived','picked_up','delivered'];
@@ -39,7 +54,7 @@ function renderChatFeed(list){
    ['Placed','Paid','Preparing','Ready','Courier booked','Collected','Delivered']) : delivery?copy.steps:copy.pickup;
   const cancelled=state.status==='cancelled'||values.has('cancelled');
   const status=state.delivery==='delivered'?'delivered':state.status||messages.at(-1).value;
-  const finished=cancelled||['completed','delivered'].includes(status);
+  const finished=cancelled||['completed','delivered'].includes(status)||greenIndex===4;
   const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
   const progress=greenOrder?(greenIndex===4?7:greenIndex===3?6:greenIndex>=0?5:status==='ready'?4:status==='preparing'?3:state.payment==='paid'?2:1):delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
@@ -100,17 +115,47 @@ function render(){
   window.dispatchEvent(new Event('umma:messages-count'));
  }
 }
-function publish(order,t=null){if(t)translate=t;
- const id=String(order.orderNumber||order.number||order.id),number=String(order.orderNumber||order.number||''),at=Date.parse(order.eventAt)||Date.now(),event=order.eventId;
- data.events=data.events||[];if(event&&data.events.includes(event))return;
+function publish(order,t=null){
+ if(t)translate=t;
+ const id=String(order.orderNumber||order.number||order.id);
+ const number=String(order.orderNumber||order.number||'');
+ const at=Date.parse(order.eventAt)||Date.now();
+ const event=order.eventId;
+ data.events=data.events||[];
+ if(event&&data.events.includes(event))return;
  const old=data.states[id];
- const next={greenStage:order.greenSmStage===undefined?old?.greenStage:order.greenSmStage,
+ const next={
+  greenStage:order.greenSmStage===undefined?old?.greenStage:order.greenSmStage,
   greenOrder:order.isGreenSm===undefined?old?.greenOrder:order.isGreenSm,
-  trackingUrl:order.greenSmTrackingUrl===undefined?old?.trackingUrl:greenTracking(order.greenSmTrackingUrl),status:order.status||order.orderStatus,payment:order.paymentStatus,delivery:order.deliveryStatus||order.state,preorder:order.preorderWaiting,orderType:order.orderType||data.states[id]?.orderType,_at:at};let added=0;
- const changes=[];if(next.greenStage&&next.greenStage!==old?.greenStage&&greenStages.includes(next.greenStage))changes.push('green_'+next.greenStage);if(event?order.changes?.preorder==='batch_ready':old?.preorder===true&&next.preorder===false)changes.push(next.status==='pending'&&next.payment!=='paid'?'batch_ready_unpaid':'batch_ready');for(const key of ['status','payment','delivery']){const value=event?order.changes?.[key]:next[key];if(value&&labels[value]&&(event||!old||value!==old[key])&&(key!=='payment'||['paid','refunded'].includes(value)))changes.push(value);}
- for(const value of new Set(changes)){if(data.messages.some(m=>m.orderId===id&&m.value===value&&Math.abs(m.at-at)<30000))continue;data.messages.push({orderId:id,number,value,at});added++;}
+  trackingUrl:order.greenSmTrackingUrl===undefined?old?.trackingUrl:greenTracking(order.greenSmTrackingUrl),
+  status:order.status||order.orderStatus||old?.status,
+  payment:order.paymentStatus??old?.payment,
+  delivery:order.deliveryStatus||order.state||old?.delivery,
+  preorder:order.preorderWaiting??old?.preorder,
+  orderType:order.orderType||old?.orderType,
+  _at:at,
+ };
+ const changes=[];
+ if(next.greenStage!==old?.greenStage&&greenStages.includes(next.greenStage))changes.push('green_'+next.greenStage);
+ const batchReady=event?order.changes?.preorder==='batch_ready':old?.preorder===true&&next.preorder===false;
+ if(batchReady)changes.push(next.status==='pending'&&next.payment!=='paid'?'batch_ready_unpaid':'batch_ready');
+ for(const key of ['status','payment','delivery']){
+  const value=event?order.changes?.[key]:next[key];
+  if(value&&labels[value]&&(event||value!==old?.[key])&&(key!=='payment'||['paid','refunded'].includes(value)))changes.push(value);
+ }
+ const known=new Set(data.messages.filter(m=>m.orderId===id).map(m=>eventValue(m.value)));
+ let added=0;
+ for(const value of changes){
+  const milestone=eventValue(value);
+  if(known.has(milestone))continue;
+  known.add(milestone);
+  data.messages.push({orderId:id,number,value,at});
+  added++;
+ }
  if(!old||at>=(old._at||0))data.states[id]=next;
- if(event)data.events=[...data.events,event].slice(-200);data.messages.sort((a,b)=>a.at-b.at);save();
+ if(event)data.events=[...data.events,event].slice(-200);
+ data.messages.sort((a,b)=>a.at-b.at);
+ save();
  if(old&&added>0&&at>data.readAt)window.ummaOrderAlerts?.sound();
 }
 const orderStages=['pending','confirmed','preparing','ready','completed'];
@@ -135,6 +180,7 @@ dialog.umma-inbox-fixed-header:not([open]){display:none}
 dialog.umma-inbox-fixed-header>.checkout-header{position:relative;top:auto;flex:0 0 auto;z-index:5;background:#f4faf9;isolation:isolate;border-radius:20px 20px 0 0;padding:16px 20px;box-shadow:0 2px 8px #153b3910}
 dialog.umma-inbox-fixed-header>.checkout-header .customer-heading-copy{min-width:0}
 dialog.umma-inbox-fixed-header>.checkout-header h2{margin:0;max-width:none}
+dialog.umma-inbox-fixed-header #ummaOrderInboxTitle:focus{outline:none}
 dialog.umma-inbox-fixed-header>.checkout-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:16px 20px 24px;scrollbar-gutter:stable}
 .umma-inbox-orders,.umma-inbox-stages{list-style:none;margin:0;padding:0}
 .umma-inbox-order{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:6px;padding:12px 0;border-bottom:1px solid #d9e8e4}
@@ -169,7 +215,7 @@ function renderOrders(list){
   const state=data.states[id],values=group.values;
   if(state?.status)values.add(state.status);
   if(state?.delivery)values.add(state.delivery);
-  const finished=values.has('cancelled')||values.has('completed')||values.has('delivered');
+  const finished=values.has('cancelled')||values.has('completed')||values.has('delivered')||values.has('green_delivered')||state?.greenStage==='delivered';
   if(finished!==inboxHistory)continue;
   for(const message of [...group.messages].reverse()){
    visible++;

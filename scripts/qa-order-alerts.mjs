@@ -17,6 +17,11 @@ assert.equal(w.localStorage.getItem('umma:order-alerts:v1'),'on');
 await tick();assert.equal(sounds,2); // unsupported push, foreground sound still works
 const o={id:'q',orderNumber:90,status:'pending',paymentStatus:'pending'};w.ummaOrderInbox.publish(o);assert.equal(sounds,2);assert.equal(badge,1);
 w.ummaOrderInbox.publish({...o,status:'ready',paymentStatus:'paid'});assert.equal(sounds,4);assert.equal(badge,3);w.ummaOrderInbox.publish({...o,status:'ready',paymentStatus:'paid'});assert.equal(sounds,4);
+// A delayed push reports the same milestones already observed through polling.
+w.ummaOrderInbox.publish({...o,status:'ready',paymentStatus:'paid',eventId:'late-ready',
+ eventAt:new Date(Date.now()-54*60000).toISOString(),changes:{status:'ready',payment:'paid'}});
+assert.equal(badge,3);
+assert.equal(sounds,4);
 // Pushes can arrive out of order: retain event times, do not regress the latest state.
 const eventAt=new Date(Date.now()-100).toISOString();
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'completed',eventId:'done',eventAt,changes:{status:'completed'}});
@@ -25,6 +30,25 @@ let stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equa
 w.ummaOrderInbox.publish({...o,orderNumber:91,status:'preparing',eventId:'older',eventAt,changes:{status:'preparing'}});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.length,length);
 w.ummaOrderInbox.open();w.ummaOrderInbox.open();assert.equal(w.document.querySelectorAll('dialog').length,1);assert.equal(badge,0);const inboxEvents=()=>[...w.document.querySelectorAll('dialog .umma-inbox-event-button strong')];assert.equal(inboxEvents().length,3);assert.ok(inboxEvents().every(event=>event.textContent.startsWith('№90 · ')));w.document.querySelectorAll('dialog [role=tab]')[1].click();assert.equal(inboxEvents().length,2);assert.ok(inboxEvents().every(event=>event.textContent.startsWith('№91 · ')));assert.equal(w.document.querySelector('dialog .umma-order-alerts').hidden,true);w.document.querySelector('dialog').close();assert.ok(w.document.querySelector('.umma-order-alerts'));
 w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:true});w.ummaOrderInbox.publish({id:'future',orderNumber:92,status:'pending',paymentStatus:'pending',preorderWaiting:false});stored=JSON.parse(w.localStorage.getItem('umma:order-inbox:v1'));assert.equal(stored.messages.at(-1).value,'batch_ready_unpaid');w.close();
+}
+// Existing local histories can contain repeats created by older versions.
+{
+ const dom=new JSDOM('<html lang="ru"><body></body></html>',{url:'https://qa.invalid/menu/',runScripts:'outside-only'});
+ const w=dom.window, now=Date.now(), key='umma:order-inbox:v1';
+ const message=(orderId,value,at)=>({orderId,number:orderId,value,at});
+ w.localStorage.setItem(key,JSON.stringify({states:{184:{status:'cancelled'},248:{status:'ready'}},readAt:0,messages:[
+  message('184','ready',now-120000),message('184','cancelled',now-90000),message('184','cancelled',now-60000),
+  message('248','paid',now-120000),message('248','ready',now-90000),message('248','paid',now-60000)
+ ]}));
+ w.eval(source('js/cafe/order-inbox.js'));
+ const saved=JSON.parse(w.localStorage.getItem(key));
+ assert.deepEqual(saved.messages.filter(m=>m.orderId==='184').map(m=>m.value),['ready','cancelled']);
+ assert.deepEqual(saved.messages.filter(m=>m.orderId==='248').map(m=>m.value),['paid','ready']);
+ assert.equal(saved.messages.find(m=>m.value==='cancelled').at,now-90000);
+ w.ummaOrderInbox.publish({orderNumber:248,greenSmStage:'delivered',deliveryStatus:'delivered'});
+ const delivered=JSON.parse(w.localStorage.getItem(key)).messages.filter(m=>m.orderId==='248');
+ assert.equal(delivered.filter(m=>['green_delivered','delivered'].includes(m.value)).length,1);
+ w.close();
 }
 // Supported browser: one explicit permission tap, subscription bound to the exact receipt.
 {
