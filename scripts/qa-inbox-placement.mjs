@@ -4,6 +4,13 @@ const inbox=d.getElementById('customerMessages');
 const trigger=d.getElementById('customerMessagesButton');
 w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
 w.AbortSignal=AbortSignal;
+const observedChatRows=new Set();
+let notifyChatResize;
+w.ResizeObserver=class{
+ constructor(callback){notifyChatResize=callback;}
+ observe(node){observedChatRows.add(node);}
+ disconnect(){observedChatRows.clear();}
+};
 const staffReplies=[
  {id:'reply-1',direction:'staff',body:'Первый ответ',created_at:'2026-11-07T12:00:00Z'},
  {id:'reply-2',direction:'staff',body:'Второй ответ',created_at:'2026-11-07T12:01:00Z'}
@@ -74,6 +81,35 @@ assert.ok(orderCard(53).classList.contains('umma-chat-order-card--finished'));
 assert.match(orderCard(53).textContent,/Заказ доставлен/);
 w.ummaOrderInbox.publish({orderNumber:54,status:'cancelled'});
 assert.match(orderCard(54).textContent,/Отменён/);
+const thread=chatDialog.querySelector('.connect-thread');
+let scrollHeight=1000,clientHeight=400,scrollTop=0;
+Object.defineProperties(thread,{
+ scrollHeight:{get:()=>scrollHeight},
+ clientHeight:{get:()=>clientHeight},
+ scrollTop:{get:()=>scrollTop,set:value=>{scrollTop=Math.max(0,Math.min(value,scrollHeight-clientHeight));}}
+});
+chatDialog.close();
+await w.ummaCustomerConnect.open();
+assert.equal(thread.scrollTop,600,'Opening the chat shows the end of the thread.');
+const lastCard=orderCard(54);
+assert.ok(observedChatRows.has(thread));
+assert.ok(observedChatRows.has(lastCard),'Observe cards even when the thread height stays fixed.');
+scrollHeight+=110;
+notifyChatResize();
+assert.equal(thread.scrollTop,710,'A card that grows remains fully in view.');
+clientHeight-=60;
+notifyChatResize();
+assert.equal(thread.scrollTop,770,'A smaller viewport keeps the card above the composer.');
+thread.scrollTop=300;
+thread.dispatchEvent(new w.Event('scroll'));
+scrollHeight+=40;
+notifyChatResize();
+assert.equal(thread.scrollTop,300,'Resizing respects manual scrolling into chat history.');
+thread.scrollTop=scrollHeight;
+thread.dispatchEvent(new w.Event('scroll'));
+scrollHeight+=40;
+notifyChatResize();
+assert.equal(thread.scrollTop,850,'Returning to the bottom resumes following the latest card.');
 chatDialog.close();
 assert.equal(w.sessionStorage.getItem('umma:chat:open'),null);
 assert.equal(inbox.open,false);

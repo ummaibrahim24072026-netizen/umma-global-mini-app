@@ -246,47 +246,27 @@ if(profileAvatar){
   attributes:true,attributeFilter:['src','hidden']
  });
 }
-// Scroll after layout settles: order cards may be inserted after message rendering.
-// Keep the newest content visible through asynchronous order-card and font layout.
-// A scroll request is bounded: it must never fight a customer reading older messages.
-let latestScrollGeneration=0;
+let chatResizeObserver;
+let followedScrollTop=0;
 function scrollToLatestMessage(){
- if(!publicChat||!dialog?.open||!list)return;
- const generation=++latestScrollGeneration;
- const scroll=()=>{
-  if(generation!==latestScrollGeneration||!dialog?.open||!list?.isConnected)return;
-  // Force the actual scroll container to its maximum; order cards can resize after insertion.
-  list.scrollTop=list.scrollHeight;
- };
- scroll();
- requestAnimationFrame(()=>requestAnimationFrame(scroll));
- [80,200,450,850,1400].forEach(delay=>setTimeout(scroll,delay));
+ if(list.dataset.followBottom!=='1'||!dialog?.open)return;
+ list.scrollTop=list.scrollHeight;
+ followedScrollTop=list.scrollTop;
 }
-// Track late-rendering order cards and viewport changes while the conversation is open.
-function installChatBottomTracking(){
- if(!publicChat||!list||list.dataset.bottomTracking)return;
- list.dataset.bottomTracking='1';
- let lastHeight=0;
- const observer=new ResizeObserver(()=>{
-  if(!dialog?.open)return;
-  const height=list.scrollHeight;
-  if(height===lastHeight)return;
-  lastHeight=height;
-  if(list.dataset.followBottom==='1')scrollToLatestMessage();
- });
- observer.observe(list);
- const mutation=new MutationObserver(()=>{
-  if(dialog?.open&&list.dataset.followBottom==='1')scrollToLatestMessage();
- });
- mutation.observe(list,{childList:true,subtree:true});
- list.addEventListener('scroll',()=>{
-  if(!dialog?.open)return;
-  if(list.scrollHeight-list.clientHeight-list.scrollTop<28)list.dataset.followBottom='1';
- },{passive:true});
+function followLatestMessage(){
+ list.dataset.followBottom='1';
+ scrollToLatestMessage();
+}
+function syncChatResizeObserver(){
+ if(!chatResizeObserver)return;
+ chatResizeObserver.disconnect();
+ if(!dialog?.open)return;
+ // The list can keep its height while a message or order card grows.
+ chatResizeObserver.observe(list);
+ for(const row of list.children)chatResizeObserver.observe(row);
 }
 function renderThread(){
  if(!list)return;
- const nearBottom=list.scrollHeight-list.clientHeight-list.scrollTop<48;
  const receipt=receiptCopy[lang()]||receiptCopy.en;
  const locale=document.documentElement.lang||'en';
  const dateTime=new Intl.DateTimeFormat(locale,{dateStyle:'short',timeStyle:'short'});
@@ -356,7 +336,10 @@ function renderThread(){
  if(publicChat)refreshTextAvatars();
  window.ummaOrderInbox?.renderChatFeed?.(list);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
- if(publicChat&&nearBottom)scrollToLatestMessage();
+ if(publicChat){
+  syncChatResizeObserver();
+  scrollToLatestMessage();
+ }
  badge();
 }
 async function markRead(){
@@ -584,17 +567,15 @@ function build(){
  off.onclick=disablePush;
  let pushSwitch,name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
- // User scrolling cancels delayed automatic positioning.
- if(publicChat)list.addEventListener('wheel',()=>{latestScrollGeneration++;list.dataset.followBottom='0';},{passive:true});
- if(publicChat)list.addEventListener('touchstart',()=>{latestScrollGeneration++;list.dataset.followBottom='0';},{passive:true});
- installChatBottomTracking();
- if(publicChat)list.addEventListener('loadedmetadata',event=>{
-  const latest=list.lastElementChild;
-  if(!event.target.matches('.connect-inline-video video')||!latest?.contains(event.target))return;
-  const {top,bottom}=list.getBoundingClientRect();
-  const messageTop=latest.getBoundingClientRect().top;
-  if(messageTop>=top&&messageTop<bottom)list.scrollTop=list.scrollHeight;
- },true);
+ if(publicChat){
+  if(typeof ResizeObserver==='function')chatResizeObserver=new ResizeObserver(scrollToLatestMessage);
+  list.addEventListener('scroll',()=>{
+   const gap=list.scrollHeight-list.clientHeight-list.scrollTop;
+   if(gap<=2)list.dataset.followBottom='1';
+   else if(list.scrollTop<followedScrollTop-2)list.dataset.followBottom='0';
+   followedScrollTop=list.scrollTop;
+  },{passive:true});
+ }
  const form=el('form'),body=el('textarea');form.className='connect-compose';body.maxLength=2000;const send=el('button',t(10),'primary connect-send');send.type='submit';
  body.addEventListener('input',()=>{pending=null;});
  if(publicChat){
@@ -616,7 +597,7 @@ function build(){
     await refreshHidden();
     state=await api('list');
     renderThread();
-    list.scrollTop=list.scrollHeight;
+    followLatestMessage();
     status.textContent='';
    }finally{sending(false);}
   }:null});
@@ -648,7 +629,7 @@ function build(){
     try{state=await api('list');}catch{setTimeout(refresh,0);}
    }
    renderThread();
-   if(publicChat)list.scrollTop=list.scrollHeight;
+   if(publicChat)followLatestMessage();
    await markRead();
   },status,!publicChat).finally(()=>sending(false));
  };
@@ -707,7 +688,10 @@ function build(){
  document.body.append(dialog);
  dialog.addEventListener('close',()=>{
   if(dialog.open)return;
-  if(publicChat){try{sessionStorage.removeItem(CHAT_OPEN_KEY);}catch{}}
+  if(publicChat){
+   chatResizeObserver?.disconnect();
+   try{sessionStorage.removeItem(CHAT_OPEN_KEY);}catch{}
+  }
   composer.close();
   list.querySelectorAll('audio,video').forEach(media=>media.pause());
   if(publicChat){
@@ -748,10 +732,9 @@ async function open(){
   }else dialog.showModal();
   status.textContent='';
   dialog.update();
-  if(publicChat){list.dataset.followBottom='1';scrollToLatestMessage();}
+  if(publicChat)followLatestMessage();
  }
  await refresh();
- if(publicChat)scrollToLatestMessage();
 }
 button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
