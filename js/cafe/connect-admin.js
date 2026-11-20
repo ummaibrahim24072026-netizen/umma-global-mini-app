@@ -61,6 +61,7 @@ function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-ope
 window.addEventListener('resize',syncChatScreen);
 const workspace=document.getElementById('webMessages');
 const badge=document.getElementById('webInboxCount');
+const messagesTab=badge?.closest('button');
 const button=workspace?null:node('button','Сообщения клиентов','umma-connect-button');
 if(button){
  button.type='button';button.hidden=true;button.setAttribute('aria-haspopup','dialog');
@@ -515,7 +516,12 @@ async function refresh(){
   }
  }
  const unread=d.clients.reduce((total,c)=>total+(Number(c.unread)||0),0);
- if(badge){badge.hidden=!unread;badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label','Непрочитанных: '+unread);}
+ if(badge){
+  badge.hidden=!unread;
+  badge.textContent=unread>99?'99+':String(unread);
+  if(unread)messagesTab.setAttribute('aria-label','Сообщения, непрочитанных: '+unread);
+  else messagesTab.removeAttribute('aria-label');
+ }
  if(button)button.textContent='Сообщения клиентов'+(unread?' · '+unread:'');
  if(workspace)announceUnread(d.clients);
  if(workspace)document.dispatchEvent(new CustomEvent('umma:staff-inbox-counts',{detail:{unread}}));

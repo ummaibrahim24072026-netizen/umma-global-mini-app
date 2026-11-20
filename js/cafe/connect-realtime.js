@@ -24,7 +24,7 @@
    if(fulfillment)current.send(JSON.stringify({topic:fulfillmentTopic,event:'phx_join',payload:{config:{broadcast:{self:false,ack:false},presence:{key:''},postgres_changes:[],private:false}},ref:String(++seq)}));
    heartbeat=setInterval(()=>{if(current.readyState===1)current.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++seq)}));},25000);
   };
-  current.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==='postgres_changes')notify();if(m.topic===fulfillmentTopic&&((m.event==='broadcast'&&m.payload?.event==='order-change')||(m.event==='phx_reply'&&m.payload?.status==='ok')))notifyOrders();if(m.event==='phx_reply'&&m.payload?.status==='error')current.close();}catch{}};
+  current.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==='postgres_changes')notify();if(m.topic===fulfillmentTopic&&((m.event==='broadcast'&&m.payload?.event==='order-change')||(m.event==='phx_reply'&&m.payload?.status==='ok')))notifyOrders();if(m.event==='phx_reply'&&m.payload?.status==='error'&&!(fulfillment&&m.topic===topic))current.close();}catch{}};
   current.onclose=()=>{clearInterval(heartbeat);if(socket===current)socket=null;schedule();};
   current.onerror=()=>current.close();
  }

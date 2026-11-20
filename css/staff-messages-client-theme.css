@@ -1,4 +1,18 @@
 /* Staff inbox layout. The shared .umma-connect styles also serve modal dialogs. */
+.web-work-app #webInboxCount,
+#webMessages .work-thread-unread {
+ background:#137a4d;
+ color:#fff;
+ -webkit-text-fill-color:currentColor;
+ text-shadow:none;
+ font-weight:800;
+ font-variant-numeric:tabular-nums;
+}
+.web-work-app #webInboxCount {
+ min-width:22px;
+ padding:2px 5px;
+ box-shadow:0 0 0 2px #fff;
+}
 .web-work-app[data-workspace="messages"] {
  --work-accent:#087b80;
  --work-line:#d8e9e6;
@@ -241,8 +255,6 @@
  min-height:22px;
  padding:1px 5px;
  border-radius:999px;
- background:#087b80;
- color:#fff;
  font-size:.72rem;
 }
 @media (min-width:761px) {

@@ -3,29 +3,55 @@ const read=p=>readFileSync(p,'utf8'),tick=()=>new Promise(r=>setTimeout(r,20));
 const expiredAt=new Date(Date.now()-3600000).toISOString();
 const employees=[{actor_id:21,name:'QA Kitchen',login:null,assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'invited'},{actor_id:22,name:'QA Active',login:'qa-kitchen',assignments:[{staff_role:'kitchen',location_id:'cafe',locationName:'HALAL UMMA'}],status:'active'},{actor_id:23,name:'QA Expired',login:null,assignments:[],status:'expired',inviteExpiresAt:expiredAt}];
 for(const owner of [true,false]){
- const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=true;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
+ const dom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{url:'https://qa.invalid/staff.html?work=messages',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document,calls=[];let board=0,boardMode,unread=[0,0];w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.AbortSignal=AbortSignal;w.ummaKitchen={open(...args){board++;boardMode=args;}};w.eval(read('js/cafe/web-session.js'));w.ummaStaffAuth.save('a'.repeat(64));
  w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
  if(url.endsWith('cafe-connect')){
-  const msg={id:'qa-message',direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:44Z',read_at:unread?null:'2026-11-07T13:09:00Z'};
-  if(b.action==='staffRead')unread=false;
-  const result=b.action==='staffInbox'?{clients:[{id:'customer-id',name:'Гость QA',unread:unread?1:0,last_message:msg.body}],total:1,subscribers:0,pushDevices:0}:b.action==='staffThread'?{client:{id:'customer-id',name:'Гость QA'},messages:[msg]}:{};
+  const people=['Гость QA','Второй клиент'];
+  const conversations=people.map((name,index)=>({id:'customer-'+index,name,unread:unread[index],last_message:'Проверка связи'}));
+  const index=conversations.findIndex(c=>c.id===b.clientId);
+  if(b.action==='staffRead')unread[index]=0;
+  const result=b.action==='staffInbox'?{clients:conversations}:b.action==='staffThread'?{
+   client:conversations[index],
+   messages:Array.from({length:unread[index]},(_,i)=>({
+    id:'qa-message-'+i,direction:'customer',body:'Проверка связи',created_at:'2026-11-07T13:08:0'+i+'Z',read_at:null
+   }))
+  }:{};
   return new Response(JSON.stringify({ok:true,...result}));
  }
  const out=url.endsWith('cafe-menu')?{ok:true,products:[],inventory:[]}:b.action==='me'?{ok:true,user:{id:10,name:'QA',role:owner?'super_admin':'employee'},assignments:owner?[]:[{staff_role:'kitchen',location_id:'cafe',can_accept_payments:false}],locations:[{id:'cafe',name:'HALAL UMMA'}]}:b.action==='staffList'?{ok:true,accounts:[],employees:employees.filter(e=>!calls.some(c=>c.action==='staffDismissExpiredInvite'&&c.actorId===e.actor_id))}:b.action==='inviteExisting'?{ok:true,invite:'b'.repeat(64)}:{ok:true};return new Response(JSON.stringify(out));};
  w.eval(read('js/cafe/web-operations.js'));w.eval(read('js/cafe/connect-media.js'));w.eval(read('js/cafe/connect-composer.js'));w.eval(read('js/cafe/connect-admin.js'));await tick();await tick();assert.equal(d.getElementById('webWorkspace').hidden,false);
  if(owner){
   assert.equal(d.body.dataset.workspace,'messages');
-  assert.equal(d.querySelector('#webInboxCount').textContent,'1');
+  const badge=d.getElementById('webInboxCount');
+  assert.equal(badge.hidden,true);
   assert.equal(d.querySelector('#webMessages .work-inbox').hidden,false);
   const inbox=d.getElementById('webMessages');
   assert.equal(inbox.querySelector('.work-section-switch, .work-campaign'),null);
   assert.equal(inbox.querySelector('input[type=search]').placeholder,'Найти переписку');
   assert.deepEqual([...inbox.querySelectorAll('.work-inbox-filters button')].map(button=>button.textContent),['Все','Непрочитанные']);
   assert.equal(calls.some(b=>b.action==='staffRead'),false);
-  d.querySelector('[data-client-thread]').click();await tick();
+  const tab=d.querySelector('[data-web-tab=messages]');
+  const row=index=>inbox.querySelector('[data-client-thread=customer-'+index+']');
+  const unreadBadge=index=>row(index).querySelector('.work-thread-unread');
+  d.querySelector('[data-web-tab=overview]').click();
+  assert.equal(inbox.hidden,true);
+  unread=[2,1];
+  d.dispatchEvent(new w.Event('umma:connect-realtime'));await tick();
+  assert.equal(badge.hidden,false);
+  assert.equal(badge.textContent,'3');
+  assert.equal(tab.getAttribute('aria-label'),'Сообщения, непрочитанных: 3');
+  tab.click();await tick();
+  assert.equal(unreadBadge(0).textContent,'2');
+  assert.equal(unreadBadge(1).textContent,'1');
+  row(0).click();await tick();
   assert.match(d.querySelector('.work-thread').textContent,/Проверка связи/);
-  assert.equal(calls.find(b=>b.action==='staffRead').clientId,'customer-id');
-  assert.equal(d.querySelector('#webInboxCount').hidden,true);
+  assert.equal(calls.find(b=>b.action==='staffRead').clientId,'customer-0');
+  assert.equal(unreadBadge(0),null);
+  assert.equal(unreadBadge(1).textContent,'1');
+  assert.equal(badge.textContent,'1');
+  row(1).click();await tick();
+  assert.equal(unreadBadge(1),null);
+  assert.equal(badge.hidden,true);
   d.querySelector('[data-web-tab=pos]').click();
   assert.equal(d.querySelector('#webCashViews').hidden,true);
   assert.equal(d.querySelector('#cafeKitchenPage').hidden,true);
@@ -42,7 +68,7 @@ for(const owner of [true,false]){
    assert.equal(calls.find(b=>b.action==='staffDismissExpiredInvite').inviteExpiresAt,expiredAt);
    assert.equal(d.querySelector('[data-staff-status=expired]'),null);
    assert.equal(d.querySelectorAll('.staff-account').length,2);
- }else{assert.equal(d.body.dataset.workspace,'orders');assert.equal(board,1);assert.equal(d.querySelector('[data-web-tab=orders]').hidden,false);for(const tab of ['admin','pos','courier','messages'])assert.equal(d.querySelector('[data-web-tab='+tab+']').hidden,true);assert.equal(calls.some(b=>b.action==='staffList'),false);}
+ }else{assert.equal(d.body.dataset.workspace,'kitchen');assert.equal(board,1);assert.equal(d.querySelector('[data-web-tab=kitchen]').hidden,false);for(const tab of ['admin','pos','orders','courier','messages'])assert.equal(d.querySelector('[data-web-tab='+tab+']').hidden,true);assert.equal(calls.some(b=>b.action==='staffList'),false);}
  w.close();
 }
 // Actual Edge handler: active/pending/expired staff are visible only to the owner; no auth secrets returned.
