@@ -58,7 +58,13 @@ assert.equal(w.sessionStorage.getItem('umma:chat:open'),'1');
 assert.equal(d.querySelector('.umma-connect-chat .connect-settings'),null);
 assert.equal(d.querySelector('.connect-settings-toggle'),null);
 assert.ok(badge(chat).hidden);
-assert.equal(badge(trigger).textContent,'3');
+assert.ok(badge(button).hidden, 'Order updates shown in the chat are marked read there.');
+assert.ok(badge(trigger).hidden, 'Opening Messages clears both kinds of unread updates.');
+assert.equal(badge(trigger).textContent,'');
+const inboxStorageKey='umma:order-inbox:v1';
+const readInbox=()=>JSON.parse(w.localStorage.getItem(inboxStorageKey));
+assert.ok(readInbox().messages.every(message=>message.at<=readInbox().readAt),
+ 'Read order updates stay cleared after a reload.');
 const orderCard=number=>chatDialog.querySelector('.umma-chat-order-card[data-order-id="'+number+'"]');
 assert.match(orderCard(52).textContent,/Заказ №52.*Готовится/);
 assert.ok(chatDialog.querySelector('textarea'));
@@ -66,9 +72,14 @@ let selectedOrder;
 w.addEventListener('umma:open-specific-order',event=>{selectedOrder=event.detail.orderId;});
 orderCard(52).querySelector('button').click();
 assert.equal(selectedOrder,'52');
-w.ummaOrderInbox.publish({orderNumber:52,status:'ready'});
+w.ummaOrderInbox.publish({
+ orderNumber:52,status:'ready',eventAt:new Date(readInbox().readAt+1000).toISOString()
+});
+assert.ok(badge(trigger).hidden, 'Updates displayed in the open chat leave the count cleared.');
 assert.match(orderCard(52).textContent,/Заказ готов/);
-w.ummaOrderInbox.publish({orderNumber:52,status:'completed'});
+w.ummaOrderInbox.publish({
+ orderNumber:52,status:'completed',eventAt:new Date(readInbox().readAt+1000).toISOString()
+});
 assert.ok(orderCard(52).classList.contains('umma-chat-order-card--finished'));
 const toggle=orderCard(52).querySelector('[aria-expanded=false]');
 toggle.click();
@@ -89,7 +100,13 @@ Object.defineProperties(thread,{
  scrollTop:{get:()=>scrollTop,set:value=>{scrollTop=Math.max(0,Math.min(value,scrollHeight-clientHeight));}}
 });
 chatDialog.close();
-await w.ummaCustomerConnect.open();
+w.ummaOrderInbox.publish({
+ orderNumber:55,status:'pending',eventAt:new Date(readInbox().readAt+1000).toISOString()
+});
+assert.equal(badge(trigger).textContent,'1','An update arriving after closing Messages has a badge.');
+trigger.click();
+await flush();
+assert.ok(badge(trigger).hidden,'Reopening Messages clears the new update.');
 assert.equal(thread.scrollTop,600,'Opening the chat shows the end of the thread.');
 const lastCard=orderCard(54);
 assert.ok(observedChatRows.has(thread));
@@ -166,4 +183,4 @@ assert.deepEqual(senderNames,['Ибрахим','']);
 chatDialog.close();
 // Standalone render of the actual header, with no live server requests or order actions.
 d.getElementById('menuLanguage').innerHTML='<option>Русский</option>';d.getElementById('products').innerHTML='<div class="message">Готовые блюда появятся после приёма кухни.</div>';
-mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, independent unread counts, clear-on-read, and order timelines.');
+mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, both counters clear in the chat, and order timelines.');

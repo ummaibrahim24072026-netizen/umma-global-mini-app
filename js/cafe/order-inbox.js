@@ -33,7 +33,7 @@ const host=document.getElementById('orderInboxHost'),messagesSection=host?.close
 const inPublicMenu=inHub||!!host?.closest('.customer-actions');
 const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления':ui()[0];
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
-function save(){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render();}
+function save(feedChanged=true){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render(feedChanged);}
 // Render order status cards inside the existing UMMA chat, without a second inbox screen.
 function renderChatFeed(list){
  if(!list)return;
@@ -102,13 +102,25 @@ function renderChatFeed(list){
   if(nextMessage)list.insertBefore(card,nextMessage);
   else list.append(card);
  }
+ if(inHub&&list.closest('#customerChatDialog[open]'))markChatRead();
 }
-function render(){
+function markChatRead(){
+ if(document.hidden)return;
+ const latest=data.messages.at(-1)?.at;
+ if(!(latest>data.readAt))return;
+ data.readAt=latest;
+ // Refresh the counters without rebuilding the order cards that just rendered.
+ save(false);
+}
+document.addEventListener('visibilitychange',()=>{
+ if(inHub&&document.getElementById('customerChatDialog')?.open)markChatRead();
+});
+function render(feedChanged=true){
+ if(feedChanged)window.dispatchEvent(new Event('umma:order-feed-change'));
  const list=document.querySelector('dialog[data-umma-inbox][open] .umma-inbox-orders');
  if(list)renderOrders(list);
  const unread=data.messages.filter(m=>m.at>data.readAt).length;
  window.ummaOrderAlerts?.badge(unread);
- window.dispatchEvent(new Event('umma:order-feed-change'));
  button.textContent=(inPublicMenu?'':'🔔 ')+inboxTitle()+(unread&&!inHub?' · '+unread:'');
  if(inHub){
   button.dataset.unread=String(unread);
@@ -155,8 +167,9 @@ function publish(order,t=null){
  if(!old||at>=(old._at||0))data.states[id]=next;
  if(event)data.events=[...data.events,event].slice(-200);
  data.messages.sort((a,b)=>a.at-b.at);
+ const shouldSound=old&&added>0&&at>data.readAt;
  save();
- if(old&&added>0&&at>data.readAt)window.ummaOrderAlerts?.sound();
+ if(shouldSound)window.ummaOrderAlerts?.sound();
 }
 const orderStages=['pending','confirmed','preparing','ready','completed'];
 const deliveryStates=['waiting_courier','courier_assigned','picked_up','delivered'];
