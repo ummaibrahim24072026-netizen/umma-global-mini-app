@@ -280,7 +280,14 @@ function open(){
    back.className='umma-notifications-back';
    back.textContent=document.documentElement.lang.startsWith('ru')?'← Назад':document.documentElement.lang.startsWith('vi')?'← Quay lại':'← Back';
    back.setAttribute('aria-label',back.textContent.replace(/^←\\s*/, ''));
-   back.onclick=()=>dialog.close();
+   back.onclick=()=>{
+    dialog.close();
+    if(!messagesSection.open){
+     if(window.ummaCustomerConnect?.open)void window.ummaCustomerConnect.open();
+     else messagesSection.show();
+     window.dispatchEvent(new Event('umma:order-inbox-visibility'));
+    }
+   };
    header.append(back);
   }
   header.append(brandHeading);
@@ -302,13 +309,17 @@ function open(){
   dialog.remove();
   if(messagesSection&&!document.querySelector('dialog[data-umma-inbox][open]')){
    messagesSection.inert=false;
-   if(messagesSection.open&&(focus===document.body||dialog.contains(focus)))button.focus({preventScroll:true});
+   if(focus===document.body||dialog.contains(focus)){
+    document.getElementById('customerMessagesButton')?.focus({preventScroll:true});
+   }
+   window.dispatchEvent(new Event('umma:order-inbox-visibility'));
   }
  });
  if(inPublicMenu&&brandTemplate){
   dialog.show();
   if(messagesSection)messagesSection.inert=true;
   heading.focus({preventScroll:true});
+  if(inHub)window.dispatchEvent(new Event('umma:order-inbox-visibility'));
  }else dialog.showModal();
  data.readAt=Math.max(Date.now(),...data.messages.map(m=>m.at));
  save();
