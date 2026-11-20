@@ -140,6 +140,25 @@ const readyToIssue=order=>order.payment_status==='paid'&&!order.preorder_waiting
 const canTakePayment=order=>order.canAcceptPayments===true&&order.payment_status==='pending'&&!closedOrder(order);
 const locationId=()=>$('posLocation').value;
 const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
+const fxMethods=new Set(['usd','eur']);
+let fxQuote=null,fxLoading=false;
+const fxCurrency=()=>selectedMethod.toUpperCase();
+const fxCash=()=>fxMethods.has(selectedMethod);
+const fxReady=()=>fxCash()&&fxQuote?.currency===fxCurrency()&&Date.now()-Date.parse(fxQuote.quotedAt)<24*60*60*1000;
+const fxFormat=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:fxCurrency(),minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
+async function refreshFxQuote(){
+ const currency=fxCurrency();if(!fxCash())return;
+ fxLoading=true;fxQuote=null;paymentFields();
+ try{const response=await api('quote',{currency},'cafe-counter-fx-cash');if(fxCurrency()===currency)fxQuote=response;}
+ catch(error){if(fxCurrency()===currency)result(error.message);}
+ finally{fxLoading=false;paymentFields();}
+}
+async function acceptFxCash(order,received){
+ const currency=fxCurrency();
+ const data=await api('settle',{currency,orderId:order.id,received},'cafe-counter-fx-cash');
+ order.paymentStatus='paid';$('posCash').value='';showPayment(order);
+ result('Получено '+new Intl.NumberFormat('en-US',{style:'currency',currency}).format(received)+' · Сдача '+money(data.changeVnd)+' · Курс '+money(data.rate)+' за 1 '+currency);
+}
 const foreignApi=(action,body)=>api(action,body,'cafe-counter-payment');
 let selectedMethod='cash',switchingPayment=false,options=null,optionsLocation='',optionsError=false;
 async function refreshMethods(){
