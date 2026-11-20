@@ -24,18 +24,57 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  const staff=await openWorkspace('staff.html');
  {
  const w=staff.window,d=w.document;
- assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'orders':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
+ assert.equal(d.querySelector('[data-web-tab=pos]').hidden,!paid);assert.equal(d.querySelector('[data-web-tab=ingredients]'),null);assert.equal(d.body.dataset.workspace,role==='kitchen'?'kitchen':'pos');assert.equal(d.getElementById('readyStockPanel').dataset.allowed,assigned==='kitchen'?'true':'false');
  assert.equal(d.getElementById('readyStockPanel').hidden,true,'order and counter views exclude planning');
  assert.equal(d.querySelector('[data-web-tab=kitchen]').hidden,role==='cashier');
+ assert.equal(d.querySelector('[data-web-tab=portions]').hidden,role==='cashier');
+ assert.equal(d.querySelector('[data-web-tab=orders]').hidden,role==='kitchen');
  if(role!=='cashier'){
-  d.querySelector('[data-web-tab=kitchen]').click();
-  assert.equal(d.body.dataset.workspace,'kitchen');
+  d.querySelector('[data-web-tab=portions]').click();
+  assert.equal(d.body.dataset.workspace,'portions');
   assert.equal(d.getElementById('readyStockPanel').hidden,false);
   assert.equal(d.getElementById('cafeKitchenPage').hidden,true);
   assert.equal(d.getElementById('webPos').hidden,true);
-  d.querySelector('[data-web-tab=orders]').click();
+  d.querySelector('[data-web-tab=kitchen]').click();
+  assert.equal(d.body.dataset.workspace,'kitchen');
   assert.equal(d.getElementById('readyStockPanel').hidden,true);
+  assert.equal(d.getElementById('cafeKitchenPage').hidden,false);
   d.querySelector('[data-web-tab=pos]').click();
+ }
+ if(role==='kitchen'){
+  w.eval(read('js/cafe/kitchen.js'));
+  const pickup={id:'pickup',order_number:25,location_id:'cafe',status:'pending',order_type:'pickup',
+    created_at:'2026-11-20T07:00:00Z',created_via:'staff',payment_status:'paid',customer_note:'Соус отдельно',
+    cafe_order_items:[{product_name_ru:'Манты',quantity:2,line_total_vnd:300000}]};
+  orders=[pickup,{...pickup,id:'dine-in',order_type:'dine_in',order_number:26},
+    {...pickup,id:'delivery',order_type:'delivery',order_number:27},
+    {...pickup,id:'unpaid',created_via:'customer',payment_status:'pending'},
+    {...pickup,id:'preorder',order_number:28,preorder_waiting:true,preorder_expected_at:'2026-11-20T10:00:00Z'}];
+  d.querySelector('[data-web-tab=kitchen]').click();
+  await tick();
+  const card=id=>d.querySelector('[data-kitchen-order="'+id+'"]');
+  const filter=name=>d.querySelector('[data-kitchen-filter="'+name+'"]');
+  assert.equal(d.querySelector('#cafeKitchenPage h1').textContent,'Кухня');
+  assert.equal(d.getElementById('cafeCashToggle').hidden,true);
+  assert.equal(filter('payment').hidden,true);
+  assert.equal(card('unpaid'),null);
+  assert.match(card('pickup').textContent,/С собой.*Манты× 2.*Соус отдельно/);
+  assert.match(card('dine-in').textContent,/На месте/);
+  assert.match(card('delivery').textContent,/Доставка/);
+  assert.match(card('preorder').textContent,/Ждёт партию/);
+  assert.equal(card('preorder').querySelector('[data-new-status]'),null);
+  assert.equal(card('pickup').querySelector('.kitchen-order-total'),null);
+  filter('new').click();
+  assert.equal(card('preorder'),null);
+  card('pickup').querySelector('[data-new-status=preparing]').click();
+  await tick();
+  assert.equal(card('pickup'),null);
+  filter('preparing').click();
+  card('pickup').querySelector('[data-new-status=ready]').click();
+  await tick();
+  filter('ready').click();
+  assert.match(card('pickup').textContent,/Готов/);
+  assert.equal(card('pickup').querySelector('[data-new-status=completed]'),null);
  }
  assert.equal(d.getElementById('webIngredients').hidden,true);
  assert.equal(d.getElementById('webStockLink').hidden,role==='cashier');
@@ -112,10 +151,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   await tick();
   const issueCard=id=>d.querySelector('#counterIssueList [data-counter-order="'+id+'"]');
   assert.equal(issueCard('another-online'),null,'unpaid ready orders cannot be handed over');
-  w.confirm=()=>false;
-  issueCard('online').querySelector('[data-counter-action=issue]').click();
-  assert.equal(requests.some(b=>b.action==='updateStatus'),false);
-  w.confirm=()=>true;
+  w.confirm=()=>assert.fail('Issuing at the counter should take one tap');
   issueCard('online').querySelector('[data-counter-action=issue]').click();
   await tick();
   assert.equal(issueCard('online'),null);

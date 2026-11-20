@@ -840,7 +840,7 @@ function tab(name, cafeId, orderFilter){
  $('webPos').hidden=name!=='pos';$('webAdmin').hidden=name!=='admin';
  $('webMessages').hidden=name!=='messages';
  $('webCashViews').hidden=name!=='cashOrders';
- $('cafeKitchenPage').hidden=!['cashOrders','orders','courier'].includes(name);
+ $('cafeKitchenPage').hidden=!['cashOrders','orders','kitchen','courier'].includes(name);
  if(counter){setCounterView('sale');void refreshCounterOrders();}
  document.querySelectorAll('[data-web-tab]').forEach(b=>b.setAttribute('aria-current',String(b===nav)));
  document.querySelectorAll('[data-cash-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cashView===name)));
@@ -849,7 +849,7 @@ function tab(name, cafeId, orderFilter){
   if(cafeId)boardArgs.push(cafeId);
   window.ummaKitchen.open(...boardArgs);
  }
- if(name==='kitchen'&&cafeId){
+ if(name==='portions'&&cafeId){
   const stockLocation=$('readyStockLocation');
   if(Array.from(stockLocation.options).some(o=>o.value===cafeId)&&stockLocation.value!==cafeId){
    stockLocation.value=cafeId;
@@ -908,6 +908,8 @@ overviewLocation.closest('label').hidden=hasSingleCafe;
 $('webOverviewCafeName').hidden=!hasSingleCafe;
 $('webOverviewCafeName').textContent=hasSingleCafe?managerLocations[0].name:'';
 updateOverviewLinks();
+const hasKitchen=owner||roles.some(a=>['kitchen','manager'].includes(a.staff_role));
+const hasOrderDesk=owner||sell||roles.some(a=>['manager','cashier','waiter'].includes(a.staff_role));
 const stockLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&['kitchen','manager'].includes(a.staff_role)));
 $('webStockLink').hidden=requested==='stock'||!stockLocations.length;
 if(requested==='stock'){
@@ -920,10 +922,10 @@ if(requested==='stock'){
  return;
 }
 $('webWorkspace').hidden=false;
-for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',!!stockLocations.length],['orders',kitchen],['courier',courier],['admin',!!managerLocations.length],['messages',canMessage]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
+for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',hasKitchen],['portions',!!stockLocations.length],['orders',hasOrderDesk],['courier',courier],['admin',!!managerLocations.length],['messages',canMessage]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
 $('counterCafeLabel').hidden=$('posLocation').options.length<2;
-counterReturn=managerLocations.length?'overview':roles.some(a=>a.staff_role==='cashier')?'cashOrders':'orders';
+counterReturn=managerLocations.length?'overview':roles.some(a=>a.staff_role==='cashier')?'cashOrders':hasKitchen?'kitchen':'orders';
 $('webInvitePanel').hidden=!owner;
 $('webStaffDescription').textContent=owner?'Управляйте ролями и доступом сотрудников к рабочему кабинету.':'Сотрудники, назначенные в ваши кафе.';
 document.body.classList.toggle('work-owner',owner);
@@ -931,7 +933,7 @@ document.body.classList.toggle('work-counter-alerts',owner||roles.some(a=>['kitc
 document.body.classList.toggle('work-waiter',roles.some(a=>a.staff_role==='waiter')&&!owner&&!managerLocations.length);
 document.body.classList.toggle('work-cash-access', sell||!!managerLocations.length||roles.some(a=>a.staff_role==='waiter'&&a.can_accept_payments));
 document.dispatchEvent(new CustomEvent('umma:staff-ready',{detail:me}));
-tab(canMessage&&requested==='messages'?'messages':requested==='counter'&&sell?'pos':managerLocations.length?'overview':sell?'pos':kitchen?'orders':'courier');
+tab(canMessage&&requested==='messages'?'messages':requested==='counter'&&sell?'pos':managerLocations.length?'overview':sell?'pos':hasKitchen?'kitchen':kitchen?'orders':'courier');
 if(sell){
  try{
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();

@@ -79,9 +79,18 @@
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
   const awaitingCounterPayment=o=>(o.requires_prepayment===true||o.created_via==="customer")&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const awaitingWebPayment=o=>awaitingCounterPayment(o)&&o.created_via==="customer"&&o.chat_available===false;
+  const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
+  const isNewOrder=o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o);
+  const kitchenStatuses={pending:"Новый",confirmed:"Новый",preparing:"Готовится",ready:"Готов"};
+  const kitchenEmptyMessages={
+    active:"На кухне пока нет активных заказов.",
+    new:"Нет новых заказов.",
+    preparing:"Сейчас ничего не готовится.",
+    ready:"Нет заказов, готовых к передаче."
+  };
   const hiddenFromPreparation=o=>awaitingCounterPayment(o)&&(
     ((o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)||
-    (document.body.dataset.workspace==="orders"&&awaitingWebPayment(o))
+    isKitchenQueue() || (document.body.dataset.workspace==="orders"&&awaitingWebPayment(o))
   );
   const preparationAlerts=()=>orders.filter(o=>!hiddenFromPreparation(o)&&!(
     ["orders","pos","cashOrders"].includes(document.body.dataset.workspace)&&awaitingWebPayment(o)
@@ -106,9 +115,28 @@
     badge.textContent = String(count);
   }
 
+  function renderPreparationCard(order, items, type, notice, action) {
+    const batch = waitingBatch(order);
+    const status = batch ? "Ждёт партию" : kitchenStatuses[order.status] || statusNames[order.status] || order.status;
+    const itemHtml = items.map(item => '<li><span class="work-order-item-name">' + orderItemPhoto(item) +
+      '<span>' + esc(item.product_name_ru) + '</span></span><strong class="kitchen-item-quantity">× ' +
+      esc(item.quantity) + '</strong></li>').join("");
+    const note = order.customer_note ? '<p class="kitchen-prep-note"><strong>Комментарий</strong> ' + esc(order.customer_note) + '</p>' : "";
+    const batchTime = batch ? '<p class="kitchen-prep-note">Предзаказ · партия к ' + esc(formatDate(order.preorder_expected_at)) + '</p>' : "";
+    const actor = order.status === "preparing" && order.preparationActor
+      ? '<p class="kitchen-prep-actor">Готовит ' + esc(order.preparationActor) + '</p>' : "";
+    return '<article data-kitchen-order="' + esc(order.id) + '" class="kitchen-order-card status-' + esc(order.status) + '">' +
+      notice + '<div class="kitchen-order-top"><div><span class="kitchen-order-number">Заказ №' + esc(order.order_number) +
+      '</span><small>' + esc(formatDate(order.created_at)) + '</small></div><span class="kitchen-status" data-order-type="' +
+      esc(order.order_type) + '">' + esc(type) + '</span></div><p class="kitchen-prep-status">' + esc(status) +
+      '</p>' + batchTime + '<ul class="kitchen-order-items">' + itemHtml + '</ul>' + note + actor +
+      (action ? '<div class="kitchen-order-actions">' + action + '</div>' : "") + '</article>';
+  }
+
   function render() {
     const root = byId("cafeKitchenOrders");
     if (!root) return;
+    const kitchenQueue=isKitchenQueue();
     const finished = order => ["completed","cancelled"].includes(order.status) || (courierWorkspace && order.delivery_status==="delivered" && order.payment_status==="paid");
     let shown = filter === "active" ? orders.filter(o => !finished(o)) : filter === "closed" ? orders.filter(finished) : orders;
     shown=shown.filter(o=>!hiddenFromPreparation(o)&&(!boardLocation||o.location_id===boardLocation));
@@ -121,28 +149,32 @@
       const number = byId("webCashSearch")?.value.replace(/^\s*№?\s*/, "").trim();
       if (number) shown=shown.filter(o=>String(o.order_number).startsWith(number));
     }
-    if (filter === "new") shown=shown.filter(o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o));
+    if (filter === "new") shown=shown.filter(o=>isNewOrder(o)&&(!kitchenQueue||!waitingBatch(o)));
     if (filter === "preparing") shown=shown.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o));
     if (filter === "ready") shown=shown.filter(o=>o.status==="ready");
     if (filter === "delivery") shown=shown.filter(o=>!finished(o)&&o.order_type==="delivery"&&o.delivery_status==="picked_up");
     const webSummary=byId("webOrderSummary");
     if(webSummary){
-      webSummary.hidden=courierWorkspace||document.body.dataset.workspace==="cashOrders";
+      webSummary.hidden=kitchenQueue||courierWorkspace||cashBoard;
       const visible=orders.filter(o=>(!boardLocation||o.location_id===boardLocation)&&!finished(o)&&!hiddenFromPreparation(o));
       const totals={payment:visible.filter(awaitingCounterPayment).length,preparing:visible.filter(o=>o.status==="preparing"&&!awaitingCounterPayment(o)).length,ready:visible.filter(o=>o.status==="ready").length};
       webSummary.querySelectorAll('[data-work-total]').forEach(el=>el.textContent=String(totals[el.dataset.workTotal]||0));
     }
-    shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
+    if(kitchenQueue){
+      const rank=order=>waitingBatch(order)?3:order.status==="ready"?2:order.status==="preparing"?1:0;
+      shown.sort((a,b)=>rank(a)-rank(b)||Date.parse(a.created_at)-Date.parse(b.created_at));
+    }else{
+      shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
+    }
     if (!shown.length) {
       root.innerHTML = "";
-      showMessage(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет.");
+      showMessage((kitchenQueue&&kitchenEmptyMessages[filter])||(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет."));
       return;
     }
-    if (["Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
+    if ([...Object.values(kitchenEmptyMessages), "Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
       const items = Array.isArray(order.cafe_order_items) ? order.cafe_order_items : [];
-      const itemHtml = items.map(item => '<li><span class="work-order-item-name">' + orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + (item.ready_stock_state==='planned'?' · готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(item.preorder_ready_at))):'') + ' × ' + Number(item.quantity) + '</span></span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const next = nextStep[order.status];
       const orderStaffRole = order.staffRole || staffRole;
       const allowedForRole = orderStaffRole !== "courier" && ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
@@ -157,12 +189,14 @@
         ["pending", "confirmed", "preparing"].includes(order.status);
       const quickIssue = canIssue ? '<button type="button" class="kitchen-action" data-order-id="' +
         esc(order.id) + '" data-new-status="completed">Выдать</button>' : "";
-      const kitchenCompletion = !webBoard || orderStaffRole !== "kitchen";
+      const kitchenCompletion = !kitchenQueue && (!webBoard || orderStaffRole !== "kitchen");
       const action = next && !(green && next.status === "completed") && (!webBoard || (ownPreparation && (next.status !== "completed" || kitchenCompletion))) && !waitingBatch(order) && allowedForRole && !awaitingCounterPayment(order) && (next.status !== "completed" || completionAllowed) ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-new-status="' + next.status + '">' + (green && next.status === 'completed' ? 'Подтвердить доставку' : webBoard ? ({preparing:'Взять в работу',ready:'Готово',completed:'Выдать'}[next.status] || next.label) : next.label) + '</button>' : "";
       const canCancel = order.payment_status!=="paid" && !["completed","cancelled"].includes(order.status) &&
         ["manager", "cashier", "waiter", "kitchen"].includes(orderStaffRole);
       const cancel = canCancel ? '<button type="button" class="kitchen-cancel" data-order-id="' + esc(order.id) + '" data-new-status="cancelled">Отменить</button>' : "";
       const type = { pickup:"С собой", dine_in: webBoard ? "На месте" : "В кафе", delivery:"Доставка" }[order.order_type] || order.order_type;
+      if(kitchenQueue) return renderPreparationCard(order, items, type, notice, action);
+      const itemHtml = items.map(item => '<li><span class="work-order-item-name">' + orderItemPhoto(item) + '<span>' + esc(item.product_name_ru) + (item.ready_stock_state==='planned'?' · готовится к '+esc(new Intl.DateTimeFormat('ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(item.preorder_ready_at))):'') + ' × ' + Number(item.quantity) + '</span></span><strong>' + money(item.line_total_vnd) + '</strong></li>').join("");
       const paymentMethod = rubleAmount(order)?"Сбер · "+rubleAmount(order):{ cash:"Наличные", qr:"QR-платёж", bank_transfer:"Банковский перевод", card:"Карта" }[order.payment_method] || order.payment_method;
       const paymentStatus = order.payment_status === "paid" ? "Оплачено" : order.payment_status === "refunded" ? "Возвращено" : "Ожидает оплаты";
       const deliveryNames = { waiting_courier:"Ожидает курьера", courier_assigned:"Курьер назначен", picked_up:"У курьера", delivered:"Доставлено" };
@@ -372,6 +406,7 @@
 
   function open(asCourier = false, initialFilter = "active", locationId) {
     const cashBoard=initialFilter==="payment";
+    const kitchenQueue=isKitchenQueue();
     boardLocation=locationId;
     ordersRevision++;
     if(byId("webCashSearchLabel")){
@@ -387,17 +422,23 @@
     if(toolsLabel)toolsLabel.textContent=courierWorkspace?"Ещё":cashBoard?"Действия кассы":"Настройки кухни";
     const closedFilter=byId("courierClosedFilter");if(closedFilter)closedFilter.hidden=!courierWorkspace;
     const allFilter=document.querySelector('[data-kitchen-filter="all"]');if(allFilter)allFilter.hidden=courierWorkspace;
-    document.querySelectorAll('[data-kitchen-filter]').forEach(button=>button.classList.toggle("is-active",button.dataset.kitchenFilter===initialFilter));
+    document.querySelectorAll('[data-kitchen-filter]').forEach(button=>{
+      const name=button.dataset.kitchenFilter;
+      button.classList.toggle("is-active",name===initialFilter);
+      button.setAttribute("aria-pressed",String(name===initialFilter));
+      if(!byId("webOverview") || button.id==="courierClosedFilter")return;
+      button.hidden=kitchenQueue&&!Object.hasOwn(kitchenEmptyMessages,name);
+    });
     if(byId("courierOwnerSetup"))byId("courierOwnerSetup").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     if(byId("selfCourierControls"))byId("selfCourierControls").hidden=!courierWorkspace||window.ummaRole!=="super_admin";
     for(const id of ["cafeCashToggle","kitchenTabletToggle","cafeKitchenToOrders"])if(byId(id))byId(id).hidden=courierWorkspace||(cashBoard&&id!=="cafeCashToggle");
     if(byId("kitchenOrderAudio"))byId("kitchenOrderAudio").hidden=courierWorkspace||cashBoard;
-    if(byId("webOverview")&&!document.body.classList.contains("work-cash-access")&&byId("cafeCashToggle"))byId("cafeCashToggle").hidden=true;
+    if(byId("webOverview")&&(kitchenQueue||!document.body.classList.contains("work-cash-access"))&&byId("cafeCashToggle"))byId("cafeCashToggle").hidden=true;
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
     const cashToggle=byId("cafeCashToggle");
     if(cashToggle){cashToggle.setAttribute("aria-expanded","false");cashToggle.textContent="💰 Касса и смена";}
-    const hint=byId("workBoardHint");if(hint)hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":cashBoard?"Выберите заказ и подтвердите фактическую оплату.":"Откройте заказ, проверьте блюда и отметьте следующий этап.";
-    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":document.body.classList.contains("work-waiter")?"Заказы гостей":"Заказы кухни";
+    const hint=byId("workBoardHint");if(hint){hint.hidden=kitchenQueue;hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":cashBoard?"Выберите заказ и подтвердите фактическую оплату.":"Откройте заказ, проверьте блюда и отметьте следующий этап.";}
+    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":kitchenQueue?"Кухня":document.body.classList.contains("work-waiter")?"Заказы гостей":"Заказы кухни";
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage"), inventory = byId("cafeInventoryPage"), locations = byId("locationAdminPage");
@@ -524,7 +565,10 @@
   });
   document.querySelectorAll("[data-kitchen-filter]").forEach(button => button.addEventListener("click", () => {
     filter = button.getAttribute("data-kitchen-filter") || "active";
-    document.querySelectorAll("[data-kitchen-filter]").forEach(other => other.classList.toggle("is-active", other === button));
+    document.querySelectorAll("[data-kitchen-filter]").forEach(other => {
+      other.classList.toggle("is-active", other === button);
+      other.setAttribute("aria-pressed",String(other===button));
+    });
     render();
   }));
   async function assignCourier(orderId) {
