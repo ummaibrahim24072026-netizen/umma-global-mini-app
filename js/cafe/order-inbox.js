@@ -3,7 +3,17 @@
 try{const saved=JSON.parse(localStorage.getItem(storeKey)||'null');if(saved&&saved.states&&Array.isArray(saved.messages))data=saved;}catch{}
 const inboxCopy={"ru": ["Мои сообщения", "Закрыть", "Здесь появятся обновления ваших заказов."], "en": ["Order updates", "Close", "Order updates will appear here."], "vi": ["Thông báo", "Đóng", "Thông tin cập nhật đơn hàng sẽ xuất hiện ở đây."], "ko": ["주문 알림", "닫기", "주문 업데이트가 여기에 표시됩니다."], "zh": ["订单消息", "关闭", "订单更新将在此显示。"], "de": ["Bestellmeldungen", "Schließen", "Hier erscheinen Neuigkeiten zu Ihren Bestellungen."], "fr": ["Mes notifications", "Fermer", "Les mises à jour de vos commandes apparaîtront ici."], "th": ["แจ้งเตือนคำสั่งซื้อ", "ปิด", "ข้อมูลอัปเดตคำสั่งซื้อจะแสดงที่นี่"], "ms": ["Kemas kini pesanan", "Tutup", "Kemas kini pesanan anda akan muncul di sini."], "id": ["Notifikasi pesanan", "Tutup", "Pembaruan pesanan Anda akan muncul di sini."], "ar": ["إشعارات الطلبات", "إغلاق", "ستظهر تحديثات طلباتك هنا."], "pt": ["Notificações", "Fechar", "As atualizações dos seus pedidos aparecerão aqui."]};
 const ui=()=>inboxCopy[document.documentElement.lang.split('-')[0]]||inboxCopy.en;
-const labels={batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
+const greenStages=['booked','assigned','arrived','picked_up','delivered'];
+const greenLabels={
+ ru:['Курьер вызван','Курьер назначен','Курьер прибыл','Курьер забрал заказ','Заказ доставлен','Отследить доставку'],
+ en:['Courier booked','Courier assigned','Courier arrived','Courier collected the order','Delivered','Track delivery'],
+ vi:['Đã đặt tài xế','Đã có tài xế','Tài xế đã đến','Tài xế đã lấy hàng','Đã giao hàng','Theo dõi giao hàng'],
+};
+function greenTracking(value){
+ if(typeof value!=='string'||!/^https:\/\/(?:[a-z0-9-]+\.)?(?:greensm\.com|xanhsm\.com)\/[a-z0-9][^\s\\]*$/i.test(value))return null;
+ return new URL(value).href;
+}
+const labels={green_booked:'Курьер вызван',green_assigned:'Курьер назначен',green_arrived:'Курьер прибыл',green_picked_up:'Курьер забрал заказ',green_delivered:'Заказ доставлен',batch_ready_unpaid:'Блюда приготовились — оплатите предзаказ',batch_ready:'Блюда приготовились — собираем ваш предзаказ',pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',paid:'Оплачено',awaiting_payment:'Ожидаем подтверждение оплаты',refunded:'Возвращено'};
 const host=document.getElementById('orderInboxHost'),messagesSection=host?.closest('#customerMessages'),inHub=!!messagesSection;
 const inPublicMenu=inHub||!!host?.closest('.customer-actions');
 const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'Уведомления':ui()[0];
@@ -21,30 +31,42 @@ function renderChatFeed(list){
  for(const [id,messages] of [...groups].sort((a,b)=>a[1][0].at-b[1][0].at)){
   const state=data.states[id]||{},values=new Set(messages.map(m=>m.value));
   const delivery=state.orderType==='delivery'||['waiting_courier','courier_assigned','picked_up','delivered'].some(v=>values.has(v)||state.delivery===v);
-  const steps=delivery?copy.steps:copy.pickup;
+  const greenIndex=greenStages.indexOf(state.greenStage);
+  const greenOrder=state.greenOrder===true||greenIndex>=0;
+  const greenCopy=greenLabels[language]||greenLabels.en;
+  const steps=greenOrder ? ({ru:['Оформлен','Оплачен','Готовится','Готов','Курьер вызван','Курьер забрал','Доставлен'],
+   vi:['Đã đặt','Đã trả tiền','Đang nấu','Đã xong','Đã gọi tài xế','Đã lấy hàng','Đã giao']}[language]||
+   ['Placed','Paid','Preparing','Ready','Courier booked','Collected','Delivered']) : delivery?copy.steps:copy.pickup;
   const cancelled=state.status==='cancelled'||values.has('cancelled');
   const status=state.delivery==='delivered'?'delivered':state.status||messages.at(-1).value;
   const finished=cancelled||['completed','delivered'].includes(status);
   const stage=cancelled?0:status==='completed'||status==='delivered'?steps.length:status==='ready'?3:status==='preparing'?2:status==='confirmed'||status==='pending'?1:1;
-  const progress=delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
+  const progress=greenOrder?(greenIndex===4?7:greenIndex===3?6:greenIndex>=0?5:status==='ready'?4:status==='preparing'?3:state.payment==='paid'?2:1):delivery&&(state.delivery==='courier_assigned'||state.delivery==='waiting_courier')?3:delivery&&state.delivery==='picked_up'?4:stage;
   const card=document.createElement('li');card.className='umma-chat-order-card';card.dataset.orderId=id;
   card.style.cssText='list-style:none;display:grid;gap:10px;max-width:100%;width:100%;padding:14px;border:1px solid #c9e2df;border-radius:18px;background:#f5fbfa;color:#30494e;box-sizing:border-box;overflow-wrap:anywhere';
   const head=document.createElement('strong');head.textContent=copy.order+' №'+(messages.at(-1).number||id);
-  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#45676d;font-weight:650';
+  const statusLine=document.createElement('div');statusLine.textContent=cancelled?copy.cancel:(greenCopy[greenIndex]||labels[state.delivery]||labels[status]||status);statusLine.style.cssText='font-size:13px;color:#45676d;font-weight:650';
   const progressBar=document.createElement('div');progressBar.style.cssText='display:grid;grid-template-columns:repeat('+steps.length+',minmax(0,1fr));gap:4px';
   for(let i=0;i<steps.length;i++){const segment=document.createElement('span');segment.style.cssText='height:7px;border-radius:99px;background:'+(i<progress&&!cancelled?'var(--umma-brand-primary, #03a2a5)':'#d9e9e7');progressBar.append(segment);}
   const stageLabels=document.createElement('div');stageLabels.style.cssText='display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#55716e';
+  if(greenOrder){progressBar.setAttribute('role','img');progressBar.setAttribute('aria-label',steps.join(' → '));
+    for(let i=0;i<steps.length;i++)progressBar.children[i].title=steps[i];
+  }
   const first=document.createElement('span');first.textContent=steps[0];const last=document.createElement('span');last.textContent=steps.at(-1);stageLabels.append(first,last);
   const latest=document.createElement('time');latest.style.cssText='font-size:11px;color:#647c7a';latest.dateTime=new Date(messages.at(-1).at).toISOString();latest.textContent=new Date(messages.at(-1).at).toLocaleString(language);
   const detail=document.createElement('button');detail.type='button';detail.className='umma-chat-order-action';detail.textContent=copy.detail;detail.style.cssText='border:1px solid var(--umma-brand-primary, #03a2a5);border-radius:999px;padding:10px 12px;font:700 13px system-ui;color:#45676d;cursor:pointer';
   detail.onclick=()=>window.dispatchEvent(new CustomEvent('umma:open-specific-order',{detail:{orderId:String(id)}}));
+  const trackingUrl=!cancelled&&greenTracking(state.trackingUrl);
+  const tracking=trackingUrl?document.createElement('a'):null;
+  if(tracking){tracking.className='umma-chat-order-action';tracking.textContent=greenCopy[5];
+   tracking.href=trackingUrl;tracking.target='_blank';tracking.rel='noopener noreferrer';}
   if(finished){
     card.classList.add('umma-chat-order-card--finished');
     card.style.gap='7px';card.style.padding='12px 14px';
     const toggle=document.createElement('button');toggle.type='button';toggle.className='umma-chat-order-action';
     toggle.textContent=copy.expand;toggle.setAttribute('aria-expanded','false');
     toggle.style.cssText='justify-self:start;border:0;border-radius:999px;font:650 12px system-ui;padding:5px 10px;color:#45676d;cursor:pointer';
-    const extras=[progressBar,stageLabels,latest,detail];
+    const extras=[progressBar,stageLabels,latest,detail,...(tracking?[tracking]:[])];
     extras.forEach(el=>el.hidden=true);
     toggle.onclick=()=>{
       const expanded=toggle.getAttribute('aria-expanded')!=='true';
@@ -53,7 +75,7 @@ function renderChatFeed(list){
       extras.forEach(el=>el.hidden=!expanded);
     };
     card.append(head,statusLine,toggle,...extras);
-  }else card.append(head,statusLine,progressBar,stageLabels,latest,detail);
+  }else card.append(head,statusLine,progressBar,stageLabels,latest,detail,...(tracking?[tracking]:[]));
   // Order updates belong in the chronological chat stream, never in a pinned footer.
   const orderTime=Number(messages[0].at)||0;
   card.dataset.timelineAt=String(orderTime);
@@ -81,8 +103,11 @@ function render(){
 function publish(order,t=null){if(t)translate=t;
  const id=String(order.orderNumber||order.number||order.id),number=String(order.orderNumber||order.number||''),at=Date.parse(order.eventAt)||Date.now(),event=order.eventId;
  data.events=data.events||[];if(event&&data.events.includes(event))return;
- const next={status:order.status||order.orderStatus,payment:order.paymentStatus,delivery:order.deliveryStatus||order.state,preorder:order.preorderWaiting,orderType:order.orderType||data.states[id]?.orderType,_at:at},old=data.states[id];let added=0;
- const changes=[];if(event?order.changes?.preorder==='batch_ready':old?.preorder===true&&next.preorder===false)changes.push(next.status==='pending'&&next.payment!=='paid'?'batch_ready_unpaid':'batch_ready');for(const key of ['status','payment','delivery']){const value=event?order.changes?.[key]:next[key];if(value&&labels[value]&&(event||!old||value!==old[key])&&(key!=='payment'||['paid','refunded'].includes(value)))changes.push(value);}
+ const old=data.states[id];
+ const next={greenStage:order.greenSmStage===undefined?old?.greenStage:order.greenSmStage,
+  greenOrder:order.isGreenSm===undefined?old?.greenOrder:order.isGreenSm,
+  trackingUrl:order.greenSmTrackingUrl===undefined?old?.trackingUrl:greenTracking(order.greenSmTrackingUrl),status:order.status||order.orderStatus,payment:order.paymentStatus,delivery:order.deliveryStatus||order.state,preorder:order.preorderWaiting,orderType:order.orderType||data.states[id]?.orderType,_at:at};let added=0;
+ const changes=[];if(next.greenStage&&next.greenStage!==old?.greenStage&&greenStages.includes(next.greenStage))changes.push('green_'+next.greenStage);if(event?order.changes?.preorder==='batch_ready':old?.preorder===true&&next.preorder===false)changes.push(next.status==='pending'&&next.payment!=='paid'?'batch_ready_unpaid':'batch_ready');for(const key of ['status','payment','delivery']){const value=event?order.changes?.[key]:next[key];if(value&&labels[value]&&(event||!old||value!==old[key])&&(key!=='payment'||['paid','refunded'].includes(value)))changes.push(value);}
  for(const value of new Set(changes)){if(data.messages.some(m=>m.orderId===id&&m.value===value&&Math.abs(m.at-at)<30000))continue;data.messages.push({orderId:id,number,value,at});added++;}
  if(!old||at>=(old._at||0))data.states[id]=next;
  if(event)data.events=[...data.events,event].slice(-200);data.messages.sort((a,b)=>a.at-b.at);save();

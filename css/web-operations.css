@@ -32,3 +32,21 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
+
+.web-fulfillment-dialog {
+  width: min(92vw, 420px);
+  max-height: 90vh;
+  box-sizing: border-box;
+  border: 1px solid var(--umma-brand-line, #b9d8d4);
+  border-radius: 20px;
+  padding: 20px;
+  background: #fff;
+  color: var(--umma-brand-ink, #183b3b);
+}
+.web-fulfillment-dialog::backdrop { background: rgb(18 49 49 / 45%); }
+.web-fulfillment-dialog form,
+.green-delivery-controls { display: grid; gap: 10px; }
+.web-fulfillment-dialog input,
+.web-fulfillment-dialog select { width: 100%; box-sizing: border-box; }
+.green-delivery-controls { flex-basis: 100%; }
+.green-delivery-controls p { margin: 0; }
