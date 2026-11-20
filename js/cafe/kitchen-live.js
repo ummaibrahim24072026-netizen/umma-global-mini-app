@@ -5,10 +5,13 @@
   let seen={};
   try { seen=JSON.parse(localStorage.getItem(key)||"{}")||{}; } catch { seen={}; }
   let orders=[],alerts=new Map(),started=false,timer=null,audio=null;
-  const knownAppOrders=new Set();
+  const appOrders={known:new Set(),loaded:false};
+  const kitchenOrders={known:new Set(),loaded:false};
   const voiceKey="umma_kitchen_order_voice";
-  let appOrdersLoaded=false,voiceEnabled=true,playback=Promise.resolve();
+  let voiceEnabled=true,playback=Promise.resolve();
   try { voiceEnabled=localStorage.getItem(voiceKey)!=="off"; } catch {}
+  const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
+  const speechEnabled=()=>isKitchenQueue()||voiceEnabled;
   const page=()=>document.getElementById("cafeKitchenPage");
   const visible=()=>page()?.hidden===false||document.getElementById("cafeWaiterPage")?.hidden===false;
   const canAnnounce=()=>!document.hidden&&(document.body.dataset.workspace==="pos"||visible()&&!page()?.classList.contains("courier-workspace"));
@@ -52,26 +55,32 @@
   }
 
   function announce(message){
+    const kitchen=isKitchenQueue();
+    const stillOnScreen=()=>canAnnounce()&&kitchen===isKitchenQueue();
     playback=playback.then(async()=>{
-      if(!canAnnounce()||audio?.state!=="running")return;
+      if(!stillOnScreen())return;
+      if(kitchen&&audio?.state!=="running")await unlockAudio();
+      if(!stillOnScreen()||audio?.state!=="running")return;
       beep(true);
-      if(!voiceEnabled)return;
+      if(!speechEnabled())return;
       await new Promise(resolve=>setTimeout(resolve,340));
-      if(canAnnounce()&&voiceEnabled)return speak(message);
+      if(stillOnScreen()&&speechEnabled())return speak(message);
     });
     return playback;
   }
 
-  function updateAppOrders(){
+  function updateIncomingOrders(){
+    const kitchen=isKitchenQueue();
+    const history=kitchen?kitchenOrders:appOrders;
     const counterLocation=document.body.dataset.workspace==="pos"
       ? document.getElementById("posLocation")?.value : "";
     const incoming=orders.filter(order=>{
-      if(order.created_via!=="customer"||knownAppOrders.has(order.id))return false;
-      knownAppOrders.add(order.id);
+      if((!kitchen&&order.created_via!=="customer")||history.known.has(order.id))return false;
+      history.known.add(order.id);
       return !["completed","cancelled"].includes(order.status)
         &&(!counterLocation||order.location_id===counterLocation);
     });
-    if(appOrdersLoaded&&canAnnounce()){
+    if(history.loaded&&canAnnounce()){
       incoming.sort((a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at));
       for(const order of incoming){
         const items=(order.cafe_order_items||[]).map(item=>item.product_name_ru+" — "+item.quantity);
@@ -79,7 +88,7 @@
         void announce([heading,...items].join(". ")+".");
       }
     }
-    appOrdersLoaded=true;
+    history.loaded=true;
   }
 
   const voice=document.getElementById("kitchenOrderVoice");
@@ -91,9 +100,11 @@
       try { localStorage.setItem(voiceKey,voiceEnabled?"on":"off"); } catch {}
     });
   }
-  document.addEventListener("click",()=>{
+  function unlockOnInteraction(){
     if(canAnnounce()&&audio?.state!=="running")void unlockAudio();
-  });
+  }
+  document.addEventListener("click",unlockOnInteraction);
+  document.addEventListener("keydown",unlockOnInteraction);
   document.getElementById("kitchenAudioTest")?.addEventListener("click",async event=>{
     const button=event.currentTarget,status=document.getElementById("kitchenAudioStatus");
     button.disabled=true;
@@ -109,7 +120,7 @@
 
   function update(next,courierWorkspace=false){
     orders=next||[];
-    if(!courierWorkspace)updateAppOrders();
+    if(!courierWorkspace)updateIncomingOrders();
     const previous=alerts;
     const nextAlerts=new Map();
     let changed=false;
@@ -161,10 +172,13 @@
     const on=page()?.classList.toggle("kitchen-tablet-mode");
     event.currentTarget.setAttribute("aria-pressed",String(!!on));
     event.currentTarget.textContent=on?"▣ Обычный режим":"▣ Режим планшета";
-    await unlockAudio();
-    beep();
+    if(!isKitchenQueue()){
+      await unlockAudio();
+      beep();
+    }
   });
   function start(){
+    if(isKitchenQueue())unlockOnInteraction();
     if(timer)return;
     timer=window.setInterval(()=>{
       if(document.hidden||!visible())return;

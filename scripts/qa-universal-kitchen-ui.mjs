@@ -45,7 +45,19 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.querySelector('[data-web-tab=pos]').click();
  }
  if(role==='kitchen'){
+  const tones=[],speech=[];
+  let audioAllowed=false,resumeAttempts=0,poll;
+  w.localStorage.setItem('umma_kitchen_order_voice','off');
+  w.AudioContext=class {
+   state='suspended';currentTime=0;
+   async resume(){resumeAttempts++;if(audioAllowed)this.state='running';}
+   createOscillator(){return {frequency:{},connect(){},start(){tones.push(this.frequency.value);},stop(){}};}
+   createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}
+  };
+  w.SpeechSynthesisUtterance=class {constructor(text){this.text=text;}};
+  w.speechSynthesis={speak(utterance){speech.push(utterance.text);utterance.onend();}};
   w.eval(read('js/cafe/kitchen.js'));
+  w.eval(read('js/cafe/kitchen-live.js'));
   const pickup={id:'pickup',order_number:25,location_id:'cafe',status:'pending',order_type:'pickup',
     created_at:'2026-11-20T07:00:00Z',created_via:'staff',payment_status:'paid',customer_note:'Соус отдельно',
     cafe_order_items:[{product_name_ru:'Манты',quantity:2,line_total_vnd:300000}]};
@@ -54,9 +66,36 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
     {...pickup,id:'unpaid',created_via:'customer',payment_status:'pending'},
     {...pickup,id:'already-ready',status:'ready'},
     {...pickup,id:'preorder',order_number:28,preorder_waiting:true,preorder_expected_at:'2026-11-20T10:00:00Z'}];
+  const originalSetInterval=w.setInterval;
+  w.setInterval=(callback,delay)=>{assert.equal(delay,2000);poll=callback;return 1;};
   d.querySelector('[data-web-tab=kitchen]').click();
+  w.setInterval=originalSetInterval;
   await tick();
+  assert.ok(resumeAttempts>0,'kitchen tries to enable audio as soon as it opens');
+  const header=d.querySelector('.cafe-kitchen-header');
+  const tools=header.querySelector('.kitchen-board-tools');
+  const tablet=d.getElementById('kitchenTabletToggle');
+  assert.equal(tools.hidden,true);
+  assert.equal(tablet.parentElement,header);
+  assert.equal(tablet.hidden,false);
+  audioAllowed=true;
+  header.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+  tablet.click();
+  assert.equal(tablet.getAttribute('aria-pressed'),'true');
+  assert.equal(d.getElementById('cafeKitchenPage').classList.contains('kitchen-tablet-mode'),true);
+  tablet.click();
+  assert.equal(tablet.getAttribute('aria-pressed'),'false');
+  assert.deepEqual(tones,[]);
   const card=id=>d.querySelector('[data-kitchen-order="'+id+'"]');
+  orders.push({...pickup,id:'new-counter-order',order_number:29});
+  poll();
+  await new Promise(resolve=>setTimeout(resolve,400));
+  assert.ok(card('new-counter-order'),'a new order renders without manual refresh');
+  assert.deepEqual(tones,[660,880]);
+  assert.deepEqual(speech,['Новый заказ номер 29. Манты — 2.']);
+  poll();
+  await tick();
+  assert.deepEqual(tones,[660,880],'automatic refresh does not repeat the alert');
   assert.equal(d.querySelector('#cafeKitchenPage h1').textContent,'Кухня');
   assert.equal(d.getElementById('cafeCashToggle').hidden,true);
   assert.equal(d.querySelector('.cafe-kitchen-filters').hidden,true);
@@ -170,6 +209,8 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   }
   d.querySelector('[data-web-tab=orders]').click();
   assert.equal(d.querySelector('.cafe-kitchen-filters').hidden,false);
+  assert.equal(d.querySelector('.kitchen-board-tools').hidden,false);
+  assert.ok(d.querySelector('.kitchen-board-tools #kitchenTabletToggle'));
   d.querySelector('[data-web-tab=pos]').click();
   d.querySelector('[data-counter-view=orders]').click();
   await tick();

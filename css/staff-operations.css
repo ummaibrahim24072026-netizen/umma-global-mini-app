@@ -356,6 +356,18 @@
 }
 
 .web-work-app[data-workspace=kitchen] .work-board-title h1 { margin: 0; }
+.web-work-app[data-workspace=kitchen] #kitchenTabletToggle {
+  grid-column: 2;
+  grid-row: 1;
+  width: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+.web-work-app[data-workspace=kitchen] #kitchenTabletToggle[aria-pressed=true] {
+  background: var(--work-primary);
+  color: var(--work-action-text);
+}
 .web-work-app[data-workspace=kitchen] .kitchen-order-top .kitchen-status {
   background: var(--umma-brand-pale);
   color: var(--umma-brand-ink);
@@ -385,6 +397,17 @@
   width: 100%;
   min-height: 48px;
 }
+.web-work-app[data-workspace=kitchen] .kitchen-tablet-mode .kitchen-order-number {
+  font-size: 26px;
+}
+.web-work-app[data-workspace=kitchen] .kitchen-tablet-mode .kitchen-order-items li,
+.web-work-app[data-workspace=kitchen] .kitchen-tablet-mode .kitchen-item-quantity {
+  font-size: 20px;
+}
+.web-work-app[data-workspace=kitchen] .kitchen-tablet-mode .kitchen-order-actions .kitchen-action {
+  min-height: 56px;
+  font-size: 17px;
+}
 @media (max-width: 650px) {
   .web-work-app:not(.work-owner):has(.web-tabs button:nth-child(5 of :not([hidden]))) {
     --work-bottom-nav: calc(126px + env(safe-area-inset-bottom, 0px));
@@ -398,10 +421,5 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     margin-bottom: 14px;
-  }
-  .web-work-app[data-workspace=kitchen] .kitchen-board-tools {
-    width: auto;
-    max-width: min(215px, 55vw);
-    padding: 7px 10px;
   }
 }

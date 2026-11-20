@@ -448,8 +448,20 @@
     const desk=window.ummaCourierDesk;
     if(byId("cafeKitchenOrders"))byId("cafeKitchenOrders").hidden=false;
     const filters=document.querySelector(".cafe-kitchen-filters");if(filters)filters.hidden=kitchenQueue||cashBoard||(courierWorkspace&&!!desk);
-    const toolsLabel=document.querySelector('.kitchen-board-tools>summary');
+    const tools=document.querySelector(".kitchen-board-tools");
+    const toolsLabel=tools?.querySelector("summary");
     if(toolsLabel)toolsLabel.textContent=courierWorkspace?"Ещё":cashBoard?"Действия кассы":"Настройки кухни";
+    if(byId("webOverview")&&tools){
+      const tabletButton=byId("kitchenTabletToggle");
+      const actions=tools.querySelector(".work-board-tools-actions");
+      tools.hidden=kitchenQueue;
+      if(kitchenQueue){
+        tools.open=false;
+        if(tabletButton)tools.after(tabletButton);
+      }else if(tabletButton&&actions){
+        actions.insertBefore(tabletButton,byId("cafeCashToggle"));
+      }
+    }
     const closedFilter=byId("courierClosedFilter");if(closedFilter)closedFilter.hidden=!courierWorkspace;
     const allFilter=document.querySelector('[data-kitchen-filter="all"]');if(allFilter)allFilter.hidden=courierWorkspace;
     document.querySelectorAll('[data-kitchen-filter]').forEach(button=>{
