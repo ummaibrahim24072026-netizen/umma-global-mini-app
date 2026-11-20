@@ -178,7 +178,7 @@ async function refreshMethods(){
 const result=message=>{$('posResult').textContent=message;};
 const counterStatus=message=>{$('counterStatus').textContent=message;};
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
-const paymentMethod=()=>payOrder?.paymentMethod||selectedMethod;
+const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?selectedMethod:payOrder?.paymentMethod||selectedMethod;
 const orderMethod=order=>order.foreignPayment?.channel||order.paymentMethod;
 const canSwitchPayment=order=>order?.staffPickup&&order.paymentStatus==='pending'&&!closedOrder(order)&&
  (order.paymentMethod!=='bank_transfer'||order.foreignPayment||order.legacyTransfer);
@@ -231,22 +231,23 @@ function updateCartJump(){
  $('posCartJump').hidden=!cart.size||currentTab!=='pos'||counterView!=='sale'||basketInView;
 }
 function paymentFields(){
- const cash=paymentMethod()==='cash',due=paymentDue(),received=Number($('posCash').value);
+ const cash=paymentMethod()==='cash',fx=fxCash()&&!switchingPayment,due=paymentDue(),received=Number($('posCash').value);
  const draft=!payOrder&&cart.size>0;
  const pending=payOrder?.paymentStatus==='pending'&&!closedOrder(payOrder);
- const validCash=Number.isSafeInteger(received)&&received>=due;
+ const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.round(received*100)/100===received&&Math.floor(received*fxQuote.vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
- const activeCash=!switchingPayment&&cash&&(draft||pending);
+ const activeCash=!switchingPayment&&(cash||fx)&&(draft||pending);
  const choosing=draft||switchingPayment;
  const foreign=foreignMethods.has(selectedMethod);
- const selectedAvailable=!foreign||options?.[selectedMethod]===true;
+ const selectedAvailable=fxCash()?fxReady():!foreign||options?.[selectedMethod]===true;
  const status=$('counterMethodStatus');
  status.hidden=!choosing||selectedAvailable;
- status.textContent=optionsError?'Не удалось проверить реквизиты. Откройте вкладку оплаты повторно.'
+ status.textContent=fxCash()?(fxLoading?'Получаем курс Google Finance…':'Курс недоступен. Валютная оплата заблокирована.')
+   :optionsError?'Не удалось проверить реквизиты. Откройте вкладку оплаты повторно.'
   :!options?'Проверяем реквизиты…'
   :'Для этого способа оплаты ещё не настроены реквизиты.';
  for(const button of $('counterMethodLabel').querySelectorAll('[data-counter-method]')){
-  button.disabled=busy||!choosing;
+  button.disabled=busy||!choosing||(switchingPayment&&fxMethods.has(button.dataset.counterMethod));
   button.setAttribute('aria-pressed',String(button.dataset.counterMethod===selectedMethod));
  }
  $('posForm').hidden=!choosing&&!activeCash;
@@ -259,6 +260,11 @@ function paymentFields(){
  $('counterSwitchPayment').disabled=busy;
  $('posCashLabel').hidden=!activeCash;
  $('posCash').required=activeCash;
+  $('posCash').step=fx?'0.01':'1';
+  $('posCash').placeholder=fx?'Получено '+fxCurrency():'Сколько дал клиент';
+  $('posCashLabel').firstChild.textContent=fx?'Получено наличными, '+fxCurrency():'Получено наличными, ₫';
+  const fxInfo=$('posFxInfo');fxInfo.hidden=!fx;
+  if(fx)fxInfo.textContent=fxReady()?'К оплате ≈ '+fxFormat(Math.ceil(due/fxQuote.vndPerUnit*100)/100)+' · 1 '+fxCurrency()+' = '+money(fxQuote.vndPerUnit)+' · Google Finance · '+new Date(fxQuote.quotedAt).toLocaleString('ru-RU'):'Ожидаем актуальный курс Google Finance';
  $('posCash').disabled=!activeCash||busy;
  $('posLocation').disabled=busy;
  $('counterCheckout').disabled=busy||!cart.size||unavailable;
@@ -267,9 +273,9 @@ function paymentFields(){
  $('counterAddProductsHint').textContent=payOrder?'Заказ уже создан. Для дополнительных блюд оформите отдельную продажу.':'';
  $('posSubmit').disabled=busy||
   (switchingPayment?(!pending||!selectedAvailable||selectedMethod===orderMethod(payOrder))
-   :(!payOrder&&(!draft||unavailable||!selectedAvailable))||(cash&&payOrder&&!pending));
- $('posSubmit').textContent=switchingPayment?'Сменить способ оплаты':cash?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
- $('posChange').textContent=activeCash&&$('posCash').value?(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received))):'';
+   :(!payOrder&&(!draft||unavailable||!selectedAvailable))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
+ $('posSubmit').textContent=switchingPayment?'Сменить способ оплаты':(cash||fx)?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
+ $('posChange').textContent=activeCash&&$('posCash').value?(fx?(fxReady()?(validCash?'Сдача '+money(Math.floor(received*fxQuote.vndPerUnit)-due):'Не хватает '+money(Math.max(0,due-Math.floor(received*fxQuote.vndPerUnit)))):'Курс недоступен'):(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received)))):'';
  $('counterPaymentSummary').innerHTML=payOrder||draft
   ? '<h2 id="posOrderNumber">'+(payOrder?'Заказ №'+esc(payOrder.orderNumber):'Текущий заказ')+'</h2>'+
    itemsMarkup(payOrder?.items||cartItems())+'<div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(paymentTotal())+'</strong></div>'
