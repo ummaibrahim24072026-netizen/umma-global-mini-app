@@ -518,7 +518,7 @@ async function counterOrderAction(event){
  if(!order)return;
  const action=button.dataset.counterAction;
  if(action==='pickup'){setCounterView('issue');return;}
- if(action==='issue'&&(!readyToIssue(order)||!confirm('Выдать заказ №'+order.order_number+'?')))return;
+ if(action==='issue'&&!readyToIssue(order))return;
  if(action==='pay'&&!canTakePayment(order))return;
  busy=true;
  paymentFields();
