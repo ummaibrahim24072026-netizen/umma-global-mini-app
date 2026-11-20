@@ -77,7 +77,7 @@
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
-  const awaitingCounterPayment=o=>o.requires_prepayment===true&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
+  const awaitingCounterPayment=o=>(o.requires_prepayment===true||o.created_via==="customer")&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const awaitingWebPayment=o=>awaitingCounterPayment(o)&&o.created_via==="customer"&&o.chat_available===false;
   const hiddenFromPreparation=o=>awaitingCounterPayment(o)&&(
     ((o.staffRole||staffRole)==="kitchen"&&o.canAcceptPayments!==true)||
