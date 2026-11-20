@@ -441,8 +441,10 @@ function counterOrderMarkup(order,issue){
   '<div class="counter-labels"><span>'+esc(orderLabel(order))+'</span><span>'+paymentLabel(order)+'</span><span>'+
    (order.created_via==='staff'?'У стойки':'Из приложения')+'</span></div>'+
   '<p>'+esc({dine_in:'На месте',pickup:'С собой',delivery:'Доставка'}[order.order_type]||'')+'</p>'+destination+
+  (order.preparationActor&&order.status==='preparing'?'<p>'+esc((order.preparation_station==='kitchen'?'Готовится на кухне':'Собирается на стойке')+
+   ' · '+order.preparationActor)+'</p>':'')+
   itemsMarkup(order.cafe_order_items||[])+'<div class="pos-total"><span>Итого</span><strong>'+money(order.total_vnd)+'</strong></div>'+
-  (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+green+'</article>';
+  (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+green+(window.ummaGreenSm?.transfer(order,auth.actorId())||'')+'</article>';
 }
 function renderCounterOrders(){
  const search=$('counterOrderSearch').value.trim().replace(/^№\s*/,'');
@@ -968,6 +970,10 @@ document.addEventListener('visibilitychange',refreshCounterOrders);
 window.addEventListener('online',refreshCounterOrders);
 setInterval(refreshStock,5000);
 setInterval(refreshCounterOrders,5000);
+document.addEventListener('umma:fulfillment-realtime',()=>{
+ void refreshCounterOrders();
+ if (!$('cafeKitchenPage')?.hidden && currentTab!=='pos') void window.ummaKitchen?.refresh({silent:true,afterMutation:true});
+});
 setInterval(()=>{if($('screenPairState').dataset.syncError)syncCustomerScreen(true);},5000);
 if(auth.credential()&&!invite)void boot().catch(e=>{$('webLoginError').textContent=e.message;notice(e.message);if(e.status===401)auth.clear();});
 })();

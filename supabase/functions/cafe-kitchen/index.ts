@@ -125,6 +125,25 @@ Deno.serve(async req => {
     }
 
 
+    if (body.action === "webFulfillment") {
+      const { orderId, operation, ...payload } = body;
+      if (!body.initData.startsWith("web:") || body.workspace === "courier" ||
+          typeof orderId !== "string" || !/^[0-9a-f-]{36}$/i.test(orderId) ||
+          !["staff","transfer","greenDetails","greenStage"].includes(operation)) {
+        return response({ok:false,error:"Некорректное действие"},400);
+      }
+      const { data, error } = await supabase.rpc("cafe_web_fulfillment", {
+        p_order: orderId, p_actor: telegramId, p_action: operation,
+        p_payload: { stage: payload.stage, targetId: payload.targetId, expectedOwner: payload.expectedOwner,
+          bookingId: payload.bookingId, trackingUrl: payload.trackingUrl },
+      });
+      if (error) return response({ok:false,error:error.code==="P0001"?error.message:"Не удалось сохранить изменение"},error.code==="P0001"?409:500);
+      if (operation === "greenStage" && payload.stage === "delivered") {
+        try { await dispatchCustomerNotifications(supabase,botToken); } catch { console.error("Customer notification deferred"); }
+      }
+      return response(data);
+    }
+
     if (body.action === "selfCourier") {
       if (actor.role !== "super_admin") return response({ok:false,error:"Доступ только суперадминистратору"},403);
       if (body.enabled !== undefined) {
@@ -456,13 +475,13 @@ Deno.serve(async req => {
       const orderIds=(ordersWithRoles??[]).map((o:any)=>o.id);
       const {data:statusEvents,error:statusEventsError}=orderIds.length?await supabase.from("cafe_order_events").select("order_id,actor_telegram_id,from_status,to_status,created_at").in("order_id",orderIds).order("created_at",{ascending:false}).limit(500):{data:[],error:null};
       if(statusEventsError) console.error("Order status history lookup failed",statusEventsError.message);
-      const statusActorIds=Array.from(new Set((statusEvents??[]).map((e:any)=>Number(e.actor_telegram_id)).filter((id:number)=>Number.isSafeInteger(id))));
+      const statusActorIds=Array.from(new Set([...((statusEvents??[]).map((e:any)=>Number(e.actor_telegram_id))),...ordersWithRoles.map((o:any)=>Number(o.accepted_by_telegram_id))].filter((id:number)=>id!==0&&Number.isSafeInteger(id))));
       const {data:statusActors,error:statusActorsError}=statusActorIds.length?await supabase.from("telegram_users").select("telegram_id,first_name,last_name,username").in("telegram_id",statusActorIds):{data:[],error:null};
       if(statusActorsError) console.error("Order status actor lookup failed",statusActorsError.message);
       const statusActorById=new Map((statusActors??[]).map((u:any)=>[Number(u.telegram_id),[u.first_name,u.last_name].filter(Boolean).join(" ")||(u.username?"@"+u.username:"Сотрудник")]));
       const latestEventByOrder=new Map<string,any>();
       for(const event of statusEvents??[]){if(!latestEventByOrder.has(event.order_id))latestEventByOrder.set(event.order_id,{...event,actor_name:statusActorById.get(Number(event.actor_telegram_id))||("Сотрудник ID "+event.actor_telegram_id)});}
-      const ordersWithAudit=ordersWithRoles.map((o:any)=>({...o,lastStatusEvent:latestEventByOrder.get(o.id)||null}));
+      const ordersWithAudit=ordersWithRoles.map((o:any)=>({...o,lastStatusEvent:latestEventByOrder.get(o.id)||null,preparationActor:statusActorById.get(Number(o.accepted_by_telegram_id))||null}));
       const [{data:offers,error:offersError},{data:proofs,error:proofsError}]=await Promise.all([
         supabase.rpc("list_cafe_courier_offers",{p_actor:telegramId}),
         orderIds.length?supabase.from("cafe_delivery_proofs").select("id,order_id,courier_telegram_id,kind,verified_at").in("order_id",orderIds).not("verified_at","is",null):Promise.resolve({data:[],error:null})

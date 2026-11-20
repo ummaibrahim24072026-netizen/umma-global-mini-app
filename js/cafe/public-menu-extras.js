@@ -116,7 +116,7 @@ function receiptDetails(value,{t,money,receiptPhoto}){
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
-const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:'Заказ выдан',cancelled:'Заказ отменён'};
+const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.greenSmStage==='delivered'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
 const waitingPayment=value.paymentStatus==='pending'&&!['cancelled','completed'].includes(value.status);
 $('orderState').removeAttribute('data-i18n');
 $('orderState').textContent=waitingPayment?t('Ожидаем подтверждение оплаты')
@@ -181,7 +181,7 @@ async function poll(){
      try{
       const tr=await fetch(ctx.API+'umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token:current.trackingToken}),cache:'no-store',signal:AbortSignal.timeout(8000)});
       const state=await tr.json();
-      if(tr.ok&&state.ok)update.deliveryStatus=state.state;
+      if(tr.ok&&state.ok&&!update.greenSmStage)update.deliveryStatus=state.state;
      }catch{}
     }
     if(!context?.activeReceipts().includes(current))return;
@@ -194,6 +194,7 @@ async function poll(){
  }finally{inFlight=false;}
 }
 window.setInterval(()=>{if(!document.hidden)void poll();},3000);
+document.addEventListener('umma:fulfillment-realtime',()=>void poll());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
 window.ummaGuestExtras={install,installText,receipt,clearReceipt(){order=null;context=null;}};
 })();

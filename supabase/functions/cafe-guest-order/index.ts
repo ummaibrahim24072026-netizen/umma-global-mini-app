@@ -12,7 +12,7 @@ async function guestPayment(db: ReturnType<typeof createClient>, order: any) {
 }
 async function receiptFor(db: ReturnType<typeof createClient>, orderId: string) {
  const {data,error}=await db.from('cafe_orders')
-  .select('subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,payment_method,payment_status,status,cafe_order_items(product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd),cafe_payment_receipts(tendered_amount_vnd,change_given_vnd)')
+  .select('subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,payment_method,payment_status,status,order_type,dispatch_mode,requires_prepayment,customer_telegram_id,courier_telegram_id,green_sm_stage,green_sm_tracking_url,cafe_order_items(product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd),cafe_payment_receipts(tendered_amount_vnd,change_given_vnd)')
   .eq('id',orderId)
   .eq('cafe_payment_receipts.payment_method','cash')
   .eq('cafe_payment_receipts.receipt_status','confirmed')
@@ -29,6 +29,8 @@ async function receiptFor(db: ReturnType<typeof createClient>, orderId: string) 
   items:data.cafe_order_items.map(({product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd})=>({
    name_ru:product_name_ru,name_en:product_name_en,name_vi:product_name_vi,quantity,unitPriceVnd:unit_price_vnd,lineTotalVnd:line_total_vnd,
   })),
+  isGreenSm:data.order_type==='delivery'&&data.dispatch_mode==='manual'&&data.requires_prepayment&&data.customer_telegram_id==null&&data.courier_telegram_id==null,
+  greenSmStage:data.green_sm_stage,greenSmTrackingUrl:data.green_sm_tracking_url,
   subtotalVnd:data.subtotal_vnd,deliveryFeeVnd:data.delivery_fee_vnd,discountVnd:data.discount_vnd,
   cashReceipt:data.payment_method==='cash'&&data.payment_status==='paid'&&cash?.tendered_amount_vnd!=null&&cash.change_given_vnd!=null
    ?{tenderedVnd:cash.tendered_amount_vnd,changeVnd:cash.change_given_vnd}:null,
