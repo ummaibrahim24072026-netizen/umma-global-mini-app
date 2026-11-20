@@ -563,6 +563,33 @@ async function refreshView(){
  connection.hidden=true;
  status.textContent='';
 }
+function buildLegacyNavigation(){
+ const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
+ panels.audience=buildAudience();
+ panels.campaign=node('section',null,'work-campaign');
+ for(const [key,label] of [['inbox','Входящие'],['audience','Посетители'],['campaign','Рассылки']]){
+  const tab=node('button',label);tab.type='button';tab.onclick=()=>run(async()=>{selectView(key);await refreshView();});
+  viewButtons[key]=tab;if(owner()||key==='inbox')nav.append(tab);
+ }
+ stats=node('p');
+ const form=node('form'),title=node('input'),body=node('textarea'),language=node('select');title.required=true;title.maxLength=100;body.required=true;body.maxLength=2000;
+ for(const [v,t]of [['ru','Русский'],['en','English'],['vi','Tiếng Việt'],['ko','한국어'],['zh','中文'],['de','Deutsch'],['fr','Français'],['th','ไทย'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['ar','العربية'],['pt','Português'],['all','Все языки']]){const o=node('option',t);o.value=v;language.append(o);}
+ language.value='all';
+ const installedOnly=node('input');installedOnly.type='checkbox';
+ const installedLabel=label('Только установившие приложение и включившие push',installedOnly);installedLabel.className='connect-check';
+ const publicNews=node('input');publicNews.type='checkbox';publicNews.defaultChecked=true;
+ const publicLabel=label('Показать всем в меню',publicNews);publicLabel.className='connect-check';
+ const updatePublic=()=>{publicNews.disabled=installedOnly.checked||language.value!=='all';};
+ language.addEventListener('change',updatePublic);installedOnly.addEventListener('change',updatePublic);
+ const preview=node('section');preview.hidden=true;const previewTitle=node('h3'),previewBody=node('p'),previewWho=node('p'),confirm=node('button','Опубликовать','primary'),cancel=node('button','Изменить');confirm.type=cancel.type='button';preview.append(previewTitle,previewBody,previewWho,confirm,cancel);
+ const submit=node('button','Проверить рассылку');submit.type='submit';
+ form.append(node('h3','Акции, новинки и напоминания'),node('p','Публикацию в меню увидят все посетители. Сообщение в чат и push получат подписчики. Чтобы показать акцию всем, выберите «Все языки» и снимите ограничение по установке.'),label('Язык получателей',language),installedLabel,publicLabel,label('Заголовок',title),label('Сообщение',body),submit,preview);
+ const resetPreview=()=>{preview.hidden=true;submit.hidden=false;campaign=null;};form.addEventListener('input',resetPreview);cancel.onclick=resetPreview;
+ form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked,publicNews:publicNews.checked&&!installedOnly.checked&&language.value==='all'};confirm.textContent=campaign.publicNews?'Опубликовать и отправить подписчикам':'Отправить подписчикам';previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent=(campaign.publicNews?'В меню увидят все. ':'')+'Получатели рассылки: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
+ confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent=(campaign.publicNews?'Опубликовано в меню. ':'')+'Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();language.value='all';updatePublic();});
+ panels.campaign.append(stats,form);
+ return nav;
+}
 function build(){
  if(workspace){workspace.classList.add('umma-connect','work-messages');}
  else{dialog=node('dialog',null,'umma-connect');dialog.setAttribute('aria-label','Сообщения клиентов');}
@@ -613,29 +640,9 @@ function build(){
   settings.append(node('summary','Настройки'),tools);
   header.append(settings);
  }else header.append(tools);
- const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
- panels={inbox:node('section',null,'work-inbox'),audience:buildAudience(),campaign:node('section',null,'work-campaign')};
+ panels={inbox:node('section',null,'work-inbox')};
  viewButtons={};
- for(const [key,label] of [['inbox','Входящие'],['audience','Посетители'],['campaign','Рассылки']]){
-  const tab=node('button',label);tab.type='button';tab.onclick=()=>run(async()=>{selectView(key);await refreshView();});
-  viewButtons[key]=tab;if(owner()||key==='inbox')nav.append(tab);
- }
- stats=node('p');clients=node('ol',null,'work-inbox-list');
- const form=node('form'),title=node('input'),body=node('textarea'),language=node('select');title.required=true;title.maxLength=100;body.required=true;body.maxLength=2000;
- for(const [v,t]of [['ru','Русский'],['en','English'],['vi','Tiếng Việt'],['ko','한국어'],['zh','中文'],['de','Deutsch'],['fr','Français'],['th','ไทย'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['ar','العربية'],['pt','Português'],['all','Все языки']]){const o=node('option',t);o.value=v;language.append(o);}
- language.value='all';
- const installedOnly=node('input');installedOnly.type='checkbox';
- const installedLabel=label('Только установившие приложение и включившие push',installedOnly);installedLabel.className='connect-check';
- const publicNews=node('input');publicNews.type='checkbox';publicNews.defaultChecked=true;
- const publicLabel=label('Показать всем в меню',publicNews);publicLabel.className='connect-check';
- const updatePublic=()=>{publicNews.disabled=installedOnly.checked||language.value!=='all';};
- language.addEventListener('change',updatePublic);installedOnly.addEventListener('change',updatePublic);
- const preview=node('section');preview.hidden=true;const previewTitle=node('h3'),previewBody=node('p'),previewWho=node('p'),confirm=node('button','Опубликовать','primary'),cancel=node('button','Изменить');confirm.type=cancel.type='button';preview.append(previewTitle,previewBody,previewWho,confirm,cancel);
- const submit=node('button','Проверить рассылку');submit.type='submit';
- form.append(node('h3','Акции, новинки и напоминания'),node('p','Публикацию в меню увидят все посетители. Сообщение в чат и push получат подписчики. Чтобы показать акцию всем, выберите «Все языки» и снимите ограничение по установке.'),label('Язык получателей',language),installedLabel,publicLabel,label('Заголовок',title),label('Сообщение',body),submit,preview);
- const resetPreview=()=>{preview.hidden=true;submit.hidden=false;campaign=null;};form.addEventListener('input',resetPreview);cancel.onclick=resetPreview;
- form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked,publicNews:publicNews.checked&&!installedOnly.checked&&language.value==='all'};confirm.textContent=campaign.publicNews?'Опубликовать и отправить подписчикам':'Отправить подписчикам';previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent=(campaign.publicNews?'В меню увидят все. ':'')+'Получатели рассылки: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
- confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent=(campaign.publicNews?'Опубликовано в меню. ':'')+'Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();language.value='all';updatePublic();});
+ clients=node('ol',null,'work-inbox-list');
  threadTitle=node('h2','Выберите переписку');threadTitle.tabIndex=-1;messages=node('ol',null,'connect-thread');
  replyForm=node('form');replyForm.classList.add('connect-compose');replyForm.hidden=true;replyBody=node('textarea');replyBody.maxLength=2000;
  replyBody.addEventListener('input',()=>{replyKey=null;replyStatus.textContent='';});
@@ -773,9 +780,9 @@ function build(){
  }else listPanel.append(node('h2','Переписки'));
  listPanel.append(clients);
  renderClients();
- panels.inbox.append(listPanel,threadPanel);panels.campaign.append(stats,form);
+ panels.inbox.append(listPanel,threadPanel);
  section.append(header);
- if(!workspace||owner())section.append(nav);
+ if(dialog)section.append(buildLegacyNavigation());
  section.append(connection,status,...Object.values(panels));selectView('inbox');
  if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }

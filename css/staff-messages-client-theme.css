@@ -76,33 +76,7 @@
  border-color:#087b80;
  color:#fff;
 }
-#webMessages .work-section-switch {
- display:flex;
- gap:clamp(8px,3vw,24px);
- margin-bottom:14px;
- border-bottom:1px solid var(--work-line);
-}
-#webMessages .work-section-switch > button {
- flex:0 1 auto;
- min-height:44px;
- padding:6px clamp(4px,1.6vw,12px);
- border:0;
- border-bottom:3px solid transparent;
- border-radius:0;
- background:transparent;
- color:#456767;
- font-size:14px;
- font-weight:700;
-}
-.web-work-app #webMessages .work-section-switch > button[aria-pressed="true"] {
- border-bottom-color:#087b80;
- border-radius:0;
- background:transparent;
- color:#075d61;
- -webkit-text-fill-color:currentColor;
- text-shadow:none;
-}
-.web-work-app #webMessages :is(.work-inbox-sidebar,.work-thread,.work-campaign) {
+.web-work-app #webMessages :is(.work-inbox-sidebar,.work-thread) {
  border:1px solid var(--work-line);
  border-radius:16px;
  background:#fff;
@@ -283,7 +257,7 @@
  }
 }
 .web-work-app #webMessages .work-thread { padding:14px; overflow:hidden; }
-#webMessages :is(.work-thread,.work-campaign) button.primary {
+#webMessages .work-thread button.primary {
  background:#087b80;
  color:#fff;
  border-radius:999px;

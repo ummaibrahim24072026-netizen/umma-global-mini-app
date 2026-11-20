@@ -17,6 +17,10 @@ for(const owner of [true,false]){
   assert.equal(d.body.dataset.workspace,'messages');
   assert.equal(d.querySelector('#webInboxCount').textContent,'1');
   assert.equal(d.querySelector('#webMessages .work-inbox').hidden,false);
+  const inbox=d.getElementById('webMessages');
+  assert.equal(inbox.querySelector('.work-section-switch, .work-campaign'),null);
+  assert.equal(inbox.querySelector('input[type=search]').placeholder,'Найти переписку');
+  assert.deepEqual([...inbox.querySelectorAll('.work-inbox-filters button')].map(button=>button.textContent),['Все','Непрочитанные']);
   assert.equal(calls.some(b=>b.action==='staffRead'),false);
   d.querySelector('[data-client-thread]').click();await tick();
   assert.match(d.querySelector('.work-thread').textContent,/Проверка связи/);
