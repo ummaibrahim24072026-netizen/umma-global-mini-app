@@ -234,7 +234,7 @@ function paymentFields(){
  const cash=paymentMethod()==='cash',fx=fxCash()&&!switchingPayment,due=paymentDue(),received=Number($('posCash').value);
  const draft=!payOrder&&cart.size>0;
  const pending=payOrder?.paymentStatus==='pending'&&!closedOrder(payOrder);
- const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.round(received*100)/100===received&&Math.floor(received*fxQuote.vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
+ const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.abs(Math.round(received*100)/100-received)<1e-8&&Math.floor(received*fxQuote.vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
  const activeCash=!switchingPayment&&(cash||fx)&&(draft||pending);
  const choosing=draft||switchingPayment;
@@ -389,7 +389,7 @@ async function sell(event){
  if(busy||$('posSubmit').disabled)return;
  if(switchingPayment){await switchOrderPayment();return;}
  const method=paymentMethod(),cash=method==='cash',fx=fxMethods.has(method),foreign=foreignMethods.has(method),due=paymentDue(),received=Number($('posCash').value);
- if(fx&&(!fxReady()||!$('posCash').value||!Number.isFinite(received)||Math.round(received*100)/100!==received||Math.floor(received*fxQuote.vndPerUnit)<due)){result('Проверьте курс и полученную сумму в '+fxCurrency());return;}
+ if(fx&&(!fxReady()||!$('posCash').value||!Number.isFinite(received)||Math.abs(Math.round(received*100)/100-received)>=1e-8||Math.floor(received*fxQuote.vndPerUnit)<due)){result('Проверьте курс и полученную сумму в '+fxCurrency());return;}
  if(cash&&(!$('posCash').value||!Number.isSafeInteger(received)||received<due)){result('Введите полученную сумму не меньше '+money(due));return;}
  busy=true;
  paymentFields();
@@ -550,6 +550,7 @@ $('counterMethodLabel').onclick=event=>{
  const button=event.target.closest('[data-counter-method]');
  if(!button||busy)return;
  selectedMethod=button.dataset.counterMethod;
+ $('posCash').value='';
  result('');
  paymentFields();
  if(foreignMethods.has(selectedMethod)&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
