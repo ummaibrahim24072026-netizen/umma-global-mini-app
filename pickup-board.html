@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#064d51">
+  <title>HALAL UMMA · Табло выдачи</title>
+  <link rel="stylesheet" href="css/pickup-board.css?v=1">
+  <script defer src="js/core/screen-awake.js?v=1"></script>
+  <script defer src="js/cafe/pickup-board.js?v=1"></script>
+</head>
+<body class="work-payment-screen">
+  <header class="board-header">
+    <div class="board-brand">
+      <img src="logo/assets/umma-icon-192.png" alt="" width="56" height="56">
+      <strong>HALAL UMMA</strong>
+    </div>
+    <div class="board-controls">
+      <button id="boardSound" type="button" hidden>Включить звук</button>
+      <button id="boardFullscreen" type="button" hidden>На весь экран</button>
+    </div>
+  </header>
+  <main>
+    <h1>Заказы готовы</h1>
+    <p class="board-destination">Заберите на стойке выдачи</p>
+    <p class="board-translations"><span lang="en">Collect at the pickup counter</span> · <span lang="vi">Nhận món tại quầy</span></p>
+    <ul id="boardCalls" aria-label="Номера заказов"></ul>
+    <p id="boardStatus" role="status">Подключаем табло…</p>
+    <p id="boardSoundStatus" role="status"></p>
+  </main>
+</body>
+</html>

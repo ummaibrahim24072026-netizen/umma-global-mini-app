@@ -561,6 +561,7 @@ function setCounterView(view,{draft=false}={}){
   if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
  }
  if(view==='orders'||view==='issue'){renderCounterOrders();void refreshCounterOrders();}
+ if(view==='issue')showPickupPair();
  updateCartJump();
  syncCustomerScreen();
  window.scrollTo({top:0,behavior:'instant'});
@@ -579,7 +580,7 @@ async function counterOrderAction(event){
  renderCounterOrders();
  try{
   if(action==='issue'){
-   await api('updateStatus',{orderId:order.id,status:'completed'},'cafe-kitchen');
+   await api('updateStatus',{orderId:order.id,status:'completed',note:'counter_pickup_call'},'cafe-kitchen');
    order.status='completed';
    counterStatus('Заказ №'+order.order_number+' выдан.');
   }else{
@@ -616,8 +617,9 @@ $('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
 $('posSearch').oninput=menu;
 $('posLocation').onchange=()=>{
  cart.clear();resetSaleService();counterOrders=[];loadedLocation='';result('');counterStatus('');
+ $('pickupPairStatus').textContent='';
  renderCounterReady([]);
- showPayment(null);renderCart();menu();showPair(screen());
+ showPayment(null);renderCart();menu();showPair(screen());showPickupPair();
  void loadAvailability().then(()=>{menu();paymentFields();}).catch(error=>counterStatus(error.message));
  void refreshCounterOrders();
 };
@@ -714,6 +716,42 @@ $('screenUnpair').onclick=async()=>{
   $('posShowScreen').hidden=true;$('screenPairState').textContent='Планшет отключён.';
  }catch(error){$('screenPairState').textContent=error.message;}
 };
+const pickupBoardKey=()=> 'umma:pickup-screen:'+auth.actorId()+':'+locationId();
+function pickupBoardToken(){
+ try{return localStorage.getItem(pickupBoardKey())||'';}catch{return '';}
+}
+function showPickupPair(){
+ const token=pickupBoardToken();
+ const link=$('pickupPairLink'),qr=$('pickupPairQr');
+ $('pickupPair').hidden=Boolean(token);
+ $('pickupUnpair').hidden=!token;
+ link.hidden=!token;
+ qr.replaceChildren();
+ link.removeAttribute('href');
+ if(!token)return;
+ const url=new URL('pickup-board.html',location.href);
+ url.hash=new URLSearchParams({screen:token});
+ link.href=url.href;
+ drawQr(qr,url.href);
+}
+async function changePickupPair(action){
+ const location=locationId(),key=pickupBoardKey(),token=pickupBoardToken();
+ if(!location)return;
+ const status=$('pickupPairStatus'),pair=$('pickupPair'),unpair=$('pickupUnpair');
+ if(pair.disabled)return;
+ pair.disabled=unpair.disabled=true;
+ status.textContent='';
+ try{
+  const data=await api(action,{locationId:location,...(action==='revoke'?{token}:{})},'cafe-pickup-board');
+  if(action==='pair')localStorage.setItem(key,data.token);
+  else localStorage.removeItem(key);
+  if(pickupBoardKey()===key)showPickupPair();
+ }catch(error){
+  if(pickupBoardKey()===key)status.textContent=error.message;
+ }finally{pair.disabled=unpair.disabled=false;}
+}
+$('pickupPair').onclick=()=>void changePickupPair('pair');
+$('pickupUnpair').onclick=()=>void changePickupPair('revoke');
 $('counterOrderSearch').oninput=renderCounterOrders;
 $('counterOrderFilter').onchange=renderCounterOrders;
 $('counterOrderType').onchange=renderCounterOrders;

@@ -1,0 +1,77 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  background: #064d51;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: linear-gradient(155deg, #086168, #06454a 60%, #05363a);
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-width: 1500px;
+  margin: auto;
+}
+
+.board-brand, .board-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.board-brand { font-size: clamp(18px, 3vw, 30px); color: #ffe4a1; }
+.board-brand img { border-radius: 50%; }
+
+button {
+  font: inherit;
+  font-weight: 750;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #90d3ce;
+  border-radius: 999px;
+  color: #fff;
+  background: #075d62;
+  cursor: pointer;
+}
+
+button:focus-visible { outline: 2px solid #ffe4a1; outline-offset: 3px; }
+
+main { max-width: 1500px; margin: clamp(24px, 6vh, 72px) auto 0; text-align: center; }
+
+h1 { margin: 0; font-size: clamp(32px, 7vw, 92px); line-height: 1.08; }
+.board-destination { margin: 10px 0 0; font-size: clamp(18px, 3vw, 38px); color: #c5f6ef; }
+.board-translations { margin: 6px 0 0; color: #b0dfdc; font-size: clamp(14px, 1.6vw, 23px); }
+
+#boardCalls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: clamp(8px, 1.6vw, 22px);
+  margin: clamp(18px, 4vw, 50px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#boardCalls li {
+  min-width: 0;
+  padding: clamp(12px, 2vw, 28px) 8px;
+  border: 1px solid #8bd3cf;
+  border-radius: clamp(14px, 2vw, 28px);
+  color: #05363a;
+  background: #c5f6ef;
+  font-size: clamp(38px, 7vw, 98px);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+#boardCalls li:first-child { background: #ffe4a1; border-color: #ffe4a1; }
+#boardStatus, #boardSoundStatus { margin-block: 16px 0; color: #d6f4f1; font-size: clamp(16px, 2vw, 25px); }
+#boardStatus:empty, #boardSoundStatus:empty { display: none; }

@@ -78,9 +78,11 @@
   min-height: 50px; box-shadow: 0 5px 16px #16575955;
 }
 .counter-payment-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-#webPos :is(#posQr, #screenPairQr) svg { display: block; width: min(100%, 244px); height: auto; margin-inline: auto; }
+#webPos :is(#posQr, #screenPairQr, #pickupPairQr) svg { display: block; width: min(100%, 244px); height: auto; margin-inline: auto; }
 #counterBankDetails { white-space: pre-line; font-size: 17px; }
 #webPos .screen-tools { margin-top: 16px; }
+#webPos .pickup-screen-tools { max-width: 480px; }
+#pickupPairStatus:empty { display: none; }
 .counter-board-header { justify-content: space-between; }
 .counter-filters, .counter-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
 .counter-filters { max-width: 640px; }

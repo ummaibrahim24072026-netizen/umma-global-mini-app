@@ -175,6 +175,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  w.scrollTo=()=>{};
  w.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
  w.speechSynthesis={speak(utterance){spoken.push(utterance.text);utterance.onend();}};
+ w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.localStorage.setItem('umma_kitchen_order_voice','off');
  const pickup={id:'pickup',order_number:165,order_type:'pickup',location_id:'cafe',staffRole:'cashier',
   created_via:'staff',payment_status:'paid',status:'preparing',cafe_order_items:[]};
@@ -187,8 +188,16 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   if(url.endsWith('cafe-menu'))return Response.json({ok:true,products:[],inventory:[],locations:[{id:'cafe'}]});
   if(body.action==='me')return Response.json({ok:true,user:{id:1000000000001,role:'employee'},
    assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]});
+  if(body.action==='pair'||body.action==='revoke'){
+   assert.match(url,/cafe-pickup-board$/);
+   assert.equal(body.locationId,'cafe');
+   assert.match(body.initData,/^web:/);
+   if(body.action==='revoke')assert.equal(body.token,'b'.repeat(64));
+   return Response.json({ok:true,token:'b'.repeat(64)});
+  }
   if(body.action==='updateStatus'){
    assert.equal(body.status,'completed');
+   assert.equal(body.note,'counter_pickup_call');
    orders.find(order=>order.id===body.orderId).status=body.status;
   }
   return Response.json({ok:true,orders});
@@ -211,6 +220,18 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  open.click();
  await tick();
  assert.equal(d.getElementById('counterIssue').hidden,false);
+ const pair=d.getElementById('pickupPair');
+ const link=d.getElementById('pickupPairLink');
+ pair.click();
+ await tick();
+ assert.equal(link.hidden,false);
+ assert.equal(new URL(link.href).pathname,'/pickup-board.html');
+ assert.match(link.hash,/^#screen=b{64}$/);
+ assert.ok(d.querySelector('#pickupPairQr svg'));
+ d.getElementById('pickupUnpair').click();
+ await tick();
+ assert.equal(link.hidden,true);
+ assert.equal(link.hasAttribute('href'),false);
  assert.deepEqual(spoken,['Выдать заказ номер 165.']);
  dineIn.payment_status='paid';
  await refresh();
