@@ -17,7 +17,9 @@
     if(next.length!==calls.length||next.some((call,index)=>call.id!==calls[index].id||call.number!==calls[index].number)){
       $('boardCalls').replaceChildren(...next.map(call=>{
         const item=document.createElement('li');
-        item.textContent='№'+call.number;
+        const number=document.createElement('span');
+        number.textContent='№'+call.number;
+        item.append(number);
         return item;
       }));
     }
