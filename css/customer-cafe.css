@@ -577,13 +577,17 @@
   gap: 11px;
   min-inline-size: 0;
 }
-.customer-heading > img {
+.customer-heading > img,
+.customer-heading-logo {
   display: block;
   flex: none;
   inline-size: 42px;
   block-size: 42px;
   object-fit: contain;
   border-radius: 50%;
+}
+.customer-heading-logo {
+  background: center / contain no-repeat url("../logo/assets/umma-icon-192.png");
 }
 .customer-heading-copy { min-inline-size: 0; }
 .customer-heading-brand {
@@ -634,15 +638,17 @@
   background: white;
 }
 #guestPayment .payment-qr { background: white; padding: 8px; }
+#profileTitle:focus { outline: none; }
 #customerProfile .profile-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 0 16px 20px;
 }
 #customerProfile .profile-body > * { min-inline-size: 0; margin: 0; }
 #customerProfile .profile-avatar-editor {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   align-items: center;
   gap: 8px 12px;
   padding: 12px;
@@ -663,11 +669,22 @@
 .profile-avatar-preview > * { grid-area: 1 / 1; }
 .profile-avatar-preview .profile-avatar-image { width: 100%; height: 100%; }
 .profile-avatar-preview svg { width: 32px; height: 32px; }
-.profile-avatar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.profile-avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  min-inline-size: 0;
+  gap: 6px;
+}
 #customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #installApp) {
   border-radius: 999px;
 }
-.profile-avatar-actions button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+.profile-avatar-actions button {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 44px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
 #removeProfileAvatar { border-color: transparent; background: transparent; }
 .profile-name-form {
   grid-column: 1 / -1;
@@ -703,9 +720,16 @@
 #profileNameStatus { margin: 0; font-size: 13px; }
 #profileNameStatus:empty { display: none; }
 #chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
-#profileAvatarStatus { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.profile-avatar-hint,
+#profileAvatarStatus {
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+#profileAvatarStatus { font-size: 13px; }
 #profileAvatarStatus:empty { display: none; }
 #customerProfile .language-control {
+  flex-wrap: wrap;
   justify-content: space-between;
   padding: 8px 12px;
   border: 1px solid var(--umma-brand-line);

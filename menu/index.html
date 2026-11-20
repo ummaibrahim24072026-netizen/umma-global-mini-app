@@ -439,7 +439,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=28"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=57"><link rel="stylesheet" href="css/connect-calls.css?v=3">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=28"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=58"><link rel="stylesheet" href="css/connect-calls.css?v=3">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
@@ -532,7 +532,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <dialog id="customerProfile" class="customer-section" closedby="closerequest" aria-labelledby="profileTitle">
-  <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" tabindex="-1" autofocus data-i18n="Профиль">Профиль</h2></div></div><form method="dialog" hidden><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
+  <div class="checkout-header"><div class="customer-heading"><span class="customer-heading-logo" aria-hidden="true"></span><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" tabindex="-1" autofocus data-i18n="Профиль">Профиль</h2></div></div><form method="dialog" hidden><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body profile-body">
     <div class="profile-avatar-editor">
       <div class="profile-avatar-preview" aria-hidden="true">
@@ -544,7 +544,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
         <button id="chooseProfileAvatar" type="button" class="plain-btn">Добавить фото</button>
         <button id="removeProfileAvatar" type="button" class="plain-btn" data-i18n="Удалить фото" hidden>Удалить фото</button>
       </div>
-      <p data-i18n="Сотрудники кафе увидят это фото в чате.">Сотрудники кафе увидят это фото в чате.</p>
+      <p class="profile-avatar-hint" data-i18n="Сотрудники кафе увидят это фото в чате.">Сотрудники кафе увидят это фото в чате.</p>
       <p id="profileAvatarStatus" role="status"></p>
       <form id="profileNameForm" class="profile-name-form">
         <label for="profileDisplayName" data-i18n="Имя или ник">Имя или ник</label>
