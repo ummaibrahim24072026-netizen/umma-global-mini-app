@@ -14,3 +14,205 @@
 .courier-workspace button:focus-visible,.courier-workspace a:focus-visible{outline:3px solid #b58d3d;outline-offset:3px}
 
 .courier-workspace [data-kiosk-admin]{display:none}
+
+.web-work-app .courier-workspace .cafe-kitchen-inner {
+  max-width: 760px;
+  padding-top: 16px;
+}
+.web-work-app .courier-workspace .cafe-kitchen-header {
+  margin-block: 0 12px;
+}
+.web-work-app .courier-workspace .cafe-kitchen-header h1 {
+  font-size: clamp(24px, 5vw, 32px);
+  margin: 0;
+}
+.web-work-app .courier-workspace :is(.kitchen-board-tools, .cafe-kitchen-shortcuts) {
+  display: none;
+}
+.web-work-app .courier-workspace .courier-shift-compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+  padding: 7px 10px 7px 14px;
+  border-radius: 16px;
+}
+.web-work-app .courier-shift-compact #courierDeskOnline {
+  width: auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.web-work-app .courier-shift-compact:has([data-online="true"]) #courierDeskOnline {
+  background: #e8f7f6;
+  border-color: #afdcd8;
+  color: #125854;
+}
+.courier-shift-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+.courier-shift-state::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #a78f61;
+}
+.courier-shift-state[data-online="true"]::before {
+  background: #087c78;
+}
+.web-work-app .courier-shift-compact #courierDeskGps {
+  grid-column: 1 / -1;
+  padding-bottom: 3px;
+}
+.web-work-app .courier-shift-compact #courierDeskGpsRetry {
+  min-height: 44px;
+}
+.web-work-app .courier-workspace .courier-desk-tabs {
+  gap: 5px;
+  margin: 0 0 12px;
+  padding: 4px;
+  border: 1px solid #c4e4e2;
+  border-radius: 999px;
+  background: #e3f5f4;
+}
+.web-work-app .courier-workspace .courier-desk-tabs button {
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.web-work-app .courier-workspace #courierDeskMessage {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.web-work-app .courier-workspace :is(.courier-work-heading, .courier-offer-top) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 0 0 10px;
+}
+.courier-work-heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+.web-work-app .courier-workspace .courier-ready {
+  border-radius: 999px;
+  background: #fbf2dd;
+  color: #674a12;
+  font-size: 13px;
+  font-weight: 700;
+}
+.web-work-app .courier-workspace .courier-ready.is-ready {
+  background: #dff4f0;
+  color: #145952;
+}
+.web-work-app .courier-workspace .courier-work-card {
+  padding: 14px;
+  border-radius: 18px;
+}
+.web-work-app .courier-workspace .cafe-kitchen-orders {
+  grid-template-columns: minmax(0, 1fr);
+}
+.courier-work-destination {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 12px;
+  border-inline-start: 3px solid #0a9695;
+  border-radius: 9px;
+  background: #eaf8f7;
+  overflow-wrap: anywhere;
+}
+.courier-work-destination small {
+  color: #365f5c;
+  font-size: 13px;
+}
+.courier-work-destination p {
+  margin: 3px 0 0;
+  font-size: 14px;
+}
+.courier-work-payment {
+  margin: 9px 0;
+  padding: 7px 11px;
+  border-radius: 8px;
+  background: #eff7f5;
+  font-size: 14px;
+  font-weight: 700;
+}
+.courier-work-payment[data-cash="true"] {
+  background: #fcf2dc;
+  color: #66490e;
+}
+.web-work-app .courier-work-card .kitchen-order-actions {
+  gap: 7px;
+  margin-top: 0;
+}
+.web-work-app .courier-work-card .kitchen-order-actions > :is(button, a) {
+  min-height: 46px;
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+.web-work-app .courier-work-card .kitchen-order-actions > [data-show-route] {
+  flex-basis: 100%;
+  background: #e1f6f4;
+  border-color: #86cdca;
+  color: #124f4c;
+}
+.web-work-app .courier-work-card .kitchen-order-actions > [data-payment-status] {
+  background: #fcf2dc;
+  border: 1px solid #caa65d;
+  color: #66490e;
+}
+.courier-step-feedback:empty {
+  display: none;
+}
+.courier-order-content,
+.web-work-app .courier-workspace .courier-evidence {
+  margin-top: 7px;
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+}
+.courier-order-content summary,
+.web-work-app .courier-workspace .courier-evidence summary {
+  min-height: 44px;
+  padding-block: 11px;
+  cursor: pointer;
+  color: #215d57;
+  font-size: 14px;
+  font-weight: 700;
+}
+.web-work-app .courier-workspace #courierOwnerSetup {
+  margin-top: 14px;
+  padding: 0 12px;
+}
+.web-work-app .courier-workspace #courierOwnerSetup > summary {
+  min-height: 44px;
+  padding-block: 11px;
+}
+.web-work-app .courier-workspace #courierAvailablePool h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.web-work-app .courier-workspace .courier-personal-offers {
+  margin: 12px 0;
+}
+.web-work-app .courier-workspace .courier-offer-card {
+  padding: 14px;
+  margin: 8px 0 12px;
+}
+.web-work-app .courier-workspace .courier-personal-offers .courier-offer-card {
+  border-color: #caa65d;
+}
+.web-work-app .courier-workspace .courier-offer-route {
+  gap: 9px 14px;
+  padding-block: 8px;
+}

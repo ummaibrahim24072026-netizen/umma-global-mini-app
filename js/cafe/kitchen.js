@@ -37,7 +37,7 @@
   }
   function showMessage(text, visible = true) {
     const el = byId("cafeKitchenMessage");
-    if (el) { el.textContent = text; el.hidden = !visible; }
+    if (el) { el.textContent = text; el.hidden = !visible; delete el.dataset.courierEmpty; }
   }
   function showConnection(text = "") {
     const status = byId("webBoardConnection");
@@ -166,11 +166,19 @@
     }else{
       shown.sort((a,b)=>Number(awaitingCounterPayment(b))-Number(awaitingCounterPayment(a)));
     }
+    const webCourier = courierWorkspace && !!byId("webOverview");
     if (!shown.length) {
       root.innerHTML = "";
+      if (webCourier) {
+        showMessage(filter==="closed"?"Завершённые доставки появятся здесь.":"Возьмите заказ во вкладке «Новые».", !root.hidden);
+        const message=byId("cafeKitchenMessage");
+        if(message)message.dataset.courierEmpty="true";
+        return;
+      }
       showMessage((kitchenQueue&&kitchenEmptyMessages[filter])||(filter==="payment"?(byId("webCashSearch")?.value.trim()?"Заказ с таким номером не найден.":"Нет заказов, ожидающих оплаты."):filter==="active"?"Активных заказов пока нет.":"Заказов пока нет."));
       return;
     }
+    if (webCourier && byId("cafeKitchenMessage")?.dataset.courierEmpty) showMessage("", false);
     if ([...Object.values(kitchenEmptyMessages), "Активных заказов пока нет.", "Заказов пока нет.", "Нет заказов, ожидающих оплаты.", "Заказ с таким номером не найден."].includes(byId("cafeKitchenMessage")?.textContent)) showMessage("", false);
     const html = shown.map(order => {
       const notice=window.ummaKitchenLive?.notice(order)||"";
@@ -212,7 +220,7 @@
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?'Забрать · фото и GPS':'Товар передал · фото')+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?(webCourier?'Подтвердить получение · фото':'Забрать · фото и GPS'):(webCourier?'Подтвердить вручение · фото':'Товар передал · фото'))+'</button>':'<span>Ожидается фото от курьера</span>';
       }
       if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
@@ -236,6 +244,30 @@
         : "";
       const refundAction=orderStaffRole==="manager"&&order.payment_status==="paid"?'<button type="button" class="kitchen-cancel" data-refund-order="'+esc(order.id)+'">Возврат и отмена</button>':"";
       const courierPayment = orderStaffRole === "courier" ? paymentAction : "";
+      if (webCourier && orderStaffRole === "courier") {
+        const closed=finished(order);
+        const complete=order.delivery_status==="delivered";
+        const ready=order.status==="ready";
+        const stage=closed?(order.status==="cancelled"?"Отменён":"Доставлен")
+          :complete?"Подтвердите оплату":goingToCafe?(ready?"Заберите из кафе":"Кафе готовит заказ"):"Доставьте клиенту";
+        const address=goingToCafe?pickup?.address||pickup?.name||"Кафе UMMA":order.delivery_address||"Уточните адрес у клиента";
+        const collectCash=order.payment_status==="pending"&&order.payment_timing==="on_delivery";
+        const payment=order.payment_status==="paid"?"Оплачено":order.payment_status==="refunded"?"Оплата возвращена"
+          :collectCash?(complete?"Наличные за заказ: ":"Получить наличными: ")+money(order.total_vnd):"Оплата через кафе";
+        const phone=String(order.customer_phone||"").replace(/[^+0-9]/g,"");
+        const canContact=!closed&&Number(order.courier_telegram_id)===Number(actorTelegramId);
+        const call=canContact&&phone?'<a class="kitchen-action courier-call" href="tel:'+esc(phone)+'">Позвонить</a>':"";
+        const chat=canContact&&order.chat_available?'<button type="button" class="kitchen-action" data-delivery-chat="'+esc(order.id)+'">Чат с клиентом</button>':"";
+        const list=items.length?'<details class="courier-order-content"><summary>Состав заказа</summary><ul class="kitchen-order-items">'+itemHtml+'</ul></details>':"";
+        return '<article data-kitchen-order="'+esc(order.id)+'" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card courier-work-card">'+
+          '<div class="courier-work-heading"><h2>Заказ №'+esc(order.order_number)+'</h2><span class="courier-ready '+(ready||closed?'is-ready':'')+'">'+esc(stage)+'</span></div>'+
+          '<div class="courier-work-destination"><small>'+ (goingToCafe?"Адрес кафе":"Адрес клиента")+'</small><strong>'+esc(address)+'</strong>'+
+          (!goingToCafe&&order.customer_note?'<p>'+esc(order.customer_note)+'</p>':"")+'</div>'+
+          '<p class="courier-work-payment" data-cash="'+collectCash+'">'+esc(payment)+'</p>'+
+          '<div class="kitchen-order-actions">'+courierRoute+courierPayment+deliveryAction+
+          '<small class="courier-step-feedback" role="status" aria-live="polite" data-courier-step-status="'+esc(order.id)+'"></small>'+
+          call+chat+'</div>'+list+evidenceActions+'</article>';
+      }
       const history=orderStaffRole==="manager"&&byId("webOverview")?'<button type="button" data-manager-history="'+esc(order.id)+'">История заказа</button>':"";
       const secondary = cashBoard ? cancel : history + paymentProofButton(order) + cancel + (orderStaffRole === "courier" || awaitingCounterPayment(order) ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;
       const secondaryMenu = secondary ? '<details class="kitchen-secondary-actions"><summary>Другие действия</summary><div class="kitchen-order-actions">' + secondary + '</div></details>' : "";
@@ -437,8 +469,9 @@
     if(byId("cafeCashPanel"))byId("cafeCashPanel").hidden=true;
     const cashToggle=byId("cafeCashToggle");
     if(cashToggle){cashToggle.setAttribute("aria-expanded","false");cashToggle.textContent="💰 Касса и смена";}
-    const hint=byId("workBoardHint");if(hint){hint.hidden=kitchenQueue;hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":cashBoard?"Выберите заказ и подтвердите фактическую оплату.":"Откройте заказ, проверьте блюда и отметьте следующий этап.";}
-    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":kitchenQueue?"Кухня":document.body.classList.contains("work-waiter")?"Заказы гостей":"Заказы кухни";
+    const webCourier=courierWorkspace&&!!byId("webOverview");
+    const hint=byId("workBoardHint");if(hint){hint.hidden=kitchenQueue||webCourier;hint.textContent=courierWorkspace?"Выйдите на линию → примите доставку → следуйте шагам заказа":cashBoard?"Выберите заказ и подтвердите фактическую оплату.":"Откройте заказ, проверьте блюда и отметьте следующий этап.";}
+    const title=byId("cafeKitchenPage")?.querySelector("h1");if(title)title.textContent=webCourier?"Доставки":courierWorkspace?"Курьер · Мои доставки":cashBoard?"Заказы к оплате":kitchenQueue?"Кухня":document.body.classList.contains("work-waiter")?"Заказы гостей":"Заказы кухни";
     if (!isAllowed()) { if (typeof showToast === "function") showToast("Доступ запрещён"); return; }
     const home = document.querySelector(".app > main");
     const admin = byId("adminPage"), users = byId("adminUsersPage"), cafe = byId("cafePage"), kitchen = byId("cafeKitchenPage"), waiter = byId("cafeWaiterPage"), staffAdmin = byId("cafeStaffAdminPage"), inventory = byId("cafeInventoryPage"), locations = byId("locationAdminPage");
