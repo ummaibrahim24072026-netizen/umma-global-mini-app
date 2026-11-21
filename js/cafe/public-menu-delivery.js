@@ -106,9 +106,6 @@ function mode(){
  generation++;cancelAddress();const delivery=$('orderType').value==='delivery';
  $('deliveryFields').hidden=!delivery;
  for(const id of ['deliveryAddress','deliveryPhone']){$(id).required=delivery;$(id).disabled=!delivery;}
- const cash=$('cashPaymentChoice').querySelector('input');
- cash.disabled=delivery;$('cashPaymentChoice').hidden=delivery;
- if(delivery&&cash.checked)document.querySelector('[name="paymentMethod"][value="qr"]').checked=true;
  $('tableNumber').closest('label').hidden=true;
  if(delivery){
   text(point?'Точка доставки выбрана.':choosePoint);

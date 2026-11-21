@@ -156,9 +156,10 @@ const locationId=()=>$('posLocation').value;
 const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
 const fxMethods=new Set(['usd','eur']);
 let fxQuote=null,fxLoading=false;
-const fxCurrency=()=>selectedMethod.toUpperCase();
-const fxCash=()=>fxMethods.has(selectedMethod);
-const fxReady=()=>fxCash()&&fxQuote?.currency===fxCurrency()&&Date.now()-Date.parse(fxQuote.quotedAt)<24*60*60*1000;
+const activeFxQuote=()=>payOrder?.guestCashQuote||fxQuote;
+const fxCurrency=()=>payOrder?.guestCashQuote?.currency||selectedMethod.toUpperCase();
+const fxCash=()=>Boolean(payOrder?.guestCashQuote)||((!payOrder||payOrder.draftFx)&&fxMethods.has(selectedMethod));
+const fxReady=()=>fxCash()&&activeFxQuote()?.currency===fxCurrency()&&Date.now()-Date.parse(activeFxQuote().quotedAt)<24*60*60*1000;
 const fxFormat=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:fxCurrency(),minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
 async function refreshFxQuote(){
  const currency=fxCurrency();if(!fxCash())return;
@@ -208,7 +209,7 @@ function resetSaleService(){
 }
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
 let counterOrdersRevision=0,counterRefreshQueued=false,paymentFrom='sale';
-const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?selectedMethod:payOrder?.paymentMethod||selectedMethod;
+const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?fxCurrency().toLowerCase():payOrder?.paymentMethod||selectedMethod;
 const orderMethod=order=>order.foreignPayment?.channel||order.paymentMethod;
 const canSwitchPayment=order=>order?.staffCounter&&order.paymentStatus==='pending'&&!closedOrder(order)&&
  (order.paymentMethod!=='bank_transfer'||order.foreignPayment||order.legacyTransfer);
@@ -276,7 +277,7 @@ function paymentFields(){
   button.setAttribute('aria-pressed',String(button.dataset.posService===saleService));
  }
  const pending=payOrder?.paymentStatus==='pending'&&!closedOrder(payOrder);
- const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.abs(Math.round(received*100)/100-received)<1e-8&&Math.floor(received*fxQuote.vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
+ const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.abs(Math.round(received*100)/100-received)<1e-8&&Math.floor(received*activeFxQuote().vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
  const activeCash=!switchingPayment&&(cash||fx)&&(draft||pending);
  const choosing=draft||switchingPayment;
@@ -311,17 +312,17 @@ function paymentFields(){
   $('posCash').placeholder=fx?'Получено '+fxCurrency():'Сколько дал клиент';
   $('posCashLabel').firstChild.textContent=fx?'Получено наличными, '+fxCurrency():'Получено наличными, ₫';
   const fxInfo=$('posFxInfo');fxInfo.hidden=!fx;
-  if(fx)fxInfo.textContent=fxReady()?'К оплате ≈ '+fxFormat(Math.ceil(due/fxQuote.vndPerUnit*100)/100)+' · 1 '+fxCurrency()+' = '+money(fxQuote.vndPerUnit)+' · Google Finance · '+new Date(fxQuote.quotedAt).toLocaleString('ru-RU'):'Ожидаем актуальный курс Google Finance';
+  if(fx)fxInfo.textContent=fxReady()?'К оплате ≈ '+fxFormat(Math.ceil(due/activeFxQuote().vndPerUnit*100)/100)+' · 1 '+fxCurrency()+' = '+money(activeFxQuote().vndPerUnit)+' · Google Finance · '+new Date(activeFxQuote().quotedAt).toLocaleString('ru-RU'):'Ожидаем актуальный курс Google Finance';
  $('posCash').disabled=!activeCash||busy;
  $('posLocation').disabled=busy;
  $('counterCheckout').disabled=busy||!cart.size||unavailable||!serviceReady;
  $('counterSummaryToolbar').hidden=!draft;
  $('counterAddProducts').disabled=busy;
- $('posSubmit').disabled=busy||
+ $('posSubmit').disabled=busy||(payOrder?.guestCash===true&&!payOrder.guestCashLoaded)||
   (switchingPayment?(!pending||!selectedAvailable||selectedMethod===orderMethod(payOrder))
    :(!payOrder&&(!draft||unavailable||!selectedAvailable||!serviceReady))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
  $('posSubmit').textContent=switchingPayment?'Сменить способ оплаты':(cash||fx)?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
- $('posChange').textContent=activeCash&&$('posCash').value?(fx?(fxReady()?(validCash?'Сдача '+money(Math.floor(received*fxQuote.vndPerUnit)-due):'Не хватает '+money(Math.max(0,due-Math.floor(received*fxQuote.vndPerUnit)))):'Курс недоступен'):(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received)))):'';
+ $('posChange').textContent=activeCash&&$('posCash').value?(fx?(fxReady()?(validCash?'Сдача '+money(Math.floor(received*activeFxQuote().vndPerUnit)-due):'Не хватает '+money(Math.max(0,due-Math.floor(received*activeFxQuote().vndPerUnit)))):'Курс недоступен'):(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received)))):'';
  const total=paymentTotal();
  $('posCashDue').querySelector('strong').textContent=total;
  const itemsOpen=$('counterPaymentItems')?.open;
@@ -386,6 +387,11 @@ async function paymentDetails(order){
   if(info.paymentMethod)order.paymentMethod=info.paymentMethod;
   if(info.status)order.status=info.status;
   return info.payment;
+ }
+ if(order.paymentMethod==='cash'&&order.guestCash){
+  const info=await foreignApi('details',{orderId:order.id});
+  order.guestCashQuote=info.cashQuote;
+  order.guestCashLoaded=true;
  }
  if(order.paymentMethod!=='qr')return null;
  const {payment}=await api('payment',{orderId:order.id});
@@ -456,7 +462,7 @@ async function sell(event){
  if(busy||$('posSubmit').disabled)return;
  if(switchingPayment){await switchOrderPayment();return;}
  const method=paymentMethod(),cash=method==='cash',fx=fxMethods.has(method),foreign=foreignMethods.has(method),due=paymentDue(),received=Number($('posCash').value);
- if(fx&&(!fxReady()||!$('posCash').value||!Number.isFinite(received)||Math.abs(Math.round(received*100)/100-received)>=1e-8||Math.floor(received*fxQuote.vndPerUnit)<due)){result('Проверьте курс и полученную сумму в '+fxCurrency());return;}
+ if(fx&&(!fxReady()||!$('posCash').value||!Number.isFinite(received)||Math.abs(Math.round(received*100)/100-received)>=1e-8||Math.floor(received*activeFxQuote().vndPerUnit)<due)){result('Проверьте курс и полученную сумму в '+fxCurrency());return;}
  if(cash&&(!$('posCash').value||!Number.isSafeInteger(received)||received<due)){result('Введите полученную сумму не меньше '+money(due));return;}
  busy=true;
  paymentFields();
@@ -478,7 +484,7 @@ async function sell(event){
     : {...common,paymentMethod:fx?'cash':method,paymentTiming:'now',customerName:'Гость',customerPhone:common.customerPhone||'',customerNote:''});
    const data=await response.json();
    if(!response.ok||!data.ok||!data.order)throw Error(data.error||'Заказ не подтверждён');
-   created={...fulfillment,...data.order,items,staffCounter:true,paymentMethod:data.paymentMethod||(foreign?'bank_transfer':fx?'cash':method),paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
+   created={...fulfillment,...data.order,items,staffCounter:true,draftFx:fx,paymentMethod:data.paymentMethod||(foreign?'bank_transfer':fx?'cash':method),paymentStatus:data.paymentStatus||'pending',status:data.status||data.order.status};
    details=data.payment;
    // Creation committed. Keep the server order even if a later payment or display call fails.
    cart.clear();
@@ -619,7 +625,7 @@ async function refreshCounterOrders({afterMutation=false}={}){
    const changed=open.paymentMethod!==latest.payment_method;
    if(changed||latest.payment_status!=='pending')$('posCash').value='';
    const next={...open,paymentStatus:latest.payment_status,status:latest.status,paymentMethod:latest.payment_method,
-    foreignPayment:changed?null:open.foreignPayment,legacyTransfer:changed?false:open.legacyTransfer};
+    guestCashQuote:changed?null:open.guestCashQuote,guestCashLoaded:changed?false:open.guestCashLoaded,foreignPayment:changed?null:open.foreignPayment,legacyTransfer:changed?false:open.legacyTransfer};
    showPayment(next);
    if(changed&&next.paymentStatus==='pending'){
     const payment=await paymentDetails(next);
@@ -706,7 +712,7 @@ async function counterOrderAction(event){
   }else{
    const target={id:order.id,orderNumber:order.order_number,totalVnd:order.total_vnd,paymentStatus:order.payment_status,
     paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,orderType:order.order_type,
-    deliveryAddress:order.delivery_address,staffCounter:order.created_via==='staff'&&
+    deliveryAddress:order.delivery_address,guestCash:order.created_via==='customer'&&order.customer_telegram_id==null,staffCounter:order.created_via==='staff'&&
      (order.order_type==='pickup'||order.order_type==='dine_in'&&order.payment_timing==='now'||
       order.order_type==='delivery'&&order.dispatch_mode==='manual'&&order.requires_prepayment)};
    $('posCash').value='';

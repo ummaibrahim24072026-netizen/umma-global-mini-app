@@ -113,17 +113,43 @@ function receiptDetails(value,{t,money,receiptPhoto}){
   $('receiptChange').textContent=money(receipt.changeVnd);
  }
 }
+function convert(amount,quote){
+ const digits=quote.currency==='USDT'?6:2;
+ const units=amount/Number(quote.vndPerUnit)*10**digits;
+ return (['USD','EUR'].includes(quote.currency)?Math.ceil(units):Math.round(units))/10**digits;
+}
+function formatForeign(amount,currency){
+ const locale=window.ummaMenuI18n?.locale()||'ru';
+ return currency==='USDT'
+  ?new Intl.NumberFormat(locale,{maximumFractionDigits:6}).format(amount)+' USDT'
+  :new Intl.NumberFormat(locale,{style:'currency',currency}).format(amount);
+}
+function renderForeignPayment(value,waiting){
+ const payment=waiting&&value.payment;
+ const show=payment&&['USD','EUR','KZT','USDT'].includes(payment.currency);
+ const section=$('guestForeignPayment');
+ if(!section)return;
+ section.hidden=!show;
+ if(!show)return;
+ const {currency,vndPerUnit,amount,bankName,recipient,account,network}=payment;
+ $('guestForeignAmount').textContent=formatForeign(vndPerUnit?convert(value.totalVnd,payment):amount,currency);
+ for(const [id,text] of Object.entries({Bank:bankName,Recipient:recipient,Account:account,Network:network})){
+  $('guestForeign'+id+'Row').hidden=!text;
+  $('guestForeign'+id).textContent=text||'';
+ }
+}
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.greenSmStage==='delivered'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
 const waitingPayment=value.paymentStatus==='pending'&&!['cancelled','completed'].includes(value.status);
+renderForeignPayment(value,waitingPayment);
 $('orderState').removeAttribute('data-i18n');
 $('orderState').textContent=waitingPayment?t('Ожидаем подтверждение оплаты')
  :value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга')
  :value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ')
  :t(statuses[value.status]||'Заказ отправлен');
-$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?'Ожидаем перевод в рублях':value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира.');
+$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?(value.payment?.currency==='RUB'?'Ожидаем перевод в рублях':'Ожидаем подтверждение оплаты'):value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира.');
 const ruble=value.payment?.currency==='RUB'&&value.paymentStatus==='pending'&&
  !['cancelled','completed'].includes(value.status)?value.payment:null;
 const rubleSection=$('rublePayment');
@@ -196,5 +222,5 @@ async function poll(){
 window.setInterval(()=>{if(!document.hidden)void poll();},3000);
 document.addEventListener('umma:fulfillment-realtime',()=>void poll());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll();});
-window.ummaGuestExtras={install,installText,receipt,clearReceipt(){order=null;context=null;}};
+window.ummaGuestExtras={install,installText,receipt,convert,formatForeign,clearReceipt(){order=null;context=null;}};
 })();

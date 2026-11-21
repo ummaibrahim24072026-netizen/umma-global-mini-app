@@ -1,6 +1,8 @@
 const googleFinance='https://www.google.com/finance/beta/quote/';
 const pairs={
   'RUB-VND':{title:'Russian Ruble / Vietnamese dong',min:10,max:10000},
+  'USD-VND':{title:'United States Dollar / Vietnamese dong',min:1000,max:100000},
+  'EUR-VND':{title:'Euro / Vietnamese dong',min:1000,max:100000},
   'RUB-KZT':{title:'Russian Ruble / Kazakhstani Tenge',min:0.1,max:100},
 };
 type Pair=keyof typeof pairs;
@@ -56,4 +58,10 @@ export async function googleTengeQuote(){
  const vndPerKzt=Number(vnd.rate)/Number(kzt.rate);
  if(!Number.isFinite(vndPerKzt)||vndPerKzt<1||vndPerKzt>1000)return null;
  return {vndPerKzt:vndPerKzt.toFixed(8),quotedAt:vnd.quotedAt<kzt.quotedAt?vnd.quotedAt:kzt.quotedAt};
+}
+
+export async function googleCashQuote(currency:'USD'|'EUR'){
+ const quote=await googleRate(currency==='USD'?'USD-VND':'EUR-VND');
+ if(!quote||Date.now()-Date.parse(quote.quotedAt)>=24*60*60*1000)return null;
+ return {currency,vndPerUnit:Number(quote.rate),quotedAt:quote.quotedAt,source:'Google Finance'};
 }

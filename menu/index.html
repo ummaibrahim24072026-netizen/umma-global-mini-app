@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ru" translate="no" class="notranslate"><head>
 <meta charset="utf-8"><meta name="google" content="notranslate"><base href="../"><link rel="canonical" href="https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/menu/"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Выберите блюда и оформите заказ на самовывоз.">
+<meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=39"></script>
+<script src="js/cafe/public-menu-i18n.js?v=40"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -23,7 +23,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.language-control{display:flex;align-items:center;gap:6px;color:var(--umma-brand-strong)}.language-control select{max-width:158px;min-height:42px;padding:8px 10px;border:1px solid var(--umma-brand-line);border-radius:12px;background:#fff;color:var(--umma-brand-ink);font:600 13px/1.4 Inter,system-ui,sans-serif;cursor:pointer}.language-control option{font:inherit}.cafe-product-price,.cart-total>span:last-child,.cart-copy small{unicode-bidi:isolate}.cafe-category span{margin-left:0;margin-inline-start:7px}#cafePage .cafe-halal-badge{right:auto;left:auto;inset-inline-end:10px}.field input[type=tel]{direction:ltr;text-align:start}.success-number{unicode-bidi:plaintext}.cafe-product h3,.cafe-product-description p{overflow-wrap:anywhere}.pickup-pill{flex-shrink:1}.cash-note{text-align:end}.service-row{gap:12px}.topbar{flex-wrap:wrap}.cafe-menu-categories{direction:inherit}.cart-copy,.field{text-align:start}html[dir=rtl] .cafe-product h3,html[dir=rtl] .cafe-product-description{text-align:right}html[dir=rtl] .checkout-header{direction:rtl}.checkout-header h2{max-width:calc(100% - 58px);overflow-wrap:anywhere}.cart-total{gap:12px}.menu-tools h1{overflow-wrap:anywhere}.cafe-card-quantity button,.cart-controls button{flex-shrink:0}@media(max-width:380px){.language-control select{max-width:136px}.brand{font-size:13px}.cash-note{font-size:11px}.pickup-pill{font-size:12px;padding:10px}}
 .field select{display:block;width:100%;min-height:48px;padding:12px;margin-top:7px;border:1px solid var(--umma-brand-line-strong);border-radius:12px;background:#fff;color:var(--umma-brand-ink);font:inherit;font-size:16px}#deliveryFields{min-width:0;margin-block:0 16px}#deliveryFields .delivery-map-actions{display:flex;flex-wrap:wrap;gap:8px}#deliveryFields .delivery-map-actions button{flex:1 1 auto;min-height:44px}#deliveryLocate{background:var(--umma-brand-tint,#e5f5f5);font-size:14px}#deliveryPointState{margin:0 0 8px;font-weight:650;color:var(--umma-brand-ink)}#deliveryMap{width:100%;height:clamp(240px,45vh,420px);height:clamp(240px,45dvh,420px);border-radius:12px;isolation:isolate;margin-block:10px 14px}#deliveryMap .leaflet-control-attribution{font-size:10px;line-height:1.35}#deliveryMap .leaflet-control-zoom a{width:40px;height:40px;line-height:40px}
-.guest-hint{font-size:13px;line-height:1.65;color:var(--umma-brand-muted);margin:0 0 12px}.optional-name{border-top:1px solid var(--umma-brand-line);margin:16px 0;padding-top:10px}.optional-name summary{cursor:pointer;font-size:13px;line-height:1.6;color:var(--umma-brand-strong);padding:7px 0;min-height:40px}.optional-name .field{margin-bottom:6px}#successNumber{font-size:clamp(28px,6vw,44px)}
+.guest-hint{font-size:13px;line-height:1.65;color:var(--umma-brand-muted);margin:0 0 12px}#successNumber{font-size:clamp(28px,6vw,44px)}
 
 /* Keep two dishes side by side even on 320–390px phones. */
 #cafePage .cafe-products{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -227,7 +227,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout .order-mode-picker legend { margin-bottom: 7px; font-weight: 750; font-size: 15px; }
 .order-mode-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border: 1px solid #b5d4d0;
   border-radius: 13px;
   background: white;
@@ -266,21 +266,24 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-width: 0;
 }
 #checkout[data-stage="checkout"] .payment-choice legend { font-size: 15px; font-weight: 750; }
-.checkout-payment-options { border: 1px solid #b5d4d0; border-radius: 12px; background: white; overflow: hidden; }
+.checkout-payment-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 350px) { .checkout-payment-options { grid-template-columns: 1fr; } }
 #checkout[data-stage="checkout"] .payment-choice label {
   min-height: 44px;
   justify-content: flex-start;
   text-align: start;
   gap: 10px;
   padding: 6px 11px;
-  border: 0;
-  border-radius: 0;
+  border: 1px solid #b5d4d0;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
 }
-.checkout-payment-options label:not([hidden]) ~ label:not([hidden]) { border-top: 1px solid #d7e8e5 !important; }
+.checkout-payment-options label:has(:disabled) { opacity: .58; cursor: default; }
+#checkoutPaymentNotice { margin: 5px 0 0; }
 .checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
 .checkout-payment-options input { flex: none; }
-#checkout[data-stage="checkout"] .optional-name { margin: 8px 0 0; padding: 0; border: 0; }
-#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; border-radius: 999px; background: var(--umma-brand-primary); padding-inline: 14px; }
+#checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: transparent; color: #006765; padding-inline: 0; text-decoration: underline; text-underline-offset: 3px; }
+#checkoutFxRow strong { font-variant-numeric: tabular-nums; }
 #checkout .checkout-pay-footer {
   flex: none;
   padding: 9px 16px max(10px, env(safe-area-inset-bottom));
@@ -655,19 +658,28 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <fieldset id="customerFields">
   <fieldset class="order-mode-picker">
     <legend data-i18n="Как получить заказ?">Как получить заказ?</legend>
-    <select id="orderType" hidden><option value="pickup" data-i18n="Самовывоз">Самовывоз</option><option value="delivery" data-i18n="Доставка">Доставка</option></select>
+    <select id="orderType" hidden><option value="pickup" data-i18n="С собой">С собой</option><option value="dine_in" data-i18n="В кафе">В кафе</option><option value="delivery" data-i18n="Доставка">Доставка</option></select>
     <div class="order-mode-options">
-      <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="pickup" checked><span data-i18n="Самовывоз">Самовывоз</span></label>
+      <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="pickup" checked><span data-i18n="С собой">С собой</span></label>
+      <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="dine_in"><span data-i18n="В кафе">В кафе</span></label>
       <label><input class="sr-only" type="radio" name="checkoutOrderMode" value="delivery"><span data-i18n="Доставка">Доставка</span></label>
     </div>
   </fieldset>
   <div class="checkout-note" id="pickupInfo">
     <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.2"/></svg>
-    <span id="pickupAddress" data-i18n="Самовывоз из HALAL UMMA.">Самовывоз из HALAL UMMA.</span>
-  </div><p class="guest-hint" data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend><div class="checkout-payment-options"><label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label><label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="По QR-коду">По QR-коду</span></label><label><input type="radio" name="paymentMethod" value="bank_transfer"><span data-i18n="Перевод в рублях">Перевод в рублях</span></label></div></fieldset>
+    <span id="pickupAddress">HALAL UMMA</span>
+  </div><p class="guest-hint" id="checkoutDeliveryHint" hidden data-i18n="Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.">Бесплатная доставка от 100 000 ₫. При меньшей сумме доставка стоит 30 000 ₫.</p><section id="deliveryFields" hidden><p id="deliveryPointState" class="guest-hint" role="status" data-i18n="Выберите точку доставки на карте.">Выберите точку доставки на карте.</p><div class="delivery-map-actions"><button type="button" id="deliveryLocate" class="plain-btn" data-i18n="Моё местоположение">Моё местоположение</button><button type="button" id="deliveryMapOpen" hidden class="plain-btn" data-i18n="Указать на карте">Указать на карте</button></div><div id="deliveryMap" hidden></div><label class="field"><span data-i18n="Адрес доставки">Адрес доставки</span><input id="deliveryAddress" autocomplete="street-address" minlength="8" maxlength="250"></label><label class="field"><span data-i18n="Телефон для доставки">Телефон для доставки</span><input id="deliveryPhone" type="tel" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" disabled></label></section><fieldset class="payment-choice"><legend data-i18n="Способ оплаты">Способ оплаты</legend>
+<div class="checkout-payment-options">
+<label id="cashPaymentChoice"><input type="radio" name="paymentMethod" value="cash" checked><span data-i18n="Наличные">Наличные</span></label>
+<label><input type="radio" name="paymentMethod" value="usd"><span data-i18n="Наличные USD">Наличные USD</span></label>
+<label><input type="radio" name="paymentMethod" value="eur"><span data-i18n="Наличные EUR">Наличные EUR</span></label>
+<label><input type="radio" name="paymentMethod" value="qr"><span data-i18n="QR Vietcombank">QR Vietcombank</span></label>
+<label><input type="radio" name="paymentMethod" value="kaspi" disabled><span data-i18n="Перевод на Kaspi">Перевод на Kaspi</span></label>
+<label><input type="radio" name="paymentMethod" value="sber" disabled><span data-i18n="Перевод на Сбербанк">Перевод на Сбербанк</span></label>
+<label><input type="radio" name="paymentMethod" value="usdt" disabled><span data-i18n="USDT">USDT</span></label>
+</div><p id="checkoutPaymentNotice" class="guest-hint" role="status" hidden></p></fieldset>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
-<details class="optional-name"><summary data-i18n="Добавить имя (необязательно)">Добавить имя (необязательно)</summary><label class="field"><span data-i18n="Имя — необязательно">Имя — необязательно</span><input id="customerName" autocomplete="given-name" maxlength="100" placeholder="Как к вам обращаться" data-i18n-placeholder="Как к вам обращаться"></label></details>
-</fieldset><button type="button" id="backToCart" class="plain-btn" data-i18n="Корзина">Корзина</button></div><div class="checkout-pay-footer"><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p></div></form></section></div>
+</fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p></div></form></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
   <header class="receipt-status">
     <span class="receipt-status-icon" aria-hidden="true">
@@ -687,7 +699,13 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><div class="receipt-instructions">
   <p id="paymentState" role="status"></p>
   <p id="receiptHint"></p>
-</div><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="rublePayment" class="receipt-lines" hidden><div class="ruble-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="rubleAmount"></strong></div><div class="ruble-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="rubleRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="rubleBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="rubleRecipient"></strong></div><div><span data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="rublePhone" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="rubleBankPickerTitle">
+</div><section id="guestForeignPayment" class="receipt-lines" hidden>
+  <div><span data-i18n="К оплате">К оплате</span><strong id="guestForeignAmount" dir="ltr"></strong></div>
+  <div id="guestForeignBankRow"><span data-i18n="Банк">Банк</span><strong id="guestForeignBank"></strong></div>
+  <div id="guestForeignRecipientRow"><span data-i18n="Получатель">Получатель</span><strong id="guestForeignRecipient"></strong></div>
+  <div id="guestForeignAccountRow"><span data-i18n="Реквизиты">Реквизиты</span><strong id="guestForeignAccount" dir="ltr"></strong></div>
+  <div id="guestForeignNetworkRow"><span data-i18n="Сеть">Сеть</span><strong id="guestForeignNetwork" dir="ltr"></strong></div>
+</section><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="rublePayment" class="receipt-lines" hidden><div class="ruble-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="rubleAmount"></strong></div><div class="ruble-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="rubleRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="rubleBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="rubleRecipient"></strong></div><div><span data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="rublePhone" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="rubleBankPickerTitle">
 <button id="copyRublePhone" type="button" class="plain-btn" data-i18n="Скопировать только номер">Скопировать только номер</button>
 <p id="rubleBankPickerTitle" data-i18n="Скопировать номер и открыть свой банк">Скопировать номер и открыть свой банк</p>
 <div id="rubleBankLinks" class="ruble-bank-links">
@@ -705,7 +723,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=17"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=18"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
@@ -781,18 +799,76 @@ const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+
 const qty=id=>cart.get(id)||0;
 const count=()=>[...cart.values()].reduce((a,b)=>a+b,0);
 const total=()=>products.reduce((a,p)=>a+qty(p.id)*Number(p.price_vnd),0);
+const paymentInputs=[...document.querySelectorAll('[name="paymentMethod"]')];
+const checkoutMethod=()=>pending?.paymentMethod||paymentInputs.find(input=>input.checked)?.value;
+const foreignMethods=new Set(['sber','kaspi','usdt','usd','eur']);
+let paymentOptions=null, optionsRequest=null;
+const paymentQuotes=new Map(), quoteRequests=new Map();
+function guestEndpoint(params){
+ return fetch(API+'cafe-guest-order?'+params,{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(async response=>{
+  const data=await response.json();
+  if(!response.ok||!data.ok)throw Error('Payment unavailable');
+  return data;
+ });
+}
+function loadPaymentOptions(){
+ if(optionsRequest)return;
+ optionsRequest=guestEndpoint('paymentOptions=1').then(data=>{
+  paymentOptions=data;
+  if(Number(data.usdtRate)>0)paymentQuotes.set('usdt',{currency:'USDT',vndPerUnit:Number(data.usdtRate)});
+  else paymentQuotes.delete('usdt');
+ }).catch(()=>{}).finally(()=>{
+  optionsRequest=null;
+  for(const input of paymentInputs){
+   const method=input.value;
+   if(['sber','kaspi','usdt'].includes(method))input.disabled=!paymentOptions?.[method==='usdt'?'usdtRate':method];
+  }
+  if(!pending&&paymentInputs.find(input=>input.checked)?.disabled)paymentInputs[0].checked=true;
+  renderCheckoutAmounts();
+ });
+}
+function loadPaymentQuote(method){
+ if(!foreignMethods.has(method)||method==='usdt'||quoteRequests.has(method))return;
+ const quote=paymentQuotes.get(method);
+ if(quote&&Date.now()<quote.expires)return;
+ paymentQuotes.delete(method);
+ const request=guestEndpoint('paymentQuote='+method).then(data=>{
+  if(!Number.isFinite(data.vndPerUnit)||data.vndPerUnit<=0)throw Error('Invalid rate');
+  paymentQuotes.set(method,{...data,expires:Date.now()+60000});
+ }).catch(()=>{}).finally(()=>{
+  quoteRequests.delete(method);
+  renderCheckoutAmounts();
+ });
+ quoteRequests.set(method,request);
+ renderCheckoutAmounts();
+}
 function renderCheckoutAmounts(subtotal=total()){
  const delivery=(pending?.orderType??$('orderType').value)==='delivery';
  const fee=delivery&&subtotal<100000?30000:0;
  $('checkoutDeliveryRow').hidden=!delivery;
  $('checkoutDeliveryFee').textContent=money(fee);
- $('checkoutTotal').textContent=money(subtotal+fee);
+ const amount=subtotal+fee;
+ $('checkoutTotal').textContent=money(amount);
+ const method=checkoutMethod()==='bank_transfer'?'sber':checkoutMethod();
+ const quote=paymentQuotes.get(method),foreign=foreignMethods.has(method);
+ const loading=quoteRequests.has(method);
+ $('checkoutFxRow').hidden=!foreign||!quote;
+ if(quote)$('checkoutFxAmount').textContent='≈ '+window.ummaGuestExtras.formatForeign(window.ummaGuestExtras.convert(amount,quote),quote.currency);
+ const notice=$('checkoutPaymentNotice');
+ const deliveryCash=delivery&&['cash','usd','eur'].includes(method);
+ const unavailable=paymentOptions&&['sber','kaspi','usdt'].some(m=>!paymentOptions[m==='usdt'?'usdtRate':m]);
+ const key=loading?'Получаем курс Google Finance…':foreign&&!quote?'Курс временно недоступен. Выберите другой способ оплаты.':
+  deliveryCash?'Оплатите наличными на стойке до отправки заказа.':unavailable?'Недоступные способы оплаты отмечены серым.':'';
+ notice.hidden=!key;
+ notice.textContent=key?t(key):'';
+ $('submit').disabled=!cart.size||busy||(!pending&&(shortages()||(foreign&&(!quote||loading))));
 }
 const orderModeInputs=[...document.querySelectorAll('[name="checkoutOrderMode"]')];
 function syncCheckoutMode(){
  const mode=$('orderType').value;
  orderModeInputs.forEach(input=>{input.checked=input.value===mode;});
  $('pickupInfo').hidden=mode==='delivery';
+ $('checkoutDeliveryHint').hidden=mode!=='delivery';
 }
 $('orderType').addEventListener('change',()=>{
  syncCheckoutMode();
@@ -804,6 +880,10 @@ orderModeInputs.forEach(input=>input.addEventListener('change',()=>{
  $('orderType').dispatchEvent(new Event('change',{bubbles:true}));
 }));
 syncCheckoutMode();
+paymentInputs.forEach(input=>input.addEventListener('change',()=>{
+ loadPaymentQuote(input.value);
+ renderCheckoutAmounts();
+}));
 const safeImage=p=>window.ummaCafeProductPhoto?.(p)||'';
 function catalogReceiptPhoto(item){
   if(!item.name_ru)return '';
@@ -976,7 +1056,6 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
  $('ummaEmptyCart').hidden=!!n;
  $('cartFooter').hidden=!n;
  $('continueCheckout').disabled=!n;
- $('submit').disabled=!n||busy||(!pending&&shortages());
  lock();
 }
 function renderCartRow(product){
@@ -998,7 +1077,7 @@ function renderCartRow(product){
    </div>
  </div>`;
 }
-function lock(){$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
+function lock(){$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
 function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
 if(row){
   const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
@@ -1272,10 +1351,14 @@ $('continueCheckout').onclick=()=>{
   const checkout=$('checkout');
   checkout.close();
   checkoutStage('checkout');
+  loadPaymentOptions();
+  loadPaymentQuote(checkoutMethod());
+  renderCheckoutAmounts();
   checkout.showModal();
   $('checkoutTitle').focus({preventScroll:true});
 };
 $('backToCart').onclick=()=>{
+  if(busy||pending)return;
   const checkout=$('checkout');
   checkout.close();
   checkoutStage('cart');
@@ -1295,16 +1378,91 @@ $('openCart').onclick=()=>{
   $('success').hidden=true;
   checkoutStage(pending?'checkout':'cart');
   renderCart();
-  if(pending)checkout.showModal();
+  if(pending){loadPaymentOptions();loadPaymentQuote(checkoutMethod()==='bank_transfer'?'sber':checkoutMethod());checkout.showModal();}
   else checkout.show();
   document.body.style.overflow='hidden';
 };
 $('closeCart').onclick=closeCart;
 $('ummaBackToMenu').onclick=closeCart;
 $('checkout').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
-$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
+$('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('success').hidden=true;$('customerFields').disabled=false;$('form').reset();$('orderType').value='pickup';syncCheckoutMode();window.ummaPublicDelivery?.reset();renderCheckoutAmounts();$('result').hidden=true;};
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
-$('form').onsubmit=async e=>{e.preventDefault();if(!cart.size||busy)return;if($('orderType').value==='delivery'&&!window.ummaPublicDelivery){status('Не удалось оформить заказ.',true);return;}if(!pending){let deliveryFields={};try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}catch(err){status(err.message,true);return;}pending={...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,name:$('customerName').value.trim(),tableNumber:$('tableNumber').value,paymentMethod:document.querySelector('[name=paymentMethod]:checked').value,point:source,items:[...cart].map(([id,quantity])=>{const p=products.find(p=>p.id===id);return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};})};}try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}busy=true;catalogRequest++;renderCart();status('Подготавливаем оплату…');try{const r=await fetch(API+'cafe-guest-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)});const d=await r.json();if(!r.ok||!d.ok){if(r.status>=400&&r.status<500){pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}};if(d.code==='STOCK_UNAVAILABLE'){setTimeout(()=>void refreshAvailability(),0);throw Error('STOCK_UNAVAILABLE');}throw Error(d.code==='RUBLE_RATE_UNAVAILABLE'?d.code:'checkout-rejected');}lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,orderType:pending.orderType||'pickup',trackingToken:d.trackingToken};window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);saveReceipt();renderSuccess();checkoutStage('receipt');$('checkoutContent').hidden=true;$('result').hidden=true;$('success').hidden=false;$('checkoutTitle').focus();pending=null;try{sessionStorage.removeItem('umma-menu-pending');}catch{}for(const [id,n]of cart){const p=products.find(p=>p.id===id);if(p?.stockManaged){p.available=Math.max(0,p.available-n);for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id))){if(p.isPreorder)other.plannedAvailable=p.available;}}}cart.clear();renderProducts();}catch(err){status(err.message==='RUBLE_RATE_UNAVAILABLE'?'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.':err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.':err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.',true,err.message==='RUBLE_RATE_UNAVAILABLE'?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');}finally{busy=false;renderCart();}};
+$('form').onsubmit=async e=>{
+ e.preventDefault();
+ if(!cart.size||busy||$('submit').disabled)return;
+ const orderType=$('orderType').value;
+ if(!pending){
+  if(orderType==='delivery'&&!window.ummaPublicDelivery){
+   status('Не удалось оформить заказ.',true);
+   return;
+  }
+  let deliveryFields;
+  try{deliveryFields=window.ummaPublicDelivery?.fields()||{};}
+  catch(err){status(err.message,true);return;}
+  pending={
+   ...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,orderType,
+   tableNumber:$('tableNumber').value,paymentMethod:checkoutMethod(),point:source,
+   items:[...cart].map(([id,quantity])=>{
+    const p=products.find(p=>p.id===id);
+    return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};
+   })
+  };
+ }
+ try{sessionStorage.setItem('umma-menu-pending',JSON.stringify(pending));}catch{}
+ busy=true;
+ catalogRequest++;
+ renderCart();
+ status('Подготавливаем оплату…');
+ try{
+  const r=await fetch(API+'cafe-guest-order',{
+   method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(pending),signal:AbortSignal.timeout(25000)
+  });
+  const d=await r.json();
+  if(!r.ok||!d.ok){
+   if(r.status>=400&&r.status<500){
+    pending=null;
+    try{sessionStorage.removeItem('umma-menu-pending');}catch{}
+   }
+   if(d.code==='STOCK_UNAVAILABLE')setTimeout(()=>void refreshAvailability(),0);
+   throw Error(d.code||'checkout-rejected');
+  }
+  lastOrder={...d.order,tableNumber:pending.tableNumber,requestKey:pending.requestKey,payment:d.payment,
+   orderType:d.order.orderType||pending.orderType||'pickup',trackingToken:d.trackingToken};
+  window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);
+  saveReceipt();
+  renderSuccess();
+  checkoutStage('receipt');
+  $('checkoutContent').hidden=true;
+  $('result').hidden=true;
+  $('success').hidden=false;
+  $('checkoutTitle').focus();
+  pending=null;
+  try{sessionStorage.removeItem('umma-menu-pending');}catch{}
+  for(const [id,n]of cart){
+   const p=products.find(p=>p.id===id);
+   if(!p?.stockManaged)continue;
+   p.available=Math.max(0,p.available-n);
+   if(p.isPreorder){
+    for(const other of products.filter(x=>(x.productId||x.id)===(p.productId||p.id)))other.plannedAvailable=p.available;
+   }
+  }
+  cart.clear();
+  renderProducts();
+ }catch(err){
+  const paymentMessages={
+   PAYMENT_METHOD_UNAVAILABLE:'Способ оплаты временно недоступен.',
+   PAYMENT_RATE_UNAVAILABLE:'Курс временно недоступен. Выберите другой способ оплаты.',
+   RUBLE_RATE_UNAVAILABLE:'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.'
+  };
+  const paymentError=paymentMessages[err.message];
+  const message=paymentError||(err.message==='STOCK_UNAVAILABLE'?'Часть блюд уже закончилась. Измените корзину.'
+   :err.name==='TimeoutError'?'Сервер долго отвечает.':'Не удалось оформить заказ.');
+  status(message,true,paymentError?'':pending?'Повторите переход к оплате.':'Проверьте данные и попробуйте ещё раз.');
+ }finally{
+  busy=false;
+  renderCart();
+ }
+};
 const terminal = order => ['cancelled','completed'].includes(order?.status);
 const receiptKey = order => order.id || String(order.orderNumber);
 const activeReceipts = () => [...receipts.values()].reverse().filter(order => !terminal(order));
@@ -1516,20 +1674,33 @@ for(const storage of [sessionStorage,localStorage]){
   }
 }
 lastOrder=activeReceipts()[0]||[...receipts.values()].at(-1)||null;
-try{const saved=JSON.parse(sessionStorage.getItem('umma-menu-pending'));if(saved?.action==='create'&&/^[a-f0-9-]{36}$/i.test(saved.requestKey)&&Array.isArray(saved.items)){pending=saved;cart=new Map(saved.items.map(p=>[p.productId+(p.planRevision?'~'+p.planRevision:''),p.quantity]));}}catch{}
+try{
+ const saved=JSON.parse(sessionStorage.getItem('umma-menu-pending'));
+ if(saved?.action==='create'&&/^[a-f0-9-]{36}$/i.test(saved.requestKey)&&Array.isArray(saved.items)){
+  pending=saved;
+  cart=new Map(saved.items.map(p=>[p.productId+(p.planRevision?'~'+p.planRevision:''),p.quantity]));
+  $('orderType').value=orderModeInputs.some(input=>input.value===saved.orderType)?saved.orderType:'pickup';
+  if(saved.paymentMethod==='bank_transfer'||paymentInputs.some(input=>input.value===saved.paymentMethod)){
+   paymentInputs.find(input=>input.value===(saved.paymentMethod==='bank_transfer'?'sber':saved.paymentMethod)).checked=true;
+  }
+  $('deliveryAddress').value=saved.address||'';
+  $('deliveryPhone').value=saved.phone||'';
+  $('orderType').dispatchEvent(new Event('change'));
+ }
+}catch{}
 for(const [code,[label]] of Object.entries(I.languages)){const option=document.createElement('option');option.value=code;option.textContent=label;option.lang=code;option.dir='auto';$('menuLanguage').append(option);}
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
 window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();$('submit').textContent=t(pending?'Повторить':'Перейти к оплате');if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
 I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();
-const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent,name:$('customerName').value});
+const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent});
 window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
  id:'menuVoice',host:$('voiceOrderHost'),reviewHost:$('voiceReviewHost'),language:()=>I.language,name,money,total,image:safeImage,
  products:()=>products.filter(p=>visibleDish(p)&&stockLeft(p)>0),
  items:()=>[...cart].map(([id,quantity])=>({product:products.find(p=>p.id===id),quantity})).filter(x=>x.product),
  detail:p=>weight(p)+(p.isPreorder?' · '+batchLabel(p):''),context:voiceContext,
- summary:()=>[$('orderType').selectedOptions[0]?.textContent,$('tableNumber').selectedOptions[0]?.textContent,t(document.querySelector('[name=paymentMethod]:checked')?.value==='qr'?'QR · VietQR':'Наличными'),$('orderType').value==='delivery'?$('deliveryAddress').value:''].filter(Boolean).join('. '),
+ summary:()=>[$('orderType').selectedOptions[0]?.textContent,$('tableNumber').selectedOptions[0]?.textContent,paymentInputs.find(input=>input.checked)?.nextElementSibling?.textContent,$('orderType').value==='delivery'?$('deliveryAddress').value:''].filter(Boolean).join('. '),
  locked:()=>busy||!!pending,change,checkout:()=>{$('openCart').click();},
  validate:()=>{if(shortages())return false;if(!$('form').reportValidity())return false;try{if($('orderType').value==='delivery'&&!window.ummaPublicDelivery)return false;window.ummaPublicDelivery?.fields();return true;}catch{return false;}},
  notice:message=>{$('result').hidden=false;$('result').dataset.state='error';$('result').textContent=message;},
