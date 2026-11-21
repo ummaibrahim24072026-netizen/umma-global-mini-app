@@ -58,21 +58,23 @@
     return order.canAcceptPayments===true && ['qr','bank_transfer'].includes(order.payment_method)
       ? '<button type="button" class="kitchen-action" data-proof-order="'+esc(order.id)+'">Чеки оплаты</button>' : '';
   }
-  function showPaymentProofs(proofs) {
-    const dialog=document.createElement('dialog');dialog.className='cafe-payment-sheet';dialog.setAttribute('aria-label','Скриншоты оплаты');
-    const header=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent='Скриншоты оплаты';close.type='button';close.className='cafe-payment-close';close.textContent='×';close.setAttribute('aria-label','Закрыть чеки');close.onclick=()=>dialog.close();header.append(title,close);dialog.append(header);
-    const notice=document.createElement('p');notice.className='cafe-payment-notice';notice.textContent='Проверьте фактическое поступление денег в банке. Скриншот сам по себе не подтверждает оплату. После проверки нажмите «Подтвердить оплату» в заказе.';dialog.append(notice);
+  function showPaymentProofs(proofs,orderNumber) {
+    const dialog=document.createElement('dialog');dialog.className='cafe-payment-sheet';const heading=orderNumber==null?'Чеки оплаты':'Чек клиента · №'+orderNumber;dialog.setAttribute('aria-label',heading);
+    const header=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent=heading;close.type='button';close.className='cafe-payment-close';close.textContent='×';close.setAttribute('aria-label','Закрыть чеки');close.onclick=()=>dialog.close();header.append(title,close);dialog.append(header);
+    const notice=document.createElement('p');notice.className='cafe-payment-notice';notice.textContent='Проверьте фактическое поступление и сумму в банке. Затем подтвердите оплату в заказе.';dialog.append(notice);
     for(const proof of proofs){
       const text=document.createElement('p');text.textContent=({pending:'На проверке',confirmed:'Проверен',rejected:'Отклонён'}[proof.status]||'Чек')+' · '+formatDate(proof.createdAt);dialog.append(text);
       try{
+        if(!proof.url)throw Error('Receipt file unavailable');
         const url=new URL(proof.url);
-        if(url.origin!=='https://zwzojugspldexyyljwpr.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/cafe-transfer-proofs/'))continue;
-        if(proof.mimeType==='application/pdf'){
-          const link=document.createElement('a');link.href=url.href;link.rel='noopener noreferrer';link.target='_blank';link.textContent='Скачать чек PDF';dialog.append(link);
-        }else{
-          const image=document.createElement('img');image.src=url.href;image.alt='Чек перевода';image.style.cssText='display:block;max-width:100%;border-radius:12px';dialog.append(image);
+        if(url.origin!=='https://zwzojugspldexyyljwpr.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/cafe-transfer-proofs/'))throw Error('Receipt file unavailable');
+        if(proof.mimeType!=='application/pdf'){
+          const image=document.createElement('img');image.src=url.href;image.alt='Чек перевода';image.referrerPolicy='no-referrer';image.style.cssText='display:block;max-width:100%;max-height:65dvh;object-fit:contain;border-radius:12px';image.onerror=()=>{image.hidden=true;};dialog.append(image);
         }
-      }catch{}
+        const link=document.createElement('a');link.href=url.href;link.rel='noopener noreferrer';link.target='_blank';link.textContent=proof.mimeType==='application/pdf'?'Скачать чек PDF':'Открыть оригинал чека';dialog.append(link);
+      }catch{
+        const message=document.createElement('p');message.textContent='Вложение недоступно. Откройте чеки ещё раз.';dialog.append(message);
+      }
     }
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
@@ -1283,5 +1285,5 @@
     window.ummaCourierTracking?.syncOrders(orders);
     render();renderStaffActiveOrders();renderStaffClosedOrders();
   }
-  window.ummaKitchen = { getLocationId: selectedStaffCafeId, open, refresh:loadOrders, rerender:render, applyCourierState };
+  window.ummaKitchen = { getLocationId: selectedStaffCafeId, open, refresh:loadOrders, rerender:render, applyCourierState, showPaymentProofs };
 })();

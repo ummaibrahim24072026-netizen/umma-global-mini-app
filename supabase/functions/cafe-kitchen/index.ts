@@ -461,6 +461,19 @@ Deno.serve(async req => {
             const assignment = order.location_id ? roleByLocation.get(order.location_id) : null;
             return { ...order, staffRole: assignment?.role ?? null, canAcceptPayments: assignment?.canAcceptPayments === true };
           });
+      // The counter only needs an indicator here. Private links come from cafe-transfer-proof.
+      const paymentOrderIds=body.includePaymentProof===true&&!courierWorkspace
+        ? ordersWithRoles.filter((order:any)=>order.canAcceptPayments&&order.payment_status==="pending"
+          && ["qr","bank_transfer"].includes(order.payment_method)
+          && !["cancelled","completed"].includes(order.status)).map((order:any)=>order.id)
+        : [];
+      const pendingPaymentProofs=new Set<string>();
+      if(paymentOrderIds.length){
+        const {data,error}=await supabase.from("cafe_transfer_proofs").select("order_id")
+          .in("order_id",paymentOrderIds).eq("review_status","pending");
+        if(error)console.error("Payment proof indicators unavailable",error.code);
+        for(const proof of data??[])pendingPaymentProofs.add(proof.order_id);
+      }
       const courierQuery=supabase.from("cafe_staff").select("telegram_id,location_id,staff_role,courier_available").eq("is_active",true);
       if(actor.role!=="super_admin") courierQuery.in("location_id",assignedLocationIds);
       const {data:courierAssignments,error:courierError}=await courierQuery;
@@ -492,7 +505,7 @@ Deno.serve(async req => {
         const {data:board,error:boardError}=await supabase.rpc("get_cafe_courier_dispatch_board",{p_actor:telegramId});
         if(boardError)console.error("Courier dispatch board unavailable");else dispatchBoard=board;
       }
-      const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
+      const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,hasPendingPaymentProof:pendingPaymentProofs.has(o.id),deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
       return response({ ok: true, dispatchBoard, orders: enrichedOrders, courierOffers:dispatchBoard?.offers||offers||[], staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
     }
 

@@ -97,3 +97,68 @@ const staffDom=new JSDOM(read('index.html').replace(/<script\b[^>]*>[\s\S]*?<\/s
 sw.fetch=async(url,opts)=>{const body=JSON.parse(opts.body);if(url.includes('cafe-transfer-proof'))return new Response(JSON.stringify({ok:true,proofs:[{status:'pending',createdAt:'2026-10-15T20:00:00Z',url:'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/demo?token=synthetic'}]}));if(body.action!=='list')mutations++;return new Response(JSON.stringify({ok:true,staffRole:'manager',orders:[{id,order_number:1,status:'pending',order_type:'pickup',payment_status:'pending',payment_method:'qr',canAcceptPayments:true,staffRole:'manager',total_vnd:125000,cafe_order_items:[]}]}));};
 sw.eval(read('js/cafe/kitchen.js'));await sw.ummaKitchen.refresh();const button=sd.querySelector('[data-proof-order]');assert.ok(button);button.click();await until(()=>sd.querySelector('.cafe-payment-sheet[open] img'));assert.match(sd.querySelector('.cafe-payment-sheet[open]').textContent,/фактическое поступление/);assert.equal(mutations,0);staffDom.window.close();
 console.log('PASS receipt attachment: owner/auth/closed-order guards, VN QR + RU transfer, validation, content deduplication, private 120s review URLs, upload cleanup, preview/retry/double tap, saved status, staff viewer and no automatic payment');
+
+const counterDom=new JSDOM(read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{
+ runScripts:'outside-only',url:'https://qa.invalid/staff.html',pretendToBeVisual:true,
+});
+const cw=counterDom.window,cd=cw.document;
+cw.AbortSignal=AbortSignal;
+cw.scrollTo=()=>{};
+cw.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+cw.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new cw.Event('close'));};
+const counterOrder={
+ id,order_number:451,status:'pending',order_type:'pickup',payment_status:'pending',payment_method:'bank_transfer',
+ rub_payment_kopecks:45000,location_id:'cafe',canAcceptPayments:true,staffRole:'cashier',total_vnd:150000,
+ created_via:'customer',requires_prepayment:true,cafe_order_items:[],
+};
+const proofUrl='https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/demo?token=synthetic';
+let submitted=0,viewRequests=0;
+cw.fetch=async(url,opts)=>{
+ const b=JSON.parse(opts?.body||'{}');
+ let data={ok:true};
+ if(url.endsWith('cafe-menu'))data={ok:true,products:[],inventory:[],locations:[{id:'cafe',name:'UMMA'}]};
+ else if(b.action==='me')data={ok:true,user:{id:42,name:'QA',role:'employee'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]};
+ else if(url.endsWith('cafe-transfer-proof')){
+  assert.equal(b.action,'list');assert.equal(b.orderId,id);assert.equal(b.initData,'web:'+staffToken);
+  viewRequests++;
+  data.proofs=[
+   {status:'pending',createdAt:'2026-10-15T20:00:00Z',url:proofUrl},
+   {status:'pending',createdAt:'2026-10-15T20:00:00Z',url:proofUrl,mimeType:'application/pdf'},
+  ];
+ }else if(b.action==='list')data.orders=[{...counterOrder,hasPendingPaymentProof:b.includePaymentProof&&counterOrder.payment_status==='pending'}];
+ else if(b.action==='details')data.counter=false;
+ else if(b.action==='updatePayment'){
+  assert.equal(b.orderId,id);assert.equal(b.paymentStatus,'paid');assert.equal(b.paymentMethod,'bank_transfer');
+  submitted++;
+  counterOrder.payment_status='paid';counterOrder.status='confirmed';
+  data.order={status:'confirmed',paymentStatus:'paid',paidByTelegramId:42};
+ }
+ return new Response(JSON.stringify(data));
+};
+try{
+ cw.eval(read('js/cafe/web-session.js'));cw.ummaStaffAuth.save(staffToken);
+ cw.eval(read('js/cafe/kitchen.js'));cw.eval(read('js/cafe/web-operations.js'));
+ await until(()=>!cd.getElementById('webWorkspace').hidden);
+ cd.querySelector('[data-work-mode=pos]').click();
+ cd.querySelector('[data-counter-view=orders]').click();
+ await until(()=>cd.querySelector('[data-counter-action=pay]'));
+ assert.match(cd.getElementById('counterOrderList').textContent,/Чек прикреплён/);
+ cd.querySelector('[data-counter-action=pay]').click();
+ const open=cd.getElementById('counterOpenProof'),confirm=cd.getElementById('posConfirmQr');
+ await until(()=>!confirm.hidden);
+ assert.equal(open.textContent,'Открыть чек клиента');
+ assert.equal(confirm.disabled,true);
+ open.click();open.click();
+ await until(()=>cd.querySelector('.cafe-payment-sheet[open] img'));
+ assert.equal(viewRequests,1);
+ assert.equal(submitted,0);
+ const dialog=cd.querySelector('.cafe-payment-sheet[open]');
+ assert.match(dialog.getAttribute('aria-label'),/№451/);
+ assert.match(dialog.textContent,/Скачать чек PDF/);
+ dialog.close();
+ cd.getElementById('counterPaymentVerified').click();
+ confirm.click();confirm.click();
+ await until(()=>submitted===1&&cd.getElementById('counterProofActions').hidden);
+ assert.match(cd.getElementById('posResult').textContent,/Оплата подтверждена/);
+ console.log('PASS counter receipt: order indicator, signed screenshot and PDF, explicit bank verification, exactly one payment confirmation.');
+}finally{counterDom.window.close();}

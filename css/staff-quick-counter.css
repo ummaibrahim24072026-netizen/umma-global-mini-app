@@ -307,3 +307,11 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   font-size: 10px;
   line-height: 1.1;
 }
+
+#webPos #counterOpenProof {
+  min-height: 44px;
+  padding-inline: 12px;
+  color: #005d5e;
+  border-color: #89c5be;
+  background: #eef9f6;
+}
