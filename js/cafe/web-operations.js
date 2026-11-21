@@ -172,7 +172,7 @@ async function acceptFxCash(order,received){
  const data=await api('settle',{currency,orderId:order.id,received},'cafe-counter-fx-cash');
  const message=data.replayed?'Заказ уже оплачен. Сдача по чеку: '+money(data.changeVnd)
   :'Получено '+new Intl.NumberFormat('en-US',{style:'currency',currency}).format(received)+' · Сдача '+money(data.changeVnd)+' · Курс '+money(data.rate)+' за 1 '+currency;
- showSettledPayment(order,data,message);
+ showSettledPayment(order,data,message,data.replayed?message:'Сдача '+money(data.changeVnd));
 }
 const foreignApi=(action,body)=>api(action,body,'cafe-counter-payment');
 let selectedMethod='cash',switchingPayment=false,options=null,optionsLocation='',optionsError=false;
@@ -280,6 +280,8 @@ function paymentFields(){
  const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
  const activeCash=!switchingPayment&&(cash||fx)&&(draft||pending);
  const choosing=draft||switchingPayment;
+ const cashReceipt=pending&&payOrder.paymentMethod==='cash';
+ const canSwitch=canSwitchPayment(payOrder)&&!switchingPayment;
  const foreign=foreignMethods.has(selectedMethod);
  const selectedAvailable=fxCash()?fxReady():!foreign||options?.[selectedMethod]===true;
  const status=$('counterMethodStatus');
@@ -297,8 +299,10 @@ function paymentFields(){
  $('counterSwitchHint').hidden=!switchingPayment;
  $('counterCancelSwitch').hidden=!switchingPayment;
  $('counterCancelSwitch').disabled=busy;
- $('posReceipt').hidden=!payOrder||switchingPayment;
- $('counterSwitchPayment').hidden=!canSwitchPayment(payOrder)||switchingPayment;
+ const receipt=$('posReceipt');
+ receipt.hidden=!payOrder||switchingPayment||(cashReceipt&&!canSwitch);
+ receipt.classList.toggle('counter-cash-actions',cashReceipt);
+ $('counterSwitchPayment').hidden=!canSwitch;
  $('counterSwitchPayment').disabled=busy;
  $('posCashLabel').hidden=!activeCash;
  $('posCash').required=activeCash;
@@ -311,9 +315,8 @@ function paymentFields(){
  $('posCash').disabled=!activeCash||busy;
  $('posLocation').disabled=busy;
  $('counterCheckout').disabled=busy||!cart.size||unavailable||!serviceReady;
- $('counterAddProducts').disabled=busy||!!payOrder;
- $('counterAddProductsHint').hidden=!payOrder;
- $('counterAddProductsHint').textContent=payOrder?'Заказ уже создан. Для дополнительных блюд оформите отдельную продажу.':'';
+ $('counterSummaryToolbar').hidden=!draft;
+ $('counterAddProducts').disabled=busy;
  $('posSubmit').disabled=busy||
   (switchingPayment?(!pending||!selectedAvailable||selectedMethod===orderMethod(payOrder))
    :(!payOrder&&(!draft||unavailable||!selectedAvailable||!serviceReady))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
@@ -366,7 +369,7 @@ function showPayment(order,payment=null){
   $('counterPaymentBack').textContent=paymentFrom==='orders'||order.paymentStatus==='paid'?'К заказу':'К продаже';
   $('posPaymentHint').textContent=order.paymentStatus==='paid'?'Оплачено. Назовите гостю номер заказа.'
    :!pending?'Заказ закрыт.'
-   :order.paymentMethod==='cash'?'Оплата ещё не записана. Сверьте сумму и подтвердите получение наличных.'
+   :order.paymentMethod==='cash'?''
    :!canConfirm?'Платёжные реквизиты пока недоступны.'
    :order.foreignPayment?.currency==='USDT'?'Сверьте поступление в кошельке в указанной сети.'
    :'Сверьте фактическое поступление в банке.';
@@ -392,10 +395,14 @@ async function paymentDetails(order){
 async function acceptCash(order,received){
  const change=received-Number(order.totalVnd);
  const settled=await settlePayment(order,{tenderedAmountVnd:received,changeGivenVnd:change});
- showSettledPayment(order,settled,'Получено '+money(received)+' · Сдача '+money(change));
+ const changeNote='Сдача '+money(change);
+ showSettledPayment(order,settled,'Получено '+money(received)+' · '+changeNote,changeNote);
 }
-function showSettledPayment(order,settled,message){
+function showSettledPayment(order,settled,message,counterNote=''){
  const paid=settled?.order;
+ const paidElsewhere=paid&&Object.hasOwn(paid,'paidByTelegramId')&&String(paid.paidByTelegramId)!==String(auth.actorId());
+ const warning=paidElsewhere?'Заказ уже оплачен. Повторно деньги не принимайте.':'';
+ order.counterPaymentNote=warning||counterNote;
  order.paymentStatus='paid';
  order.status=paid?.status||order.status;
  const listed=counterOrders.find(item=>item.id===order.id);
@@ -406,8 +413,7 @@ function showSettledPayment(order,settled,message){
  }
  $('posCash').value='';
  showPayment(order);
- const paidElsewhere=paid&&Object.hasOwn(paid,'paidByTelegramId')&&String(paid.paidByTelegramId)!==String(auth.actorId());
- result(paidElsewhere?'Заказ уже оплачен. Повторно деньги не принимайте.':message);
+ result(warning||message);
 }
 async function switchOrderPayment(){
  const order=payOrder,method=selectedMethod;
@@ -517,11 +523,13 @@ function counterOrderMarkup(order){
  const mark=fresh?'<span class="counter-order-mark is-new" role="img" aria-label="Новый заказ" title="Новый заказ"></span>':
   '<span class="counter-order-mark" role="img" aria-label="Заказ обработан" title="Заказ обработан">✓</span>';
  const stage=['pending','confirmed'].includes(order.status)&&!order.preorder_waiting?'':orderLabel(order);
+ const paymentNote=payOrder?.id===order.id&&order.payment_status==='paid'&&!closedOrder(order)?payOrder.counterPaymentNote:'';
  return '<article class="counter-card'+(ready?' counter-card--ready':'')+(fresh?' counter-card--new':'')+
   '" data-counter-order="'+esc(order.id)+'">'+
   '<details class="counter-order-details"><summary><span class="counter-order-ident">'+mark+
   '<strong>№'+esc(order.order_number)+'</strong></span><strong>'+money(order.total_vnd)+'</strong>'+
-  '<small>'+esc(serviceLabels[order.order_type]||'')+(stage?' · '+esc(stage):'')+'</small></summary>'+
+  '<small>'+esc(serviceLabels[order.order_type]||'')+(stage?' · '+esc(stage):'')+'</small>'+
+  (paymentNote?'<small class="counter-order-payment-note">'+esc(paymentNote)+'</small>':'')+'</summary>'+
   '<div class="counter-order-body"><p>'+paymentLabel(order)+' · '+(order.created_via==='staff'?'У стойки':'Из приложения')+'</p>'+
   destination+actor+itemsMarkup(order.cafe_order_items||[])+(start?issue:'')+'</div></details>'+
   (action||green||transfer?'<div class="counter-order-actions">'+action+green+transfer+'</div>':'')+'</article>';
@@ -619,8 +627,11 @@ async function refreshCounterOrders({afterMutation=false}={}){
    }
    if(current()&&payOrder===next&&!busy){
     const paidElsewhere=open.paymentStatus==='pending'&&next.paymentStatus==='paid';
-    if(paidElsewhere)result('Заказ уже оплачен. Повторно деньги не принимайте.');
-    else if(changed)result('Способ оплаты обновился на другой стойке.');
+    if(paidElsewhere){
+     const warning='Заказ уже оплачен. Повторно деньги не принимайте.';
+     if(next.paymentMethod==='cash')next.counterPaymentNote=warning;
+     result(warning);
+    }else if(changed)result('Способ оплаты обновился на другой стойке.');
    }
   }
   if(current()&&!busy&&counterView==='payment'&&paymentFrom==='sale'&&
@@ -643,6 +654,7 @@ function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders'};
  counterView=view;
  if(view==='payment'){
+  if(!$('counterStatus').dataset.offline)counterStatus('');
   paymentFrom=from;
   $('counterPaymentBack').textContent=from==='orders'?'К заказу':'К продаже';
  }
@@ -684,7 +696,7 @@ async function counterOrderAction(event){
   if(action==='issue'){
    await api('updateStatus',{orderId:order.id,status:'completed',note:'counter_pickup_call'},'cafe-kitchen');
    order.status='completed';
-   counterStatus('Заказ №'+order.order_number+' выдан.');
+   counterStatus('');
   }else if(action==='start'||action==='ready'){
    const status=action==='start'?'preparing':'ready';
    await api('updateStatus',{orderId:order.id,status},'cafe-kitchen');
@@ -706,7 +718,7 @@ async function counterOrderAction(event){
  }catch(error){
   if(action==='issue'&&error.message==='Order already has this status'){
    order.status='completed';
-   counterStatus('Заказ №'+order.order_number+' уже выдан.');
+   counterStatus('');
   }else if(action!=='pay'&&['Order already has this status','Order already accepted by another employee'].includes(error.message)){
    counterStatus('Обновляем заказ №'+order.order_number+' · статус уже изменился.');
   }else if(action!=='pay')counterStatus(error.message);
@@ -925,8 +937,6 @@ function openPaidCounterSale({refresh=false}={}){
  $('counterOrderSearch').value='';
  $('counterOrderType').value='';
  $('counterOrderFilter').value='active';
- const confirmation=$('posResult').textContent||'Оплата подтверждена.';
- counterStatus('Заказ №'+payOrder.orderNumber+' · '+confirmation);
  returnToCounterOrder({refresh});
 }
 $('counterPaymentBack').onclick=()=>{

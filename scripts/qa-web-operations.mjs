@@ -88,7 +88,10 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   d.getElementById('posDeliveryMap').click();
  }
  assert.equal(checkout.disabled,false);
- checkout.click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
+ checkout.click();
+ assert.equal(d.getElementById('counterSale').hidden,true);
+ assert.equal(d.getElementById('counterSummaryToolbar').hidden,false);
+ d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
  if(method==='cash'){
   const field=d.getElementById('posCash');
   let layoutHeight=760;
@@ -135,6 +138,8 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   await switchTo('cash');
   assert.equal(byId('posCashLabel').hidden,false);
   assert.equal(byId('posQr').querySelector('svg'),null);
+  assert.equal(byId('counterSwitchPayment').hidden,false);
+  assert.equal(byId('posPaymentHint').textContent,'');
   await switchTo('qr');
  }
  if(method!=='cash'){
@@ -163,7 +168,9 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.activeElement,saleCard.querySelector('summary'));
  assert.match(saleCard.textContent,/№444.*Оплачено/);
  assert.ok(saleCard.querySelector('[data-counter-action="'+(service==='delivery'?'start':'issue')+'"]'));
- assert.match(d.getElementById('counterStatus').textContent,method==='cash'?/№444.*Сдача/:/№444.*опла|№444.*Оплата/);
+ assert.equal(d.getElementById('counterStatus').textContent,'');
+ if(method==='cash')assert.match(saleCard.querySelector('.counter-order-payment-note').textContent,/Сдача 25[.  ]000/);
+ else assert.equal(saleCard.querySelector('.counter-order-payment-note'),null);
  assert.equal(d.getElementById('posCart').querySelector('[data-id]'),null);
  w.close();
 }
@@ -211,7 +218,9 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(keys[0],keys[1]);
  assert.match(d.getElementById('posOrderNumber').textContent,/№445/);
  assert.equal(d.getElementById('counterPayment').hidden,false);
- assert.match(d.getElementById('posPaymentHint').textContent,/Оплата ещё не записана/);
+ assert.equal(d.getElementById('posPaymentHint').textContent,'');
+ assert.equal(d.getElementById('counterSummaryToolbar').hidden,true);
+ assert.equal(d.getElementById('posCashLabel').hidden,false);
  assert.equal(d.querySelector('#posCart [data-id]'),null);
  w.close();
 }
@@ -450,7 +459,11 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
    click(w,'#counterPaymentFilter');
    assert.equal(w.document.getElementById('counterOrderFilter').value,'payment');
    assert.equal(w.document.querySelectorAll('#counterOrderList [data-counter-action=pay]').length,1);
+   w.document.getElementById('counterStatus').textContent='Заказ №500 · Сдача 25.000 ₫';
    click(w,'#counterOrderList [data-counter-action=pay]');
+   assert.equal(text(w,'counterStatus'),'');
+   assert.equal(w.document.getElementById('posReceipt').hidden,true);
+   assert.match(text(w,'counterPaymentSummary'),/Заказ №501.*К оплате/);
    assert.equal(text(w,'counterPaymentBack'),'К заказу');
    assert.equal(w.document.querySelector('[data-counter-view=orders]').getAttribute('aria-current'),'page');
   }
@@ -500,7 +513,8 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   issueButton(second).click();
   await tick();
   assert.deepEqual(handoffs,[11]);
-  assert.match(text(second,'counterStatus'),/Заказ №501 уже выдан/);
+  assert.equal(text(first,'counterStatus'),'');
+  assert.equal(text(second,'counterStatus'),'');
   releaseCounterList();
   await tick();
   for(const w of [first,second]){

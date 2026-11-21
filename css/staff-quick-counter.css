@@ -171,7 +171,14 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   min-height: 44px; padding: 6px 10px; font-size: 14px;
 }
 .counter-customer-language label { margin-top: 8px; }
-#counterStatus:empty, #posResult:empty, #posChange:empty { display: none; }
+#counterStatus:empty, #posResult:empty, #posChange:empty, #posPaymentHint:empty { display: none; }
+#webPos #posReceipt.counter-cash-actions {
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.counter-order-payment-note { font-size: 14px; font-weight: 750; }
 .counter-nav {
   flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
   padding: 4px max(8px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
@@ -236,7 +243,6 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-add-products{border:1px solid #82d5ce!important;border-radius:999px!important;background:#dff7f3!important;color:#086a70!important;padding:10px 18px!important;font-weight:800!important;min-height:42px}
 .counter-add-products:hover:not(:disabled){background:#c8f1eb!important}
 .counter-add-products:disabled{opacity:.45;cursor:not-allowed}
-.counter-add-products-hint{color:#7b6262;font-size:13px;margin:0 0 8px}
 
 #webPos #posService {
   min-inline-size: 0;
