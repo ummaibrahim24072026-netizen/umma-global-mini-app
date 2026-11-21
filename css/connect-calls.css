@@ -326,3 +326,20 @@
     width:92px; min-height:92px; padding:8px 4px;
   }
 }
+
+
+/* Gold mosque-arch ornament along the bottom of the full-screen call. */
+.umma-call::after {
+  content:"";
+  position:fixed;
+  z-index:1;
+  pointer-events:none;
+  inset:auto 0 0;
+  height:clamp(92px,17dvh,175px);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 145' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cpattern id='p' width='22' height='22' patternUnits='userSpaceOnUse'%3E%3Cpath d='M11 0 22 11 11 22 0 11Z M11 5 17 11 11 17 5 11Z' fill='none' stroke='%23e4b958' stroke-opacity='.32' stroke-width='.8'/%3E%3C/pattern%3E%3ClinearGradient id='g' x2='0' y2='1'%3E%3Cstop stop-color='%23005660'/%3E%3Cstop offset='1' stop-color='%2300787c'/%3E%3C/linearGradient%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 145' preserveAspectRatio='none'%3E%3Cpath d='M0 30 Q40 95 75 95 Q100 62 125 95 Q160 55 175 56 Q193 38 200 10 Q207 38 225 56 Q240 55 275 95 Q300 62 325 95 Q360 95 400 30 V145 H0Z' fill='%23006770' stroke='%23f5cf75' stroke-width='5'/%3E%3Cpath d='M0 30 Q40 95 75 95 Q100 62 125 95 Q160 55 175 56 Q193 38 200 10 Q207 38 225 56 Q240 55 275 95 Q300 62 325 95 Q360 95 400 30 V145 H0Z' fill='url(%23p)'/%3E%3Cpath d='M164 123v-20h8V90l5-6 5 6v33h8v-20q10-27 20 0v20h8V90l5-6 5 6v33h8' fill='%23e8bf65'/%3E%3Cpath d='M192 90q8-18 16 0Z' fill='%23f5d783'/%3E%3Cpath d='M200 78v-9m-4-1q4 5 8 0' fill='none' stroke='%23f5d783' stroke-width='2'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 145' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cpattern id='p' width='22' height='22' patternUnits='userSpaceOnUse'%3E%3Cpath d='M11 0 22 11 11 22 0 11Z M11 5 17 11 11 17 5 11Z' fill='none' stroke='%23e4b958' stroke-opacity='.32' stroke-width='.8'/%3E%3C/pattern%3E%3C/defs%3E%3Cpath d='M0 30 Q40 95 75 95 Q100 62 125 95 Q160 55 175 56 Q193 38 200 10 Q207 38 225 56 Q240 55 275 95 Q300 62 325 95 Q360 95 400 30 V145 H0Z' fill='%23006770' stroke='%23f5cf75' stroke-width='5'/%3E%3Cpath d='M0 30 Q40 95 75 95 Q100 62 125 95 Q160 55 175 56 Q193 38 200 10 Q207 38 225 56 Q240 55 275 95 Q300 62 325 95 Q360 95 400 30 V145 H0Z' fill='url(%23p)'/%3E%3Cpath d='M164 123v-20h8V90l5-6 5 6v33h8v-20q10-27 20 0v20h8V90l5-6 5 6v33h8' fill='%23e8bf65'/%3E%3Cpath d='M192 90q8-18 16 0Z' fill='%23f5d783'/%3E%3Cpath d='M200 78v-9m-4-1q4 5 8 0' fill='none' stroke='%23f5d783' stroke-width='2'/%3E%3C/svg%3E");
+  background-size:100% 100%;
+}
+.umma-call-card { padding-bottom:max(calc(110px + env(safe-area-inset-bottom)),18dvh); }
+@media(max-height:680px) { .umma-call::after {height:78px} .umma-call-card {padding-bottom:85px} }
