@@ -19,6 +19,11 @@ try{
  await db.exec(readFileSync('supabase/proposals/cafe-notifications.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay.sql','utf8'));
  await db.exec(readFileSync('supabase/proposals/umma-pay-reparse.sql','utf8'));
+ await db.exec(`
+   create table umma_private.public_guest_requests(order_id uuid);
+   grant usage on schema umma_private to service_role;
+ `);
+ await db.exec(readFileSync('supabase/migrations/20261121063918_cafe_guest_transfer_receipts.sql','utf8'));
  await db.exec("insert into locations(name,location_type) values('QA','cafe'); insert into telegram_users(telegram_id,role) values(99,'user');");
  const loc=(await db.query('select id from locations')).rows[0].id;
  const device=(await db.query("insert into umma_private.pay_devices(location_id,account,activation_hash,activation_expires) values($1,$2,'code',now()+interval '1 hour') returning id",[loc,acct])).rows[0].id;
@@ -51,6 +56,22 @@ try{
  assert.equal((await ingest('old',124,120000,'old','2020-01-01T00:00:00Z')).reason,'notification_outside_window');
  await db.query("update cafe_orders set status='cancelled' where order_number=124");assert.equal((await ingest('cancelled',124)).reason,'order_closed');
  await assert.rejects(ingest('bad',123,120000,'bad',new Date().toISOString(),'bad'),/unauthorized/);
+ const guestOrder=await order(125);
+ await db.query("insert into umma_private.public_guest_requests values($1)",[guestOrder]);
+ const bankEvent=await ingest('guest-qr',125);
+ assert.deepEqual(bankEvent,{ok:true,state:'review',reason:'guest_receipt_review'});
+ assert.equal((await db.query("select order_id from umma_private.pay_events where event_key='guest-qr'")).rows[0].order_id,guestOrder);
+ const proofStatus=async id=>(await db.query("select * from cafe_counter_proof_status(array[$1::uuid])",[id])).rows[0];
+ assert.deepEqual(await proofStatus(guestOrder),{order_id:guestOrder,requires_guest_proof:true,has_pending_proof:false});
+ assert.equal((await proofStatus(id)).requires_guest_proof,false);
+ const confirmGuest=()=>db.query("update cafe_orders set payment_status='paid', paid_by_telegram_id=99 where id=$1",[guestOrder]);
+ await assert.rejects(confirmGuest(),/GUEST_PAYMENT_PROOF_REQUIRED/);
+ await db.query("insert into cafe_transfer_proofs(order_id,customer_telegram_id,bank_country,file_path) values($1,99,'VN','qa-test.png')",[guestOrder]);
+ assert.equal((await ingest('guest-qr',125)).state,'review');
+ assert.equal((await proofStatus(guestOrder)).has_pending_proof,true);
+ await confirmGuest();
+ assert.deepEqual((await db.query('select review_status, reviewed_by_telegram_id from cafe_transfer_proofs where order_id=$1',[guestOrder])).rows[0],
+  {review_status:'confirmed',reviewed_by_telegram_id:99});
  await db.query('update umma_private.pay_devices set enabled=false where id=$1',[device]);await assert.rejects(ingest('disabled'),/unauthorized/);
  for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'public.umma_pay_ingest(text,text,text,text,timestamptz,integer,bigint)','execute') v",[role])).rows[0].v,false);
  console.log('PASS UMMA Pay: strict parser, pairing replay, revoked devices, exact matching, duplicate events, single receipt, private notification, amount/time/cancelled checks, restricted RPCs');

@@ -10,7 +10,9 @@ async function until(check){for(let i=0;i<100;i++){if(check())return;await tick(
 let handler,profile={is_active:true,role:'customer'},staff=null,order={id,location_id:'cafe',customer_telegram_id:42,created_by_telegram_id:42,payment_method:'qr',payment_status:'pending',status:'pending'},proofs=[],uploaded=[],removed=[],signed=[],failInsert=false,failUpload=false;
 const guestKey='22222222-2222-4222-8222-222222222222';
 const staffToken='f'.repeat(64);
+let transferCurrency=null;
 const db={async rpc(name,args){
+ if(name==='cafe_guest_checkout_payment'){assert.equal(args.p_order_id,id);return {data:{currency:transferCurrency}};}
  assert.equal(name,'cafe_guest_order_status');
  return args.p_request_key===guestKey&&args.p_order_id===id?{data:{order:{id}}}:{error:{}};
 },from(table){let insert,filters=[];const q={select(){return q;},eq(k,v){filters.push([k,v]);return q;},insert(value){insert=value;return q;},order(){return q;},is(k,v){filters.push([k,v]);return q;},gt(){return q;},limit(){return Promise.resolve({data:proofs.filter(p=>filters.every(([k,v])=>p[k]===v))});},async maybeSingle(){if(table==='cafe_orders')return {data:order};if(table==='cafe_web_sessions')return {data:filters.some(([k,v])=>k==='token_hash'&&v===createHash('sha256').update(staffToken).digest('hex'))?{actor_id:42}:null};if(table==='cafe_web_accounts')return {data:{active:true}};if(table==='telegram_users')return {data:profile};if(table==='cafe_staff')return {data:staff};return {data:proofs.find(p=>filters.every(([k,v])=>p[k]===v))??null};},async single(){if(failInsert)return {error:{}};const proof={...insert,id:'proof-'+proofs.length,created_at:'2026-10-15T20:00:00Z',review_status:'pending'};proofs.unshift(proof);return {data:proof};}};return q;},storage:{from(bucket){assert.equal(bucket,'cafe-transfer-proofs');return {async upload(path,bytes,options){uploaded.push({path,bytes,options});return failUpload?{error:{}}:{};},async remove(paths){removed.push(...paths);return {};},async createSignedUrl(path,seconds,options){signed.push({path,seconds,options});return {data:{signedUrl:'https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/test?token=synthetic'}};}};}}};
@@ -51,6 +53,16 @@ assert.equal((await request(staffReq)).data.proofs[0].mimeType,'application/pdf'
 assert.equal(signed.at(-1).options.download,'receipt.pdf');
 order.payment_status='paid';
 assert.equal((await request(guest)).status,409);
+order.payment_status='pending';
+order.rub_payment_kopecks=null;
+for(const [method,currency,country] of [['bank_transfer','KZT','KZ'],['bank_transfer','USDT','CRYPTO'],['qr',null,'VN']]){
+ proofs=[];order.payment_method=method;transferCurrency=currency;
+ assert.equal((await request(guest)).status,200);
+ assert.equal(proofs[0].bank_country,country);
+ assert.equal(order.payment_status,'pending');
+}
+order.payment_method='cash';
+assert.equal((await request(guest)).status,403);
 // Actual client attachment controls, isolated FileReader and network.
 const dom=new JSDOM('<body></body>',{runScripts:'outside-only',url:'https://qa.invalid/'}),w=dom.window,d=w.document;let mode='ok',held,requests=[],mine=[{status:'pending'}];
 w.Telegram={WebApp:{initData:'synthetic'}};w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
@@ -81,16 +93,20 @@ ww.eval(read('js/cafe/public-menu-extras.js'));
 const webOrder={id,requestKey:guestKey,status:'pending',paymentStatus:'pending',paymentMethod:'bank_transfer',payment:{currency:'RUB',kopecks:47943,rate:312,bankName:'Сбер',recipient:'Test',phone:'+70000000000'}};
 const ctx={API:'https://qa.invalid/',money:String,t:s=>s,activeReceipts:()=>[]};
 ww.ummaGuestExtras.receipt(webOrder,ctx);
-assert.equal(wd.getElementById('rubleProof').hidden,false);
-const webInput=wd.getElementById('rubleProofFile');
+assert.equal(wd.getElementById('guestTransferProof').hidden,false);
+const webInput=wd.getElementById('guestTransferProofFile');
 Object.defineProperty(webInput,'files',{value:[{type:'application/pdf',name:'receipt.pdf',size:100}]});
 webInput.dispatchEvent(new ww.Event('change'));
-await until(()=>wd.getElementById('attachRubleProof').hidden);
-assert.match(wd.getElementById('rubleProofStatus').textContent,/кассиру на проверку/);
+await until(()=>wd.getElementById('attachGuestTransferProof').hidden);
+assert.match(wd.getElementById('guestTransferProofStatus').textContent,/кассиру на проверку/);
 assert.equal(webCalls.find(x=>x.action==='guestSubmit').requestKey,guestKey);
 assert.equal(webOrder.paymentStatus,'pending');
 ww.ummaGuestExtras.receipt({...webOrder,paymentStatus:'paid',payment:null},ctx);
-assert.equal(wd.getElementById('rubleProof').hidden,true);
+assert.equal(wd.getElementById('guestTransferProof').hidden,true);
+for(const [method,details] of [['bank_transfer',{currency:'KZT',amount:1000}],['bank_transfer',{currency:'USDT',amount:5}],['qr',null]]){
+ ww.ummaGuestExtras.receipt({...webOrder,id:webOrder.id+String(details?.currency),paymentMethod:method,payment:details},ctx);
+ assert.equal(wd.getElementById('guestTransferProof').hidden,false);
+}
 webDom.window.close();
 // Staff can view submitted QR screenshots without changing payment status.
 const staffDom=new JSDOM(read('index.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),{runScripts:'outside-only',url:'https://qa.invalid'}),sw=staffDom.window,sd=sw.document;let mutations=0;sw.Telegram={WebApp:{initData:'synthetic'}};sw.ummaRole='employee';sw.HTMLDialogElement.prototype.showModal=function(){this.open=true;};sw.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new sw.Event('close'));};
@@ -109,10 +125,10 @@ cw.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEve
 const counterOrder={
  id,order_number:451,status:'pending',order_type:'pickup',payment_status:'pending',payment_method:'bank_transfer',
  rub_payment_kopecks:45000,location_id:'cafe',canAcceptPayments:true,staffRole:'cashier',total_vnd:150000,
- created_via:'customer',requires_prepayment:true,cafe_order_items:[],
+ created_via:'customer',chat_available:false,requires_prepayment:true,cafe_order_items:[],
 };
 const proofUrl='https://zwzojugspldexyyljwpr.supabase.co/storage/v1/object/sign/cafe-transfer-proofs/demo?token=synthetic';
-let submitted=0,viewRequests=0;
+let submitted=0,viewRequests=0,attachmentPresent=false;
 cw.fetch=async(url,opts)=>{
  const b=JSON.parse(opts?.body||'{}');
  let data={ok:true};
@@ -125,7 +141,7 @@ cw.fetch=async(url,opts)=>{
    {status:'pending',createdAt:'2026-10-15T20:00:00Z',url:proofUrl},
    {status:'pending',createdAt:'2026-10-15T20:00:00Z',url:proofUrl,mimeType:'application/pdf'},
   ];
- }else if(b.action==='list')data.orders=[{...counterOrder,hasPendingPaymentProof:b.includePaymentProof&&counterOrder.payment_status==='pending'}];
+ }else if(b.action==='list')data.orders=[{...counterOrder,requiresGuestPaymentProof:true,hasPendingPaymentProof:b.includePaymentProof&&attachmentPresent&&counterOrder.payment_status==='pending'}];
  else if(b.action==='details')data.counter=false;
  else if(b.action==='updatePayment'){
   assert.equal(b.orderId,id);assert.equal(b.paymentStatus,'paid');assert.equal(b.paymentMethod,'bank_transfer');
@@ -142,12 +158,17 @@ try{
  cd.querySelector('[data-work-mode=pos]').click();
  cd.querySelector('[data-counter-view=orders]').click();
  await until(()=>cd.querySelector('[data-counter-action=pay]'));
- assert.match(cd.getElementById('counterOrderList').textContent,/Чек прикреплён/);
+ assert.doesNotMatch(cd.getElementById('counterOrderList').textContent,/Чек прикреплён/);
  cd.querySelector('[data-counter-action=pay]').click();
  const open=cd.getElementById('counterOpenProof'),confirm=cd.getElementById('posConfirmQr');
  await until(()=>!confirm.hidden);
- assert.equal(open.textContent,'Открыть чек клиента');
- assert.equal(confirm.disabled,true);
+ assert.equal(open.textContent,'Проверить чек клиента');
+ cd.getElementById('counterPaymentVerified').click();
+ assert.equal(confirm.disabled,true,'a bank check alone cannot confirm an order awaiting a receipt');
+ attachmentPresent=true;
+ cd.dispatchEvent(new cw.Event('umma:fulfillment-realtime'));
+ await until(()=>open.textContent==='Открыть чек клиента'&&!confirm.disabled);
+ assert.match(cd.getElementById('counterOrderList').textContent,/Чек прикреплён/);
  open.click();open.click();
  await until(()=>cd.querySelector('.cafe-payment-sheet[open] img'));
  assert.equal(viewRequests,1);
@@ -156,7 +177,6 @@ try{
  assert.match(dialog.getAttribute('aria-label'),/№451/);
  assert.match(dialog.textContent,/Скачать чек PDF/);
  dialog.close();
- cd.getElementById('counterPaymentVerified').click();
  confirm.click();confirm.click();
  await until(()=>submitted===1&&cd.getElementById('counterProofActions').hidden);
  assert.match(cd.getElementById('posResult').textContent,/Оплата подтверждена/);

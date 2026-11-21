@@ -132,6 +132,7 @@ if(document.documentElement){document.documentElement.lang=language;document.doc
 Object.assign(copy,{
  'Перевод в рублях':{en:'Bank transfer in RUB',vi:'Chuyển khoản bằng rúp'},
  'Ожидаем перевод в рублях':{en:'Awaiting your RUB transfer',vi:'Đang chờ chuyển khoản bằng rúp'},
+ 'После оплаты прикрепите чек для проверки.':{en:'After paying, attach your receipt for review.',vi:'Sau khi thanh toán, vui lòng đính kèm biên lai để kiểm tra.'},
  'Прикрепить чек':{en:'Attach receipt',vi:'Đính kèm biên lai'},
  'Чек в PDF, JPG, PNG или WEBP · до 5 МБ':{en:'PDF, JPG, PNG or WEBP receipt · up to 5 MB',vi:'Biên lai PDF, JPG, PNG hoặc WEBP · tối đa 5 MB'},
  'Отправляем чек…':{en:'Uploading receipt…',vi:'Đang gửi biên lai…'},

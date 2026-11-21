@@ -225,7 +225,8 @@ const foreignAmount=payment=>payment.currency==='USDT'
  : new Intl.NumberFormat('ru',{style:'currency',currency:payment.currency}).format(payment.amount);
 const paymentTotal=()=>payOrder?.foreignPayment?foreignAmount(payOrder.foreignPayment)
  :payOrder?.rubKopecks!=null?rubles(payOrder.rubKopecks):money(paymentDue());
-const confirmationReady=()=>$('counterPaymentVerified').checked&&(
+const confirmationReady=()=>$('counterPaymentVerified').checked&&
+ (!payOrder?.requiresGuestProof||payOrder.hasPendingPaymentProof)&&(
  !payOrder?.foreignPayment||$('counterPaymentReference').value.trim().length>=4
 );
 const paymentLabel=order=>order.payment_status==='paid'?'Оплачено':order.payment_status==='refunded'?'Возврат':'Ожидает оплаты';
@@ -340,6 +341,7 @@ function updateProofAction(order){
  const button=$('counterOpenProof'),loading=Boolean(order&&proofLoading===order);
  $('counterProofActions').hidden=!visible;
  button.disabled=loading;
+ if(order?.requiresGuestProof)$('posConfirmQr').disabled=busy||!confirmationReady();
  button.textContent=loading?'Загружаем чек…':order?.hasPendingPaymentProof?'Открыть чек клиента':'Проверить чек клиента';
 }
 $('counterOpenProof').onclick=async()=>{
@@ -353,6 +355,7 @@ $('counterOpenProof').onclick=async()=>{
   if(!current())return;
   const pending=(proofs||[]).filter(proof=>proof.status==='pending');
   if(pending.length){
+   order.hasPendingPaymentProof=true;
    result('');
    window.ummaKitchen.showPaymentProofs(pending,order.orderNumber);
   }else result('Клиент пока не прикрепил чек.');
@@ -403,7 +406,7 @@ function showPayment(order,payment=null){
    :!pending?'Заказ закрыт.'
    :order.paymentMethod==='cash'?''
    :!canConfirm?'Платёжные реквизиты пока недоступны.'
-   :order.foreignPayment?.currency==='USDT'?'Сверьте поступление в кошельке в указанной сети.'
+   :order.requiresGuestProof&&!order.hasPendingPaymentProof?'Ожидаем чек от клиента.':order.foreignPayment?.currency==='USDT'?'Сверьте поступление в кошельке в указанной сети.'
    :'Сверьте фактическое поступление в банке.';
  }
  paymentFields();
@@ -654,7 +657,12 @@ async function refreshCounterOrders({afterMutation=false}={}){
   window.ummaKitchenLive?.update(counterOrders);
   const open=payOrder,latest=counterOrders.find(order=>order.id===open?.id);
   if(open&&latest){
-   open.hasPendingPaymentProof=latest.hasPendingPaymentProof;
+   const hasProof=latest.hasPendingPaymentProof;
+   open.requiresGuestProof=latest.requiresGuestPaymentProof===true;
+   if(open.requiresGuestProof&&hasProof&&!open.hasPendingPaymentProof&&$('posPaymentHint').textContent==='Ожидаем чек от клиента.'){
+    $('posPaymentHint').textContent='Сверьте фактическое поступление.';
+   }
+   open.hasPendingPaymentProof=hasProof;
    updateProofAction(open);
   }
   if(open&&latest&&!busy&&(open.paymentMethod!==latest.payment_method||open.paymentStatus!==latest.payment_status||closedOrder(open)!==closedOrder(latest))){
@@ -748,7 +756,7 @@ async function counterOrderAction(event){
   }else{
    const target={id:order.id,orderNumber:order.order_number,totalVnd:order.total_vnd,paymentStatus:order.payment_status,
     paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,orderType:order.order_type,
-    deliveryAddress:order.delivery_address,hasPendingPaymentProof:order.hasPendingPaymentProof,guestCash:order.created_via==='customer'&&order.customer_telegram_id==null,staffCounter:order.created_via==='staff'&&
+    deliveryAddress:order.delivery_address,hasPendingPaymentProof:order.hasPendingPaymentProof,requiresGuestProof:order.requiresGuestPaymentProof===true,guestCash:order.created_via==='customer'&&order.customer_telegram_id==null,staffCounter:order.created_via==='staff'&&
      (order.order_type==='pickup'||order.order_type==='dine_in'&&order.payment_timing==='now'||
       order.order_type==='delivery'&&order.dispatch_mode==='manual'&&order.requires_prepayment)};
    $('posCash').value='';

@@ -5,16 +5,16 @@
 const $=id=>document.getElementById(id);
 const banks=[['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
 let installPrompt=null,translate,order=null,context=null,inFlight=false,lastQr='',lastPoll=0;
-let rubleProofState=null;
+let guestProofState=null;
 const proofFormats={pdf:'application/pdf',jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',webp:'image/webp'};
 const proofHint='Чек в PDF, JPG, PNG или WEBP · до 5 МБ';
-function renderRubleProof(ruble,value,{API,t}){
- const section=$('rubleProof');
- section.hidden=!(ruble&&value.requestKey);
+function renderGuestProof(required,value,{API,t}){
+ const section=$('guestTransferProof');
+ section.hidden=!(required&&value.requestKey);
  if(section.hidden)return;
- const button=$('attachRubleProof'),input=$('rubleProofFile'),status=$('rubleProofStatus');
+ const button=$('attachGuestTransferProof'),input=$('guestTransferProofFile'),status=$('guestTransferProofStatus');
  const refresh=state=>{
-  if(rubleProofState!==state)return;
+  if(guestProofState!==state)return;
   button.hidden=state.sent;
   button.disabled=state.sending;
   status.textContent=t(state.sent?'Чек отправлен кассиру на проверку.':state.sending?'Отправляем чек…':state.message);
@@ -28,13 +28,13 @@ function renderRubleProof(ruble,value,{API,t}){
   if(!res.ok||!result.ok)throw Error('Receipt unavailable');
   return result;
  };
- if(rubleProofState?.id!==value.id){
-  const state=rubleProofState={id:value.id,sent:false,sending:false,message:proofHint};
+ if(guestProofState?.id!==value.id){
+  const state=guestProofState={id:value.id,sent:false,sending:false,message:proofHint};
   void request('guestMine').then(result=>{
    if(result.proofs.length){state.sent=true;refresh(state);}
   }).catch(()=>{});
  }
- const state=rubleProofState;
+ const state=guestProofState;
  refresh(state);
  button.onclick=()=>input.click();
  input.onchange=async()=>{
@@ -144,6 +144,7 @@ window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!r
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.greenSmStage==='delivered'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
 const waitingPayment=value.paymentStatus==='pending'&&!['cancelled','completed'].includes(value.status);
 renderForeignPayment(value,waitingPayment);
+renderGuestProof(waitingPayment&&['qr','bank_transfer'].includes(value.paymentMethod),value,ctx);
 $('orderState').removeAttribute('data-i18n');
 $('orderState').textContent=waitingPayment?t('Ожидаем подтверждение оплаты')
  :value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга')
@@ -156,7 +157,6 @@ const rubleSection=$('rublePayment');
 if(rubleSection&&previousOrderId!==value.id)$('rubleCopyStatus').textContent='';
 if(rubleSection){
  rubleSection.hidden=!ruble;
- renderRubleProof(ruble,value,ctx);
  if(ruble){
   const locale=window.ummaMenuI18n?.locale()||'ru';
   $('rubleAmount').textContent=new Intl.NumberFormat(locale,{style:'currency',currency:'RUB'}).format(ruble.kopecks/100);

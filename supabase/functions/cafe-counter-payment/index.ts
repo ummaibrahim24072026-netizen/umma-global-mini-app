@@ -13,6 +13,7 @@ const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{header
 const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const isUuid=(value:unknown)=>typeof value==='string'&&uuid.test(value);
 const messages:Record<string,[number,string]>={
+  GUEST_PAYMENT_PROOF_REQUIRED:[409,'Дождитесь чека клиента перед подтверждением оплаты.'],
   COUNTER_INVALID:[400,'Проверьте данные заказа.'],
   DELIVERY_POINT_REQUIRED:[400,'Выберите точку доставки на карте.'],
   DELIVERY_UNAVAILABLE:[400,'Доставка из выбранного кафе недоступна.'],

@@ -467,12 +467,11 @@ Deno.serve(async req => {
           && ["qr","bank_transfer"].includes(order.payment_method)
           && !["cancelled","completed"].includes(order.status)).map((order:any)=>order.id)
         : [];
-      const pendingPaymentProofs=new Set<string>();
+      const paymentProofByOrder=new Map<string,{requires_guest_proof:boolean;has_pending_proof:boolean}>();
       if(paymentOrderIds.length){
-        const {data,error}=await supabase.from("cafe_transfer_proofs").select("order_id")
-          .in("order_id",paymentOrderIds).eq("review_status","pending");
+        const {data,error}=await supabase.rpc("cafe_counter_proof_status",{p_order_ids:paymentOrderIds});
         if(error)console.error("Payment proof indicators unavailable",error.code);
-        for(const proof of data??[])pendingPaymentProofs.add(proof.order_id);
+        for(const proof of data??[])paymentProofByOrder.set(proof.order_id,proof);
       }
       const courierQuery=supabase.from("cafe_staff").select("telegram_id,location_id,staff_role,courier_available").eq("is_active",true);
       if(actor.role!=="super_admin") courierQuery.in("location_id",assignedLocationIds);
@@ -505,7 +504,7 @@ Deno.serve(async req => {
         const {data:board,error:boardError}=await supabase.rpc("get_cafe_courier_dispatch_board",{p_actor:telegramId});
         if(boardError)console.error("Courier dispatch board unavailable");else dispatchBoard=board;
       }
-      const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,hasPendingPaymentProof:pendingPaymentProofs.has(o.id),deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
+      const enrichedOrders=ordersWithAudit.map((o:any)=>({...o,hasPendingPaymentProof:paymentProofByOrder.get(o.id)?.has_pending_proof===true,requiresGuestPaymentProof:paymentProofByOrder.get(o.id)?.requires_guest_proof===true,deliveryProofs:(proofs||[]).filter((p:any)=>p.order_id===o.id)}));
       return response({ ok: true, dispatchBoard, orders: enrichedOrders, courierOffers:dispatchBoard?.offers||offers||[], staffRole, locationIds: assignedLocationIds, couriers, actorTelegramId: telegramId, locations: mapLocations ?? [] });
     }
 
@@ -567,6 +566,8 @@ Deno.serve(async req => {
         p_change_given_vnd: changeGiven,
       });
       if (error) {
+        if(error.message==="GUEST_PAYMENT_PROOF_REQUIRED")
+          return response({ok:false,error:"Дождитесь чека клиента перед подтверждением оплаты."},409);
         const clientError = /Courier can accept payment only for own collected delivery|Closed order cannot receive payment changes|Use recorded refund instead of voiding payment|Invalid payment|Payment already confirmed|Invalid cash received amount or change|Cash receipt was not recorded|Order not found|Payment management access denied|Payment acceptance permission denied|No active staff assignment|Staff role cannot update payment/.test(error.message);
         return response({ ok: false, error: clientError ? error.message : "Не удалось обновить оплату" }, clientError ? 400 : 500);
       }

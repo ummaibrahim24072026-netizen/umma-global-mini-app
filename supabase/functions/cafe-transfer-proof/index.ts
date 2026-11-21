@@ -93,8 +93,19 @@ Deno.serve(async req=>{
  }
  const {data:order,error:orderError}=await db.from("cafe_orders").select("id,location_id,customer_telegram_id,created_by_telegram_id,payment_status,payment_method,status,rub_payment_kopecks").eq("id",body.orderId).maybeSingle();
  if(orderError||!order)return response({ok:false,error:"Заказ не найден"},404);
- if(guest&&(order.customer_telegram_id!=null||order.rub_payment_kopecks==null||order.payment_method!=="bank_transfer")){
-  return response({ok:false,error:"Нет доступа к заказу"},403);
+ let guestBankCountry:string|null=null;
+ if(guest){
+  if(order.customer_telegram_id==null&&order.payment_method==="qr")guestBankCountry="VN";
+  if(order.customer_telegram_id==null&&order.payment_method==="bank_transfer"){
+   if(order.rub_payment_kopecks!=null)guestBankCountry="RU";
+   else{
+    const {data,error}=await db.rpc("cafe_guest_checkout_payment",{p_order_id:order.id});
+    if(error)return response({ok:false,error:"Не удалось проверить способ оплаты"},500);
+    if(data?.currency==="KZT")guestBankCountry="KZ";
+    if(data?.currency==="USDT")guestBankCountry="CRYPTO";
+   }
+  }
+  if(!guestBankCountry)return response({ok:false,error:"Нет доступа к заказу"},403);
  }
  const profile=telegramId===null?null:(await db.from("telegram_users").select("role,is_active").eq("telegram_id",telegramId).maybeSingle()).data;
  if(!guest&&!profile?.is_active)return response({ok:false,error:"Профиль отключён или не найден"},403);
@@ -107,8 +118,8 @@ Deno.serve(async req=>{
  if(body.action==="submit"||body.action==="guestSubmit"){
  if(!guest&&String(order.customer_telegram_id)!==String(telegramId)&&String(order.created_by_telegram_id)!==String(telegramId))return response({ok:false,error:"Нет доступа к заказу"},403);
  if(order.payment_status!=="pending"||["cancelled","completed"].includes(order.status))return response({ok:false,error:"Заказ уже оплачен или закрыт"},409);
- const bankCountry=guest?"RU":order.payment_method==="qr"?"VN":body.bankCountry;
- if(order.payment_method!=="qr"&&!["RU","KZ"].includes(bankCountry))return response({ok:false,error:"Выберите страну банка"},400);
+ const bankCountry=guest?guestBankCountry:order.payment_method==="qr"?"VN":body.bankCountry;
+ if(!guest&&order.payment_method!=="qr"&&!["RU","KZ"].includes(bankCountry))return response({ok:false,error:"Выберите страну банка"},400);
  if(!["bank_transfer","qr"].includes(order.payment_method))return response({ok:false,error:"Для заказа не выбран банковский перевод"},400);
  if(typeof body.base64!=="string"||body.base64.length>7200000||body.base64.length<100)return response({ok:false,error:"Некорректный файл"},400);
  const types:Record<string,string>={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
