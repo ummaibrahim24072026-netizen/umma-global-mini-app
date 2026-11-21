@@ -115,6 +115,7 @@
     function release(call) {
       clearTimeout(call.deadline);
       stopRinger(call);
+      clearInterval(call.ringbackTimer);
       call.waveFrame && cancelAnimationFrame(call.waveFrame);
       call.waveAudio?.close().catch(() => {});
       call.waveAudio = null;
@@ -200,6 +201,31 @@
       for (const note of call.notes || []) note.stop();
       call.notes?.clear();
       call.ringtoneButton?.remove();
+    }
+
+    function ringback(call) {
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (!Audio || call.incoming) return;
+      try {
+        ringAudio ||= new Audio();
+        void ringAudio.resume().catch(() => {});
+        const tone = () => {
+          if (current !== call || call.connected || ringAudio.state !== 'running') return;
+          const now = ringAudio.currentTime;
+          const osc = ringAudio.createOscillator();
+          const gain = ringAudio.createGain();
+          osc.frequency.value = 425;
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(0.07, now + 0.03);
+          gain.gain.setValueAtTime(0.07, now + 0.75);
+          gain.gain.linearRampToValueAtTime(0.0001, now + 0.85);
+          osc.connect(gain).connect(ringAudio.destination);
+          osc.start(now);
+          osc.stop(now + 0.86);
+        };
+        tone();
+        call.ringbackTimer = setInterval(tone, 3000);
+      } catch {}
     }
 
     function ring(call) {
@@ -346,13 +372,6 @@
         }
         call.stream = stream;
         startWave(call, stream);
-        const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
-        if (current !== call) return;
-        const peer = call.peer = new RTCPeerConnection({iceServers: servers});
-        const remote = call.remote = element(call.mode === 'video' ? 'video' : 'audio');
-        remote.autoplay = true;
-        remote.playsInline = true;
-        call.media.append(remote);
         if (call.mode === 'video') {
           const local = call.local = element('video', 'umma-call-preview');
           local.muted = true;
@@ -361,7 +380,15 @@
           local.srcObject = stream;
           call.media.append(local);
           call.media.hidden = false;
+          void local.play().catch(() => {});
         }
+        const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
+        if (current !== call) return;
+        const peer = call.peer = new RTCPeerConnection({iceServers: servers});
+        const remote = call.remote = element(call.mode === 'video' ? 'video' : 'audio');
+        remote.autoplay = true;
+        remote.playsInline = true;
+        call.media.append(remote);
         const playback = action('playback', () => {
           void remote.play().then(() => { playback.hidden = true; }).catch(() => {});
         });
@@ -376,6 +403,7 @@
           if (current !== call) return;
           if (peer.connectionState === 'connected') {
             clearTimeout(call.deadline);
+            clearInterval(call.ringbackTimer);
             call.connected = true;
             call.status.textContent = t('connected');
           } else if (peer.connectionState === 'disconnected' && call.connected) {
@@ -406,6 +434,7 @@
         call.ready = true;
         if (!call.incoming) {
           call.status.textContent = t('outgoing');
+          ringback(call);
           armTimeout(call, 'unanswered', 44000);
         } else if (!call.connected) {
           armTimeout(call, 'unavailable', 22000);
