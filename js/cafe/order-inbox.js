@@ -35,9 +35,10 @@ const inboxTitle=()=>inHub&&document.documentElement.lang.split('-')[0]==='ru'?'
 const button=document.createElement('button');button.type='button';button.className='umma-inbox-button';if(!inPublicMenu)button.style.cssText='min-height:44px;padding:10px 14px;border:1px solid #cfac52;border-radius:12px;background:#007c80;color:white;font:700 14px system-ui;white-space:normal';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','ummaOrderInboxDialog');(host||document.querySelector('header')||document.body).append(button);
 function save(feedChanged=true){data.messages=data.messages.slice(-100);const ids=new Set(data.messages.map(m=>m.orderId));for(const id of Object.keys(data.states))if(!ids.has(id))delete data.states[id];try{localStorage.setItem(storeKey,JSON.stringify(data));}catch{}render(feedChanged);}
 // Render order status cards inside the existing UMMA chat, without a second inbox screen.
-function renderChatFeed(list){
+function renderChatFeed(list,openOrderId){
  if(!list)return;
  list.querySelectorAll('.umma-chat-order-card').forEach(node=>node.remove());
+ let targetCard;
  const language=document.documentElement.lang.split('-')[0];
  const dictionary={ru:{order:'Заказ',detail:'Детали заказа',cancel:'Отменён',expand:'Показать шкалу',collapse:'Свернуть',steps:['Принят','Готовится','Готов','Курьер','Доставлен'],pickup:['Принят','Готовится','Готов','Выдан']},en:{order:'Order',detail:'Order details',cancel:'Cancelled',expand:'Show progress',collapse:'Collapse',steps:['Accepted','Preparing','Ready','Courier','Delivered'],pickup:['Accepted','Preparing','Ready','Collected']},vi:{order:'Đơn hàng',detail:'Chi tiết đơn',cancel:'Đã hủy',expand:'Xem tiến độ',collapse:'Thu gọn',steps:['Đã nhận','Đang nấu','Đã xong','Tài xế','Đã giao'],pickup:['Đã nhận','Đang nấu','Đã xong','Đã lấy']}};
  const copy=dictionary[language]||dictionary.en;
@@ -75,7 +76,9 @@ function renderChatFeed(list){
   const tracking=trackingUrl?document.createElement('a'):null;
   if(tracking){tracking.className='umma-chat-order-action';tracking.textContent=greenCopy[5];
    tracking.href=trackingUrl;tracking.target='_blank';tracking.rel='noopener noreferrer';}
-  if(finished){
+  const selected=id===openOrderId;
+  if(selected)targetCard=card;
+  if(finished&&!selected){
     card.classList.add('umma-chat-order-card--finished');
     card.style.gap='7px';card.style.padding='12px 14px';
     const toggle=document.createElement('button');toggle.type='button';toggle.className='umma-chat-order-action';
@@ -103,6 +106,7 @@ function renderChatFeed(list){
   else list.append(card);
  }
  if(inHub&&list.closest('#customerChatDialog[open]'))markChatRead();
+ return targetCard;
 }
 function markChatRead(){
  if(document.hidden)return;

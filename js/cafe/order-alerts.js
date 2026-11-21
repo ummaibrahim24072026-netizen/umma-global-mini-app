@@ -59,7 +59,7 @@ navigator.serviceWorker?.addEventListener('message',event=>{
   ingest([message.payload]);
  }else if(message?.type==='UMMA_PUSH_HISTORY'){
   ingest(message.messages);
- }else if(message?.type==='UMMA_OPEN_INBOX'){
+ }else if(message?.type==='UMMA_OPEN_INBOX'&&!document.body.classList.contains('public-cafe-menu')){
   window.ummaOrderInbox?.open();
  }
 });

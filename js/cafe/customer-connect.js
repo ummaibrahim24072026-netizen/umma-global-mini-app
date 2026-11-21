@@ -247,15 +247,20 @@ if(profileAvatar){
  });
 }
 let chatResizeObserver;
-let followedScrollTop=0;
-function scrollToLatestMessage(){
- if(list.dataset.followBottom!=='1'||!dialog?.open)return;
- list.scrollTop=list.scrollHeight;
+let followedScrollTop=0, orderTarget='', targetCard=null;
+function syncThreadScroll(){
+ if(!dialog?.open)return;
+ if(targetCard){
+  list.scrollTop+=targetCard.getBoundingClientRect().top-list.getBoundingClientRect().top-12;
+ }else if(list.dataset.followBottom==='1')list.scrollTop=list.scrollHeight;
+ else return;
  followedScrollTop=list.scrollTop;
 }
 function followLatestMessage(){
+ orderTarget='';
+ targetCard=null;
  list.dataset.followBottom='1';
- scrollToLatestMessage();
+ syncThreadScroll();
 }
 function syncChatResizeObserver(){
  if(!chatResizeObserver)return;
@@ -335,11 +340,11 @@ function renderThread(){
   return m.read_at?receipt[1]+' · '+dateTime.format(new Date(m.read_at)):receipt[0];
  });
  if(publicChat)refreshTextAvatars();
- window.ummaOrderInbox?.renderChatFeed?.(list);
+ targetCard=window.ummaOrderInbox?.renderChatFeed?.(list,orderTarget);
  if(!list.children.length)list.append(el('li',t(12),'connect-empty'));
  if(publicChat){
   syncChatResizeObserver();
-  scrollToLatestMessage();
+  syncThreadScroll();
  }
  badge();
 }
@@ -569,8 +574,12 @@ function build(){
  let pushSwitch,name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  if(publicChat){
-  if(typeof ResizeObserver==='function')chatResizeObserver=new ResizeObserver(scrollToLatestMessage);
+  if(typeof ResizeObserver==='function')chatResizeObserver=new ResizeObserver(syncThreadScroll);
   list.addEventListener('scroll',()=>{
+   if(orderTarget&&Math.abs(list.scrollTop-followedScrollTop)>2){
+    orderTarget='';
+    targetCard=null;
+   }
    const gap=list.scrollHeight-list.clientHeight-list.scrollTop;
    if(gap<=2)list.dataset.followBottom='1';
    else if(list.scrollTop<followedScrollTop-2)list.dataset.followBottom='0';
@@ -691,6 +700,8 @@ function build(){
   if(dialog.open)return;
   if(publicChat){
    chatResizeObserver?.disconnect();
+   orderTarget='';
+   targetCard=null;
    try{sessionStorage.removeItem(CHAT_OPEN_KEY);}catch{}
   }
   composer.close();
@@ -705,12 +716,9 @@ function build(){
   }else button.focus();
  });
  function update(){
-  join.hidden=!!token;
-  content.hidden=!token;
-  if(publicChat){
-   if(token)content.insertBefore(status,form);
-   else join.after(status);
-  }
+  join.hidden=publicChat||!!token;
+  content.hidden=!publicChat&&!token;
+  if(publicChat)content.insertBefore(status,form);
   if(name)name.value=state?.client?.name||'';
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
@@ -733,9 +741,18 @@ async function open(){
   }else dialog.showModal();
   status.textContent='';
   dialog.update();
-  if(publicChat)followLatestMessage();
+  if(publicChat&&!orderTarget)followLatestMessage();
  }
  await refresh();
+}
+function openOrderNotification(number){
+ orderTarget=/^\d{1,20}$/.test(number)?number:'';
+ window.dispatchEvent(new Event('umma:order-chat-open'));
+ if(dialog?.open){
+  if(!orderTarget)followLatestMessage();
+  renderThread();
+ }
+ void open();
 }
 button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
@@ -751,16 +768,27 @@ if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>
  if(settingsDialog.open)dialog?.update();
 };
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
-navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='UMMA_CONNECT_PUSH'){void refresh();}if(e.data?.type==='UMMA_OPEN_CONNECT')void open();});
+navigator.serviceWorker?.addEventListener('message',e=>{
+ if(e.data?.type==='UMMA_CONNECT_PUSH')void refresh();
+ if(e.data?.type==='UMMA_OPEN_CONNECT')void open();
+ if(publicChat&&e.data?.type==='UMMA_OPEN_INBOX')openOrderNotification();
+});
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
 window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);document.addEventListener('umma:connect-realtime',()=>void refresh());setInterval(refresh,15000);void refresh();installedSetup();
 let resumeChat=false;
 if(publicChat){try{resumeChat=sessionStorage.getItem(CHAT_OPEN_KEY)==='1';}catch{}}
 const launchURL=new URL(location.href);
+const orderFromLink=publicChat&&launchURL.searchParams.has('messages');
 const openFromLink=launchURL.searchParams.has('connect');
-if(openFromLink){
+const linkedOrder=launchURL.searchParams.get('order');
+if(orderFromLink||openFromLink){
  launchURL.searchParams.delete('connect');
+ if(orderFromLink){
+  launchURL.searchParams.delete('messages');
+  launchURL.searchParams.delete('order');
+ }
  history.replaceState(history.state,'',launchURL);
 }
-if(openFromLink||resumeChat)void open();
+if(orderFromLink)openOrderNotification(linkedOrder);
+else if(openFromLink||resumeChat)void open();
 })();

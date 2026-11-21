@@ -68,8 +68,8 @@ reload.close();w.close();
 }
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
 {
-const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0;const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
-const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});const previous=notifications.findIndex(n=>n.tag===o.tag);if(previous>=0)notifications.splice(previous,1);const active={tag:o.tag,data:o.data,close(){notifications.splice(notifications.indexOf(active),1);closed++;}};notifications.push(active);},async getNotifications(){return [...notifications];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return[];},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
+const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0,windows=[];const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
+const self={registration:{scope:'https://qa.invalid/app/',async showNotification(t,o){shown.push({t,o});const previous=notifications.findIndex(n=>n.tag===o.tag);if(previous>=0)notifications.splice(previous,1);const active={tag:o.tag,data:o.data,close(){notifications.splice(notifications.indexOf(active),1);closed++;}};notifications.push(active);},async getNotifications(){return [...notifications];}},navigator:{async setAppBadge(n){badge=n;},async clearAppBadge(){badge=0;}},clients:{async matchAll(){return windows;},async openWindow(url){out.push(url);}},addEventListener(n,f){callbacks[n]=f;}};
 vm.runInNewContext(source('umma-menu-sw.js'),{self,caches:{async open(){return cache;}},URL,Response,Promise,JSON,Math,Number});
 async function event(type,obj){let task;callbacks[type]({...obj,waitUntil(p){task=p;}});await task;}
 const payload={eventId:'one',title:'Ready',body:'Collect',order:{id:'o',orderNumber:12,status:'ready'}};
@@ -84,6 +84,18 @@ assert.equal(notifications[0].data.kind,'connect');
 await event('notificationclick',{notification:{data:{kind:'connect'},close(){}}});assert.equal(out[0],'https://qa.invalid/app/menu/?connect=1');
 await event('message',{data:{type:'UMMA_CONNECT_BADGE',count:0}});assert.equal(badge,0);assert.equal(closed,2);
 await event('notificationclick',{notification:{close(){}}});assert.equal(out[1],'https://qa.invalid/app/menu/?messages=1');
+const menuURL='https://qa.invalid/app/menu/';
+const orderURL=menuURL+'?messages=1&order=12';
+await event('notificationclick',{notification:{data:shown[0].o.data,close(){}}});
+assert.equal(out.at(-1),orderURL);
+await event('notificationclick',{notification:{tag:payload.eventId,close(){}}});
+assert.equal(out.at(-1),orderURL,'older notifications can resolve the order from push history');
+const navigation=[];
+windows=[{url:menuURL+'index.html',async navigate(url){navigation.push(url);return this;},async focus(){navigation.push('focus');}}];
+const opened=out.length;
+await event('notificationclick',{notification:{data:shown[0].o.data,close(){}}});
+assert.deepEqual(navigation,[orderURL,'focus']);
+assert.equal(out.length,opened);
 }
 // Actual library generates encrypted Web Push request and VAPID signature; no network send.
 const keys=webpush.generateVAPIDKeys(),receiver=webpush.generateVAPIDKeys();const subscription={endpoint:'https://fcm.googleapis.com/fcm/send/synthetic',keys:{p256dh:receiver.publicKey,auth:Buffer.alloc(16,9).toString('base64url')}};

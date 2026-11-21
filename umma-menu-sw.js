@@ -33,6 +33,7 @@ function serial(work){const next=pushWork.then(work);pushWork=next.catch(()=>{})
 async function history(){const cache=await caches.open(PUSH_CACHE),response=await cache.match(historyURL);return response?response.json():{messages:[],count:0};}
 async function storeHistory(value){const cache=await caches.open(PUSH_CACHE);await cache.put(historyURL,new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}}));}
 const callId=value=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+const orderNumber=value=>/^\d{1,20}$/.test(String(value))?String(value):'';
 const callTag=id=>'umma-call:'+id;
 const badgeCount=saved=>Math.min(999,(saved.count||0)+(saved.connectCount||0));
 async function setBadge(count){try{if(count)await self.navigator.setAppBadge?.(count);else await self.navigator.clearAppBadge?.();}catch{}}
@@ -58,7 +59,7 @@ self.addEventListener('push',event=>event.waitUntil(serial(async()=>{
  const saved=await history();
  const duplicate=!!payload.eventId&&saved.messages.some(m=>m.eventId===payload.eventId);
  if((payload.order||payload.kind==='connect')&&!duplicate){saved.messages.push(payload);saved.messages=saved.messages.slice(-100);const key=payload.kind==='connect'?'connectCount':'count';saved[key]=Math.min(999,(saved[key]||0)+1);await storeHistory(saved);}
- await self.registration.showNotification(payload.title||'UMMA Cafe',{body:payload.body||'Order update',icon:new URL('./logo/assets/umma-icon-192.png',self.registration.scope).href,badge:new URL('./logo/assets/umma-icon-192.png',self.registration.scope).href,tag:payload.eventId||'umma-order-update',silent:duplicate,...(payload.kind==='connect'&&!duplicate?{vibrate:[200,100,200]}:{}),data:{umma:true,kind:payload.kind}});
+ await self.registration.showNotification(payload.title||'UMMA Cafe',{body:payload.body||'Order update',icon:new URL('./logo/assets/umma-icon-192.png',self.registration.scope).href,badge:new URL('./logo/assets/umma-icon-192.png',self.registration.scope).href,tag:payload.eventId||'umma-order-update',silent:duplicate,...(payload.kind==='connect'&&!duplicate?{vibrate:[200,100,200]}:{}),data:{umma:true,kind:payload.kind,orderNumber:orderNumber(payload.order?.orderNumber)}});
  await setBadge(badgeCount(saved));
  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows)client.postMessage({type:payload.kind==='connect'?'UMMA_CONNECT_PUSH':'UMMA_ORDER_PUSH',payload});
 })));
@@ -100,8 +101,25 @@ self.addEventListener('notificationclick',event=>{event.notification.close();eve
   return;
  }
  const connect=data.kind==='connect';
- const url=new URL(connect?'./menu/?connect=1':'./menu/?messages=1',self.registration.scope);
+ const url=new URL(connect?'./menu/?connect=1':'./menu/?messages=1',base);
+ if(!connect){
+  let number=orderNumber(data.orderNumber);
+  if(!number&&event.notification.tag){
+   // Notifications displayed by an older worker only carry the event ID in their tag.
+   const saved=await history().catch(()=>null);
+   number=orderNumber(saved?.messages.find(message=>message.eventId===event.notification.tag)?.order?.orderNumber);
+  }
+  if(number)url.searchParams.set('order',number);
+ }
  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
  const existing=windows.find(c=>{const u=new URL(c.url);return u.origin===url.origin&&(u.pathname===url.pathname||u.pathname===url.pathname+'index.html');});
- if(existing){await existing.focus();existing.postMessage({type:connect?'UMMA_OPEN_CONNECT':'UMMA_OPEN_INBOX'});}else await self.clients.openWindow(url.href);
+ if(connect&&existing){
+  await existing.focus();
+  existing.postMessage({type:'UMMA_OPEN_CONNECT'});
+  return;
+ }
+ // Load the current menu even if the installed app still has an older page open.
+ const navigated=await existing?.navigate(url.href).catch(()=>null);
+ if(navigated)await navigated.focus();
+ else await self.clients.openWindow(url.href);
 })());});

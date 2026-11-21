@@ -705,7 +705,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section></section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=7"></script><script src="js/cafe/order-inbox.js?v=31"></script><script src="js/cafe/public-menu-extras.js?v=17"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=9"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=32"></script><script src="js/cafe/public-menu-extras.js?v=17"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
@@ -1178,32 +1178,29 @@ function syncCustomerNavigation() {
   if (active) dockMenu.removeAttribute('aria-current');
   else dockMenu.setAttribute('aria-current', 'page');
 }
-customerDock.addEventListener('click', event => {
-  const trigger = event.target.closest('.dock-menu, button[aria-controls]');
-  if (!trigger) return;
-  const nextId = trigger.getAttribute('aria-controls');
+function closeCustomerSections(nextId, keepChat = false) {
   if (dishDetails.open) dishDetails.close();
   if (customerChatSettings.open) customerChatSettings.close();
   if (customerProfile.open) customerProfile.close();
   const orderInbox = $('ummaOrderInboxDialog');
   if (orderInbox?.open) orderInbox.close();
   const chat = $('customerChatDialog');
-  if (chat?.open) chat.close();
+  if (!keepChat && chat?.open) chat.close();
   for (const section of dockSections) {
     if (section.id !== nextId && section.open) section.close();
   }
+}
+customerDock.addEventListener('click', event => {
+  const trigger = event.target.closest('.dock-menu, button[aria-controls]');
+  if (!trigger) return;
+  closeCustomerSections(trigger.getAttribute('aria-controls'));
   trigger.focus({preventScroll:true});
   syncCustomerNavigation();
 }, true);
+window.addEventListener('umma:order-chat-open', () => closeCustomerSections('customerChatDialog', true));
 customerDock.addEventListener('click', syncCustomerNavigation);
 window.addEventListener('umma:chat-visibility', syncCustomerNavigation);
 window.addEventListener('umma:order-inbox-visibility', syncCustomerNavigation);
-const notificationLink = new URL(location.href);
-if (notificationLink.searchParams.has('messages')) {
-  notificationLink.searchParams.delete('messages');
-  history.replaceState(history.state, '', notificationLink);
-  document.addEventListener('DOMContentLoaded', () => window.ummaOrderInbox?.open(), {once:true});
-}
 window.addEventListener('umma:chat-settings-open', syncCustomerNavigation);
 for (const section of dockSections) section.addEventListener('close', syncCustomerNavigation);
 syncCustomerNavigation();
@@ -1541,4 +1538,4 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 window.ummaMenuAudience?.start(source);
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=34"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=3"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=35"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
