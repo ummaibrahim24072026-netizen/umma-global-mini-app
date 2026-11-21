@@ -12,6 +12,7 @@
       audio: 'Голосовой звонок', video: 'Видеозвонок', incoming: 'Входящий звонок', fromCafe: 'Звонит UMMA', fromClient: 'Звонит клиент', ringtone: 'Включить звук звонка', outgoing: 'Вызываем…',
       connecting: 'Подключаем…', connected: 'На связи', reconnecting: 'Восстанавливаем связь…',
       answer: 'Принять', decline: 'Отклонить', end: 'Завершить', close: 'Закрыть',
+      speaker: 'Громкая связь', earpiece: 'Динамик телефона',
       mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
       busy: 'Линия занята. Попробуйте чуть позже.', ended: 'Звонок завершён.',
       unanswered: 'На звонок не ответили.', expired: 'Этот вызов уже завершён.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
@@ -21,6 +22,7 @@
       audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', fromCafe: 'UMMA is calling', fromClient: 'A customer is calling', ringtone: 'Enable ringtone', outgoing: 'Calling…',
       connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…',
       answer: 'Answer', decline: 'Decline', end: 'End call', close: 'Close',
+      speaker: 'Speaker', earpiece: 'Phone earpiece',
       mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
       busy: 'Line busy. Try again shortly.', ended: 'Call ended.',
       unanswered: 'No answer.', expired: 'This call has already ended.', unavailable: 'Could not connect. Try again.',
@@ -30,6 +32,7 @@
       audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', fromCafe: 'UMMA đang gọi', fromClient: 'Khách hàng đang gọi', ringtone: 'Bật nhạc chuông', outgoing: 'Đang gọi…',
       connecting: 'Đang kết nối…', connected: 'Đã kết nối', reconnecting: 'Đang kết nối lại…',
       answer: 'Trả lời', decline: 'Từ chối', end: 'Kết thúc', close: 'Đóng',
+      speaker: 'Loa ngoài', earpiece: 'Loa thoại',
       mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
       busy: 'Đường dây đang bận. Vui lòng thử lại sau.', ended: 'Cuộc gọi đã kết thúc.',
       unanswered: 'Không có trả lời.', expired: 'Cuộc gọi này đã kết thúc.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
@@ -97,6 +100,8 @@
       button.setAttribute('aria-label', t(label));
       button.dataset.callAction = label;
       const iconPaths = {
+        speaker: '<path d="M11 5 6 9H3v6h3l5 4V5ZM15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/>',
+        earpiece: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
         mute: '<path d="M12 19v3m-5 0h10M9 9v3a3 3 0 0 0 5.1 2.1M15 9V6a3 3 0 0 0-6 0v1M5 10v2a7 7 0 0 0 12 4M3 3l18 18"/>',
         unmute: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-5 0h10"/>',
         hide: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3M3 3l18 18"/>',
@@ -394,6 +399,35 @@
         });
         playback.hidden = true;
         call.controls.prepend(playback, toggleTrack(stream.getAudioTracks()[0], 'mute', 'unmute'));
+        // Output-device routing is browser-dependent. Only show a real switch when
+        // the browser exposes both a communications output and the default output.
+        if (typeof remote.setSinkId === 'function' && navigator.mediaDevices?.enumerateDevices) {
+          void navigator.mediaDevices.enumerateDevices().then(devices => {
+            if (current !== call) return;
+            const outputs = devices.filter(device => device.kind === 'audiooutput');
+            const handset = outputs.find(device => device.deviceId === 'communications' ||
+              /earpiece|receiver|handset|разговорн/i.test(device.label));
+            const speaker = outputs.find(device => device.deviceId === 'default' ||
+              /speaker|громк|динамик/i.test(device.label));
+            if (!handset || !speaker || handset.deviceId === speaker.deviceId) return;
+            let loud = false;
+            const switcher = action('speaker', async () => {
+              const next = !loud;
+              try {
+                await remote.setSinkId(next ? speaker.deviceId : handset.deviceId);
+                loud = next;
+                switcher.dataset.callAction = loud ? 'earpiece' : 'speaker';
+                switcher.setAttribute('aria-label', t(loud ? 'earpiece' : 'speaker'));
+                switcher.setAttribute('aria-pressed', String(loud));
+                switcher.querySelector('span')?.replaceChildren(document.createTextNode(t(loud ? 'earpiece' : 'speaker')));
+              } catch (error) {
+                console.warn('Audio output switching is unavailable', error?.name);
+              }
+            });
+            switcher.setAttribute('aria-pressed', 'false');
+            call.controls.prepend(switcher);
+          }).catch(() => {});
+        }
         if (call.mode === 'video') call.controls.prepend(toggleTrack(stream.getVideoTracks()[0], 'hide', 'show'));
         peer.ontrack = event => {
           remote.srcObject = event.streams[0];
