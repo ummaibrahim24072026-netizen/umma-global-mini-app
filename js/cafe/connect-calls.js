@@ -281,6 +281,16 @@
         call.wave.append(bar);
       }
       card.append(identity, type, call.wave, call.status, call.media, call.controls);
+      // Only enable pixel-aligned artwork mode after the actual approved asset loads.
+      if (call.mode === 'audio') {
+        const artwork = new Image();
+        artwork.onload = () => {
+          if (modal === opened && artwork.naturalWidth && artwork.naturalHeight) {
+            opened.classList.add('umma-call-artwork');
+          }
+        };
+        artwork.src = new URL('assets/umma-call-original.webp', document.baseURI).href;
+      }
       opened.append(card);
       opened.addEventListener('cancel', event => {
         event.preventDefault();
