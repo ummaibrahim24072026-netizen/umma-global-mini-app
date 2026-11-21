@@ -76,7 +76,7 @@ for(const method of ['cash','qr']){
   workerMessage(pushHistory);
   const target=orderChat.querySelector('.umma-chat-order-card[data-order-id="267"]');
   assert.ok(target);
-  assert.equal(target.querySelector('[aria-expanded]'),null,'the tapped order has its timeline expanded');
+  assert.equal(target.querySelector('.umma-chat-order-toggle').getAttribute('aria-expanded'),'true','the tapped order has its timeline expanded');
   assert.match(target.textContent,/Заказ выдан/);
   assert.ok(orderChat.querySelector('.umma-chat-order-card[data-order-id="268"] [aria-expanded=false]'));
   assert.equal(orderChat.querySelector('.connect-chat-content').hidden,false,'an order can be viewed without an existing support conversation');

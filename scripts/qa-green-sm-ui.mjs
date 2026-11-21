@@ -24,7 +24,10 @@ try {
   card = render({greenSmStage:'picked_up',greenSmTrackingUrl:'https://booking.xanhsm.com/qa-example'});
   assert.match(card.textContent, /Курьер забрал заказ/);
   assert.equal(card.querySelector('a').href,'https://booking.xanhsm.com/qa-example');
-  assert.match(card.querySelector('[role="img"]').getAttribute('aria-label'), /Оформлен.*Оплачен.*Доставлен/);
+  const stages=card.querySelector('.umma-order-stages');
+  assert.match(stages.textContent,/Заказ оформлен.*Оплата подтверждена.*Заказ доставлен/);
+  assert.equal(stages.querySelector('[aria-current=step]').dataset.stage,'green_picked_up');
+  assert.equal(stages.querySelector('[data-stage=delivered]').dataset.state,'upcoming');
   assert.equal(chat.children.length,1);
   card = render({greenSmStage:'delivered',status:'completed'});
   assert.match(card.textContent,/Заказ доставлен/);

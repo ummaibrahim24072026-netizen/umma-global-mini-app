@@ -1070,3 +1070,170 @@ body.public-cafe-menu #customerChatDialog .connect-chat-wallpaper{min-height:0!i
 body.public-cafe-menu #customerChatDialog .connect-thread{box-sizing:border-box!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;padding-bottom:12px!important;overscroll-behavior-y:contain!important}
 body.public-cafe-menu #customerChatDialog .connect-thread[data-follow-bottom="1"]{overflow-anchor:none}
 body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!important}
+
+/* Order stages in the customer chat. */
+.public-cafe-menu .umma-connect-chat .connect-thread > .umma-chat-order-card {
+  --order-ink:#183f42;
+  --order-muted:#4f6769;
+  --order-accent:#006c70;
+  display:grid;
+  gap:8px;
+  box-sizing:border-box;
+  align-self:stretch;
+  inline-size:100%;
+  max-inline-size:min(100%,520px);
+  padding:12px 14px;
+  border:1px solid #cadedc;
+  border-radius:18px;
+  background:#f6fbfa;
+  color:var(--order-ink);
+  white-space:normal;
+}
+.umma-chat-order-header {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px 12px;
+  justify-content:space-between;
+}
+.umma-chat-order-header strong { font-size:15px; }
+.umma-chat-order-status {
+  max-inline-size:100%;
+  border-radius:10px;
+  padding:4px 8px;
+  background:#e1f2ef;
+  color:var(--order-accent);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.3;
+}
+.umma-chat-order-card--cancelled .umma-chat-order-status { background:#f9eae9;color:#8e3843; }
+.umma-connect .umma-chat-order-card .umma-chat-order-toggle {
+  justify-self:start;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  min-block-size:44px;
+  padding:0 10px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:var(--order-accent);
+  font-size:13px;
+  font-weight:750;
+  text-align:start;
+}
+.umma-chat-order-toggle::after {
+  content:"";
+  inline-size:7px;
+  block-size:7px;
+  margin-inline-end:3px;
+  border:solid currentColor;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg) translateY(-2px);
+}
+.umma-chat-order-toggle[aria-expanded="true"]::after { transform:rotate(225deg) translateY(-2px); }
+.umma-connect .umma-chat-order-card .umma-order-stages {
+  display:grid;
+  margin:0;
+  padding:0;
+  border:1px solid #deeeeb;
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+.umma-connect .umma-chat-order-card .umma-order-stage {
+  position:relative;
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  min-block-size:34px;
+  inline-size:auto;
+  margin:0;
+  padding:5px 8px;
+  border:0;
+  border-radius:0;
+  max-inline-size:none;
+  background:transparent;
+  color:var(--order-muted);
+  font-size:13px;
+  line-height:1.25;
+  white-space:normal;
+}
+.umma-order-stage:not(:last-child)::after {
+  content:"";
+  position:absolute;
+  inset-block:50% -1px;
+  inset-inline-start:17px;
+  inline-size:2px;
+  background:#d6e6e3;
+}
+.umma-order-stage:not(:first-child)::before {
+  content:"";
+  position:absolute;
+  inset-block:0 50%;
+  inset-inline-start:17px;
+  inline-size:2px;
+  background:#d6e6e3;
+}
+.umma-order-stage-marker {
+  z-index:1;
+  display:grid;
+  place-items:center;
+  box-sizing:border-box;
+  inline-size:20px;
+  block-size:20px;
+  border:2px solid #a9c2bf;
+  border-radius:50%;
+  background:#fff;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  line-height:1;
+}
+.umma-order-stage[data-state="done"] .umma-order-stage-marker {
+  border-color:var(--order-accent);
+  background:var(--order-accent);
+}
+.umma-connect .umma-chat-order-card .umma-order-stage[data-state="current"] {
+  background:#eff9f6;
+  color:var(--order-ink);
+  font-weight:750;
+}
+.umma-order-stage[data-state="current"] .umma-order-stage-marker {
+  border-color:#af801f;
+  background:#fff7e4;
+}
+.umma-order-stage[data-state="current"] .umma-order-stage-marker::after {
+  content:"";
+  inline-size:6px;
+  block-size:6px;
+  border-radius:50%;
+  background:#946a16;
+}
+.umma-connect .umma-chat-order-card .umma-order-stage[data-state="cancelled"] { color:#8e3843;font-weight:750; }
+.umma-order-stage[data-state="cancelled"] .umma-order-stage-marker {
+  border-color:#a8505a;
+  background:#f9eae9;
+  color:#8e3843;
+}
+.umma-order-stage time {
+  color:var(--order-muted);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.umma-connect .umma-chat-order-card .umma-chat-order-action {
+  display:grid;
+  place-items:center;
+  min-block-size:44px;
+  border:1px solid #a3ccc7;
+  border-radius:12px;
+  background:#eef8f6;
+  color:var(--order-accent);
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+}
+.umma-connect .umma-chat-order-card :is(.umma-order-stages,.umma-chat-order-action)[hidden] { display:none; }

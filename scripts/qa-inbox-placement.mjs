@@ -70,7 +70,7 @@ assert.match(orderCard(52).textContent,/Заказ №52.*Готовится/);
 assert.ok(chatDialog.querySelector('textarea'));
 let selectedOrder;
 w.addEventListener('umma:open-specific-order',event=>{selectedOrder=event.detail.orderId;});
-orderCard(52).querySelector('button').click();
+orderCard(52).querySelector('.umma-chat-order-action').click();
 assert.equal(selectedOrder,'52');
 w.ummaOrderInbox.publish({
  orderNumber:52,status:'ready',eventAt:new Date(readInbox().readAt+1000).toISOString()
@@ -82,16 +82,31 @@ w.ummaOrderInbox.publish({
 });
 assert.ok(orderCard(52).classList.contains('umma-chat-order-card--finished'));
 const toggle=orderCard(52).querySelector('[aria-expanded=false]');
+assert.equal(toggle.textContent,'Показать этапы');
 toggle.click();
-assert.equal(toggle.getAttribute('aria-expanded'),'true');
+assert.equal(toggle.textContent,'Скрыть этапы');
+const stages=number=>orderCard(number).querySelector('.umma-order-stages');
+assert.deepEqual([...stages(52).children].map(row=>row.dataset.stage),['pending','confirmed','preparing','paid','ready','completed']);
+assert.ok([...stages(52).children].every(row=>row.dataset.state==='done'));
+assert.equal(stages(52).querySelector('[data-stage=confirmed] time'),null,'inferred stages have no fabricated time');
+assert.ok(stages(52).querySelector('[data-stage=completed] time'));
 w.ummaOrderInbox.publish({orderNumber:53,orderType:'delivery',status:'pending',deliveryStatus:'waiting_courier'});
 w.ummaOrderInbox.publish({orderNumber:53,status:'ready',deliveryStatus:'picked_up'});
-assert.match(orderCard(53).textContent,/Курьер в пути/);
+assert.match(orderCard(53).textContent,/Курьер забрал заказ/);
+assert.equal(stages(53).querySelector('[aria-current=step]').dataset.stage,'picked_up');
+assert.equal(stages(53).querySelector('[data-stage=delivered]').dataset.state,'upcoming');
+assert.equal(stages(52).hidden,false,'a user-expanded card stays open through background updates');
 w.ummaOrderInbox.publish({orderNumber:53,status:'ready',deliveryStatus:'delivered'});
 assert.ok(orderCard(53).classList.contains('umma-chat-order-card--finished'));
 assert.match(orderCard(53).textContent,/Заказ доставлен/);
+w.ummaOrderInbox.publish({orderNumber:54,status:'confirmed',paymentStatus:'paid'});
 w.ummaOrderInbox.publish({orderNumber:54,status:'cancelled'});
-assert.match(orderCard(54).textContent,/Отменён/);
+w.ummaOrderInbox.publish({orderNumber:54,status:'cancelled',paymentStatus:'refunded',eventAt:new Date(Date.now()+1000).toISOString()});
+assert.match(orderCard(54).textContent,/Заказ отменён/);
+orderCard(54).querySelector('.umma-chat-order-toggle').click();
+assert.deepEqual([...stages(54).children].map(row=>row.dataset.stage),['pending','confirmed','paid','cancelled','refunded']);
+assert.equal(stages(54).querySelector('[data-stage=confirmed]').dataset.state,'done');
+assert.equal(stages(54).querySelector('[aria-current=step]').dataset.stage,'cancelled');
 const thread=chatDialog.querySelector('.connect-thread');
 let scrollHeight=1000,clientHeight=400,scrollTop=0;
 Object.defineProperties(thread,{
