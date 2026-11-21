@@ -122,11 +122,11 @@ function formatForeign(amount,currency){
  const locale=window.ummaMenuI18n?.locale()||'ru';
  return currency==='USDT'
   ?new Intl.NumberFormat(locale,{maximumFractionDigits:6}).format(amount)+' USDT'
-  :new Intl.NumberFormat(locale,{style:'currency',currency}).format(amount);
+  :new Intl.NumberFormat(locale,{style:'currency',currency,currencyDisplay:currency==='KZT'?'narrowSymbol':'symbol'}).format(amount);
 }
 function renderForeignPayment(value,waiting){
  const payment=waiting&&value.payment;
- const show=payment&&['USD','EUR','KZT','USDT'].includes(payment.currency);
+ const show=payment&&['USD','EUR','USDT'].includes(payment.currency);
  const section=$('guestForeignPayment');
  if(!section)return;
  section.hidden=!show;
@@ -137,6 +137,47 @@ function renderForeignPayment(value,waiting){
   $('guestForeign'+id+'Row').hidden=!text;
   $('guestForeign'+id).textContent=text||'';
  }
+}
+function renderNumberTransfer(value,waiting,t,previousOrderId){
+ const payment=value.payment;
+ const section=$('numberTransfer');
+ if(!section)return;
+ const status=$('transferCopyStatus');
+ if(previousOrderId!==value.id)status.textContent='';
+ section.hidden=!(waiting&&['RUB','KZT'].includes(payment?.currency));
+ if(section.hidden)return;
+ const ruble=payment.currency==='RUB';
+ const number=String((ruble?payment.phone:payment.account)??'').trim();
+ $('transferAmount').textContent=formatForeign(ruble?payment.kopecks/100:payment.amount,payment.currency);
+ $('transferRateRow').hidden=!ruble;
+ if(ruble){
+  const locale=window.ummaMenuI18n?.locale()||'ru';
+  $('transferRate').textContent='1 ₽ = '+new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(payment.rate)+' ₫';
+ }
+ $('transferBank').textContent=payment.bankName;
+ $('transferRecipient').textContent=payment.recipient;
+ const label=ruble?'Телефон для перевода':'Реквизиты';
+ $('transferNumberLabel').dataset.i18n=label;
+ $('transferNumberLabel').textContent=t(label);
+ $('transferNumber').textContent=number;
+ $('rubleBankPickerTitle').hidden=!ruble;
+ $('rubleBankLinks').hidden=!ruble;
+ const copy=$('copyTransferNumber');
+ copy.hidden=!number;
+ const copyNumber=async()=>{
+  let message;
+  try{
+   await navigator.clipboard.writeText(number);
+   message='Номер скопирован';
+  }catch{
+   message='Скопируйте номер из реквизитов вручную.';
+  }
+  if(order?.id===value.id&&!section.hidden)status.textContent=t(message);
+ };
+ copy.onclick=copyNumber;
+ $('rubleBankLinks').onclick=event=>{
+  if(ruble&&number&&event.target.closest('a'))void copyNumber();
+ };
 }
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
@@ -151,33 +192,7 @@ $('orderState').textContent=waitingPayment?t('Ожидаем подтвержд�
  :value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ')
  :t(statuses[value.status]||'Заказ отправлен');
 $('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?(value.payment?.currency==='RUB'?'Ожидаем перевод в рублях':'Ожидаем подтверждение оплаты'):value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира.');
-const ruble=value.payment?.currency==='RUB'&&value.paymentStatus==='pending'&&
- !['cancelled','completed'].includes(value.status)?value.payment:null;
-const rubleSection=$('rublePayment');
-if(rubleSection&&previousOrderId!==value.id)$('rubleCopyStatus').textContent='';
-if(rubleSection){
- rubleSection.hidden=!ruble;
- if(ruble){
-  const locale=window.ummaMenuI18n?.locale()||'ru';
-  $('rubleAmount').textContent=new Intl.NumberFormat(locale,{style:'currency',currency:'RUB'}).format(ruble.kopecks/100);
-  $('rubleRate').textContent='1 ₽ = '+new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(ruble.rate)+' ₫';
-  $('rubleBank').textContent=ruble.bankName;$('rubleRecipient').textContent=ruble.recipient;$('rublePhone').textContent=ruble.phone;
-  const copy=$('copyRublePhone');
-  const copyNumber=async()=>{
-   const status=$('rubleCopyStatus');
-   try{
-    await navigator.clipboard.writeText(ruble.phone);
-    status.textContent=t('Номер скопирован');
-   }catch{
-    status.textContent=t('Скопируйте номер из реквизитов вручную.');
-   }
-  };
-  copy.onclick=copyNumber;
-  $('rubleBankLinks').onclick=event=>{
-   if(event.target.closest('a'))void copyNumber();
-  };
- }
-}
+renderNumberTransfer(value,waitingPayment,t,previousOrderId);
 const p=value.payment,show=value.paymentMethod==='qr'&&value.paymentStatus!=='paid'&&value.paymentStatus!=='refunded'&&!['cancelled','completed'].includes(value.status)&&p;
 $('guestPayment').hidden=!show;
 if(show){

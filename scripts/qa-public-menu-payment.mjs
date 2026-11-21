@@ -287,6 +287,48 @@ console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference
  dom.window.close();
 }
 console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, explicit geolocation and nearest cafe selection.');
+{
+ const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id);
+ const copied=[];
+ Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async text=>copied.push(text)}});
+ w.fetch=async()=>new Response(JSON.stringify({ok:true,proofs:[]}));
+ w.eval(read('js/cafe/public-menu-i18n.js'));
+ w.ummaMenuI18n.setLanguage('ru');
+ w.eval(read('js/cafe/public-menu-extras.js'));
+ const ctx={t:w.ummaMenuI18n.t,money:String,API:'/api/',activeReceipts:()=>[]};
+ const kaspi={id:'kaspi-order',requestKey:'kaspi-test-key',status:'pending',paymentStatus:'pending',
+  paymentMethod:'bank_transfer',totalVnd:150000,
+  payment:{currency:'KZT',amount:2850,bankName:'Kaspi',recipient:'Test recipient',account:'+77000000000'}};
+ w.ummaGuestExtras.receipt(kaspi,ctx);
+ assert.equal($('numberTransfer').hidden,false);
+ assert.equal($('guestForeignPayment').hidden,true);
+ assert.equal($('transferBank').textContent,'Kaspi');
+ assert.match($('transferAmount').textContent,/₸/);
+ assert.equal($('transferNumber').textContent,kaspi.payment.account);
+ assert.equal($('rubleBankLinks').hidden,true);
+ assert.equal($('transferRateRow').hidden,true);
+ assert.equal($('guestTransferProof').hidden,false);
+ assert.equal($('copyTransferNumber').hidden,false);
+ await $('copyTransferNumber').onclick();
+ assert.deepEqual(copied,[kaspi.payment.account]);
+ assert.equal($('transferCopyStatus').textContent,'Номер скопирован');
+
+ const sber={...kaspi,id:'sber-order',payment:{currency:'RUB',kopecks:47618,rate:315,
+  bankName:'Сбер',recipient:'Test recipient',phone:'+79000000000'}};
+ w.ummaGuestExtras.receipt(sber,ctx);
+ assert.equal($('transferCopyStatus').textContent,'');
+ assert.equal($('rubleBankLinks').hidden,false);
+ assert.equal($('transferRateRow').hidden,false);
+ await $('copyTransferNumber').onclick();
+ assert.deepEqual(copied,[kaspi.payment.account,sber.payment.phone]);
+
+ w.ummaGuestExtras.receipt({...kaspi,paymentStatus:'paid'},ctx);
+ assert.equal($('numberTransfer').hidden,true);
+ assert.equal($('guestTransferProof').hidden,true);
+ dom.window.close();
+}
+console.log('PASS Kaspi and Sber payment receipts: shared layout, exact number copying, proof attachment, and paid-state cleanup.');
 // Exercise the deployed handler code: guest capabilities, server totals and payment scope.
 const {stripTypeScriptTypes}=await import('node:module');const vm=await import('node:vm');const {webcrypto}=await import('node:crypto');
 let handler,rpcCalls=[],allowStatus=true,receiptReads=0,storedMethod='qr',storedStatus='pending';

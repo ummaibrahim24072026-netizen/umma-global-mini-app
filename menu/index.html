@@ -296,93 +296,94 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout .checkout-pay-footer .guest-hint { margin: 7px 0 0; font-size: 12px; line-height: 1.35; }
 #checkout[data-stage="checkout"] #result { flex: none; max-height: 20dvh; overflow: auto; margin: 4px 16px; }
 
-/* Compact receipt for an active RUB transfer. */
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) {
+/* Compact receipt for an active bank transfer by number. */
+#checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) {
   width: min(calc(100% - 20px), 456px);
   max-height: calc(100dvh - 16px);
   overscroll-behavior: contain;
-  --ruble-mint: #e3f5ef;
-  --ruble-teal: #006561;
+  --transfer-mint: #e3f5ef;
+  --transfer-teal: #006561;
 }
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .checkout-header {
+#checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-header {
   padding: 6px 12px;
-  background: var(--ruble-teal);
+  background: var(--transfer-teal);
   --customer-heading-brand: #d2efec;
   border-bottom: 1px solid #d1ac58;
   color: #fff;
 }
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) #checkoutTitle { max-width: none; }
-#checkout[data-stage="receipt"]:has(#success:not([hidden]) #rublePayment:not([hidden])) .checkout-body { padding: 8px 12px 10px; }
-#checkout #success:has(#rublePayment:not([hidden])) { display: flex; flex-direction: column; gap: 7px; }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-status {
+#checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) #checkoutTitle { max-width: none; }
+#checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-body { padding: 8px 12px 10px; }
+#checkout #success:has(#numberTransfer:not([hidden])) { display: flex; flex-direction: column; gap: 7px; }
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-status {
   align-items: center;
   gap: 8px;
   padding: 7px 9px;
   border-radius: 12px;
-  background: var(--ruble-mint);
+  background: var(--transfer-mint);
 }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-status-icon {
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-status-icon {
   width: 30px;
   height: 30px;
   background: #fff7e2;
   color: #83601d;
 }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-status-copy {
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-status-copy {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 8px;
 }
-#checkout #success:has(#rublePayment:not([hidden])) :is(#successNumber, #orderReserveUntil) { margin: 0; font-size: 12px; }
-#checkout #success:has(#rublePayment:not([hidden])) #orderState { order: 1; flex-basis: 100%; font-size: 14px; }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-summary { margin: 0; padding-inline: 8px; border-radius: 12px; }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails {
+#checkout #success:has(#numberTransfer:not([hidden])) :is(#successNumber, #orderReserveUntil) { margin: 0; font-size: 12px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #orderState { order: 1; flex-basis: 100%; font-size: 14px; }
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-summary { margin: 0; padding-inline: 8px; border-radius: 12px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails {
   max-height: 86px;
   overflow-y: auto;
   font-size: 12px;
 }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails > div { padding-block: 4px; }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails small { font-size: 11px; }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails .receipt-item-photo { inline-size: 28px; block-size: 28px; }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-total { padding-block: 5px; font-size: 13px; }
-#checkout #success:has(#rublePayment:not([hidden])) #successTotal { font-size: 15px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails > div { padding-block: 4px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails small { font-size: 11px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails .receipt-item-photo { inline-size: 28px; block-size: 28px; }
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-total { padding-block: 5px; font-size: 13px; }
+#checkout #success:has(#numberTransfer:not([hidden])) #successTotal { font-size: 15px; }
 /* A single item without an adjustment already shows the full total. */
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails:has(> .receipt-item:only-child) { border-bottom: 0; }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptDetails:has(> .receipt-item:only-child) + .receipt-total { display: none; }
-#checkout #rublePayment { margin: 0; border: 0; }
-#checkout #rublePayment > div { align-items: baseline; gap: 4px 9px; padding: 5px 2px; font-size: 13px; }
-#checkout #rublePayment > div strong { white-space: normal; text-align: end; overflow-wrap: anywhere; }
-#checkout #rublePayment > .ruble-amount { padding: 7px 9px 1px; border-radius: 12px 12px 0 0; background: var(--ruble-mint); }
-#checkout #rubleAmount { color: #004b49; font-size: clamp(20px, 6vw, 26px); line-height: 1.12; }
-#checkout #rublePayment > .ruble-rate {
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails:has(> .receipt-item:only-child) { border-bottom: 0; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptDetails:has(> .receipt-item:only-child) + .receipt-total { display: none; }
+#checkout #numberTransfer { margin: 0; border: 0; }
+#checkout #numberTransfer > div { align-items: baseline; gap: 4px 9px; padding: 5px 2px; font-size: 13px; }
+#checkout #numberTransfer > div strong { white-space: normal; text-align: end; overflow-wrap: anywhere; }
+#checkout #numberTransfer > .transfer-amount { padding: 7px 9px 1px; border-radius: 12px 12px 0 0; background: var(--transfer-mint); }
+#checkout #numberTransfer > .transfer-amount:has(+ .transfer-rate[hidden]) { padding-bottom: 7px; border-radius: 12px; }
+#checkout #transferAmount { color: #004b49; font-size: clamp(20px, 6vw, 26px); line-height: 1.12; }
+#checkout #numberTransfer > .transfer-rate {
   padding: 3px 9px 6px;
   border: 0;
   border-radius: 0 0 12px 12px;
-  background: var(--ruble-mint);
+  background: var(--transfer-mint);
   font-size: 11px;
 }
-#checkout #rublePayment > .ruble-rate small { display: inline; }
-#checkout #rublePayment > .ruble-rate + div { border: 0; }
-#checkout #rublePayment .ruble-bank-picker { padding: 4px 0 0; }
-#checkout #copyRublePhone { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); color: var(--umma-brand-on-primary); }
+#checkout #numberTransfer > .transfer-rate small { display: inline; }
+#checkout #numberTransfer > .transfer-rate + div { border: 0; }
+#checkout #numberTransfer .ruble-bank-picker { padding: 4px 0 0; }
+#checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); color: var(--umma-brand-on-primary); }
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
-#checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--ruble-mint); }
+#checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--transfer-mint); }
 #checkout #guestTransferProof { margin-top: 5px; }
 #checkout #attachGuestTransferProof { width: 100%; min-height: 44px; }
-#checkout :is(#guestTransferProofStatus, #rubleCopyStatus) { margin: 4px 0 0; font-size: 12px; }
-#checkout :is(#guestTransferProofStatus, #rubleCopyStatus):empty { display: none; }
-#checkout #success:has(#rublePayment:not([hidden])) .receipt-instructions { order: 2; padding: 0; background: none; }
-#checkout #success:has(#rublePayment:not([hidden])) #paymentState { display: none; }
-#checkout #success:has(#rublePayment:not([hidden])) #receiptHint { margin: 0; font-size: 11px; text-align: center; }
-#checkout #success:has(#rublePayment:not([hidden])) #syncState { margin: 0; }
-#checkout #success:has(#rublePayment:not([hidden])) #syncState:empty { display: none; }
-#checkout #success:has(#rublePayment:not([hidden])) #newOrder {
+#checkout :is(#guestTransferProofStatus, #transferCopyStatus) { margin: 4px 0 0; font-size: 12px; }
+#checkout :is(#guestTransferProofStatus, #transferCopyStatus):empty { display: none; }
+#checkout #success:has(#numberTransfer:not([hidden])) .receipt-instructions { order: 2; padding: 0; background: none; }
+#checkout #success:has(#numberTransfer:not([hidden])) #paymentState { display: none; }
+#checkout #success:has(#numberTransfer:not([hidden])) #receiptHint { margin: 0; font-size: 11px; text-align: center; }
+#checkout #success:has(#numberTransfer:not([hidden])) #syncState { margin: 0; }
+#checkout #success:has(#numberTransfer:not([hidden])) #syncState:empty { display: none; }
+#checkout #success:has(#numberTransfer:not([hidden])) #newOrder {
   min-height: 44px;
   margin: 0;
   padding: 5px 10px;
   background: none;
-  color: var(--ruble-teal);
+  color: var(--transfer-teal);
   box-shadow: none;
   text-decoration: underline;
 }
@@ -705,8 +706,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div id="guestForeignRecipientRow"><span data-i18n="Получатель">Получатель</span><strong id="guestForeignRecipient"></strong></div>
   <div id="guestForeignAccountRow"><span data-i18n="Реквизиты">Реквизиты</span><strong id="guestForeignAccount" dir="ltr"></strong></div>
   <div id="guestForeignNetworkRow"><span data-i18n="Сеть">Сеть</span><strong id="guestForeignNetwork" dir="ltr"></strong></div>
-</section><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="rublePayment" class="receipt-lines" hidden><div class="ruble-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="rubleAmount"></strong></div><div class="ruble-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="rubleRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="rubleBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="rubleRecipient"></strong></div><div><span data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="rublePhone" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="rubleBankPickerTitle">
-<button id="copyRublePhone" type="button" class="plain-btn" data-i18n="Скопировать только номер">Скопировать только номер</button>
+</section><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="numberTransfer" class="receipt-lines" hidden><div class="transfer-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="transferAmount"></strong></div><div id="transferRateRow" class="transfer-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="transferRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="transferBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="transferRecipient"></strong></div><div><span id="transferNumberLabel" data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="transferNumber" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="copyTransferNumber">
+<button id="copyTransferNumber" type="button" class="plain-btn" data-i18n="Скопировать только номер">Скопировать только номер</button>
 <p id="rubleBankPickerTitle" data-i18n="Скопировать номер и открыть свой банк">Скопировать номер и открыть свой банк</p>
 <div id="rubleBankLinks" class="ruble-bank-links">
 <a class="plain-btn bank-link" href="https://online.sberbank.ru/" target="_blank" rel="noopener noreferrer">Сбер</a>
@@ -715,7 +716,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <a class="plain-btn bank-link" href="https://online.vtb.ru/" target="_blank" rel="noopener noreferrer">ВТБ</a>
 </div>
 
-<p id="rubleCopyStatus" class="guest-hint" role="status"></p>
+<p id="transferCopyStatus" class="guest-hint" role="status"></p>
 </section></section><section id="guestTransferProof" hidden>
 <p class="guest-hint" data-i18n="После оплаты прикрепите чек для проверки.">После оплаты прикрепите чек для проверки.</p>
 <button id="attachGuestTransferProof" type="button" class="plain-btn" data-i18n="Прикрепить чек">Прикрепить чек</button>
@@ -724,7 +725,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=19"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=20"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
