@@ -203,8 +203,8 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   assert.deepEqual(tones,[660,880,660,880]);
   assert.deepEqual(speech.map(entry=>entry.lang),['ru-RU','ru-RU']);
   assert.equal(speech[1].text,'Новый заказ номер 165. Плов — 2. Архивное блюдо — 1.');
-  assert.equal(d.getElementById('counterNewOrderBadge').textContent,'1');
-  assert.equal(d.getElementById('counterPaymentBadge').textContent,'2');
+  assert.equal(d.getElementById('counterOrderBadge').textContent,'2','a new unpaid order is counted once');
+  assert.equal(d.getElementById('counterPaymentFilter').textContent,'К оплате · 2');
   d.querySelector('[data-counter-view=orders]').click();
   await tick();
   const orderCard=id=>d.querySelector('#counterOrderList [data-counter-order="'+id+'"]');

@@ -97,12 +97,18 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #counterOrders:has(.counter-filter-tools[open]) .counter-board-header { align-items: start; }
 .counter-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .counter-filters label { margin-bottom: 0; }
-#webPos #counterOrderSearch { min-height: 44px; margin-bottom: 8px; }
+.counter-order-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+#webPos #counterOrderSearch { flex: 1 1 135px; min-height: 44px; min-width: 0; }
+#webPos #counterPaymentFilter {
+  min-height: 44px; padding: 6px 10px; font-size: 14px; background: #fff4dc; color: #704d16; border-color: #d7b657;
+}
+#webPos #counterPaymentFilter[aria-pressed="true"] { background: #81510a; border-color: #81510a; color: #fff; }
+#webPos #counterPaymentBack { min-height: 44px; padding: 6px 12px; }
 .counter-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
 #webPos .counter-board .counter-card { min-width: 0; padding: 8px 10px; }
 #counterOrderList .counter-card--ready { border-color: #72bfb7; }
 #counterOrderList .counter-card--new { border-inline-start: 4px solid #008780; background: #f6fffc; }
-.counter-order-details summary, .counter-payment-row {
+.counter-order-details summary {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 8px;
 }
 .counter-order-details summary { position: relative; cursor: pointer; min-height: 44px; padding-inline-end: 20px; }
@@ -123,15 +129,14 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-order-body p, .counter-order-body ul { margin-block: 6px; }
 .counter-order-body ul { padding-inline-start: 20px; }
 .counter-order-actions { display: grid; gap: 6px; }
-.counter-order-actions:has(> *), .counter-payment-row button { margin-top: 6px; }
+.counter-order-actions:has(> *) { margin-top: 6px; }
 #webPos :is(.counter-order-actions, .counter-board) button {
   min-height: 44px; padding: 6px 10px; font-size: 14px;
 }
-.counter-payment-row button { grid-column: 1 / -1; }
 .counter-customer-language label { margin-top: 8px; }
 #counterStatus:empty, #posResult:empty, #posChange:empty { display: none; }
 .counter-nav {
-  flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;
+  flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
   padding: 4px max(8px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
   background: #fff; border-top: 1px solid var(--counter-line);
 }
@@ -145,7 +150,6 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   min-width: 19px; padding-inline: 4px; border: 1px solid white; border-radius: 999px;
   background: #176642; color: #fff; font-size: 12px; line-height: 17px; font-weight: 800;
 }
-#counterPaymentBadge { background: #81510a; }
 .counter-nav svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 820px) {
   .counter-nav { padding-inline: max(16px, calc((100vw - 640px) / 2)); }

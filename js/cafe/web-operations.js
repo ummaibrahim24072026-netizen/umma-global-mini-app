@@ -206,7 +206,7 @@ function resetSaleService(){
  $('posDeliveryPhone').value='';
 }
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
-let counterOrdersRevision=0,counterRefreshQueued=false,paymentQueueOpen=false;
+let counterOrdersRevision=0,counterRefreshQueued=false,paymentFrom='sale';
 const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?selectedMethod:payOrder?.paymentMethod||selectedMethod;
 const orderMethod=order=>order.foreignPayment?.channel||order.paymentMethod;
 const canSwitchPayment=order=>order?.staffCounter&&order.paymentStatus==='pending'&&!closedOrder(order)&&
@@ -284,7 +284,7 @@ function paymentFields(){
  const status=$('counterMethodStatus');
  status.hidden=!choosing||selectedAvailable;
  status.textContent=fxCash()?(fxLoading?'Получаем курс Google Finance…':'Курс недоступен. Валютная оплата заблокирована.')
-   :optionsError?'Не удалось проверить реквизиты. Откройте вкладку оплаты повторно.'
+   :optionsError?'Не удалось проверить реквизиты. Откройте оплату заказа повторно.'
   :!options?'Проверяем реквизиты…'
   :'Для этого способа оплаты ещё не настроены реквизиты.';
  for(const button of $('counterMethodLabel').querySelectorAll('[data-counter-method]')){
@@ -358,7 +358,7 @@ function showPayment(order,payment=null){
   $('posConfirmQr').disabled=busy||!confirmationReady();
   $('posReloadQr').hidden=!(pending&&electronic&&!canConfirm);
   $('posShowScreen').hidden=!(pending&&order.paymentMethod==='qr'&&payment&&screen());
-  $('counterNewSale').hidden=pending;
+  $('counterNewSale').hidden=pending||paymentFrom==='orders';
   $('posPaymentHint').textContent=order.paymentStatus==='paid'?'Оплачено. Назовите гостю номер заказа.'
    :!pending?'Заказ закрыт.'
    :order.paymentMethod==='cash'?'Оплата ещё не записана. Сверьте сумму и подтвердите получение наличных.'
@@ -393,6 +393,12 @@ function showSettledPayment(order,settled,message){
  const paid=settled?.order;
  order.paymentStatus='paid';
  order.status=paid?.status||order.status;
+ const listed=counterOrders.find(item=>item.id===order.id);
+ if(listed){
+  listed.payment_status='paid';
+  if(paid?.status)listed.status=paid.status;
+  renderCounterOrders();
+ }
  $('posCash').value='';
  showPayment(order);
  const paidElsewhere=paid&&Object.hasOwn(paid,'paidByTelegramId')&&String(paid.paidByTelegramId)!==String(auth.actorId());
@@ -515,32 +521,12 @@ function counterOrderMarkup(order){
   destination+actor+itemsMarkup(order.cafe_order_items||[])+(start?issue:'')+'</div></details>'+
   (action||green||transfer?'<div class="counter-order-actions">'+action+green+transfer+'</div>':'')+'</article>';
 }
-function counterQueueMarkup(order){
- const method={cash:'Наличные',qr:'QR Vietcombank',bank_transfer:'Банковский перевод'}[order.payment_method];
- return '<article class="counter-card counter-payment-row"><strong>№'+esc(order.order_number)+'</strong>'+
-  '<strong>'+money(order.total_vnd)+'</strong><small>'+method+' · '+esc(serviceLabels[order.order_type]||'')+'</small>'+
-  counterOrderButton(order,'pay','Открыть оплату')+'</article>';
-}
 function setCounterBadge(id,label,count,description){
  const badge=$(id);
  const value=count?String(count):'';
  if(badge.textContent!==value)badge.textContent=value;
  badge.hidden=!count;
  badge.parentElement.setAttribute('aria-label',count?label+' · '+description+': '+count:label);
-}
-function renderCounterPaymentQueue(orders){
- const queue=$('counterPaymentQueue');
- queue.hidden=!paymentQueueOpen;
- $('counterPaymentCheckout').hidden=paymentQueueOpen;
- $('counterResumePayment').hidden=!payOrder&&!cart.size;
- const root=$('counterPaymentList');
- const markup=orders.map(counterQueueMarkup).join('')||'<p>'+
-  (loadedLocation!==locationId()?'Загружаем оплаты…':'Нет оплат к подтверждению.')+'</p>';
- if(root.counterMarkup!==markup){root.innerHTML=markup;root.counterMarkup=markup;}
-}
-function showCounterPaymentQueue(open){
- paymentQueueOpen=open;
- renderCounterPaymentQueue(counterOrders.filter(needsCounterPayment));
 }
 function syncCounterReadyShortcut(){
  const filtered=counterView==='orders'&&$('counterOrderFilter').value==='ready'&&
@@ -562,7 +548,7 @@ function renderCounterOrders(){
  const type=$('counterOrderType').value;
  const shown=counterOrders.filter(order=>{
   if(type&&order.order_type!==type)return false;
-  if(search)return String(order.order_number).includes(search);
+  if(search)return String(order.order_number).includes(search)&&(filter!=='payment'||needsCounterPayment(order));
   if(filter==='closed')return closedOrder(order);
   if(closedOrder(order))return false;
   if(filter==='payment')return needsCounterPayment(order);
@@ -573,14 +559,17 @@ function renderCounterOrders(){
  });
  if(filter==='active')shown.sort((a,b)=>Number(newCounterOrder(b))-Number(newCounterOrder(a))||
   Number(readyForCounterPickup(b))-Number(readyForCounterPickup(a)));
- const payments=counterOrders.filter(needsCounterPayment);
- const incoming=counterOrders.filter(newCounterOrder);
- setCounterBadge('counterPaymentBadge','Оплата',payments.length,'К подтверждению');
- setCounterBadge('counterNewOrderBadge','Заказы',incoming.length,'Новые');
- renderCounterPaymentQueue(payments);
+ const payments=counterOrders.filter(needsCounterPayment).length;
+ const attention=counterOrders.filter(order=>newCounterOrder(order)||needsCounterPayment(order)).length;
+ setCounterBadge('counterOrderBadge','Заказы',attention,'Требуют внимания');
+ const shortcut=$('counterPaymentFilter');
+ shortcut.hidden=!payments&&filter!=='payment';
+ shortcut.textContent='К оплате · '+payments;
+ shortcut.setAttribute('aria-pressed',String(filter==='payment'));
  renderCounterReady(counterOrders.filter(readyForCounterPickup));
  const empty=loadedLocation!==locationId()?'Загружаем заказы…':filter==='ready'&&!search?
-  'Пока нет готовых оплаченных заказов.':'Заказов по этому запросу нет.';
+  'Пока нет готовых оплаченных заказов.':filter==='payment'&&!search&&!type?
+ 'Нет оплат к подтверждению.':'Заказов по этому запросу нет.';
  const root=$('counterOrderList');
  const markup=shown.map(counterOrderMarkup).join('')||'<p>'+empty+'</p>';
  if(root.counterMarkup!==markup){
@@ -642,21 +631,24 @@ async function refreshCounterOrders({afterMutation=false}={}){
   }
  }
 }
-function setCounterView(view,{draft=false,queue=false}={}){
+function setCounterView(view,{draft=false,from='sale'}={}){
  if(currentTab!=='pos')return;
  const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders'};
  counterView=view;
+ if(view==='payment'){
+  paymentFrom=from;
+  $('counterPaymentBack').textContent=from==='orders'?'К заказу':'К продаже';
+ }
+ const activeView=view==='payment'?paymentFrom:view;
  for(const [name,id] of Object.entries(ids))$(id).hidden=name!==view;
  document.querySelectorAll('[data-counter-view]').forEach(button=>{
-  if(button.dataset.counterView===view)button.setAttribute('aria-current','page');
+  if(button.dataset.counterView===activeView)button.setAttribute('aria-current','page');
   else button.removeAttribute('aria-current');
  });
  if(draft){resetSaleService();selectedMethod='cash';fxQuote=null;$('posCash').value='';result('');showPayment(null);}
  if(view==='payment'){
-  showCounterPaymentQueue(queue);
-  if(queue)void refreshCounterOrders();
   paymentFields();
-  if(!queue&&!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
+  if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
  }
  if(view==='orders'){
   renderCounterOrders();
@@ -699,7 +691,7 @@ async function counterOrderAction(event){
       order.order_type==='delivery'&&order.dispatch_mode==='manual'&&order.requires_prepayment)};
    $('posCash').value='';
    result('');
-   setCounterView('payment');
+   setCounterView('payment',{from:'orders'});
    showPayment(target);
    showPayment(target,await paymentDetails(target));
   }
@@ -867,8 +859,14 @@ $('counterOrderSearch').oninput=renderCounterOrders;
 $('counterOrderFilter').onchange=renderCounterOrders;
 $('counterOrderType').onchange=renderCounterOrders;
 $('counterOrderList').onclick=counterOrderAction;
-$('counterPaymentList').onclick=counterOrderAction;
-$('counterResumePayment').onclick=()=>setCounterView('payment');
+$('counterPaymentFilter').onclick=()=>{
+ if(busy)return;
+ $('counterOrderSearch').value='';
+ $('counterOrderType').value='';
+ const filter=$('counterOrderFilter');
+ filter.value=filter.value==='payment'?'active':'payment';
+ renderCounterOrders();
+};
 $('counterReadyOpen').onclick=()=>{
  if(busy)return;
  $('counterOrderSearch').value='';
@@ -903,7 +901,28 @@ $('posDeliveryMap').onclick=()=>{
   paymentFields();
  },$('posDeliveryMap'),{point:saleDeliveryPoint});
 };
-$('counterCheckout').onclick=()=>setCounterView('payment');
+function returnToCounterOrder(){
+ const order=payOrder;
+ const filter=$('counterOrderFilter');
+ if(filter.value==='payment'&&order?.paymentStatus!=='pending')filter.value='active';
+ if(order&&closedOrder(order))filter.value='closed';
+ setCounterView('orders');
+ const card=order&&Array.from($('counterOrderList').children).find(card=>card.dataset.counterOrder===order.id);
+ if(card){
+  card.scrollIntoView?.({block:'nearest'});
+  card.querySelector('summary').focus({preventScroll:true});
+ }else $('counterOrdersHeading').focus({preventScroll:true});
+}
+$('counterPaymentBack').onclick=()=>{
+ if(busy)return;
+ if(paymentFrom==='orders')returnToCounterOrder();
+ else setCounterView('sale');
+};
+$('counterCheckout').onclick=()=>{
+ if(busy)return;
+ if(cart.size){result('');if(payOrder)showPayment(null);}
+ setCounterView('payment');
+};
 $('counterAddProducts').onclick=()=>{
  if(busy||payOrder)return;
  setCounterView('sale');
@@ -915,11 +934,12 @@ document.querySelectorAll('[data-counter-view]').forEach(button=>{
   if(busy)return;
   const view=button.dataset.counterView;
   if(view==='orders'){
+   if(counterView==='payment'&&paymentFrom==='orders'){returnToCounterOrder();return;}
    $('counterOrderSearch').value='';
    $('counterOrderType').value='';
    $('counterOrderFilter').value='active';
   }
-  setCounterView(view,{queue:view==='payment'&&counterOrders.some(needsCounterPayment)});
+  setCounterView(view);
  };
 });
 let staffLoading;
