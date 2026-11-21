@@ -29,7 +29,9 @@
     let selected=null,selection=0;
     function showSaved(proofs) {
       const latest=proofs?.[0];if(!latest)return;
-      status.textContent=latest.status==='confirmed'?'Чек проверен сотрудником.':latest.status==='rejected'?'Чек отклонён. Проверьте перевод и прикрепите другой скриншот.':'Чек отправлен на проверку. Оплату подтвердит сотрудник после поступления денег.';
+      const sent=latest.status==='pending'||latest.status==='confirmed';
+      help.hidden=sent;label.hidden=sent;preview.hidden=sent;send.hidden=sent;title.hidden=sent;
+      status.textContent=latest.status==='confirmed'?'Чек отправлен':latest.status==='rejected'?'Чек отклонён. Прикрепите другой скриншот.':'Чек отправлен';
     }
     input.onchange=()=>{
       const current=++selection;selected=null;send.disabled=true;preview.hidden=true;preview.removeAttribute('src');const file=input.files?.[0];if(!file)return;
@@ -41,7 +43,7 @@
       send.disabled=true;input.disabled=true;send.textContent='Отправляем…';send.setAttribute('aria-busy','true');
       const payload={action:'submit',initData:window.Telegram?.WebApp?.initData,orderId,bankCountry:'VN',...selected};
       const upload=(async()=>{const response=await fetch(proofEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store',signal:window.AbortSignal?.timeout?.(30000)});const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Не удалось отправить чек');return data;})();uploads.set(orderId,upload);
-      try{await upload;showSaved([{status:'pending'}]);selected=null;input.value='';preview.hidden=true;preview.removeAttribute('src');send.textContent='Чек отправлен';if(section.isConnected&&dialog.open){dialog.close();if(typeof showToast==='function')showToast('Скриншот отправлен. Ожидайте проверки кафе.');}}
+      try{await upload;showSaved([{status:'pending'}]);selected=null;input.value='';preview.hidden=true;preview.removeAttribute('src');send.textContent='Чек отправлен';}
       catch(error){status.textContent=(error.name==='TimeoutError'?'Ответ задерживается. Откройте оплату ещё раз, чтобы проверить отправку чека.':error.message)||'Не удалось отправить чек. Попробуйте ещё раз.';send.textContent='Повторить отправку';}
       finally{uploads.delete(orderId);input.disabled=false;send.disabled=!selected;send.removeAttribute('aria-busy');}
     };
