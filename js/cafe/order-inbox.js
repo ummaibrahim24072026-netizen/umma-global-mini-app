@@ -141,7 +141,7 @@ function renderChatFeed(list,openOrderId){
   preferences=new Map();
   stagePreferences.set(list,preferences);
  }
- list.querySelectorAll('.umma-chat-order-card').forEach(card=>card.remove());
+ for(const row of list.querySelectorAll(':scope > :is(.umma-chat-order-card,.umma-chat-day)'))row.remove();
  let targetCard;
  const language=document.documentElement.lang.split('-')[0];
  const copy=chatCopy[language]||chatCopy.en;
@@ -153,7 +153,12 @@ function renderChatFeed(list,openOrderId){
   groups.get(message.orderId).push(message);
  }
  for(const id of preferences.keys())if(!groups.has(id))preferences.delete(id);
- for(const [id,messages] of groups){
+ const chatMessages=[...list.children].map(row=>({row,at:Date.parse(row.dataset.createdAt)}));
+ const orders=[...groups].map(([id,messages])=>{
+  const placedAt=messages.find(message=>message.value==='pending')?.at;
+  return {id,messages,placedAt,at:placedAt??messages[0].at};
+ }).sort((a,b)=>a.at-b.at);
+ for(const {id,messages,placedAt,at} of orders){
   const state=data.states[id]||{};
   const {timeline,status,finished,cancelled}=orderTimeline(messages,state,copy,greenCopy,clock,id);
   const card=document.createElement('li');
@@ -208,18 +213,35 @@ function renderChatFeed(list,openOrderId){
   };
   card.append(header,toggle,timeline,...actions);
   // Order updates belong in the chronological chat stream, never in a pinned footer.
-  const orderTime=Number(messages[0].at)||0;
-  card.dataset.timelineAt=String(orderTime);
-  const chatMessages=[...list.children].filter(node=>!node.classList.contains('umma-chat-order-card'));
-  const nextMessage=chatMessages.find(node=>{
-    const time=node.querySelector('time[datetime]')?.dateTime||node.dataset.createdAt;
-    return time&&Date.parse(time)>orderTime;
-  });
-  if(nextMessage)list.insertBefore(card,nextMessage);
-  else list.append(card);
+  if(Number.isFinite(placedAt))card.dataset.timelineAt=String(placedAt);
+  const nextMessage=chatMessages.find(message=>message.at>at);
+  list.insertBefore(card,nextMessage?.row??null);
  }
+ renderChatDays(list,language);
  if(inHub&&list.closest('#customerChatDialog[open]'))markChatRead();
  return targetCard;
+}
+function renderChatDays(list,language){
+ const currentYear=new Date().getFullYear();
+ const dayLabel=new Intl.DateTimeFormat(language,{day:'numeric',month:'long'});
+ const fullDateLabel=new Intl.DateTimeFormat(language,{dateStyle:'long'});
+ let previousDay;
+ for(const row of [...list.children]){
+  const at=row.dataset.timelineAt===undefined?Date.parse(row.dataset.createdAt):Number(row.dataset.timelineAt);
+  if(!Number.isFinite(at))continue;
+  const date=new Date(at);
+  const year=date.getFullYear();
+  const day=[year,String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+  if(day===previousDay)continue;
+  previousDay=day;
+  const divider=document.createElement('li');
+  divider.className='umma-chat-day';
+  const label=document.createElement('time');
+  label.dateTime=day;
+  label.textContent=(year===currentYear?dayLabel:fullDateLabel).format(date);
+  divider.append(label);
+  list.insertBefore(divider,row);
+ }
 }
 function markChatRead(){
  if(document.hidden)return;

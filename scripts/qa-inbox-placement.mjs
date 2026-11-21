@@ -196,6 +196,28 @@ message.form.requestSubmit();
 await flush();
 assert.deepEqual(senderNames,['Ибрахим','']);
 chatDialog.close();
+const datedThread=d.createElement('ol');
+const localTime=(day,hour,minute)=>new Date(2025,10,day,hour,minute).toISOString();
+const addDatedMessage=(day,hour,minute,text)=>{
+ const row=d.createElement('li');
+ row.dataset.createdAt=localTime(day,hour,minute);
+ row.textContent=text;
+ datedThread.append(row);
+};
+addDatedMessage(20,23,45,'Перед заказом');
+addDatedMessage(21,0,5,'После полуночи');
+w.ummaOrderInbox.publish({orderNumber:61,status:'pending',eventAt:localTime(20,23,50)});
+w.ummaOrderInbox.publish({orderNumber:62,status:'pending',eventAt:localTime(20,23,55)});
+w.ummaOrderInbox.publish({orderNumber:61,status:'completed',eventAt:localTime(21,0,10)});
+w.ummaOrderInbox.publish({orderNumber:63,status:'pending',eventAt:localTime(21,0,15)});
+for(let refresh=0;refresh<2;refresh++){
+ w.ummaOrderInbox.renderChatFeed(datedThread,'61');
+ const rows=[...datedThread.children];
+ assert.deepEqual(rows.slice(0,7).map(row=>row.matches('.umma-chat-day')?row.firstElementChild.dateTime:row.dataset.orderId||row.textContent),
+  ['2025-11-20','Перед заказом','61','62','2025-11-21','После полуночи','63']);
+ assert.match(rows[0].textContent,/20 ноября 2025/);
+ assert.equal(rows[2].querySelector('[data-stage=pending] time').dateTime,localTime(20,23,50));
+}
 // Standalone render of the actual header, with no live server requests or order actions.
 d.getElementById('menuLanguage').innerHTML='<option>Русский</option>';d.getElementById('products').innerHTML='<div class="message">Готовые блюда появятся после приёма кухни.</div>';
 mkdirSync('preview-dist/menu',{recursive:true});writeFileSync('preview-dist/menu/index.html',dom.serialize());cpSync('css','preview-dist/css',{recursive:true});cpSync('logo','preview-dist/logo',{recursive:true});w.close();console.log('PASS inbox: one Messages entry, both counters clear in the chat, and order timelines.');

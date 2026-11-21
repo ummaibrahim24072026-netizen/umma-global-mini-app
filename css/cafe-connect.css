@@ -1071,6 +1071,20 @@ body.public-cafe-menu #customerChatDialog .connect-thread{box-sizing:border-box!
 body.public-cafe-menu #customerChatDialog .connect-thread[data-follow-bottom="1"]{overflow-anchor:none}
 body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!important}
 
+.public-cafe-menu .umma-connect-chat .connect-thread > .umma-chat-day {
+  align-self:center;
+  max-inline-size:100%;
+  padding:4px 12px;
+  border:1px solid #cadedc;
+  border-radius:999px;
+  background:#f6fbfa;
+  color:#315e60;
+  font-size:12px;
+  font-weight:650;
+  line-height:1.35;
+  text-align:center;
+}
+
 /* Order stages in the customer chat. */
 .public-cafe-menu .umma-connect-chat .connect-thread > .umma-chat-order-card {
   --order-ink:#183f42;
