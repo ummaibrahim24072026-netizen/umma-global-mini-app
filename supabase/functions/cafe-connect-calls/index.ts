@@ -17,8 +17,43 @@ const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SE
   auth: {persistSession: false, autoRefreshToken: false}
 });
 
-async function iceServers(device: string) {
-  const servers: Array<{urls: string | string[]; username?: string; credential?: string}> = [{urls: 'stun:stun.l.google.com:19302'}];
+type IceServer = {urls: string | string[]; username?: string; credential?: string};
+const turnTtl = 3600;
+
+async function cloudflareIceServers(keyId: string, token: string): Promise<IceServer[]> {
+  try {
+    const response = await fetch(
+      'https://rtc.live.cloudflare.com/v1/turn/keys/' + encodeURIComponent(keyId) + '/credentials/generate-ice-servers',
+      {
+        method: 'POST',
+        headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ttl: turnTtl}),
+        signal: AbortSignal.timeout(3000)
+      }
+    );
+    if (!response.ok) {
+      console.warn('Cloudflare TURN credential request failed', response.status);
+      return [];
+    }
+    const {iceServers} = await response.json();
+    if (!Array.isArray(iceServers)) return [];
+    // Only hand browsers the Cloudflare relay URLs with a usable transport. Port 53 is blocked by browsers.
+    return iceServers.flatMap(server => {
+      if (typeof server?.username !== 'string' || !server.username ||
+          typeof server.credential !== 'string' || !server.credential) return [];
+      const urls = (Array.isArray(server.urls) ? server.urls : [server.urls])
+        .filter(url => typeof url === 'string' &&
+          /^turns?:turn\.cloudflare\.com:(?:80|443|3478|5349)(?:\?transport=(?:udp|tcp))?$/.test(url));
+      return urls.length ? [{urls, username: server.username, credential: server.credential}] : [];
+    });
+  } catch (error) {
+    console.warn('Cloudflare TURN unavailable', (error as Error).name);
+    return [];
+  }
+}
+
+async function iceServers(device: string, req: Request, actor: number | null) {
+  const servers: IceServer[] = [{urls: 'stun:stun.l.google.com:19302'}];
   const urls = Deno.env.get('UMMA_CALL_TURN_URLS')?.split(',').map(url => url.trim()).filter(Boolean);
   const secret = Deno.env.get('UMMA_CALL_TURN_SECRET');
   if (urls?.length && secret) {
@@ -27,7 +62,16 @@ async function iceServers(device: string) {
     const key = await crypto.subtle.importKey('raw', encoder.encode(secret), {name: 'HMAC', hash: 'SHA-1'}, false, ['sign']);
     const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(username));
     servers.push({urls, username, credential: btoa(String.fromCharCode(...new Uint8Array(signature)))});
+    return servers;
   }
+  const keyId = Deno.env.get('UMMA_CALL_CLOUDFLARE_KEY_ID')?.trim();
+  const token = Deno.env.get('UMMA_CALL_CLOUDFLARE_API_TOKEN')?.trim();
+  if (!keyId || !token) return servers;
+  const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const limitKey = await sha256(actor === null ? 'call-turn-ip:' + ip : 'call-turn-staff:' + actor);
+  const {data: allowed, error} = await db.rpc('cafe_web_rate_allow', {p_identity: limitKey});
+  if (error) console.warn('TURN rate check failed', error.code);
+  if (allowed === true && !error) servers.push(...await cloudflareIceServers(keyId, token));
   return servers;
 }
 
@@ -94,7 +138,7 @@ Deno.serve(async req => {
       if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(send);
       else await send;
     }
-    return reply(b.action === 'ice' ? {ok: true, servers: await iceServers(b.device)} : data);
+    return reply(b.action === 'ice' ? {ok: true, servers: await iceServers(b.device, req, actor)} : data);
   } catch (error) {
     if (String(error).startsWith('Error: Web ')) return reply({ok: false}, 403);
     console.error('Call request failed', (error as Error).name);
