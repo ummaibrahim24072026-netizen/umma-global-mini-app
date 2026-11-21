@@ -252,3 +252,77 @@
   .umma-call-logo { width: 78px; }
   .umma-call-controls { margin-top: 10px; }
 }
+
+
+/* Fullscreen UMMA call experience — shared by customer messages and staff calls. */
+.umma-call {
+  width:100vw; width:100dvw; height:100vh; height:100dvh;
+  max-width:none; max-height:none; padding:0; margin:0; border:0; border-radius:0;
+  overflow:hidden; color:#fff;
+  background:
+    linear-gradient(180deg,rgba(0,52,62,.08) 0%,rgba(0,82,88,.12) 34%,rgba(0,91,96,.78) 64%,#007b82 100%),
+    url('../assets/umma-counter-shore.webp') center top / cover no-repeat,
+    linear-gradient(160deg,#3ecacb,#006c76);
+}
+.umma-call-incoming { background:
+    linear-gradient(180deg,rgba(0,52,62,.08) 0%,rgba(0,82,88,.12) 34%,rgba(0,91,96,.78) 64%,#007b82 100%),
+    url('../assets/umma-counter-shore.webp') center top / cover no-repeat,
+    linear-gradient(160deg,#3ecacb,#006c76);
+}
+.umma-call-card {
+  width:100%; height:100%; min-height:100%; max-height:100dvh;
+  overflow-y:auto; overscroll-behavior:contain;
+  padding:calc(18px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+  justify-content:center; gap:clamp(10px,2.4vh,24px);
+  text-shadow:0 2px 12px rgba(0,55,60,.45);
+}
+.umma-call-identity { gap:clamp(8px,1.5vh,16px); }
+.umma-call-logo {
+  width:clamp(116px,35vw,190px);
+  border:3px solid #f7d87b; border-radius:50%;
+  box-shadow:0 8px 32px #004b5699,0 0 0 5px #ffffff28;
+}
+.umma-call-card h2 { color:#fff; font-size:clamp(30px,8vw,44px); text-shadow:0 3px 14px #00565a; }
+.umma-call-card .umma-call-type {
+  padding:10px 22px; color:#fff; font-size:clamp(17px,4.6vw,23px); font-weight:750;
+  border:2px solid #f6d47a; border-radius:999px;
+  background:rgba(0,89,96,.62); box-shadow:0 6px 24px #004e5366;
+}
+.umma-call-card .umma-call-status {
+  color:#fff; font-size:clamp(17px,4.7vw,24px); font-weight:600;
+  text-shadow:0 3px 14px #00565a;
+}
+.umma-call-controls, .umma-call-incoming .umma-call-controls {
+  width:min(100%,420px); gap:clamp(14px,5vw,36px); margin:clamp(12px,4vh,36px) auto 0;
+}
+.umma-call-controls button, .umma-call-incoming .umma-call-controls button {
+  width:clamp(104px,32vw,146px); min-height:clamp(112px,32vw,146px);
+  padding:16px 8px; border:2px solid #e9ce8c; border-radius:50%;
+  background:linear-gradient(145deg,#8eece8a8,#00858cce);
+  color:white; font-size:clamp(12px,3.3vw,15px); line-height:1.18;
+  box-shadow:inset 0 3px 12px #ffffff77,0 10px 30px #00454a88;
+  text-shadow:0 1px 4px #003d42;
+}
+.umma-call-controls button svg { width:clamp(28px,9vw,44px); height:clamp(28px,9vw,44px); }
+.umma-call-controls .umma-call-end {
+  background:linear-gradient(145deg,#ff686e,#d4082c); color:#fff;
+  border-color:#ffdc8c; border-radius:50%;
+}
+.umma-call-controls .umma-call-answer {
+  background:linear-gradient(145deg,#4be9a8,#008a70); color:#fff;
+  border-color:#ffdc8c; border-radius:50%;
+}
+.umma-call-controls button[aria-pressed="true"] { background:linear-gradient(145deg,#006a72,#00484d); }
+.umma-call-incoming .umma-call-status { position:static; width:auto; height:auto; clip-path:none; }
+.umma-call-incoming .umma-call-ring-button {
+  width:auto!important; min-height:44px!important; border-radius:999px!important;
+  padding:10px 18px!important;
+}
+.umma-call-media { width:min(100%,480px); max-height:34dvh; }
+@media(max-height:680px) {
+  .umma-call-card { justify-content:flex-start; gap:8px; }
+  .umma-call-logo { width:84px; }
+  .umma-call-controls button,.umma-call-incoming .umma-call-controls button {
+    width:92px; min-height:92px; padding:8px 4px;
+  }
+}
