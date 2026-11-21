@@ -2,10 +2,11 @@ import {JSDOM} from 'jsdom';import {readFileSync} from 'node:fs';import assert f
 const html=readFileSync('staff.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const tick=()=>new Promise(r=>setTimeout(r,20));
 for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','delivery'],['sber','dine_in'],['kaspi','delivery'],['usdt','pickup']]){
- const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html'}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
+ const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html',pretendToBeVisual:true}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.eval(readFileSync('js/cafe/web-session.js','utf8'));w.ummaStaffAuth.save('a'.repeat(64));
  const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false,currentMethod=method;
  const foreign=!['cash','qr'].includes(method);
+ const automatic=method==='qr'&&service==='pickup';
  const point={lat:12.25,lng:109.19};
  const zones=[[12.24,109.18],[12.26,109.18],[12.25,109.20]];
  w.ummaDeliveryLocation={chooseForLocation(location,confirm){assert.deepEqual(location.delivery_zone,zones);confirm(point);}};
@@ -15,6 +16,12 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  w.fetch=async(url,opts)=>{const b=opts?.body?JSON.parse(opts.body):{};requests.push({url,b});assert.equal(w.Telegram,undefined);
  let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000}],inventory:[],locations:[{id:'cafe',delivery_zone:zones}]};
  else{assert.ok(b.initData?.startsWith('web:'));if(b.action==='me')out={ok:true,user:{id:1000000000001,name:'Cashier',role:'employee'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]};
+ else if(b.action==='list')out.orders=created?[{
+  id:order.id,order_number:order.orderNumber,total_vnd:order.totalVnd,order_type:service,location_id:'cafe',
+  status:paid?'confirmed':'pending',created_via:'staff',staffRole:'cashier',canAcceptPayments:true,
+  payment_status:paid?'paid':'pending',payment_method:foreign?'bank_transfer':currentMethod,
+  cafe_order_items:[{product_name_ru:'Лепёшка',quantity:1}],
+ }]:[];
  else if(b.action==='screenCreate')out={ok:true,id:'client-screen',screenToken:'b'.repeat(64)};
  else if(b.action==='options')out.methods={rub:true,sber:true,tenge:true,kaspi:true,usdt:true};
  else if(b.staffOrder){
@@ -103,6 +110,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   await switchTo('qr');
  }
  if(method!=='cash'){
+  assert.equal(d.getElementById('counterPayment').hidden,false);
   const byId=id=>d.getElementById(id);
   assert.equal(Boolean(byId('posQr').querySelector('svg')),method==='qr');
   assert.match(byId('counterBankDetails').textContent,foreign?/QA-112233/:/UMMA 444/);
@@ -114,10 +122,22 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
    byId('counterPaymentReference').value='QA-7777';
    byId('counterPaymentReference').dispatchEvent(new w.Event('input',{bubbles:true}));
   }
-  byId('posConfirmQr').click();await tick();
+  if(automatic){
+   paid=true;
+   d.dispatchEvent(new w.Event('umma:cafe-events'));
+  }else byId('posConfirmQr').click();
+  await tick();
   assert.equal(paid,true);assert.equal(byId('posConfirmQr').hidden,true);
  }
- assert.match(d.getElementById('posPaymentHint').textContent,/Оплачено/);assert.equal(d.getElementById('posCart').querySelector('[data-id]'),null);w.close();
+ assert.equal(d.getElementById('counterPayment').hidden,true);
+ assert.equal(d.getElementById('counterOrders').hidden,false);
+ const saleCard=d.querySelector('[data-counter-order="qa-order"]');
+ assert.equal(d.activeElement,saleCard.querySelector('summary'));
+ assert.match(saleCard.textContent,/№444.*Оплачено/);
+ assert.ok(saleCard.querySelector('[data-counter-action="'+(service==='delivery'?'start':'issue')+'"]'));
+ assert.match(d.getElementById('counterStatus').textContent,method==='cash'?/№444.*Сдача/:/№444.*опла|№444.*Оплата/);
+ assert.equal(d.getElementById('posCart').querySelector('[data-id]'),null);
+ w.close();
 }
 // The server commits before the response is lost. Checking the order reuses its operation key.
 {

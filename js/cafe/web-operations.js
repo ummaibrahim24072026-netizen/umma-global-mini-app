@@ -146,8 +146,9 @@ const needsCounterPayment=order=>canTakePayment(order)&&order.payment_timing!=='
  ['cash','qr','bank_transfer'].includes(order.payment_method);
 const newCounterOrder=order=>order.created_via==='customer'&&!order.accepted_by_telegram_id&&
  ['pending','confirmed'].includes(order.status);
-const canStartCounterOrder=order=>newCounterOrder(order)&&counterCanIssue(order)&&
- order.payment_status==='paid'&&!order.preorder_waiting;
+const canStartCounterOrder=order=>counterCanIssue(order)&&order.payment_status==='paid'&&!order.preorder_waiting&&
+ (newCounterOrder(order)||order.created_via==='staff'&&order.order_type==='delivery'&&
+  !order.accepted_by_telegram_id&&['pending','confirmed'].includes(order.status));
 const canFinishCounterDelivery=order=>order.order_type==='delivery'&&counterCanIssue(order)&&
  order.status==='preparing'&&order.payment_status==='paid'&&!order.preorder_waiting&&
  String(order.accepted_by_telegram_id)===String(auth.actorId());
@@ -359,6 +360,7 @@ function showPayment(order,payment=null){
   $('posReloadQr').hidden=!(pending&&electronic&&!canConfirm);
   $('posShowScreen').hidden=!(pending&&order.paymentMethod==='qr'&&payment&&screen());
   $('counterNewSale').hidden=pending||paymentFrom==='orders';
+  $('counterPaymentBack').textContent=paymentFrom==='orders'||order.paymentStatus==='paid'?'К заказу':'К продаже';
   $('posPaymentHint').textContent=order.paymentStatus==='paid'?'Оплачено. Назовите гостю номер заказа.'
    :!pending?'Заказ закрыт.'
    :order.paymentMethod==='cash'?'Оплата ещё не записана. Сверьте сумму и подтвердите получение наличных.'
@@ -618,6 +620,8 @@ async function refreshCounterOrders({afterMutation=false}={}){
     else if(changed)result('Способ оплаты обновился на другой стойке.');
    }
   }
+  if(current()&&!busy&&counterView==='payment'&&paymentFrom==='sale'&&
+   latest?.id===payOrder?.id&&latest?.payment_status==='paid')openPaidCounterSale();
  }catch{
   if(current()&&!busy){
    $('counterStatus').dataset.offline='true';
@@ -631,7 +635,7 @@ async function refreshCounterOrders({afterMutation=false}={}){
   }
  }
 }
-function setCounterView(view,{draft=false,from='sale'}={}){
+function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  if(currentTab!=='pos')return;
  const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders'};
  counterView=view;
@@ -653,7 +657,7 @@ function setCounterView(view,{draft=false,from='sale'}={}){
  if(view==='orders'){
   renderCounterOrders();
   showPickupPair();
-  void refreshCounterOrders();
+  if(refresh)void refreshCounterOrders();
  }else syncCounterReadyShortcut();
  updateCartJump();
  syncCustomerScreen();
@@ -901,21 +905,30 @@ $('posDeliveryMap').onclick=()=>{
   paymentFields();
  },$('posDeliveryMap'),{point:saleDeliveryPoint});
 };
-function returnToCounterOrder(){
+function returnToCounterOrder({refresh=true}={}){
  const order=payOrder;
  const filter=$('counterOrderFilter');
  if(filter.value==='payment'&&order?.paymentStatus!=='pending')filter.value='active';
  if(order&&closedOrder(order))filter.value='closed';
- setCounterView('orders');
+ setCounterView('orders',{refresh});
  const card=order&&Array.from($('counterOrderList').children).find(card=>card.dataset.counterOrder===order.id);
  if(card){
   card.scrollIntoView?.({block:'nearest'});
   card.querySelector('summary').focus({preventScroll:true});
  }else $('counterOrdersHeading').focus({preventScroll:true});
 }
+function openPaidCounterSale({refresh=false}={}){
+ $('counterOrderSearch').value='';
+ $('counterOrderType').value='';
+ $('counterOrderFilter').value='active';
+ const confirmation=$('posResult').textContent||'Оплата подтверждена.';
+ counterStatus('Заказ №'+payOrder.orderNumber+' · '+confirmation);
+ returnToCounterOrder({refresh});
+}
 $('counterPaymentBack').onclick=()=>{
  if(busy)return;
  if(paymentFrom==='orders')returnToCounterOrder();
+ else if(payOrder?.paymentStatus==='paid')openPaidCounterSale({refresh:true});
  else setCounterView('sale');
 };
 $('counterCheckout').onclick=()=>{
@@ -935,10 +948,11 @@ document.querySelectorAll('[data-counter-view]').forEach(button=>{
   const view=button.dataset.counterView;
   if(view==='orders'){
    if(counterView==='payment'&&paymentFrom==='orders'){returnToCounterOrder();return;}
+   if(counterView==='payment'&&payOrder?.paymentStatus==='paid'){openPaidCounterSale({refresh:true});return;}
    $('counterOrderSearch').value='';
    $('counterOrderType').value='';
    $('counterOrderFilter').value='active';
-  }
+  }else if(!$('counterStatus').dataset.offline)counterStatus('');
   setCounterView(view);
  };
 });
@@ -1223,7 +1237,10 @@ document.addEventListener('umma:cafe-operation-recovered',async event=>{
   paymentStatus:recovered.paymentStatus||'pending',status:recovered.status||recovered.order.status};
  cart.clear();resetSaleService();$('posCash').value='';renderCart();
  setCounterView('payment');showPayment(recoveredSale);
- try{showPayment(recoveredSale,recovered.payment||await paymentDetails(recoveredSale));result('Прежний заказ восстановлен. Проверьте оплату.');}
+ try{
+  showPayment(recoveredSale,recovered.payment||await paymentDetails(recoveredSale));
+  result(recoveredSale.paymentStatus==='paid'?'Оплата подтверждена.':'Прежний заказ восстановлен. Проверьте оплату.');
+ }
  catch(error){result(error.message);}
  void refreshCounterOrders();
 });
