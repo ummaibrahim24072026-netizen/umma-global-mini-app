@@ -16,7 +16,12 @@
       mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
       busy: 'Линия занята. Попробуйте чуть позже.', ended: 'Звонок завершён.',
       unanswered: 'На звонок не ответили.', expired: 'Этот вызов уже завершён.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
-      denied: 'Разрешите доступ к микрофону и, для видеозвонка, к камере.', playback: 'Включить звук', client: 'Клиент'
+      denied: 'Разрешите этому сайту доступ к камере и микрофону в настройках браузера.',
+      microphoneDenied: 'Разрешите этому сайту доступ к микрофону в настройках браузера.',
+      cameraDenied: 'Разрешите этому сайту доступ к камере в настройках браузера.',
+      microphoneUnavailable: 'Микрофон недоступен. Проверьте настройки телефона и закройте приложения, которые могут его использовать.',
+      mediaUnavailable: 'Камера или микрофон недоступны. Проверьте настройки телефона и закройте приложения, которые могут их использовать.',
+      retry: 'Повторить', playback: 'Включить звук', client: 'Клиент'
     },
     en: {
       audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', fromCafe: 'UMMA is calling', fromClient: 'A customer is calling', ringtone: 'Enable ringtone', outgoing: 'Calling…',
@@ -26,7 +31,12 @@
       mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
       busy: 'Line busy. Try again shortly.', ended: 'Call ended.',
       unanswered: 'No answer.', expired: 'This call has already ended.', unavailable: 'Could not connect. Try again.',
-      denied: 'Allow microphone access and camera access for video calls.', playback: 'Play sound', client: 'Customer'
+      denied: 'Allow this site to use the camera and microphone in your browser settings.',
+      microphoneDenied: 'Allow this site to use the microphone in your browser settings.',
+      cameraDenied: 'Allow this site to use the camera in your browser settings.',
+      microphoneUnavailable: 'Microphone unavailable. Check your device settings and close any app that may be using it.',
+      mediaUnavailable: 'Camera or microphone unavailable. Check your device settings and close any app that may be using them.',
+      retry: 'Try again', playback: 'Play sound', client: 'Customer'
     },
     vi: {
       audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', fromCafe: 'UMMA đang gọi', fromClient: 'Khách hàng đang gọi', ringtone: 'Bật nhạc chuông', outgoing: 'Đang gọi…',
@@ -36,7 +46,12 @@
       mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
       busy: 'Đường dây đang bận. Vui lòng thử lại sau.', ended: 'Cuộc gọi đã kết thúc.',
       unanswered: 'Không có trả lời.', expired: 'Cuộc gọi này đã kết thúc.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
-      denied: 'Hãy cho phép dùng micrô và camera khi gọi video.', playback: 'Bật âm thanh', client: 'Khách hàng'
+      denied: 'Cho phép trang web dùng camera và micrô trong cài đặt trình duyệt.',
+      microphoneDenied: 'Cho phép trang web dùng micrô trong cài đặt trình duyệt.',
+      cameraDenied: 'Cho phép trang web dùng camera trong cài đặt trình duyệt.',
+      microphoneUnavailable: 'Không dùng được micrô. Hãy kiểm tra cài đặt thiết bị và đóng ứng dụng có thể đang dùng micrô.',
+      mediaUnavailable: 'Không dùng được camera hoặc micrô. Hãy kiểm tra cài đặt thiết bị và đóng ứng dụng có thể đang dùng chúng.',
+      retry: 'Thử lại', playback: 'Bật âm thanh', client: 'Khách hàng'
     }
   };
 
@@ -342,26 +357,60 @@
       call.deadline = setTimeout(() => finish(call, key), ms);
     }
 
+    async function mediaProblem(mode, error) {
+      if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(error.name)) {
+        if (mode === 'audio') return 'microphoneDenied';
+        const permissions = await Promise.all(['microphone', 'camera'].map(async name => {
+          try { return (await navigator.permissions?.query({name}))?.state; }
+          catch { return null; }
+        }));
+        const [microphone, camera] = permissions;
+        if (camera === 'denied' && microphone !== 'denied') return 'cameraDenied';
+        if (microphone === 'denied' && camera !== 'denied') return 'microphoneDenied';
+        return 'denied';
+      }
+      return mode === 'audio' ? 'microphoneUnavailable' : 'mediaUnavailable';
+    }
+
     async function establish(call) {
       stopRinger(call);
-      modal?.classList.remove('umma-call-incoming');
+      call.overlay.classList.remove('umma-call-incoming');
       dismissNotification(call.id);
       call.status.textContent = t('connecting');
-      call.controls.replaceChildren(action('end', () => finish(call), 'umma-call-end'));
+      const end = action('end', () => finish(call), 'umma-call-end');
+      call.controls.replaceChildren(end);
+      let stream;
       try {
         // Request media directly in the click handler, including for first-time guests.
-        const stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({
           audio: {echoCancellation: true, noiseSuppression: true},
           video: call.mode === 'video' && {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}
         });
-        if (current !== call) {
-          stream.getTracks().forEach(track => track.stop());
-          return;
+        if (!stream.getAudioTracks().length || (call.mode === 'video' && !stream.getVideoTracks().length)) {
+          throw new DOMException('', 'NotFoundError');
         }
-        call.stream = stream;
+      } catch (error) {
+        stream?.getTracks().forEach(track => track.stop());
+        const reason = await mediaProblem(call.mode, error);
+        if (current !== call) return;
+        if (call.incoming) {
+          call.status.textContent = t(reason);
+          call.controls.prepend(action('retry', () => void establish(call), 'umma-call-answer'));
+        } else {
+          finish(call, reason);
+          const {clientId, name} = call;
+          call.controls.prepend(action('retry', () => start(call.mode, {clientId, name}), 'umma-call-answer'));
+        }
+        return;
+      }
+      if (current !== call) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      call.stream = stream;
+      try {
         const microphone = stream.getAudioTracks()[0];
         const camera = stream.getVideoTracks()[0];
-        if (!microphone || (call.mode === 'video' && !camera)) throw new DOMException('', 'NotFoundError');
         startWave(call, stream);
         call.controls.prepend(toggleTrack(microphone, 'mute', 'unmute'));
         if (camera) {
@@ -494,9 +543,7 @@
         }
         schedule(0);
       } catch (error) {
-        const permissionError = ['NotAllowedError', 'NotFoundError', 'NotReadableError'].includes(error.name);
-        const reason = permissionError ? 'denied' : error.message === 'busy' ? 'busy' : 'unavailable';
-        finish(call, reason);
+        finish(call, error.message === 'busy' ? 'busy' : 'unavailable');
       }
     }
 
@@ -521,7 +568,7 @@
       // An outgoing request is not visible until the offer has been posted.
       const credentials = call ? call.credentials : identity();
       try {
-        if ((!call && modal?.open && !requestedCall) || (!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
+        if ((!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
         const linked = !call ? requestedCall : null;
         const {call: state} = await request('poll', {id: call?.id || linked}, credentials);
         pollFailures = 0;
