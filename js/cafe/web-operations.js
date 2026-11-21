@@ -140,6 +140,7 @@ const canIssue = order => counterCanIssue(order) && order.order_type !== "delive
  (order.payment_status === "paid" && !order.preorder_waiting && ["pending", "confirmed", "preparing"].includes(order.status) &&
   (order.status !== "preparing" || !order.accepted_by_telegram_id ||
    String(order.accepted_by_telegram_id) === String(auth.actorId()))));
+const readyForCounterPickup=order=>readyToIssue(order)&&canIssue(order);
 const canTakePayment=order=>order.canAcceptPayments===true&&order.payment_status==='pending'&&!closedOrder(order);
 const locationId=()=>$('posLocation').value;
 const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
@@ -218,8 +219,12 @@ const paymentLabel=order=>order.payment_status==='paid'?'Оплачено':order
 function orderLabel(order){
  if(order.status==='completed')return 'Выдан';
  if(order.status==='cancelled')return 'Отменён';
- if(readyToIssue(order)||order.status==='ready')return 'Готов к выдаче';
  if(order.preorder_waiting)return 'Ожидается партия';
+ if(order.status==='ready'){
+  if(order.order_type==='delivery')return 'Готов к передаче курьеру';
+  if(order.payment_status==='pending')return 'Готов · ждёт оплаты';
+  return 'Готов к выдаче';
+ }
  if(order.payment_status==='pending'&&order.requires_prepayment)return 'Ожидает оплаты';
  return {pending:'Новый',confirmed:'Принят',preparing:'Готовится'}[order.status]||'В работе';
 }
@@ -465,7 +470,7 @@ async function sell(event){
  }catch(error){result((created?'Заказ №'+created.orderNumber+' уже создан. ':'')+error.message);}
  finally{busy=false;paymentFields();void refreshCounterOrders({afterMutation:true});}
 }
-function counterOrderMarkup(order,issue){
+function counterOrderMarkup(order){
  const mayPay=order.payment_timing!=='on_delivery'&&canTakePayment(order)&&['cash','qr','bank_transfer'].includes(order.payment_method);
  const mayIssue=canIssue(order);
  const delivery=order.order_type==='delivery';
@@ -473,9 +478,9 @@ function counterOrderMarkup(order,issue){
   ? window.ummaGreenSm.card(order,me.locations.find(location=>location.id===order.location_id)) : '';
  const destination=delivery?'<p>'+[order.customer_name,order.customer_phone,order.delivery_address,order.customer_note]
   .filter(Boolean).map(esc).join(' · ')+'</p>':'';
- const action=issue&&mayIssue?['issue',readyToIssue(order)?'Выдать':'Собрать и выдать']
-  :!issue&&mayPay?['pay','К оплате']:!issue&&mayIssue?['pickup','К выдаче']:null;
- return '<article class="counter-card" data-counter-order="'+esc(order.id)+'"><h2>№'+esc(order.order_number)+'</h2>'+
+ const ready=mayIssue&&readyToIssue(order);
+ const action=mayPay?['pay','К оплате']:mayIssue?['issue',ready?'Выдано':'Собрать и выдать']:null;
+ return '<article class="counter-card'+(ready?' counter-card--ready':'')+'" data-counter-order="'+esc(order.id)+'"><h2>№'+esc(order.order_number)+'</h2>'+
   '<div class="counter-labels"><span>'+esc(orderLabel(order))+'</span><span>'+paymentLabel(order)+'</span><span>'+
    (order.created_via==='staff'?'У стойки':'Из приложения')+'</span></div>'+
   '<p>'+esc({dine_in:'На месте',pickup:'С собой',delivery:'Доставка'}[order.order_type]||'')+'</p>'+destination+
@@ -484,14 +489,18 @@ function counterOrderMarkup(order,issue){
   itemsMarkup(order.cafe_order_items||[])+'<div class="pos-total"><span>Итого</span><strong>'+money(order.total_vnd)+'</strong></div>'+
   (action?'<button type="button" class="primary" data-counter-action="'+action[0]+'" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+action[1]+'</button>':'')+green+(window.ummaGreenSm?.transfer(order,auth.actorId())||'')+'</article>';
 }
-function renderCounterReady(orders){
- const ready=orders.filter(readyToIssue);
+function syncCounterReadyShortcut(){
+ const filtered=counterView==='orders'&&$('counterOrderFilter').value==='ready'&&
+  !$('counterOrderSearch').value.trim()&&!$('counterOrderType').value;
+ $('counterReadyOpen').hidden=filtered||!$('counterReadyMessage').textContent;
+}
+function renderCounterReady(ready){
  const numbers=ready.slice(0,3).map(order=>'№'+order.order_number).join(', ');
  const message=ready.length===1?'Выдать заказ '+numbers
   :ready.length?'К выдаче: '+numbers+(ready.length>3?' и ещё '+(ready.length-3):''):'';
  const label=$('counterReadyMessage');
  if(label.textContent!==message)label.textContent=message;
- $('counterReadyOpen').hidden=!ready.length;
+ syncCounterReadyShortcut();
  window.ummaKitchenLive?.updateCounterIssues?.(ready);
 }
 function renderCounterOrders(){
@@ -509,17 +518,16 @@ function renderCounterOrders(){
   if(filter==='ready')return readyToIssue(order);
   return true;
  });
- const issue=counterOrders.filter(canIssue).sort((a,b)=>Number(readyToIssue(b))-Number(readyToIssue(a)));
- renderCounterReady(issue);
+ if(filter==='active')shown.sort((a,b)=>Number(readyForCounterPickup(b))-Number(readyForCounterPickup(a)));
+ renderCounterReady(counterOrders.filter(readyForCounterPickup));
  const online=counterOrders.filter(order=>order.created_via==='customer'&&!closedOrder(order));
  $('counterOnline').hidden=!online.length;
  $('counterOnline').textContent='Из приложения · '+online.length;
- const empty=loadedLocation===locationId()?'':'Загружаем заказы…';
- for(const [id,list,message] of [['counterOrderList',shown,'Заказов по этому запросу нет.'],['counterIssueList',issue,'Пока нет готовых оплаченных заказов.']]){
-  const root=$(id);
-  const markup=list.map(order=>counterOrderMarkup(order,id==='counterIssueList')).join('')||'<p>'+(empty||message)+'</p>';
-  if(root.counterMarkup!==markup){root.innerHTML=markup;root.counterMarkup=markup;}
- }
+ const empty=loadedLocation!==locationId()?'Загружаем заказы…':filter==='ready'&&!search?
+  'Пока нет готовых оплаченных заказов.':'Заказов по этому запросу нет.';
+ const root=$('counterOrderList');
+ const markup=shown.map(counterOrderMarkup).join('')||'<p>'+empty+'</p>';
+ if(root.counterMarkup!==markup){root.innerHTML=markup;root.counterMarkup=markup;}
 }
 async function refreshCounterOrders({afterMutation=false}={}){
  if(afterMutation)counterOrdersRevision++;
@@ -573,7 +581,7 @@ async function refreshCounterOrders({afterMutation=false}={}){
 }
 function setCounterView(view,{draft=false}={}){
  if(currentTab!=='pos')return;
- const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders',issue:'counterIssue'};
+ const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders'};
  counterView=view;
  for(const [name,id] of Object.entries(ids))$(id).hidden=name!==view;
  document.querySelectorAll('[data-counter-view]').forEach(button=>{
@@ -585,8 +593,11 @@ function setCounterView(view,{draft=false}={}){
   paymentFields();
   if(!payOrder&&cart.size&&(optionsLocation!==locationId()||optionsError))void refreshMethods();
  }
- if(view==='orders'||view==='issue'){renderCounterOrders();void refreshCounterOrders();}
- if(view==='issue')showPickupPair();
+ if(view==='orders'){
+  renderCounterOrders();
+  showPickupPair();
+  void refreshCounterOrders();
+ }else syncCounterReadyShortcut();
  updateCartJump();
  syncCustomerScreen();
  window.scrollTo({top:0,behavior:'instant'});
@@ -597,7 +608,6 @@ async function counterOrderAction(event){
  const order=counterOrders.find(order=>order.id===button.dataset.orderId);
  if(!order)return;
  const action=button.dataset.counterAction;
- if(action==='pickup'){setCounterView('issue');return;}
  if(action==='issue'&&!canIssue(order))return;
  if(action==='pay'&&!canTakePayment(order))return;
  busy=true;
@@ -783,11 +793,16 @@ $('counterOrderSearch').oninput=renderCounterOrders;
 $('counterOrderFilter').onchange=renderCounterOrders;
 $('counterOrderType').onchange=renderCounterOrders;
 $('counterOrderList').onclick=counterOrderAction;
-$('counterIssueList').onclick=counterOrderAction;
 $('counterOnline').onclick=()=>setCounterView('orders');
 $('counterOrdersRefresh').onclick=refreshCounterOrders;
-$('counterIssueRefresh').onclick=refreshCounterOrders;
-$('counterReadyOpen').onclick=()=>{setCounterView('issue');$('counterIssueHeading').focus({preventScroll:true});};
+$('counterReadyOpen').onclick=()=>{
+ if(busy)return;
+ $('counterOrderSearch').value='';
+ $('counterOrderType').value='';
+ $('counterOrderFilter').value='ready';
+ setCounterView('orders');
+ $('counterOrdersHeading').focus({preventScroll:true});
+};
 $('posService').onclick=event=>{
  const button=event.target.closest('[data-pos-service]');
  if(!button||busy)return;

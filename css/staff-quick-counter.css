@@ -90,12 +90,13 @@
 .counter-card ul { padding-inline-start: 20px; }
 .counter-card li + li { margin-top: 4px; }
 .counter-card h2 { font-size: 24px; }
-#counterIssue .counter-card h2 { font-size: 32px; }
+#counterOrderList .counter-card--ready { border-color: #72bfb7; }
+#counterOrderList .counter-card--ready .counter-labels span:first-child { background: #d4efea; color: #075d5e; font-weight: 750; }
 .counter-labels { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 8px; }
 .counter-labels span { padding: 4px 9px; border-radius: 999px; background: #eaf7f6; font-size: 14px; }
 #counterStatus:empty, #posResult:empty, #posChange:empty { display: none; }
 .counter-nav {
-  position: fixed; z-index: 40; inset: auto 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;
+  position: fixed; z-index: 40; inset: auto 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;
   padding: 7px max(8px, env(safe-area-inset-right, 0px)) calc(7px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
   background: #fff; border-top: 1px solid var(--counter-line); box-shadow: 0 -3px 14px #173d3b12;
 }

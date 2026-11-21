@@ -47,7 +47,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.getElementById('webWorkspace').hidden,false);assert.equal(d.querySelector('[data-web-tab="courier"]').hidden,true);
  assert.equal(d.body.dataset.workspace,'pos');
  assert.equal(d.getElementById('webCashViews').hidden,true);
- assert.deepEqual([...d.querySelectorAll('[data-counter-view]')].map(b=>b.textContent.trim()),['Продажа','Оплата','Заказы','Выдача']);
+ assert.deepEqual([...d.querySelectorAll('[data-counter-view]')].map(b=>b.textContent.trim()),['Продажа','Оплата','Заказы']);
  if(method==='qr'){
   d.getElementById('screenLayout').value='tablet-large';
   d.getElementById('screenPair').click();await tick();
@@ -219,7 +219,11 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.deepEqual(spoken,[]);
  open.click();
  await tick();
- assert.equal(d.getElementById('counterIssue').hidden,false);
+ assert.equal(d.getElementById('counterOrders').hidden,false);
+ assert.equal(d.getElementById('counterOrderFilter').value,'ready');
+ assert.equal(d.getElementById('counterIssue'),null);
+ assert.match(d.querySelector('#counterOrderList .counter-card--ready').textContent,/Готов к выдаче.*Выдано/);
+ assert.equal(d.querySelector('#pickupPair').closest('section').id,'counterOrders');
  const pair=d.getElementById('pickupPair');
  const link=d.getElementById('pickupPairLink');
  pair.click();
@@ -379,7 +383,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  const text=(w,id)=>w.document.getElementById(id).textContent;
  const feed=w=>w.document.dispatchEvent(new w.Event('umma:fulfillment-realtime'));
  const kitchenCard=()=>second.document.querySelector('[data-kitchen-order="shared-order"]');
- const issueButton=w=>w.document.querySelector('#counterIssueList [data-counter-action=issue]');
+ const issueButton=w=>w.document.querySelector('#counterOrderList [data-counter-action=issue]');
  try{
   await tick();
   for(const w of [first,second]){
@@ -398,7 +402,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   assert.match(text(first,'posResult'),/Получено.*Сдача/);
   assert.match(text(second,'posResult'),/Заказ уже оплачен/);
   assert.doesNotMatch(text(second,'posResult'),/Сдача/);
-  click(first,'[data-counter-view=issue]');
+  click(first,'[data-counter-view=orders]');
   assert.equal(issueButton(first).textContent,'Собрать и выдать');
   click(second,'#counterExit');
   await tick();
@@ -415,9 +419,9 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   await tick();
   assert.equal(kitchenCard(),null);
   assert.match(text(first,'counterReadyMessage'),/Выдать заказ №501/);
-  assert.equal(issueButton(first).textContent,'Выдать');
+  assert.equal(issueButton(first).textContent,'Выдано');
   click(second,'[data-web-tab=pos]');
-  click(second,'[data-counter-view=issue]');
+  click(second,'[data-counter-view=orders]');
   await tick();
   holdCounterList=true;
   feed(first);
