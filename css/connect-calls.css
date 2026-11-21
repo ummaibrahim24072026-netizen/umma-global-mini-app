@@ -343,3 +343,20 @@
 }
 .umma-call-card { padding-bottom:max(calc(110px + env(safe-area-inset-bottom)),18dvh); }
 @media(max-height:680px) { .umma-call::after {height:78px} .umma-call-card {padding-bottom:85px} }
+
+/* Real-time microphone visualizer (Web Audio API); no decorative looping animation. */
+.umma-call-wave {
+  display:flex; align-items:center; justify-content:center; gap:3px;
+  width:min(64%,300px); height:clamp(35px,7dvh,68px);
+  margin:0 auto; pointer-events:none;
+}
+.umma-call-wave i {
+  width:3px; min-height:4px; border-radius:8px; flex:0 0 3px;
+  background:#bfffff; box-shadow:0 0 7px #bfffff;
+  transform:scaleY(.18); transform-origin:center;
+  transition:transform 90ms linear;
+}
+.umma-call-card .umma-call-wave { flex-shrink:0; }
+@media(prefers-reduced-motion:reduce) {
+  .umma-call-wave i { transition:none; }
+}
