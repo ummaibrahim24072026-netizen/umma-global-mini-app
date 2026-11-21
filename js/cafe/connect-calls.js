@@ -82,6 +82,7 @@
     let current, modal, pollTimer, ringAudio, polling = false, pollFailures = 0;
     const linkedId = new URL(location.href).searchParams.get('call');
     let requestedCall = validId(linkedId) ? linkedId : null;
+    let pushedCall = null;
 
     function dismissNotification(id) {
       navigator.serviceWorker?.controller?.postMessage({type: 'UMMA_CLOSE_CALL', callId: id});
@@ -155,7 +156,7 @@
     function finish(call, reason, notify = true, keepalive = false) {
       if (current !== call) return;
       current = null;
-      dismissNotification(call.id);
+      if (!keepalive || notify) dismissNotification(call.id);
       release(call);
       if (notify) signalEnd(call, keepalive);
       if (!reason) {
@@ -537,7 +538,7 @@
         if (!call.incoming) {
           call.status.textContent = t('outgoing');
           ringback(call);
-          armTimeout(call, 'unanswered', 44000);
+          armTimeout(call, 'unanswered', 74000);
         } else if (!call.connected) {
           armTimeout(call, 'unavailable', 22000);
         }
@@ -570,7 +571,9 @@
       try {
         if ((!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
         const linked = !call ? requestedCall : null;
-        const {call: state} = await request('poll', {id: call?.id || linked}, credentials);
+        const hinted = !call && !linked ? pushedCall : null;
+        const {call: state} = await request('poll', {id: call?.id || linked || hinted}, credentials);
+        if (hinted && pushedCall === hinted) pushedCall = null;
         pollFailures = 0;
         if (current !== call) return;
         if (linked && requestedCall !== linked) return;
@@ -604,12 +607,20 @@
       if (data?.type === 'UMMA_OPEN_CALL' && validId(data.callId) && current?.id !== data.callId) {
         requestedCall = data.callId;
       }
+      if (data?.type === 'UMMA_CALL_PUSH' && validId(data.callId) && current?.id !== data.callId) {
+        pushedCall = data.callId;
+      }
       if (data?.type === 'UMMA_OPEN_CALL' || data?.type === 'UMMA_CALL_PUSH') schedule(0);
     });
     document.addEventListener('umma:staff-ready', () => schedule(0));
     document.addEventListener('click', enableRinger, {once: true, capture: true});
     document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); });
-    window.addEventListener('pagehide', () => { if (current) finish(current, null, true, true); });
+    window.addEventListener('online', () => schedule(0));
+    window.addEventListener('pageshow', () => schedule(0));
+    window.addEventListener('pagehide', () => {
+      const call = current;
+      if (call) finish(call, null, !call.incoming || Boolean(call.sent), true);
+    });
     schedule(0);
 
     return {

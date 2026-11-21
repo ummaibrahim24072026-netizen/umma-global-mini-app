@@ -51,7 +51,7 @@ self.addEventListener('push',event=>event.waitUntil(serial(async()=>{
    const path=new URL(client.url).pathname;
    if(payload.staff===true?path===new URL('staff.html',base).pathname:
     [new URL('menu/',base).pathname,new URL('menu/index.html',base).pathname].includes(path)){
-    client.postMessage({type:'UMMA_CALL_PUSH'});
+    client.postMessage({type:'UMMA_CALL_PUSH',callId:payload.callId});
    }
   }
   return;

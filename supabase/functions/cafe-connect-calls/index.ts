@@ -83,7 +83,10 @@ Deno.serve(async req => {
           p_call: b.id, p_device: b.device
         });
         if (targetsError) throw Error(targetsError.code);
-        if (!targets?.length) return;
+        if (!targets?.length) {
+          console.info('Call push has no subscriptions', actor === null ? 'work' : 'customer');
+          return;
+        }
         const {data: config, error: configError} = await db.rpc('cafe_push_config');
         if (configError) throw Error(configError.code);
         await notifyCall(b.id, targets, config);

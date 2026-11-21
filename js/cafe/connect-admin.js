@@ -149,7 +149,7 @@ async function updateCallAlerts(userInitiated){
  if(!callAlerts||!calls||!callIdentity()||!pushSupported()||updatingCallAlerts)return;
  const key=alertKey();
  const identity=credential();
- if(!userInitiated&&(Notification.permission!=='granted'||localStorage.getItem(key)!=='on'))return;
+ if(!userInitiated&&(Notification.permission!=='granted'||localStorage.getItem(key)==='off'))return;
  updatingCallAlerts=true;
  showCallAlertStatus('');
  syncCallAlerts();

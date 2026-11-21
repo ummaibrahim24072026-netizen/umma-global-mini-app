@@ -22,23 +22,55 @@ export function validSubscription(value: unknown): value is Subscription {
   }
 }
 
+function retryDelay(error: {statusCode?: number; headers?: Record<string, string>} | null, attempt: number) {
+  const status = error?.statusCode;
+  if (status && status !== 429 && status < 500) return null;
+  const after = error?.headers?.['retry-after'];
+  const fallback = attempt === 0 ? 500 : 1200;
+  if (!after) return fallback;
+  const seconds = Number(after);
+  const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(after) - Date.now();
+  return Number.isFinite(delay) ? Math.max(fallback, delay) : fallback;
+}
+
 export async function notifyCall(
   callId: string, targets: Target[], config: {publicKey: string; privateKey: string}
 ) {
-  if (!config?.publicKey || !config.privateKey) return;
-  await Promise.allSettled(targets.map(async target => {
-    const ttl = Math.floor((Date.parse(target.expires_at) - Date.now()) / 1000);
-    if (ttl < 2 || !validSubscription(target.subscription)) return;
+  if (!config?.publicKey || !config.privateKey) throw Error('Push configuration missing');
+  const results = await Promise.all(targets.map(async target => {
+    if (!validSubscription(target.subscription)) return 'invalid';
+    const expiresAt = Date.parse(target.expires_at);
+    if (!Number.isFinite(expiresAt)) return 'invalid';
     const copy = labels[target.language as keyof typeof labels] || labels.en;
-    await webpush.sendNotification(target.subscription, JSON.stringify({
+    const payload = JSON.stringify({
       kind: 'call', callId, staff: target.staff, title: copy[target.mode],
       body: target.staff ? copy.customer : copy.cafe
-    }), {
-      TTL: Math.min(ttl, 45), urgency: 'high', timeout: 5000,
-      vapidDetails: {
-        subject: 'https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/',
-        publicKey: config.publicKey, privateKey: config.privateKey
-      }
     });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const ttl = Math.floor((expiresAt - Date.now()) / 1000);
+      if (ttl < 2) return 'expired';
+      try {
+        await webpush.sendNotification(target.subscription, payload, {
+          TTL: Math.min(ttl, 75), urgency: 'high', timeout: Math.min(5000, ttl * 1000),
+          topic: callId.replaceAll('-', ''),
+          vapidDetails: {
+            subject: 'https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/',
+            publicKey: config.publicKey, privateKey: config.privateKey
+          }
+        });
+        return 'accepted';
+      } catch (error) {
+        const failure = error as {statusCode?: number; headers?: Record<string, string>} | null;
+        const delay = retryDelay(failure, attempt);
+        if (attempt === 2 || delay === null || Date.now() + delay + 2000 >= expiresAt) {
+          return 'failed:' + (failure?.statusCode ?? 'network');
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    return 'expired';
   }));
+  if (results.some(result => result !== 'accepted')) {
+    console.warn('Call push outcomes', results);
+  }
 }
