@@ -101,10 +101,11 @@ const root=()=>workspace||dialog;
 const visible=()=>workspace?!workspace.hidden&&!!workspace.parentElement&&!workspace.parentElement.hidden:!!dialog?.open;
 const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebApp?.initData||'';
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='staffVoice'?115000:20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok){const error=Error(d.error||'Нет связи с кафе');error.status=r.status;throw error;}return d;}
-const calls=workspace?window.ummaConnectCalls?.({identity:()=>{
+const callIdentity=()=>{
  const initData=credential();
  return owner()&&initData.startsWith('web:')?{initData}:null;
-},language:()=> 'ru'}):null;
+};
+const calls=workspace?window.ummaConnectCalls?.({identity:callIdentity,language:()=> 'ru'}):null;
 let callButtons;
 const callAlerts=document.getElementById('webCallAlerts');
 const callAlertStatus=document.getElementById('webCallAlertStatus');
@@ -400,7 +401,7 @@ function showMessages(data,forceBottom=false){
   }
  }
  replyForm.hidden=false;
- if(callButtons)callButtons.hidden=false;
+ if(callButtons)callButtons.hidden=!callIdentity();
 }
 async function loadEarlier(){
  if(!thread||!latestThread)return;
@@ -816,6 +817,7 @@ function openInbox(){
 }
 if(button)button.onclick=openInbox;
 function syncVisibility(){
+ if(callButtons)callButtons.hidden=!thread||!callIdentity();
  if(button){button.hidden=!owner();if(button.hidden&&dialog?.open)dialog.close();}
 }
 async function poll(){

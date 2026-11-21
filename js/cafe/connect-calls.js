@@ -55,7 +55,7 @@
         resolve();
       };
       const onState = () => { if (peer.iceGatheringState === 'complete') finish(); };
-      const timer = setTimeout(finish, 5000);
+      const timer = setTimeout(finish, 8000);
       peer.addEventListener('icegatheringstatechange', onState);
     });
   }
@@ -84,7 +84,7 @@
       if (!credentials) throw new Error('unavailable');
       const response = await fetch(apiUrl, {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
-        signal: keepalive ? undefined : AbortSignal.timeout(6500), keepalive,
+        signal: keepalive ? undefined : AbortSignal.timeout?.(10000), keepalive,
         body: JSON.stringify({...credentials, action, device, ...data})
       });
       const result = await response.json();
@@ -99,6 +99,7 @@
       button.textContent = t(label);
       button.setAttribute('aria-label', t(label));
       button.dataset.callAction = label;
+      button.title = t(label);
       const iconPaths = {
         speaker: '<path d="M11 5 6 9H3v6h3l5 4V5ZM15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/>',
         earpiece: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
@@ -120,7 +121,7 @@
     function release(call) {
       clearTimeout(call.deadline);
       stopRinger(call);
-      clearInterval(call.ringbackTimer);
+      clearInterval(call.durationTimer);
       call.waveFrame && cancelAnimationFrame(call.waveFrame);
       call.waveAudio?.close().catch(() => {});
       call.waveAudio = null;
@@ -146,8 +147,10 @@
         modal?.close();
         return;
       }
-      modal?.classList.remove('umma-call-incoming');
+      modal?.classList.remove('umma-call-incoming', 'umma-call-has-video');
       call.status.textContent = t(reason);
+      call.duration.hidden = true;
+      call.wave.hidden = true;
       call.media.hidden = true;
       call.controls.replaceChildren(action('close', () => modal.close()));
     }
@@ -180,9 +183,11 @@
       } catch { call.waveAudio?.close().catch(() => {}); }
     }
 
-    function toggleTrack(track, off, on) {
+    function toggleTrack(track, off, on, update) {
       const button = action(off, () => {
         track.enabled = !track.enabled;
+        update?.(track.enabled);
+        button.title = t(track.enabled ? off : on);
         button.setAttribute('aria-label', t(track.enabled ? off : on));
         button.querySelector('span')?.replaceChildren(document.createTextNode(t(track.enabled ? off : on)));
         button.setAttribute('aria-pressed', String(!track.enabled));
@@ -202,6 +207,7 @@
 
     function stopRinger(call) {
       clearInterval(call.ringer);
+      clearInterval(call.ringbackTimer);
       call.ringer = null;
       for (const note of call.notes || []) note.stop();
       call.notes?.clear();
@@ -209,28 +215,30 @@
     }
 
     function ringback(call) {
-      const Audio = window.AudioContext || window.webkitAudioContext;
-      if (!Audio || call.incoming) return;
-      try {
-        ringAudio ||= new Audio();
-        void ringAudio.resume().catch(() => {});
-        const tone = () => {
-          if (current !== call || call.connected || ringAudio.state !== 'running') return;
-          const now = ringAudio.currentTime;
-          const osc = ringAudio.createOscillator();
-          const gain = ringAudio.createGain();
-          osc.frequency.value = 425;
-          gain.gain.setValueAtTime(0.0001, now);
-          gain.gain.linearRampToValueAtTime(0.07, now + 0.03);
-          gain.gain.setValueAtTime(0.07, now + 0.75);
-          gain.gain.linearRampToValueAtTime(0.0001, now + 0.85);
-          osc.connect(gain).connect(ringAudio.destination);
-          osc.start(now);
-          osc.stop(now + 0.86);
+      if (!ringAudio || call.incoming) return;
+      call.notes ||= new Set();
+      const tone = () => {
+        if (current !== call || call.connected || ringAudio.state !== 'running') return;
+        const now = ringAudio.currentTime;
+        const osc = ringAudio.createOscillator();
+        const gain = ringAudio.createGain();
+        osc.frequency.value = 425;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.03);
+        gain.gain.setValueAtTime(0.18, now + 0.65);
+        gain.gain.linearRampToValueAtTime(0, now + 0.75);
+        osc.connect(gain).connect(ringAudio.destination);
+        call.notes.add(osc);
+        osc.onended = () => {
+          call.notes.delete(osc);
+          osc.disconnect();
+          gain.disconnect();
         };
-        tone();
-        call.ringbackTimer = setInterval(tone, 3000);
-      } catch {}
+        osc.start(now);
+        osc.stop(now + 0.75);
+      };
+      tone();
+      call.ringbackTimer = setInterval(tone, 2600);
     }
 
     function ring(call) {
@@ -266,41 +274,28 @@
       opened.setAttribute('aria-label', t(call.mode));
       const card = element('section', 'umma-call-card');
       const identity = element('div', 'umma-call-identity');
-      const logo = element('img', 'umma-call-logo');
-      logo.src = new URL('logo/assets/umma-logo.png', document.baseURI).href;
-      logo.alt = 'UMMA Global';
-      logo.width = 112;
-      logo.height = 112;
-      identity.append(logo);
       const title = element('h2');
       const isStaff = Boolean(call.credentials?.initData);
       title.textContent = call.name || (isStaff ? t('client') : 'UMMA');
-      if (call.incoming) {
-        opened.classList.add('umma-call-incoming');
-        title.textContent = t(isStaff ? 'fromClient' : 'fromCafe');
-        const mark = element('span', 'umma-call-mark');
-        mark.setAttribute('aria-hidden', 'true');
-        mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + icons[call.mode] + '</svg>';
-        identity.append(mark);
-      }
-      identity.append(title);
-      if (call.incoming && isStaff && call.name) {
-        const from = element('p', 'umma-call-from');
-        from.textContent = call.name;
-        identity.append(from);
-      }
+      if (call.incoming) opened.classList.add('umma-call-incoming');
+      if (call.mode === 'video') opened.classList.add('umma-call-video');
       const type = element('p', 'umma-call-type');
       type.textContent = t(call.mode);
       call.status = element('p', 'umma-call-status');
       call.status.setAttribute('role', 'status');
       call.status.textContent = t(call.incoming ? 'incoming' : 'connecting');
+      call.duration = element('p', 'umma-call-duration');
+      call.duration.hidden = true;
       call.media = element('div', 'umma-call-media');
       call.media.hidden = true;
       call.controls = element('div', 'umma-call-controls');
       const cancel = () => finish(call);
       if (call.incoming) {
         call.controls.append(action('decline', cancel, 'umma-call-end'),
-          action('answer', () => void establish(call), 'umma-call-answer'));
+          action('answer', () => {
+            void enableRinger();
+            void establish(call);
+          }, 'umma-call-answer'));
       } else {
         call.controls.append(action('end', cancel, 'umma-call-end'));
       }
@@ -311,17 +306,9 @@
         bar.style.height = (12 + 76 * Math.pow(Math.max(0, 1 - Math.abs(i - 12) / 13), 2)) + '%';
         call.wave.append(bar);
       }
-      card.append(identity, type, call.wave, call.status, call.media, call.controls);
-      // Only enable pixel-aligned artwork mode after the actual approved asset loads.
-      if (call.mode === 'audio') {
-        const artwork = new Image();
-        artwork.onload = () => {
-          if (modal === opened && artwork.naturalWidth && artwork.naturalHeight) {
-            opened.classList.add('umma-call-artwork');
-          }
-        };
-        artwork.src = new URL('assets/umma-call-original.webp', document.baseURI).href;
-      }
+      call.overlay = opened;
+      identity.append(title, type, call.status, call.duration, call.wave);
+      card.append(identity, call.media, call.controls);
       opened.append(card);
       opened.addEventListener('cancel', event => {
         event.preventDefault();
@@ -335,6 +322,7 @@
       });
       document.body.append(opened);
       opened.showModal();
+
       if (call.incoming) {
         call.notes = new Set();
         if (ringAudio?.state !== 'running' && (window.AudioContext || window.webkitAudioContext)) {
@@ -361,14 +349,9 @@
       call.status.textContent = t('connecting');
       call.controls.replaceChildren(action('end', () => finish(call), 'umma-call-end'));
       try {
-        if (!call.credentials) {
-          await prepare?.();
-          if (current !== call) return;
-          call.credentials = identity();
-        }
-        // Start the permission request from the answer/start gesture where possible.
+        // Request media directly in the click handler, including for first-time guests.
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {echoCancellation: true, noiseSuppression: true},
           video: call.mode === 'video' && {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}
         });
         if (current !== call) {
@@ -376,8 +359,12 @@
           return;
         }
         call.stream = stream;
+        const microphone = stream.getAudioTracks()[0];
+        const camera = stream.getVideoTracks()[0];
+        if (!microphone || (call.mode === 'video' && !camera)) throw new DOMException('', 'NotFoundError');
         startWave(call, stream);
-        if (call.mode === 'video') {
+        call.controls.prepend(toggleTrack(microphone, 'mute', 'unmute'));
+        if (camera) {
           const local = call.local = element('video', 'umma-call-preview');
           local.muted = true;
           local.autoplay = true;
@@ -386,6 +373,12 @@
           call.media.append(local);
           call.media.hidden = false;
           void local.play().catch(() => {});
+          call.controls.prepend(toggleTrack(camera, 'hide', 'show', enabled => { local.hidden = !enabled; }));
+        }
+        if (!call.credentials && prepare) {
+          await prepare();
+          if (current !== call) return;
+          call.credentials = identity();
         }
         const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
         if (current !== call) return;
@@ -393,12 +386,13 @@
         const remote = call.remote = element(call.mode === 'video' ? 'video' : 'audio');
         remote.autoplay = true;
         remote.playsInline = true;
-        call.media.append(remote);
+        remote.hidden = true;
+        call.media.prepend(remote);
         const playback = action('playback', () => {
           void remote.play().then(() => { playback.hidden = true; }).catch(() => {});
         });
         playback.hidden = true;
-        call.controls.prepend(playback, toggleTrack(stream.getAudioTracks()[0], 'mute', 'unmute'));
+        call.controls.prepend(playback);
         // Output-device routing is browser-dependent. Only show a real switch when
         // the browser exposes both a communications output and the default output.
         if (typeof remote.setSinkId === 'function' && navigator.mediaDevices?.enumerateDevices) {
@@ -416,7 +410,7 @@
               try {
                 await remote.setSinkId(next ? speaker.deviceId : handset.deviceId);
                 loud = next;
-                switcher.dataset.callAction = loud ? 'earpiece' : 'speaker';
+                switcher.title = t(loud ? 'earpiece' : 'speaker');
                 switcher.setAttribute('aria-label', t(loud ? 'earpiece' : 'speaker'));
                 switcher.setAttribute('aria-pressed', String(loud));
                 switcher.querySelector('span')?.replaceChildren(document.createTextNode(t(loud ? 'earpiece' : 'speaker')));
@@ -428,18 +422,43 @@
             call.controls.prepend(switcher);
           }).catch(() => {});
         }
-        if (call.mode === 'video') call.controls.prepend(toggleTrack(stream.getVideoTracks()[0], 'hide', 'show'));
-        peer.ontrack = event => {
-          remote.srcObject = event.streams[0];
-          void remote.play().catch(() => { playback.hidden = false; });
+        const remoteStream = new MediaStream();
+        remote.srcObject = remoteStream;
+        peer.ontrack = ({track}) => {
+          if (current !== call) return;
+          remoteStream.addTrack(track);
+          if (track.kind === 'video') {
+            const updateVideo = () => {
+              if (current !== call) return;
+              const visible = !track.muted && track.readyState === 'live';
+              remote.hidden = !visible;
+              call.overlay.classList.toggle('umma-call-has-video', visible);
+            };
+            for (const event of ['unmute', 'mute', 'ended']) track.addEventListener(event, updateVideo);
+            updateVideo();
+          }
+          void remote.play().catch(() => {
+            if (current === call) playback.hidden = false;
+          });
         };
         peer.onconnectionstatechange = () => {
           if (current !== call) return;
           if (peer.connectionState === 'connected') {
             clearTimeout(call.deadline);
-            clearInterval(call.ringbackTimer);
+            stopRinger(call);
             call.connected = true;
             call.status.textContent = t('connected');
+            if (!call.durationTimer) {
+              const started = Date.now();
+              const tick = () => {
+                const seconds = Math.floor((Date.now() - started) / 1000);
+                call.duration.textContent = [Math.floor(seconds / 60), seconds % 60]
+                  .map(part => String(part).padStart(2, '0')).join(':');
+              };
+              call.duration.hidden = false;
+              tick();
+              call.durationTimer = setInterval(tick, 1000);
+            }
           } else if (peer.connectionState === 'disconnected' && call.connected) {
             call.status.textContent = t('reconnecting');
             armTimeout(call, 'unavailable', 15000);
@@ -483,6 +502,7 @@
 
     function start(mode, target) {
       if (current) return;
+      void enableRinger();
       pollFailures = 0;
       current = {id: crypto.randomUUID(), mode, ...target, credentials: identity()};
       show(current);
@@ -509,6 +529,7 @@
         if (linked && requestedCall !== linked) return;
         if (linked) consumeLink();
         if (!call && state?.incoming && state.offer) {
+          pollFailures = 0;
           current = {...state, credentials};
           show(current);
         } else if (linked && !call) {
@@ -517,7 +538,8 @@
           finish(current, 'expired', false);
         } else if (call && !state) {
           finish(call, call.ready && !call.incoming && !call.peer?.remoteDescription ? 'unanswered' : 'ended', false);
-        } else if (call && state?.answer && !call.peer?.remoteDescription) {
+        } else if (call?.ready && !call.incoming && state?.answer && !call.peer.remoteDescription) {
+          stopRinger(call);
           call.status.textContent = t('connecting');
           armTimeout(call, 'unavailable', 22000);
           await call.peer.setRemoteDescription({type: 'answer', sdp: state.answer});
