@@ -1251,3 +1251,13 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   text-align:center;
 }
 .umma-connect .umma-chat-order-card :is(.umma-order-stages,.umma-chat-order-action)[hidden] { display:none; }
+
+.public-cafe-menu .umma-connect-chat .connect-call-alert-button {
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: calc(100% - 24px);
+  min-height: 38px;
+  margin: 4px 0;
+  padding: 5px 10px;
+  font-size: .85rem;
+}

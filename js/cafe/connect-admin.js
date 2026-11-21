@@ -103,7 +103,7 @@ const credential=()=>window.ummaStaffAuth?.credential?.()||window.Telegram?.WebA
 async function api(action,data={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(action==='staffVoice'?115000:20000),body:JSON.stringify({action,initData:credential(),...data})});const d=await r.json();if(!r.ok||!d.ok){const error=Error(d.error||'Нет связи с кафе');error.status=r.status;throw error;}return d;}
 const callIdentity=()=>{
  const initData=credential();
- return owner()&&initData.startsWith('web:')?{initData}:null;
+ return (owner()||inboxAccess)&&initData.startsWith('web:')?{initData}:null;
 };
 const calls=workspace?window.ummaConnectCalls?.({identity:callIdentity,language:()=> 'ru'}):null;
 let callButtons;
@@ -111,11 +111,21 @@ const callAlerts=document.getElementById('webCallAlerts');
 const callAlertStatus=document.getElementById('webCallAlertStatus');
 const pushSupported=()=> 'Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator;
 const alertKey=()=> 'umma:staff-call-alerts:'+window.ummaStaffAuth?.actorId();
+let inboxCallAlerts, inboxCallAlertStatus, callAlertsReady=false, updatingCallAlerts=false;
 function syncCallAlerts(){
- if(!callAlerts||!calls||!owner())return;
- callAlerts.hidden=false;
- const enabled=pushSupported()&&Notification.permission==='granted'&&localStorage.getItem(alertKey())==='on';
- callAlerts.textContent=enabled?'Отключить уведомления о звонках':'Включить уведомления о звонках';
+ if(!callAlerts||!calls)return;
+ const supported=Boolean(callIdentity())&&pushSupported();
+ callAlerts.hidden=!supported;
+ callAlerts.disabled=updatingCallAlerts;
+ callAlerts.textContent=callAlertsReady?'Отключить уведомления о звонках':'Включить уведомления о звонках';
+ if(inboxCallAlerts){
+  inboxCallAlerts.hidden=!supported||callAlertsReady;
+  inboxCallAlerts.disabled=updatingCallAlerts;
+ }
+}
+function showCallAlertStatus(message){
+ if(callAlertStatus)callAlertStatus.textContent=message;
+ if(inboxCallAlertStatus)inboxCallAlertStatus.textContent=message;
 }
 async function registerCallAlerts(){
  const registration=await Promise.race([
@@ -135,34 +145,38 @@ async function registerCallAlerts(){
  }
  await calls.saveStaffSubscription(subscription.toJSON());
 }
-if(callAlerts&&calls){
- callAlerts.onclick=async()=>{
-  callAlerts.disabled=true;
-  callAlertStatus.textContent='';
-  try{
-   if(!pushSupported())throw Error('Чтобы получать звонки, добавьте UMMA Work на экран «Домой» или откройте приложение в браузере с уведомлениями.');
-   const key=alertKey();
-   if(Notification.permission==='granted'&&localStorage.getItem(key)==='on'){
-    await calls.saveStaffSubscription(null);
-    localStorage.removeItem(key);
-    callAlertStatus.textContent='Уведомления о звонках отключены.';
-   }else{
-    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
-    if(permission!=='granted')throw Error('Разрешите уведомления для UMMA Work в настройках браузера.');
-    await registerCallAlerts();
-    localStorage.setItem(key,'on');
-    callAlertStatus.textContent='Уведомления о звонках включены.';
-   }
-  }catch(error){callAlertStatus.textContent=error.message;}
-  finally{callAlerts.disabled=false;syncCallAlerts();}
- };
- document.addEventListener('umma:staff-ready',()=>{
-  syncCallAlerts();
-  if(owner()&&pushSupported()&&Notification.permission==='granted'&&localStorage.getItem(alertKey())==='on'){
-   void registerCallAlerts().catch(()=>{callAlertStatus.textContent='Не удалось обновить уведомления о звонках.';});
+async function updateCallAlerts(userInitiated){
+ if(!callAlerts||!calls||!callIdentity()||!pushSupported()||updatingCallAlerts)return;
+ const key=alertKey();
+ const identity=credential();
+ if(!userInitiated&&(Notification.permission!=='granted'||localStorage.getItem(key)!=='on'))return;
+ updatingCallAlerts=true;
+ showCallAlertStatus('');
+ syncCallAlerts();
+ try{
+  if(userInitiated&&callAlertsReady){
+   await calls.saveStaffSubscription(null);
+   localStorage.setItem(key,'off');
+   callAlertsReady=false;
+   showCallAlertStatus('Уведомления о звонках отключены.');
+  }else{
+   const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+   if(permission!=='granted')throw Error('Разрешите уведомления для UMMA Work в настройках браузера.');
+   await registerCallAlerts();
+   if(credential()!==identity)return;
+   localStorage.setItem(key,'on');
+   callAlertsReady=true;
+   if(userInitiated)showCallAlertStatus('Уведомления о звонках включены.');
   }
- });
+ }catch(error){
+  callAlertsReady=false;
+  if(userInitiated)showCallAlertStatus(error.message);
+ }finally{
+  updatingCallAlerts=false;
+  syncCallAlerts();
+ }
 }
+if(callAlerts&&calls)callAlerts.onclick=()=>void updateCallAlerts(true);
 
 const TRANSLATE_API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-translate';
 async function translateChat(messageId,language,clientId){
@@ -797,6 +811,15 @@ function build(){
   inboxSearch.addEventListener('input',renderClients);
   search.append(inboxSearch);
   controls.append(search);
+  if(calls){
+   inboxCallAlerts=node('button','Включить уведомления о звонках','web-soft-button');
+   inboxCallAlerts.type='button';
+   inboxCallAlerts.onclick=()=>void updateCallAlerts(true);
+   inboxCallAlertStatus=node('small');
+   inboxCallAlertStatus.setAttribute('role','status');
+   controls.append(inboxCallAlerts,inboxCallAlertStatus);
+   syncCallAlerts();
+  }
   listPanel.append(controls);
  }else listPanel.append(node('h2','Переписки'));
  listPanel.append(clients);
@@ -848,11 +871,14 @@ if(workspace&&Audio){
 }
 document.addEventListener('umma:staff-ready',event=>{
  inboxAccess=Boolean(event.detail?.assignments?.some(a=>['manager','cashier','waiter'].includes(a.staff_role)));
+ syncCallAlerts();
+ void updateCallAlerts(false);
  restoreStaffTheme();
  syncVisibility();void poll();
 });
 function resumeMessages(){
  if(document.hidden)return;
+ if(!callAlertsReady)void updateCallAlerts(false);
  if(workspace&&thread&&visible())avatarCheckedAt=0;
  if(alertAudio)void enableMessageSound();
  void poll();

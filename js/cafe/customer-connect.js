@@ -88,6 +88,7 @@ function refresh(){
    if(busy||document.hidden)return;
    state=next;
    renderSetup();
+   syncPushButton();
    if(dialog?.open){renderThread();await markRead();}
    else badge();
    if(navigator.onLine!==false)connectionStatus.textContent='';
@@ -102,6 +103,20 @@ function showReconnect(){
  if(dialog?.open&&token)connectionStatus.textContent=reconnectCopy[lang()]||reconnectCopy.en;
 }
 let list,promotions,push;
+let hasBrowserPush;
+function syncPushButton(){
+ if(!publicChat||!push)return;
+ const granted=pushSupported()&&Notification.permission==='granted';
+ push.hidden=!pushSupported()||dismissed||Boolean(state?.client?.pushEnabled&&granted&&hasBrowserPush!==false);
+}
+async function inspectBrowserPush(){
+ if(!publicChat||!pushSupported()||Notification.permission!=='granted')return;
+ try{
+  const registration=await navigator.serviceWorker.getRegistration?.();
+  if(registration)hasBrowserPush=Boolean(await registration.pushManager.getSubscription());
+ }catch{}
+ syncPushButton();
+}
 const mediaCopy={
  ru:{album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
  en:{album:'Open photos and videos',photo:'Open photo',video:'Open video',voice:'Listen to voice message',error:'Could not open attachment. Try again.'},
@@ -424,6 +439,7 @@ function enablePush(feedback,enableOrderAlerts=feedback===status){
   const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
   await connect();
   state=await api('preferences',{subscription:subscription.toJSON(),language:lang()});
+  hasBrowserPush=true;
   if(enableOrderAlerts)window.ummaOrderAlerts?.enableGranted?.();
   feedback.textContent=t(14)+' '+notice(2);
   if(dialog)dialog.update?.();else badge();
@@ -562,7 +578,9 @@ function build(){
    }
   },settingsStatus);
  };
- push=el('button',notice(0),'primary');push.type='button';push.onclick=()=>enablePush(settingsStatus,true);
+ push=el('button',notice(0),publicChat?'plain-btn connect-call-alert-button':'primary');
+ push.type='button';
+ push.onclick=()=>enablePush(publicChat?status:settingsStatus,!publicChat);
  const off=el('button',t(8),'connect-off');off.type='button';
  const disablePush=()=>run(async()=>{
   state=await api('preferences',{subscription:null});
@@ -667,13 +685,14 @@ function build(){
    pushSwitch.setAttribute('aria-labelledby','customerChatPush');
    pushSwitch.setAttribute('aria-describedby','customerChatPushHint');
    pushSwitch.append(notificationText(pushTitle,pushHint,'customerChatPush'),el('span',null,'chat-setting-track'));
-   pushSwitch.onclick=()=>state?.client?.pushEnabled?disablePush():enablePush(settingsStatus,false);
+   pushSwitch.onclick=()=>state?.client?.pushEnabled&&hasBrowserPush!==false&&window.Notification?.permission==='granted'
+    ?disablePush():enablePush(settingsStatus,false);
    settingsDialog.querySelector('.chat-settings-notifications').replaceChildren(check,pushSwitch);
   }
   content.className='connect-chat-content';
   const wallpaper=el('div',null,'connect-chat-wallpaper');
   wallpaper.append(list);
-  content.append(wallpaper,connectionStatus,status,form);
+  content.append(wallpaper,connectionStatus,push,status,form);
   dialog.append(join,content);
  }else{
   const settings=el('section',null,'connect-settings');
@@ -723,8 +742,8 @@ function build(){
   promotions.checked=state?.client?.promotions===true;
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
   off.hidden=!state?.client.pushEnabled;
-  push.hidden=subscribed;
-  pushSwitch?.setAttribute('aria-checked',String(state?.client?.pushEnabled===true));
+  if(publicChat)syncPushButton();else push.hidden=subscribed;
+  pushSwitch?.setAttribute('aria-checked',String(subscribed&&hasBrowserPush!==false));
   renderThread();
  }
  dialog.update=update;
@@ -754,7 +773,9 @@ function openOrderNotification(number){
  }
  void open();
 }
-button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
+button.addEventListener('click',inspectBrowserPush);
+ window.addEventListener('pageshow',inspectBrowserPush);
+ button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
 if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>{
  if(settingsDialog.open)return;
