@@ -115,6 +115,9 @@
     function release(call) {
       clearTimeout(call.deadline);
       stopRinger(call);
+      call.waveFrame && cancelAnimationFrame(call.waveFrame);
+      call.waveAudio?.close().catch(() => {});
+      call.waveAudio = null;
       call.peer?.close();
       call.stream?.getTracks().forEach(track => track.stop());
       if (call.remote) call.remote.srcObject = null;
@@ -141,6 +144,34 @@
       call.status.textContent = t(reason);
       call.media.hidden = true;
       call.controls.replaceChildren(action('close', () => modal.close()));
+    }
+
+    function startWave(call, stream) {
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (!Audio || !call.wave || !stream.getAudioTracks().length) return;
+      try {
+        const ctx = call.waveAudio = new Audio();
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = .78;
+        source.connect(analyser); // Never connect the microphone to speakers.
+        const samples = new Uint8Array(analyser.frequencyBinCount);
+        const bars = [...call.wave.children];
+        const draw = () => {
+          if (current !== call || ctx.state === 'closed') return;
+          analyser.getByteFrequencyData(samples);
+          const active = stream.getAudioTracks()[0]?.enabled;
+          bars.forEach((bar, index) => {
+            const band = Math.floor(index / bars.length * (samples.length * .65));
+            const value = active ? samples[band] / 255 : 0;
+            bar.style.transform = 'scaleY(' + Math.max(.12, Math.min(1.5, .18 + value * 2.6)) + ')';
+          });
+          call.waveFrame = requestAnimationFrame(draw);
+        };
+        void ctx.resume().catch(() => {});
+        draw();
+      } catch { call.waveAudio?.close().catch(() => {}); }
     }
 
     function toggleTrack(track, off, on) {
@@ -242,7 +273,14 @@
       } else {
         call.controls.append(action('end', cancel, 'umma-call-end'));
       }
-      card.append(identity, type, call.status, call.media, call.controls);
+      call.wave = element('div', 'umma-call-wave');
+      call.wave.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < 25; i++) {
+        const bar = element('i');
+        bar.style.height = (12 + 76 * Math.pow(Math.max(0, 1 - Math.abs(i - 12) / 13), 2)) + '%';
+        call.wave.append(bar);
+      }
+      card.append(identity, type, call.wave, call.status, call.media, call.controls);
       opened.append(card);
       opened.addEventListener('cancel', event => {
         event.preventDefault();
@@ -297,6 +335,7 @@
           return;
         }
         call.stream = stream;
+        startWave(call, stream);
         const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
         if (current !== call) return;
         const peer = call.peer = new RTCPeerConnection({iceServers: servers});
