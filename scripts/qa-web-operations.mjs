@@ -391,7 +391,19 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
    click(w,'[data-counter-view=orders]');
   }
   await tick();
-  for(const w of [first,second])click(w,'#counterOrderList [data-counter-action=pay]');
+  for(const w of [first,second]){
+   assert.equal(text(w,'counterNewOrderBadge'),'1');
+   assert.equal(text(w,'counterPaymentBadge'),'1');
+   const card=w.document.querySelector('[data-counter-order="shared-order"]');
+   assert.ok(card.querySelector('.counter-order-mark.is-new'));
+   card.querySelector('summary').click();
+   assert.equal(card.querySelector('details').open,true);
+   assert.equal(text(w,'counterNewOrderBadge'),'1','viewing an order keeps it new');
+   click(w,'[data-counter-view=payment]');
+   assert.equal(w.document.getElementById('counterPaymentQueue').hidden,false);
+   assert.equal(w.document.querySelectorAll('#counterPaymentList [data-counter-action=pay]').length,1);
+   click(w,'#counterPaymentList [data-counter-action=pay]');
+  }
   await tick();
   for(const [w,received] of [[first,60000],[second,90000]]){
    w.document.getElementById('posCash').value=String(received);
@@ -402,6 +414,10 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   assert.match(text(first,'posResult'),/Получено.*Сдача/);
   assert.match(text(second,'posResult'),/Заказ уже оплачен/);
   assert.doesNotMatch(text(second,'posResult'),/Сдача/);
+  for(const w of [first,second]){
+   assert.equal(w.document.getElementById('counterPaymentBadge').hidden,true);
+   assert.equal(text(w,'counterNewOrderBadge'),'1','paid customer order still needs preparation');
+  }
   click(first,'[data-counter-view=orders]');
   assert.equal(issueButton(first).textContent,'Собрать и выдать');
   click(second,'#counterExit');
@@ -413,6 +429,8 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   feed(first);
   await tick();
   assert.equal(issueButton(first),null,'another employee is preparing the order');
+  assert.equal(first.document.getElementById('counterNewOrderBadge').hidden,true);
+  assert.equal(first.document.querySelector('.counter-order-mark').textContent,'✓');
   kitchenCard().querySelector('[data-new-status=ready]').click();
   await tick();
   feed(first);
@@ -437,7 +455,18 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
    assert.equal(issueButton(w),null);
    assert.equal(text(w,'counterReadyMessage'),'');
   }
-  console.log('PASS two staff sessions: shared cash payment winner, counter-to-kitchen handoff, one issue, and stale response reconciliation.');
+  Object.assign(order,{status:'confirmed',accepted_by_telegram_id:null});
+  feed(first);feed(second);
+  await tick();
+  assert.equal(text(first,'counterNewOrderBadge'),'1');
+  click(first,'#counterOrderList [data-counter-action=start]');
+  await tick();
+  feed(second);
+  await tick();
+  assert.equal(order.status,'preparing');
+  assert.equal(order.accepted_by_telegram_id,11);
+  for(const w of [first,second])assert.equal(w.document.getElementById('counterNewOrderBadge').hidden,true);
+  console.log('PASS two staff sessions: live queue badges, shared cash payment winner, counter-to-kitchen handoff, one issue, and stale response reconciliation.');
  }finally{first.close();second.close();}
 }
 console.log('PASS counter payment and customer display: live basket, exact draft total, method switching, QR cleanup, successful order receipt, idempotent recovery and read-only customer capability.');

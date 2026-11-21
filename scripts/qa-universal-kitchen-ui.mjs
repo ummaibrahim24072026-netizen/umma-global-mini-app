@@ -203,14 +203,15 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   assert.deepEqual(tones,[660,880,660,880]);
   assert.deepEqual(speech.map(entry=>entry.lang),['ru-RU','ru-RU']);
   assert.equal(speech[1].text,'Новый заказ номер 165. Плов — 2. Архивное блюдо — 1.');
-  assert.match(d.getElementById('counterOnline').textContent,/Из приложения/);
-  d.getElementById('counterOnline').click();
+  assert.equal(d.getElementById('counterNewOrderBadge').textContent,'1');
+  assert.equal(d.getElementById('counterPaymentBadge').textContent,'2');
+  d.querySelector('[data-counter-view=orders]').click();
   await tick();
   const orderCard=id=>d.querySelector('#counterOrderList [data-counter-order="'+id+'"]');
   assert.match(orderCard('online').textContent,/Плов × 2/);
   assert.match(orderCard('online').textContent,/Ожидает оплаты/);
   assert.equal(orderCard('other-location'),null);
-  assert.equal(d.querySelector('#counterOrderList article').dataset.counterOrder,'staff-sale');
+  assert.equal(d.querySelector('#counterOrderList article').dataset.counterOrder,'online');
   assert.ok(orderCard('online').querySelector('[data-counter-action=pay]'));
   d.querySelector('[data-counter-view=sale]').click();
   assert.match(d.getElementById('posCart').textContent,/Лепёшка/);
@@ -241,7 +242,7 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.querySelector('[data-web-tab=pos]').click();
   d.querySelector('[data-counter-view=orders]').click();
   await tick();
-  assert.match(orderCard('delivery-handoff').textContent,/Готов.*Доставка/);
+  assert.match(orderCard('delivery-handoff').textContent,/Доставка · Готов к передаче курьеру/);
   assert.equal(orderCard('another-online').querySelector('[data-counter-action=issue]'),null,'unpaid ready orders cannot be handed over');
   assert.equal(orderCard('delivery-handoff').querySelector('[data-counter-action=issue]'),null,'delivery uses its own handoff');
   const ready=orderCard('online');
