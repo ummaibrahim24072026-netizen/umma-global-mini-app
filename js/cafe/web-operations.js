@@ -303,6 +303,7 @@ function paymentFields(){
  $('posCashLabel').hidden=!activeCash;
  $('posCash').required=activeCash;
   $('posCash').step=fx?'0.01':'1';
+  $('posCash').inputMode=fx?'decimal':'numeric';
   $('posCash').placeholder=fx?'Получено '+fxCurrency():'Сколько дал клиент';
   $('posCashLabel').firstChild.textContent=fx?'Получено наличными, '+fxCurrency():'Получено наличными, ₫';
   const fxInfo=$('posFxInfo');fxInfo.hidden=!fx;
@@ -318,12 +319,14 @@ function paymentFields(){
    :(!payOrder&&(!draft||unavailable||!selectedAvailable||!serviceReady))||((cash||fx)&&payOrder&&!pending)||(fx&&!validCash));
  $('posSubmit').textContent=switchingPayment?'Сменить способ оплаты':(cash||fx)?'Принять наличные':foreign?'Показать реквизиты':'Показать QR';
  $('posChange').textContent=activeCash&&$('posCash').value?(fx?(fxReady()?(validCash?'Сдача '+money(Math.floor(received*fxQuote.vndPerUnit)-due):'Не хватает '+money(Math.max(0,due-Math.floor(received*fxQuote.vndPerUnit)))):'Курс недоступен'):(validCash?'Сдача '+money(received-due):'Не хватает '+money(Math.max(0,due-received)))):'';
+ const total=paymentTotal();
+ $('posCashDue').querySelector('strong').textContent=total;
  const itemsOpen=$('counterPaymentItems')?.open;
  $('counterPaymentSummary').innerHTML=payOrder||draft
   ? '<h2 id="posOrderNumber">'+(payOrder?'Заказ №'+esc(payOrder.orderNumber):'Текущий заказ')+'</h2>'+
    '<p>'+[serviceLabels[payOrder?payOrder.orderType:saleService],payOrder?payOrder.deliveryAddress?.split('\nТочка доставки: ')[0]:deliveryAddress].filter(Boolean).map(esc).join(' · ')+'</p>'+
    '<details id="counterPaymentItems"'+(itemsOpen?' open':'')+'><summary>Блюда в заказе</summary>'+
-   itemsMarkup(payOrder?.items||cartItems())+'</details><div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(paymentTotal())+'</strong></div>'
+   itemsMarkup(payOrder?.items||cartItems())+'</details><div class="pos-total"><span>'+(payOrder?.paymentStatus==='paid'?'Оплачено':'К оплате')+'</span><strong>'+esc(total)+'</strong></div>'
   : '<p>Добавьте блюда в разделе «Продажа» или выберите заказ в разделе «Заказы».</p>';
 }
 function showPayment(order,payment=null){
@@ -662,6 +665,7 @@ function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  updateCartJump();
  syncCustomerScreen();
  $('counterContent').scrollTop=0;
+ if(document.body.classList.contains('counter-cash-keyboard'))syncCashKeyboard();
 }
 async function counterOrderAction(event){
  const button=event.target.closest('[data-counter-action]');
@@ -1153,6 +1157,42 @@ $('webCashShift').onclick=()=>{
 $('webInviteCopy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('webInviteLink').href);$('webInviteResult').textContent='Приглашение скопировано. Передайте его сотруднику.';}catch{$('webInviteResult').textContent='Нажмите и удерживайте ссылку приглашения, затем выберите «Копировать ссылку».';}});
 function syncWorkKeyboard(){const viewport=window.visualViewport;const field=document.activeElement;const editing=field&&/^(INPUT|TEXTAREA|SELECT)$/.test(field.tagName);const closedHeight=document.documentElement.clientHeight||window.innerHeight;document.body.classList.toggle('work-keyboard-open',Boolean(viewport&&editing&&closedHeight-viewport.height>140));}
 window.visualViewport?.addEventListener('resize',syncWorkKeyboard);document.addEventListener('focusin',syncWorkKeyboard);document.addEventListener('focusout',()=>document.body.classList.remove('work-keyboard-open'));
+
+const cashField=$('posCash');
+const cashPanel=cashField.closest('.counter-payment-controls');
+const cashViewport=window.visualViewport;
+let cashClosedHeight=0;
+let cashViewportWidth=0;
+function syncCashKeyboard(){
+ const layoutHeight=document.documentElement.clientHeight||window.innerHeight;
+ const height=cashViewport?.height||layoutHeight;
+ const width=document.documentElement.clientWidth||window.innerWidth;
+ const docked=document.body.classList.contains('counter-cash-keyboard');
+ const active=document.activeElement;
+ const editing=active===cashField||docked&&(active===$('posSubmit')||active===document.body);
+ const visible=currentTab==='pos'&&counterView==='payment'&&!$('posForm').hidden&&!$('posCashLabel').hidden&&!cashField.disabled;
+ if(!editing||!visible||width!==cashViewportWidth){
+  cashClosedHeight=layoutHeight;
+  cashViewportWidth=width;
+ }
+ // Android can resize the layout viewport. Safari usually resizes only the visual viewport.
+ const layoutResized=window.matchMedia?.('(any-pointer: coarse)').matches&&cashClosedHeight-layoutHeight>120;
+ const viewportReduced=layoutHeight-height>120;
+ const keyboard=editing&&visible&&(layoutResized||viewportReduced);
+ if(keyboard){
+  const bottom=(cashViewport?.offsetTop||0)+height;
+  cashPanel.style.setProperty('--counter-keyboard-inset',Math.max(0,layoutHeight-bottom)+'px');
+  cashPanel.style.setProperty('--counter-keyboard-height',height+'px');
+ }else if(!viewportReduced&&!layoutResized){
+  cashClosedHeight=layoutHeight;
+ }
+ document.body.classList.toggle('counter-cash-keyboard',keyboard);
+}
+document.addEventListener('focusin',syncCashKeyboard);
+document.addEventListener('focusout',()=>window.requestAnimationFrame(syncCashKeyboard));
+window.addEventListener('resize',syncCashKeyboard);
+cashViewport?.addEventListener('resize',syncCashKeyboard);
+cashViewport?.addEventListener('scroll',syncCashKeyboard);
 $('posCartJump').onclick=()=>{
  $('counterSale').dataset.basket='open';
  $('counterContent').scrollTop=0;

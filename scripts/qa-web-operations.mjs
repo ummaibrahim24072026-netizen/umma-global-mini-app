@@ -5,6 +5,9 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html',pretendToBeVisual:true}),w=dom.window,d=w.document,requests=[];w.AbortSignal=AbortSignal;w.scrollTo=()=>{};w.ummaKitchen={open(){}};w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg></svg>';}});
  w.eval(readFileSync('js/cafe/web-session.js','utf8'));w.ummaStaffAuth.save('a'.repeat(64));
  const order={id:'qa-order',orderNumber:444,totalVnd:25000};let created=0,paid=false,currentMethod=method;
+ const viewport=new w.EventTarget();
+ Object.assign(viewport,{height:760,offsetTop:0});
+ Object.defineProperty(w,'visualViewport',{value:viewport});
  const foreign=!['cash','qr'].includes(method);
  const automatic=method==='qr'&&service==='pickup';
  const point={lat:12.25,lng:109.19};
@@ -86,6 +89,31 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  }
  assert.equal(checkout.disabled,false);
  checkout.click();assert.equal(d.getElementById('counterSale').hidden,true);d.querySelector('[data-counter-method='+method+']').click();await tick();d.getElementById('posCash').value='50000';
+ if(method==='cash'){
+  const field=d.getElementById('posCash');
+  let layoutHeight=760;
+  Object.defineProperty(d.documentElement,'clientHeight',{get:()=>layoutHeight});
+  w.matchMedia=()=>({matches:true});
+  field.focus();
+  field.dispatchEvent(new w.Event('input',{bubbles:true}));
+  assert.match(d.getElementById('posCashDue').textContent,/25[.  ]000/);
+  assert.match(d.getElementById('posChange').textContent,/Сдача 25[.  ]000/);
+  const controls=field.closest('.counter-payment-controls');
+  assert.equal(controls.contains(d.getElementById('posSubmit')),true);
+  layoutHeight=viewport.height=350;
+  w.dispatchEvent(new w.Event('resize'));
+  assert.equal(d.body.classList.contains('counter-cash-keyboard'),true);
+  assert.equal(controls.style.getPropertyValue('--counter-keyboard-inset'),'0px');
+  layoutHeight=760;
+  viewport.offsetTop=40;
+  viewport.dispatchEvent(new w.Event('resize'));
+  assert.equal(controls.style.getPropertyValue('--counter-keyboard-inset'),'370px');
+  viewport.offsetTop=0;
+  viewport.height=760;
+  viewport.dispatchEvent(new w.Event('resize'));
+  assert.equal(d.body.classList.contains('counter-cash-keyboard'),false);
+  assert.equal(field.value,'50000');
+ }
  const form=d.getElementById('posForm');form.dispatchEvent(new w.Event('submit',{cancelable:true}));form.dispatchEvent(new w.Event('submit',{cancelable:true}));await tick();await tick();assert.equal(created,1,'double tap cannot create two sales');
  assert.equal(paid,method==='cash');assert.equal(d.getElementById('posConfirmQr').hidden,method==='cash');
  if(method==='qr'){

@@ -80,6 +80,43 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #webPos .pos-row > div { grid-column: 1 / -1; }
 #webPos .pos-total { font-size: clamp(20px, 5vw, 25px); padding-block: 10px; margin: 0 0 10px; }
 #webPos :is(#counterCheckout, #posSubmit) { width: 100%; }
+#webPos #posSubmit { min-height: 54px; font-size: 15px; }
+#webPos #posCash { font-size: 16px; }
+#webPos #posCashDue { display: none; }
+
+.web-work-app.counter-cash-keyboard #webPos .counter-nav { display: none; }
+.counter-cash-keyboard #webPos .counter-payment-controls {
+  position: fixed;
+  z-index: 20;
+  inset-inline: 0;
+  bottom: var(--counter-keyboard-inset, 0px);
+  box-sizing: border-box;
+  width: min(100%, 480px);
+  max-height: var(--counter-keyboard-height, 100dvh);
+  margin-inline: auto;
+  padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+  display: grid;
+  gap: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--counter-line);
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  box-shadow: 0 -4px 20px #163c3d26;
+}
+.counter-cash-keyboard #webPos #posCashLabel { gap: 4px; margin: 0; }
+.counter-cash-keyboard #webPos #posCash { min-height: 44px; margin: 0; padding-block: 6px; }
+.counter-cash-keyboard #webPos .counter-payment-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.counter-cash-keyboard #webPos #posCashDue { display: block; }
+.counter-cash-keyboard #webPos :is(#posCashDue, #posFxInfo, #posChange) { margin: 0; font-size: 13px; }
+.counter-cash-keyboard #webPos #posChange:not(:empty) { padding: 3px 8px; }
+.counter-cash-keyboard #webPos #posSubmit { min-height: 44px; padding-block: 6px; }
 #webPos #posCartJump {
   display: none; flex: none; margin: 4px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
   min-height: 46px; padding-block: 6px;
