@@ -732,7 +732,6 @@
 :is(#profileNameStatus, #profilePhoneStatus) { margin: 0; font-size: 13px; }
 :is(#profileNameStatus, #profilePhoneStatus):empty { display: none; }
 #chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
-.profile-avatar-hint,
 #profileAvatarStatus {
   grid-column: 1 / -1;
   margin: 0;
