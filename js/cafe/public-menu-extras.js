@@ -234,16 +234,18 @@ function renderNumberTransfer(value,waiting,t,previousOrderId){
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
-const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.greenSmStage==='delivered'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
-const waitingPayment=value.paymentStatus==='pending'&&!['cancelled','completed'].includes(value.status);
+const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.orderType==='delivery'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
+const deliveryState=value.status==='ready'&&({courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен'})[value.deliveryStatus];
+const courierCash=value.orderType==='delivery'&&value.paymentMethod==='cash'&&!value.payment?.currency;
+const waitingPayment=!courierCash&&value.paymentStatus==='pending'&&!['cancelled','completed'].includes(value.status);
 renderForeignPayment(value,waitingPayment);
 renderGuestProof(waitingPayment&&['qr','bank_transfer'].includes(value.paymentMethod),value,ctx);
 $('orderState').removeAttribute('data-i18n');
 $('orderState').textContent=waitingPayment?t('Ожидаем подтверждение оплаты')
  :value.preorderWaiting&&!['cancelled','completed'].includes(value.status)?t('Предзаказ · готовится к {time}',{time:new Intl.DateTimeFormat(window.ummaMenuI18n?.locale()||'ru',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value.preorderExpectedAt))})+' · '+t('Время Нячанга')
  :value.preorderExpectedAt&&value.status==='preparing'?t('Собираем предзаказ')
- :t(statuses[value.status]||'Заказ отправлен');
-$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?(value.payment?.currency==='RUB'?'Ожидаем перевод в рублях':'Ожидаем подтверждение оплаты'):value.paymentMethod==='qr'?'Ожидаем оплату по QR':'Оплатите наличными у кассира.');
+ :t(deliveryState||statuses[value.status]||'Заказ отправлен');
+$('paymentState').textContent=t(value.status==='cancelled'?'Заказ отменён. Не оплачивайте его. Если деньги уже переведены, обратитесь в кафе.':value.paymentStatus==='paid'?'Оплачено':value.paymentStatus==='refunded'?'Возвращено':value.status==='completed'?'':value.paymentMethod==='bank_transfer'?(value.payment?.currency==='RUB'?'Ожидаем перевод в рублях':'Ожидаем подтверждение оплаты'):value.paymentMethod==='qr'?'Ожидаем оплату по QR':courierCash?'Оплата наличными курьеру при получении.':'Оплатите наличными у кассира.');
 renderNumberTransfer(value,waitingPayment,t,previousOrderId);
 const p=value.payment,show=value.paymentMethod==='qr'&&value.paymentStatus!=='paid'&&value.paymentStatus!=='refunded'&&!['cancelled','completed'].includes(value.status)&&p;
 $('guestPayment').hidden=!show;

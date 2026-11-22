@@ -72,6 +72,27 @@
   // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
   return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
  }
+ async function confirmPhoto(imageBase64,kind){
+  const dialog=document.createElement('dialog');
+  dialog.className='cafe-refund-dialog courier-photo-preview';
+  dialog.innerHTML='<form method="dialog"><h3>'+(kind==='pickup'?'Фото заказа':'Фото вручения')+'</h3>'+
+   '<img alt="Снимок для подтверждения доставки"><div class="kitchen-order-actions">'+
+   '<button type="submit" class="kitchen-action" value="send">Отправить фото</button>'+
+   '<button type="submit" class="kitchen-cancel" value="cancel">Назад</button></div></form>';
+  dialog.setAttribute('aria-label',kind==='pickup'?'Подтвердить получение':'Подтвердить вручение');
+  dialog.querySelector('img').src='data:image/jpeg;base64,'+imageBase64;
+  document.body.append(dialog);
+  try{
+   return await new Promise(resolve=>{
+    dialog.querySelector('form').onsubmit=event=>{
+     event.preventDefault();
+     resolve(event.submitter?.value==='send');
+    };
+    dialog.addEventListener('cancel',event=>{event.preventDefault();resolve(false);},{once:true});
+    dialog.showModal();
+   });
+  }finally{dialog.remove();}
+ }
  let cameraInput=null;
  async function photo(id,kind,button){
   if(busy||completing.has(id)||cameraInput)return;
@@ -89,6 +110,10 @@
    try {
     stepMessage('Сохраняем фото…');
     const imageBase64=await jpeg(input.files[0]);
+    if(document.getElementById('webOverview')&&!await confirmPhoto(imageBase64,kind)){
+     stepMessage('');
+     return;
+    }
     const result=await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});
     rememberTransition(id,kind);
     button.textContent=kind==='pickup'?'Подтверждаем получение…':'Подтверждаем вручение…';

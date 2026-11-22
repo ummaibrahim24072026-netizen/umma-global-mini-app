@@ -6,7 +6,7 @@ const token=new URLSearchParams(location.hash.slice(1)).get('token')||'';
 let road=null,routeRequest=0,routeOrigin=null;
 let map=null,marker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
 const terminal=['delivered','completed','cancelled'];
-const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ выдан',cancelled:'Заказ отменён'};
+const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ доставлен',cancelled:'Заказ отменён'};
 const stages=['Заказ отправлен','Готовится','Заказ готов','Курьер назначен','Курьер в пути','Заказ доставлен'];
 const stageRows=stages.map(()=>document.createElement('li'));
 $('stages').append(...stageRows);

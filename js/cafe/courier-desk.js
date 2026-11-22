@@ -59,7 +59,7 @@
    '<div class="courier-offer-route"><div><small>Забрать</small><strong>'+esc(o.locationName||'Кафе UMMA')+'</strong><span>'+esc(o.pickupAddress||'Адрес кафе после принятия')+'</span></div><div><small>Доставить</small><strong>'+esc(o.deliveryAddress?.trim()||'Точка клиента на карте')+'</strong></div></div>'+
    '<div class="courier-offer-facts"><span>До кафе: '+esc(distance)+(Number.isFinite(o.pickupDistanceM)?' по прямой':'')+'</span><span>'+esc(cash)+'</span>'+(Number(o.deliveryFeeVnd)>0?'<span>Стоимость доставки: '+esc(money(o.deliveryFeeVnd))+'</span>':'')+'</div>'+
    (exclusive?'<p class="courier-offer-deadline">Предложено вам · <span data-courier-deadline="'+esc(o.expiresAt||'')+'">Обновляем время…</span></p>':'')+
-   '<div class="kitchen-order-actions"><button type="button" class="kitchen-action" '+(exclusive?'data-courier-accept':'data-courier-claim')+'="'+esc(o.orderId)+'">'+(exclusive?'Принять доставку':'Взять доставку')+'</button>'+(exclusive?'<button type="button" class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться</button>':'')+'</div><p class="courier-offer-feedback" role="status" data-courier-offer-feedback></p></article>';
+   '<div class="kitchen-order-actions"><button type="button" class="kitchen-action" '+(web&&board.busy?'disabled ':'')+(exclusive?'data-courier-accept':'data-courier-claim')+'="'+esc(o.orderId)+'">'+(exclusive?'Принять доставку':web?'Взять заказ':'Взять доставку')+'</button>'+(exclusive?'<button type="button" class="kitchen-cancel" data-courier-decline="'+esc(o.orderId)+'">Отказаться</button>':'')+'</div><p class="courier-offer-feedback" role="status" data-courier-offer-feedback></p></article>';
  }
  function updateDeadlines(){document.querySelectorAll('[data-courier-deadline]').forEach(el=>{const remaining=Math.ceil((Date.parse(el.dataset.courierDeadline)-Date.now())/1000);el.textContent=Number.isFinite(remaining)&&remaining>0?remaining+' с на ответ':'Время предложения истекло';if(remaining<=0)el.closest('article')?.querySelectorAll('button').forEach(b=>b.disabled=true);});}
  function render(offers,data){
@@ -77,16 +77,21 @@
   board=data||{online:false,eligible:false,busy:false,activeCount:0,completedToday:0,available:[],offers};
   const active=Number(board.activeCount||0);
   const previousTab=tab;
-  if(!tabChosen||(web&&tab==='work'&&previousActive>0&&active===0))tab=active>0?'work':'available';
+  if(!tabChosen||(web&&tab==='work'&&previousActive>0&&active===0)||
+     (web&&tab==='available'&&previousActive===0&&active>0))tab=active>0?'work':'available';
   const available=[...(board.available||[])].sort((a,b)=>Number(b.kitchenStatus==='ready')-Number(a.kitchenStatus==='ready')||(a.pickupDistanceM??Infinity)-(b.pickupDistanceM??Infinity));
   const personal=board.offers||offers||[];
+  const badge=$('webCourierCount');
+  const newCount=available.length+personal.length;
+  if(badge){badge.hidden=newCount+active===0;badge.textContent=String(newCount+active);}
+  if(web&&previousActive===0&&active>0)notice('Вам назначена доставка.');
   const shiftButton='<button type="button" id="courierDeskOnline" '+(!board.eligible||shiftBusy?'disabled':'')+'>'+(board.online?'Уйти с линии':'Выйти на линию')+'</button>';
   const shiftDetails='<small id="courierDeskGps"></small><button type="button" id="courierDeskGpsRetry" class="courier-gps-retry" hidden>Обновить GPS</button>';
   const shiftMessage='<p id="courierDeskMessage" role="status" aria-live="polite"></p>';
   const shift=web
    ? '<section class="courier-shift-card courier-shift-compact" aria-label="Приём доставок"><strong class="courier-shift-state" data-online="'+board.online+'">'+(board.online?'На линии':'Не на линии')+'</strong>'+shiftButton+(board.online?shiftDetails:'')+'</section>'+shiftMessage
    : '<section class="courier-shift-card"><div><small>UMMA · КУРЬЕР</small><h2>'+(board.online?(board.busy?'Вы на доставке':'Вы на линии'):'Готовы к доставкам?')+'</h2><p>'+(board.online?'Новые предложения учитывают вашу доступность и GPS.':'Выйдите на линию, чтобы получать и выбирать заказы.')+'</p></div>'+shiftButton+shiftDetails+shiftMessage+'</section><div class="courier-desk-stats"><div><strong>'+active+'</strong><span>В работе</span></div><div><strong>'+Number(board.completedToday||0)+'</strong><span>Доставлено сегодня</span></div></div>';
-  const availableTab='<button type="button" role="tab" data-courier-tab="available">'+(web?'Новые':'Доступные')+' · '+(web?available.length+personal.length:available.length)+'</button>';
+  const availableTab='<button type="button" role="tab" data-courier-tab="available">'+(web?'Новые':'Доступные')+' · '+(web?newCount:available.length)+'</button>';
   const workTab='<button type="button" role="tab" data-courier-tab="work">В работе'+(!web||active?' · '+active:'')+'</button>';
   const personalOffers=personal.length?'<section class="courier-personal-offers"><h3>Предложено вам</h3>'+personal.map(o=>offerCard(o,true)).join('')+'</section>':'';
   const html='<p id="courierConnection" class="courier-connection" role="status" hidden></p>'+shift+
@@ -94,7 +99,7 @@
    (web?'':personalOffers)+
    (web?'<p id="courierHistorySummary" hidden>Доставлено сегодня: '+Number(board.completedToday||0)+'</p>':'')+
    (web?'<div id="courierAvailablePool">'+personalOffers+
-    (available.length?'<section><h3>Свободные доставки</h3>'+available.map(o=>offerCard(o,false)).join('')+'</section>':personal.length?'':'<div class="courier-desk-empty">'+(!board.eligible?($('courierOwnerSetup')?.hidden?'Доступ к доставкам выдаёт администратор кафе.':'Подключите кафе в настройках курьера ниже.'):!board.online?'Вы пока не на линии. Выйдите на линию, чтобы принимать заказы.':board.busy?'Новые заказы появятся после завершения текущей доставки.':'Новых доставок пока нет. Они появятся здесь автоматически.')+'</div>')+'</div>':
+    (available.length?'<section><h3>Свободные доставки</h3>'+(board.busy?'<p class="courier-queue-note">Завершите текущую доставку, чтобы взять следующий заказ.</p>':'')+available.map(o=>offerCard(o,false)).join('')+'</section>':personal.length?'':'<div class="courier-desk-empty">'+(!board.eligible?($('courierOwnerSetup')?.hidden?'Доступ к доставкам выдаёт администратор кафе.':'Подключите кафе в настройках курьера ниже.'):!board.online?'Вы пока не на линии. Выйдите на линию, чтобы принимать заказы.':board.busy?'Новые заказы появятся после завершения текущей доставки.':'Новых доставок пока нет. Они появятся здесь автоматически.')+'</div>')+'</div>':
    '<section id="courierAvailablePool"><div class="courier-pool-heading"><h3>Свободные доставки</h3><small>Сначала готовые к выдаче</small></div>'+(available.length?available.map(o=>offerCard(o,false)).join(''):'<div class="courier-desk-empty">'+(!board.eligible?'Подключите кафе в разделе «Кафе и доступ курьера».':!board.online?'Вы пока не на линии.':board.busy?'Завершите текущую доставку — после этого появятся новые заказы.':'Свободных доставок пока нет. Новые появятся автоматически.')+'</div>')+'</section>');
   if(root._deskMarkup!==html){
    const feedback=$('courierDeskMessage')?.textContent??lastNotice;

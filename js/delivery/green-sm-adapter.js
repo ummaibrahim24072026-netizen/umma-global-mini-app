@@ -8,7 +8,8 @@
   function handles(order) {
     return order.order_type === 'delivery' && order.dispatch_mode === 'manual' &&
       ['customer','staff'].includes(order.created_via) && order.customer_telegram_id == null && order.chat_available !== true &&
-      order.requires_prepayment === true && order.courier_telegram_id == null;
+      order.requires_prepayment === true && order.courier_telegram_id == null &&
+      Boolean(order.green_sm_stage || order.green_sm_booking_id || order.green_sm_tracking_url);
   }
 
   const deliverySteps = [

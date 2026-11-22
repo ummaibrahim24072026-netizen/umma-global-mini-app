@@ -758,7 +758,7 @@ async function counterOrderAction(event){
     paymentMethod:order.payment_method,status:order.status,items:order.cafe_order_items,rubKopecks:order.rub_payment_kopecks,orderType:order.order_type,
     deliveryAddress:order.delivery_address,hasPendingPaymentProof:order.hasPendingPaymentProof,requiresGuestProof:order.requiresGuestPaymentProof===true,guestCash:order.created_via==='customer'&&order.customer_telegram_id==null,staffCounter:order.created_via==='staff'&&
      (order.order_type==='pickup'||order.order_type==='dine_in'&&order.payment_timing==='now'||
-      order.order_type==='delivery'&&order.dispatch_mode==='manual'&&order.requires_prepayment)};
+      order.order_type==='delivery'&&order.requires_prepayment)};
    $('posCash').value='';
    result('');
    setCounterView('payment',{from:'orders'});

@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=45"></script>
+<script src="js/cafe/public-menu-i18n.js?v=46"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -738,7 +738,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
   <div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><div class="receipt-instructions">
   <p id="paymentState" role="status"></p>
-  <p id="receiptHint"></p>
+  <p id="receiptHint"></p><a id="receiptTracking" class="plain-btn bank-link" data-i18n="Отследить доставку" hidden>Отследить доставку</a>
 </div><section id="guestForeignPayment" class="receipt-lines" hidden>
   <div><span data-i18n="К оплате">К оплате</span><strong id="guestForeignAmount" dir="ltr"></strong></div>
   <div id="guestForeignBankRow"><span data-i18n="Банк">Банк</span><strong id="guestForeignBank"></strong></div>
@@ -773,7 +773,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=23"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=24"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
@@ -905,12 +905,14 @@ function renderCheckoutAmounts(subtotal=total()){
  $('checkoutFxRow').hidden=!foreign||!quote;
  if(quote)$('checkoutFxAmount').textContent='≈ '+window.ummaGuestExtras.formatForeign(window.ummaGuestExtras.convert(amount,quote),quote.currency);
  const notice=$('checkoutPaymentNotice');
- const deliveryCash=delivery&&['cash','usd','eur'].includes(method);
+ const courierCash=delivery&&method==='cash';
+ const deliveryCash=delivery&&['usd','eur'].includes(method);
  const unavailable=paymentOptions&&['sber','kaspi','usdt'].some(m=>!paymentOptions[m==='usdt'?'usdtRate':m]);
  const key=loading?'Получаем курс Google Finance…':foreign&&!quote?'Курс временно недоступен. Выберите другой способ оплаты.':
-  deliveryCash?'Оплатите наличными на стойке до отправки заказа.':unavailable?'Недоступные способы оплаты отмечены серым.':'';
+  courierCash?'Оплата наличными курьеру при получении.':deliveryCash?'Оплатите наличными на стойке до отправки заказа.':unavailable?'Недоступные способы оплаты отмечены серым.':'';
  notice.hidden=!key;
  notice.textContent=key?t(key):'';
+ $('submit').textContent=t(pending?'Повторить':courierCash?'Оформить заказ':'Перейти к оплате');
  $('submit').disabled=!cart.size||busy||(!pending&&(shortages()||(foreign&&(!quote||loading))));
 }
 const orderModeInputs=[...document.querySelectorAll('[name="checkoutOrderMode"]')];
@@ -1351,8 +1353,11 @@ if (window.visualViewport) {
   viewport.addEventListener('scroll', syncDialogViewport);
   syncDialogViewport();
 }
+function courierCashOrder(order){
+  return order?.orderType==='delivery'&&order.paymentMethod==='cash'&&!order.payment?.currency;
+}
 function paymentPending(order){
-  return order?.paymentStatus==='pending'&&!terminal(order);
+  return order?.paymentStatus==='pending'&&!terminal(order)&&!courierCashOrder(order);
 }
 function renderCheckoutTitle(stage){
   const title=stage==='cart'?'Корзина':stage==='checkout'?'Оформить заказ':paymentPending(lastOrder)?'Оплата заказа':'Ваш заказ';
@@ -1562,7 +1567,10 @@ function renderReceiptList(list,orders,emptyKey){
     button.className='order-summary';
     button.dataset.orderKey=key;
     const awaitingPayment=paymentPending(order);
-    const status=awaitingPayment?'Ожидаем оплату':statuses[order.status];
+    const deliveryStatus=order.orderType==='delivery'&&!terminal(order)
+      ? ({picked_up:'Курьер в пути',courier_assigned:'Курьер назначен',delivered:'Заказ доставлен'})[order.deliveryStatus] : '';
+    const status=awaitingPayment?'Ожидаем оплату':deliveryStatus||
+      (order.orderType==='delivery'&&order.status==='completed'?'Заказ доставлен':statuses[order.status]);
     const tone=awaitingPayment?'payment':order.status==='cancelled'?'cancelled':'progress';
     const item=order.items?.[0];
     const photo=item&&receiptPhoto(item,order);
@@ -1665,6 +1673,10 @@ function renderSuccess(){
   $('success').toggleAttribute('data-kaspi-pending', lastOrder.payment?.currency==='KZT'&&!$('numberTransfer').hidden);
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
   $('successTotal').textContent=money(lastOrder.totalVnd);
+  const tracking=$('receiptTracking');
+  tracking.hidden=lastOrder.orderType!=='delivery'||terminal(lastOrder)||!/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
+  if(tracking.hidden)tracking.removeAttribute('href');
+  else tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
   if(cashPending){
@@ -1744,7 +1756,7 @@ for(const [code,[label]] of Object.entries(I.languages)){const option=document.c
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
-window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();$('submit').textContent=t(pending?'Повторить':'Перейти к оплате');if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
+window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
 I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();
 const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent});
 window.ummaMenuVoice=window.UmmaVoiceOrder?.create({

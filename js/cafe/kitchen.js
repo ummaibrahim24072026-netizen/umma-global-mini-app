@@ -79,7 +79,8 @@
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
   }
   const waitingBatch=o=>o.preorder_waiting===true&&!["completed","cancelled"].includes(o.status);
-  const awaitingCounterPayment=o=>(o.requires_prepayment===true||o.created_via==="customer")&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
+  const cashOnDelivery=o=>o.order_type==="delivery"&&o.payment_method==="cash"&&o.payment_timing==="on_delivery"&&o.requires_prepayment!==true;
+  const awaitingCounterPayment=o=>(o.requires_prepayment===true||(o.created_via==="customer"&&!cashOnDelivery(o)))&&o.payment_status!=="paid"&&!["completed","cancelled"].includes(o.status);
   const awaitingWebPayment=o=>awaitingCounterPayment(o)&&o.created_via==="customer"&&o.chat_available===false;
   const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
   const isNewOrder=o=>["pending","confirmed"].includes(o.status)&&!awaitingCounterPayment(o);
@@ -220,7 +221,7 @@
       const requiredKind=order.delivery_status==="courier_assigned"?"pickup":order.delivery_status==="picked_up"?"handover":null;
       const proofs=Array.isArray(order.deliveryProofs)?order.deliveryProofs:[];
       if(deliveryAction&&requiredKind&&!proofs.some(p=>p.kind===requiredKind&&Number(p.courier_telegram_id)===Number(order.courier_telegram_id))){
-        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?(webCourier?'Подтвердить получение · фото':'Забрать · фото и GPS'):(webCourier?'Подтвердить вручение · фото':'Товар передал · фото'))+'</button>':'<span>Ожидается фото от курьера</span>';
+        deliveryAction=orderStaffRole==="courier"?'<button type="button" class="kitchen-action" data-order-id="'+esc(order.id)+'" data-delivery-photo="'+requiredKind+'">'+(requiredKind==="pickup"?(webCourier?'Сфотографировать заказ':'Забрать · фото и GPS'):(webCourier?'Сфотографировать вручение':'Товар передал · фото'))+'</button>':'<span>Ожидается фото от курьера</span>';
       }
       if(orderStaffRole==="courier"&&deliveryAction&&!deliveryAction.includes("data-delivery-photo")){deliveryAction=deliveryAction.replace("Курьер забрал","Забрать").replace("Подтвердить доставку","Вручить");}
       const evidenceActions=["manager","courier"].includes(orderStaffRole)&&proofs.length?'<details class="courier-evidence"><summary>Фото доставки</summary>'+proofs.map(p=>'<button type="button" class="kitchen-action" data-view-proof="'+esc(p.id)+'">Фото '+(p.kind==="pickup"?'получения':'вручения')+'</button>').join("")+'</details>':"";
@@ -250,8 +251,13 @@
         const ready=order.status==="ready";
         const stage=closed?(order.status==="cancelled"?"Отменён":"Доставлен")
           :complete?"Подтвердите оплату":goingToCafe?(ready?"Заберите из кафе":"Кафе готовит заказ"):"Доставьте клиенту";
-        const address=goingToCafe?pickup?.address||pickup?.name||"Кафе UMMA":order.delivery_address||"Уточните адрес у клиента";
-        const collectCash=order.payment_status==="pending"&&order.payment_timing==="on_delivery";
+        const address=goingToCafe?pickup?.address||pickup?.name||"Кафе UMMA":
+          order.delivery_address?.replace(/\s*Точка доставки:\s*-?[\d.]+,\s*-?[\d.]+\s*$/i,"").trim()||"Точка клиента на карте";
+        const collectCash=order.payment_status==="pending"&&cashOnDelivery(order);
+        const takeCashFirst=collectCash&&!!courierPayment;
+        const tracking=!closed&&order.delivery_status==="picked_up"
+          ? '<div class="courier-live"><small role="status" data-tracking-status="'+esc(order.id)+'">Передача позиции клиенту</small><button type="button" class="kitchen-action" data-share-delivery="'+esc(order.id)+'">'+
+            (window.ummaCourierTracking?.isSharing(order.id)?'Остановить передачу позиции':'Передавать позицию клиенту')+'</button></div>' : "";
         const payment=order.payment_status==="paid"?"Оплачено":order.payment_status==="refunded"?"Оплата возвращена"
           :collectCash?(complete?"Наличные за заказ: ":"Получить наличными: ")+money(order.total_vnd):"Оплата через кафе";
         const phone=String(order.customer_phone||"").replace(/[^+0-9]/g,"");
@@ -262,11 +268,11 @@
         return '<article data-kitchen-order="'+esc(order.id)+'" data-payment-state="'+esc(order.payment_status)+'" class="kitchen-order-card courier-work-card">'+
           '<div class="courier-work-heading"><h2>Заказ №'+esc(order.order_number)+'</h2><span class="courier-ready '+(ready||closed?'is-ready':'')+'">'+esc(stage)+'</span></div>'+
           '<div class="courier-work-destination"><small>'+ (goingToCafe?"Адрес кафе":"Адрес клиента")+'</small><strong>'+esc(address)+'</strong>'+
-          (!goingToCafe&&order.customer_note?'<p>'+esc(order.customer_note)+'</p>':"")+'</div>'+
+          (!goingToCafe&&order.customer_note?.replace(/(?:^|\n)Web ·[^\n]*$/,"").trim()?'<p>'+esc(order.customer_note.replace(/(?:^|\n)Web ·[^\n]*$/,"").trim())+'</p>':"")+'</div>'+
           '<p class="courier-work-payment" data-cash="'+collectCash+'">'+esc(payment)+'</p>'+
-          '<div class="kitchen-order-actions">'+courierRoute+courierPayment+deliveryAction+
+          '<div class="kitchen-order-actions">'+(takeCashFirst?courierPayment:deliveryAction||courierPayment)+courierRoute+
           '<small class="courier-step-feedback" role="status" aria-live="polite" data-courier-step-status="'+esc(order.id)+'"></small>'+
-          call+chat+'</div>'+list+evidenceActions+'</article>';
+          call+chat+'</div>'+tracking+list+evidenceActions+'</article>';
       }
       const history=orderStaffRole==="manager"&&byId("webOverview")?'<button type="button" data-manager-history="'+esc(order.id)+'">История заказа</button>':"";
       const secondary = cashBoard ? cancel : history + paymentProofButton(order) + cancel + (orderStaffRole === "courier" || awaitingCounterPayment(order) ? "" : paymentAction) + routeAction + courierAssignAction + refundAction + evidenceActions;

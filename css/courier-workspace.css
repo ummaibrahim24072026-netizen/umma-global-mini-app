@@ -216,3 +216,50 @@
   gap: 9px 14px;
   padding-block: 8px;
 }
+
+.web-work-app .courier-work-card [data-payment-status] {
+  flex-basis: 100%;
+}
+.web-work-app .courier-work-card .courier-live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+  color: #315e5b;
+}
+.web-work-app .courier-work-card .courier-live button {
+  min-height: 44px;
+}
+.courier-queue-note {
+  margin-block: 6px 12px;
+  color: #315e5b;
+}
+.courier-photo-preview {
+  box-sizing: border-box;
+  width: min(460px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid #cbe7e4;
+  border-radius: 24px;
+  padding: 16px;
+  color: #153e3c;
+  background: #fff;
+}
+.courier-photo-preview::backdrop {
+  background: #123b3bc2;
+}
+.courier-photo-preview h3 {
+  margin: 0 0 12px;
+}
+.courier-photo-preview img {
+  display: block;
+  width: 100%;
+  max-height: 55dvh;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #eef8f7;
+}
+.courier-photo-preview button {
+  min-height: 48px;
+}
