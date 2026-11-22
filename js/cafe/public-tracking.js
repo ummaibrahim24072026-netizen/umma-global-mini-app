@@ -118,7 +118,7 @@ function drawPosition(d){
   if(!map.getBounds().pad(-0.15).contains(fix))map.panTo(fix);
  }
  lastFix=fix;
- if(destination&&fresh)updateRoad(courier,destination);
+ if(destination)updateRoad(courier,destination);
 }
 $('center').onclick=()=>{if(map&&lastFix)map.panTo(lastFix);};
 function updateRoad(courier,destination){
@@ -128,7 +128,7 @@ function updateRoad(courier,destination){
  const request=++routeRequest;
  void window.UmmaNhaTrangRouter.route(courier,destination).then(result=>{
   if(request!==routeRequest||!map)return;
-  etaMinutes=result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination);
+  etaMinutes=Date.now()-Date.parse(data?.updatedAt||0)<60000?(result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination)):null;
   if(result){
    const path=result.path.map(p=>[p.lat,p.lng]);
    if(road)road.setLatLngs(path);
@@ -139,7 +139,7 @@ function updateRoad(courier,destination){
   if(request!==routeRequest||!map)return;
   routeOrigin=null;
   road?.remove();road=null;
-  etaMinutes=estimateMinutes(courier,destination);
+  etaMinutes=Date.now()-Date.parse(data?.updatedAt||0)<60000?estimateMinutes(courier,destination):null;
   labels();
  });
 }
