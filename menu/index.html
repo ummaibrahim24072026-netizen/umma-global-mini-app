@@ -1757,7 +1757,7 @@ function renderSuccess(){
   $('successTotal').textContent=money(lastOrder.totalVnd);
   const tracking=$('receiptTracking');
   tracking.hidden=(lastOrder.orderType||lastOrder.order_type)!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
-    !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
+    !(/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||(lastOrder.id&&lastOrder.requestKey))||Boolean(lastOrder.greenSmStage);
   // The tracking page itself enforces the pickup milestone server-side.
   // Never disable the navigation link merely because a locally cached receipt is stale.
   const canTrack=!tracking.hidden;
@@ -1765,7 +1765,8 @@ function renderSuccess(){
   if(canTrack){
    // <base href="../"> already points to the repository root; never traverse up again.
    const url=new URL('/umma-global-mini-app/delivery-tracking.html',location.origin);
-   url.searchParams.set('token',lastOrder.trackingToken);
+   if(lastOrder.trackingToken)url.searchParams.set('token',lastOrder.trackingToken);
+   url.searchParams.set('v','live-realtime-10');
    if(lastOrder.id&&lastOrder.requestKey){
     url.searchParams.set('orderId',lastOrder.id);
     url.searchParams.set('requestKey',lastOrder.requestKey);
