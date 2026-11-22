@@ -295,7 +295,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout .checkout-pay-footer .receipt-lines { margin: 0 0 7px; border: 0; }
 #checkout .checkout-pay-footer .receipt-lines > div { padding: 3px 0; font-weight: 700; }
 #checkout .checkout-pay-footer #submit { margin: 0; min-height: 48px; border-radius: 999px; }
-#checkout .checkout-pay-footer .guest-hint { margin: 7px 0 0; font-size: 12px; line-height: 1.35; }
 #checkout[data-stage="checkout"] #result { flex: none; max-height: 20dvh; overflow: auto; margin: 4px 16px; }
 
 /* Compact receipt for an active bank transfer by number. */
@@ -728,7 +727,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
  <p id="checkoutCashChangeResult" class="guest-hint" role="status"></p>
 </div>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
-</fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p></div></form></section></div>
+</fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button></div></form></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
   <header class="receipt-status">
     <span class="receipt-status-icon" aria-hidden="true">
