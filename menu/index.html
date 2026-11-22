@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=43"></script>
+<script src="js/cafe/public-menu-i18n.js?v=44"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -463,7 +463,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=chat-layout-36"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=59"><link rel="stylesheet" href="css/connect-calls.css?v=8">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=chat-layout-36"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=60"><link rel="stylesheet" href="css/connect-calls.css?v=8">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 #checkout[data-stage="receipt"] .checkout-header {
@@ -589,6 +589,15 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
           <button id="saveProfileName" type="submit" class="plain-btn" data-i18n="Сохранить имя" disabled>Сохранить имя</button>
         </div>
         <p id="profileNameStatus" role="status"></p>
+      </form>
+      <form id="profilePhoneForm" class="profile-name-form">
+        <label for="profileDeliveryPhone" data-i18n="Телефон для доставки">Телефон для доставки</label>
+        <p id="profilePhoneHint" class="profile-avatar-hint" data-i18n="Необязательно. Номер сохраняется на этом устройстве.">Необязательно. Номер сохраняется на этом устройстве.</p>
+        <div class="profile-name-controls">
+          <input id="profileDeliveryPhone" type="tel" dir="ltr" autocomplete="tel" maxlength="32" pattern="[+0-9 \(\)\-]{8,32}" aria-describedby="profilePhoneHint">
+          <button id="saveProfilePhone" type="submit" class="plain-btn" data-i18n="Сохранить номер" disabled>Сохранить номер</button>
+        </div>
+        <p id="profilePhoneStatus" role="status"></p>
       </form>
     </div>
     <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
@@ -766,11 +775,11 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=23"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=23"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
-<script src="js/cafe/public-menu-profile-name.js?v=2"></script>
+<script src="js/cafe/public-menu-profile-name.js?v=3"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
 <script src="js/cafe/menu-audience.js?v=1"></script>
 <script>
@@ -1486,6 +1495,7 @@ $('form').onsubmit=async e=>{
   $('success').hidden=false;
   $('checkoutTitle').focus();
   pending=null;
+  window.ummaPublicDelivery?.resetPhone?.();
   try{sessionStorage.removeItem('umma-menu-pending');}catch{}
   for(const [id,n]of cart){
    const p=products.find(p=>p.id===id);

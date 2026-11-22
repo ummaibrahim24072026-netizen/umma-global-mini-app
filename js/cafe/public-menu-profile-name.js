@@ -1,41 +1,65 @@
 (() => {
   'use strict';
 
-  const storageKey = 'umma-menu-profile-name';
-  const form = document.getElementById('profileNameForm');
-  const field = document.getElementById('profileDisplayName');
-  const save = document.getElementById('saveProfileName');
-  const status = document.getElementById('profileNameStatus');
+  const $ = id => document.getElementById(id);
   const t = window.ummaMenuI18n.t;
-  let savedName = null;
-  let statusKey = '';
-  try {
-    savedName = localStorage.getItem(storageKey)?.trim().slice(0, field.maxLength) ?? null;
-  } catch {}
-  field.value = savedName ?? '';
-  window.ummaMenuProfileName = () => savedName;
 
-  function renderStatus() {
-    status.textContent = statusKey ? t(statusKey) : '';
+  function bindField({key, form, field, save, status, messages, onSave}) {
+    const input = $(field);
+    const button = $(save);
+    const feedback = $(status);
+    let savedValue = null;
+    let statusKey = '';
+
+    try {
+      savedValue = localStorage.getItem(key)?.trim().slice(0, input.maxLength) ?? null;
+    } catch {}
+    input.value = savedValue ?? '';
+
+    function renderStatus() {
+      feedback.textContent = statusKey ? t(statusKey) : '';
+    }
+
+    input.addEventListener('input', () => {
+      button.disabled = input.value.trim() === (savedValue ?? '');
+      statusKey = '';
+      renderStatus();
+    });
+    $(form).addEventListener('submit', event => {
+      event.preventDefault();
+      const value = input.value.trim().slice(0, input.maxLength);
+      try {
+        localStorage.setItem(key, value);
+        savedValue = input.value = value;
+        button.disabled = true;
+        statusKey = value ? messages.saved : messages.removed;
+      } catch {
+        statusKey = messages.failed;
+        renderStatus();
+        return;
+      }
+      renderStatus();
+      onSave?.();
+    });
+    window.addEventListener('umma-menu:languagechange', renderStatus);
+    return () => savedValue;
   }
 
-  field.addEventListener('input', () => {
-    save.disabled = field.value.trim() === (savedName ?? '');
-    statusKey = '';
-    renderStatus();
+  window.ummaMenuProfileName = bindField({
+    key: 'umma-menu-profile-name', form: 'profileNameForm', field: 'profileDisplayName',
+    save: 'saveProfileName', status: 'profileNameStatus',
+    messages: {
+      saved: 'Имя сохранено.', removed: 'Имя удалено.',
+      failed: 'Не удалось сохранить имя на этом устройстве.',
+    },
   });
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    const name = field.value.trim().slice(0, field.maxLength);
-    try {
-      localStorage.setItem(storageKey, name);
-      savedName = field.value = name;
-      save.disabled = true;
-      statusKey = name ? 'Имя сохранено.' : 'Имя удалено.';
-    } catch {
-      statusKey = 'Не удалось сохранить имя на этом устройстве.';
-    }
-    renderStatus();
+  window.ummaMenuProfilePhone = bindField({
+    key: 'umma-menu-profile-delivery-phone', form: 'profilePhoneForm', field: 'profileDeliveryPhone',
+    save: 'saveProfilePhone', status: 'profilePhoneStatus',
+    messages: {
+      saved: 'Номер сохранён.', removed: 'Номер удалён.',
+      failed: 'Не удалось сохранить номер на этом устройстве.',
+    },
+    onSave: () => window.dispatchEvent(new Event('umma-menu:profile-phone-change')),
   });
-  window.addEventListener('umma-menu:languagechange', renderStatus);
 })();

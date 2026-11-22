@@ -8,6 +8,19 @@ const choosePoint='Выберите точку доставки на карте.
 const mapUnavailable='Карта недоступна. Используйте геолокацию.';
 const locateFailed='Не удалось определить местоположение. Выберите точку на карте.';
 const isDelivery=()=>$('orderType').value==='delivery';
+const phone=$('deliveryPhone');
+let autoPhone='',phoneEdited=false;
+phone.addEventListener('input',()=>{phoneEdited=true;});
+function syncPhone(){
+ if(!isDelivery()||$('customerFields').disabled||phoneEdited||phone.value!==autoPhone)return;
+ autoPhone=window.ummaMenuProfilePhone?.()||'';
+ phone.value=autoPhone;
+}
+window.addEventListener('umma-menu:profile-phone-change',syncPhone);
+function resetPhone(){
+ phoneEdited=false;
+ autoPhone=phone.value=isDelivery()?(window.ummaMenuProfilePhone?.()||''):'';
+}
 function text(key){statusKey=key;$('deliveryPointState').removeAttribute('data-i18n');$('deliveryPointState').textContent=t(key);}
 window.addEventListener('umma-menu:languagechange',()=>text(statusKey));
 // Photon receives only the explicitly selected point, without order or customer details.
@@ -108,6 +121,7 @@ function mode(){
  for(const id of ['deliveryAddress','deliveryPhone']){$(id).required=delivery;$(id).disabled=!delivery;}
  $('tableNumber').closest('label').hidden=true;
  if(delivery){
+  syncPhone();
   text(point?'Точка доставки выбрана.':choosePoint);
   openMap();
  }
@@ -118,6 +132,7 @@ window.ummaPublicDelivery={
  setCafe(value){cafe=value;if(value)openMap();},
  point:()=>point?{...point}:null,
  fields(){if($('orderType').value!=='delivery')return {};if(!point)throw Error(t('Выберите точку доставки на карте.'));return {orderType:'delivery',address:$('deliveryAddress').value.trim(),phone:$('deliveryPhone').value.trim(),...point};},
- reset(){cancelAddress();autoAddress='';point=null;generation++;if(marker){marker.remove();marker=null;}mode();text('Выберите точку доставки на карте.');},
+ resetPhone,
+ reset(){cancelAddress();autoAddress='';resetPhone();point=null;generation++;if(marker){marker.remove();marker=null;}mode();text('Выберите точку доставки на карте.');},
 };
 })();
