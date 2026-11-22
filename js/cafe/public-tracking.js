@@ -2,7 +2,10 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),I=window.ummaMenuI18n,t=I.t;
-const token=new URLSearchParams(location.hash.slice(1)).get('token')||'';
+const query=new URLSearchParams(location.search);
+const token=query.get('token')||new URLSearchParams(location.hash.slice(1)).get('token')||'';
+const requestKey=query.get('requestKey')||'';
+const orderId=query.get('orderId')||'';
 let road=null,routeRequest=0,routeOrigin=null;
 let map=null,marker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
 const terminal=['delivered','completed','cancelled'];
@@ -36,8 +39,10 @@ function drawPosition(d){
  const courier=point(d),destination=point(d.destination);
  const age=Date.now()-Date.parse(d.updatedAt);
  if(d.state!=='picked_up'||isTerminal(d)||!courier||!(age>=-10000&&age<60000)){
-  hideMap();
-  if(d.state==='picked_up'&&!isTerminal(d))connectionKey='Ожидаем свежую геопозицию курьера';
+  if(d.state==='picked_up'&&!isTerminal(d)&&destination&&window.L&&window.UmmaMaps){
+   if(!map){$('map').hidden=false;$('map').closest('main').dataset.map='';map=UmmaMaps.create($('map'),destination,()=>{});map.zoomControl?.setPosition('bottomleft');UmmaMaps.marker(map,destination);map.setView([destination.lat,destination.lng],15);}
+   connectionKey='Ожидаем свежую геопозицию курьера';
+  }else hideMap();
   return;
  }
  if(!routeOrigin)etaMinutes=destination?estimateMinutes(courier,destination):null;
@@ -118,7 +123,12 @@ function labels(){
 for(const [code,[label]]of Object.entries(I.languages)){const o=document.createElement('option');o.value=code;o.textContent=label;$('menuLanguage').append(o);}$('menuLanguage').value=I.language;$('menuLanguage').onchange=e=>I.setLanguage(e.target.value);window.addEventListener('umma-menu:languagechange',labels);labels();
 $('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!('Notification'in window))return;try{const p=await Notification.requestPermission();notificationKey=p==='granted'?'Уведомления разрешены для открытой страницы':'Уведомления не разрешены';labels();}catch{notificationKey='Уведомления не разрешены';labels();}};
 async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{
- const r=await fetch('https://zwzojugspldexyyljwpr.supabase.co/functions/v1/umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token}),cache:'no-store',signal:controller.signal});
+ const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/umma-guest-delivery';
+ const options=payload=>({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),cache:'no-store',signal:controller.signal});
+ let r=await fetch(endpoint,options({action:'tracking',token}));
+ if(r.status===404&&/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId)){
+  r=await fetch(endpoint,options({action:'tracking',requestKey,orderId}));
+ }
  if(r.status===404){stopped=true;hideMap();statusKey='Ссылка отслеживания недействительна или истекла.';labels();return;}
  const d=await r.json();if(!r.ok||!d.ok)throw Error();if(stopped)return;
  data=d;statusKey='';connectionKey='';
@@ -128,5 +138,5 @@ async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);
  if(isTerminal(d))stopped=true;
  }catch{if(!stopped){hideMap();connectionKey='Нет связи. Повторяем запрос…';labels();}}finally{clearTimeout(timeout);active=false;if(!stopped)timer=setTimeout(poll,5000);}}
 window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);controller?.abort();hideMap();});window.addEventListener('pageshow',e=>{if(e.persisted){stopped=false;void poll();}});
-if(/^[a-f0-9]{64}$/.test(token)){if(!data)statusKey='Загружаем меню…';labels();void poll();}else{statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;}
+if(/^[a-f0-9]{64}$/.test(token)||(/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId))){if(!data)statusKey='Загружаем меню…';labels();void poll();}else{statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;}
 })();
