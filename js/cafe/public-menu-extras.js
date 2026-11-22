@@ -309,6 +309,8 @@ async function poll(){
     const d=await r.json();
     if(!r.ok||!d.ok)throw Error();
     const update={...d.order,payment:d.payment};
+    // A generic receipt status response must not erase a delivery milestone already confirmed by tracking.
+    if(!update.deliveryStatus&&current.deliveryStatus)update.deliveryStatus=current.deliveryStatus;
     if(current.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(current.trackingToken||'')){
      try{
       const tr=await fetch(ctx.API+'umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token:current.trackingToken}),cache:'no-store',signal:AbortSignal.timeout(8000)});
