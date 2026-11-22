@@ -392,8 +392,41 @@ console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, e
  dom.window.close();
 }
 console.log('PASS Kaspi, RUB bank shortcuts and USDT payment receipts: shared layout, exact number copying, proof attachment, and paid-state cleanup.');
+const {stripTypeScriptTypes}=await import('node:module');
+const vm=await import('node:vm');
+{
+ const now=Date.parse('2026-11-22T04:20:00Z');
+ const html=(stamp)=>'United States Dollar / Vietnamese dong</div>'
+  +'<span jsname="Pdsbrc" class=""><span>25,801.5244</span></span>'
+  +'<div>'+stamp+'</div>';
+ for(const fresh of [true,false]){
+  const requests=[];
+  const rates=vm.runInNewContext(stripTypeScriptTypes(read('supabase/functions/cafe-guest-order/ruble-rate.ts')
+   .replace(/^export /gm,''))+';({googleCashQuote})',{
+   Date:class extends Date{static now(){return now;}},
+   AbortSignal,
+   fetch:async url=>{
+    requests.push(url);
+    const stamp=fresh&&url.endsWith('?hl=en')?'Nov 22, 4:15:00\u202fAM UTC':'Nov 20, 10:00:00\u202fPM UTC';
+    return new Response(html(stamp));
+   },
+  });
+  const quote=await rates.googleCashQuote('USD');
+  if(fresh){
+   assert.equal(quote.currency,'USD');
+   assert.equal(quote.vndPerUnit,25801.5244);
+   assert.equal(quote.quotedAt,'2026-11-22T04:15:00.000Z');
+   assert.equal(await rates.googleCashQuote('USD').then(value=>value.vndPerUnit),25801.5244);
+  }else assert.equal(quote,null);
+  assert.deepEqual(requests,[
+   'https://www.google.com/finance/beta/quote/USD-VND',
+   'https://www.google.com/finance/beta/quote/USD-VND?hl=en',
+  ]);
+ }
+}
+console.log('PASS USD cash rate: Google Finance fallback, cache reuse and stale quote rejection.');
 // Exercise the deployed handler code: guest capabilities, server totals and payment scope.
-const {stripTypeScriptTypes}=await import('node:module');const vm=await import('node:vm');const {webcrypto}=await import('node:crypto');
+const {webcrypto}=await import('node:crypto');
 let handler,rpcCalls=[],allowStatus=true,receiptReads=0,storedMethod='qr',storedStatus='pending';
 const receiptQuery={
  select(){return this;},

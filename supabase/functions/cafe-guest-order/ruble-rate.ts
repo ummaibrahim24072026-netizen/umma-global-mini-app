@@ -7,6 +7,7 @@ const pairs={
 };
 type Pair=keyof typeof pairs;
 const maxQuoteAge=72*60*60*1000;
+const maxCashQuoteAge=24*60*60*1000;
 type Quote={rate:string,quotedAt:string};
 
 export function parseGoogleRate(html:string, pair:Pair, now=Date.now()):Quote|null {
@@ -25,20 +26,38 @@ export function parseGoogleRate(html:string, pair:Pair, now=Date.now()):Quote|nu
 
 const cache=new Map<Pair,{quote:Quote,until:number}>();
 const fetching=new Map<Pair,Promise<Quote|null>>();
+async function fetchGoogleRate(pair:Pair, query:string):Promise<Quote|null> {
+ try{
+  const res=await fetch(googleFinance+pair+query,{
+   headers:{
+    'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+    'Accept-Language':'en-US,en;q=0.9',
+   },
+   signal:AbortSignal.timeout(6000),
+  });
+  return res.ok?parseGoogleRate(await res.text(),pair):null;
+ }catch{
+  return null;
+ }
+}
+
 async function googleRate(pair:Pair):Promise<Quote|null> {
  const cached=cache.get(pair);
  if(cached&&Date.now()<cached.until)return cached.quote;
  const pending=fetching.get(pair);
  if(pending)return pending;
  const request=(async()=>{
-  try{
-   const res=await fetch(googleFinance+pair+'?hl=en',{headers:{'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'},signal:AbortSignal.timeout(10000)});
-   const quote=res.ok?parseGoogleRate(await res.text(),pair):null;
-   if(quote)cache.set(pair,{quote,until:Math.min(Date.now()+300000,Date.parse(quote.quotedAt)+maxQuoteAge)});
+  const cash=pair==='USD-VND'||pair==='EUR-VND';
+  const maxAge=cash?maxCashQuoteAge:maxQuoteAge;
+  const variants=pair==='USD-VND'?['','?hl=en']:['?hl=en'];
+  for(const query of variants){
+   const quote=await fetchGoogleRate(pair,query);
+   const now=Date.now();
+   if(!quote||now-Date.parse(quote.quotedAt)>=maxAge)continue;
+   cache.set(pair,{quote,until:Math.min(now+300000,Date.parse(quote.quotedAt)+maxAge)});
    return quote;
-  }catch{
-   return null;
   }
+  return null;
  })().finally(()=>fetching.delete(pair));
  fetching.set(pair,request);
  return request;
@@ -62,6 +81,6 @@ export async function googleTengeQuote(){
 
 export async function googleCashQuote(currency:'USD'|'EUR'){
  const quote=await googleRate(currency==='USD'?'USD-VND':'EUR-VND');
- if(!quote||Date.now()-Date.parse(quote.quotedAt)>=24*60*60*1000)return null;
+ if(!quote)return null;
  return {currency,vndPerUnit:Number(quote.rate),quotedAt:quote.quotedAt,source:'Google Finance'};
 }
