@@ -1806,6 +1806,34 @@ async function refreshAvailability(){
     if(!pending&&shortages())status('Часть блюд уже закончилась. Измените корзину.',true);
   }catch{}finally{availabilityBusy=false;}
 }
+// Independently reconcile the customer tracking button with the authoritative delivery state.
+// The receipt/payment refresh can fail or lag without preventing live delivery tracking.
+let deliveryButtonSyncBusy=false;
+async function syncDeliveryButton(){
+ if(deliveryButtonSyncBusy||document.hidden||!lastOrder||lastOrder.orderType!=='delivery'||terminal(lastOrder))return;
+ const token=lastOrder.trackingToken;
+ if(!/^[a-f0-9]{64}$/.test(token||''))return;
+ deliveryButtonSyncBusy=true;
+ const observedOrder=lastOrder;
+ try{
+  const response=await fetch(API+'umma-guest-delivery',{
+   method:'POST',headers:{'content-type':'application/json'},
+   body:JSON.stringify({action:'tracking',token}),cache:'no-store',signal:AbortSignal.timeout(10000)
+  });
+  const result=await response.json();
+  if(!response.ok||!result.ok||lastOrder!==observedOrder)return;
+  if(['picked_up','courier_assigned','delivered','waiting_courier'].includes(result.state)){
+   if(observedOrder.deliveryStatus!==result.state){
+    observedOrder.deliveryStatus=result.state;
+    saveReceipt(observedOrder);
+    renderSuccess();
+   }
+  }
+ }catch{}finally{deliveryButtonSyncBusy=false;}
+}
+setInterval(()=>void syncDeliveryButton(),5000);
+document.addEventListener('umma:fulfillment-realtime',()=>void syncDeliveryButton());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void syncDeliveryButton();});
 setInterval(()=>void refreshAvailability(),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAvailability();});
 window.addEventListener('online',()=>{if(menuState==='error')void load();else void refreshAvailability();});
 
