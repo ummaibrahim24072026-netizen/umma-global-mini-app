@@ -313,7 +313,14 @@ async function poll(){
      try{
       const tr=await fetch(ctx.API+'umma-guest-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'tracking',token:current.trackingToken}),cache:'no-store',signal:AbortSignal.timeout(8000)});
       const state=await tr.json();
-      if(tr.ok&&state.ok&&!update.greenSmStage)update.deliveryStatus=state.state;
+      if(tr.ok&&state.ok&&!update.greenSmStage){
+       // The tracking endpoint may report GPS availability rather than the delivery milestone.
+       // Never replace a confirmed pickup with 'not_sharing' or 'stale': those are GPS states.
+       const milestone=['picked_up','delivered','courier_assigned','waiting_courier'].includes(state.state)?state.state:null;
+       if(milestone)update.deliveryStatus=milestone;
+       else if(['live','not_sharing','stale'].includes(state.state)&&!['delivered','completed','cancelled'].includes(update.deliveryStatus))update.deliveryStatus='picked_up';
+       if(['delivered','completed','cancelled'].includes(state.orderStatus))update.status=state.orderStatus;
+      }
      }catch{}
     }
     if(!context?.activeReceipts().includes(current)||current.status==='completed')return;
