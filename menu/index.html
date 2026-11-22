@@ -1758,7 +1758,7 @@ function renderSuccess(){
     !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
   const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
   tracking.setAttribute('aria-disabled',String(!canTrack));
-  if(canTrack)tracking.href='../delivery-tracking.html#token='+lastOrder.trackingToken;
+  if(canTrack)tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
   else tracking.removeAttribute('href');
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
@@ -1810,26 +1810,30 @@ async function refreshAvailability(){
 // The receipt/payment refresh can fail or lag without preventing live delivery tracking.
 let deliveryButtonSyncBusy=false;
 async function syncDeliveryButton(){
- if(deliveryButtonSyncBusy||document.hidden||!lastOrder||lastOrder.orderType!=='delivery'||terminal(lastOrder))return;
- const token=lastOrder.trackingToken;
- if(!/^[a-f0-9]{64}$/.test(token||''))return;
+ if(deliveryButtonSyncBusy||document.hidden)return;
+ const candidates=activeReceipts().filter(o=>o.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(o.trackingToken||''));
+ if(!candidates.length)return;
  deliveryButtonSyncBusy=true;
- const observedOrder=lastOrder;
  try{
-  const response=await fetch(API+'umma-guest-delivery',{
-   method:'POST',headers:{'content-type':'application/json'},
-   body:JSON.stringify({action:'tracking',token}),cache:'no-store',signal:AbortSignal.timeout(10000)
-  });
-  const result=await response.json();
-  if(!response.ok||!result.ok||lastOrder!==observedOrder)return;
-  if(['picked_up','courier_assigned','delivered','waiting_courier'].includes(result.state)){
-   if(observedOrder.deliveryStatus!==result.state){
-    observedOrder.deliveryStatus=result.state;
-    saveReceipt(observedOrder);
-    renderSuccess();
-   }
-  }
- }catch{}finally{deliveryButtonSyncBusy=false;}
+  await Promise.all(candidates.map(async current=>{
+   try{
+    const response=await fetch(API+'umma-guest-delivery',{
+     method:'POST',headers:{'content-type':'application/json'},
+     body:JSON.stringify({action:'tracking',token:current.trackingToken}),
+     cache:'no-store',signal:AbortSignal.timeout(10000)
+    });
+    const result=await response.json();
+    if(!response.ok||!result.ok||terminal(current))return;
+    if(['picked_up','courier_assigned','delivered','waiting_courier'].includes(result.state)){
+     if(current.deliveryStatus!==result.state){
+      current.deliveryStatus=result.state;
+      saveReceipt(current);
+     }
+     if(current===lastOrder)renderSuccess();
+    }
+   }catch(error){console.warn('Delivery tracking refresh failed',error);}
+  }));
+ }finally{deliveryButtonSyncBusy=false;}
 }
 setInterval(()=>void syncDeliveryButton(),5000);
 document.addEventListener('umma:fulfillment-realtime',()=>void syncDeliveryButton());
