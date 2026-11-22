@@ -1756,9 +1756,9 @@ function renderSuccess(){
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
   $('successTotal').textContent=money(lastOrder.totalVnd);
   const tracking=$('receiptTracking');
-  tracking.hidden=lastOrder.orderType!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
+  tracking.hidden=(lastOrder.orderType||lastOrder.order_type)!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
     !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
-  const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
+  const canTrack=!tracking.hidden&&(lastOrder.deliveryStatus==='picked_up'||lastOrder.delivery_status==='picked_up');
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack)tracking.href=new URL('delivery-tracking.html',document.baseURI).href+'#token='+lastOrder.trackingToken;
   else tracking.removeAttribute('href');
@@ -1837,7 +1837,7 @@ async function syncDeliveryButton(){
   }));
  }finally{deliveryButtonSyncBusy=false;}
 }
-setInterval(()=>void syncDeliveryButton(),5000);
+setInterval(()=>void syncDeliveryButton(),3000);
 document.addEventListener('umma:fulfillment-realtime',()=>void syncDeliveryButton());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void syncDeliveryButton();});
 setInterval(()=>void refreshAvailability(),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAvailability();});
@@ -1875,7 +1875,7 @@ $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
 window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
-I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();
+I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();void syncDeliveryButton();
 const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent});
 window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
  id:'menuVoice',host:$('voiceOrderHost'),reviewHost:$('voiceReviewHost'),language:()=>I.language,name,money,total,image:safeImage,
