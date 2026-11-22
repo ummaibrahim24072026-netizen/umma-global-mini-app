@@ -70,6 +70,22 @@ async function fits(page, scene, selectors = []) {
   checks++;
 }
 
+async function hasReadableContrast(locator, label) {
+  const contrast = await locator.evaluate(node => {
+    function luminance(colour) {
+      return colour.match(/\d+(?:\.\d+)?/g).slice(0, 3)
+        .map(value => Number(value) / 255)
+        .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+        .reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+    }
+    const style = getComputedStyle(node);
+    const foreground = luminance(style.color);
+    const background = luminance(getComputedStyle(node.closest('.checkout-header') || node).backgroundColor);
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+  });
+  assert.ok(contrast >= 4.5, label + ': contrast ' + contrast.toFixed(2));
+}
+
 try {
   browser = await chromium.launch({
     executablePath: process.env.QA_CHROMIUM_PATH || undefined,
@@ -184,14 +200,23 @@ try {
   assert.equal(await page.locator('#dishDetails').evaluate(dialog => dialog.open), true,
     'catalog refresh preserves the opened description');
   await page.locator('.dock-menu').click();
+  await page.keyboard.press('Tab');
+  const menuTab = page.locator('.dock-menu');
+  await menuTab.focus();
+  assert.equal(await menuTab.evaluate(node => getComputedStyle(node).outlineStyle), 'solid');
   await page.locator('#openCart').click();
+  await hasReadableContrast(page.locator('#continueCheckout'), 'Cart action');
   await page.locator('#continueCheckout').click();
+  await hasReadableContrast(page.locator('#checkout .customer-heading-brand'), 'Checkout heading');
+  await hasReadableContrast(page.locator('#submit'), 'Checkout action');
   await page.setViewportSize({width:320,height:568});
   await fits(page, 'Checkout form', ['#checkout','.checkout-body']);
   await page.locator('#submit').click();
   await page.locator('#successNumber').waitFor();
   assert.match(await page.locator('#successNumber').textContent(), /71/);
   assert.equal(checkoutCalls, 1);
+  await hasReadableContrast(page.locator('#checkout .customer-heading-brand'), 'Receipt heading');
+  await hasReadableContrast(page.locator('#newOrder'), 'Receipt action');
 
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);

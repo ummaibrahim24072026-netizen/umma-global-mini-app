@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
-*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button,a,input,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--umma-brand-primary);outline-offset:3px}#customerChatDialog .connect-close:focus,#customerChatDialog .connect-close:focus-visible{outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent}#customerDock .customer-actions .plain-btn:focus,#customerDock .customer-actions .plain-btn:focus-visible{outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}a{color:var(--umma-brand-strong)}
+*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button,a,input,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--umma-brand-primary);outline-offset:3px}#customerChatDialog .connect-close,#customerDock .customer-actions .plain-btn{-webkit-tap-highlight-color:transparent}#customerDock .customer-actions :is(a,button):focus-visible{outline:2px solid var(--umma-brand-deep);outline-offset:-3px}[hidden]{display:none!important}a{color:var(--umma-brand-strong)}
 #cafePage{container:umma-shell / inline-size;max-width:820px;margin:auto;padding:0 16px 110px;min-height:100dvh}.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px}.brand{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;letter-spacing:.02em}.brand img{width:34px;height:34px;border-radius:50%;object-fit:contain}.topbar small{font-size:11px;font-weight:650;letter-spacing:.08em;color:var(--umma-brand-muted)}
 .topbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .share-menu-status:empty{display:none}.share-menu-status{margin:0 0 10px;text-align:end;font-size:13px;color:var(--umma-brand-strong)}
@@ -135,7 +135,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 52px;
   padding-inline: 46px;
   border-radius: 999px !important;
-  background: var(--umma-brand-primary) !important;
+  background: var(--umma-brand-strong) !important;
   color: #fff !important;
   box-shadow: none;
   white-space: normal;
@@ -216,7 +216,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 0;
   padding: 10px 16px !important;
   border-bottom: 2px solid #d1ac58 !important;
-  background: var(--umma-brand-primary) !important;
+  background: var(--umma-brand-strong) !important;
 }
 #checkout[data-stage="checkout"] .checkout-header::before { content: none; }
 #checkout[data-stage="checkout"] #checkoutTitle { max-width: none; }
@@ -291,7 +291,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 #checkout .checkout-pay-footer .receipt-lines { margin: 0 0 7px; border: 0; }
 #checkout .checkout-pay-footer .receipt-lines > div { padding: 3px 0; font-weight: 700; }
-#checkout .checkout-pay-footer #submit { margin: 0; min-height: 48px; border-radius: 999px; }
+#checkout .checkout-pay-footer #submit { margin: 0; min-height: 48px; border-radius: 999px; background: var(--umma-brand-strong); }
 #checkout .checkout-pay-footer .guest-hint { margin: 7px 0 0; font-size: 12px; line-height: 1.35; }
 #checkout[data-stage="checkout"] #result { flex: none; max-height: 20dvh; overflow: auto; margin: 4px 16px; }
 
@@ -358,7 +358,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #numberTransfer > .transfer-rate small { display: inline; }
 #checkout #numberTransfer > .transfer-rate + div { border: 0; }
 #checkout #numberTransfer .ruble-bank-picker { padding: 4px 0 0; }
-#checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); }
+#checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-brand-strong); }
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
 #checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--umma-brand-soft); }
@@ -454,7 +454,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success[data-cash-pending="true"] #newOrder{
   border-radius:999px!important;min-height:54px;
-  background:var(--umma-brand-primary)!important;
+  background:var(--umma-brand-strong)!important;
   color:#fff!important;font-weight:800;box-shadow:0 8px 18px rgba(7,127,130,.18);
 }
 @media(max-width:360px){
@@ -467,7 +467,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 #checkout[data-stage="receipt"] .checkout-header {
-  background: var(--umma-brand-primary);
+  background: var(--umma-brand-strong);
   border-bottom: 1px solid var(--gold);
 }
 #checkout:is([data-stage="checkout"], [data-stage="receipt"]) :is(.customer-heading-brand, #checkoutTitle, #submit, #copyTransferNumber) {
@@ -844,6 +844,7 @@ const count=()=>[...cart.values()].reduce((a,b)=>a+b,0);
 const total=()=>products.reduce((a,p)=>a+qty(p.id)*Number(p.price_vnd),0);
 const paymentInputs=[...document.querySelectorAll('[name="paymentMethod"]')];
 const checkoutMethod=()=>pending?.paymentMethod||paymentInputs.find(input=>input.checked)?.value;
+const quoteMethod=()=>checkoutMethod()==='bank_transfer'?'sber':checkoutMethod();
 const foreignMethods=new Set(['sber','kaspi','usdt','usd','eur']);
 let paymentOptions=null, optionsRequest=null;
 const paymentQuotes=new Map(), quoteRequests=new Map();
@@ -892,7 +893,7 @@ function renderCheckoutAmounts(subtotal=total()){
  $('checkoutDeliveryFee').textContent=money(fee);
  const amount=subtotal+fee;
  $('checkoutTotal').textContent=money(amount);
- const method=checkoutMethod()==='bank_transfer'?'sber':checkoutMethod();
+ const method=quoteMethod();
  const quote=paymentQuotes.get(method),foreign=foreignMethods.has(method);
  const loading=quoteRequests.has(method);
  $('checkoutFxRow').hidden=!foreign||!quote;
@@ -1395,7 +1396,7 @@ $('continueCheckout').onclick=()=>{
   checkout.close();
   checkoutStage('checkout');
   loadPaymentOptions();
-  loadPaymentQuote(checkoutMethod());
+  loadPaymentQuote(quoteMethod());
   renderCheckoutAmounts();
   checkout.showModal();
   $('checkoutTitle').focus({preventScroll:true});
@@ -1421,7 +1422,7 @@ $('openCart').onclick=()=>{
   $('success').hidden=true;
   checkoutStage(pending?'checkout':'cart');
   renderCart();
-  if(pending){loadPaymentOptions();loadPaymentQuote(checkoutMethod()==='bank_transfer'?'sber':checkoutMethod());checkout.showModal();}
+  if(pending){loadPaymentOptions();loadPaymentQuote(quoteMethod());checkout.showModal();}
   else checkout.show();
   document.body.style.overflow='hidden';
 };
@@ -1435,6 +1436,11 @@ $('form').onsubmit=async e=>{
  if(!cart.size||busy||$('submit').disabled)return;
  const orderType=$('orderType').value;
  if(!pending){
+  const method=quoteMethod();
+  if(foreignMethods.has(method)&&method!=='usdt'&&paymentQuotes.get(method)?.expires<=Date.now()){
+   loadPaymentQuote(method);
+   return;
+  }
   if(orderType==='delivery'&&!window.ummaPublicDelivery){
    status('Не удалось оформить заказ.',true);
    return;
@@ -1704,7 +1710,17 @@ async function refreshAvailability(){
   }catch{}finally{availabilityBusy=false;}
 }
 setInterval(()=>void refreshAvailability(),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAvailability();});
-window.addEventListener('online',()=>{if(menuState==='error')void load();else void refreshAvailability();});
+function recoverCheckoutPayment(){
+  const checkout=$('checkout');
+  if(!checkout.open||checkout.dataset.stage!=='checkout'||busy||pending)return;
+  loadPaymentQuote(quoteMethod());
+  if(!paymentOptions)loadPaymentOptions();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)recoverCheckoutPayment();});
+window.addEventListener('online',()=>{
+  if(menuState==='error')void load();else void refreshAvailability();
+  recoverCheckoutPayment();
+});
 
 function renderTables(){const selected=$('tableNumber').value;$('tableNumber').replaceChildren();for(const value of ['',...Array.from({length:6},(_,i)=>String(i+1))]){const option=document.createElement('option');option.value=value;option.textContent=value?t('Стол №{number}',{number:num(Number(value))}):t('У стойки выдачи');$('tableNumber').append(option);}$('tableNumber').value=selected;}
 for(const storage of [sessionStorage,localStorage]){

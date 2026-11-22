@@ -392,6 +392,67 @@ console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, e
  dom.window.close();
 }
 console.log('PASS Kaspi, RUB bank shortcuts and USDT payment receipts: shared layout, exact number copying, proof attachment, and paid-state cleanup.');
+{
+ const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
+  w.AbortSignal=AbortSignal;
+  w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+  w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  w.eval(read('js/cafe/public-menu-i18n.js'));
+  w.eval(read('js/cafe/public-menu-extras.js'));
+  w.eval(read('js/cafe/product-photo.js'));
+  w.fetch=async(url,options)=>{
+   if(options?.body){
+    submissions++;
+    return new Response(JSON.stringify({ok:false}),{status:400});
+   }
+   if(url.includes('paymentQuote=usd')){
+    quoteRequests++;
+    if(!online)throw Error('offline');
+    return new Response(JSON.stringify({ok:true,currency:'USD',vndPerUnit:quoteRequests===1?25000:30000}));
+   }
+   return new Response(JSON.stringify({ok:true,products:[product]}));
+  };
+ }});
+ const w=dom.window,d=w.document,$=id=>d.getElementById(id);
+ const settle=()=>new Promise(resolve=>setTimeout(resolve,20));
+ await settle();
+ let submissions=0,quoteRequests=0,online=true;
+ let now=w.Date.now();
+ w.Date.now=()=>now;
+ d.querySelector('[data-change="1"]').click();
+ $('openCart').click();
+ $('continueCheckout').click();
+ const usd=d.querySelector('[name="paymentMethod"][value="usd"]');
+ usd.checked=true;
+ usd.dispatchEvent(new w.Event('change'));
+ await settle();
+ assert.equal(quoteRequests,1);
+ assert.equal($('submit').disabled,false);
+ assert.match($('checkoutFxAmount').textContent,/3[.,]60/);
+
+ now+=60000;
+ online=false;
+ const submit=()=>$('form').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ submit();
+ assert.equal($('submit').disabled,true);
+ await settle();
+ assert.equal(quoteRequests,2);
+ assert.equal(submissions,0,'an expired rate cannot create an order');
+ assert.equal($('checkoutFxRow').hidden,true);
+
+ online=true;
+ w.dispatchEvent(new w.Event('online'));
+ await settle();
+ assert.equal(quoteRequests,3);
+ assert.equal($('submit').disabled,false);
+ assert.match($('checkoutFxAmount').textContent,/3[.,]00/);
+ assert.equal(submissions,0,'rate recovery requires a fresh customer action');
+ submit();
+ await settle();
+ assert.equal(submissions,1);
+ w.close();
+}
+console.log('PASS expired USD rate: no order at expiry or during network loss, updated quote on reconnect, fresh confirmation.');
 const {stripTypeScriptTypes}=await import('node:module');
 const vm=await import('node:vm');
 {
