@@ -1762,7 +1762,15 @@ function renderSuccess(){
   // Never disable the navigation link merely because a locally cached receipt is stale.
   const canTrack=!tracking.hidden;
   tracking.setAttribute('aria-disabled',String(!canTrack));
-  if(canTrack)tracking.href=new URL('delivery-tracking.html',document.baseURI).href+'#token='+lastOrder.trackingToken;
+  if(canTrack){
+   const url=new URL('delivery-tracking.html',document.baseURI);
+   url.searchParams.set('token',lastOrder.trackingToken);
+   if(lastOrder.id&&lastOrder.requestKey){
+    url.searchParams.set('orderId',lastOrder.id);
+    url.searchParams.set('requestKey',lastOrder.requestKey);
+   }
+   tracking.href=url.href;
+  }
   else tracking.removeAttribute('href');
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
