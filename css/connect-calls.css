@@ -174,10 +174,12 @@ body > dialog.umma-call {
   max-height: 38%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  transform: scaleX(-1);
   border: 1px solid #f1d58b;
   border-radius: 14px;
   background: #002932;
+}
+.umma-call-media .umma-call-preview-mirrored {
+  transform: scaleX(-1);
 }
 .umma-call-has-video .umma-call-identity {
   align-self: start;
@@ -191,9 +193,29 @@ body > dialog.umma-call {
 .umma-call-has-video .umma-call-identity h2 {
   font-size: clamp(18px, 4.5vw, 26px);
 }
-.umma-call-controls {
-  display: flex;
+.umma-call-footer {
   align-self: end;
+  display: grid;
+  justify-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+.umma-call-media-notice {
+  max-width: 30rem;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #002e39ec;
+  color: #fff;
+  font: 500 14px/1.35 system-ui, sans-serif;
+}
+.umma-call-media-notice:empty {
+  display: none;
+}
+.umma-call-controls {
+  box-sizing: border-box;
+  display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
@@ -223,18 +245,37 @@ body > dialog.umma-call {
 }
 .umma-call-controls button[data-call-action="mute"],
 .umma-call-controls button[data-call-action="hide"],
-.umma-call-controls button[data-call-action="speaker"] {
+.umma-call-controls button[data-call-action="speaker"],
+.umma-call-controls button[data-call-action="flip"] {
   width: 56px;
   border-radius: 50%;
 }
 .umma-call-controls button[data-call-action="mute"] > span,
 .umma-call-controls button[data-call-action="hide"] > span,
-.umma-call-controls button[data-call-action="speaker"] > span {
+.umma-call-controls button[data-call-action="speaker"] > span,
+.umma-call-controls button[data-call-action="flip"] > span {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip-path: inset(50%);
+}
+.umma-call-controls button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+@media (max-width: 379px) {
+  .umma-call-controls {
+    gap: 5px;
+    padding: 6px;
+  }
+  .umma-call-controls button {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .umma-call-controls button[data-call-action] {
+    width: auto;
+  }
 }
 .umma-call-controls button svg {
   width: 24px;

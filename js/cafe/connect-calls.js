@@ -12,7 +12,8 @@
       audio: 'Голосовой звонок', video: 'Видеозвонок', incoming: 'Входящий звонок', fromCafe: 'Звонит UMMA', fromClient: 'Звонит клиент', ringtone: 'Включить звук звонка', outgoing: 'Вызываем…',
       connecting: 'Подключаем…', connected: 'На связи', reconnecting: 'Восстанавливаем связь…',
       answer: 'Принять', decline: 'Отклонить', end: 'Завершить', close: 'Закрыть',
-      speaker: 'Громкая связь', earpiece: 'Динамик телефона',
+      speaker: 'Громкая связь', louder: 'Усилить звук', speakerSystem: 'Выберите динамик в системных настройках звука, если телефон поддерживает такой выбор.',
+      flip: 'Сменить камеру', flipFailed: 'Не удалось сменить камеру.', cameraLost: 'Камера недоступна. Попробуйте переключить её ещё раз.',
       mute: 'Выключить микрофон', unmute: 'Включить микрофон', hide: 'Выключить камеру', show: 'Включить камеру',
       busy: 'Линия занята. Попробуйте чуть позже.', ended: 'Звонок завершён.',
       unanswered: 'На звонок не ответили.', expired: 'Этот вызов уже завершён.', unavailable: 'Не удалось установить связь. Попробуйте ещё раз.',
@@ -27,7 +28,8 @@
       audio: 'Voice call', video: 'Video call', incoming: 'Incoming call', fromCafe: 'UMMA is calling', fromClient: 'A customer is calling', ringtone: 'Enable ringtone', outgoing: 'Calling…',
       connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…',
       answer: 'Answer', decline: 'Decline', end: 'End call', close: 'Close',
-      speaker: 'Speaker', earpiece: 'Phone earpiece',
+      speaker: 'Speaker', louder: 'Boost volume', speakerSystem: 'Select the speaker in your device’s audio controls if available.',
+      flip: 'Switch camera', flipFailed: 'Could not switch cameras.', cameraLost: 'Camera unavailable. Try switching it again.',
       mute: 'Mute microphone', unmute: 'Unmute microphone', hide: 'Turn camera off', show: 'Turn camera on',
       busy: 'Line busy. Try again shortly.', ended: 'Call ended.',
       unanswered: 'No answer.', expired: 'This call has already ended.', unavailable: 'Could not connect. Try again.',
@@ -42,7 +44,8 @@
       audio: 'Gọi thoại', video: 'Gọi video', incoming: 'Cuộc gọi đến', fromCafe: 'UMMA đang gọi', fromClient: 'Khách hàng đang gọi', ringtone: 'Bật nhạc chuông', outgoing: 'Đang gọi…',
       connecting: 'Đang kết nối…', connected: 'Đã kết nối', reconnecting: 'Đang kết nối lại…',
       answer: 'Trả lời', decline: 'Từ chối', end: 'Kết thúc', close: 'Đóng',
-      speaker: 'Loa ngoài', earpiece: 'Loa thoại',
+      speaker: 'Loa ngoài', louder: 'Tăng âm lượng', speakerSystem: 'Chọn loa ngoài trong phần cài đặt âm thanh của thiết bị nếu có.',
+      flip: 'Đổi camera', flipFailed: 'Không đổi được camera.', cameraLost: 'Camera không khả dụng. Hãy thử đổi camera lại.',
       mute: 'Tắt micrô', unmute: 'Bật micrô', hide: 'Tắt camera', show: 'Bật camera',
       busy: 'Đường dây đang bận. Vui lòng thử lại sau.', ended: 'Cuộc gọi đã kết thúc.',
       unanswered: 'Không có trả lời.', expired: 'Cuộc gọi này đã kết thúc.', unavailable: 'Không thể kết nối. Vui lòng thử lại.',
@@ -118,7 +121,7 @@
       button.title = t(label);
       const iconPaths = {
         speaker: '<path d="M11 5 6 9H3v6h3l5 4V5ZM15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/>',
-        earpiece: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+        flip: '<path d="M21 8V4m0 4h-4M3 16v4m0-4h4M20 7a9 9 0 0 0-15 1M4 17a9 9 0 0 0 15-1"/><rect x="8" y="9" width="8" height="6" rx="1.5"/>',
         mute: '<path d="M12 19v3m-5 0h10M9 9v3a3 3 0 0 0 5.1 2.1M15 9V6a3 3 0 0 0-6 0v1M5 10v2a7 7 0 0 0 12 4M3 3l18 18"/>',
         unmute: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-5 0h10"/>',
         hide: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3M3 3l18 18"/>',
@@ -143,7 +146,12 @@
       call.waveAudio = null;
       call.peer?.close();
       call.stream?.getTracks().forEach(track => track.stop());
-      if (call.remote) call.remote.srcObject = null;
+      if (call.remoteVideo) call.remoteVideo.srcObject = null;
+      if (call.remoteAudio) call.remoteAudio.srcObject = null;
+      void call.volumeContext?.close().catch(() => {});
+      if (call.audioSession) {
+        try { call.audioSession.type = call.previousAudioType; } catch {}
+      }
       if (call.local) call.local.srcObject = null;
     }
 
@@ -168,6 +176,7 @@
       call.duration.hidden = true;
       call.wave.hidden = true;
       call.media.hidden = true;
+      call.mediaNotice.textContent = '';
       call.controls.replaceChildren(action('close', () => modal.close()));
     }
 
@@ -199,8 +208,10 @@
       } catch { call.waveAudio?.close().catch(() => {}); }
     }
 
-    function toggleTrack(track, off, on, update) {
+    function toggleTrack(getTrack, off, on, update) {
       const button = action(off, () => {
+        const track = getTrack();
+        if (track?.readyState !== 'live') return;
         track.enabled = !track.enabled;
         update?.(track.enabled);
         button.title = t(track.enabled ? off : on);
@@ -305,6 +316,10 @@
       call.media = element('div', 'umma-call-media');
       call.media.hidden = true;
       call.controls = element('div', 'umma-call-controls');
+      call.mediaNotice = element('p', 'umma-call-media-notice');
+      call.mediaNotice.setAttribute('role', 'status');
+      const footer = element('div', 'umma-call-footer');
+      footer.append(call.mediaNotice, call.controls);
       const cancel = () => finish(call);
       if (call.incoming) {
         call.controls.append(action('decline', cancel, 'umma-call-end'),
@@ -324,7 +339,7 @@
       }
       call.overlay = opened;
       identity.append(title, type, call.status, call.duration, call.wave);
-      card.append(identity, call.media, call.controls);
+      card.append(identity, call.media, footer);
       opened.append(card);
       opened.addEventListener('cancel', event => {
         event.preventDefault();
@@ -373,6 +388,206 @@
       return mode === 'audio' ? 'microphoneUnavailable' : 'mediaUnavailable';
     }
 
+    function cameraConstraints(facingMode) {
+      return {facingMode, width: {ideal: 640}, height: {ideal: 480}};
+    }
+
+    function previewCamera(call, track) {
+      call.local.classList.toggle('umma-call-preview-mirrored', call.facing === 'user');
+      call.local.srcObject = new MediaStream([track]);
+      call.local.hidden = !track.enabled;
+      void call.local.play().catch(() => {});
+    }
+
+    async function replaceCamera(call, facing, constraints) {
+      const capture = await navigator.mediaDevices.getUserMedia({audio: false, video: constraints});
+      const track = capture.getVideoTracks()[0];
+      try {
+        if (current !== call) return;
+        if (!track) throw new Error('Camera unavailable');
+        track.enabled = call.cameraEnabled;
+        await call.videoSender.replaceTrack(track);
+        if (current !== call) return;
+        for (const old of call.stream.getVideoTracks()) call.stream.removeTrack(old);
+        call.stream.addTrack(track);
+        call.facing = track.getSettings().facingMode || facing;
+        previewCamera(call, track);
+      } finally {
+        for (const captured of capture.getTracks()) {
+          if (current !== call || !call.stream.getTracks().includes(captured)) captured.stop();
+        }
+      }
+    }
+
+    async function switchCamera(call, button, cameraToggle) {
+      if (current !== call || button.disabled) return;
+      button.disabled = cameraToggle.disabled = true;
+      call.mediaNotice.textContent = '';
+      const old = call.stream.getVideoTracks()[0];
+      const previous = old?.getSettings().deviceId;
+      const facing = call.facing === 'user' ? 'environment' : 'user';
+      // Mobile browsers may require the previous camera to be released first.
+      old?.stop();
+      call.local.hidden = true;
+      try {
+        await replaceCamera(call, facing, cameraConstraints({exact: facing}));
+      } catch {
+        if (current !== call) return;
+        call.mediaNotice.textContent = t('flipFailed');
+        try {
+          const restore = cameraConstraints({ideal: call.facing});
+          if (previous) restore.deviceId = {exact: previous};
+          await replaceCamera(call, call.facing, restore);
+        } catch {
+          if (current === call) {
+            if (old) call.stream.removeTrack(old);
+            call.mediaNotice.textContent = t('cameraLost');
+          }
+        }
+      } finally {
+        button.disabled = false;
+        cameraToggle.disabled = !call.stream.getVideoTracks().length;
+      }
+    }
+
+    function setupRemoteMedia(call, peer) {
+      const audio = call.remoteAudio = element('audio');
+      audio.autoplay = true;
+      audio.volume = 1;
+      call.media.prepend(audio);
+      call.media.hidden = false;
+      const playback = action('playback', () => void playAudio());
+      playback.hidden = true;
+      const playAudio = async () => {
+        if (current !== call || !audio.srcObject) return;
+        try {
+          await audio.play();
+          if (current === call) playback.hidden = true;
+        } catch {
+          if (current === call) playback.hidden = false;
+        }
+      };
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      let useBoost = typeof audio.setSinkId !== 'function' && Boolean(Audio);
+      const updateSpeaker = active => {
+        const label = t(useBoost ? 'louder' : 'speaker');
+        speaker.title = label;
+        speaker.setAttribute('aria-label', label);
+        speaker.querySelector('span').textContent = label;
+        speaker.setAttribute('aria-pressed', String(active));
+      };
+      const boostVolume = async () => {
+        if (!Audio || !audio.srcObject) return false;
+        if (call.volumeContext) {
+          const context = call.volumeContext;
+          call.volumeContext = null;
+          audio.muted = false;
+          await context.close().catch(() => {});
+          updateSpeaker(false);
+          return true;
+        }
+        const context = call.volumeContext = new Audio();
+        try {
+          const source = context.createMediaStreamSource(audio.srcObject);
+          const gain = context.createGain();
+          gain.gain.value = 1.6;
+          const compressor = context.createDynamicsCompressor();
+          compressor.threshold.value = -6;
+          compressor.ratio.value = 8;
+          await context.resume();
+          if (current !== call) return false;
+          if (context.state !== 'running') throw new Error('Volume boost unavailable');
+          source.connect(gain).connect(compressor).connect(context.destination);
+          audio.muted = true;
+          updateSpeaker(true);
+          context.addEventListener('statechange', () => {
+            if (current !== call || call.volumeContext !== context) return;
+            const running = context.state === 'running';
+            audio.muted = running;
+            updateSpeaker(running);
+            if (!running) void playAudio();
+          });
+          return true;
+        } catch {
+          call.volumeContext = null;
+          await context.close().catch(() => {});
+          return false;
+        }
+      };
+      const speaker = action('speaker', async () => {
+        const devices = navigator.mediaDevices;
+        speaker.disabled = true;
+        call.mediaNotice.textContent = '';
+        try {
+          if (useBoost) {
+            if (!await boostVolume() && current === call) call.mediaNotice.textContent = t('speakerSystem');
+            return;
+          }
+          if (typeof audio.setSinkId !== 'function') throw new Error('Audio routing unavailable');
+          if (audio.sinkId) {
+            await audio.setSinkId('');
+          } else if (devices.selectAudioOutput) {
+            const output = await devices.selectAudioOutput();
+            if (current !== call) return;
+            await audio.setSinkId(output.deviceId);
+          } else {
+            const outputs = await devices.enumerateDevices();
+            if (current !== call) return;
+            const output = outputs.find(device => device.kind === 'audiooutput' && device.deviceId &&
+              !['default', 'communications'].includes(device.deviceId) &&
+              /built-in speaker|speakerphone|loudspeaker|loa ngoài|громкая связь|^speakers?\b/i.test(device.label));
+            if (!output) throw new Error('Speaker unavailable');
+            await audio.setSinkId(output.deviceId);
+          }
+          if (current === call) updateSpeaker(Boolean(audio.sinkId));
+        } catch (error) {
+          if (current !== call || error?.name === 'AbortError') return;
+          if (Audio && !audio.sinkId) {
+            useBoost = true;
+            updateSpeaker(false);
+            if (await boostVolume()) return;
+          }
+          if (current === call) call.mediaNotice.textContent = t('speakerSystem');
+        } finally {
+          speaker.disabled = false;
+          void playAudio();
+        }
+      });
+      updateSpeaker(false);
+      speaker.disabled = true;
+      call.controls.prepend(speaker, playback);
+
+      let video;
+      if (call.mode === 'video') {
+        video = call.remoteVideo = element('video');
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.hidden = true;
+        call.media.prepend(video);
+      }
+      peer.ontrack = ({track}) => {
+        if (current !== call) return;
+        if (track.kind === 'audio') {
+          audio.srcObject = new MediaStream([track]);
+          speaker.disabled = false;
+          track.addEventListener('unmute', playAudio);
+          void playAudio();
+        } else if (video) {
+          video.srcObject = new MediaStream([track]);
+          const updateVideo = () => {
+            if (current !== call) return;
+            const visible = !track.muted && track.readyState === 'live';
+            video.hidden = !visible;
+            if (visible) void video.play().catch(() => {});
+          };
+          for (const event of ['unmute', 'mute', 'ended']) track.addEventListener(event, updateVideo);
+          updateVideo();
+        }
+      };
+      return playAudio;
+    }
+
     async function establish(call) {
       stopRinger(call);
       call.overlay.classList.remove('umma-call-incoming');
@@ -381,11 +596,20 @@
       const end = action('end', () => finish(call), 'umma-call-end');
       call.controls.replaceChildren(end);
       let stream;
+      call.mediaNotice.textContent = '';
+      if (!call.audioSession && navigator.audioSession) {
+        try {
+          const session = navigator.audioSession;
+          call.previousAudioType = session.type;
+          session.type = 'play-and-record';
+          call.audioSession = session;
+        } catch {}
+      }
       try {
         // Request media directly in the click handler, including for first-time guests.
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {echoCancellation: true, noiseSuppression: true},
-          video: call.mode === 'video' && {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}
+          video: call.mode === 'video' && cameraConstraints({ideal: 'user'})
         });
         if (!stream.getAudioTracks().length || (call.mode === 'video' && !stream.getVideoTracks().length)) {
           throw new DOMException('', 'NotFoundError');
@@ -413,17 +637,18 @@
         const microphone = stream.getAudioTracks()[0];
         const camera = stream.getVideoTracks()[0];
         startWave(call, stream);
-        call.controls.prepend(toggleTrack(microphone, 'mute', 'unmute'));
+        call.controls.prepend(toggleTrack(() => microphone, 'mute', 'unmute'));
         if (camera) {
           const local = call.local = element('video', 'umma-call-preview');
           local.muted = true;
           local.autoplay = true;
           local.playsInline = true;
-          local.srcObject = stream;
+          call.facing = camera.getSettings().facingMode || 'user';
+          call.cameraEnabled = camera.enabled;
           call.media.append(local);
           call.media.hidden = false;
-          void local.play().catch(() => {});
-          call.controls.prepend(toggleTrack(camera, 'hide', 'show', enabled => { local.hidden = !enabled; }));
+          call.overlay.classList.add('umma-call-has-video');
+          previewCamera(call, camera);
         }
         if (!call.credentials && prepare) {
           await prepare();
@@ -433,70 +658,24 @@
         const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
         if (current !== call) return;
         const peer = call.peer = new RTCPeerConnection({iceServers: servers});
-        const remote = call.remote = element(call.mode === 'video' ? 'video' : 'audio');
-        remote.autoplay = true;
-        remote.playsInline = true;
-        remote.hidden = true;
-        call.media.prepend(remote);
-        const playback = action('playback', () => {
-          void remote.play().then(() => { playback.hidden = true; }).catch(() => {});
-        });
-        playback.hidden = true;
-        call.controls.prepend(playback);
-        // Output-device routing is browser-dependent. Only show a real switch when
-        // the browser exposes both a communications output and the default output.
-        if (typeof remote.setSinkId === 'function' && navigator.mediaDevices?.enumerateDevices) {
-          void navigator.mediaDevices.enumerateDevices().then(devices => {
-            if (current !== call) return;
-            const outputs = devices.filter(device => device.kind === 'audiooutput');
-            const handset = outputs.find(device => device.deviceId === 'communications' ||
-              /earpiece|receiver|handset|разговорн/i.test(device.label));
-            const speaker = outputs.find(device => device.deviceId === 'default' ||
-              /speaker|громк|динамик/i.test(device.label));
-            if (!handset || !speaker || handset.deviceId === speaker.deviceId) return;
-            let loud = false;
-            const switcher = action('speaker', async () => {
-              const next = !loud;
-              try {
-                await remote.setSinkId(next ? speaker.deviceId : handset.deviceId);
-                loud = next;
-                switcher.title = t(loud ? 'earpiece' : 'speaker');
-                switcher.setAttribute('aria-label', t(loud ? 'earpiece' : 'speaker'));
-                switcher.setAttribute('aria-pressed', String(loud));
-                switcher.querySelector('span')?.replaceChildren(document.createTextNode(t(loud ? 'earpiece' : 'speaker')));
-              } catch (error) {
-                console.warn('Audio output switching is unavailable', error?.name);
-              }
-            });
-            switcher.setAttribute('aria-pressed', 'false');
-            call.controls.prepend(switcher);
-          }).catch(() => {});
-        }
-        const remoteStream = new MediaStream();
-        remote.srcObject = remoteStream;
-        peer.ontrack = ({track}) => {
-          if (current !== call) return;
-          remoteStream.addTrack(track);
-          if (track.kind === 'video') {
-            const updateVideo = () => {
-              if (current !== call) return;
-              const visible = !track.muted && track.readyState === 'live';
-              remote.hidden = !visible;
-              call.overlay.classList.toggle('umma-call-has-video', visible);
-            };
-            for (const event of ['unmute', 'mute', 'ended']) track.addEventListener(event, updateVideo);
-            updateVideo();
-          }
-          void remote.play().catch(() => {
-            if (current === call) playback.hidden = false;
+        const playAudio = setupRemoteMedia(call, peer);
+        peer.addTrack(microphone, stream);
+        if (camera) {
+          call.videoSender = peer.addTrack(camera, stream);
+          const cameraToggle = toggleTrack(() => stream.getVideoTracks()[0], 'hide', 'show', enabled => {
+            call.cameraEnabled = enabled;
+            call.local.hidden = !enabled;
           });
-        };
+          const flip = action('flip', () => void switchCamera(call, flip, cameraToggle));
+          call.controls.prepend(cameraToggle, flip);
+        }
         peer.onconnectionstatechange = () => {
           if (current !== call) return;
           if (peer.connectionState === 'connected') {
             clearTimeout(call.deadline);
             stopRinger(call);
             call.connected = true;
+            void playAudio();
             call.status.textContent = t('connected');
             if (!call.durationTimer) {
               const started = Date.now();
@@ -516,7 +695,6 @@
             finish(call, 'unavailable');
           }
         };
-        stream.getTracks().forEach(track => peer.addTrack(track, stream));
         if (call.incoming) await peer.setRemoteDescription({type: 'offer', sdp: call.offer});
         await peer.setLocalDescription(call.incoming ? await peer.createAnswer() : await peer.createOffer());
         await listenForIce(peer);
