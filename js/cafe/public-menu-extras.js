@@ -75,9 +75,50 @@ function renderGuestProof(required,value,{API,t}){
 const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
 function installText(t){translate=t;$('installApp').hidden=standalone();if(!$('installHelp').hidden)$('installHelp').textContent=t(/iPad|iPhone|iPod/.test(navigator.userAgent)?'В Safari: Поделиться → На экран «Домой».':'В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».');}
 function install(t){installText(t);window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});window.addEventListener('appinstalled',()=>{installPrompt=null;$('installApp').hidden=true;$('installHelp').hidden=true;});$('installApp').onclick=async()=>{if(installPrompt){const prompt=installPrompt;installPrompt=null;try{await prompt.prompt();await prompt.userChoice;}catch{$('installHelp').hidden=false;installText(translate);}}else{$('installHelp').hidden=!$('installHelp').hidden;installText(translate);}};}
-function bankLink(){if(!order?.payment)return;const p=order.payment,selected=$('paymentBank').value;try{localStorage.setItem('umma-payment-bank',selected);}catch{}const url=new URL('https://dl.vietqr.io/pay');url.search=new URLSearchParams({ba:p.account+'@vcb',am:String(p.amount),tn:p.reference,app:selected,url:location.origin+location.pathname});$('openBank').href=url.href;
-// Vietcombank's existing flow uses a saved QR rather than a bank deep link.
-$('openBank').hidden=selected==='vcb';}
+function renderBankQr(payment){
+ if(payment.qrPayload===lastQr)return;
+ const qr=window.qrcode(0,'M');
+ qr.addData(payment.qrPayload);
+ qr.make();
+ const size=qr.getModuleCount(),scale=8,padding=4;
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=(size+padding*2)*scale;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#fff';
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle='#000';
+ for(let row=0;row<size;row++){
+  for(let col=0;col<size;col++){
+   if(qr.isDark(row,col))ctx.fillRect((col+padding)*scale,(row+padding)*scale,scale,scale);
+  }
+ }
+ const data=canvas.toDataURL('image/png');
+ $('paymentQr').src=data;
+ $('saveQr').href=data;
+ $('saveQr').download='UMMA-'+order.orderNumber+'.png';
+ lastQr=payment.qrPayload;
+}
+function renderBankPayment(){
+ const payment=order.payment,selected=$('paymentBank').value;
+ const showQr=selected==='vcb';
+ const openBank=$('openBank');
+ $('guestPaymentQr').hidden=!showQr;
+ openBank.hidden=showQr;
+ if(showQr){
+  openBank.removeAttribute('href');
+  renderBankQr(payment);
+  return;
+ }
+ const url=new URL('https://dl.vietqr.io/pay');
+ url.search=new URLSearchParams({
+  ba:payment.account+'@'+(payment.bankCode||'vcb'),
+  am:String(payment.amount),
+  tn:payment.reference,
+  app:selected,
+  url:location.origin+location.pathname
+ });
+ openBank.href=url.href;
+}
 function receiptDetails(value,{t,money,receiptPhoto}){
  const details=$('receiptDetails');
  details.hidden=!value.items?.length;
@@ -209,8 +250,15 @@ $('guestPayment').hidden=!show;
 if(show){
  const previous=$('paymentBank').value;let chosen=previous||'vcb';try{if(!previous)chosen=localStorage.getItem('umma-payment-bank')||chosen;}catch{}
  if(!$('paymentBank').options.length)for(const [id,label] of banks){const option=document.createElement('option');option.value=id;option.textContent=label;$('paymentBank').append(option);}
- $('paymentBank').value=banks.some(([id])=>id===chosen)?chosen:'vcb';$('paymentBank').onchange=bankLink;bankLink();
- if(p.qrPayload!==lastQr){const qr=window.qrcode(0,'M');qr.addData(p.qrPayload);qr.make();const n=qr.getModuleCount(),scale=8,pad=4,canvas=document.createElement('canvas');canvas.width=canvas.height=(n+pad*2)*scale;const c=canvas.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.fillStyle='#000';for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(qr.isDark(y,x))c.fillRect((x+pad)*scale,(y+pad)*scale,scale,scale);const data=canvas.toDataURL('image/png');$('paymentQr').src=data;$('saveQr').href=data;$('saveQr').download='UMMA-'+value.orderNumber+'.png';lastQr=p.qrPayload;}
+ const bank=$('paymentBank');
+ bank.value=banks.some(([id])=>id===chosen)?chosen:'vcb';
+ bank.onchange=()=>{
+  try{localStorage.setItem('umma-payment-bank',bank.value);}catch{}
+  renderBankPayment();
+  const openBank=$('openBank');
+  if(!openBank.hidden)openBank.click();
+ };
+ renderBankPayment();
  $('paymentAccount').textContent=p.bankName+' · '+p.account+' · '+p.reference;
 }
 if(Date.now()-lastPoll>2500)void poll();

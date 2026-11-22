@@ -169,7 +169,45 @@ for(const method of ['cash','qr']){
  assert.equal(receiptLines.hidden,false);
  assert.match(receiptLines.textContent,/Шурпа2 × 45\D?000.*90\D?000/);
  assert.equal(d.getElementById('receiptCash').hidden,true);
- if(method==='qr'){assert.equal(d.getElementById('paymentBank').options.length,6);assert.ok(d.getElementById('paymentQr').src.startsWith('data:image/png'));d.getElementById('paymentBank').value='mb';d.getElementById('paymentBank').dispatchEvent(new w.Event('change'));const url=new URL(d.getElementById('openBank').href);assert.equal(url.searchParams.get('am'),'90000');assert.equal(url.searchParams.get('ba'),'1062679069@vcb');assert.equal(url.searchParams.get('tn'),'UMMA 98765');}
+ if(method==='qr'){
+  const bank=d.getElementById('paymentBank');
+  const qr=d.getElementById('guestPaymentQr');
+  const appLink=d.getElementById('openBank');
+  const launches=[];
+  appLink.addEventListener('click',event=>{
+   event.preventDefault();
+   launches.push(new URL(appLink.href));
+  });
+  assert.equal(bank.value,'vcb');
+  assert.equal(qr.hidden,false);
+  assert.equal(appLink.hidden,true);
+  assert.ok(d.getElementById('paymentQr').src.startsWith('data:image/png'));
+  assert.doesNotMatch(d.getElementById('guestPayment').textContent,/Можно оплатить переводом по реквизитам выше/);
+  const appIds=['mb','bidv','acb','ocb','icb'];
+  assert.deepEqual(Array.from(bank.options,option=>option.value),['vcb',...appIds]);
+  for(const app of appIds){
+   bank.value=app;
+   bank.dispatchEvent(new w.Event('change'));
+   assert.equal(qr.hidden,true);
+   assert.equal(appLink.hidden,false);
+   const url=launches.at(-1);
+   assert.equal(url.origin+url.pathname,'https://dl.vietqr.io/pay');
+   assert.equal(url.searchParams.get('app'),app);
+   assert.equal(url.searchParams.get('am'),'90000');
+   assert.equal(url.searchParams.get('ba'),'1062679069@vcb');
+   assert.equal(url.searchParams.get('tn'),'UMMA 98765');
+  }
+  w.ummaMenuI18n.setLanguage('en');
+  assert.equal(launches.length,appIds.length);
+  assert.equal(qr.hidden,true);
+  w.ummaMenuI18n.setLanguage('ru');
+  bank.value='vcb';
+  bank.dispatchEvent(new w.Event('change'));
+  assert.equal(qr.hidden,false);
+  assert.equal(appLink.hidden,true);
+  assert.equal(launches.length,appIds.length);
+  assert.equal(d.getElementById('attachGuestTransferProof').hidden,false);
+ }
  for(const code of Object.keys(w.ummaMenuI18n.languages)){w.ummaMenuI18n.setLanguage(code);for(const key of ['Язык','На главный экран','Способ оплаты','Наличные','По QR-коду','Ваш банк','Открыть банк','Сохранить QR','Ожидаем оплату по QR','Получено наличными','Сдача','Стоимость блюд','Стоимость доставки','Скидка'])if(code!=='ru')assert.ok(!/[А-Яа-яЁё]/.test(w.ummaMenuI18n.t(key)),code+': '+key);}
  w.ummaMenuI18n.setLanguage('ru');paid=true;d.dispatchEvent(new w.Event('visibilitychange'));await new Promise(r=>setTimeout(r,20));assert.equal(d.getElementById('paymentState').textContent,'Оплачено');assert.equal(d.getElementById('guestPayment').hidden,true);assert.equal(d.getElementById('orderState').textContent,'Заказ готов');assert.equal(calls.filter(x=>/paid|confirm/.test(x.action)).length,0);assert.ok(JSON.parse(w.sessionStorage.getItem('umma-menu-receipt')).requestKey);
  assert.equal(d.getElementById('checkoutTitle').textContent,'Ваш заказ');
