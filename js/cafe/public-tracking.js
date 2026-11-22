@@ -10,6 +10,7 @@ const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const hex=/^[a-f0-9]{64}$/;
 const base='https://zwzojugspldexyyljwpr.supabase.co';
 const mapFallback={lat:12.245,lng:109.194};
+const mapArchive=new URL('assets/maps/nha-trang-v1.pmtiles',document.baseURI);
 // Old tracking links carried only a token. Recover the original order-bound
 // checkout key from this device's saved receipt, without ever guessing a key.
 if(!requestKey||!orderId){
@@ -97,6 +98,79 @@ if(window.ResizeObserver){
  observer.observe($('map'));
 }
 function addBasemap(view){
+ const library=window.protomapsL;
+ if(!library?.leafletLayer)return addRasterBasemap(view);
+
+ const coverage=L.latLngBounds([[12.12,109.10],[12.39,109.30]]);
+ let archive,local,raster,timer,localFailed=false,disposed=false;
+
+ function useRaster(){
+  clearTimeout(timer);
+  local?.remove();local=null;
+  raster??=addRasterBasemap(view);
+ }
+ function update(){
+  if(disposed)return;
+  if(localFailed||!coverage.contains(view.getBounds())){
+   useRaster();
+   return;
+  }
+  if(local)return;
+  raster?.();raster=null;
+  $('mapNotice').hidden=true;
+  archive??=new library.PmtilesSource(mapArchive.href,false).p;
+  const currentArchive=archive;
+  const source={
+   async getZxy(z,x,y,signal){
+    try{return await currentArchive.getZxy(z,x,y,signal);}
+    catch(error){
+     if(error.name!=='AbortError'&&local===layer){
+      localFailed=true;
+      archive=null;
+      useRaster();
+     }
+     throw error;
+    }
+   }
+  };
+  const layer=library.leafletLayer({
+   url:source,flavor:'light',lang:'vi',bounds:coverage,noWrap:true,maxZoom:19,zIndex:2,
+   devicePixelRatio:Math.min(window.devicePixelRatio||1,2)
+  });
+  const water=layer.paintRules.find(rule=>rule.dataLayer==='water'&&rule.symbolizer instanceof library.PolygonSymbolizer);
+  if(water)water.symbolizer=new library.PolygonSymbolizer({fill:'#91bdef'});
+  local=layer;
+  layer.on('loading',()=>{
+   if(local!==layer)return;
+   clearTimeout(timer);
+   timer=setTimeout(()=>{
+    if(local===layer)raster??=addRasterBasemap(view);
+   },6500);
+  });
+  layer.on('load',()=>{
+   if(local!==layer)return;
+   clearTimeout(timer);
+   raster?.();raster=null;
+   $('mapNotice').hidden=true;
+  });
+  layer.addTo(view);
+ }
+ function reconnect(){
+  localFailed=false;
+  update();
+ }
+ view.on('moveend',update);
+ window.addEventListener('online',reconnect);
+ update();
+ return ()=>{
+  disposed=true;
+  clearTimeout(timer);
+  view.off('moveend',update);
+  window.removeEventListener('online',reconnect);
+  raster?.();
+ };
+}
+function addRasterBasemap(view){
  const notice=$('mapNotice');
  const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19,referrerPolicy:'origin',
@@ -143,6 +217,8 @@ function addBasemap(view){
   disposed=true;
   clearTimeout(timeout);
   window.removeEventListener('online',retry);
+  tiles.remove();
+  localLayer?.remove();
  };
 }
 function hideMap(){

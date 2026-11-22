@@ -1764,7 +1764,7 @@ function renderSuccess(){
   const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack){
-   const url=new URL('delivery-tracking.html?v=map-fallback-1',document.baseURI);
+   const url=new URL('delivery-tracking.html?v=nha-trang-1',document.baseURI);
    const credentials=new URLSearchParams();
    if(lastOrder.trackingToken)credentials.set('token',lastOrder.trackingToken);
    if(lastOrder.id&&lastOrder.requestKey){

@@ -164,14 +164,15 @@ assert.equal(cashRpc.args.p_payment_method,undefined);
 response=await req({...payload,latitude:undefined});assert.equal(response.status,400);response=await req({...payload,orderType:'bogus'});assert.equal(response.status,400);
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
-for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting','tiles-failed','tiles-slow','tiles-recovered','basemaps-failed']){
- let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,mapOptions,localStreets,tileTimeout;
- const tileEvents={};
+for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting','tiles-failed','tiles-slow','tiles-recovered','basemaps-failed','regional-map','regional-map-failed','regional-map-slow']){
+ let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,mapOptions,localStreets,tileTimeout,localOptions,regionalTimeout,rasterAdds=0,rasterRemoves=0;
+ const tileEvents={},regionalEvents={};
  const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
- w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);if(ms===4000)tileTimeout=fn;return 1;};w.clearTimeout=()=>{};
+ w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);if(ms===4000)tileTimeout=fn;if(ms===6500)regionalTimeout=fn;return 1;};w.clearTimeout=()=>{};
  w.eval(read('js/cafe/public-menu-i18n.js'));
- const layer={addTo(){tileEvents.loading();return this;},on(name,fn){tileEvents[name]=fn;return this;}};
- w.L={map:(_element,options)=>{mapOptions=options;return {setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;},invalidateSize(){}};},
+ const layer={addTo(){rasterAdds++;tileEvents.loading();return this;},on(name,fn){tileEvents[name]=fn;return this;},remove(){rasterRemoves++;}};
+ w.L={map:(_element,options)=>{mapOptions=options;return {setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;},invalidateSize(){},getBounds(){},on(){},off(){}};},
+  latLngBounds:()=>({contains:()=>true}),
   tileLayer:(_,options)=>{assert.equal(options.referrerPolicy,'origin');return layer;},
   canvas:options=>options,
   polyline(initial,style){
@@ -187,6 +188,21 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
    streetLines:async()=>{
     if(ending==='basemaps-failed')throw Error('Street data unavailable');
     return [[[12.28,109.2],[12.31,109.2]]];
+   }
+  };
+ }
+ if(ending.startsWith('regional-map')){
+  w.protomapsL={
+   PmtilesSource:class{constructor(url){
+    assert.equal(url,'https://example.com/assets/maps/nha-trang-v1.pmtiles');
+    this.p={getZxy:async()=>{
+     if(ending==='regional-map-failed')throw Error('Archive data unavailable');
+     return {data:new ArrayBuffer(0)};
+    }};
+   }},
+   leafletLayer:options=>{
+    localOptions=options;
+    return {paintRules:[],on(name,fn){regionalEvents[name]=fn;return this;},addTo(){regionalEvents.loading();},remove(){}};
    }
   };
  }
@@ -213,6 +229,23 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
   assert.equal(d.getElementById('mapNotice').hidden,ending!=='basemaps-failed');
   assert.equal(d.getElementById('map').hidden,false);
   assert.equal(removed,0);
+  w.close();continue;
+ }
+ if(ending.startsWith('regional-map')){
+  assert.equal(localOptions.lang,'vi');
+  assert.equal(localOptions.flavor,'light');
+  assert.equal(rasterAdds,0,'the detailed regional map is the first source');
+  if(ending==='regional-map-failed'){
+   await assert.rejects(localOptions.url.getZxy(15,26000,15000),/Archive data unavailable/);
+   assert.equal(rasterAdds,1,'external raster is used if the regional data is unavailable');
+  }
+  if(ending==='regional-map-slow'){
+   regionalTimeout();
+   assert.equal(rasterAdds,1,'slow regional data gets a temporary raster layer');
+   regionalEvents.load();
+   assert.equal(rasterRemoves,1,'the full regional map replaces the temporary raster layer');
+  }
+  assert.equal(d.getElementById('map').hidden,false);
   w.close();continue;
  }
  if(ending==='road'){assert.equal(roadPath.length,2);w.close();continue;}
