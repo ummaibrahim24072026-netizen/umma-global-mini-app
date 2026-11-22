@@ -30,26 +30,31 @@ Deno.serve(async req=>{
    return reply({ok:true,token:secret,expiresInSeconds:172800});
   }
   if(b.action==='tracking'){
-   // Recover a guest's delivery access from the original private checkout request.
-   // This is the same secret used to create the original token; no public order-number lookup.
-   let accessToken=typeof b.token==='string'&&/^[a-f0-9]{64}$/.test(b.token)?b.token:null;
-   if(!accessToken&&typeof b.requestKey==='string'&&/^[0-9a-f-]{36}$/i.test(b.requestKey)&&typeof b.orderId==='string'&&/^[0-9a-f-]{36}$/i.test(b.orderId)){
-    const salt=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(salt),{name:'HMAC',hash:'SHA-256'},false,['sign']);
-    accessToken=Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode('guest-delivery:'+b.requestKey))),v=>v.toString(16).padStart(2,'0')).join('');
-   }
-   if(!accessToken)return reply({ok:false},404);
-   let {data:grant}=await db.from('umma_guest_delivery_grants').select('order_id,token_hash').eq('token_hash',await sha(accessToken)).is('revoked_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
-   // Recover access for an existing guest order using its original private checkout key.
-   // Both the order UUID and the 128-bit random checkout key are required; order numbers alone never authorize GPS.
-   if(!grant&&typeof b.orderId==='string'&&/^[0-9a-f-]{36}$/i.test(b.orderId)&&typeof b.requestKey==='string'&&/^[0-9a-f-]{36}$/i.test(b.requestKey)){
+   // First verify the original guest checkout secret, even if a stale tracking token
+   // is also present. The private request table is never exposed to the browser.
+   const validPair=typeof b.orderId==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.orderId)
+    &&typeof b.requestKey==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.requestKey);
+   let grant:null|{order_id:string;token_hash:string}=null;
+   if(validPair){
     const {data:verified,error:verifyError}=await db.rpc('umma_verify_guest_delivery_request',{p_order:b.orderId,p_request_key:b.requestKey});
-    if(!verifyError&&verified){
-     const {data:recovered}=await db.from('umma_guest_delivery_grants').select('order_id,token_hash').eq('order_id',b.orderId).is('revoked_at',null).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(1).maybeSingle();
-     grant=recovered;
+    if(verifyError)console.error('Tracking private request verification failed',verifyError.code);
+    if(verified&&!verifyError){
+     const {data:authorized,error:grantError}=await db.from('umma_guest_delivery_grants')
+      .select('order_id,token_hash').eq('order_id',b.orderId).is('revoked_at',null)
+      .gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(1).maybeSingle();
+     if(grantError)console.error('Tracking grant lookup failed',grantError.code);
+     grant=authorized;
     }
    }
-   if(!grant||(b.orderId&&b.orderId!==grant.order_id))return reply({ok:false,code:'TRACKING_ACCESS_INVALID'},404);
+   if(!grant&&typeof b.token==='string'&&/^[a-f0-9]{64}$/.test(b.token)){
+    const {data:authorized,error:tokenError}=await db.from('umma_guest_delivery_grants')
+     .select('order_id,token_hash').eq('token_hash',await sha(b.token)).is('revoked_at',null)
+     .gt('expires_at',new Date().toISOString()).maybeSingle();
+    if(tokenError)console.error('Tracking token lookup failed',tokenError.code);
+    grant=authorized;
+   }
+   if(!grant)return reply({ok:false,code:'TRACKING_CREDENTIAL_INVALID'},404);
+   if(b.orderId&&b.orderId!==grant.order_id)return reply({ok:false,code:'TRACKING_ORDER_MISMATCH'},403);
    const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id,delivery_address').eq('id',grant.order_id).maybeSingle();
    if(!o||o.order_type!=='delivery')return reply({ok:false},404);
    const data:any={ok:true,channel:'umma-delivery:'+grant.token_hash,number:o.order_number,state:['completed','cancelled'].includes(o.status)?o.status:o.delivery_status||o.status,paymentStatus:o.payment_status,orderStatus:o.status};
