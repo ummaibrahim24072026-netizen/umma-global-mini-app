@@ -279,9 +279,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 .checkout-payment-options label:has(:disabled) { opacity: .58; cursor: default; }
 #checkoutPaymentNotice { margin: 5px 0 0; }
-#checkoutCashChange .field { margin-block-end: 4px; }
-#checkoutCashChangeResult { margin: 0; color: var(--umma-brand-strong); }
-#checkoutCashChangeResult[data-error="true"] { color: #8a3325; }
 .checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
 .checkout-payment-options input { flex: none; }
 #checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: transparent; color: #006765; padding-inline: 0; text-decoration: underline; text-underline-offset: 3px; }
@@ -294,6 +291,42 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 #checkout .checkout-pay-footer .receipt-lines { margin: 0 0 7px; border: 0; }
 #checkout .checkout-pay-footer .receipt-lines > div { padding: 3px 0; font-weight: 700; }
+#checkoutCashChange:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 36%);
+  align-items: center;
+  gap: 4px 10px;
+  margin-block: 0 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 12px;
+  background: #fff;
+}
+#checkoutCashChange label { color: var(--umma-brand-ink); font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
+#deliveryCashAmount {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 8px;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--umma-brand-ink);
+  font: inherit;
+  font-size: 16px;
+}
+#deliveryCashAmount:focus-visible { outline: 2px solid var(--umma-brand-strong); outline-offset: 1px; }
+#checkoutCashChangeResult { grid-column: 1 / -1; margin: 0; color: var(--umma-brand-strong); }
+#checkoutCashChangeResult:empty { display: none; }
+#checkoutCashChangeResult[data-error="true"] { color: #8a3325; }
+@media (max-height: 460px) {
+  #checkout[data-stage="checkout"] #form:has(#checkoutCashChange:not([hidden])) { overflow: auto; }
+  #checkout[data-stage="checkout"] #form:has(#checkoutCashChange:not([hidden])) .checkout-form-scroll {
+    flex: none;
+    overflow: visible;
+  }
+}
 #checkout .checkout-pay-footer #submit { margin: 0; min-height: 48px; border-radius: 999px; }
 #checkout[data-stage="checkout"] #result { flex: none; max-height: 20dvh; overflow: auto; margin: 4px 16px; }
 
@@ -720,14 +753,12 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <label><input type="radio" name="paymentMethod" value="sber" disabled><span data-i18n="Перевод на Сбербанк">Перевод на Сбербанк</span></label>
 <label><input type="radio" name="paymentMethod" value="usdt" disabled><span data-i18n="USDT">USDT</span></label>
 </div><p id="checkoutPaymentNotice" class="guest-hint" role="status" hidden></p></fieldset>
-<div id="checkoutCashChange" hidden>
- <label class="field"><span data-i18n="С какой суммы подготовить сдачу?">С какой суммы подготовить сдачу?</span>
-  <input id="deliveryCashAmount" type="text" inputmode="numeric" maxlength="13" autocomplete="off" dir="ltr" placeholder="500 000 ₫" aria-describedby="checkoutCashChangeResult" disabled>
- </label>
- <p id="checkoutCashChangeResult" class="guest-hint" role="status"></p>
-</div>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
-</fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button></div></form></section></div>
+</fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><div id="checkoutCashChange" hidden>
+ <label for="deliveryCashAmount" data-i18n="С какой суммы подготовить сдачу?">С какой суммы подготовить сдачу?</label>
+ <input id="deliveryCashAmount" type="text" inputmode="numeric" maxlength="13" autocomplete="off" dir="ltr" placeholder="500 000 ₫" aria-describedby="checkoutCashChangeResult" disabled>
+ <p id="checkoutCashChangeResult" class="guest-hint" role="status"></p>
+</div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button></div></form></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
   <header class="receipt-status">
     <span class="receipt-status-icon" aria-hidden="true">
@@ -915,7 +946,7 @@ function renderCashChange(visible,amount){
  const input=$('deliveryCashAmount');
  const result=$('checkoutCashChangeResult');
  $('checkoutCashChange').hidden=!visible;
- input.disabled=!visible;
+ input.disabled=!visible||busy||Boolean(pending);
  if(!visible)return;
  const cash=requestedCashAmount();
  const error=pending?'':cashAmountError(cash,amount);
