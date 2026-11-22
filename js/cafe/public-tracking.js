@@ -39,6 +39,7 @@ let road=null,routeRequest=0,routeOrigin=null;
 let liveSocket=null,liveChannel='',liveRetry=null,liveSequence=0,liveHeartbeat=null;
 let map=null,marker=null,destinationMarker=null,trail=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='';
 let disconnected=false,refreshQueued=false;
+let removeBasemap=null;
 const terminal=['delivered','completed','cancelled'];
 const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ доставлен',cancelled:'Заказ отменён'};
 function isTerminal(d){return terminal.includes(d.state)||terminal.includes(d.orderStatus);}
@@ -95,7 +96,57 @@ if(window.ResizeObserver){
  const observer=new ResizeObserver(()=>map?.invalidateSize({debounceMoveend:true}));
  observer.observe($('map'));
 }
+function addBasemap(view){
+ const notice=$('mapNotice');
+ const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,referrerPolicy:'origin',
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+ });
+ let timeout,localLayer,pending=false,disposed=false,failed=false,tileError=false;
+ async function showLocalStreets(){
+  failed=true;
+  if(localLayer||pending)return;
+  pending=true;
+  try{
+   const lines=await window.UmmaNhaTrangRouter.streetLines();
+   if(disposed||!failed)return;
+   // Keep the local street layer behind both the image tiles and the live route.
+   localLayer=L.polyline(lines,{
+    renderer:L.canvas({pane:'tilePane'}),interactive:false,color:'#788e89',weight:1.5
+   }).addTo(view);
+   notice.hidden=true;
+  }catch{
+   if(!disposed&&failed){
+    notice.textContent=t('Не удалось загрузить подложку карты.');
+    notice.hidden=false;
+   }
+  }finally{pending=false;}
+ }
+ tiles.on('loading',()=>{
+  tileError=false;
+  clearTimeout(timeout);
+  timeout=setTimeout(showLocalStreets,4000);
+ });
+ tiles.on('tileerror',()=>{tileError=true;});
+ tiles.on('load',()=>{
+  clearTimeout(timeout);
+  if(tileError)void showLocalStreets();
+  else{
+   failed=false;
+   notice.hidden=true;
+  }
+ });
+ tiles.addTo(view);
+ const retry=()=>{if(failed||tileError)tiles.redraw();};
+ window.addEventListener('online',retry);
+ return ()=>{
+  disposed=true;
+  clearTimeout(timeout);
+  window.removeEventListener('online',retry);
+ };
+}
 function hideMap(){
+ removeBasemap?.();removeBasemap=null;
  if(map)map.remove();
  map=marker=destinationMarker=trail=lastFix=road=routeOrigin=null;
  $('mapNotice').hidden=true;
@@ -119,17 +170,10 @@ function drawPosition(d){
  $('map').hidden=false;
  const initial=destination||courier||mapFallback;
  if(!map){
-  map=L.map($('map'),{zoomControl:false}).setView([initial.lat,initial.lng],destination||courier?16:13);
+  map=L.map($('map'),{zoomControl:false,fadeAnimation:false}).setView([initial.lat,initial.lng],destination||courier?16:13);
   map.attributionControl?.setPrefix(false).setPosition('topright');
-  const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-   maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-  tiles.on('tileerror',()=>{
-   $('mapNotice').textContent=t('Не удалось загрузить подложку карты.');
-   $('mapNotice').hidden=false;
-  });
-  tiles.on('tileload',()=>{$('mapNotice').hidden=true;});
-  setTimeout(()=>map?.invalidateSize(),100);
+  removeBasemap=addBasemap(map);
+  requestAnimationFrame(()=>map?.invalidateSize());
  }
  if(destination&&!destinationMarker){
   destinationMarker=UmmaMaps.marker(map,destination);

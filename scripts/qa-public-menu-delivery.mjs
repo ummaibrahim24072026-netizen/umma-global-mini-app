@@ -164,20 +164,32 @@ assert.equal(cashRpc.args.p_payment_method,undefined);
 response=await req({...payload,latitude:undefined});assert.equal(response.status,400);response=await req({...payload,orderType:'bogus'});assert.equal(response.status,400);
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
-for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting']){
- let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,mapOptions;
- const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only'}),w=dom.window,d=w.document;
- w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
+for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting','tiles-failed','tiles-slow','tiles-recovered','basemaps-failed']){
+ let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,mapOptions,localStreets,tileTimeout;
+ const tileEvents={};
+ const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+ w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);if(ms===4000)tileTimeout=fn;return 1;};w.clearTimeout=()=>{};
  w.eval(read('js/cafe/public-menu-i18n.js'));
- const layer={addTo(){return this;},on(){return this;}};
- w.L={map:(_element,options)=>{mapOptions=options;return {setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;}};},
-  tileLayer:()=>layer,
+ const layer={addTo(){tileEvents.loading();return this;},on(name,fn){tileEvents[name]=fn;return this;}};
+ w.L={map:(_element,options)=>{mapOptions=options;return {setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;},invalidateSize(){}};},
+  tileLayer:(_,options)=>{assert.equal(options.referrerPolicy,'origin');return layer;},
+  canvas:options=>options,
   polyline(initial,style){
+   if(style.renderer?.pane==='tilePane')return {addTo(){localStreets=initial;return this;}};
    if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}
    points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};
   }};
  w.UmmaMaps={marker:()=>({setZIndexOffset(){},setLatLng(fix){markerMoves.push(fix);}})};
  w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',destination:{latitude:12.31,longitude:109.2},...(ending==='waiting'||(turn===2&&ending==='stale')?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,updatedAt:new Date().toISOString()})}));};
+ if(ending.startsWith('tiles-')||ending==='basemaps-failed'){
+  w.UmmaNhaTrangRouter={
+   route:async()=>null,
+   streetLines:async()=>{
+    if(ending==='basemaps-failed')throw Error('Street data unavailable');
+    return [[[12.28,109.2],[12.31,109.2]]];
+   }
+  };
+ }
  if(ending==='road')w.UmmaNhaTrangRouter={route:async()=>({seconds:420,path:[{lat:12.28,lng:109.2},{lat:12.31,lng:109.2}]})};
  w.eval(read('js/cafe/public-tracking.js'));await tick();
  assert.equal(d.getElementById('map').hidden,false);
@@ -191,6 +203,18 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
  assert.equal(d.querySelector('#stages, #notify, #eta, #center, .tracking-sheet'),null);
  assert.equal(d.getElementById('connection').hidden,true);
  assert.equal(mapOptions.zoomControl,false);
+ assert.equal(mapOptions.fadeAnimation,false);
+ if(ending.startsWith('tiles-')||ending==='basemaps-failed'){
+  if(ending==='tiles-slow'||ending==='tiles-recovered')tileTimeout();
+  else{tileEvents.tileerror();tileEvents.load();}
+  if(ending==='tiles-recovered')tileEvents.load();
+  await tick();
+  assert.equal(localStreets?.length,['tiles-failed','tiles-slow'].includes(ending)?1:undefined);
+  assert.equal(d.getElementById('mapNotice').hidden,ending!=='basemaps-failed');
+  assert.equal(d.getElementById('map').hidden,false);
+  assert.equal(removed,0);
+  w.close();continue;
+ }
  if(ending==='road'){assert.equal(roadPath.length,2);w.close();continue;}
  await queue.shift()();await tick();
  if(ending==='moving'){

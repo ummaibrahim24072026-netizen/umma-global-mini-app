@@ -2,7 +2,14 @@
 (() => {
  'use strict';
  const asset = new URL('../../assets/maps/nha-trang-roads.json.gz?v=1', document.currentScript.src);
- let graph;
+ let roadData,graph;
+ function loadRoads(){
+  roadData ??= fetch(asset).then(response=>{
+   if(!response.ok)throw Error('Road data unavailable');
+   return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+  }).catch(error=>{roadData=null;throw error;});
+  return roadData;
+ }
  const distance = (a, b) => Math.hypot((a.lat-b.lat)*111195, (a.lng-b.lng)*108700);
  function projection(point, a, b) {
   const x = (b.lng-a.lng)*108700, y = (b.lat-a.lat)*111195;
@@ -113,11 +120,13 @@
  }
  window.UmmaNhaTrangRouter={
   async route(from,to){
-   graph ??= fetch(asset).then(response=>{
-    if(!response.ok)throw Error('Road data unavailable');
-    return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
-   }).then(build).catch(error=>{graph=null;throw error;});
+   graph ??= loadRoads().then(build).catch(error=>{graph=null;throw error;});
    return route(await graph,from,to);
+  },
+  async streetLines(){
+   const {nodes,roads}=await loadRoads();
+   const points=nodes.map(([lat,lng])=>[lat/100000,lng/100000]);
+   return roads.map(([, , , ids])=>ids.map(id=>points[id]));
   }
  };
 })();

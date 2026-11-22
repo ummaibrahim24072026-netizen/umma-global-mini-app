@@ -8,17 +8,24 @@ const w=dom.window,d=w.document,$=id=>d.getElementById(id);
 const router='js/maps/nha-trang-router.js';
 const parser='js/maps/delivery-location.js';
 assert.ok(html.includes(parser)&&html.indexOf(parser)<html.indexOf('js/maps/courier-route.js'));
-let gps,drag,stopped=0,drawn=0,markerMoves=0,pans=0;
+let gps,drag,stopped=0,drawn=0,markerMoves=0,pans=0,roadRequests=0;
 w.Response=Response;
 w.DecompressionStream=DecompressionStream;
 w.fetch=async url=>{
  assert.equal(url.origin,'https://qa.invalid');
+ roadRequests++;
  return new Response(readFileSync('assets/maps/nha-trang-roads.json.gz'));
 };
 Object.defineProperty(d,'currentScript',{value:{src:'https://qa.invalid/'+router}});
 w.eval(readFileSync(router,'utf8'));
 const cafe={lat:12.2409,lng:109.1967},north={lat:12.2783,lng:109.2028};
-const result=await w.UmmaNhaTrangRouter.route(cafe,north);
+const [result,streets]=await Promise.all([
+ w.UmmaNhaTrangRouter.route(cafe,north),
+ w.UmmaNhaTrangRouter.streetLines()
+]);
+assert.equal(roadRequests,1,'route and street map share one local extract request');
+assert.ok(streets.length>1000);
+assert.ok(streets.every(line=>line.length>=2&&line.every(([lat,lng])=>lat>12&&lat<13&&lng>109&&lng<110)));
 assert.ok(result.path.length>20);
 assert.ok(result.meters>4000&&result.meters<14000);
 assert.ok(result.streets.length>2&&result.seconds>0);
