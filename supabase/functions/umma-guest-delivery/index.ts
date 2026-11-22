@@ -8,6 +8,7 @@ function deliveryPoint(address: unknown) {
  const latitude = Number(match[1]), longitude = Number(match[2]);
  if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) return {latitude, longitude};
 }
+const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers});
@@ -30,43 +31,42 @@ Deno.serve(async req=>{
    return reply({ok:true,token:secret,expiresInSeconds:172800});
   }
   if(b.action==='tracking'){
-   // First verify the original guest checkout secret, even if a stale tracking token
-   // is also present. The private request table is never exposed to the browser.
-   const validPair=typeof b.orderId==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.orderId)
-    &&typeof b.requestKey==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.requestKey);
-   let grant:null|{order_id:string;token_hash:string}=null;
-   if(validPair){
-    const {data:verified,error:verifyError}=await db.rpc('umma_verify_guest_delivery_request',{p_order:b.orderId,p_request_key:b.requestKey});
-    if(verifyError)console.error('Tracking private request verification failed',verifyError.code);
-    if(verified&&!verifyError){
-     const {data:authorized,error:grantError}=await db.from('umma_guest_delivery_grants')
-      .select('order_id,token_hash').eq('order_id',b.orderId).is('revoked_at',null)
-      .gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(1).maybeSingle();
-     if(grantError)console.error('Tracking grant lookup failed',grantError.code);
-     grant=authorized;
-    }
+   const orderId=typeof b.orderId==='string'&&uuid.test(b.orderId)?b.orderId:null;
+   const requestKey=typeof b.requestKey==='string'&&uuid.test(b.requestKey)?b.requestKey:null;
+   const trackingToken=typeof b.token==='string'&&/^[a-f0-9]{64}$/.test(b.token)?b.token:null;
+   if((b.orderId&&!orderId)||(!(orderId&&requestKey)&&!trackingToken)){
+    return reply({ok:false,code:'TRACKING_CREDENTIAL_INVALID'},403);
    }
-   if(!grant&&typeof b.token==='string'&&/^[a-f0-9]{64}$/.test(b.token)){
-    const {data:authorized,error:tokenError}=await db.from('umma_guest_delivery_grants')
-     .select('order_id,token_hash').eq('token_hash',await sha(b.token)).is('revoked_at',null)
-     .gt('expires_at',new Date().toISOString()).maybeSingle();
-    if(tokenError)console.error('Tracking token lookup failed',tokenError.code);
-    grant=authorized;
-   }
-   if(!grant)return reply({ok:false,code:'TRACKING_CREDENTIAL_INVALID'},404);
-   if(b.orderId&&b.orderId!==grant.order_id)return reply({ok:false,code:'TRACKING_ORDER_MISMATCH'},403);
-   const {data:o}=await db.from('cafe_orders').select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id,delivery_address').eq('id',grant.order_id).maybeSingle();
-   if(!o||o.order_type!=='delivery')return reply({ok:false},404);
-   const data:any={ok:true,channel:'umma-delivery:'+grant.token_hash,number:o.order_number,state:['completed','cancelled'].includes(o.status)?o.status:o.delivery_status||o.status,paymentStatus:o.payment_status,orderStatus:o.status};
-   if(o.courier_telegram_id&&data.state==='picked_up'){
+   const {data:grant,error:grantError}=await db.rpc('umma_resolve_guest_tracking',{
+    p_order:orderId,p_request_key:requestKey,p_token_hash:trackingToken?await sha(trackingToken):null,
+   });
+   if(grantError)throw grantError;
+   if(!grant)return reply({ok:false,code:'TRACKING_CREDENTIAL_INVALID'},403);
+   const {data:o,error:orderError}=await db.from('cafe_orders')
+    .select('order_number,status,delivery_status,order_type,payment_status,courier_telegram_id,delivery_address,green_sm_stage')
+    .eq('id',grant.orderId).maybeSingle();
+   if(orderError)throw orderError;
+   if(!o||o.order_type!=='delivery'||o.green_sm_stage)return reply({ok:false,code:'TRACKING_UNAVAILABLE'},404);
+   const state=['completed','cancelled'].includes(o.status)?o.status:o.delivery_status||o.status;
+   const data:Record<string,unknown>={ok:true,number:o.order_number,state,paymentStatus:o.payment_status,orderStatus:o.status};
+   if(o.courier_telegram_id&&state==='picked_up'){
+    data.channel=grant.channel;
     data.destination=deliveryPoint(o.delivery_address);
-    const {data:p}=await db.from('cafe_delivery_tracking').select('latitude,longitude,accuracy_m,position_at,enabled').eq('order_id',grant.order_id).eq('courier_telegram_id',o.courier_telegram_id).eq('enabled',true).maybeSingle();
-    if(p&&p.latitude!=null&&p.longitude!=null&&p.position_at&&Date.now()-Date.parse(p.position_at)>=-10000){
-      data.latitude=p.latitude;data.longitude=p.longitude;data.accuracy=p.accuracy_m;data.updatedAt=p.position_at;data.positionFresh=Date.now()-Date.parse(p.position_at)<60000;
+    const {data:p,error:positionError}=await db.from('cafe_delivery_tracking')
+     .select('latitude,longitude,accuracy_m,position_at,enabled')
+     .eq('order_id',grant.orderId).eq('courier_telegram_id',o.courier_telegram_id).maybeSingle();
+    if(positionError)throw positionError;
+    const age=Date.now()-Date.parse(p?.position_at||'');
+    if(p&&Number.isFinite(p.latitude)&&Math.abs(p.latitude)<=90&&Number.isFinite(p.longitude)&&Math.abs(p.longitude)<=180&&age>=-10000){
+     Object.assign(data,{latitude:p.latitude,longitude:p.longitude,accuracy:p.accuracy_m,
+      updatedAt:p.position_at,positionFresh:p.enabled&&age<60000});
     }
    }
    return reply(data);
   }
   return reply({ok:false},400);
- }catch{return reply({ok:false,error:'Service temporarily unavailable'},500);}
+ }catch(error){
+  console.error('Guest delivery request failed', error instanceof Error?error.name:(error as {code?:string})?.code);
+  return reply({ok:false,code:'TRACKING_SERVICE_UNAVAILABLE'},500);
+ }
 });

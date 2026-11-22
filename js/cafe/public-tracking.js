@@ -2,10 +2,14 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),I=window.ummaMenuI18n,t=I.t;
-const query=new URLSearchParams(location.search);
-const token=query.get('token')||new URLSearchParams(location.hash.slice(1)).get('token')||'';
-let requestKey=query.get('requestKey')||'';
-let orderId=query.get('orderId')||'';
+const query=new URLSearchParams(location.search), fragment=new URLSearchParams(location.hash.slice(1));
+const token=fragment.get('token')||query.get('token')||'';
+let requestKey=fragment.get('requestKey')||query.get('requestKey')||'';
+let orderId=fragment.get('orderId')||query.get('orderId')||'';
+const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+const hex=/^[a-f0-9]{64}$/;
+const base='https://zwzojugspldexyyljwpr.supabase.co';
+const mapFallback={lat:12.245,lng:109.194};
 // Old tracking links carried only a token. Recover the original order-bound
 // checkout key from this device's saved receipt, without ever guessing a key.
 if(!requestKey||!orderId){
@@ -17,13 +21,24 @@ if(!requestKey||!orderId){
   }
   const receipts=stored.flatMap(v=>typeof v==='string'?(()=>{try{return [JSON.parse(v)];}catch{return [];}})():[v]);
   const match=receipts.find(o=>o&&o.id&&o.requestKey&&
-   (token&&o.trackingToken===token||(!token&&String(o.id)===orderId)));
+   (orderId?String(o.id)===orderId:token&&o.trackingToken===token));
   if(match){requestKey=requestKey||match.requestKey;orderId=orderId||match.id;}
  }catch(error){console.warn('Receipt recovery unavailable',error);}
 }
+// Keep credentials out of future document requests while preserving reload and old links.
+if(query.has('token')||query.has('requestKey')||query.has('orderId')){
+ const url=new URL(location.href);
+ for(const name of ['token','requestKey','orderId']){
+  if(!fragment.has(name)&&query.has(name))fragment.set(name,query.get(name));
+  url.searchParams.delete(name);
+ }
+ url.hash=fragment.toString();
+ history.replaceState(history.state,'',url.href);
+}
 let road=null,routeRequest=0,routeOrigin=null;
 let liveSocket=null,liveChannel='',liveRetry=null,liveSequence=0,liveHeartbeat=null;
-let map=null,marker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
+let map=null,marker=null,destinationMarker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
+let disconnected=false,refreshQueued=false;
 const terminal=['delivered','completed','cancelled'];
 const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ доставлен',cancelled:'Заказ отменён'};
 const stages=['Заказ отправлен','Готовится','Заказ готов','Курьер назначен','Курьер в пути','Заказ доставлен'];
@@ -34,40 +49,40 @@ function point(d){
  const lat=d?.latitude,lng=d?.longitude;
  return Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lng}:null;
 }
-// The order-specific channel is returned only after the tracking credential is verified.
-// Broadcast updates supplement the authoritative 3-second polling fallback.
+// Private Broadcast only wakes up the authorized HTTP reader. Ignore all payload data.
 function startRealtime(channel){
- if(typeof channel!=='string'||!/^umma-delivery:[a-f0-9]{64}$/.test(channel)||stopped)return;
- if(liveChannel===channel&&liveSocket)return;
+ if(channel===liveChannel)return;
  stopRealtime();
+ if(typeof channel!=='string'||!/^umma-guest-gps:[a-f0-9]{64}$/.test(channel)||stopped||!window.WebSocket)return;
  liveChannel=channel;
- const endpoint='wss://zwzojugspldexyyljwpr.supabase.co/realtime/v1/websocket?apikey='+encodeURIComponent('sb_publishable_s2qkY0H-Wb7r9aVkofZIJQ_8SsaQTpC')+'&vsn=1.0.0';
+ const endpoint=base.replace(/^https:/,'wss:')+'/realtime/v1/websocket?apikey='+encodeURIComponent('sb_publishable_s2qkY0H-Wb7r9aVkofZIJQ_8SsaQTpC')+'&vsn=1.0.0';
  const topic='realtime:'+channel;
  function connect(){
   if(stopped||document.hidden||!navigator.onLine||liveSocket)return;
   let ws;
   try{ws=new WebSocket(endpoint);}catch{return;}
   liveSocket=ws;
+  const send=(target,event,payload)=>ws.send(JSON.stringify({topic:target,event,payload,ref:String(++liveSequence)}));
   ws.onopen=()=>{
-   ws.send(JSON.stringify({topic,event:'phx_join',payload:{config:{broadcast:{self:false,ack:false},presence:{key:''},postgres_changes:[],private:false}},ref:String(++liveSequence)}));
-   liveHeartbeat=setInterval(()=>{if(ws.readyState===1)ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++liveSequence)}));},25000);
+   send(topic,'phx_join',{config:{broadcast:{self:false,ack:false},presence:{enabled:false},postgres_changes:[],private:true}});
+   liveHeartbeat=setInterval(()=>{if(ws.readyState===1)send('phoenix','heartbeat',{});},25000);
   };
   ws.onmessage=event=>{
-   try{
-    const msg=JSON.parse(event.data);
-    if(msg.topic!==topic||msg.event!=='broadcast'||msg.payload?.event!=='position'||!data||isTerminal(data))return;
-    const p=msg.payload.payload;
-    if(!p||!Number.isFinite(p.latitude)||!Number.isFinite(p.longitude)||!Number.isFinite(Date.parse(p.updatedAt)))return;
-    if(Date.parse(p.updatedAt)<=Date.parse(data.updatedAt||0))return;
-    data={...data,latitude:p.latitude,longitude:p.longitude,accuracy:p.accuracy,updatedAt:p.updatedAt};
-    connectionKey='GPS курьера подключён · обновление в реальном времени';
-    drawPosition(data);labels();
-   }catch(error){console.warn('Realtime position',error);}
+   if(liveSocket!==ws)return;
+   let message;
+   try{message=JSON.parse(event.data);}catch{return;}
+   if(message.topic!==topic)return;
+   if(message.event==='broadcast'&&message.payload?.event==='position'){
+    if(active)refreshQueued=true;
+    else void poll();
+   }
+   if(message.event==='phx_error'||message.event==='phx_close'||
+      (message.event==='phx_reply'&&message.payload?.status==='error'))ws.close();
   };
   ws.onclose=()=>{
-   clearInterval(liveHeartbeat);liveHeartbeat=null;
-   if(liveSocket===ws)liveSocket=null;
-   if(!stopped&&liveChannel===channel&&!document.hidden)liveRetry=setTimeout(connect,3000);
+   if(liveSocket!==ws)return;
+   clearInterval(liveHeartbeat);liveHeartbeat=null;liveSocket=null;
+   if(!stopped&&!document.hidden)liveRetry=setTimeout(connect,5000);
   };
   ws.onerror=()=>ws.close();
  }
@@ -76,11 +91,12 @@ function startRealtime(channel){
 function stopRealtime(){
  clearTimeout(liveRetry);clearInterval(liveHeartbeat);liveRetry=liveHeartbeat=null;
  const ws=liveSocket;liveSocket=null;liveChannel='';
- if(ws)ws.close();
+ ws?.close();
 }
 function hideMap(){
  if(map)map.remove();
- map=marker=trail=lastFix=road=routeOrigin=null;
+ map=marker=destinationMarker=trail=lastFix=road=routeOrigin=null;
+ $('mapNotice').hidden=true;
  routeRequest++;
  delete $('map').closest('main').dataset.map;
  $('center').hidden=true;
@@ -96,41 +112,51 @@ function estimateMinutes(from,to){
  return Math.max(1,Math.ceil(km*1.4/18*60));
 }
 function drawPosition(d){
- const courier=point(d),destination=point(d.destination);
+ if(isTerminal(d)){hideMap();return;}
  const age=Date.now()-Date.parse(d.updatedAt);
- if(d.state!=='picked_up'||isTerminal(d)||!courier||!(age>=-10000)){
-  if(d.state==='picked_up'&&!isTerminal(d)&&destination&&window.L&&window.UmmaMaps){
-   if(!map){$('map').hidden=false;$('map').closest('main').dataset.map='';map=UmmaMaps.create($('map'),destination,()=>{});map.zoomControl?.setPosition('bottomleft');UmmaMaps.marker(map,destination);map.setView([destination.lat,destination.lng],15);setTimeout(()=>map?.invalidateSize(),100);}
-   connectionKey='Ожидаем свежую геопозицию курьера';
-  }else hideMap();
-  return;
- }
- const fresh=age<60000;
- if(!fresh){connectionKey='Последняя позиция курьера · '+new Date(d.updatedAt).toLocaleTimeString('ru-RU')+' (GPS сейчас не обновляется)';etaMinutes=null;}
- if(!routeOrigin&&fresh)etaMinutes=destination?estimateMinutes(courier,destination):null;
- if(!window.L||!window.UmmaMaps){connectionKey='Не удалось загрузить карту';return;}
- const fix=[courier.lat,courier.lng];
+ const courier=d.state==='picked_up'&&age>=-10000?point(d):null;
+ const destination=point(d.destination);
+ const fresh=courier&&d.positionFresh!==false&&age<60000&&!disconnected;
+ if(!courier){
+  etaMinutes=null;
+  if(d.state==='picked_up')connectionKey='Ожидаем геолокацию курьера';
+ }else if(!fresh){
+  etaMinutes=null;
+  connectionKey='Последняя позиция курьера · '+new Date(d.updatedAt).toLocaleTimeString();
+ }else if(!routeOrigin&&destination)etaMinutes=estimateMinutes(courier,destination);
+ if(!window.L?.map||!window.UmmaMaps)throw Error('Map assets unavailable');
  $('map').hidden=false;
  $('map').closest('main').dataset.map='';
- $('center').hidden=false;
+ const initial=destination||courier||mapFallback;
  if(!map){
-  map=UmmaMaps.create($('map'),courier,()=>{});setTimeout(()=>map?.invalidateSize(),100);
+  map=L.map($('map')).setView([initial.lat,initial.lng],destination||courier?16:13);
   map.zoomControl?.setPosition('bottomleft');
+  map.attributionControl?.setPrefix(false);
+  const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+   maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+  tiles.on('tileerror',()=>{
+   $('mapNotice').textContent=t('Не удалось загрузить подложку карты.');
+   $('mapNotice').hidden=false;
+  });
+  tiles.on('tileload',()=>{$('mapNotice').hidden=true;});
+  setTimeout(()=>map?.invalidateSize(),100);
+ }
+ if(destination&&!destinationMarker){
+  destinationMarker=UmmaMaps.marker(map,destination);
+  if(!courier)map.setView([destination.lat,destination.lng],16);
+ }
+ if(!courier)return;
+ const fix=[courier.lat,courier.lng];
+ $('center').hidden=false;
+ if(!marker){
   marker=UmmaMaps.marker(map,courier,'courier');
-  trail=L.polyline([fix],{color:'#478a80',weight:3,dashArray:'4 7'}).addTo(map);
-  if(destination){
-   UmmaMaps.marker(map,destination);
-   map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[32,32],maxZoom:16});
-  }
- }else if(!marker){
-  marker=UmmaMaps.marker(map,courier,'courier');
-  trail=L.polyline([fix],{color:'#478a80',weight:3,dashArray:'4 7'}).addTo(map);
-  if(destination)map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[32,32],maxZoom:16});
+  trail=L.polyline([fix],{color:'#418780',weight:3,dashArray:'4 7'}).addTo(map);
+  if(destination)map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[36,36],maxZoom:16});
+  else map.setView(fix,16);
  }else if(lastFix?.[0]!==fix[0]||lastFix?.[1]!==fix[1]){
   marker.setLatLng(fix);
-  const points=trail.getLatLngs().slice(-119);
-  trail.setLatLngs([...points,fix]);
-  if(!map.getBounds().pad(-0.15).contains(fix))map.panTo(fix);
+  trail.setLatLngs([...trail.getLatLngs().slice(-119),fix]);
  }
  lastFix=fix;
  if(destination)updateRoad(courier,destination);
@@ -143,7 +169,7 @@ function updateRoad(courier,destination){
  const request=++routeRequest;
  void window.UmmaNhaTrangRouter.route(courier,destination).then(result=>{
   if(request!==routeRequest||!map)return;
-  etaMinutes=Date.now()-Date.parse(data?.updatedAt||0)<60000?(result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination)):null;
+  etaMinutes=!disconnected&&data?.positionFresh!==false&&Date.now()-Date.parse(data?.updatedAt||'')<60000?(result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination)):null;
   if(result){
    const path=result.path.map(p=>[p.lat,p.lng]);
    if(road)road.setLatLngs(path);
@@ -154,7 +180,7 @@ function updateRoad(courier,destination){
   if(request!==routeRequest||!map)return;
   routeOrigin=null;
   road?.remove();road=null;
-  etaMinutes=Date.now()-Date.parse(data?.updatedAt||0)<60000?estimateMinutes(courier,destination):null;
+  etaMinutes=!disconnected&&data?.positionFresh!==false&&Date.now()-Date.parse(data?.updatedAt||'')<60000?estimateMinutes(courier,destination):null;
   labels();
  });
 }
@@ -178,7 +204,7 @@ function labels(){
  const state=data?.state;
  const label=['courier_assigned','picked_up',...terminal].includes(state)?names[state]:names[data?.orderStatus]||names[state];
  $('status').textContent=statusKey?t(statusKey):label?t(label):'';
- $('connection').textContent=connectionKey?t(connectionKey):'';
+ $('connection').textContent=[disconnected&&t('Нет связи. Восстанавливаем подключение…'),connectionKey&&t(connectionKey)].filter(Boolean).join(' · ');
  $('notify').textContent=t(notificationKey);
  $('back').setAttribute('aria-label',t('Вернуться к меню'));
  $('center').textContent=t('Показать курьера');
@@ -187,24 +213,71 @@ function labels(){
 }
 window.addEventListener('umma-menu:languagechange',labels);labels();
 $('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!('Notification'in window))return;try{const p=await Notification.requestPermission();notificationKey=p==='granted'?'Уведомления разрешены для открытой страницы':'Уведомления не разрешены';labels();}catch{notificationKey='Уведомления не разрешены';labels();}};
-async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{
- const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/umma-guest-delivery';
- const options=payload=>({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),cache:'no-store',signal:controller.signal});
- // Prefer the original order-bound checkout credential when available.
- // This avoids stale or invalid token links; legacy token-only links still work.
- const hasReceiptKey=/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId);
- let r=await fetch(endpoint,options(hasReceiptKey?{action:'tracking',requestKey,orderId}:{action:'tracking',token}));
- if(r.status===404&&hasReceiptKey&&/^[a-f0-9]{64}$/.test(token)){
-  r=await fetch(endpoint,options({action:'tracking',token}));
+async function poll(){
+ if(stopped||active)return;
+ active=true;clearTimeout(timer);
+ controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),12000);
+ try{
+  const payload={action:'tracking'};
+  if(uuid.test(orderId))payload.orderId=orderId;
+  if(uuid.test(requestKey))payload.requestKey=requestKey;
+  if(hex.test(token))payload.token=token;
+  const response=await fetch(base+'/functions/v1/umma-guest-delivery',{
+   method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),
+   cache:'no-store',signal:controller.signal
+  });
+  const next=await response.json();
+  if(stopped)return;
+  if([403,404].includes(response.status)&&['TRACKING_CREDENTIAL_INVALID','TRACKING_UNAVAILABLE'].includes(next.code)){
+   stopped=true;data=null;disconnected=false;stopRealtime();hideMap();
+   statusKey='Доступ к отслеживанию не подтверждён';
+   connectionKey='Откройте доставку через «Мои заказы» на устройстве оформления.';
+   labels();return;
+  }
+  if(!response.ok||!next.ok)throw Error('Tracking API unavailable');
+  disconnected=false;statusKey='';connectionKey='';
+  if(next.state==='picked_up'&&data?.state==='picked_up'&&!point(next)&&point(data)&&!isTerminal(next)){
+   Object.assign(next,{latitude:data.latitude,longitude:data.longitude,updatedAt:data.updatedAt,positionFresh:false});
+  }
+  data=next;
+  if(isTerminal(next)){stopped=true;stopRealtime();}
+  else if(!document.hidden)startRealtime(next.channel);
+  try{drawPosition(next);}catch{hideMap();connectionKey='Не удалось загрузить карту';}
+  window.ummaOrderInbox?.publish({...next,id:'delivery:'+next.number},t);labels();
+  const state=next.orderStatus+':'+next.state;
+  if(previous&&state!==previous&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){
+   try{new Notification('UMMA Delivery',{body:$('status').textContent});}catch{}
+  }
+  previous=state;
+ }catch{
+  if(!stopped){
+   disconnected=true;
+   if(data)try{drawPosition(data);}catch{}
+   labels();
+  }
+ }finally{
+  clearTimeout(timeout);active=false;
+  if(!stopped)timer=setTimeout(poll,refreshQueued?0:3000);
+  refreshQueued=false;
  }
- if(r.status===404){statusKey='Доступ к отслеживанию не подтверждён';connectionKey='Откройте доставку через «Мои заказы» на устройстве оформления. Карта повторит подключение автоматически.';labels();return;}
- const d=await r.json();if(!r.ok||!d.ok)throw Error();if(stopped)return;
- data=d;statusKey='';connectionKey='';startRealtime(d.channel);
- try{drawPosition(d);}catch{hideMap();connectionKey='Не удалось загрузить карту';}
- window.ummaOrderInbox?.publish({...d,id:"delivery:"+d.number},t);labels();
- const state=d.orderStatus+':'+d.state;if(previous&&state!==previous&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){try{new Notification('UMMA Delivery',{body:$('status').textContent});}catch{}}previous=state;
- if(isTerminal(d))stopped=true;
- }catch(error){if(!stopped){console.warn('Tracking poll',error);connectionKey='Нет связи. Повторяем запрос каждые 3 секунды…';labels();}}finally{clearTimeout(timeout);active=false;if(!stopped)timer=setTimeout(poll,3000);}}
-window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);controller?.abort();stopRealtime();hideMap();});window.addEventListener('pageshow',e=>{if(e.persisted){stopped=false;void poll();}});
-if(/^[a-f0-9]{64}$/.test(token)||(/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId))){if(!data)statusKey='Подключаем карту доставки…';labels();void poll();}else{statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;}
+}
+window.addEventListener('offline',()=>{
+ if(stopped)return;
+ disconnected=true;stopRealtime();controller?.abort();
+ if(data)try{drawPosition(data);}catch{}
+ labels();
+});
+window.addEventListener('online',()=>void poll());
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)stopRealtime();
+ else void poll();
+});
+window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);controller?.abort();stopRealtime();hideMap();});
+window.addEventListener('pageshow',event=>{if(event.persisted){stopped=false;void poll();}});
+if(hex.test(token)||(uuid.test(orderId)&&uuid.test(requestKey))){
+ statusKey='Подключаем карту доставки…';labels();void poll();
+}else{
+ stopped=true;statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;
+}
 })();

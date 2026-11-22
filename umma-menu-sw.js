@@ -1,6 +1,6 @@
 // Keep live documents and transaction data out of Cache Storage.
 const base = new URL(self.registration.scope);
-const shellPaths = new Set(['menu/', 'menu/index.html', 'staff.html'].map(path => new URL(path, base).pathname));
+const shellPaths = new Set(['menu/', 'menu/index.html', 'staff.html', 'delivery-tracking.html'].map(path => new URL(path, base).pathname));
 self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', event => {
   event.waitUntil(Promise.all([

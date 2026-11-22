@@ -13,7 +13,7 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
  const method='qr';
  const payment=paymentFor({id:'a',order_number:321,total_vnd:120000,location_id:cafe.id,payment_method:'qr',payment_status:'pending',status:'pending',currency:'VND'});
  let calls=[],lost=true,gps,receipt,deliveryState='waiting_courier';
- const dom=new JSDOM(html,{url:'https://example.com/umma-global-mini-app/menu/',runScripts:'dangerously',beforeParse(w){
+ const dom=new JSDOM(html,{url:'https://example.com/umma-global-mini-app/menu/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
   w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.HTMLCanvasElement.prototype.getContext=()=>({fillRect(){},set fillStyle(v){}});w.HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,AA==';
@@ -104,9 +104,8 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
  assert.equal(d.getElementById('success').hidden,false);assert.equal(w.sessionStorage.getItem('umma-menu-pending'),null);receipt=JSON.parse(w.sessionStorage.getItem('umma-menu-receipt'));assert.equal(receipt.trackingToken,'a'.repeat(64));assert.equal(receipt.orderType,'delivery');assert.equal(receipt.payment.amount,120000);assert.equal(receipt.deliveryFeeVnd,30000);
  const tracking=d.getElementById('receiptTracking');
  assert.equal(tracking.hidden,false);
- assert.equal(tracking.getAttribute('aria-disabled'),'false','the customer can open tracking and see the pre-pickup status');
- assert.equal(new URL(tracking.href).pathname,'/umma-global-mini-app/delivery-tracking.html','tracking must remain inside GitHub Pages project');
- assert.equal(new URL(tracking.href).searchParams.get('token'),receipt.trackingToken);
+ assert.equal(tracking.getAttribute('aria-disabled'),'true','tracking is disabled until pickup');
+ assert.equal(tracking.hasAttribute('href'),false);
  const updateDelivery=async state=>{
   deliveryState=state;
   d.dispatchEvent(new w.Event('umma:fulfillment-realtime'));
@@ -114,10 +113,15 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
  };
  await updateDelivery('courier_assigned');
  assert.equal(tracking.hidden,false);
- assert.equal(tracking.getAttribute('aria-disabled'),'false','tracking navigation remains available while awaiting courier');
+ assert.equal(tracking.getAttribute('aria-disabled'),'true','an assignment does not unlock tracking');
  await updateDelivery('picked_up');
  assert.equal(tracking.getAttribute('aria-disabled'),'false');
- assert.equal(new URL(tracking.href).pathname,'/umma-global-mini-app/delivery-tracking.html');
+ const trackingUrl=new URL(tracking.href);
+ assert.equal(trackingUrl.pathname,'/umma-global-mini-app/delivery-tracking.html');
+ assert.equal(trackingUrl.searchParams.has('token'),false);
+ const credentials=new URLSearchParams(trackingUrl.hash.slice(1));
+ assert.equal(credentials.get('token'),receipt.trackingToken);
+ assert.equal(credentials.get('requestKey'),receipt.requestKey);
  await updateDelivery('delivered');
  assert.equal(tracking.hidden,true);
  assert.equal(tracking.hasAttribute('href'),false);
@@ -160,15 +164,27 @@ assert.equal(cashRpc.args.p_payment_method,undefined);
 response=await req({...payload,latitude:undefined});assert.equal(response.status,400);response=await req({...payload,orderType:'bogus'});assert.equal(response.status,400);
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
-for(const ending of ['delivered','cancelled','network','stale','moving','road']){
+for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting']){
  let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,centered;
  const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only'}),w=dom.window,d=w.document;
- w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===5000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
- w.eval(read('js/cafe/public-menu-i18n.js'));w.L={polyline(initial,style){if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};}};w.UmmaMaps={create:()=>({remove(){removed++;},fitBounds(bounds){fitted=bounds;},panTo(point){centered=point;},getBounds:()=>({pad:()=>({contains:()=>true})})}),marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
- w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',...(turn===2&&ending==='stale'?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,destination:{latitude:12.31,longitude:109.2},updatedAt:new Date().toISOString()})}));};
+ w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
+ w.eval(read('js/cafe/public-menu-i18n.js'));
+ const layer={addTo(){return this;},on(){return this;}};
+ w.L={map:()=>({setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;},panTo(point){centered=point;}}),
+  tileLayer:()=>layer,
+  polyline(initial,style){
+   if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}
+   points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};
+  }};
+ w.UmmaMaps={marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
+ w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',destination:{latitude:12.31,longitude:109.2},...(ending==='waiting'||(turn===2&&ending==='stale')?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,updatedAt:new Date().toISOString()})}));};
  if(ending==='road')w.UmmaNhaTrangRouter={route:async()=>({seconds:420,path:[{lat:12.28,lng:109.2},{lat:12.31,lng:109.2}]})};
  w.eval(read('js/cafe/public-tracking.js'));await tick();
  assert.equal(d.getElementById('map').hidden,false);
+ if(ending==='waiting'){
+  assert.match(d.getElementById('connection').textContent,/геолокацию курьера/);
+  assert.equal(d.getElementById('center').hidden,true);w.close();continue;
+ }
  const eta=d.getElementById('eta'),initialEta=eta.textContent;
  assert.equal(eta.hidden,false);
  assert.ok(fitted);
@@ -181,11 +197,16 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road'])
   assert.equal(markerMoves.length,1);
   assert.equal(points.length,2);
   assert.notEqual(eta.textContent,initialEta);
+ }else if(ending==='network'||ending==='stale'){
+  assert.equal(d.getElementById('map').hidden,false);
+  assert.equal(eta.hidden,true);
+  assert.equal(removed,0);
+  assert.match(d.getElementById('connection').textContent,/Последняя позиция курьера/);
  }else{
-  assert.equal(d.getElementById('map').hidden,true,ending+' hides previous coordinates');
+  assert.equal(d.getElementById('map').hidden,true,ending+' removes previous coordinates');
   assert.equal(eta.hidden,true);
   assert.equal(removed,1);
  }
  assert.equal(w.Notification,undefined);w.close();
 }
-console.log('PASS tracking page: live map, terminal delivery/cancellation, stale/missing positions and lost connection clear map; unsupported Notification API does not crash.');
+console.log('PASS tracking page: live map, terminal delivery/cancellation, stale/no connection retains the last fix, missing positions still render the map; unsupported Notification API does not crash.');

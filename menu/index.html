@@ -815,7 +815,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=delivery-receipt-2"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=guest-gps-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
@@ -1758,19 +1758,17 @@ function renderSuccess(){
   const tracking=$('receiptTracking');
   tracking.hidden=(lastOrder.orderType||lastOrder.order_type)!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
     !(/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||(lastOrder.id&&lastOrder.requestKey))||Boolean(lastOrder.greenSmStage);
-  // The tracking page itself enforces the pickup milestone server-side.
-  // Never disable the navigation link merely because a locally cached receipt is stale.
-  const canTrack=!tracking.hidden;
+  const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack){
-   // <base href="../"> already points to the repository root; never traverse up again.
-   const url=new URL('/umma-global-mini-app/delivery-tracking.html',location.origin);
-   if(lastOrder.trackingToken)url.searchParams.set('token',lastOrder.trackingToken);
-   url.searchParams.set('v','live-realtime-10');
+   const url=new URL('delivery-tracking.html?v=guest-gps-1',document.baseURI);
+   const credentials=new URLSearchParams();
+   if(lastOrder.trackingToken)credentials.set('token',lastOrder.trackingToken);
    if(lastOrder.id&&lastOrder.requestKey){
-    url.searchParams.set('orderId',lastOrder.id);
-    url.searchParams.set('requestKey',lastOrder.requestKey);
+    credentials.set('orderId',lastOrder.id);
+    credentials.set('requestKey',lastOrder.requestKey);
    }
+   url.hash=credentials.toString();
    tracking.href=url.href;
   }
   else tracking.removeAttribute('href');
@@ -1825,7 +1823,8 @@ async function refreshAvailability(){
 let deliveryButtonSyncBusy=false;
 async function syncDeliveryButton(){
  if(deliveryButtonSyncBusy||document.hidden)return;
- const candidates=activeReceipts().filter(o=>o.orderType==='delivery'&&/^[a-f0-9]{64}$/.test(o.trackingToken||''));
+ const candidates=activeReceipts().filter(o=>(o.orderType||o.order_type)==='delivery'&&!o.greenSmStage&&
+  (o.id&&o.requestKey||/^[a-f0-9]{64}$/.test(o.trackingToken||'')));
  if(!candidates.length)return;
  deliveryButtonSyncBusy=true;
  try{
@@ -1833,18 +1832,16 @@ async function syncDeliveryButton(){
    try{
     const response=await fetch(API+'umma-guest-delivery',{
      method:'POST',headers:{'content-type':'application/json'},
-     body:JSON.stringify({action:'tracking',token:current.trackingToken}),
+     body:JSON.stringify({action:'tracking',orderId:current.id,requestKey:current.requestKey,token:current.trackingToken}),
      cache:'no-store',signal:AbortSignal.timeout(10000)
     });
     const result=await response.json();
-    if(!response.ok||!result.ok||terminal(current))return;
-    if(['picked_up','courier_assigned','delivered','waiting_courier'].includes(result.state)){
-     if(current.deliveryStatus!==result.state){
-      current.deliveryStatus=result.state;
-      saveReceipt(current);
-     }
-     if(current===lastOrder)renderSuccess();
-    }
+    if(!response.ok||!result.ok||!activeReceipts().includes(current))return;
+    const status=['completed','cancelled'].includes(result.orderStatus)?result.orderStatus:current.status;
+    if(current.deliveryStatus===result.state&&current.status===status)return;
+    current.deliveryStatus=result.state;
+    current.status=status;
+    receiptUpdated(current);
    }catch(error){console.warn('Delivery tracking refresh failed',error);}
   }));
  }finally{deliveryButtonSyncBusy=false;}
