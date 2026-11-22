@@ -142,7 +142,7 @@ async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);
  window.ummaOrderInbox?.publish({...d,id:"delivery:"+d.number},t);labels();
  const state=d.orderStatus+':'+d.state;if(previous&&state!==previous&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){try{new Notification('UMMA Delivery',{body:$('status').textContent});}catch{}}previous=state;
  if(isTerminal(d))stopped=true;
- }catch{if(!stopped){hideMap();connectionKey='Нет связи. Повторяем запрос…';labels();}}finally{clearTimeout(timeout);active=false;if(!stopped)timer=setTimeout(poll,5000);}}
+ }catch{if(!stopped){hideMap();connectionKey='Нет связи. Повторяем запрос…';labels();}}finally{clearTimeout(timeout);active=false;if(!stopped)timer=setTimeout(poll,3000);}}
 window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);controller?.abort();hideMap();});window.addEventListener('pageshow',e=>{if(e.persisted){stopped=false;void poll();}});
 if(/^[a-f0-9]{64}$/.test(token)||(/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId))){if(!data)statusKey='Загружаем меню…';labels();void poll();}else{statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;}
 })();
