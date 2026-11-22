@@ -1564,6 +1564,7 @@ $('form').onsubmit=async e=>{
   window.ummaMenuAudience?.orderPlaced(d.order.id,pending.requestKey);
   saveReceipt();
   renderSuccess();
+  void syncDeliveryButton();
   checkoutStage('receipt');
   $('checkoutContent').hidden=true;
   $('result').hidden=true;
@@ -1714,6 +1715,7 @@ function openReceipt(order){
   renderSuccess();
   checkoutStage('receipt');
   $('checkout').showModal();
+  void syncDeliveryButton();
   syncCustomerNavigation();
   document.body.style.overflow='hidden';
 }
@@ -1749,7 +1751,7 @@ function renderSuccess(){
   const paid=lastOrder.paymentStatus==='paid'&&!cancelled;
   $('success').dataset.payment=cancelled?'cancelled':paymentPending(lastOrder)?'pending':paid?'paid':'closed';
   $('paymentConfirmedMark').hidden=!paid;
-  window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,receiptPhoto,updated:receiptUpdated});
+  try{window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,receiptPhoto,updated:receiptUpdated});}catch(error){console.error('Receipt widget error',error);}
   $('success').toggleAttribute('data-kaspi-pending', lastOrder.payment?.currency==='KZT'&&!$('numberTransfer').hidden);
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
   $('successTotal').textContent=money(lastOrder.totalVnd);
@@ -1758,7 +1760,7 @@ function renderSuccess(){
     !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
   const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
   tracking.setAttribute('aria-disabled',String(!canTrack));
-  if(canTrack)tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
+  if(canTrack)tracking.href=new URL('delivery-tracking.html',document.baseURI).href+'#token='+lastOrder.trackingToken;
   else tracking.removeAttribute('href');
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
