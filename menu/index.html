@@ -1758,7 +1758,7 @@ function renderSuccess(){
     !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
   const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
   tracking.setAttribute('aria-disabled',String(!canTrack));
-  if(canTrack)tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
+  if(canTrack)tracking.href='../delivery-tracking.html#token='+lastOrder.trackingToken;
   else tracking.removeAttribute('href');
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
