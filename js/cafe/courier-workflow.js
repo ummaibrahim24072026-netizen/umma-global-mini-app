@@ -37,10 +37,10 @@
     const state=result.order||{deliveryStatus:target};
     window.ummaKitchen?.applyCourierState?.(orderId,state,proof);
     forgetTransition(orderId);
-    if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop();
+    if(kind==='handover' && window.ummaCourierTracking?.isSharing(orderId)) await window.ummaCourierTracking.stop().catch(()=>{});
     await window.ummaKitchen.refresh({afterMutation:true}).catch(()=>{});
     if(kind==='pickup' && state.deliveryStatus==='picked_up' && !['completed','cancelled'].includes(state.status)) await window.ummaCourierTracking?.start(orderId);
-    message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Фото сохранено. Заказ вручён клиенту.');
+    message(kind==='pickup'?'Фото сохранено. Заказ получен курьером.':'Заказ передан. Фото сохранено.');
    } catch(error) {
     message('Фото сохранено. '+(error.status>=400&&error.status<500?'Не удалось подтвердить этап: '+error.message:'Подтверждаем этап доставки после восстановления связи…'));
     if(error.status>=400&&error.status<500)forgetTransition(orderId);else scheduleTransitions();
@@ -65,65 +65,167 @@
  }
  async function respond(id,accept,reason=null,button=null,market=false){if(busy)return;busy=true;const label=button?.textContent;if(button){button.disabled=true;button.textContent=accept?'Принимаем…':'Отправляем…';button.setAttribute('aria-busy','true');}message(accept?'Принимаем доставку…':'Отправляем отказ…');try{await api({action:'respondCourierOffer',orderId:id,accept,reason,market});if(accept)window.ummaCourierDesk?.showTab('work');await window.ummaKitchen.refresh({afterMutation:true});if(document.getElementById('webOverview'))message(accept?'Доставка принята.':'Отказ отправлен.');}catch(e){message(e.message);const feedback=button?.closest('article')?.querySelector('[data-courier-offer-feedback]');if(feedback)feedback.textContent=e.message;}finally{busy=false;lastOfferSignature='';if(button?.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}await window.ummaKitchen.refresh();}}
  function decline(id){if(busy||document.querySelector('.cafe-refund-dialog'))return;const dialog=document.createElement('dialog');dialog.className='cafe-refund-dialog';dialog.innerHTML='<form class="cafe-order-form"><h3>Причина отказа</h3><label>Причина<textarea minlength="3" maxlength="500" required></textarea></label><div class="kitchen-order-actions"><button type="button">Назад</button><button type="submit" class="kitchen-cancel">Отправить отказ</button></div><p role="status"></p></form>';document.body.append(dialog);dialog.showModal();dialog.querySelector('[type="button"]').onclick=()=>dialog.remove();dialog.querySelector('form').onsubmit=async e=>{e.preventDefault();const reason=dialog.querySelector('textarea').value.trim();if(reason.length<3)return;dialog.remove();await respond(id,false,reason);};}
- async function jpeg(file){if(!file||!file.type.startsWith('image/'))throw Error('Выберите фотографию');if(file.size>20000000)throw Error('Исходное фото слишком большое');
-  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
-  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Не удалось открыть фотографию'));img.src=data;});
-  const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(image.width,image.height));canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
-  // Re-encoding also removes device EXIF metadata; the server stamps actor/time/hash.
-  return canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+ function readPhoto(file){
+  return new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(reader.result);
+   reader.onerror=()=>reject(Error('Не удалось прочитать фотографию'));
+   reader.readAsDataURL(file);
+  });
  }
- async function confirmPhoto(imageBase64,kind){
+ function encodePhoto(source,width,height){
+  if(!width||!height)throw Error('Не удалось открыть фотографию');
+  const canvas=document.createElement('canvas');
+  try{
+   // Bound the encoded image so a photo and its retry data fit in session storage.
+   for(const edge of [1280,960,640]){
+    const scale=Math.min(1,edge/Math.max(width,height));
+    canvas.width=Math.max(1,Math.round(width*scale));
+    canvas.height=Math.max(1,Math.round(height*scale));
+    canvas.getContext('2d').drawImage(source,0,0,canvas.width,canvas.height);
+    const photo=canvas.toDataURL('image/jpeg',0.78).split(',')[1];
+    if(photo && photo.length<=350000)return photo;
+   }
+   throw Error('Не удалось подготовить снимок. Сделайте другое фото.');
+  }finally{canvas.width=0;canvas.height=0;}
+ }
+ async function jpeg(file){
+  if(!file?.size || (file.type&&!file.type.startsWith('image/')))throw Error('Выберите фотографию');
+  if(file.size>20000000)throw Error('Исходное фото слишком большое');
+  const canUseObjectUrl=typeof URL.createObjectURL==='function';
+  const url=canUseObjectUrl?URL.createObjectURL(file):await readPhoto(file);
+  try{
+   const image=await new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(Error('Не удалось открыть фотографию. Сделайте новый снимок или выберите JPEG.'));
+    img.src=url;
+   });
+   return encodePhoto(image,image.naturalWidth||image.width,image.naturalHeight||image.height);
+  }finally{if(canUseObjectUrl)URL.revokeObjectURL(url);}
+ }
+ async function confirmPhoto(imageBase64,kind,sendPhoto){
   const dialog=document.createElement('dialog');
   dialog.className='cafe-refund-dialog courier-photo-preview';
   dialog.innerHTML='<form method="dialog"><h3>'+(kind==='pickup'?'Фото заказа':'Фото вручения')+'</h3>'+
    '<img alt="Снимок для подтверждения доставки"><div class="kitchen-order-actions">'+
    '<button type="submit" class="kitchen-action" value="send">Отправить фото</button>'+
-   '<button type="submit" class="kitchen-cancel" value="cancel">Назад</button></div></form>';
+   '<button type="button" class="kitchen-cancel" value="cancel">Назад</button></div><p role="status"></p></form>';
   dialog.setAttribute('aria-label',kind==='pickup'?'Подтвердить получение':'Подтвердить вручение');
   dialog.querySelector('img').src='data:image/jpeg;base64,'+imageBase64;
+  const send=dialog.querySelector('[value="send"]');
+  const back=dialog.querySelector('[value="cancel"]');
+  const status=dialog.querySelector('[role="status"]');
   document.body.append(dialog);
   try{
    return await new Promise(resolve=>{
-    dialog.querySelector('form').onsubmit=event=>{
+    back.onclick=()=>resolve(false);
+    dialog.addEventListener('cancel',event=>{event.preventDefault();if(!send.disabled)resolve(false);});
+    dialog.querySelector('form').onsubmit=async event=>{
      event.preventDefault();
-     resolve(event.submitter?.value==='send');
+     if(send.disabled)return;
+     send.disabled=back.disabled=true;
+     status.textContent='Отправляем фото…';
+     try{
+      await sendPhoto(imageBase64);
+      resolve(true);
+     }catch(error){
+      status.textContent='Не удалось отправить фото: '+error.message;
+      send.textContent='Повторить отправку';
+      send.disabled=back.disabled=false;
+     }
     };
-    dialog.addEventListener('cancel',event=>{event.preventDefault();resolve(false);},{once:true});
     dialog.showModal();
    });
   }finally{dialog.remove();}
  }
+ function openCamera(title,processPhoto,openFile,cleanup){
+  const camera=document.createElement('dialog');
+  camera.className='cafe-refund-dialog courier-photo-preview';
+  camera.setAttribute('aria-label',title);
+  camera.innerHTML='<h3></h3><video autoplay muted playsinline hidden></video><p role="status">Открываем камеру…</p>'+
+   '<div class="kitchen-order-actions"><button type="button" class="kitchen-action" data-take-photo disabled>Сделать снимок</button>'+
+   '<button type="button" class="kitchen-action" data-choose-photo>Выбрать фото</button>'+
+   '<button type="button" class="kitchen-cancel" data-close-camera>Назад</button></div>';
+  camera.querySelector('h3').textContent=title;
+  const video=camera.querySelector('video');
+  const take=camera.querySelector('[data-take-photo]');
+  const status=camera.querySelector('[role="status"]');
+  let stream;
+  const close=()=>{
+   stream?.getTracks().forEach(track=>track.stop());
+   video.srcObject=null;
+   camera.remove();
+  };
+  camera.querySelector('[data-close-camera]').onclick=()=>{close();cleanup();};
+  camera.addEventListener('cancel',event=>{event.preventDefault();close();cleanup();});
+  camera.querySelector('[data-choose-photo]').onclick=()=>{close();openFile();};
+  video.addEventListener('loadeddata',()=>{
+   take.disabled=false;
+   video.hidden=false;
+   status.textContent='';
+  });
+  take.onclick=()=>{
+   try{
+    const image=encodePhoto(video,video.videoWidth,video.videoHeight);
+    close();
+    void processPhoto(()=>image);
+   }catch(error){status.textContent=error.message;}
+  };
+  document.body.append(camera);
+  camera.showModal();
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false}).then(result=>{
+   if(!camera.isConnected){result.getTracks().forEach(track=>track.stop());return;}
+   stream=result;
+   video.srcObject=stream;
+  }).catch(()=>{
+   if(camera.isConnected)status.textContent='Камера недоступна. Выберите фото.';
+  });
+ }
  let cameraInput=null;
  async function photo(id,kind,button){
   if(busy||completing.has(id)||cameraInput)return;
+  const web=!!document.getElementById('webOverview');
   const input=document.createElement('input');cameraInput=input;
-  input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.hidden=true;
+  input.type='file';input.accept='image/*';input.hidden=true;
+  if(!web||!navigator.mediaDevices?.getUserMedia)input.setAttribute('capture','environment');
   input.dataset.courierCamera=id;
   const label=button.textContent;
   button.disabled=true;button.textContent='Выберите или сделайте фото…';
   const stepMessage=text=>{message(text);document.querySelectorAll('[data-courier-step-status]').forEach(el=>{if(el.dataset.courierStepStatus===id)el.textContent=text;});};
   const cleanup=()=>{input.remove();if(cameraInput===input)cameraInput=null;if(button.isConnected){button.disabled=false;button.textContent=label;button.removeAttribute('aria-busy');}};
-  input.oncancel=cleanup;
-  input.onchange=async()=>{
-   if(busy||!input.files?.length){cleanup();return;}
+  const sendPhoto=async imageBase64=>{
+   const result=await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});
+   rememberTransition(id,kind);
+   await completePhoto(id,kind,result.order,result.proof);
+  };
+  const processPhoto=async prepare=>{
+   if(busy){cleanup();return;}
    busy=true;button.textContent='Сохраняем фото…';button.setAttribute('aria-busy','true');
-   try {
-    stepMessage('Сохраняем фото…');
-    const imageBase64=await jpeg(input.files[0]);
-    if(document.getElementById('webOverview')&&!await confirmPhoto(imageBase64,kind)){
-     stepMessage('');
-     return;
-    }
-    const result=await api({action:'uploadDeliveryProof',orderId:id,kind,imageBase64});
-    rememberTransition(id,kind);
-    button.textContent=kind==='pickup'?'Подтверждаем получение…':'Подтверждаем вручение…';
-    await completePhoto(id,kind,result.order,result.proof);
-   }catch(e){stepMessage('Фото не подтверждено: '+e.message);}
+   try{
+    const imageBase64=await prepare();
+    if(web)await confirmPhoto(imageBase64,kind,sendPhoto);
+    else await sendPhoto(imageBase64);
+   }catch(error){stepMessage('Фото не подтверждено: '+error.message);}
    finally{busy=false;cleanup();}
   };
-  // Keep a real, connected file input alive while the Telegram WebView opens its camera.
+  const openFile=()=>{
+   try{input.click();}catch(error){stepMessage(error.message);cleanup();}
+  };
+  input.oncancel=cleanup;
+  input.onchange=()=>{
+   const file=input.files?.[0];
+   if(!file){cleanup();return;}
+   void processPhoto(()=>jpeg(file));
+  };
   document.body.append(input);
-  try{input.click();}catch(e){stepMessage(e.message);cleanup();}
+  try{
+   const pending=web?window.ummaCafeRequests?.pending?.()?.payload:null;
+   if(pending?.action==='uploadDeliveryProof'&&pending.orderId===id&&pending.kind===kind){
+    void processPhoto(()=>pending.imageBase64);
+   }else if(web&&navigator.mediaDevices?.getUserMedia)openCamera(kind==='pickup'?'Фото заказа':'Фото вручения',processPhoto,openFile,cleanup);
+   else openFile();
+  }catch(error){stepMessage(error.message);cleanup();}
  }
  document.addEventListener('click',async event=>{const target=event.target.closest?.('button');if(!target)return;
  if(target.dataset.courierClaim)await respond(target.dataset.courierClaim,true,null,target,true);
