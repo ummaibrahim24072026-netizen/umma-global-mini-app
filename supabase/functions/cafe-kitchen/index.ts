@@ -405,6 +405,21 @@ Deno.serve(async req => {
       if(setting&&typeof body.enabled!=="boolean")return response({ok:false,error:"Некорректный режим"},400);
       const args=setting?{p_order:body.orderId,p_actor:telegramId,p_enabled:body.enabled}:{p_order:body.orderId,p_actor:telegramId,p_session:body.sessionId,p_sequence:body.sequence,p_lat:body.latitude,p_lng:body.longitude,p_accuracy:body.accuracy};
       const {data,error}=await supabase.rpc(setting?"set_cafe_delivery_tracking":"update_cafe_delivery_tracking",args);
+      if(!setting&&!error&&data?.ok&&!data?.ignored){
+        // The authenticated courier has just persisted this GPS fix.
+        // Broadcast only to unguessable, per-order grant channels; REST polling remains the fallback.
+        const broadcast=async()=>{
+          const {data:grants}=await supabase.from("umma_guest_delivery_grants").select("token_hash").eq("order_id",body.orderId).is("revoked_at",null).gt("expires_at",new Date().toISOString());
+          if(!grants?.length)return;
+          const key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const url=Deno.env.get("SUPABASE_URL")!+"/realtime/v1/api/broadcast";
+          const messages=grants.map(g=>({topic:"umma-delivery:"+g.token_hash,event:"position",payload:{latitude:body.latitude,longitude:body.longitude,accuracy:body.accuracy,updatedAt:new Date().toISOString()}}));
+          const sent=await fetch(url,{method:"POST",headers:{"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({messages})});
+          if(!sent.ok)console.error("Delivery realtime broadcast",sent.status);
+        };
+        if(typeof EdgeRuntime!=="undefined")EdgeRuntime.waitUntil(broadcast().catch(e=>console.error("Delivery realtime",e)));
+        else await broadcast().catch(e=>console.error("Delivery realtime",e));
+      }
       return response(error?{ok:false,error:error.message}:data,error?400:200);
     }
     if(body.action==="uploadDeliveryProof"){
