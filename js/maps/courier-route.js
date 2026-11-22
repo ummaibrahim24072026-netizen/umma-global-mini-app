@@ -77,7 +77,7 @@
   $('courierMapClose').focus();
   if(!destination){status('В заказе нет точки на карте. Уточните её у кафе.');return;}
   try{
-   view.map=window.UmmaMaps.create($('courierRouteMap'),destination,()=>{});
+   view.map=window.UmmaMaps.create($('courierRouteMap'),destination,undefined,{blueWater:true});
    window.UmmaMaps.marker(view.map,destination);
    status('Ожидаем GPS. Разрешите геолокацию.');
    if(!navigator.geolocation?.watchPosition)throw Error('GPS недоступен в этом браузере.');

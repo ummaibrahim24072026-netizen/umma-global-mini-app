@@ -4,6 +4,13 @@
   let libraries = null;
   const style = 'https://tiles.openfreemap.org/styles/liberty';
   const credit = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://openmaptiles.org" target="_blank" rel="noopener">OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+  const moped = `<svg viewBox="0 0 28 28" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="7" cy="20" r="2.7"/>
+    <circle cx="22" cy="20" r="2.7"/>
+    <path d="M7 20h7.5a4 4 0 0 0 3.9-3.1l1.2-5.2M22 20l-3-10.4h-3M20 13h1.3a1.4 1.4 0 0 1 0 2.8h-.5"/>
+    <path d="M4 18h8l-1.3-3.5H6z" fill="#5ed5d1"/>
+    <path d="M5 12h7v2.5H5z" fill="#f6ce77"/>
+  </svg>`;
   function script(src) {
     return new Promise((resolve, reject) => {
       const node = document.createElement('script');
@@ -74,19 +81,25 @@
     }).catch(fallback);
     return () => { disposed = true; clearTimeout(timer); };
   }
-  function create(canvas, point, status) {
+  function create(canvas, point, status, options) {
     if (!window.L?.map) throw Error('Карта не загрузилась. Откройте адрес в Google Maps.');
     const map = window.L.map(canvas, { scrollWheelZoom: false }).setView([point.lat, point.lng], 16);
     map.attributionControl?.setPrefix(false);
-    const dispose = basemap(map, canvas, status);
+    const dispose = basemap(map, canvas, status, options);
     const remove = map.remove.bind(map);
     map.remove = () => { dispose(); remove(); };
     return map;
   }
   function marker(map, point, kind = 'destination') {
+    const courier = kind === 'courier';
     return window.L.marker([point.lat, point.lng], {
-      title: kind === 'courier' ? 'Курьер UMMA' : 'Точка доставки',
-      icon: window.L.divIcon({ className: 'umma-map-marker umma-map-marker-' + kind, html: '<span aria-hidden="true">' + (kind === 'courier' ? '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h11v11H3zM14 10h4l3 4v3h-7"/><circle cx="7" cy="18" r="2" fill="#087b80"/><circle cx="18" cy="18" r="2" fill="#087b80"/></svg>' : '●') + '</span>', iconSize: [36, 36], iconAnchor: [18, 18] })
+      title: courier ? 'Курьер UMMA' : 'Точка доставки',
+      icon: window.L.divIcon({
+        className: 'umma-map-marker umma-map-marker-' + kind,
+        html: courier ? moped : '<span aria-hidden="true">●</span>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      })
     }).addTo(map);
   }
   window.UmmaMaps = { basemap, create, marker };

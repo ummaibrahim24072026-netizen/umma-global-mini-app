@@ -13,7 +13,7 @@ w.L={
  map:()=>{const map=emitter({center:{lat:12,lng:109},setView(point){this.center={lat:point[0],lng:point[1]};return this;},getCenter(){return this.center;},invalidateSize(){},remove(){this.removed=true;}});maps.push(map);return map;},
  tileLayer:options=>{rasters.push(options);return emitter({addTo(){return this;}});},divIcon:options=>options,
  maplibreGL:options=>{const gl=emitter({getStyle:()=>({layers:[{id:"water",type:"fill","source-layer":"water"},{id:"buildings",type:"fill","source-layer":"building"},{id:"labels",type:"symbol","source-layer":"place"}]}),setPaintProperty:(...args)=>paints.push(args)});const layer={options,gl,addTo(){return this;},getMaplibreMap(){return gl;},remove(){this.removed=true;}};vectors.push(layer);return layer;},
- marker:point=>{const marker=emitter({point:{lat:point[0],lng:point[1]},addTo(){return this;},setLatLng(point){this.point={lat:point[0],lng:point[1]};return this;},getLatLng(){return this.point;}});markers.push(marker);return marker;}
+ marker:(point,options)=>{const marker=emitter({options,point:{lat:point[0],lng:point[1]},addTo(){return this;},setLatLng(point){this.point={lat:point[0],lng:point[1]};return this;},getLatLng(){return this.point;}});markers.push(marker);return marker;}
 };
 w.Telegram={WebApp:{initData:'isolated-qa',initDataUnsafe:{user:{id:1,first_name:'QA'}}}};
 w.fetch=async()=>({ok:true,json:async()=>({ok:true,products:[{id:'food',name_ru:'QA',price_vnd:50000}],inventoryControlEnabled:false,location:{id:'cafe',name:'QA',latitude:12.25,longitude:109.19,delivery_zone:[[12.2,109.1],[12.4,109.1],[12.4,109.3],[12.2,109.3]]}})});
@@ -95,6 +95,14 @@ try{
  const route=d.createElement('button');route.dataset.routeAddress=payloads[0].deliveryAddress;route.dataset.routeOrderNumber='QA';d.body.append(route);
  w.UmmaCourierMap.open(route);
  assert.equal($('courierMapModal').hidden,false);
+ await tick();
+ vectors.at(-1).gl.fire('load');
+ assert.deepEqual(paints.findLast(([layer])=>layer==='water'),['water','fill-color','#91bdef'],'courier route shows blue water');
+ const courierMarker=w.UmmaMaps.marker(maps.at(-1),{lat:12.28,lng:109.22},'courier');
+ const icon=d.createElement('div');
+ icon.innerHTML=courierMarker.options.icon.html;
+ assert.equal(courierMarker.options.title,'Курьер UMMA');
+ assert.equal(icon.querySelectorAll('svg circle').length,2,'the moped has two wheels');
  w.UmmaCourierMap.close();
  assert.equal(w.ummaMapLinks.parseAddress('Точка доставки: 91,181'),null);
  w.eval(readFileSync('js/core/navigation.js','utf8'));
