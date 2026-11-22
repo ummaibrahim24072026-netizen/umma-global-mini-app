@@ -108,7 +108,13 @@ ww.ummaGuestExtras.receipt(webOrder,ctx);
 assert.equal(wd.getElementById('guestTransferProof').hidden,false);
 const receiptView=wd.getElementById('success');
 const returnButton=wd.getElementById('newOrder');
-wd.getElementById('checkout').dataset.stage='receipt';
+const checkout=wd.getElementById('checkout');
+checkout.dataset.stage='checkout';
+assert.equal(ww.getComputedStyle(wd.getElementById('submit')).color,'rgb(255, 255, 255)');
+checkout.dataset.stage='receipt';
+for(const selector of ['.customer-heading-brand','#checkoutTitle','#copyTransferNumber']){
+ assert.equal(ww.getComputedStyle(checkout.querySelector(selector)).color,'rgb(255, 255, 255)',selector);
+}
 assert.equal(receiptView.hasAttribute('data-proof-sent'),false);
 assert.equal(ww.getComputedStyle(returnButton).display,'flex');
 const webInput=wd.getElementById('guestTransferProofFile');

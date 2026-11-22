@@ -217,10 +217,9 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   padding: 10px 16px !important;
   border-bottom: 2px solid #d1ac58 !important;
   background: var(--umma-brand-primary) !important;
-  --customer-heading-brand: #d2efec;
 }
 #checkout[data-stage="checkout"] .checkout-header::before { content: none; }
-#checkout[data-stage="checkout"] #checkoutTitle { max-width: none; color: #fffdf5 !important; text-shadow: none; }
+#checkout[data-stage="checkout"] #checkoutTitle { max-width: none; }
 #checkout[data-stage="checkout"] .checkout-body { padding: 0 !important; }
 .checkout-form-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 14px 16px 8px; }
 #checkout .order-mode-picker { padding: 0; margin: 0 0 8px; border: 0; min-width: 0; }
@@ -304,10 +303,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-header {
   padding: 6px 12px;
-  background: var(--umma-brand-primary);
-  --customer-heading-brand: var(--umma-brand-on-primary);
-  border-bottom: 1px solid var(--gold);
-  color: var(--umma-brand-on-primary);
 }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) #checkoutTitle { max-width: none; }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-body { padding: 8px 12px 10px; }
@@ -363,11 +358,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #numberTransfer > .transfer-rate small { display: inline; }
 #checkout #numberTransfer > .transfer-rate + div { border: 0; }
 #checkout #numberTransfer .ruble-bank-picker { padding: 4px 0 0; }
-#checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); color: var(--umma-brand-on-primary); }
+#checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); }
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
 #checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--umma-brand-soft); }
-#checkout #psbBankLink { grid-column: 1 / -1; }
 #checkout #guestTransferProof { margin-top: 5px; }
 #checkout #attachGuestTransferProof { width: 100%; min-height: 44px; }
 #checkout :is(#guestTransferProofStatus, #transferCopyStatus) { margin: 4px 0 0; font-size: 12px; }
@@ -472,6 +466,14 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=chat-layout-36"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=59"><link rel="stylesheet" href="css/connect-calls.css?v=8">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
+#checkout[data-stage="receipt"] .checkout-header {
+  background: var(--umma-brand-primary);
+  border-bottom: 1px solid var(--gold);
+}
+#checkout:is([data-stage="checkout"], [data-stage="receipt"]) :is(.customer-heading-brand, #checkoutTitle, #submit, #copyTransferNumber) {
+  color: #fff;
+  -webkit-text-fill-color: currentColor;
+}
 #checkout[data-stage="receipt"] #success[data-proof-sent] #newOrder {
   display: none;
 }
@@ -743,7 +745,6 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <a class="plain-btn bank-link" href="https://www.tbank.ru/login/" target="_blank" rel="noopener noreferrer">Т-Банк</a>
 <a class="plain-btn bank-link" href="https://web.alfabank.ru/" target="_blank" rel="noopener noreferrer">Альфа-Банк</a>
 <a class="plain-btn bank-link" href="https://online.vtb.ru/" target="_blank" rel="noopener noreferrer">ВТБ</a>
-<a id="psbBankLink" class="plain-btn bank-link" href="https://www.psbank.ru/personal/remote/psb-retail" target="_blank" rel="noopener noreferrer">ПСБ</a>
 </div>
 
 <p id="transferCopyStatus" class="guest-hint" role="status"></p>

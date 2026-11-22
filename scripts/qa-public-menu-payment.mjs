@@ -322,9 +322,9 @@ console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, e
  assert.equal($('transferRateRow').hidden,false);
  await $('copyTransferNumber').onclick();
  assert.deepEqual(copied,[kaspi.payment.account,sber.payment.phone]);
- assert.equal($('psbBankLink').textContent,'ПСБ');
- assert.equal(new URL($('psbBankLink').href).hostname,'www.psbank.ru');
- $('rubleBankLinks').onclick({target:$('psbBankLink')});
+ const bankLinks=$('rubleBankLinks').querySelectorAll('a');
+ assert.deepEqual(Array.from(bankLinks,link=>link.textContent),['Сбер','Т-Банк','Альфа-Банк','ВТБ']);
+ $('rubleBankLinks').onclick({target:bankLinks[0]});
  assert.equal(copied.at(-1),sber.payment.phone);
 
  const usdt={...kaspi,id:'usdt-order',payment:{currency:'USDT',amount:5.123456,bankName:'USDT',
