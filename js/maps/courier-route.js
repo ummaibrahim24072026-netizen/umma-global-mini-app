@@ -77,6 +77,11 @@
   const address=button.dataset.routeLabel;
   const view={destination,opener:button,orderId:button.dataset.routeOrderId,follow:true,fullScreen:!!$('courierRouteFollow')};
   active=view;
+  // Opening navigation after confirmed pickup also resumes client GPS sharing.
+  // Never expose a courier's location before pickup or after delivery.
+  if(button.dataset.routeStage==='picked_up'&&view.orderId&&window.ummaCourierTracking){
+   void window.ummaCourierTracking.start(view.orderId);
+  }
   $('courierMapModal').hidden=false;
   $('courierMapTitle').textContent='Маршрут · Заказ №'+(button.dataset.routeOrderNumber||'');
   $('courierRouteDirections').hidden=true;
