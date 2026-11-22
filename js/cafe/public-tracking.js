@@ -38,14 +38,16 @@ function estimateMinutes(from,to){
 function drawPosition(d){
  const courier=point(d),destination=point(d.destination);
  const age=Date.now()-Date.parse(d.updatedAt);
- if(d.state!=='picked_up'||isTerminal(d)||!courier||!(age>=-10000&&age<60000)){
+ if(d.state!=='picked_up'||isTerminal(d)||!courier||!(age>=-10000)){
   if(d.state==='picked_up'&&!isTerminal(d)&&destination&&window.L&&window.UmmaMaps){
    if(!map){$('map').hidden=false;$('map').closest('main').dataset.map='';map=UmmaMaps.create($('map'),destination,()=>{});map.zoomControl?.setPosition('bottomleft');UmmaMaps.marker(map,destination);map.setView([destination.lat,destination.lng],15);setTimeout(()=>map?.invalidateSize(),100);}
    connectionKey='Ожидаем свежую геопозицию курьера';
   }else hideMap();
   return;
  }
- if(!routeOrigin)etaMinutes=destination?estimateMinutes(courier,destination):null;
+ const fresh=age<60000;
+ if(!fresh){connectionKey='Последняя позиция курьера · '+new Date(d.updatedAt).toLocaleTimeString('ru-RU')+' (GPS сейчас не обновляется)';etaMinutes=null;}
+ if(!routeOrigin&&fresh)etaMinutes=destination?estimateMinutes(courier,destination):null;
  if(!window.L||!window.UmmaMaps){connectionKey='Не удалось загрузить карту';return;}
  const fix=[courier.lat,courier.lng];
  $('map').hidden=false;
@@ -71,7 +73,7 @@ function drawPosition(d){
   if(!map.getBounds().pad(-0.15).contains(fix))map.panTo(fix);
  }
  lastFix=fix;
- if(destination)updateRoad(courier,destination);
+ if(destination&&fresh)updateRoad(courier,destination);
 }
 $('center').onclick=()=>{if(map&&lastFix)map.panTo(lastFix);};
 function updateRoad(courier,destination){
