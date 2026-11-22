@@ -140,7 +140,7 @@
  else{v.marker.setLatLng([point.lat,point.lng]);v.accuracy.setLatLng([point.lat,point.lng]).setRadius(Number(data.accuracy)||0);if(v.follow.checked||!v.point)v.map.panTo([point.lat,point.lng]);v.map.invalidateSize();}
  v.point=point;
  }else{v.badge.textContent=data.state==='delivered'?'Доставлено':'Ожидаем позицию';v.badge.dataset.state='waiting';v.empty.hidden=false;v.empty.textContent=states[data.state]||'Позиция недоступна.';v.center.disabled=true;v.status.textContent=states[data.state]||'Позиция недоступна.';v.canvas.hidden=true;v.map?.remove();v.map=null;v.marker=null;v.accuracy=null;v.canvas.replaceChildren();v.point=null;}
- if(['delivered','unavailable'].includes(data.state))return;
+ if(['delivered','unavailable'].includes(data.state)){close();return;}
  }catch(e){if(viewer===v){v.badge.textContent='Нет свежей позиции';v.badge.dataset.state='waiting';v.center.disabled=true;v.empty.hidden=false;v.empty.textContent='Ждём свежую позицию курьера. Проверьте подключение к интернету.';v.status.textContent='Связь потеряна или позиция устарела. Ожидаем обновление…';v.canvas.hidden=true;}}
  if(viewer===v)v.timer=setTimeout(()=>{if(!document.hidden)poll(v);else v.timer=setTimeout(()=>poll(v),5000);},5000);
  }
