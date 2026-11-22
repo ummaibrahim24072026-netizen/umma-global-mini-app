@@ -1,11 +1,14 @@
 import {JSDOM} from 'jsdom';import {readFileSync,writeFileSync,mkdirSync,cpSync} from 'node:fs';import assert from 'node:assert/strict';
 const read=p=>readFileSync(p,'utf8'),html=read('staff.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''),tick=()=>new Promise(r=>setTimeout(r,20));
 for(const role of ['kitchen','cashier','kitchen_cashier']){
- const requests=[],receipts=new Map();let qty=0,lost=true,orders=[],rejectReady=false;
+ const requests=[],receipts=new Map();let qty=0,lost=true,orders=[],rejectReady=false,listOffline=false;
  const assigned=role==='kitchen_cashier'?'kitchen':role,paid=role!=='kitchen';
  const fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');requests.push(b);let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',sku:'UMMA-CAFE-FLATBREAD',description_ru:'Лепёшка <из печи>',price_vnd:25000},{id:'dessert',name_ru:'Медовик',description_en:'Honey cake',price_vnd:25000,image_url:'assets/cafe/dessert-2-white.webp'}],inventory:[{product_id:'bread',location_id:'cafe',quantity:2,reserved_quantity:0,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true},{product_id:'dessert',location_id:'cafe',quantity:1,ready_stock_confirmed:true,ready_stock_state:'ready',is_available:true}]};
  else if(b.action==='me')out={ok:true,user:{id:b.initData==='web:'+'b'.repeat(64)?101:100,name:'QA universal',role:'employee'},locations:[{id:'cafe',name:'HALAL UMMA',ready_stock_enabled:true}],assignments:[{location_id:'cafe',staff_role:assigned,can_accept_payments:paid}]};
- else if(b.action==='list')out={ok:true,staffRole:assigned,locationIds:['cafe'],orders:orders.map(order=>({...order,staffRole:assigned}))};
+ else if(b.action==='list'){
+  if(listOffline)return new Response(JSON.stringify({ok:false,error:'Нет связи'}),{status:503});
+  out={ok:true,staffRole:assigned,locationIds:['cafe'],orders:orders.map(order=>({...order,staffRole:assigned}))};
+ }
  else if(b.action==='updateStatus'){
   if(rejectReady&&b.status==='ready')return new Response(JSON.stringify({ok:false,error:'Повторите попытку'}),{status:503});
   orders=orders.map(order=>order.id===b.orderId?{...order,status:b.status}:order);
@@ -258,6 +261,63 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   const filter=d.getElementById('counterOrderFilter');
   filter.value='closed';filter.dispatchEvent(new w.Event('change'));
   assert.match(orderCard('online').textContent,/Выдан/);
+  w.eval(read('js/maps/delivery-location.js'));
+  const delivery={...online,id:'cash-delivery',order_number:328,order_type:'delivery',payment_timing:'on_delivery',
+   requires_prepayment:false,delivery_status:'waiting_courier',requested_cash_vnd:200000,
+   delivery_address:'Pham Ngoc Thach\nТочка доставки: 12.281274,109.202034',customer_phone:'+84 912 345 678',
+   customer_note:'Позвонить у входа'};
+  orders.push(delivery,{...delivery,id:'in-transit',order_number:329,status:'ready',delivery_status:'picked_up'});
+  const refresh=()=>d.getElementById('counterRefreshOrders').click();
+  const choose=filter=>d.querySelector('[data-counter-filter='+filter+']').click();
+  refresh();
+  await tick();
+  choose('active');
+  const cashCard=()=>orderCard('cash-delivery');
+  assert.match(cashCard().querySelector('summary').textContent,/Наличные курьеру.*Сдача 150\.000/);
+  assert.match(orderCard('in-transit').querySelector('summary').textContent,/Курьер в пути/);
+  assert.equal(cashCard().querySelector('[data-counter-action=pay]'),null);
+  cashCard().querySelector('summary').click();
+  assert.equal(cashCard().querySelector('details').open,true);
+  assert.equal(cashCard().querySelector('a[href^="tel:"]').getAttribute('href'),'tel:+84912345678');
+  assert.match(cashCard().querySelector('a[target="_blank"]').href,/12\.281274%2C109\.202034/);
+  assert.doesNotMatch(cashCard().querySelector('.counter-order-body').textContent,/12\.281274/);
+  assert.match(cashCard().textContent,/Позвонить у входа/);
+  const heldCard=cashCard();
+  orders=orders.map(order=>order.id==='in-transit'?{...order,payment_status:'paid'}:order);
+  refresh();
+  await tick();
+  assert.equal(cashCard(),heldCard,'an update to a different order keeps the open card in place');
+  assert.equal(cashCard().querySelector('details').open,true);
+  listOffline=true;
+  refresh();
+  await tick();
+  assert.match(d.getElementById('counterStatus').textContent,/Обновить/);
+  assert.equal(cashCard().querySelector('[data-counter-action=start]').disabled,true);
+  listOffline=false;
+  refresh();
+  await tick();
+  assert.equal(cashCard().querySelector('[data-counter-action=start]').disabled,false);
+  cashCard().querySelector('[data-counter-action=start]').click();
+  const acceptedBy=requests.find(b=>b.orderId===delivery.id&&b.status==='preparing');
+  assert.ok(acceptedBy);
+  // The actual list endpoint returns the actor that accepted the order.
+  orders=orders.map(order=>order.id===delivery.id?{...order,accepted_by_telegram_id:100}:order);
+  await tick();
+  cashCard().querySelector('[data-counter-action=ready]').click();
+  await tick();
+  choose('ready');
+  assert.match(cashCard().textContent,/Готов к передаче курьеру.*Ожидает курьера/);
+  assert.equal(cashCard().querySelector('[data-counter-action=issue]'),null);
+  assert.equal(orderCard('in-transit'),null);
+  const search=d.getElementById('counterOrderSearch');
+  search.value='№329';search.dispatchEvent(new w.Event('input'));
+  assert.equal(orderCard('in-transit'),null,'number search respects the ready filter');
+  choose('active');
+  search.value='№165';search.dispatchEvent(new w.Event('input'));
+  assert.match(orderCard('online').textContent,/Выдан/,'active search can locate an already issued order');
+  choose('payment');
+  assert.equal(cashCard(),null,'cash to collect on delivery does not enter the payment queue at the counter');
+  assert.ok(orderCard('another-online').querySelector('[data-counter-action=pay]'));
   d.querySelector('[data-counter-view=sale]').click();
   d.querySelector('[data-pos-service=pickup]').click();
   d.getElementById('counterCheckout').click();

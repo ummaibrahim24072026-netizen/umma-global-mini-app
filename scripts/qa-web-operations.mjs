@@ -495,7 +495,8 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   await tick();
   assert.equal(issueButton(first),null,'another employee is preparing the order');
   assert.equal(first.document.getElementById('counterOrderBadge').hidden,true);
-  assert.equal(first.document.querySelector('.counter-order-mark').textContent,'✓');
+  assert.match(first.document.querySelector('.counter-order-stage').textContent,/Готовится/);
+  assert.equal(first.document.querySelector('.counter-order-mark'),null);
   kitchenCard().querySelector('[data-new-status=ready]').click();
   await tick();
   feed(first);

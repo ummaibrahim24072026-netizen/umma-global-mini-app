@@ -142,16 +142,22 @@ const canIssue = order => counterCanIssue(order) && order.order_type !== "delive
   (order.status !== "preparing" || !order.accepted_by_telegram_id ||
    String(order.accepted_by_telegram_id) === String(auth.actorId()))));
 const readyForCounterPickup=order=>readyToIssue(order)&&canIssue(order);
+const cashOnDelivery=order=>order.order_type==='delivery'&&order.payment_method==='cash'&&
+ order.payment_timing==='on_delivery'&&order.requires_prepayment!==true;
+const canPrepareCounterOrder=order=>order.payment_status==='paid'||order.payment_status==='pending'&&cashOnDelivery(order);
+const readyForCourier=order=>order.order_type==='delivery'&&order.status==='ready'&&!order.preorder_waiting&&
+ !['picked_up','delivered'].includes(order.delivery_status)&&canPrepareCounterOrder(order);
+const counterOrderReady=order=>readyForCounterPickup(order)||readyForCourier(order);
 const canTakePayment=order=>order.canAcceptPayments===true&&order.payment_status==='pending'&&!closedOrder(order);
 const needsCounterPayment=order=>canTakePayment(order)&&order.payment_timing!=='on_delivery'&&
  ['cash','qr','bank_transfer'].includes(order.payment_method);
 const newCounterOrder=order=>order.created_via==='customer'&&!order.accepted_by_telegram_id&&
  ['pending','confirmed'].includes(order.status);
-const canStartCounterOrder=order=>counterCanIssue(order)&&order.payment_status==='paid'&&!order.preorder_waiting&&
+const canStartCounterOrder=order=>counterCanIssue(order)&&canPrepareCounterOrder(order)&&!order.preorder_waiting&&
  (newCounterOrder(order)||order.created_via==='staff'&&order.order_type==='delivery'&&
   !order.accepted_by_telegram_id&&['pending','confirmed'].includes(order.status));
 const canFinishCounterDelivery=order=>order.order_type==='delivery'&&counterCanIssue(order)&&
- order.status==='preparing'&&order.payment_status==='paid'&&!order.preorder_waiting&&
+ order.status==='preparing'&&canPrepareCounterOrder(order)&&!order.preorder_waiting&&
  String(order.accepted_by_telegram_id)===String(auth.actorId());
 const locationId=()=>$('posLocation').value;
 const foreignMethods=new Set(['rub','tenge','kaspi','sber','usdt']);
@@ -229,19 +235,28 @@ const confirmationReady=()=>$('counterPaymentVerified').checked&&
  (!payOrder?.requiresGuestProof||payOrder.hasPendingPaymentProof)&&(
  !payOrder?.foreignPayment||$('counterPaymentReference').value.trim().length>=4
 );
-const paymentLabel=order=>order.payment_status==='paid'?'Оплачено':order.payment_status==='refunded'?'Возврат':'Ожидает оплаты';
-function orderLabel(order){
- if(order.status==='completed')return 'Выдан';
+function counterPaymentLabel(order){
+ if(order.payment_status==='paid')return 'Оплачено';
+ if(order.payment_status==='refunded')return 'Возврат';
+ if(order.status==='cancelled')return 'Без оплаты';
+ if(cashOnDelivery(order))return 'Наличные курьеру';
+ if(order.hasPendingPaymentProof)return 'Чек на проверке';
+ return 'Ожидает оплаты';
+}
+function counterStage(order){
+ const delivery=order.order_type==='delivery';
  if(order.status==='cancelled')return 'Отменён';
+ if(order.status==='completed')return delivery?'Доставлен':'Выдан';
+ if(delivery&&order.delivery_status==='delivered')return 'Доставлен';
+ if(delivery&&order.delivery_status==='picked_up')return 'Курьер в пути';
  if(order.preorder_waiting)return 'Ожидается партия';
- if(order.status==='ready'){
-  if(order.order_type==='delivery')return 'Готов к передаче курьеру';
-  if(order.payment_status==='pending')return 'Готов · ждёт оплаты';
-  return 'Готов к выдаче';
- }
- if(order.payment_status==='pending'&&order.requires_prepayment)return 'Ожидает оплаты';
+ if(order.status==='ready')return delivery&&readyForCourier(order)?'Готов к передаче курьеру':
+  readyToIssue(order)?'Готов к выдаче':'Готов, выдача после оплаты';
  return {pending:'Новый',confirmed:'Принят',preparing:'Готовится'}[order.status]||'В работе';
 }
+const counterOrderDate=new Intl.DateTimeFormat('ru-RU',{
+ timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
+});
 
 function renderProductCounts(){
  for(const card of $('posProducts').querySelectorAll('[data-pos-product]')){
@@ -541,41 +556,57 @@ async function sell(event){
 }
 function counterOrderButton(order,action,label,primary=true){
  return '<button type="button"'+(primary?' class="primary"':'')+' data-counter-action="'+action+
-  '" data-order-id="'+esc(order.id)+'"'+(busy?' disabled':'')+'>'+label+'</button>';
+  '" data-order-id="'+esc(order.id)+'"'+(busy||$('counterStatus').dataset.offline?' disabled':'')+'>'+label+'</button>';
+}
+function counterDeliveryDetails(order){
+ const raw=order.delivery_address||'';
+ const address=raw.replace(/\s*Точка доставки:.*$/im,'').trim();
+ const maps=window.ummaMapLinks;
+ const point=maps?.parseAddress?.(raw.replace(/\s*Точка доставки: */i,'\nТочка доставки: '));
+ const phone=String(order.customer_phone||'').replace(/[^+0-9]/g,'');
+ return '<dl class="counter-order-info">'+
+  (order.customer_name?'<div><dt>Клиент</dt><dd>'+esc(order.customer_name)+'</dd></div>':'')+
+  (phone?'<div><dt>Телефон</dt><dd><a href="tel:'+esc(phone)+'">'+esc(order.customer_phone)+'</a></dd></div>':'')+
+  (address||point?'<div><dt>Адрес</dt><dd>'+esc(address)+
+   (point?'<a href="'+esc(maps.googlePlace(point))+'" target="_blank" rel="noopener noreferrer">На карте</a>':'')+'</dd></div>':'')+'</dl>';
 }
 function counterOrderMarkup(order){
  const mayPay=needsCounterPayment(order);
- const mayIssue=canIssue(order);
  const delivery=order.order_type==='delivery';
  const green=delivery&&counterCanIssue(order)&&window.ummaGreenSm?.handles(order)
   ? window.ummaGreenSm.card(order,me.locations.find(location=>location.id===order.location_id)) : '';
  const transfer=window.ummaGreenSm?.transfer(order,auth.actorId())||'';
- const destination=delivery?'<p>'+[order.customer_name,order.customer_phone,order.delivery_address,order.customer_note]
-  .filter(Boolean).map(esc).join(' · ')+'</p>':'';
  const requestedCash=Number(order.requested_cash_vnd),due=Number(order.total_vnd);
- const changeNote=delivery&&order.payment_status==='pending'&&!closedOrder(order)&&requestedCash>=due&&requestedCash>0
+ const changeNote=cashOnDelivery(order)&&order.payment_status==='pending'&&!closedOrder(order)&&requestedCash>=due&&requestedCash>0
   ?requestedCash===due?'Без сдачи':'Сдача '+money(requestedCash-due)+' с '+money(requestedCash):'';
  const fresh=newCounterOrder(order);
- const ready=readyForCounterPickup(order);
+ const ready=counterOrderReady(order);
  const start=canStartCounterOrder(order);
- const issue=mayIssue?counterOrderButton(order,'issue',ready?'Выдано':'Собрать и выдать',!start):'';
- const action=mayPay?counterOrderButton(order,'pay',order.hasPendingPaymentProof?'Проверить оплату':'К оплате'):start?counterOrderButton(order,'start','Взять в работу'):
-  canFinishCounterDelivery(order)?counterOrderButton(order,'ready','Заказ готов'):issue;
+ const issue=canIssue(order)?counterOrderButton(order,'issue',ready?'Выдано':'Собрать и выдать',!start):'';
+ const action=mayPay?counterOrderButton(order,'pay',order.hasPendingPaymentProof?'Проверить оплату':order.payment_method==='cash'?'Принять оплату':'Открыть оплату'):
+  start?counterOrderButton(order,'start','Взять в работу'):canFinishCounterDelivery(order)?counterOrderButton(order,'ready','Заказ готов'):issue;
  const actor=order.preparationActor&&order.status==='preparing'?
   '<p>'+esc((order.preparation_station==='kitchen'?'Готовится на кухне':'Собирается на стойке')+' · '+order.preparationActor)+'</p>':'';
- const mark=fresh?'<span class="counter-order-mark is-new" role="img" aria-label="Новый заказ" title="Новый заказ"></span>':
-  '<span class="counter-order-mark" role="img" aria-label="Заказ обработан" title="Заказ обработан">✓</span>';
- const stage=['pending','confirmed'].includes(order.status)&&!order.preorder_waiting?'':orderLabel(order);
  const paymentNote=payOrder?.id===order.id&&order.payment_status==='paid'&&!closedOrder(order)?payOrder.counterPaymentNote:'';
+ const paymentClass=order.payment_status==='paid'?'is-paid':order.payment_status==='pending'&&!closedOrder(order)?'is-due':'';
+ const createdAt=Date.parse(order.created_at);
+ const source=order.created_via==='staff'?'У стойки':'Из приложения';
+ const items=order.cafe_order_items||[];
  return '<article class="counter-card'+(ready?' counter-card--ready':'')+(fresh?' counter-card--new':'')+
   '" data-counter-order="'+esc(order.id)+'">'+
-  '<details class="counter-order-details"><summary><span class="counter-order-ident">'+mark+
-  '<strong>№'+esc(order.order_number)+'</strong></span><strong>'+money(order.total_vnd)+'</strong>'+
-  '<small>'+esc(serviceLabels[order.order_type]||'')+(stage?' · '+esc(stage):'')+'</small>'+
-  (mayPay&&order.hasPendingPaymentProof?'<small class="counter-order-payment-note">Чек прикреплён</small>':'')+
+  '<details class="counter-order-details"><summary><span class="counter-order-ident">'+
+  (fresh?'<span class="counter-order-mark is-new" aria-hidden="true"></span>':'')+
+  '<strong>№'+esc(order.order_number)+'</strong></span><strong class="counter-order-total">'+money(order.total_vnd)+'</strong>'+
+  '<small class="counter-order-stage">'+esc(serviceLabels[order.order_type]||'')+' · '+esc(counterStage(order))+'</small>'+
+  '<span class="counter-order-payment '+paymentClass+'">'+counterPaymentLabel(order)+'</span>'+
+  (readyForCourier(order)&&order.delivery_status==='waiting_courier'?'<small>Ожидает курьера</small>':'')+
+  (readyForCourier(order)&&order.delivery_status==='courier_assigned'?'<small>Курьер назначен</small>':'')+
   ((changeNote||paymentNote)?'<small class="counter-order-payment-note">'+esc(changeNote||paymentNote)+'</small>':'')+'</summary>'+
-  '<div class="counter-order-body"><p>'+paymentLabel(order)+' · '+(order.created_via==='staff'?'У стойки':'Из приложения')+'</p>'+
-  destination+actor+itemsMarkup(order.cafe_order_items||[])+(start?issue:'')+'</div></details>'+
+  '<div class="counter-order-body"><p class="counter-order-meta">'+source+
+  (Number.isFinite(createdAt)?' · <time datetime="'+esc(order.created_at)+'">'+counterOrderDate.format(createdAt)+'</time>':'')+'</p>'+
+  (items.length?itemsMarkup(items):'')+(delivery?counterDeliveryDetails(order):'')+
+  (order.customer_note?'<p class="counter-order-note"><strong>Комментарий</strong> '+esc(order.customer_note)+'</p>':'')+
+  actor+(start?issue:'')+'</div></details>'+
   (action||green||transfer?'<div class="counter-order-actions">'+action+green+transfer+'</div>':'')+'</article>';
 }
 function setCounterBadge(id,label,count,description){
@@ -605,37 +636,70 @@ function renderCounterOrders(){
  const type=$('counterOrderType').value;
  const shown=counterOrders.filter(order=>{
   if(type&&order.order_type!==type)return false;
-  if(search)return String(order.order_number).includes(search)&&(filter!=='payment'||needsCounterPayment(order));
+  if(search&&!String(order.order_number).includes(search))return false;
   if(filter==='closed')return closedOrder(order);
-  if(closedOrder(order))return false;
+  if(closedOrder(order))return filter==='active'&&Boolean(search);
   if(filter==='payment')return needsCounterPayment(order);
-  if(filter==='paid')return order.payment_status==='paid'&&['pending','confirmed'].includes(order.status);
-  if(filter==='preparing')return order.status==='preparing'&&!readyToIssue(order);
-  if(filter==='ready')return readyToIssue(order);
+  if(filter==='paid')return order.payment_status==='paid';
+  if(filter==='preparing')return order.status==='preparing';
+  if(filter==='ready')return counterOrderReady(order);
   return true;
  });
  if(filter==='active')shown.sort((a,b)=>Number(newCounterOrder(b))-Number(newCounterOrder(a))||
-  Number(readyForCounterPickup(b))-Number(readyForCounterPickup(a)));
+  Number(readyForCounterPickup(b))-Number(readyForCounterPickup(a))||
+  Number(counterOrderReady(b))-Number(counterOrderReady(a)));
  const payments=counterOrders.filter(needsCounterPayment).length;
  const attention=counterOrders.filter(order=>newCounterOrder(order)||needsCounterPayment(order)).length;
  setCounterBadge('counterOrderBadge','Заказы',attention,'Требуют внимания');
- const shortcut=$('counterPaymentFilter');
- shortcut.hidden=!payments&&filter!=='payment';
- shortcut.textContent='К оплате · '+payments;
- shortcut.setAttribute('aria-pressed',String(filter==='payment'));
+ $('counterPaymentFilter').textContent='К оплате · '+payments;
+ document.querySelector('[data-counter-filter="ready"]').textContent='Готовые · '+counterOrders.filter(counterOrderReady).length;
+ for(const button of document.querySelectorAll('[data-counter-filter]')){
+  button.setAttribute('aria-pressed',String(button.dataset.counterFilter===filter));
+ }
+ const filters=$('counterOrderFilter').closest('details');
+ const filterLabel=filter==='paid'||filter==='preparing'?$('counterOrderFilter').selectedOptions[0].textContent:'';
+ const typeLabel=type?serviceLabels[type]:'';
+ filters.querySelector('summary').textContent=[filterLabel,typeLabel].filter(Boolean).join(' · ')||'Фильтры';
  renderCounterReady(counterOrders.filter(readyForCounterPickup));
- const empty=loadedLocation!==locationId()?'Загружаем заказы…':filter==='ready'&&!search?
-  'Пока нет готовых оплаченных заказов.':filter==='payment'&&!search&&!type?
- 'Нет оплат к подтверждению.':'Заказов по этому запросу нет.';
+ const empty=$('counterStatus').dataset.offline?'Не удалось загрузить заказы.':loadedLocation!==locationId()?'Загружаем заказы…':
+  search||type?'Заказы не найдены.':({ready:'Готовых заказов пока нет.',payment:'Нет заказов к оплате.',
+   closed:'Завершённых заказов пока нет.'}[filter]||'Заказов в этом списке пока нет.');
  const root=$('counterOrderList');
- const markup=shown.map(counterOrderMarkup).join('')||'<p>'+empty+'</p>';
- if(root.counterMarkup!==markup){
-  const expanded=new Set([...root.querySelectorAll('details[open]')].map(details=>details.parentElement.dataset.counterOrder));
-  root.innerHTML=markup;
-  root.counterMarkup=markup;
-  for(const details of root.querySelectorAll('.counter-order-details')){
-   details.open=expanded.has(details.parentElement.dataset.counterOrder);
+ const existing=new Map([...root.querySelectorAll('[data-counter-order]')].map(card=>[card.dataset.counterOrder,card]));
+ const active=document.activeElement;
+ let next=root.firstElementChild;
+ for(const order of shown){
+  const markup=counterOrderMarkup(order);
+  let card=existing.get(order.id);
+  existing.delete(order.id);
+  if(card?.orderMarkup!==markup){
+   const template=document.createElement('template');
+   template.innerHTML=markup;
+   const updated=template.content.firstElementChild;
+   updated.orderMarkup=markup;
+   if(card){
+    updated.querySelector('details').open=card.querySelector('details').open;
+    if(next===card)next=updated;
+    card.replaceWith(updated);
+    if(card.contains(active))updated.querySelector('summary').focus({preventScroll:true});
+   }
+   card=updated;
   }
+  if(card!==next)root.insertBefore(card,next);
+  next=card.nextElementSibling;
+ }
+ for(const card of existing.values()){
+  if(card.contains(active))$('counterOrdersHeading').focus({preventScroll:true});
+  card.remove();
+ }
+ const placeholder=root.querySelector('.counter-orders-empty');
+ if(shown.length)placeholder?.remove();
+ else if(placeholder)placeholder.textContent=empty;
+ else{
+  const message=document.createElement('p');
+  message.className='counter-orders-empty';
+  message.textContent=empty;
+  root.append(message);
  }
 }
 async function refreshCounterOrders({afterMutation=false}={}){
@@ -692,7 +756,8 @@ async function refreshCounterOrders({afterMutation=false}={}){
  }catch{
   if(current()&&!busy){
    $('counterStatus').dataset.offline='true';
-   counterStatus('Не удалось обновить заказы. Попробуйте ещё раз.');
+   counterStatus('Не удалось обновить заказы. Нажмите «Обновить».');
+   renderCounterOrders();
   }
  }finally{
   orderFetch=null;
@@ -932,13 +997,20 @@ $('counterOrderSearch').oninput=renderCounterOrders;
 $('counterOrderFilter').onchange=renderCounterOrders;
 $('counterOrderType').onchange=renderCounterOrders;
 $('counterOrderList').onclick=counterOrderAction;
-$('counterPaymentFilter').onclick=()=>{
- if(busy)return;
+$('counterRefreshOrders').onclick=async()=>{
+ const button=$('counterRefreshOrders');
+ button.disabled=true;
+ try{await refreshCounterOrders();}
+ finally{button.disabled=false;}
+};
+document.querySelector('.counter-queues').onclick=event=>{
+ const button=event.target.closest('[data-counter-filter]');
+ if(!button||busy)return;
  $('counterOrderSearch').value='';
  $('counterOrderType').value='';
- const filter=$('counterOrderFilter');
- filter.value=filter.value==='payment'?'active':'payment';
+ $('counterOrderFilter').value=button.dataset.counterFilter;
  renderCounterOrders();
+ $('counterContent').scrollTop=0;
 };
 $('counterReadyOpen').onclick=()=>{
  if(busy)return;

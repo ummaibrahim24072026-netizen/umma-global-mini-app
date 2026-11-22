@@ -128,43 +128,73 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #webPos .pickup-screen-tools { max-width: 480px; }
 #pickupPairStatus:empty { display: none; }
 #webPos #counterStatus { margin: 0; padding-block: 4px; color: #704d16; background: #fff5df; }
-.counter-board-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.counter-filter-tools { margin-inline-start: auto; }
-.counter-filter-tools summary { cursor: pointer; padding: 8px; font-weight: 750; }
-#counterOrders:has(.counter-filter-tools[open]) .counter-board-header { align-items: start; }
-.counter-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.counter-filters label { margin-bottom: 0; }
-.counter-order-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-#webPos #counterOrderSearch { flex: 1 1 135px; min-height: 44px; min-width: 0; }
-#webPos #counterPaymentFilter {
-  min-height: 44px; padding: 6px 10px; font-size: 14px; background: #fff4dc; color: #704d16; border-color: #d7b657;
+.counter-board-header { justify-content: space-between; margin-bottom: 8px; }
+#webPos #counterRefreshOrders { min-height: 44px; padding: 6px 12px; font-size: 14px; }
+.counter-queues {
+  display: grid; grid-template-columns: repeat(4, minmax(0, max-content)); gap: 6px; margin-bottom: 10px;
 }
-#webPos #counterPaymentFilter[aria-pressed="true"] { background: #81510a; border-color: #81510a; color: #fff; }
+#webPos .counter-queues button {
+  min-height: 44px; padding: 6px 12px; font-size: 14px; line-height: 1.2; font-weight: 750;
+  border-color: #a9cdca; color: #075b60; background: #fff;
+}
+#webPos .counter-queues button[aria-pressed="true"] { background: #087276; color: #fff; border-color: #087276; }
+.counter-order-tools {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; margin-bottom: 10px;
+}
+#webPos #counterOrderSearch { min-height: 44px; min-width: 0; margin: 0; }
+.counter-filter-tools summary {
+  width: fit-content; max-width: 100%; box-sizing: border-box; margin-inline-start: auto;
+  min-height: 44px; padding: 10px; border: 1px solid #a9cdca; border-radius: 12px;
+  background: #fff; cursor: pointer; font-size: 14px; font-weight: 750; overflow-wrap: anywhere;
+}
+.counter-filter-tools[open] { grid-column: 1 / -1; }
+.counter-order-tools:has(.counter-filter-tools[open]) #counterOrderSearch { grid-column: 1 / -1; }
+.counter-filters {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px;
+  padding: 8px 10px; border: 1px solid var(--counter-line); border-radius: 12px; background: #fff;
+}
+.counter-filters label { min-width: 0; margin: 0; }
+@media (max-width: 480px) {
+  .counter-queues { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .counter-order-tools { grid-template-columns: minmax(0, 2fr) minmax(96px, 1fr); }
+}
 #webPos #counterPaymentBack { min-height: 44px; padding: 6px 12px; }
 .counter-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
-#webPos .counter-board .counter-card { min-width: 0; padding: 8px 10px; }
+#webPos .counter-board .counter-card { min-width: 0; padding: 10px 12px; }
 #counterOrderList .counter-card--ready { border-color: #72bfb7; }
 #counterOrderList .counter-card--new { border-inline-start: 4px solid #008780; background: #f6fffc; }
+.counter-orders-empty { grid-column: 1 / -1; margin: 0; padding: 12px 0; color: #42635e; }
 .counter-order-details summary {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 8px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 8px;
+  position: relative; cursor: pointer; min-height: 44px; padding-inline-end: 18px;
 }
-.counter-order-details summary { position: relative; cursor: pointer; min-height: 44px; padding-inline-end: 20px; }
 .counter-order-details summary::-webkit-details-marker { display: none; }
 .counter-order-details summary::after {
-  content: ''; position: absolute; right: 3px; top: 11px; width: 7px; height: 7px;
+  content: ''; position: absolute; inset-inline-end: 3px; top: 7px; width: 7px; height: 7px;
   border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
-.counter-order-details[open] summary::after { transform: rotate(225deg); }
-.counter-order-ident { display: flex; align-items: center; gap: 7px; }
-.counter-order-mark {
-  display: inline-grid; place-items: center; flex: none; width: 18px; height: 18px;
-  color: #416b63; font-size: 16px;
+.counter-order-details[open] summary::after { transform: translateY(4px) rotate(225deg); }
+.counter-order-ident { display: flex; align-items: center; gap: 6px; }
+.counter-order-mark { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #008780; }
+.counter-order-total { text-align: end; }
+.counter-order-details small { grid-column: 1 / -1; color: #42635e; }
+.counter-order-stage { font-weight: 750; }
+.counter-order-payment {
+  grid-column: 1 / -1; justify-self: start; border-radius: 999px; padding: 2px 8px;
+  background: #eef2f2; color: #365653; font-size: 13px; line-height: 1.35; font-weight: 750;
 }
-.counter-order-mark.is-new::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #008780; }
-.counter-board small { grid-column: 1 / -1; color: #42635e; }
-.counter-order-body { border-top: 1px solid var(--counter-line); margin-top: 6px; }
-.counter-order-body p, .counter-order-body ul { margin-block: 6px; }
+.counter-order-payment.is-paid { background: #ddf3ef; color: #0a5e58; }
+.counter-order-payment.is-due { background: #fff1cf; color: #68430d; }
+.counter-order-body { border-top: 1px solid var(--counter-line); margin-top: 8px; }
+.counter-order-body p, .counter-order-body ul, .counter-order-info { margin-block: 8px; }
+.counter-order-meta { font-size: 13px; color: #42635e; }
 .counter-order-body ul { padding-inline-start: 20px; }
+.counter-order-info { display: grid; gap: 6px; }
+.counter-order-info > div { display: grid; grid-template-columns: 4.3rem minmax(0, 1fr); gap: 6px; }
+.counter-order-info dt { font-size: 13px; color: #42635e; }
+.counter-order-info dd { margin: 0; }
+.counter-order-info a { display: block; width: fit-content; padding-block: 4px; color: #075b60; }
+.counter-order-note { white-space: pre-line; }
 .counter-order-actions { display: grid; gap: 6px; }
 .counter-order-actions:has(> *) { margin-top: 6px; }
 #webPos :is(.counter-order-actions, .counter-board) button {
