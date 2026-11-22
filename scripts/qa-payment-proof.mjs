@@ -86,7 +86,10 @@ mode='fail';send.click();await until(()=>send.textContent==='Повторить 
 mode='held';send.click();send.click();assert.equal(requests.filter(r=>r.action==='submit').length,2,'one failed attempt plus one held attempt, duplicate tap ignored');assert.equal(send.disabled,true);held(new Response('{"ok":true}'));await until(()=>send.textContent==='Чек отправлен');assert.equal(send.disabled,true);assert.equal(send.hidden,true);assert.equal(d.querySelector('.cafe-payment-sheet').open,true);assert.equal(requests.some(r=>r.action==='updatePayment'),false);
 dom.window.close();
 // Web guest receipt uses the saved order key and keeps payment pending.
-const webHtml=read('menu/index.html');
+const webHtml=read('menu/index.html').replace(
+ /<link rel="stylesheet" href="css\/customer-cafe\.css[^"]*">/,
+ () => '<style>'+read('css/customer-cafe.css')+'</style>',
+);
 const webDom=new JSDOM(webHtml,{runScripts:'outside-only',url:'https://qa.invalid/menu/'}),ww=webDom.window,wd=ww.document;
 ww.AbortSignal=AbortSignal;
 ww.FileReader=w.FileReader;
@@ -104,7 +107,10 @@ const ctx={API:'https://qa.invalid/',money:String,t:s=>s,activeReceipts:()=>[]};
 ww.ummaGuestExtras.receipt(webOrder,ctx);
 assert.equal(wd.getElementById('guestTransferProof').hidden,false);
 const receiptView=wd.getElementById('success');
+const returnButton=wd.getElementById('newOrder');
+wd.getElementById('checkout').dataset.stage='receipt';
 assert.equal(receiptView.hasAttribute('data-proof-sent'),false);
+assert.equal(ww.getComputedStyle(returnButton).display,'flex');
 const webInput=wd.getElementById('guestTransferProofFile');
 Object.defineProperty(webInput,'files',{value:[{type:'application/pdf',name:'receipt.pdf',size:100}]});
 webInput.dispatchEvent(new ww.Event('change'));
@@ -118,11 +124,13 @@ for(const id of ['guestTransferProofHint','transferCopyStatus','newOrder','recei
  assert.equal(ww.getComputedStyle(hiddenNode).display,'none',id);
 }
 assert.equal(ww.getComputedStyle(proofStatus).display,'flex');
+assert.equal(ww.getComputedStyle(proofStatus).borderRadius,'999px');
 assert.equal(webCalls.find(x=>x.action==='guestSubmit').requestKey,guestKey);
 assert.equal(webOrder.paymentStatus,'pending');
 ww.ummaGuestExtras.receipt({...webOrder,paymentStatus:'paid',payment:null},ctx);
 assert.equal(wd.getElementById('guestTransferProof').hidden,true);
 assert.equal(receiptView.hasAttribute('data-proof-sent'),false);
+assert.equal(ww.getComputedStyle(returnButton).display,'flex');
 ww.ummaGuestExtras.receipt({...webOrder,id:'reopened',payment:{currency:'KZT',amount:1000,account:'+77000000000'}},ctx);
 await until(()=>receiptView.hasAttribute('data-proof-sent'));
 assert.equal(proofStatus.textContent,'Чек отправлен');

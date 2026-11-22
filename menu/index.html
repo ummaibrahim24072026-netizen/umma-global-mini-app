@@ -301,15 +301,13 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   width: min(calc(100% - 20px), 456px);
   max-height: calc(100dvh - 16px);
   overscroll-behavior: contain;
-  --transfer-mint: #e3f5ef;
-  --transfer-teal: #006561;
 }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-header {
   padding: 6px 12px;
-  background: var(--transfer-teal);
-  --customer-heading-brand: #d2efec;
-  border-bottom: 1px solid #d1ac58;
-  color: #fff;
+  background: var(--umma-brand-primary);
+  --customer-heading-brand: var(--umma-brand-on-primary);
+  border-bottom: 1px solid var(--gold);
+  color: var(--umma-brand-on-primary);
 }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) #checkoutTitle { max-width: none; }
 #checkout[data-stage="receipt"]:has(#success:not([hidden]) #numberTransfer:not([hidden])) .checkout-body { padding: 8px 12px 10px; }
@@ -319,7 +317,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   gap: 8px;
   padding: 7px 9px;
   border-radius: 12px;
-  background: var(--transfer-mint);
+  background: var(--umma-brand-soft);
 }
 #checkout #success:has(#numberTransfer:not([hidden])) .receipt-status-icon {
   width: 30px;
@@ -352,14 +350,14 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #numberTransfer { margin: 0; border: 0; }
 #checkout #numberTransfer > div { align-items: baseline; gap: 4px 9px; padding: 5px 2px; font-size: 13px; }
 #checkout #numberTransfer > div strong { white-space: normal; text-align: end; overflow-wrap: anywhere; }
-#checkout #numberTransfer > .transfer-amount { padding: 7px 9px 1px; border-radius: 12px 12px 0 0; background: var(--transfer-mint); }
+#checkout #numberTransfer > .transfer-amount { padding: 7px 9px 1px; border-radius: 12px 12px 0 0; background: var(--umma-brand-soft); }
 #checkout #numberTransfer > .transfer-amount:has(+ .transfer-rate[hidden]) { padding-bottom: 7px; border-radius: 12px; }
 #checkout #transferAmount { color: #004b49; font-size: clamp(20px, 6vw, 26px); line-height: 1.12; }
 #checkout #numberTransfer > .transfer-rate {
   padding: 3px 9px 6px;
   border: 0;
   border-radius: 0 0 12px 12px;
-  background: var(--transfer-mint);
+  background: var(--umma-brand-soft);
   font-size: 11px;
 }
 #checkout #numberTransfer > .transfer-rate small { display: inline; }
@@ -368,12 +366,12 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); color: var(--umma-brand-on-primary); }
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
-#checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--transfer-mint); }
+#checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--umma-brand-soft); }
 #checkout #guestTransferProof { margin-top: 5px; }
 #checkout #attachGuestTransferProof { width: 100%; min-height: 44px; }
 #checkout :is(#guestTransferProofStatus, #transferCopyStatus) { margin: 4px 0 0; font-size: 12px; }
 #checkout :is(#guestTransferProofStatus, #transferCopyStatus):empty { display: none; }
-#checkout #success[data-proof-sent] :is(#guestTransferProofHint, #transferCopyStatus, #newOrder, #syncState, .receipt-instructions) {
+#checkout #success[data-proof-sent] :is(#guestTransferProofHint, #transferCopyStatus, #syncState, .receipt-instructions) {
   display: none;
 }
 #checkout #success[data-proof-sent] #guestTransferProofStatus {
@@ -384,10 +382,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   min-height: 44px;
   margin: 0;
   padding: 10px 14px;
-  border: 1px solid #b0d8ca;
-  border-radius: 14px;
-  background: #e3f5ef;
-  color: #005951;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 999px;
+  background: var(--umma-brand-soft);
+  color: var(--umma-brand-deep);
   font-size: 15px;
   font-weight: 750;
 }
@@ -410,7 +408,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   margin: 0;
   padding: 5px 10px;
   background: none;
-  color: var(--transfer-teal);
+  color: var(--umma-brand-deep);
   box-shadow: none;
   text-decoration: underline;
 }
@@ -473,16 +471,19 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=7"><link rel="stylesheet" href="css/cafe-connect.css?v=chat-layout-36"><link rel="stylesheet" href="css/connect-video-circles.css?v=20"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=59"><link rel="stylesheet" href="css/connect-calls.css?v=8">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
+#checkout[data-stage="receipt"] #success[data-proof-sent] #newOrder {
+  display: none;
+}
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
   position:relative!important;display:flex!important;align-items:center!important;
-  gap:14px!important;padding:18px!important;border:1px solid #b9e4df!important;
+  gap:14px!important;padding:18px!important;border:1px solid var(--umma-brand-line)!important;
   border-radius:24px!important;
-  background:linear-gradient(125deg,#e2f7f4 0%,#f4fcfa 75%,#fffdf6 100%)!important;
+  background:linear-gradient(125deg,var(--umma-brand-soft),var(--umma-brand-canvas) 75%,#fffdf6)!important;
   box-shadow:0 8px 26px rgba(11,99,100,.09)!important;
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status::before {
   content:"";position:absolute;top:0;left:24px;right:24px;height:3px;
-  background:linear-gradient(90deg,#0b9999,#d7b05a);border-radius:0 0 8px 8px;
+  background:linear-gradient(90deg,var(--umma-brand-primary),var(--gold));border-radius:0 0 8px 8px;
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status-icon {
   display:grid!important;place-items:center!important;flex:0 0 52px!important;
