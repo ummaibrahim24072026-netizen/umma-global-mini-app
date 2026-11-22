@@ -63,3 +63,42 @@ body{margin:0;background:#edf5f2;color:#173c38;font:16px system-ui,sans-serif}
 .tracking:not([data-map]) .tracking-map-area{min-height:100dvh;flex:1}
 .tracking:not([data-map]) .tracking-sheet{margin-top:0;flex:none}
 #center{bottom:calc(155px + env(safe-area-inset-bottom))}
+
+/* UMMA delivery: compact full-width light turquoise navigation bar. */
+.tracking-toolbar{
+ position:absolute;
+ inset:0 0 auto 0;
+ height:calc(62px + env(safe-area-inset-top));
+ box-sizing:border-box;
+ padding:calc(8px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));
+ border-radius:0 0 18px 18px;
+ background:linear-gradient(110deg,#12b4bc,#24c3c7);
+ box-shadow:0 4px 18px #00494d24;
+ display:grid;
+ grid-template-columns:44px minmax(0,1fr) 44px;
+ align-items:center;
+ gap:10px;
+ pointer-events:auto;
+}
+.tracking-toolbar #back{
+ display:grid;place-items:center;
+ width:42px;height:42px;min-height:42px;
+ padding:0;
+ border:1px solid #ffffff70;
+ border-radius:14px;
+ background:#ffffff22;
+ color:#fff;
+ box-shadow:none;
+}
+.tracking-toolbar #back:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.tracking-toolbar-title{
+ color:#fff;font-size:clamp(17px,4.8vw,21px);
+ font-weight:750;line-height:1.15;
+ text-align:center;letter-spacing:.01em;
+ text-shadow:0 1px 1px #00656b28;
+}
+.tracking-toolbar .tracking-brand{
+ width:36px;height:36px;
+ object-fit:contain;
+ margin:auto;
+}
