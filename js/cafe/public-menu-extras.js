@@ -130,7 +130,7 @@ function formatForeign(amount,currency){
 }
 function renderForeignPayment(value,waiting){
  const payment=waiting&&value.payment;
- const show=payment&&['USD','EUR','USDT'].includes(payment.currency);
+ const show=payment&&['USD','EUR'].includes(payment.currency);
  const section=$('guestForeignPayment');
  if(!section)return;
  section.hidden=!show;
@@ -148,39 +148,46 @@ function renderNumberTransfer(value,waiting,t,previousOrderId){
  if(!section)return;
  const status=$('transferCopyStatus');
  if(previousOrderId!==value.id)status.textContent='';
- section.hidden=!(waiting&&['RUB','KZT'].includes(payment?.currency));
+ section.hidden=!(waiting&&['RUB','KZT','USDT'].includes(payment?.currency));
  if(section.hidden)return;
- const ruble=payment.currency==='RUB';
- const number=String((ruble?payment.phone:payment.account)??'').trim();
+ const ruble=payment.currency==='RUB', crypto=payment.currency==='USDT';
+ const account=String((ruble?payment.phone:payment.account)??'').trim();
  $('transferAmount').textContent=formatForeign(ruble?payment.kopecks/100:payment.amount,payment.currency);
  $('transferRateRow').hidden=!ruble;
  if(ruble){
   const locale=window.ummaMenuI18n?.locale()||'ru';
   $('transferRate').textContent='1 ₽ = '+new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(payment.rate)+' ₫';
  }
- $('transferBank').textContent=payment.bankName;
- $('transferRecipient').textContent=payment.recipient;
- const label=ruble?'Телефон для перевода':'Реквизиты';
+ $('transferBankRow').hidden=crypto;
+ $('transferBank').textContent=payment.bankName||'';
+ $('transferRecipientRow').hidden=!payment.recipient;
+ $('transferRecipient').textContent=payment.recipient||'';
+ $('transferNetworkRow').hidden=!(crypto&&payment.network);
+ $('transferNetwork').textContent=payment.network||'';
+ const label=crypto?'Адрес кошелька':ruble?'Телефон для перевода':'Реквизиты';
  $('transferNumberLabel').dataset.i18n=label;
  $('transferNumberLabel').textContent=t(label);
- $('transferNumber').textContent=number;
+ $('transferNumber').textContent=account;
  $('rubleBankPickerTitle').hidden=!ruble;
  $('rubleBankLinks').hidden=!ruble;
  const copy=$('copyTransferNumber');
- copy.hidden=!number;
- const copyNumber=async()=>{
+ const copyLabel=crypto?'Скопировать адрес':'Скопировать только номер';
+ copy.dataset.i18n=copyLabel;
+ copy.textContent=t(copyLabel);
+ copy.hidden=!account;
+ const copyAccount=async()=>{
   let message;
   try{
-   await navigator.clipboard.writeText(number);
-   message='Номер скопирован';
+   await navigator.clipboard.writeText(account);
+   message=crypto?'Адрес скопирован':'Номер скопирован';
   }catch{
-   message='Скопируйте номер из реквизитов вручную.';
+   message=crypto?'Скопируйте адрес кошелька вручную.':'Скопируйте номер из реквизитов вручную.';
   }
   if(order?.id===value.id&&!section.hidden)status.textContent=t(message);
  };
- copy.onclick=copyNumber;
+ copy.onclick=copyAccount;
  $('rubleBankLinks').onclick=event=>{
-  if(ruble&&number&&event.target.closest('a'))void copyNumber();
+  if(ruble&&account&&event.target.closest('a'))void copyAccount();
  };
 }
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;

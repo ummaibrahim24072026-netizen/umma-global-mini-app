@@ -322,13 +322,38 @@ console.log('PASS nearby cafes: offline directions, cafe marker, primary cafe, e
  assert.equal($('transferRateRow').hidden,false);
  await $('copyTransferNumber').onclick();
  assert.deepEqual(copied,[kaspi.payment.account,sber.payment.phone]);
+ assert.equal($('psbBankLink').textContent,'ПСБ');
+ assert.equal(new URL($('psbBankLink').href).hostname,'www.psbank.ru');
+ $('rubleBankLinks').onclick({target:$('psbBankLink')});
+ assert.equal(copied.at(-1),sber.payment.phone);
 
- w.ummaGuestExtras.receipt({...kaspi,paymentStatus:'paid'},ctx);
+ const usdt={...kaspi,id:'usdt-order',payment:{currency:'USDT',amount:5.123456,bankName:'USDT',
+  network:'TRC20',account:'TTestWalletUpperAndLowerCase12345'}};
+ w.ummaGuestExtras.receipt(usdt,ctx);
+ assert.equal($('numberTransfer').hidden,false);
+ assert.equal($('guestForeignPayment').hidden,true);
+ assert.equal($('transferBankRow').hidden,true);
+ assert.equal($('transferRateRow').hidden,true);
+ assert.equal($('transferNetworkRow').hidden,false);
+ assert.equal($('transferNetwork').textContent,'TRC20');
+ assert.match($('transferAmount').textContent,/5,123456 USDT/);
+ assert.equal($('transferNumber').textContent,usdt.payment.account);
+ assert.equal($('copyTransferNumber').textContent,'Скопировать адрес');
+ assert.equal($('rubleBankLinks').hidden,true);
+ assert.equal($('guestTransferProof').hidden,false);
+ await $('copyTransferNumber').onclick();
+ assert.equal(copied.at(-1),usdt.payment.account);
+ assert.equal($('transferCopyStatus').textContent,'Адрес скопирован');
+ w.ummaGuestExtras.receipt(kaspi,ctx);
+ assert.equal($('transferNetworkRow').hidden,true);
+ assert.equal($('copyTransferNumber').textContent,'Скопировать только номер');
+
+ w.ummaGuestExtras.receipt({...usdt,paymentStatus:'paid'},ctx);
  assert.equal($('numberTransfer').hidden,true);
  assert.equal($('guestTransferProof').hidden,true);
  dom.window.close();
 }
-console.log('PASS Kaspi and Sber payment receipts: shared layout, exact number copying, proof attachment, and paid-state cleanup.');
+console.log('PASS Kaspi, RUB bank shortcuts and USDT payment receipts: shared layout, exact number copying, proof attachment, and paid-state cleanup.');
 // Exercise the deployed handler code: guest capabilities, server totals and payment scope.
 const {stripTypeScriptTypes}=await import('node:module');const vm=await import('node:vm');const {webcrypto}=await import('node:crypto');
 let handler,rpcCalls=[],allowStatus=true,receiptReads=0,storedMethod='qr',storedStatus='pending';

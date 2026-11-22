@@ -146,6 +146,10 @@ Object.assign(copy,{
  'Скопировать номер и открыть свой банк':{en:'Copy the number and open your bank',vi:'Sao chép số và mở ngân hàng của bạn'},
  'Скопировать только номер':{en:'Copy number only',vi:'Chỉ sao chép số'},
  'Скопируйте номер из реквизитов вручную.':{en:'Copy the phone number from the payment details manually.',vi:'Hãy sao chép số điện thoại từ thông tin thanh toán theo cách thủ công.'},
+ 'Адрес кошелька':{en:'Wallet address',vi:'Địa chỉ ví',ko:'지갑 주소',zh:'钱包地址',de:'Wallet-Adresse',fr:'Adresse du portefeuille',th:'ที่อยู่กระเป๋าเงิน',ms:'Alamat dompet',id:'Alamat dompet',ar:'عنوان المحفظة',pt:'Endereço da carteira'},
+ 'Скопировать адрес':{en:'Copy address',vi:'Sao chép địa chỉ',ko:'주소 복사',zh:'复制地址',de:'Adresse kopieren',fr:'Copier l’adresse',th:'คัดลอกที่อยู่',ms:'Salin alamat',id:'Salin alamat',ar:'نسخ العنوان',pt:'Copiar endereço'},
+ 'Адрес скопирован':{en:'Address copied',vi:'Đã sao chép địa chỉ'},
+ 'Скопируйте адрес кошелька вручную.':{en:'Copy the wallet address manually.',vi:'Hãy sao chép địa chỉ ví theo cách thủ công.'},
  'Номер скопирован':{en:'Number copied',vi:'Đã sao chép số'},
  'Переведите указанную сумму по номеру телефона. Кафе подтвердит заказ после поступления перевода.':{
   en:'Transfer the amount shown using the phone number. The cafe will confirm your order once payment arrives.',

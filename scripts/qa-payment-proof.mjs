@@ -131,7 +131,7 @@ ww.ummaGuestExtras.receipt({...webOrder,paymentStatus:'paid',payment:null},ctx);
 assert.equal(wd.getElementById('guestTransferProof').hidden,true);
 assert.equal(receiptView.hasAttribute('data-proof-sent'),false);
 assert.equal(ww.getComputedStyle(returnButton).display,'flex');
-ww.ummaGuestExtras.receipt({...webOrder,id:'reopened',payment:{currency:'KZT',amount:1000,account:'+77000000000'}},ctx);
+ww.ummaGuestExtras.receipt({...webOrder,id:'reopened',payment:{currency:'USDT',amount:5,account:'TestWalletAddress',network:'TRC20'}},ctx);
 await until(()=>receiptView.hasAttribute('data-proof-sent'));
 assert.equal(proofStatus.textContent,'Чек отправлен');
 savedGuestProof=false;

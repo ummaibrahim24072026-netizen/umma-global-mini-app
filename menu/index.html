@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=42"></script>
+<script src="js/cafe/public-menu-i18n.js?v=43"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -367,6 +367,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
 #checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--umma-brand-soft); }
+#checkout #psbBankLink { grid-column: 1 / -1; }
 #checkout #guestTransferProof { margin-top: 5px; }
 #checkout #attachGuestTransferProof { width: 100%; min-height: 44px; }
 #checkout :is(#guestTransferProofStatus, #transferCopyStatus) { margin: 4px 0 0; font-size: 12px; }
@@ -734,7 +735,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <div id="guestForeignRecipientRow"><span data-i18n="Получатель">Получатель</span><strong id="guestForeignRecipient"></strong></div>
   <div id="guestForeignAccountRow"><span data-i18n="Реквизиты">Реквизиты</span><strong id="guestForeignAccount" dir="ltr"></strong></div>
   <div id="guestForeignNetworkRow"><span data-i18n="Сеть">Сеть</span><strong id="guestForeignNetwork" dir="ltr"></strong></div>
-</section><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="numberTransfer" class="receipt-lines" hidden><div class="transfer-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="transferAmount"></strong></div><div id="transferRateRow" class="transfer-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="transferRate" dir="ltr"></strong></div><div><span data-i18n="Банк">Банк</span><strong id="transferBank"></strong></div><div><span data-i18n="Получатель">Получатель</span><strong id="transferRecipient"></strong></div><div><span id="transferNumberLabel" data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="transferNumber" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="copyTransferNumber">
+</section><section id="guestPayment" hidden><label class="field"><span data-i18n="Ваш банк">Ваш банк</span><select id="paymentBank"></select></label><a id="openBank" class="primary bank-link" target="_blank" rel="noopener" data-i18n="Открыть банк">Открыть банк</a><img id="paymentQr" class="payment-qr" alt="VietQR"><a id="saveQr" class="plain-btn bank-link" download="UMMA-QR.png" data-i18n="Сохранить QR">Сохранить QR</a><p class="guest-hint" data-i18n="Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.">Сохраните QR и выберите его в приложении банка. Сумма и номер заказа уже указаны.</p><p id="paymentAccount" dir="ltr"></p><p class="guest-hint" data-i18n="Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.">Можно оплатить переводом по реквизитам выше. Укажите сумму и код заказа. Сборка начнётся после подтверждения оплаты.</p></section><section id="numberTransfer" class="receipt-lines" hidden><div class="transfer-amount"><span data-i18n="Сумма перевода">Сумма перевода</span><strong id="transferAmount"></strong></div><div id="transferRateRow" class="transfer-rate"><span><span data-i18n="Курс">Курс</span> <small>(Google Finance)</small></span><strong id="transferRate" dir="ltr"></strong></div><div id="transferBankRow"><span data-i18n="Банк">Банк</span><strong id="transferBank"></strong></div><div id="transferRecipientRow"><span data-i18n="Получатель">Получатель</span><strong id="transferRecipient"></strong></div><div id="transferNetworkRow" hidden><span data-i18n="Сеть">Сеть</span><strong id="transferNetwork" dir="ltr"></strong></div><div><span id="transferNumberLabel" data-i18n="Телефон для перевода">Телефон для перевода</span><strong id="transferNumber" dir="ltr"></strong></div><section class="ruble-bank-picker" aria-labelledby="copyTransferNumber">
 <button id="copyTransferNumber" type="button" class="plain-btn" data-i18n="Скопировать только номер">Скопировать только номер</button>
 <p id="rubleBankPickerTitle" data-i18n="Скопировать номер и открыть свой банк">Скопировать номер и открыть свой банк</p>
 <div id="rubleBankLinks" class="ruble-bank-links">
@@ -742,6 +743,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <a class="plain-btn bank-link" href="https://www.tbank.ru/login/" target="_blank" rel="noopener noreferrer">Т-Банк</a>
 <a class="plain-btn bank-link" href="https://web.alfabank.ru/" target="_blank" rel="noopener noreferrer">Альфа-Банк</a>
 <a class="plain-btn bank-link" href="https://online.vtb.ru/" target="_blank" rel="noopener noreferrer">ВТБ</a>
+<a id="psbBankLink" class="plain-btn bank-link" href="https://www.psbank.ru/personal/remote/psb-retail" target="_blank" rel="noopener noreferrer">ПСБ</a>
 </div>
 
 <p id="transferCopyStatus" class="guest-hint" role="status"></p>
@@ -753,7 +755,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=21"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=10"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=34"></script><script src="js/cafe/public-menu-extras.js?v=22"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
