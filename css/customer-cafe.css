@@ -1271,11 +1271,11 @@
 .order-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block-start: 13px; }
 .order-step { display: grid; justify-items: center; align-content: start; gap: 4px; position: relative; padding-inline: 2px; color: var(--umma-brand-muted); text-align: center; font-size: 11px; overflow-wrap: anywhere; }
 .order-step:not(:last-child)::after { content: ""; position: absolute; inset-block-start: 8px; inset-inline-start: calc(50% + 11px); width: calc(100% - 22px); height: 2px; background: var(--umma-brand-line); }
-.order-step[data-state="done"]::after { background: var(--umma-brand-strong); }
+.order-step[data-state="done"]::after { background: var(--umma-brand-primary); }
 .order-step-mark { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #e8f2f1; line-height: 1; }
-.order-step[data-state="done"] .order-step-mark { background: var(--umma-brand-deep); color: white; }
+.order-step[data-state="done"] .order-step-mark { background: var(--umma-brand-primary); color: var(--umma-brand-on-primary); }
 .order-step[data-state="current"] { color: var(--umma-brand-deep); font-weight: 750; }
-.order-step[data-state="current"] .order-step-mark { border: 5px solid var(--umma-brand-strong); background: white; }
+.order-step[data-state="current"] .order-step-mark { border: 5px solid var(--umma-brand-primary); background: white; }
 .orders-empty { margin: 0; padding: 24px 12px; color: var(--umma-brand-muted); text-align: center; }
 #customerOrders .checkout-body { padding: 0 16px 18px; }
 

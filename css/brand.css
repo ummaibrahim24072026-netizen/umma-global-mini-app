@@ -2,13 +2,8 @@
 :root{
   --umma-brand-primary:#00B8C8;
   --umma-brand-outline:#03A2A5;
-  /* White and gold lettering keeps its fill over the light brand surface. */
-  --umma-brand-light-label-shadow:
-    -1px -1px 0 var(--umma-brand-on-primary), 0 -1px 0 var(--umma-brand-on-primary), 1px -1px 0 var(--umma-brand-on-primary),
-    -1px 0 0 var(--umma-brand-on-primary), 1px 0 0 var(--umma-brand-on-primary),
-    -1px 1px 0 var(--umma-brand-on-primary), 0 1px 0 var(--umma-brand-on-primary), 1px 1px 0 var(--umma-brand-on-primary);
-  --umma-brand-light-icon-shadow:
-    drop-shadow(0 0 1px var(--umma-brand-on-primary)) drop-shadow(0 0 1px var(--umma-brand-on-primary));
+  --umma-brand-light-label-shadow:none;
+  --umma-brand-light-icon-shadow:none;
   --umma-brand-on-primary:#002D2E;
   --umma-brand-on-primary-rgb:0,45,46;
   --umma-brand-primary-rgb:0,184,200;

@@ -21,7 +21,7 @@ self.addEventListener('fetch', event => {
     '<title>UMMA · Offline</title><main><h1>UMMA</h1><p lang="ru">Нет связи. Проверьте интернет и обновите страницу.</p>' +
     '<p>Offline. Check your connection and reload.</p><p lang="vi">Mất kết nối. Hãy kiểm tra mạng và tải lại trang.</p>' +
     '<button type="button" onclick="location.reload()">Обновить · Reload · Tải lại</button></main>' +
-    '<style>body{margin:0;background:#f1fafa;color:#163d3e;font:16px system-ui}main{max-width:32rem;margin:8vh auto;padding:24px}button{min-height:48px;padding:8px 16px;border:0;border-radius:12px;background:#00B8C8;color:white;text-shadow:-1px -1px #002D2E,1px -1px #002D2E,-1px 1px #002D2E,1px 1px #002D2E;font:inherit}</style>',
+    '<style>body{margin:0;background:#f1fafa;color:#163d3e;font:16px system-ui}main{max-width:32rem;margin:8vh auto;padding:24px}button{min-height:48px;padding:8px 16px;border:0;border-radius:12px;background:#00B8C8;color:white;font:inherit}</style>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
   )));
 });
