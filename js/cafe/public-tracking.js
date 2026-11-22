@@ -40,7 +40,7 @@ function drawPosition(d){
  const age=Date.now()-Date.parse(d.updatedAt);
  if(d.state!=='picked_up'||isTerminal(d)||!courier||!(age>=-10000&&age<60000)){
   if(d.state==='picked_up'&&!isTerminal(d)&&destination&&window.L&&window.UmmaMaps){
-   if(!map){$('map').hidden=false;$('map').closest('main').dataset.map='';map=UmmaMaps.create($('map'),destination,()=>{});map.zoomControl?.setPosition('bottomleft');UmmaMaps.marker(map,destination);map.setView([destination.lat,destination.lng],15);}
+   if(!map){$('map').hidden=false;$('map').closest('main').dataset.map='';map=UmmaMaps.create($('map'),destination,()=>{});map.zoomControl?.setPosition('bottomleft');UmmaMaps.marker(map,destination);map.setView([destination.lat,destination.lng],15);setTimeout(()=>map?.invalidateSize(),100);}
    connectionKey='Ожидаем свежую геопозицию курьера';
   }else hideMap();
   return;
@@ -52,7 +52,7 @@ function drawPosition(d){
  $('map').closest('main').dataset.map='';
  $('center').hidden=false;
  if(!map){
-  map=UmmaMaps.create($('map'),courier,()=>{});
+  map=UmmaMaps.create($('map'),courier,()=>{});setTimeout(()=>map?.invalidateSize(),100);
   map.zoomControl?.setPosition('bottomleft');
   marker=UmmaMaps.marker(map,courier,'courier');
   trail=L.polyline([fix],{color:'#478a80',weight:3,dashArray:'4 7'}).addTo(map);
@@ -60,6 +60,10 @@ function drawPosition(d){
    UmmaMaps.marker(map,destination);
    map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[32,32],maxZoom:16});
   }
+ }else if(!marker){
+  marker=UmmaMaps.marker(map,courier,'courier');
+  trail=L.polyline([fix],{color:'#478a80',weight:3,dashArray:'4 7'}).addTo(map);
+  if(destination)map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[32,32],maxZoom:16});
  }else if(lastFix?.[0]!==fix[0]||lastFix?.[1]!==fix[1]){
   marker.setLatLng(fix);
   const points=trail.getLatLngs().slice(-119);
