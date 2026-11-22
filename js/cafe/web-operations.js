@@ -552,6 +552,9 @@ function counterOrderMarkup(order){
  const transfer=window.ummaGreenSm?.transfer(order,auth.actorId())||'';
  const destination=delivery?'<p>'+[order.customer_name,order.customer_phone,order.delivery_address,order.customer_note]
   .filter(Boolean).map(esc).join(' · ')+'</p>':'';
+ const requestedCash=Number(order.requested_cash_vnd),due=Number(order.total_vnd);
+ const changeNote=delivery&&order.payment_status==='pending'&&!closedOrder(order)&&requestedCash>=due&&requestedCash>0
+  ?requestedCash===due?'Без сдачи':'Сдача '+money(requestedCash-due)+' с '+money(requestedCash):'';
  const fresh=newCounterOrder(order);
  const ready=readyForCounterPickup(order);
  const start=canStartCounterOrder(order);
@@ -570,7 +573,7 @@ function counterOrderMarkup(order){
   '<strong>№'+esc(order.order_number)+'</strong></span><strong>'+money(order.total_vnd)+'</strong>'+
   '<small>'+esc(serviceLabels[order.order_type]||'')+(stage?' · '+esc(stage):'')+'</small>'+
   (mayPay&&order.hasPendingPaymentProof?'<small class="counter-order-payment-note">Чек прикреплён</small>':'')+
-  (paymentNote?'<small class="counter-order-payment-note">'+esc(paymentNote)+'</small>':'')+'</summary>'+
+  ((changeNote||paymentNote)?'<small class="counter-order-payment-note">'+esc(changeNote||paymentNote)+'</small>':'')+'</summary>'+
   '<div class="counter-order-body"><p>'+paymentLabel(order)+' · '+(order.created_via==='staff'?'У стойки':'Из приложения')+'</p>'+
   destination+actor+itemsMarkup(order.cafe_order_items||[])+(start?issue:'')+'</div></details>'+
   (action||green||transfer?'<div class="counter-order-actions">'+action+green+transfer+'</div>':'')+'</article>';

@@ -3,7 +3,7 @@ const web=process.env.UMMA_QA_WEB_STAFF==='1';
 const html=readFileSync(web?'staff.html':'index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
 const dom=new JSDOM(html,{pretendToBeVisual:true,runScripts:'outside-only',url:'https://synthetic-qa.invalid'}),w=dom.window,d=w.document;
 const tick=()=>new Promise(r=>setTimeout(r,10));const until=async fn=>{for(let n=0;n<150;n++){if(fn())return;await tick();}assert.fail('Courier UI did not settle');};
-let order={id:'delivery',order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_method:'cash',payment_status:'pending',total_vnd:120000,delivery_address:'Точка доставки: 12.25,109.18',deliveryProofs:[],cafe_order_items:[]},sharing=false,starts=0,stops=0,uploads=0,updates=0;
+let order={id:'delivery',order_number:1,order_type:'delivery',status:'ready',delivery_status:'courier_assigned',courier_telegram_id:20,staffRole:'courier',canAcceptPayments:true,payment_timing:'on_delivery',payment_method:'cash',payment_status:'pending',total_vnd:120000,requested_cash_vnd:200000,delivery_address:'Точка доставки: 12.25,109.18',deliveryProofs:[],cafe_order_items:[]},sharing=false,starts=0,stops=0,uploads=0,updates=0;
 let navigationLink;
 w.Telegram={WebApp:{openLink:link=>{navigationLink=link;},initData:'synthetic',initDataUnsafe:{user:{id:20}}}};w.ummaRole='employee';w.AbortSignal=AbortSignal;w.scrollTo=()=>{};
 if(web){w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};delete w.Telegram;w.ummaStaffAuth={credential:()=>"web:"+"a".repeat(64),actorId:()=>20};w.HTMLAnchorElement.prototype.click=function(){navigationLink=this.href;};}
@@ -25,6 +25,7 @@ async function send(){
 const card=()=>d.getElementById('cafeKitchenOrders');const btn=kind=>card().querySelector('[data-delivery-photo="'+kind+'"]');
 try {
  w.eval(readFileSync('js/maps/courier-route.js','utf8'));w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
+ if(web)assert.match(card().querySelector('.courier-work-payment').textContent,/Подготовьте сдачу 80\D000.*200\D000/);
  btn('pickup').click();assert.ok(camera.isConnected);order.customer_note='Polling changed this card while camera was open';await w.ummaKitchen.refresh({silent:true});assert.ok(camera.isConnected);select();
  if(web){
   await until(()=>d.querySelector('.courier-photo-preview [value="cancel"]'));
@@ -44,6 +45,7 @@ try {
  const route=card().querySelector('.kitchen-order-actions > [data-show-route]');
  assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Маршрут к клиенту');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.equal(navigationLink,undefined);d.getElementById('courierMapClose').click();
  payment.click();const amount=d.getElementById('cashPayTendered');amount.value='150000';amount.dispatchEvent(new w.Event('input'));d.getElementById('cashPayConfirm').click();await until(()=>!card().querySelector('[data-payment-status="paid"]'));
+ if(web)assert.doesNotMatch(card().querySelector('.courier-work-payment').textContent,/Подготовьте сдачу/);
  assert.ok(card().querySelector('.kitchen-order-actions > [data-show-route]'),'navigation remains visible after payment');
  assert.ok(btn('handover'),'paid order still requires handover photo');assert.equal(sharing,true);
  btn('handover').click();select();await send();await until(()=>!card().querySelector('[data-kitchen-order]'));assert.equal(sharing,false);assert.equal(stops,1);assert.equal(order.status,'completed');

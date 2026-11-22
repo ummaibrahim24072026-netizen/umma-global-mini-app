@@ -260,6 +260,11 @@
             (window.ummaCourierTracking?.isSharing(order.id)?'Остановить передачу позиции':'Передавать позицию клиенту')+'</button></div>' : "";
         const payment=order.payment_status==="paid"?"Оплачено":order.payment_status==="refunded"?"Оплата возвращена"
           :collectCash?(complete?"Наличные за заказ: ":"Получить наличными: ")+money(order.total_vnd):"Оплата через кафе";
+        const requestedCash=Number(order.requested_cash_vnd);
+        const due=Number(order.total_vnd);
+        const changeNote=collectCash&&!closed&&requestedCash>=due&&requestedCash>0
+          ? requestedCash===due?"Без сдачи":"Подготовьте сдачу "+money(requestedCash-due)+" с "+money(requestedCash)
+          : "";
         const phone=String(order.customer_phone||"").replace(/[^+0-9]/g,"");
         const canContact=!closed&&Number(order.courier_telegram_id)===Number(actorTelegramId);
         const call=canContact&&phone?'<a class="kitchen-action courier-call" href="tel:'+esc(phone)+'">Позвонить</a>':"";
@@ -269,7 +274,7 @@
           '<div class="courier-work-heading"><h2>Заказ №'+esc(order.order_number)+'</h2><span class="courier-ready '+(ready||closed?'is-ready':'')+'">'+esc(stage)+'</span></div>'+
           '<div class="courier-work-destination"><small>'+ (goingToCafe?"Адрес кафе":"Адрес клиента")+'</small><strong>'+esc(address)+'</strong>'+
           (!goingToCafe&&order.customer_note?.replace(/(?:^|\n)Web ·[^\n]*$/,"").trim()?'<p>'+esc(order.customer_note.replace(/(?:^|\n)Web ·[^\n]*$/,"").trim())+'</p>':"")+'</div>'+
-          '<p class="courier-work-payment" data-cash="'+collectCash+'">'+esc(payment)+'</p>'+
+          '<p class="courier-work-payment" data-cash="'+collectCash+'">'+esc(payment)+(changeNote?'<br><strong>'+esc(changeNote)+'</strong>':'')+'</p>'+
           '<div class="kitchen-order-actions">'+(takeCashFirst?courierPayment:deliveryAction||courierPayment)+courierRoute+
           '<small class="courier-step-feedback" role="status" aria-live="polite" data-courier-step-status="'+esc(order.id)+'"></small>'+
           call+chat+'</div>'+tracking+list+evidenceActions+'</article>';

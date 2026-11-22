@@ -88,6 +88,9 @@ Deno.serve(async req=>{
   const delivery=b.orderType==='delivery';
   if(delivery&&(typeof b.address!=='string'||b.address.trim().length<8||b.address.length>250||typeof b.latitude!=='number'||typeof b.longitude!=='number'||!Number.isFinite(b.latitude)||!Number.isFinite(b.longitude)))return reply({ok:false,error:'Invalid delivery point'},400);
   if(b.paymentMethod!=null&&!['cash','qr','bank_transfer','usd','eur','sber','kaspi','usdt'].includes(b.paymentMethod))return reply({ok:false,error:'Invalid payment method'},400);
+  const requestedCash=b.requestedCashVnd;
+  if(requestedCash!=null&&(!delivery||b.paymentMethod!=='cash'||!Number.isInteger(requestedCash)||requestedCash<=0||requestedCash>2147483647))
+   return reply({ok:false,error:'Invalid requested cash'},400);
   if(b.tableNumber!=null&&(typeof b.tableNumber!=='string'||(b.tableNumber!==''&&!/^[1-6]$/.test(b.tableNumber))))return reply({ok:false,error:'Invalid table'},400);
   if(b.action!=='create'||typeof b.requestKey!=='string'||!/^[0-9a-f-]{36}$/i.test(b.requestKey))return reply({ok:false,error:'Invalid request'},400);
   if(b.locationId!==cafeId)return reply({ok:false,error:'Invalid cafe'},400);
@@ -97,16 +100,19 @@ Deno.serve(async req=>{
   const ipHash=Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
   const trackingToken=delivery?Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',await crypto.subtle.importKey('raw',new TextEncoder().encode(salt),{name:'HMAC',hash:'SHA-256'},false,['sign']),new TextEncoder().encode('guest-delivery:'+b.requestKey))),v=>v.toString(16).padStart(2,'0')).join(''):null;
   const trackingHash=trackingToken?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(trackingToken))),v=>v.toString(16).padStart(2,'0')).join(''):null;
-  const args={...(delivery?{p_address:b.address,p_lat:b.latitude,p_lng:b.longitude,p_token_hash:trackingHash}:{}),p_payment_method:b.paymentMethod||'cash',p_request_key:b.requestKey,p_ip_hash:ipHash,p_location_id:b.locationId,p_items:b.items,p_customer_name:typeof b.name==='string'?b.name:'',p_customer_phone:typeof b.phone==='string'?b.phone:'',p_table_number:b.orderType==='dine_in'&&!b.tableNumber?'dine_in':typeof b.tableNumber==='string'?b.tableNumber:null,p_source:typeof b.point==='string'?b.point.slice(0,80):''};
+  const orderArgs={...(delivery?{p_address:b.address,p_lat:b.latitude,p_lng:b.longitude,p_token_hash:trackingHash}:{}),p_request_key:b.requestKey,p_ip_hash:ipHash,p_location_id:b.locationId,p_items:b.items,p_customer_name:typeof b.name==='string'?b.name:'',p_customer_phone:typeof b.phone==='string'?b.phone:'',p_table_number:b.orderType==='dine_in'&&!b.tableNumber?'dine_in':typeof b.tableNumber==='string'?b.tableNumber:null,p_source:typeof b.point==='string'?b.point.slice(0,80):''};
+  const args={...orderArgs,p_payment_method:b.paymentMethod||'cash'};
   const quote=b.paymentMethod==='bank_transfer'?await googleRubleQuote():null;
   const extended=['usd','eur','sber','kaspi','usdt'].includes(b.paymentMethod);
   const fx=extended?await paymentQuote(b.paymentMethod):null;
-  const {data,error}=extended
+  const {data,error}=requestedCash!=null
+   ?await db.rpc('submit_cafe_guest_delivery_cash',{...orderArgs,p_requested_cash_vnd:requestedCash})
+   :extended
    ?await db.rpc('submit_cafe_guest_payment_choice',{p_args:args,p_method:b.paymentMethod,p_rate:fx?.vndPerUnit??null,p_quoted_at:fx?.quotedAt??null})
    :b.paymentMethod==='bank_transfer'
    ?await db.rpc('submit_cafe_web_ruble_order',{p_args:args,p_vnd_per_rub:quote?.vndPerRub??null,p_quoted_at:quote?.quotedAt??null})
    :await db.rpc(delivery?'submit_cafe_guest_delivery_v4':'submit_cafe_guest_order_v3',args);
-  if(error){if(['PAYMENT_METHOD_UNAVAILABLE','PAYMENT_RATE_UNAVAILABLE'].includes(error.message))return reply({ok:false,code:error.message},422);if(error.message?.includes('RUBLE_RATE_UNAVAILABLE'))return reply({ok:false,code:'RUBLE_RATE_UNAVAILABLE'},422);if(error.message?.includes('READY_STOCK_UNAVAILABLE'))return reply({ok:false,code:'STOCK_UNAVAILABLE',error:'Часть блюд уже закончилась. Обновите корзину.'},409);console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
+  if(error){if(['CASH_AMOUNT_TOO_LOW','PAYMENT_METHOD_UNAVAILABLE','PAYMENT_RATE_UNAVAILABLE'].includes(error.message))return reply({ok:false,code:error.message},422);if(error.message?.includes('RUBLE_RATE_UNAVAILABLE'))return reply({ok:false,code:'RUBLE_RATE_UNAVAILABLE'},422);if(error.message?.includes('READY_STOCK_UNAVAILABLE'))return reply({ok:false,code:'STOCK_UNAVAILABLE',error:'Часть блюд уже закончилась. Обновите корзину.'},409);console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
   if(delivery&&data?.order){data.trackingToken=trackingToken;data.order.orderType='delivery';}
   if(data?.order){
    const o=data.order;

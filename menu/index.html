@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#FCFFFF"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
-<script src="js/cafe/public-menu-i18n.js?v=46"></script>
+<script src="js/cafe/public-menu-i18n.js?v=47"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=1"><link rel="stylesheet" href="css/brand.css?v=8"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -279,6 +279,9 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 }
 .checkout-payment-options label:has(:disabled) { opacity: .58; cursor: default; }
 #checkoutPaymentNotice { margin: 5px 0 0; }
+#checkoutCashChange .field { margin-block-end: 4px; }
+#checkoutCashChangeResult { margin: 0; color: var(--umma-brand-strong); }
+#checkoutCashChangeResult[data-error="true"] { color: #8a3325; }
 .checkout-payment-options label:has(:focus-visible) { outline: 2px solid #087c78; outline-offset: -3px; }
 .checkout-payment-options input { flex: none; }
 #checkout[data-stage="checkout"] #backToCart { width: auto; margin: 0; min-height: 44px; border: 0; background: transparent; color: #006765; padding-inline: 0; text-decoration: underline; text-underline-offset: 3px; }
@@ -718,6 +721,12 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <label><input type="radio" name="paymentMethod" value="sber" disabled><span data-i18n="Перевод на Сбербанк">Перевод на Сбербанк</span></label>
 <label><input type="radio" name="paymentMethod" value="usdt" disabled><span data-i18n="USDT">USDT</span></label>
 </div><p id="checkoutPaymentNotice" class="guest-hint" role="status" hidden></p></fieldset>
+<div id="checkoutCashChange" hidden>
+ <label class="field"><span data-i18n="С какой суммы подготовить сдачу?">С какой суммы подготовить сдачу?</span>
+  <input id="deliveryCashAmount" type="text" inputmode="numeric" maxlength="13" autocomplete="off" dir="ltr" placeholder="500 000 ₫" aria-describedby="checkoutCashChangeResult" disabled>
+ </label>
+ <p id="checkoutCashChangeResult" class="guest-hint" role="status"></p>
+</div>
 <label class="field" hidden><span data-i18n="Где получить заказ?">Где получить заказ?</span><select id="tableNumber" aria-label="Где получить заказ?" data-i18n-label="Где получить заказ?"><option value="" data-i18n="У стойки выдачи">У стойки выдачи</option></select></label>
 </fieldset></div><div class="checkout-pay-footer"><button type="button" id="backToCart" class="plain-btn" data-i18n="Вернуться в корзину">Вернуться в корзину</button><div class="receipt-lines" id="checkoutAmounts" aria-live="polite"><div id="checkoutDeliveryRow" hidden><span data-i18n="Стоимость доставки">Стоимость доставки</span><strong id="checkoutDeliveryFee"></strong></div><div><span data-i18n="Итого">Итого</span><strong id="checkoutTotal"></strong></div><div id="checkoutFxRow" hidden><span data-i18n="К оплате">К оплате</span><strong id="checkoutFxAmount" dir="ltr"></strong></div></div><button class="primary" id="submit" type="submit" data-i18n="Перейти к оплате">Перейти к оплате</button><p class="guest-hint" data-i18n="Заказ поступит на кухню после подтверждения оплаты.">Заказ поступит на кухню после подтверждения оплаты.</p></div></form></section></div>
 <div id="result" class="result" role="status" hidden></div><section id="success" class="success" hidden>
@@ -892,9 +901,34 @@ function loadPaymentQuote(method){
  quoteRequests.set(method,request);
  renderCheckoutAmounts();
 }
+const deliveryFee=subtotal=>subtotal<100000?30000:0;
+function requestedCashAmount(){
+ const value=$('deliveryCashAmount').value.replace(/\s/g,'');
+ if(!value)return null;
+ return /^\d{1,10}$/.test(value)&&Number(value)<=2147483647?Number(value):NaN;
+}
+function cashAmountError(cash,amount){
+ if(cash===null)return '';
+ if(!Number.isInteger(cash)||cash<=0)return 'Введите сумму в донгах целым числом.';
+ return cash<amount?'Сумма меньше итога заказа.':'';
+}
+function renderCashChange(visible,amount){
+ const input=$('deliveryCashAmount');
+ const result=$('checkoutCashChangeResult');
+ $('checkoutCashChange').hidden=!visible;
+ input.disabled=!visible;
+ if(!visible)return;
+ const cash=requestedCashAmount();
+ const error=pending?'':cashAmountError(cash,amount);
+ input.setAttribute('aria-invalid',String(Boolean(error)));
+ result.dataset.error=String(Boolean(error));
+ const message=pending?'':error?t(error):cash===null?t('Можно оставить пустым.'):
+  cash<=amount?t('Без сдачи'):t('Сдача {amount}',{amount:money(cash-amount)});
+ if(result.textContent!==message)result.textContent=message;
+}
 function renderCheckoutAmounts(subtotal=total()){
  const delivery=(pending?.orderType??$('orderType').value)==='delivery';
- const fee=delivery&&subtotal<100000?30000:0;
+ const fee=delivery?deliveryFee(subtotal):0;
  $('checkoutDeliveryRow').hidden=!delivery;
  $('checkoutDeliveryFee').textContent=money(fee);
  const amount=subtotal+fee;
@@ -906,6 +940,7 @@ function renderCheckoutAmounts(subtotal=total()){
  if(quote)$('checkoutFxAmount').textContent='≈ '+window.ummaGuestExtras.formatForeign(window.ummaGuestExtras.convert(amount,quote),quote.currency);
  const notice=$('checkoutPaymentNotice');
  const courierCash=delivery&&method==='cash';
+ renderCashChange(courierCash,amount);
  const deliveryCash=delivery&&['usd','eur'].includes(method);
  const unavailable=paymentOptions&&['sber','kaspi','usdt'].some(m=>!paymentOptions[m==='usdt'?'usdtRate':m]);
  const key=loading?'Получаем курс Google Finance…':foreign&&!quote?'Курс временно недоступен. Выберите другой способ оплаты.':
@@ -936,6 +971,7 @@ paymentInputs.forEach(input=>input.addEventListener('change',()=>{
  loadPaymentQuote(input.value);
  renderCheckoutAmounts();
 }));
+$('deliveryCashAmount').addEventListener('input',()=>renderCheckoutAmounts());
 const safeImage=p=>window.ummaCafeProductPhoto?.(p)||'';
 function catalogReceiptPhoto(item){
   if(!item.name_ru)return '';
@@ -1447,6 +1483,14 @@ $('form').onsubmit=async e=>{
  if(!cart.size||busy||$('submit').disabled)return;
  const orderType=$('orderType').value;
  if(!pending){
+  const hasCashChange=orderType==='delivery'&&checkoutMethod()==='cash';
+  const cash=hasCashChange?requestedCashAmount():null;
+  const cashTotal=hasCashChange?total()+deliveryFee(total()):null;
+  if(cashAmountError(cash,cashTotal)){
+   renderCashChange(true,cashTotal);
+   $('deliveryCashAmount').focus();
+   return;
+  }
   if(orderType==='delivery'&&!window.ummaPublicDelivery){
    status('Не удалось оформить заказ.',true);
    return;
@@ -1457,6 +1501,7 @@ $('form').onsubmit=async e=>{
   pending={
    ...deliveryFields,action:'create',requestKey:crypto.randomUUID(),locationId,orderType,
    tableNumber:$('tableNumber').value,paymentMethod:checkoutMethod(),point:source,
+   ...(cash===null?{}:{requestedCashVnd:cash}),
    items:[...cart].map(([id,quantity])=>{
     const p=products.find(p=>p.id===id);
     return {productId:p.productId||id,quantity,...(p.isPreorder?{planRevision:p.planRevision}:{})};
@@ -1492,6 +1537,7 @@ $('form').onsubmit=async e=>{
   $('success').hidden=false;
   $('checkoutTitle').focus();
   pending=null;
+  $('deliveryCashAmount').value='';
   window.ummaPublicDelivery?.resetPhone?.();
   try{sessionStorage.removeItem('umma-menu-pending');}catch{}
   for(const [id,n]of cart){
@@ -1506,6 +1552,7 @@ $('form').onsubmit=async e=>{
   renderProducts();
  }catch(err){
   const paymentMessages={
+   CASH_AMOUNT_TOO_LOW:'Сумма заказа изменилась. Проверьте наличные для сдачи.',
    PAYMENT_METHOD_UNAVAILABLE:'Способ оплаты временно недоступен.',
    PAYMENT_RATE_UNAVAILABLE:'Курс временно недоступен. Выберите другой способ оплаты.',
    RUBLE_RATE_UNAVAILABLE:'Курс Google Finance временно недоступен. Выберите другой способ оплаты или попробуйте позже.'
@@ -1749,6 +1796,7 @@ try{
   }
   $('deliveryAddress').value=saved.address||'';
   $('deliveryPhone').value=saved.phone||'';
+  $('deliveryCashAmount').value=saved.requestedCashVnd??'';
   $('orderType').dispatchEvent(new Event('change'));
  }
 }catch{}
