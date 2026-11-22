@@ -176,7 +176,7 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
    if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}
    points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};
   }};
- w.UmmaMaps={marker:()=>({setLatLng(fix){markerMoves.push(fix);}})};
+ w.UmmaMaps={marker:()=>({setZIndexOffset(){},setLatLng(fix){markerMoves.push(fix);}})};
  w.fetch=async()=>{turn++;if(turn===2&&ending==='network')throw Error();return new Response(JSON.stringify({ok:true,number:321,orderStatus:turn===2&&ending==='cancelled'?'cancelled':'preparing',state:turn===2&&ending==='delivered'?'delivered':turn===2&&ending==='cancelled'?'cancelled':'picked_up',destination:{latitude:12.31,longitude:109.2},...(ending==='waiting'||(turn===2&&ending==='stale')?{}:{latitude:turn===2&&ending==='moving'?12.30:12.28,longitude:109.2,updatedAt:new Date().toISOString()})}));};
  if(ending==='road')w.UmmaNhaTrangRouter={route:async()=>({seconds:420,path:[{lat:12.28,lng:109.2},{lat:12.31,lng:109.2}]})};
  w.eval(read('js/cafe/public-tracking.js'));await tick();
@@ -185,26 +185,25 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
   assert.match(d.getElementById('connection').textContent,/геолокацию курьера/);
   assert.equal(d.getElementById('center').hidden,true);w.close();continue;
  }
- const eta=d.getElementById('eta'),initialEta=eta.textContent;
- assert.equal(eta.hidden,false);
  assert.ok(fitted);
- assert.equal(d.querySelector('#stages [aria-current]').textContent,w.ummaMenuI18n.t('Курьер в пути'));
+ assert.equal(d.querySelector('header #status').textContent,w.ummaMenuI18n.t('Курьер в пути'));
+ assert.equal(d.querySelector('header #orderNumber').textContent,w.ummaMenuI18n.t('Заказ №{number}',{number:321}));
+ assert.equal(d.querySelector('#stages, #notify, #eta, .tracking-sheet'),null);
+ assert.equal(d.getElementById('connection').hidden,true);
  d.getElementById('center').click();assert.equal(centered[0],12.28);
- if(ending==='road'){assert.equal(roadPath.length,2);assert.equal(initialEta,w.ummaMenuI18n.t('Примерно {minutes} мин. до прибытия',{minutes:7}));w.close();continue;}
+ if(ending==='road'){assert.equal(roadPath.length,2);w.close();continue;}
  await queue.shift()();await tick();
  if(ending==='moving'){
   assert.equal(d.getElementById('map').hidden,false);
   assert.equal(markerMoves.length,1);
   assert.equal(points.length,2);
-  assert.notEqual(eta.textContent,initialEta);
+  assert.equal(d.getElementById('connection').hidden,true);
  }else if(ending==='network'||ending==='stale'){
   assert.equal(d.getElementById('map').hidden,false);
-  assert.equal(eta.hidden,true);
   assert.equal(removed,0);
   assert.match(d.getElementById('connection').textContent,/Последняя позиция курьера/);
  }else{
   assert.equal(d.getElementById('map').hidden,true,ending+' removes previous coordinates');
-  assert.equal(eta.hidden,true);
   assert.equal(removed,1);
  }
  assert.equal(w.Notification,undefined);w.close();

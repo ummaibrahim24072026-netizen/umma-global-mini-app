@@ -37,13 +37,10 @@ if(query.has('token')||query.has('requestKey')||query.has('orderId')){
 }
 let road=null,routeRequest=0,routeOrigin=null;
 let liveSocket=null,liveChannel='',liveRetry=null,liveSequence=0,liveHeartbeat=null;
-let map=null,marker=null,destinationMarker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
+let map=null,marker=null,destinationMarker=null,trail=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='';
 let disconnected=false,refreshQueued=false;
 const terminal=['delivered','completed','cancelled'];
 const names={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',waiting_courier:'Ищем курьера',courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен',completed:'Заказ доставлен',cancelled:'Заказ отменён'};
-const stages=['Заказ отправлен','Готовится','Заказ готов','Курьер назначен','Курьер в пути','Заказ доставлен'];
-const stageRows=stages.map(()=>document.createElement('li'));
-$('stages').append(...stageRows);
 function isTerminal(d){return terminal.includes(d.state)||terminal.includes(d.orderStatus);}
 function point(d){
  const lat=d?.latitude,lng=d?.longitude;
@@ -93,23 +90,18 @@ function stopRealtime(){
  const ws=liveSocket;liveSocket=null;liveChannel='';
  ws?.close();
 }
+// A GPS notice or a change in the visible mobile viewport can resize the map without a window resize.
+if(window.ResizeObserver){
+ const observer=new ResizeObserver(()=>map?.invalidateSize({debounceMoveend:true}));
+ observer.observe($('map'));
+}
 function hideMap(){
  if(map)map.remove();
  map=marker=destinationMarker=trail=lastFix=road=routeOrigin=null;
  $('mapNotice').hidden=true;
  routeRequest++;
- delete $('map').closest('main').dataset.map;
  $('center').hidden=true;
- etaMinutes=null;
  $('map').hidden=true;
-}
-function estimateMinutes(from,to){
- // Straight-line distance with a local driving allowance. No road or traffic feed.
- const radians=Math.PI/180;
- const a=Math.sin((to.lat-from.lat)*radians/2)**2
-   +Math.cos(from.lat*radians)*Math.cos(to.lat*radians)*Math.sin((to.lng-from.lng)*radians/2)**2;
- const km=12742*Math.asin(Math.sqrt(Math.min(1,a)));
- return Math.max(1,Math.ceil(km*1.4/18*60));
 }
 function drawPosition(d){
  if(isTerminal(d)){hideMap();return;}
@@ -117,16 +109,15 @@ function drawPosition(d){
  const courier=d.state==='picked_up'&&age>=-10000?point(d):null;
  const destination=point(d.destination);
  const fresh=courier&&d.positionFresh!==false&&age<60000&&!disconnected;
- if(!courier){
-  etaMinutes=null;
-  if(d.state==='picked_up')connectionKey='Ожидаем геолокацию курьера';
- }else if(!fresh){
-  etaMinutes=null;
-  connectionKey='Последняя позиция курьера · '+new Date(d.updatedAt).toLocaleTimeString();
- }else if(!routeOrigin&&destination)etaMinutes=estimateMinutes(courier,destination);
+ if(courier&&!fresh){
+  connectionKey=t('Последняя позиция курьера')+' · '+new Date(d.updatedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+ }else if(!courier&&d.state==='picked_up'){
+  connectionKey=t('Ожидаем геолокацию курьера');
+ }else{
+  connectionKey='';
+ }
  if(!window.L?.map||!window.UmmaMaps)throw Error('Map assets unavailable');
  $('map').hidden=false;
- $('map').closest('main').dataset.map='';
  const initial=destination||courier||mapFallback;
  if(!map){
   map=L.map($('map')).setView([initial.lat,initial.lng],destination||courier?16:13);
@@ -151,6 +142,7 @@ function drawPosition(d){
  $('center').hidden=false;
  if(!marker){
   marker=UmmaMaps.marker(map,courier,'courier');
+  marker.setZIndexOffset(1000);
   trail=L.polyline([fix],{color:'#418780',weight:3,dashArray:'4 7'}).addTo(map);
   if(destination)map.fitBounds([fix,[destination.lat,destination.lng]],{padding:[36,36],maxZoom:16});
   else map.setView(fix,16);
@@ -169,50 +161,32 @@ function updateRoad(courier,destination){
  const request=++routeRequest;
  void window.UmmaNhaTrangRouter.route(courier,destination).then(result=>{
   if(request!==routeRequest||!map)return;
-  etaMinutes=!disconnected&&data?.positionFresh!==false&&Date.now()-Date.parse(data?.updatedAt||'')<60000?(result?Math.max(1,Math.ceil(result.seconds/60)):estimateMinutes(courier,destination)):null;
   if(result){
    const path=result.path.map(p=>[p.lat,p.lng]);
    if(road)road.setLatLngs(path);
    else road=L.polyline(path,{color:'#007c61',weight:5}).addTo(map);
   }else if(road){road.remove();road=null;}
-  labels();
  }).catch(()=>{
   if(request!==routeRequest||!map)return;
   routeOrigin=null;
   road?.remove();road=null;
-  etaMinutes=!disconnected&&data?.positionFresh!==false&&Date.now()-Date.parse(data?.updatedAt||'')<60000?estimateMinutes(courier,destination):null;
-  labels();
  });
-}
-function renderStages(){
- const d=data;
- $('progress').hidden=!d||d.state==='cancelled'||d.orderStatus==='cancelled'||!!statusKey;
- const kitchen=d?.orderStatus==='ready'?2:d?.orderStatus==='preparing'?1:0;
- const delivery=d?.state==='courier_assigned'?3:d?.state==='picked_up'?4:d&&isTerminal(d)?5:0;
- const current=delivery>=4?delivery:Math.max(kitchen,delivery);
- stageRows.forEach((row,i)=>{
-  row.textContent=t(stages[i]);
-  row.toggleAttribute('data-done',i<=kitchen||(i>=3&&i<=delivery)||delivery>=4);
-  if(i===current)row.setAttribute('aria-current','step');else row.removeAttribute('aria-current');
- });
- $('eta').hidden=etaMinutes===null;
- $('eta').textContent=etaMinutes===null?'':t('Примерно {minutes} мин. до прибытия',{minutes:etaMinutes});
 }
 function labels(){
  document.title='UMMA Delivery';
- $('orderNumber').textContent=data&&!statusKey?t('Заказ №{number}',{number:data.number}):'';
+ const number=data?.number;
+ $('orderNumber').hidden=number==null||!!statusKey;
+ $('orderNumber').textContent=$('orderNumber').hidden?'':t('Заказ №{number}',{number});
  const state=data?.state;
  const label=['courier_assigned','picked_up',...terminal].includes(state)?names[state]:names[data?.orderStatus]||names[state];
  $('status').textContent=statusKey?t(statusKey):label?t(label):'';
- $('connection').textContent=[disconnected&&t('Нет связи. Восстанавливаем подключение…'),connectionKey&&t(connectionKey)].filter(Boolean).join(' · ');
- $('notify').textContent=t(notificationKey);
+ const notice=[disconnected&&t('Нет связи'),connectionKey].filter(Boolean).join(' · ');
+ $('connection').textContent=notice;
+ $('connection').hidden=!notice;
  $('back').setAttribute('aria-label',t('Вернуться к меню'));
  $('center').textContent=t('Показать курьера');
- $('progressLabel').textContent=t('Этапы доставки');
- renderStages();
 }
-window.addEventListener('umma-menu:languagechange',labels);labels();
-$('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!('Notification'in window))return;try{const p=await Notification.requestPermission();notificationKey=p==='granted'?'Уведомления разрешены для открытой страницы':'Уведомления не разрешены';labels();}catch{notificationKey='Уведомления не разрешены';labels();}};
+window.addEventListener('umma-menu:languagechange',labels);
 async function poll(){
  if(stopped||active)return;
  active=true;clearTimeout(timer);
@@ -232,7 +206,7 @@ async function poll(){
   if([403,404].includes(response.status)&&['TRACKING_CREDENTIAL_INVALID','TRACKING_UNAVAILABLE'].includes(next.code)){
    stopped=true;data=null;disconnected=false;stopRealtime();hideMap();
    statusKey='Доступ к отслеживанию не подтверждён';
-   connectionKey='Откройте доставку через «Мои заказы» на устройстве оформления.';
+   connectionKey=t('Откройте доставку через «Мои заказы» на устройстве оформления.');
    labels();return;
   }
   if(!response.ok||!next.ok)throw Error('Tracking API unavailable');
@@ -243,7 +217,7 @@ async function poll(){
   data=next;
   if(isTerminal(next)){stopped=true;stopRealtime();}
   else if(!document.hidden)startRealtime(next.channel);
-  try{drawPosition(next);}catch{hideMap();connectionKey='Не удалось загрузить карту';}
+  try{drawPosition(next);}catch{hideMap();connectionKey=t('Не удалось загрузить карту');}
   window.ummaOrderInbox?.publish({...next,id:'delivery:'+next.number},t);labels();
   const state=next.orderStatus+':'+next.state;
   if(previous&&state!==previous&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){
@@ -278,6 +252,6 @@ window.addEventListener('pageshow',event=>{if(event.persisted){stopped=false;voi
 if(hex.test(token)||(uuid.test(orderId)&&uuid.test(requestKey))){
  statusKey='Подключаем карту доставки…';labels();void poll();
 }else{
- stopped=true;statusKey='Ссылка отслеживания недействительна или истекла.';labels();$('notify').hidden=true;
+ stopped=true;statusKey='Ссылка отслеживания недействительна или истекла.';labels();
 }
 })();
