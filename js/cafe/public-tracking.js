@@ -174,19 +174,18 @@ function renderStages(){
 }
 function labels(){
  document.title='UMMA Delivery';
- $('menuLanguage').setAttribute('aria-label',t('Выбрать язык'));
  $('orderNumber').textContent=data&&!statusKey?t('Заказ №{number}',{number:data.number}):'';
  const state=data?.state;
  const label=['courier_assigned','picked_up',...terminal].includes(state)?names[state]:names[data?.orderStatus]||names[state];
  $('status').textContent=statusKey?t(statusKey):label?t(label):'';
  $('connection').textContent=connectionKey?t(connectionKey):'';
  $('notify').textContent=t(notificationKey);
- $('back').textContent=t('Вернуться к меню');
+ $('back').setAttribute('aria-label',t('Вернуться к меню'));
  $('center').textContent=t('Показать курьера');
  $('progressLabel').textContent=t('Этапы доставки');
  renderStages();
 }
-for(const [code,[label]]of Object.entries(I.languages)){const o=document.createElement('option');o.value=code;o.textContent=label;$('menuLanguage').append(o);}$('menuLanguage').value=I.language;$('menuLanguage').onchange=e=>I.setLanguage(e.target.value);window.addEventListener('umma-menu:languagechange',labels);labels();
+window.addEventListener('umma-menu:languagechange',labels);labels();
 $('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!('Notification'in window))return;try{const p=await Notification.requestPermission();notificationKey=p==='granted'?'Уведомления разрешены для открытой страницы':'Уведомления не разрешены';labels();}catch{notificationKey='Уведомления не разрешены';labels();}};
 async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/umma-guest-delivery';
