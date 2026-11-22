@@ -30,9 +30,10 @@
       align-items: center;
       justify-content: center;
       border-radius: 13px;
-      background: var(--umma-turquoise, var(--umma-brand-primary));
+      background: var(--umma-brand-primary);
       color: #fff;
       font-size: 20px;
+      text-shadow: var(--umma-brand-light-label-shadow);
     }
 
     .admin-entry-copy {
@@ -106,9 +107,10 @@
       align-items: center;
       justify-content: center;
       border-radius: 18px;
-      background: var(--umma-turquoise, var(--umma-brand-primary));
+      background: var(--umma-brand-primary);
       color: #fff;
       font-size: 27px;
+      text-shadow: var(--umma-brand-light-label-shadow);
     }
 
     .admin-eyebrow {
@@ -217,9 +219,9 @@
 #locationAdminMap { z-index: 1; background: var(--umma-brand-pale); }
 .umma-map-marker-wrap { background: transparent; border: 0; }
 .umma-map-marker { display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid #176b55;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#fff;box-shadow:0 2px 8px #0002;font-size:15px; }
-.umma-map-marker.is-cafe { background:var(--umma-brand-primary);color:#fff;border-color:var(--umma-brand-deep); }
+.umma-map-marker.is-cafe { background:var(--umma-brand-outline);color:#fff;border-color:var(--umma-brand-deep);text-shadow:var(--umma-brand-light-label-shadow)}
 .leaflet-popup-content { line-height:1.55; }
-.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:var(--umma-brand-primary);color:#fff;padding:7px 10px;font-weight:700;cursor:pointer; }
+.location-popup-edit { margin-top:6px;border:0;border-radius:8px;background:var(--umma-brand-primary);color:#fff;padding:7px 10px;font-weight:700;cursor:pointer;text-shadow:var(--umma-brand-light-label-shadow)}
 #locationForm label { display:block; margin:10px 0; }
 #locationForm input:not([type="checkbox"]),#locationForm select { display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:5px;border:1px solid var(--umma-brand-line);border-radius:10px;background:#fff;font:inherit; }
 #locationForm input[readonly] { background:var(--umma-brand-canvas);color:var(--umma-brand-muted); }
@@ -242,7 +244,7 @@
   border:1px solid var(--umma-brand-line); border-radius:10px; padding:9px 12px; background:#fff; color:var(--umma-brand-deep);
   font:inherit; font-size:12px; font-weight:800; white-space:nowrap; cursor:pointer;
 }
-.accounting-tabs button.active { background:var(--umma-brand-primary); color:#fff; border-color:var(--umma-brand-primary); }
+.accounting-tabs button.active { background:var(--umma-brand-primary); color:#fff; border-color:var(--umma-brand-outline);text-shadow:var(--umma-brand-light-label-shadow)}
 .accounting-content h3 { margin:22px 0 10px; color:var(--umma-brand-deep); font-size:17px; }
 .accounting-content h4 { margin:16px 0 8px; color:var(--umma-brand-text); }
 .accounting-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
@@ -258,7 +260,7 @@
 .accounting-fields label, .accounting-form label { display:block; min-width:0; color:var(--umma-brand-muted); font-size:12px; font-weight:700; margin-bottom:10px; }
 .accounting-fields .accounting-check { display:flex; align-items:center; gap:8px; }
 .accounting-check input { width:auto; margin:0; }
-.accounting-primary { display:block; width:100%; border:0; border-radius:11px; padding:12px 14px; background:var(--umma-brand-primary); color:#fff; font:inherit; font-size:13px; font-weight:900; cursor:pointer; }
+.accounting-primary { display:block; width:100%; border:0; border-radius:11px; padding:12px 14px; background:var(--umma-brand-primary); color:#fff; font:inherit; font-size:13px; font-weight:900; cursor:pointer;text-shadow:var(--umma-brand-light-label-shadow)}
 .accounting-form .accounting-secondary { margin:4px 0 12px; }
 .accounting-line { display:grid; grid-template-columns:minmax(0,2fr) minmax(75px,.8fr) minmax(75px,1fr) 36px; gap:7px; align-items:center; margin:8px 0; }
 .accounting-line input, .accounting-line select { min-width:0; width:100%; box-sizing:border-box; padding:9px 8px; border:1px solid var(--umma-brand-line); border-radius:9px; background:#fff; font:inherit; font-size:12px; }

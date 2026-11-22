@@ -5,7 +5,7 @@
  --umma-radius-card:24px;--umma-radius-control:14px;
  --umma-shadow-card:0 8px 28px rgba(var(--umma-brand-ink-rgb),.045);
  --umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));
- --umma-action:linear-gradient(135deg,var(--umma-brand-strong),var(--umma-brand-deep));
+ --umma-action:var(--umma-brand-primary);
  --umma-focus:var(--umma-brand-strong);
 }
 /* A shared rhythm for customer, staff and management screens. */
@@ -22,9 +22,9 @@
 }
 /* Page introductions: the same light material as the approved direction cards. */
 :is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header){
- position:relative;margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);border-radius:var(--umma-radius-card);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card);gap:12px
+ position:relative;margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);border-radius:var(--umma-radius-card);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card);gap:12px;text-shadow:none
 }
-#cafeOrdersPage .cafe-page-header{margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card)}
+#cafeOrdersPage .cafe-page-header{margin:0 0 20px;padding:20px;border:1px solid var(--umma-brand-line);background:var(--umma-surface);color:var(--umma-brand-ink);box-shadow:var(--umma-shadow-card);text-shadow:none}
 #cafeOrdersPage .cafe-page-header::after{display:none}
 :is(.cafe-page-header,.cafe-kitchen-header,.cafe-staff-admin-header,.admin-header,.market-header,.market-shop-header) h1,
 #cafeOrdersPage .cafe-page-header h1{color:var(--umma-brand-ink);font:750 clamp(22px,4vw,30px)/1.25 Inter,system-ui,sans-serif;margin:6px 0;display:block;min-width:0;overflow-wrap:anywhere}
@@ -51,8 +51,8 @@
 .courier-desk-tabs{background:var(--umma-brand-soft)}
 .courier-desk-tabs button.is-active{background:#fff;color:var(--umma-brand-strong)}
 /* Primary and selected controls; errors/destructive controls retain module colours. */
-:is(.cafe-submit,.accounting-primary,.cafe-sticky-order button,.market-shop-cart button,.market-checkout button[type=submit],.b2b-request-bar button,.b2b-form button[type=submit]){border-radius:14px;background:var(--umma-action);color:#fff;min-height:48px;font-weight:700;box-shadow:0 4px 12px rgba(var(--umma-brand-primary-rgb),.12)}
-.market-primary{background:var(--umma-action)!important;color:#fff!important}
+:is(.cafe-submit,.accounting-primary,.cafe-sticky-order button,.market-shop-cart button,.market-checkout button[type=submit],.b2b-request-bar button,.b2b-form button[type=submit]){border-radius:14px;background:var(--umma-action);color:#fff;text-shadow:var(--umma-brand-light-label-shadow);min-height:48px;font-weight:700;box-shadow:0 4px 12px rgba(var(--umma-brand-primary-rgb),.12)}
+.market-primary{background:var(--umma-action)!important;color:#fff!important;text-shadow:var(--umma-brand-light-label-shadow)}
 :is(.market-tabs,.market-shop-categories,.accounting-tabs,.b2b-tabs){gap:8px;scroll-padding-inline:4px;scrollbar-width:thin;scrollbar-color:var(--umma-brand-line-strong) transparent}
 :is(.market-tabs,.market-shop-categories){background:var(--umma-brand-canvas)}
 :is(.market-tabs [aria-current=page],.market-shop-categories [aria-pressed=true],.b2b-tabs [aria-pressed=true],.accounting-tabs button.active,.cafe-kitchen-filters button.is-active){background:var(--umma-brand-soft);color:var(--umma-brand-deep);border:1px solid var(--umma-brand-line-strong);box-shadow:inset 0 1px 0 #fff}
@@ -100,7 +100,7 @@
 .delivery-chat-dialog header{background:var(--umma-surface);color:var(--umma-brand-ink);border-bottom:1px solid var(--umma-brand-line)}
 .chat-message{border-color:var(--umma-brand-line);background:#fff;color:var(--umma-brand-ink);box-shadow:0 2px 8px rgba(var(--umma-brand-ink-rgb),.03)}
 .chat-compose{background:var(--umma-brand-white);border-color:var(--umma-brand-line)}
-.chat-compose [type=submit]{background:var(--umma-action);color:#fff}
+.chat-compose [type=submit]{background:var(--umma-action);color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
 /* Text remains a normal inline formatting context beside decorative artwork. */
 .native-screen h1{overflow-wrap:anywhere}
 h1>.umma-page-emblem.direction-emblem{float:inline-start;margin-inline-end:12px;margin-block-end:4px}
@@ -113,7 +113,7 @@ h1>.umma-page-emblem.direction-emblem{float:inline-start;margin-inline-end:12px;
 .kitchen-action{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--umma-brand-ink);border-radius:14px}
 .chat-message-own{background:var(--umma-brand-pale)}
 .cafe-payment-close,.cafe-payment-notice{background:var(--umma-brand-pale);color:var(--umma-brand-ink)}
-.cafe-payment-open{background:var(--umma-action);color:#fff}
+.cafe-payment-open{background:var(--umma-action);color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
 /* Reserve a dedicated row for store selection; avoid unreadably narrow selects. */
 @media(max-width:600px){.market-shop-tools>label{flex:1 1 100%;width:100%}}
 .app>.admin-page{padding:0}
@@ -185,7 +185,7 @@ h1>.umma-page-emblem.direction-emblem{float:inline-start;margin-inline-end:12px;
 .market-product h2{font-family:Inter,system-ui,sans-serif;font-weight:750;overflow-wrap:break-word}
 .market-product-price{color:var(--umma-brand-strong);font-variant-numeric:tabular-nums}
 .market-product-content{gap:12px}
-.market-product button{background:var(--umma-action);border-color:var(--umma-brand-strong);color:#fff;min-height:44px;line-height:1.45;white-space:normal}
+.market-product button{background:var(--umma-action);border-color:var(--umma-brand-strong);color:#fff;text-shadow:var(--umma-brand-light-label-shadow);min-height:44px;line-height:1.45;white-space:normal}
 .market-product button[aria-pressed=true]{background:var(--umma-brand-soft);border-color:var(--gold);color:var(--umma-brand-deep)}
 .market-product details summary{min-height:44px;align-content:center;color:var(--umma-brand-strong);cursor:pointer}
 .b2b-lines li>div{flex-wrap:wrap}

@@ -10,13 +10,13 @@
 #cafePage .cafe-brand-values i{background:#b08a35}
 #cafePage .cafe-banner-services{background:#ffffff40;border-color:var(--umma-brand-line-strong)}
 #cafePage .cafe-banner-services button{background:#ffffff90;border-color:var(--umma-brand-line-strong);color:var(--umma-brand-text);font-size:13px}
-#cafePage .cafe-banner-services button[aria-pressed="true"]{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);color:#fff;box-shadow:0 2px 5px rgba(var(--umma-brand-strong-rgb), 0.082)}
+#cafePage .cafe-banner-services button[aria-pressed="true"]{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);color:#fff;box-shadow:0 2px 5px rgba(var(--umma-brand-strong-rgb), 0.082);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-banner-services button:focus-visible{outline-color:var(--umma-brand-strong)}
 /* This strip sticks inside the cafe screen, below the app's own header. */
 #cafePage #cafeMenuCategories{position:sticky;top:0;z-index:8;display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin:12px -16px 14px;padding:10px 16px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;background:rgba(var(--umma-brand-canvas-rgb), 0.98);backdrop-filter:blur(12px);border-bottom:1px solid var(--umma-brand-line);box-shadow:0 5px 10px rgba(var(--umma-brand-strong-rgb), 0.031);scroll-padding-inline:16px}
 #cafePage #cafeMenuCategories::-webkit-scrollbar{display:none}
 #cafePage .cafe-category{flex:0 0 auto;white-space:nowrap;border-radius:24px;background:#fff;border-color:var(--umma-brand-line);color:var(--umma-brand-text);padding:11px 16px}
-#cafePage .cafe-category[aria-pressed="true"]{color:#fff;background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);box-shadow:0 3px 8px rgba(var(--umma-brand-strong-rgb), 0.094)}
+#cafePage .cafe-category[aria-pressed="true"]{color:#fff;background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);box-shadow:0 3px 8px rgba(var(--umma-brand-strong-rgb), 0.094);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-category[aria-pressed="true"] span{color:var(--umma-brand-canvas);background:#ffffff1a}
 #cafePage .cafe-category-heading{scroll-margin-top:78px;color:var(--umma-brand-text)}
 #cafePage .cafe-product{border-color:var(--umma-brand-line);box-shadow:0 3px 12px rgba(var(--umma-brand-strong-rgb), 0.024)}
@@ -41,7 +41,7 @@
 #cafePage .cafe-location-settings[open]>label{margin-top:12px}
 #cafePage .cafe-delivery-location{background:var(--umma-brand-pale);border:1px solid var(--umma-brand-tint);padding:14px;border-radius:15px;gap:10px}
 #cafePage .cafe-delivery-location strong{color:var(--umma-brand-text)}
-#cafePage .cafe-location-button{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);box-shadow:none;color:#fff}
+#cafePage .cafe-location-button{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);box-shadow:none;color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-location-clear{border:0;background:transparent;padding:6px 0;color:var(--umma-brand-text);font-size:12px;text-decoration:underline;box-shadow:none}
 #cafePage .cafe-checkout-payment>label{gap:8px;font-weight:500;font-size:12px;color:var(--umma-brand-muted)}
 #cafePage .cafe-order-form input,#cafePage .cafe-order-form select,#cafePage .cafe-order-form textarea,#cafePage .cafe-choice-trigger{border-color:var(--umma-brand-line-strong);background:var(--umma-brand-canvas);color:var(--umma-brand-ink);box-shadow:none;border-radius:13px;font-size:16px}
@@ -59,7 +59,7 @@
 #cafePage .cafe-cart-total{margin:0;padding:16px;border:0;border-radius:0;background:var(--umma-brand-canvas);color:var(--umma-brand-text)}
 #cafePage .cafe-cart-total strong{color:var(--umma-brand-strong);font-size:22px}
 #cafePage .cafe-cart-controls button{border-color:var(--umma-brand-line-strong);background:var(--umma-brand-canvas);color:var(--umma-brand-strong);box-shadow:none}
-#cafePage .cafe-cart-controls button[data-cart-change="1"]{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);color:#fff}
+#cafePage .cafe-cart-controls button[data-cart-change="1"]{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-checkout-disclosure>summary:focus-visible{outline:3px solid var(--umma-brand-strong);outline-offset:-3px;border-radius:16px}
 #cafePage .cafe-checkout-footnote{padding:0 8px;font-size:11px;color:var(--umma-brand-muted)}
 #cafePage .cafe-sticky-order,#cafePage.is-checkout-open>.cafe-sticky-order{border-top:1px solid var(--umma-brand-tint);background:var(--umma-brand-white);box-shadow:0 -6px 20px rgba(var(--umma-brand-strong-rgb), 0.063)}
@@ -91,7 +91,7 @@
 .external-delivery{display:grid;gap:10px;margin:14px 0;padding:16px;border:1px solid var(--umma-brand-line,#b6d9d8);border-radius:16px;background:var(--umma-brand-pale,#effafa);color:#164d52;overflow-wrap:anywhere}
 .external-delivery p{margin:0;line-height:1.5}.external-delivery small{display:block;line-height:1.5}
 .external-delivery textarea{box-sizing:border-box;width:100%;margin:10px 0;border:1px solid #9cbfbe;border-radius:10px;padding:10px;background:#fff;color:#164d52;font:inherit;resize:vertical}
-.external-delivery a{display:block;text-align:center;text-decoration:none;min-height:44px;padding:12px;border-radius:12px;background:var(--umma-brand-strong,#075e65);color:#fff;font-weight:700}
+.external-delivery a{display:block;text-align:center;text-decoration:none;min-height:44px;padding:12px;border-radius:12px;background:var(--umma-brand-primary);color:#fff;font-weight:700;text-shadow:var(--umma-brand-light-label-shadow)}
 .external-delivery button{min-height:44px;border:1px solid #8aafaf;border-radius:10px;padding:8px 12px;background:#fff;color:#164d52;font:inherit}
 
 /* Cafe introduction follows the UMMA Market page header and shared surfaces. */
@@ -117,7 +117,7 @@
 #cafePage .cafe-menu-location{margin:14px 0 4px;color:var(--umma-brand-strong);font-size:13px;font-weight:650;line-height:1.6}
 #cafePage .cafe-banner-services{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #cafePage .cafe-banner-services button{min-height:48px;border-radius:14px;font-weight:750;background:#fff;box-shadow:0 3px 10px rgba(var(--umma-brand-strong-rgb),.05)}
-#cafePage .cafe-banner-services button[aria-pressed="true"]{border-color:#c4a356;background:var(--umma-brand-strong);box-shadow:inset 0 0 0 1px #c4a356,0 3px 10px rgba(var(--umma-brand-strong-rgb),.12)}
+#cafePage .cafe-banner-services button[aria-pressed="true"]{border-color:#c4a356;background:var(--umma-brand-primary);box-shadow:inset 0 0 0 1px #c4a356,0 3px 10px rgba(var(--umma-brand-strong-rgb),.12)}
 #cafePage .cafe-menu-heading{gap:12px;align-items:center}
 #cafePage .cafe-my-orders-toggle{min-height:46px;padding:10px 14px;border-radius:14px;flex-shrink:0;font-size:13px}
 #cafePage .cafe-menu-search{margin-top:12px}
@@ -126,7 +126,7 @@
 #cafePage .cafe-product-description>summary{min-height:44px;display:flex;align-items:center;gap:8px}
 #cafePage .cafe-product-description>summary::after{content:'+';font-size:18px;margin-left:auto;color:var(--umma-brand-strong)}
 #cafePage .cafe-product-description[open]>summary::after{content:'−'}
-#cafePage .cafe-checkout-modes button[aria-pressed="true"]{background:var(--umma-brand-strong);color:#fff;border-color:var(--umma-brand-strong)}
+#cafePage .cafe-checkout-modes button[aria-pressed="true"]{background:var(--umma-brand-primary);color:#fff;border-color:var(--umma-brand-strong);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage #cafeTableLabel small{font-size:12px;font-weight:400;color:var(--umma-brand-muted);line-height:1.6}
 #cafePage .cafe-empty-order{padding:24px 16px;text-align:center;background:#fff;border:1px solid var(--umma-brand-line);border-radius:18px;line-height:1.6}
 #cafePage .cafe-empty-order p{margin:0 0 16px}

@@ -1,12 +1,17 @@
-/* Approved UMMA web accent: #03A2A5 (RGB 3 / 162 / 165), matching the chat microphone.
- * Use --umma-brand-primary for primary control fills in customer and staff screens.
- * Strong and muted colors provide contrast for text and secondary UI.
- * Print reference: C81 M13 Y38 K0. CMYK requires a print profile for conversion. */
+/* UMMA GLOBAL web palette from the approved 3835.png logo reference. */
 :root{
-  --umma-brand-primary:#03A2A5;
+  --umma-brand-primary:#00B8C8;
+  --umma-brand-outline:#03A2A5;
+  /* White and gold lettering keeps its fill over the light brand surface. */
+  --umma-brand-light-label-shadow:
+    -1px -1px 0 var(--umma-brand-on-primary), 0 -1px 0 var(--umma-brand-on-primary), 1px -1px 0 var(--umma-brand-on-primary),
+    -1px 0 0 var(--umma-brand-on-primary), 1px 0 0 var(--umma-brand-on-primary),
+    -1px 1px 0 var(--umma-brand-on-primary), 0 1px 0 var(--umma-brand-on-primary), 1px 1px 0 var(--umma-brand-on-primary);
+  --umma-brand-light-icon-shadow:
+    drop-shadow(0 0 1px var(--umma-brand-on-primary)) drop-shadow(0 0 1px var(--umma-brand-on-primary));
   --umma-brand-on-primary:#002D2E;
   --umma-brand-on-primary-rgb:0,45,46;
-  --umma-brand-primary-rgb:3,162,165;
+  --umma-brand-primary-rgb:0,184,200;
   --umma-brand-strong:#02787A;
   --umma-brand-strong-rgb:2,120,122;
   --umma-brand-deep:#02595B;
@@ -44,27 +49,27 @@
 }
 /* Shared focus, form and active states across customer and staff screens. */
 ::selection{background:var(--umma-brand-soft);color:var(--umma-brand-ink)}
-input[type=checkbox],input[type=radio]{accent-color:var(--umma-brand-strong)}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline-color:var(--umma-brand-primary)}
+input[type=checkbox],input[type=radio]{accent-color:var(--umma-brand-primary)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline-color:var(--umma-brand-outline)}
 .native-app-mark,.service-icon,.gold-circle,.turquoise-circle{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
 .nav-item.active{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
 .admin-entry-icon{background:var(--umma-brand-pale);color:var(--umma-brand-strong)}
-.cafe-kitchen-header{background:linear-gradient(135deg,var(--umma-brand-deep),var(--umma-brand-strong));color:#fff}
-.cafe-page-header{background:linear-gradient(135deg,var(--umma-brand-deep),var(--umma-brand-strong))}
+.cafe-kitchen-header{background:var(--umma-brand-primary);color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
+.cafe-page-header{background:var(--umma-brand-primary)}
 .cafe-halal-badge text{fill:var(--umma-brand-deep)}
 #cafePage{--cafe-canvas:var(--umma-brand-canvas);--cafe-ink:var(--umma-brand-ink);--cafe-accent:var(--umma-brand-strong);--cafe-line:var(--umma-brand-line)}
 #cafePage .cafe-banner-header{background:linear-gradient(145deg,var(--umma-brand-soft),var(--umma-brand-tint));border-color:var(--umma-brand-line-strong)}
 #cafePage .cafe-banner-title text{fill:var(--umma-brand-strong)}
-#cafePage .cafe-category[aria-pressed="true"],#cafePage .cafe-banner-services button[aria-pressed="true"]{background:var(--umma-brand-strong);color:#fff;border-color:var(--umma-brand-strong)}
-.cafe-choice-option[aria-pressed="true"]{background:var(--umma-brand-pale);border-color:var(--umma-brand-primary);color:var(--umma-brand-deep);box-shadow:inset 0 0 0 1px var(--umma-brand-primary)}
-.cafe-choice-option[aria-pressed="true"] .cafe-choice-mark{background:var(--umma-brand-strong);border-color:var(--umma-brand-strong);color:#fff}
+#cafePage .cafe-category[aria-pressed="true"],#cafePage .cafe-banner-services button[aria-pressed="true"]{background:var(--umma-brand-primary);color:#fff;border-color:var(--umma-brand-strong);text-shadow:var(--umma-brand-light-label-shadow)}
+.cafe-choice-option[aria-pressed="true"]{background:var(--umma-brand-pale);border-color:var(--umma-brand-outline);color:var(--umma-brand-deep);box-shadow:inset 0 0 0 1px var(--umma-brand-outline)}
+.cafe-choice-option[aria-pressed="true"] .cafe-choice-mark{background:var(--umma-brand-primary);border-color:var(--umma-brand-strong);color:#fff;text-shadow:var(--umma-brand-light-label-shadow)}
 
 /* Turquoise UMMA sign with the gold lettering and ornaments from the brand artwork. */
-#cafePage .cafe-banner-header{--cafe-sign-gold:#FFE7A3;background:var(--umma-brand-primary);border-color:#D7B75F;color:var(--cafe-sign-gold)}
+#cafePage .cafe-banner-header{--cafe-sign-gold:#FFE7A3;background:var(--umma-brand-primary);border-color:#D7B75F;color:var(--cafe-sign-gold);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-banner-header::before{border-color:#FFE7A380}
 #cafePage .cafe-banner-title text{fill:url(#cafeWordmarkGold)}
 #cafePage .cafe-banner-title svg,#cafePage .cafe-brand-seal{filter:drop-shadow(0 1px 1px #002D2E70)}
-#cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--cafe-sign-gold);text-shadow:0 1px 1px #002D2E70}
+#cafePage .cafe-brand-seal,#cafePage .cafe-brand-cuisine,#cafePage .cafe-brand-intention,#cafePage .cafe-brand-values{color:var(--cafe-sign-gold);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .cafe-brand-values{border-color:#FFE7A380}
 #cafePage .cafe-brand-values i{background:var(--cafe-sign-gold)}
 
@@ -73,8 +78,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])){border:1px solid #d9b965!important;border-radius:28px!important;overflow:hidden!important;background:linear-gradient(160deg,#f6ffff,#fffdf7)!important;box-shadow:0 24px 85px #003f4566!important;max-width:min(94vw,540px)!important;width:100%;max-height:min(88dvh,800px)!important;padding:0!important;color:#123d40}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"]))::backdrop{background:#002f35a8;backdrop-filter:blur(5px)}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{position:sticky;top:0;z-index:2;background:var(--umma-brand-primary)!important;border-bottom:3px solid #d7b75f!important;padding:15px 18px!important;min-height:82px;gap:12px}
-#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{content:"✦";display:grid;place-items:center;flex:none;width:42px;height:42px;border:2px solid #eac976;border-radius:50%;color:#ffe6a2;font-size:23px;background:#005c62}
-#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header h2{flex:1;color:#ffe5a0!important;font-weight:800!important;font-size:clamp(21px,5vw,27px)!important;text-shadow:0 1px 2px #00474d;letter-spacing:-.025em}
+#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{content:"✦";display:grid;place-items:center;flex:none;width:42px;height:42px;border:2px solid #eac976;border-radius:50%;color:#ffe6a2;font-size:23px;background:var(--umma-brand-primary);text-shadow:var(--umma-brand-light-label-shadow)}
+#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header h2{flex:1;color:#ffe5a0!important;font-weight:800!important;font-size:clamp(21px,5vw,27px)!important;text-shadow:var(--umma-brand-light-label-shadow);letter-spacing:-.025em}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header .close{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #ffffff80;background:#ffffffeb;color:#005e64;font-size:28px;line-height:1}
 #checkout:not([data-stage="receipt"]) .checkout-body{padding:18px clamp(16px,4vw,26px) 24px!important;overflow-y:auto}
 #checkout:not([data-stage="receipt"]) #cartStep{min-width:0}
@@ -86,7 +91,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #checkout:not([data-stage="receipt"]) .cart-controls button{border:1px solid #a7dbd7;border-radius:12px;background:#effcfb;color:#007f83;font-weight:700}
 #checkout:not([data-stage="receipt"]) .cart-total{margin-top:14px;padding:18px 2px;border-top:1px solid #d7b75f;color:#103d40;font-size:20px;gap:12px}
 #checkout:not([data-stage="receipt"]) .cart-total span:last-child{color:#aa751c;font-variant-numeric:tabular-nums}
-#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:var(--umma-brand-primary)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b}
+#checkout:not([data-stage="receipt"]) #continueCheckout{min-height:54px;border-radius:17px!important;background:var(--umma-brand-primary)!important;color:#fff!important;font-weight:800;box-shadow:0 6px 18px #008b8e2b;text-shadow:var(--umma-brand-light-label-shadow)}
 #checkout:not([data-stage="receipt"]) #continueCheckout:disabled{background:#8dd1d0!important;color:#eaf7f7!important;box-shadow:none;opacity:.75}
 #checkout:not([data-stage="receipt"]) .cart-clear{border-radius:12px}
 @media(max-width:420px){#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])){max-width:calc(100vw - 24px)!important;border-radius:24px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header{min-height:74px;padding:12px 15px!important}#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])) .checkout-header::before{width:36px;height:36px}#checkout:not([data-stage="receipt"]) .checkout-body{padding:14px 16px 20px!important}}
@@ -95,7 +100,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* Empty basket visual — UMMA turquoise/gold reference, responsive. */
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])){border:2px solid #e2b955!important;background:linear-gradient(155deg,#e6faf9,#fffefa 60%,#e5f8f7)!important}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header{min-height:105px;background:var(--umma-brand-primary)!important;border-bottom:4px solid #e6b755!important;justify-content:center}
-#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header::before{content:"U";font-family:Georgia,serif;font-weight:900;position:absolute;left:50%;top:9px;transform:translateX(-50%);width:40px;height:40px;border:3px solid #e8ba53;border-radius:12px;box-shadow:0 0 0 3px #006a71;color:#ffd67e;background:#007b80}
+#checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header::before{content:"U";font-family:Georgia,serif;font-weight:900;position:absolute;left:50%;top:9px;transform:translateX(-50%);width:40px;height:40px;border:3px solid #e8ba53;border-radius:12px;box-shadow:0 0 0 3px #006a71;color:#ffd67e;background:var(--umma-brand-primary)}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header h2{margin-top:40px;text-align:center;flex:none;font-family:Georgia,serif;font-size:clamp(25px,6vw,34px)!important}
 #checkout:not([data-stage="receipt"]):where(:not(.public-cafe-menu [data-stage="cart"])):has(.umma-empty-cart:not([hidden])) .checkout-header .close{position:absolute;right:15px;top:15px}
 #checkout:not([data-stage="receipt"]) .umma-empty-cart{text-align:center;position:relative;display:flex;align-items:center;flex-direction:column;padding:4px 0 20px;gap:7px;overflow:hidden}

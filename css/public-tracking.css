@@ -5,7 +5,7 @@ html, body {
 }
 
 body {
-  background: #12b4bc;
+  background: var(--umma-brand-primary);
   color: #173c38;
   font: 16px system-ui, sans-serif;
 }
@@ -30,7 +30,7 @@ body {
   padding: calc(7px + env(safe-area-inset-top, 0px))
     max(10px, env(safe-area-inset-right)) 7px
     max(10px, env(safe-area-inset-left));
-  background: linear-gradient(110deg, #12b4bc, #24c3c7);
+  background: var(--umma-brand-primary);
   box-shadow: 0 2px 8px #00494d24;
 }
 
@@ -46,13 +46,15 @@ body {
   color: #fff;
 }
 
+#back svg { filter: var(--umma-brand-light-icon-shadow); }
+
 #back:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
 .tracking-heading {
   min-width: 0;
   text-align: center;
   color: #fff;
-  text-shadow: 0 1px 2px #00494d50;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 
 #status {

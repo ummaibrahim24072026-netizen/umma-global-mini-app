@@ -55,7 +55,8 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #counterReadyMessage { min-width: 0; overflow-wrap: anywhere; }
 #webPos #counterReadyOpen {
   flex: none; min-height: 44px; padding: 6px 12px; border-color: #087276;
-  color: #fff; background: #087276; font-weight: 750;
+  color: #fff; background: var(--umma-brand-primary); font-weight: 750;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 #webPos .web-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(270px, 335px); }
 #webPos :is(.web-pos-grid, .counter-payment-grid) > * { min-width: 0; }
@@ -137,7 +138,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   min-height: 44px; padding: 6px 12px; font-size: 14px; line-height: 1.2; font-weight: 750;
   border-color: #a9cdca; color: #075b60; background: #fff;
 }
-#webPos .counter-queues button[aria-pressed="true"] { background: #087276; color: #fff; border-color: #087276; }
+#webPos .counter-queues button[aria-pressed="true"] { background: var(--umma-brand-primary); color: #fff; border-color: #087276;text-shadow:var(--umma-brand-light-label-shadow)}
 .counter-order-tools {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; margin-bottom: 10px;
 }
@@ -175,7 +176,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 }
 .counter-order-details[open] summary::after { transform: translateY(4px) rotate(225deg); }
 .counter-order-ident { display: flex; align-items: center; gap: 6px; }
-.counter-order-mark { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #008780; }
+.counter-order-mark { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--umma-brand-primary); }
 .counter-order-total { text-align: end; }
 .counter-order-details small { grid-column: 1 / -1; color: #42635e; }
 .counter-order-stage { font-weight: 750; }
@@ -218,7 +219,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   min-width: 0; min-height: 50px; padding: 4px 2px; font-size: 13px; font-weight: 750; color: var(--counter-ink); background: transparent; border-color: transparent;
 }
-#webPos .counter-nav button[aria-current="page"] { background: #087276; color: #fff; }
+#webPos .counter-nav button[aria-current="page"] { background: var(--umma-brand-primary); color: #fff;text-shadow:var(--umma-brand-light-label-shadow)}
 .counter-nav-badge {
   position: absolute; top: 1px; inset-inline-start: calc(50% + 8px);
   min-width: 19px; padding-inline: 4px; border: 1px solid white; border-radius: 999px;

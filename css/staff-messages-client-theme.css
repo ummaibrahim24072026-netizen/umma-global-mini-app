@@ -241,9 +241,10 @@
 }
 .web-work-app #webMessages .work-thread { padding:14px; overflow:hidden; }
 #webMessages .work-thread button.primary {
- background:#087b80;
+ background:var(--umma-brand-primary);
  color:#fff;
  border-radius:999px;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 @media (max-width:760px) {
  #webMessages:not(.work-chat-open) .work-thread { display:none; }

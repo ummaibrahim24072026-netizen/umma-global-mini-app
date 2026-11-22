@@ -214,11 +214,12 @@ body > dialog.umma-call {
   max-width: 140px;
   padding: 7px 9px;
   color: #fff;
-  background: #12515d;
+  background: var(--umma-brand-primary);
   border: 1px solid #a1e7e253;
   border-radius: 20px;
   font: 600 12px/1.2 system-ui, sans-serif;
   cursor: pointer;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 .umma-call-controls button[data-call-action="mute"],
 .umma-call-controls button[data-call-action="hide"],

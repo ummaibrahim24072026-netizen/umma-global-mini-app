@@ -2,7 +2,8 @@
   color-scheme: dark;
   font-family: system-ui, sans-serif;
   color: #fff;
-  background: #064d51;
+  background: var(--umma-brand-primary);
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 
 * { box-sizing: border-box; }
@@ -13,7 +14,7 @@ body {
   min-height: 100dvh;
   padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  background: linear-gradient(155deg, #086168, #06454a 60%, #05363a);
+  background: var(--umma-brand-primary);
 }
 
 .board-header {
@@ -27,6 +28,7 @@ body {
 }
 
 .board-brand, .board-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.board-header, main { text-shadow: var(--umma-brand-light-label-shadow); }
 .board-brand { font-size: clamp(18px, 3vw, 30px); color: #ffe4a1; }
 .board-brand img { border-radius: 50%; }
 
@@ -38,8 +40,9 @@ button {
   border: 1px solid #90d3ce;
   border-radius: 999px;
   color: #fff;
-  background: #075d62;
+  background: var(--umma-brand-primary);
   cursor: pointer;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 
 button:focus-visible { outline: 2px solid #ffe4a1; outline-offset: 3px; }
@@ -66,6 +69,7 @@ h1 { margin: 0; font-size: clamp(32px, 7vw, 92px); line-height: 1.08; }
   border-radius: clamp(14px, 2vw, 28px);
   color: #05363a;
   background: #c5f6ef;
+  text-shadow: none;
   container-type: inline-size;
   font-weight: 850;
   font-variant-numeric: tabular-nums;

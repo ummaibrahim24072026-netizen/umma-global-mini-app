@@ -55,11 +55,11 @@
   #webInviteCopy, #posConfirmQr, #posCartJump, #cashPayConfirm
 ):not(.kitchen-cancel) {
   background: var(--work-primary);
-  border-color: var(--work-primary);
+  border-color: var(--umma-brand-outline);
   color: var(--work-action-text);
   -webkit-text-fill-color: var(--work-action-text);
   border-radius: 999px;
-  text-shadow: 0 1px 2px var(--umma-brand-ink);
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 
 .web-work-app :is(.cafe-kitchen-orders, .staff-account, .ready-stock-panel, .courier-desk-panel) {
@@ -92,8 +92,8 @@
 }
 
 .web-work-app .work-mode-options button:is(:hover, :focus-visible) {
-  border-color: var(--work-primary);
-  outline: 2px solid var(--work-primary);
+  border-color: var(--umma-brand-outline);
+  outline: 2px solid var(--umma-brand-outline);
   outline-offset: 1px;
 }
 
@@ -394,6 +394,7 @@
 .web-work-app[data-workspace=kitchen] #kitchenTabletToggle[aria-pressed=true] {
   background: var(--work-primary);
   color: var(--work-action-text);
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 .web-work-app[data-workspace=kitchen] .kitchen-order-top .kitchen-status {
   background: var(--umma-brand-pale);

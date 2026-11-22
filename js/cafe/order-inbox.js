@@ -323,7 +323,7 @@ let inboxHistory=false;
 const inboxStyles=`
 .umma-inbox-event{list-style:none;margin:0 0 10px}.umma-inbox-event-button{width:100%;display:grid;gap:7px;text-align:left;background:#fff;border:1px solid #c9e2df;border-radius:18px;padding:15px;color:#153b39;cursor:pointer;font:inherit}.umma-inbox-event-button strong{font-size:15px}.umma-inbox-event-button time{font-size:12px;color:#647c7a}.umma-inbox-event-hint{color:#078f91;font-weight:700;font-size:13px}.umma-inbox-event-button:focus-visible{outline:3px solid #0aa3a4;outline-offset:2px}
 
-.umma-inbox-tabs{display:flex;gap:8px;margin-bottom:12px}.umma-inbox-tabs button{flex:1;min-height:42px;border:1px solid #b9d8d4;border-radius:14px;background:#fff;color:#164d4b;font-weight:700}.umma-inbox-tabs button[aria-selected=true]{background:#0aa3a4;color:#fff;border-color:#0aa3a4}
+.umma-inbox-tabs{display:flex;gap:8px;margin-bottom:12px}.umma-inbox-tabs button{flex:1;min-height:42px;border:1px solid #b9d8d4;border-radius:14px;background:#fff;color:#164d4b;font-weight:700}.umma-inbox-tabs button[aria-selected=true]{background:var(--umma-brand-primary);color:#fff;border-color:#0aa3a4;text-shadow:var(--umma-brand-light-label-shadow)}
 .umma-inbox-meta{font-size:12px;color:#637b79;font-weight:500;white-space:nowrap}.umma-inbox-order{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}.umma-inbox-order-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.umma-inbox-orders:empty{display:none}
 
 /* The order list scrolls beneath an opaque, stationary heading. */

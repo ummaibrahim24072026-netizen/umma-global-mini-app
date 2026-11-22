@@ -10,7 +10,7 @@ button{ -webkit-tap-highlight-color:transparent }
 #cafePage .menu-actions:has(#receiptButton:not([hidden])),
 #cafePage .menu-actions:has(#voiceOrderHost:not(:empty)){grid-template-columns:repeat(4,minmax(0,1fr))}
 #cafePage .menu-actions:has(#receiptButton:not([hidden])):has(#voiceOrderHost:not(:empty)){grid-template-columns:repeat(5,minmax(0,1fr))}
-#cafePage .menu-actions #receiptButton:not([hidden]){background:var(--umma-brand-deep);color:#fff;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+#cafePage .menu-actions #receiptButton:not([hidden]){background:var(--umma-brand-primary);color:#fff;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);text-shadow:var(--umma-brand-light-label-shadow)}
 #cafePage .menu-actions :is(.umma-inbox-button,#orderHistoryButton,#receiptButton,.uv-launch,.search-toggle){display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;min-height:52px!important;padding:10px 12px!important;border-radius:var(--umma-control-radius)!important;text-align:center;white-space:normal;overflow-wrap:anywhere;font-size:14px!important;line-height:1.4!important}
 #cafePage .menu-tools h1{margin:0}
 /* The main app uses the same paired voice/search controls. */
@@ -278,7 +278,7 @@ body{max-inline-size:100%;overflow-x:clip}
   border: 1px solid #b29450;
   border-block-start: 0;
   border-radius: 0 0 20px 20px;
-  background: linear-gradient(130deg, #074449, #08666a);
+  background: var(--umma-brand-primary);
   box-shadow: 0 6px 20px #12454822;
 }
 .public-cafe-menu #cafePage .brand {

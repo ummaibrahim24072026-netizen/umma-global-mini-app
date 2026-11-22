@@ -71,7 +71,7 @@ button:active { transform: scale(.98); }
   background:
     radial-gradient(circle at 8% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
     radial-gradient(circle at 92% 83%, rgba(255,255,255,.13) 0 39px, transparent 40px),
-    linear-gradient(145deg, var(--turquoise) 0%, var(--umma-brand-strong) 68%, var(--turquoise-deep) 100%);
+    var(--umma-brand-primary);
   border-bottom: 2px solid var(--gold);
 }
 .brand::before, .brand::after {
@@ -112,7 +112,7 @@ button:active { transform: scale(.98); }
 }
 .welcome-image {
   width: 52px; height: 52px; flex: 0 0 52px; border: 2px solid var(--gold);
-  border-radius: 50%; background: var(--turquoise); display: grid; place-items: center; font-size: 25px;
+  border-radius: 50%; background: var(--umma-brand-primary); display: grid; place-items: center; font-size: 25px;
 }
 .welcome-content { flex: 1; min-width: 0; overflow: hidden; }
 .welcome-content h2 {
@@ -124,7 +124,7 @@ button:active { transform: scale(.98); }
   width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%;
   display: grid; place-items: center; font-size: 24px; line-height: 1;
 }
-.gold-circle { color: var(--gold); background: var(--turquoise); border: 2px solid var(--gold-light); }
+.gold-circle { color: var(--gold); background: var(--umma-brand-primary); border: 2px solid var(--gold-light); }
 
 /* Ayah */
 .ayah-card {
@@ -145,14 +145,14 @@ button:active { transform: scale(.98); }
   font-weight: 800; line-height: 1.18;
 }
 .ayah-content small { display: block; color: var(--gold-dark); font-size: 9px; font-weight: 700; }
-.turquoise-circle { color: var(--white); background: var(--turquoise); border: 2px solid var(--gold-light); }
+.turquoise-circle { color: var(--white); background: var(--umma-brand-primary); border: 2px solid var(--gold-light); }
 
 /* Cafe — compact card, similar footprint to Farm */
 .cafe-card {
   height: 112px; flex: 0 0 112px; width: calc(100% - 28px); margin: 0 14px;
   position: relative; overflow: hidden; border: 2px solid var(--gold);
   border-radius: 21px; color: var(--white);
-  background: linear-gradient(112deg, var(--umma-brand-strong) 0%, var(--turquoise) 57%, var(--umma-brand-deep) 100%);
+  background: var(--umma-brand-primary);
   box-shadow: var(--shadow);
 }
 .cafe-background {
@@ -203,7 +203,7 @@ button:active { transform: scale(.98); }
 }
 .service-icon {
   width: 29px; height: 29px; flex: 0 0 29px; margin-bottom: 3px; border-radius: 50%;
-  border: 1px solid var(--gold); background: var(--turquoise); color: var(--gold-light);
+  border: 1px solid var(--gold); background: var(--umma-brand-primary); color: var(--gold-light);
   display: grid; place-items: center; font-size: 15px;
 }
 .service strong {
@@ -220,7 +220,7 @@ button:active { transform: scale(.98); }
   height: 64px; flex: 0 0 64px; width: calc(100% - 28px); margin: 0 14px;
   padding: 6px 9px; border: 1px solid var(--gold); border-radius: 17px;
   display: flex; align-items: center; gap: 8px; overflow: hidden; position: relative;
-  background: linear-gradient(100deg, var(--umma-brand-deep), var(--umma-brand-strong) 58%, var(--umma-brand-deep));
+  background: var(--umma-brand-primary);
 }
 .farm-icon {
   width: 42px; height: 42px; flex: 0 0 42px; border-radius: 13px;
@@ -336,8 +336,9 @@ button:active { transform: scale(.98); }
 .cafe-page-inner { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 14px 20px; }
 .cafe-page-header {
   position: relative; margin: 0 -14px 14px; padding: 18px 14px 17px;
-  color: #fff; background: linear-gradient(135deg, var(--umma-brand-strong), var(--umma-brand-primary));
+  color: #fff; background: var(--umma-brand-primary);
   border-bottom: 2px solid var(--gold);
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 .cafe-back {
   display: inline-flex; align-items: center; min-height: 34px; padding: 6px 10px;
@@ -372,7 +373,8 @@ button:active { transform: scale(.98); }
 .cafe-product-price { color: var(--turquoise-deep); font-size: 14px; font-weight: 900; }
 .cafe-add {
   width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%;
-  color: #fff; background: var(--turquoise); font-size: 22px; font-weight: 700;
+  color: #fff; background: var(--umma-brand-primary); font-size: 22px; font-weight: 700;
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 .cafe-cart {
   margin-top: 16px; padding: 14px; border: 1px solid var(--gold);
@@ -442,8 +444,9 @@ button:active { transform: scale(.98); }
 .cafe-kitchen-inner { max-width: 680px; margin: 0 auto; padding: 0 14px 24px; }
 .cafe-kitchen-header {
   position: relative; margin: 0 -14px 12px; padding: 16px 14px 18px;
-  color: #fff; background: linear-gradient(135deg, var(--umma-brand-strong), var(--umma-brand-primary));
+  color: #fff; background: var(--umma-brand-primary);
   border-bottom: 2px solid var(--gold);
+  text-shadow: var(--umma-brand-light-label-shadow);
 }
 .cafe-kitchen-header h1 { margin: 15px 0 3px; color: var(--gold-light); font: 800 25px/1.1 Georgia, serif; }
 .cafe-kitchen-header p { margin: 0; font-size: 12px; }
@@ -456,7 +459,7 @@ button:active { transform: scale(.98); }
   flex: 1; padding: 10px; border: 1px solid var(--umma-brand-line); border-radius: 12px;
   color: var(--turquoise-deep); background: #fff; font-size: 12px; font-weight: 800;
 }
-.cafe-kitchen-filters button.is-active { border-color: var(--turquoise); color: #fff; background: var(--turquoise); }
+.cafe-kitchen-filters button.is-active { border-color: var(--turquoise); color: #fff; background: var(--umma-brand-primary);text-shadow:var(--umma-brand-light-label-shadow)}
 .cafe-kitchen-orders { display: grid; gap: 12px; }
 .kitchen-order-card {
   padding: 14px; border: 1px solid var(--umma-brand-line); border-left: 5px solid var(--turquoise);
@@ -561,7 +564,7 @@ button:active { transform: scale(.98); }
 
 /* Staff order builder: make selected menu items obvious */
 .staff-order-builder .cafe-product.staff-product-selected {
-  border: 2px solid var(--umma-brand-primary);
+  border: 2px solid var(--umma-brand-outline);
   background: var(--umma-brand-pale);
   box-shadow: 0 0 0 3px rgba(var(--umma-brand-primary-rgb), .14);
 }
@@ -688,7 +691,7 @@ button:active { transform: scale(.98); }
 .staff-product-minus,.staff-product-plus{width:34px;height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--umma-brand-line);border-radius:10px;font-size:22px;line-height:1;font-weight:800}
 .staff-product-minus{background:var(--umma-brand-soft)!important;color:var(--umma-brand-text)!important}
 .staff-product-minus[hidden],.staff-product-quantity[hidden]{display:none!important}
-.staff-product-plus{background:var(--umma-brand-strong)!important;color:#fff!important}
+.staff-product-plus{background:var(--umma-brand-primary)!important;color:#fff!important;text-shadow:var(--umma-brand-light-label-shadow)}
 .cafe-product-bottom{gap:10px}
 
 /* Compact, symmetrical staff dish cards: price and quantity controls fit on mobile */
@@ -774,7 +777,7 @@ button:active { transform: scale(.98); }
 /* Staff workspace: separate order creation from active-order control */
 .staff-workspace-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 16px}
 .staff-workspace-tab{min-height:46px;padding:10px 12px;border:1px solid var(--umma-brand-line);border-radius:12px;background:var(--umma-brand-canvas);color:var(--umma-brand-ink);font-weight:750;font-size:14px}
-.staff-workspace-tab.is-active{background:var(--umma-brand-strong);color:#fff;border-color:var(--umma-brand-strong)}
+.staff-workspace-tab.is-active{background:var(--umma-brand-primary);color:#fff;border-color:var(--umma-brand-strong);text-shadow:var(--umma-brand-light-label-shadow)}
 .staff-active-orders{display:grid;gap:10px;margin:12px 0}
 .staff-active-order{border:1px solid var(--umma-brand-line);border-radius:14px;padding:13px;background:#fff;display:grid;gap:10px}
 .staff-active-order-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -814,7 +817,7 @@ button:active { transform: scale(.98); }
 /* Universal staff workspace: four task-oriented entry points. */
 .cafe-staff-quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
 .cafe-staff-quick-nav button{min-width:0;border:1px solid var(--umma-brand-line-strong);border-radius:12px;padding:14px 8px;background:var(--umma-brand-canvas);color:var(--umma-brand-deep);font-weight:800;font-size:14px;cursor:pointer}
-.cafe-staff-quick-nav button.is-active{background:var(--umma-brand-strong);color:white}
+.cafe-staff-quick-nav button.is-active{background:var(--umma-brand-primary);color:white;text-shadow:var(--umma-brand-light-label-shadow)}
 .cafe-management-tools{margin:10px 0 16px;border:1px solid var(--umma-brand-line);border-radius:12px;padding:10px}
 .cafe-management-tools summary{font-weight:750;cursor:pointer;padding:7px}
 #cafeCashPanel[hidden]{display:none!important}
@@ -831,13 +834,13 @@ button:active { transform: scale(.98); }
 .staff-table-zone{font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--umma-brand-muted);margin:12px 0 7px}
 .staff-table-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .staff-table-grid button{min-height:52px;border-radius:12px;border:1px solid var(--umma-brand-highlight);background:white;color:var(--umma-brand-deep);font:inherit;font-weight:800;cursor:pointer}
-.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:var(--umma-brand-strong);color:white;border-color:var(--umma-brand-strong);box-shadow:0 0 0 2px var(--umma-brand-tint)}
+.staff-table-grid button.is-selected,.staff-table-grid button[aria-pressed="true"]{background:var(--umma-brand-primary);color:white;border-color:var(--umma-brand-strong);box-shadow:0 0 0 2px var(--umma-brand-tint);text-shadow:var(--umma-brand-light-label-shadow)}
 .staff-table-grid button:focus-visible{outline:3px solid #e5ac2e;outline-offset:2px}
 @media(min-width:700px){.staff-table-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 
 .staff-table-grid button.has-open-bill{border-color:#d7a225;background:#fff5d6;color:#815100}
 .staff-table-grid button.has-open-bill::after{content:" · занят";display:block;font-size:10px;font-weight:700}
-.staff-table-grid button.has-open-bill.is-selected{background:var(--umma-brand-strong);color:white}
+.staff-table-grid button.has-open-bill.is-selected{background:var(--umma-brand-primary);color:white;text-shadow:var(--umma-brand-light-label-shadow)}
 
 /* Delivery addresses and actions must fit narrow Telegram viewports. */
 .cafe-order-form, .cafe-order-form label, .kitchen-order-card { min-width: 0; }
