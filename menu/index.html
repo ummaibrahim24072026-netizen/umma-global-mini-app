@@ -1763,7 +1763,8 @@ function renderSuccess(){
   const canTrack=!tracking.hidden;
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack){
-   const url=new URL('../delivery-tracking.html',document.baseURI);
+   // <base href="../"> already points to the repository root; never traverse up again.
+   const url=new URL('delivery-tracking.html',document.baseURI);
    url.searchParams.set('token',lastOrder.trackingToken);
    if(lastOrder.id&&lastOrder.requestKey){
     url.searchParams.set('orderId',lastOrder.id);
