@@ -474,7 +474,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   color: #fff;
   -webkit-text-fill-color: currentColor;
 }
-#checkout[data-stage="receipt"] #success[data-proof-sent] #newOrder {
+#checkout[data-stage="receipt"] #success:is([data-proof-sent], [data-kaspi-pending]) #newOrder,
+#checkout[data-stage="receipt"] #success[data-kaspi-pending] .receipt-instructions {
   display: none;
 }
 .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status {
@@ -1644,6 +1645,7 @@ function renderSuccess(){
   $('success').dataset.payment=cancelled?'cancelled':paymentPending(lastOrder)?'pending':paid?'paid':'closed';
   $('paymentConfirmedMark').hidden=!paid;
   window.ummaGuestExtras.receipt(lastOrder,{t,money,API,activeReceipts,receiptPhoto,updated:receiptUpdated});
+  $('success').toggleAttribute('data-kaspi-pending', lastOrder.payment?.currency==='KZT'&&!$('numberTransfer').hidden);
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
   $('successTotal').textContent=money(lastOrder.totalVnd);
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
