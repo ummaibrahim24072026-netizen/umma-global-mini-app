@@ -100,7 +100,6 @@ function hideMap(){
  map=marker=destinationMarker=trail=lastFix=road=routeOrigin=null;
  $('mapNotice').hidden=true;
  routeRequest++;
- $('center').hidden=true;
  $('map').hidden=true;
 }
 function drawPosition(d){
@@ -120,9 +119,8 @@ function drawPosition(d){
  $('map').hidden=false;
  const initial=destination||courier||mapFallback;
  if(!map){
-  map=L.map($('map')).setView([initial.lat,initial.lng],destination||courier?16:13);
-  map.zoomControl?.setPosition('bottomleft');
-  map.attributionControl?.setPrefix(false);
+  map=L.map($('map'),{zoomControl:false}).setView([initial.lat,initial.lng],destination||courier?16:13);
+  map.attributionControl?.setPrefix(false).setPosition('topright');
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
    maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
@@ -139,7 +137,6 @@ function drawPosition(d){
  }
  if(!courier)return;
  const fix=[courier.lat,courier.lng];
- $('center').hidden=false;
  if(!marker){
   marker=UmmaMaps.marker(map,courier,'courier');
   marker.setZIndexOffset(1000);
@@ -153,7 +150,6 @@ function drawPosition(d){
  lastFix=fix;
  if(destination)updateRoad(courier,destination);
 }
-$('center').onclick=()=>{if(map&&lastFix)map.panTo(lastFix);};
 function updateRoad(courier,destination){
  if(!window.UmmaNhaTrangRouter)return;
  if(routeOrigin&&Math.hypot(courier.lat-routeOrigin.lat,courier.lng-routeOrigin.lng)<0.00045)return;
@@ -184,7 +180,6 @@ function labels(){
  $('connection').textContent=notice;
  $('connection').hidden=!notice;
  $('back').setAttribute('aria-label',t('Вернуться к меню'));
- $('center').textContent=t('Показать курьера');
 }
 window.addEventListener('umma-menu:languagechange',labels);
 async function poll(){

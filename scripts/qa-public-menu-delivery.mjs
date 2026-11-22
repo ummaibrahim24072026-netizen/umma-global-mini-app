@@ -165,12 +165,12 @@ response=await req({...payload,latitude:undefined});assert.equal(response.status
 console.log('PASS delivery Edge handler: atomic RPC, stable HMAC token and hash, server QR total, invalid mode/point rejected.');
 // Page remains useful on mobile browsers with no Notification API.
 for(const ending of ['delivered','cancelled','network','stale','moving','road','waiting']){
- let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,centered;
+ let queue=[],removed=0,turn=0,points=[],markerMoves=[],fitted,roadPath,mapOptions;
  const dom=new JSDOM(read('delivery-tracking.html'),{url:'https://example.com/delivery-tracking.html#token='+'a'.repeat(64),runScripts:'outside-only'}),w=dom.window,d=w.document;
  w.AbortController=AbortController;w.setTimeout=(fn,ms)=>{if(ms===3000)queue.push(fn);return 1;};w.clearTimeout=()=>{};
  w.eval(read('js/cafe/public-menu-i18n.js'));
  const layer={addTo(){return this;},on(){return this;}};
- w.L={map:()=>({setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;},panTo(point){centered=point;}}),
+ w.L={map:(_element,options)=>{mapOptions=options;return {setView(){return this;},remove(){removed++;},fitBounds(bounds){fitted=bounds;}};},
   tileLayer:()=>layer,
   polyline(initial,style){
    if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}
@@ -183,14 +183,14 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
  assert.equal(d.getElementById('map').hidden,false);
  if(ending==='waiting'){
   assert.match(d.getElementById('connection').textContent,/геолокацию курьера/);
-  assert.equal(d.getElementById('center').hidden,true);w.close();continue;
+  w.close();continue;
  }
  assert.ok(fitted);
  assert.equal(d.querySelector('header #status').textContent,w.ummaMenuI18n.t('Курьер в пути'));
  assert.equal(d.querySelector('header #orderNumber').textContent,w.ummaMenuI18n.t('Заказ №{number}',{number:321}));
- assert.equal(d.querySelector('#stages, #notify, #eta, .tracking-sheet'),null);
+ assert.equal(d.querySelector('#stages, #notify, #eta, #center, .tracking-sheet'),null);
  assert.equal(d.getElementById('connection').hidden,true);
- d.getElementById('center').click();assert.equal(centered[0],12.28);
+ assert.equal(mapOptions.zoomControl,false);
  if(ending==='road'){assert.equal(roadPath.length,2);w.close();continue;}
  await queue.shift()();await tick();
  if(ending==='moving'){

@@ -96,7 +96,7 @@ body {
 #mapNotice {
   position: absolute;
   z-index: 500;
-  inset: 10px 12px auto;
+  inset: 24px 12px auto;
   width: fit-content;
   max-width: calc(100% - 24px);
   box-sizing: border-box;
@@ -107,21 +107,15 @@ body {
   font-size: .8125rem;
 }
 
-#center {
-  position: absolute;
-  z-index: 500;
-  right: max(10px, env(safe-area-inset-right));
-  bottom: 26px;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid #dce9e4;
-  border-radius: 12px;
-  background: #fff;
-  color: #13483e;
-  font: 600 .8125rem system-ui, sans-serif;
-  cursor: pointer;
-  box-shadow: 0 2px 9px #153d3226;
+#map .leaflet-control-attribution {
+  margin: 3px 5px 0 0;
+  padding: 0 3px;
+  background: transparent;
+  color: #163c3a;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
 }
+
+#map .leaflet-control-attribution a { color: inherit; }
 
 #map .leaflet-left { left: env(safe-area-inset-left, 0px); }
 #map .leaflet-right { right: env(safe-area-inset-right, 0px); }
