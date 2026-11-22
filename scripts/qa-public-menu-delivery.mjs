@@ -12,7 +12,7 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
 {
  const method='qr';
  const payment=paymentFor({id:'a',order_number:321,total_vnd:120000,location_id:cafe.id,payment_method:'qr',payment_status:'pending',status:'pending',currency:'VND'});
- let calls=[],lost=true,gps,receipt;
+ let calls=[],lost=true,gps,receipt,deliveryState='waiting_courier';
  const dom=new JSDOM(html,{url:'https://example.com/umma-global-mini-app/menu/',runScripts:'dangerously',beforeParse(w){
   w.localStorage.setItem('umma-menu-language','ru');w.AbortSignal=AbortSignal;
   w.HTMLDialogElement.prototype.show=w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
@@ -23,6 +23,7 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
   w.fetch=async(url,o)=>{
    if(url.includes('paymentOptions'))return new Response(JSON.stringify({ok:true,sber:true,kaspi:true,usdtRate:null}));
    if(url.includes('paymentQuote=sber'))return new Response(JSON.stringify({ok:true,currency:'RUB',vndPerUnit:300}));
+   if(url.endsWith('umma-guest-delivery'))return new Response(JSON.stringify({ok:true,state:deliveryState}));
    if(!o?.body)return new Response(JSON.stringify({ok:true,products:[product],locations:[cafe]}));const b=JSON.parse(o.body);calls.push(b);if(b.action==='status')return new Response(JSON.stringify({ok:true,order:{status:'pending',paymentStatus:'pending'},payment}));if(lost){lost=false;throw Error('response lost');}return new Response(JSON.stringify({ok:true,order:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',orderNumber:321,totalVnd:120000,subtotalVnd:90000,deliveryFeeVnd:30000,status:'pending',paymentMethod:b.paymentMethod,paymentStatus:'pending'},trackingToken:'a'.repeat(64),payment:b.paymentMethod==='cash'?null:payment}));};
  }});
  const w=dom.window,d=w.document;await tick();
@@ -100,7 +101,27 @@ const tick=()=>new Promise(r=>setTimeout(r,25));
  d.getElementById('deliveryLocate').click();gps({coords:{latitude:21,longitude:105}});submit();await tick();assert.equal(calls.length,0,'outside zone blocked');
  d.getElementById('deliveryAddress').value='';d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.28,longitude:109.20}});assert.equal(d.getElementById('deliveryAddress').value,'12.280000, 109.200000');d.getElementById('deliveryAddress').value+=' · apartment 123';d.getElementById('deliveryAddress').dispatchEvent(new w.Event('input'));d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.281,longitude:109.201}});assert.equal(d.getElementById('deliveryAddress').value,'12.280000, 109.200000 · apartment 123');d.getElementById('deliveryAddress').value='';d.getElementById('deliveryLocate').click();gps({coords:{latitude:12.28,longitude:109.20}});submit();await tick();assert.equal(calls.length,1);assert.equal(d.getElementById('customerFields').disabled,true);const saved=JSON.parse(w.sessionStorage.getItem('umma-menu-pending'));assert.equal(saved.requestKey,calls[0].requestKey);
  submit();await tick();const created=calls.filter(b=>b.action==='create');assert.equal(created.length,2);assert.equal(created[0].requestKey,created[1].requestKey);assert.equal(created[1].orderType,'delivery');assert.equal(created[1].paymentMethod,method);assert.equal(created[1].requestedCashVnd,undefined);assert.equal(created[1].latitude,12.28);assert.equal(created[1].name,undefined);assert.equal(created[1].phone,'0901234567');
- assert.equal(d.getElementById('success').hidden,false);assert.match(d.getElementById('receiptTracking').href,/delivery-tracking\.html#token=[a-f0-9]{64}$/);assert.equal(w.sessionStorage.getItem('umma-menu-pending'),null);receipt=JSON.parse(w.sessionStorage.getItem('umma-menu-receipt'));assert.equal(receipt.trackingToken,'a'.repeat(64));assert.equal(receipt.orderType,'delivery');assert.equal(receipt.payment.amount,120000);assert.equal(receipt.deliveryFeeVnd,30000);
+ assert.equal(d.getElementById('success').hidden,false);assert.equal(w.sessionStorage.getItem('umma-menu-pending'),null);receipt=JSON.parse(w.sessionStorage.getItem('umma-menu-receipt'));assert.equal(receipt.trackingToken,'a'.repeat(64));assert.equal(receipt.orderType,'delivery');assert.equal(receipt.payment.amount,120000);assert.equal(receipt.deliveryFeeVnd,30000);
+ const tracking=d.getElementById('receiptTracking');
+ assert.equal(tracking.hidden,false);
+ assert.equal(tracking.getAttribute('aria-disabled'),'true','new deliveries cannot open the map');
+ assert.equal(tracking.hasAttribute('href'),false);
+ const updateDelivery=async state=>{
+  deliveryState=state;
+  d.dispatchEvent(new w.Event('umma:fulfillment-realtime'));
+  await tick();
+ };
+ await updateDelivery('courier_assigned');
+ assert.equal(tracking.hidden,false);
+ assert.equal(tracking.getAttribute('aria-disabled'),'true','assignment alone does not enable the map');
+ assert.equal(tracking.hasAttribute('href'),false);
+ await updateDelivery('picked_up');
+ assert.equal(tracking.getAttribute('aria-disabled'),'false');
+ assert.equal(tracking.href,'https://example.com/umma-global-mini-app/delivery-tracking.html#token='+receipt.trackingToken);
+ await updateDelivery('delivered');
+ assert.equal(tracking.hidden,true);
+ assert.equal(tracking.hasAttribute('href'),false);
+ deliveryState='waiting_courier';
  assert.equal(w.localStorage.getItem(profileStorageKey),'+84 901 234 567','the order override never changes the profile');
  assert.equal(deliveryPhone.value,'+84 901 234 567','the override expires after the order is created');
  d.getElementById('newOrder').click();assert.equal(d.getElementById('deliveryFields').hidden,true);assert.equal(d.getElementById('deliveryAddress').disabled,true);

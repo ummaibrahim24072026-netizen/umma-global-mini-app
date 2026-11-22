@@ -396,6 +396,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 #checkout #copyTransferNumber { width: 100%; min-height: 44px; border: 0; background: var(--umma-action); }
 #checkout #rubleBankPickerTitle { margin: 5px 0 3px; font-size: 11px; color: #355b5b; }
 #checkout #rubleBankLinks { margin: 0; gap: 4px; }
+#receiptTracking[aria-disabled="true"] { cursor: default; opacity: .5; }
 #checkout #rubleBankLinks .bank-link { min-height: 44px; margin: 0; padding: 4px; background: var(--umma-brand-soft); }
 #checkout #guestTransferProof { margin-top: 5px; }
 #checkout #attachGuestTransferProof { width: 100%; min-height: 44px; }
@@ -777,7 +778,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
   <div id="receiptCash" class="receipt-lines" hidden><div><span data-i18n="Получено наличными">Получено наличными</span><strong id="receiptTendered"></strong></div><div><span data-i18n="Сдача">Сдача</span><strong id="receiptChange"></strong></div></div><div class="receipt-instructions">
   <p id="paymentState" role="status"></p>
-  <p id="receiptHint"></p><a id="receiptTracking" class="plain-btn bank-link" data-i18n="Отследить доставку" hidden>Отследить доставку</a>
+  <p id="receiptHint"></p>
+  <a id="receiptTracking" class="plain-btn bank-link" role="link" aria-disabled="true" data-i18n="Отследить доставку" hidden>Отследить доставку</a>
   <button id="confirmDeliveryReceipt" type="button" class="plain-btn bank-link" data-i18n="Заказ получил" hidden>Заказ получил</button>
 </div><section id="guestForeignPayment" class="receipt-lines" hidden>
   <div><span data-i18n="К оплате">К оплате</span><strong id="guestForeignAmount" dir="ltr"></strong></div>
@@ -1752,9 +1754,12 @@ function renderSuccess(){
   $('successNumber').textContent=t('Заказ №{number}',{number:String(lastOrder.orderNumber)});
   $('successTotal').textContent=money(lastOrder.totalVnd);
   const tracking=$('receiptTracking');
-  tracking.hidden=lastOrder.orderType!=='delivery'||terminal(lastOrder)||!/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
-  if(tracking.hidden)tracking.removeAttribute('href');
-  else tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
+  tracking.hidden=lastOrder.orderType!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
+    !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
+  const canTrack=!tracking.hidden&&lastOrder.deliveryStatus==='picked_up';
+  tracking.setAttribute('aria-disabled',String(!canTrack));
+  if(canTrack)tracking.href='delivery-tracking.html#token='+lastOrder.trackingToken;
+  else tracking.removeAttribute('href');
   const cashPending=paymentPending(lastOrder) && /наличн|cash/i.test(String(lastOrder.paymentMethod||lastOrder.paymentType||lastOrder.payment_method||$('paymentState').textContent||''));
   $('success').dataset.cashPending=String(cashPending);
   if(cashPending){
