@@ -1091,9 +1091,6 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
 
 /* Order stages in the customer chat. */
 .public-cafe-menu .umma-connect-chat .connect-thread > .umma-chat-order-card {
-  --order-ink:#183f42;
-  --order-muted:#4f6769;
-  --order-accent:#006c70;
   display:grid;
   gap:8px;
   box-sizing:border-box;
@@ -1104,7 +1101,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   border:1px solid #cadedc;
   border-radius:18px;
   background:#f6fbfa;
-  color:var(--order-ink);
+  color:var(--umma-brand-ink);
   white-space:normal;
 }
 .umma-chat-order-header {
@@ -1119,8 +1116,8 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   max-inline-size:100%;
   border-radius:10px;
   padding:4px 8px;
-  background:#e1f2ef;
-  color:var(--order-accent);
+  background:var(--umma-brand-pale);
+  color:var(--umma-brand-deep);
   font-size:12px;
   font-weight:700;
   line-height:1.3;
@@ -1136,7 +1133,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   border:0;
   border-radius:10px;
   background:transparent;
-  color:var(--order-accent);
+  color:var(--umma-brand-deep);
   font-size:13px;
   font-weight:750;
   text-align:start;
@@ -1174,7 +1171,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   border-radius:0;
   max-inline-size:none;
   background:transparent;
-  color:var(--order-muted);
+  color:var(--umma-brand-muted);
   font-size:13px;
   line-height:1.25;
   white-space:normal;
@@ -1185,7 +1182,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   inset-block:50% -1px;
   inset-inline-start:17px;
   inline-size:2px;
-  background:#d6e6e3;
+  background:var(--umma-brand-line);
 }
 .umma-order-stage:not(:first-child)::before {
   content:"";
@@ -1193,7 +1190,11 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   inset-block:0 50%;
   inset-inline-start:17px;
   inline-size:2px;
-  background:#d6e6e3;
+  background:var(--umma-brand-line);
+}
+.umma-order-stage[data-state="done"]:has(+ .umma-order-stage:is([data-state="done"], [data-state="current"]))::after,
+.umma-order-stage[data-state="done"] + .umma-order-stage:is([data-state="done"], [data-state="current"])::before {
+  background:var(--umma-brand-primary);
 }
 .umma-order-stage-marker {
   z-index:1;
@@ -1202,7 +1203,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   box-sizing:border-box;
   inline-size:20px;
   block-size:20px;
-  border:2px solid #a9c2bf;
+  border:2px solid var(--umma-brand-line);
   border-radius:50%;
   background:#fff;
   color:#fff;
@@ -1211,24 +1212,25 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   line-height:1;
 }
 .umma-order-stage[data-state="done"] .umma-order-stage-marker {
-  border-color:var(--order-accent);
-  background:var(--order-accent);
+  border-color:var(--umma-brand-primary);
+  background:var(--umma-brand-primary);
+  color:var(--umma-brand-on-primary);
 }
 .umma-connect .umma-chat-order-card .umma-order-stage[data-state="current"] {
-  background:#eff9f6;
-  color:var(--order-ink);
+  background:var(--umma-brand-pale);
+  color:var(--umma-brand-deep);
   font-weight:750;
 }
 .umma-order-stage[data-state="current"] .umma-order-stage-marker {
-  border-color:#af801f;
-  background:#fff7e4;
+  border-color:var(--umma-brand-primary);
+  background:#fff;
 }
 .umma-order-stage[data-state="current"] .umma-order-stage-marker::after {
   content:"";
   inline-size:6px;
   block-size:6px;
   border-radius:50%;
-  background:#946a16;
+  background:var(--umma-brand-primary);
 }
 .umma-connect .umma-chat-order-card .umma-order-stage[data-state="cancelled"] { color:#8e3843;font-weight:750; }
 .umma-order-stage[data-state="cancelled"] .umma-order-stage-marker {
@@ -1237,7 +1239,7 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   color:#8e3843;
 }
 .umma-order-stage time {
-  color:var(--order-muted);
+  color:var(--umma-brand-muted);
   font-size:11px;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
@@ -1246,10 +1248,10 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   display:grid;
   place-items:center;
   min-block-size:44px;
-  border:1px solid #a3ccc7;
+  border:1px solid var(--umma-brand-line);
   border-radius:12px;
-  background:#eef8f6;
-  color:var(--order-accent);
+  background:var(--umma-brand-pale);
+  color:var(--umma-brand-deep);
   font-size:13px;
   font-weight:700;
   text-align:center;
