@@ -240,7 +240,7 @@ function counterPaymentLabel(order){
  if(order.payment_status==='refunded')return 'Возврат';
  if(order.status==='cancelled')return 'Без оплаты';
  if(cashOnDelivery(order))return 'Наличные курьеру';
- if(order.hasPendingPaymentProof)return 'Чек на проверке';
+ if(order.hasPendingPaymentProof)return 'Чек прикреплён';
  return 'Ожидает оплаты';
 }
 function counterStage(order){
