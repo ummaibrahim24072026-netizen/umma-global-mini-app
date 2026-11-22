@@ -74,6 +74,11 @@ UMMA GLOBAL — развивающаяся международная экоси
 Ассаляму алейкум,|Assalamu alaykum,|Assalamu alaykum,
 Кафе, Market, B2B и Коран доступны в приложении. Остальные направления готовятся к запуску.|Cafe, Market, B2B and Quran are available in the app. Other directions are being prepared.|Cafe, Market, B2B và Kinh Qur’an có trong ứng dụng. Các lĩnh vực khác đang được chuẩn bị.
 Коран|Quran|Kinh Qur’an
+Ислам|Islam|Islam
+Кибла, время намаза, Коран и Сунна|Qibla, prayer times, Quran and Sunnah|Qibla, giờ cầu nguyện, Qur’an và Sunnah
+Аренда байков|Motorbike rental|Thuê xe máy
+Бронирование и оплата|Booking and payment|Đặt xe và thanh toán
+Байки в Нячанге · бронирование и оплата|Motorbikes in Nha Trang · booking and payment|Xe máy tại Nha Trang · đặt xe và thanh toán
 Объединяем людей. Создаём возможности.|Bringing people together. Creating opportunities.|Kết nối mọi người. Tạo dựng cơ hội.
 Откройте мир UMMA GLOBAL|Discover the world of UMMA GLOBAL|Khám phá thế giới UMMA GLOBAL
 Единая экосистема для жизни, бизнеса и общества.|One ecosystem for life, business and community.|Một hệ sinh thái cho cuộc sống, kinh doanh và cộng đồng.

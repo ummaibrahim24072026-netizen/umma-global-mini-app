@@ -17,6 +17,12 @@ const staffReplies=[
 ];
 const profileClient={name:'Тест',promotions:true,pushEnabled:true};
 const senderNames=[];
+let hasSubscription=true;
+w.Notification={permission:'granted'};
+w.PushManager=function(){};
+const worker=new w.EventTarget();
+worker.getRegistration=async()=>({pushManager:{getSubscription:async()=>hasSubscription?{}:null}});
+Object.defineProperty(w.navigator,'serviceWorker',{value:worker});
 w.ummaMenuI18n={t:key=>key};
 w.eval(readFileSync('js/cafe/public-menu-profile-name.js','utf8'));
 w.fetch=async(_url, options)=>{
@@ -177,6 +183,12 @@ await flush();
 assert.equal(profileClient.pushEnabled,false);
 assert.equal(pushSwitch.getAttribute('aria-checked'),'false');
 assert.equal(profileClient.name,'Тест');
+settings.close();
+profileClient.pushEnabled=true;
+hasSubscription=false;
+d.getElementById('openChatSettings').click();
+await flush();
+assert.equal(pushSwitch.getAttribute('aria-checked'),'false','A server preference without this browser subscription must not show as enabled.');
 settings.close();
 assert.ok(d.getElementById('customerProfile').open);
 const name=d.getElementById('profileDisplayName');

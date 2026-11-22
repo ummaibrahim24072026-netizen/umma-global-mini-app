@@ -102,18 +102,20 @@ const connectionStatus=el('p');connectionStatus.setAttribute('role','status');
 function showReconnect(){
  if(dialog?.open&&token)connectionStatus.textContent=reconnectCopy[lang()]||reconnectCopy.en;
 }
-let list,promotions,push;
+let list,promotions,push,pushSwitch;
 let hasBrowserPush;
 function syncPushButton(){
  if(!publicChat||!push)return;
- const granted=pushSupported()&&Notification.permission==='granted';
- push.hidden=!pushSupported()||dismissed||Boolean(state?.client?.pushEnabled&&granted&&hasBrowserPush!==false);
+ const supported=pushSupported();
+ const subscribed=Boolean(supported&&Notification.permission==='granted'&&state?.client?.pushEnabled&&hasBrowserPush!==false);
+ push.hidden=!supported||dismissed||subscribed;
+ pushSwitch?.setAttribute('aria-checked',String(subscribed));
 }
 async function inspectBrowserPush(){
  if(!publicChat||!pushSupported()||Notification.permission!=='granted')return;
  try{
   const registration=await navigator.serviceWorker.getRegistration?.();
-  if(registration)hasBrowserPush=Boolean(await registration.pushManager.getSubscription());
+  hasBrowserPush=Boolean(await registration?.pushManager.getSubscription());
  }catch{}
  syncPushButton();
 }
@@ -589,7 +591,7 @@ function build(){
   update();
  },settingsStatus);
  off.onclick=disablePush;
- let pushSwitch,name;
+ let name;
  list=el('ol',null,'connect-thread');list.setAttribute('aria-label',chatTitle());
  if(publicChat){
   if(typeof ResizeObserver==='function')chatResizeObserver=new ResizeObserver(syncThreadScroll);
@@ -743,7 +745,6 @@ function build(){
   const subscribed=state?.client.pushEnabled===true&&window.Notification?.permission==='granted';
   off.hidden=!state?.client.pushEnabled;
   if(publicChat)syncPushButton();else push.hidden=subscribed;
-  pushSwitch?.setAttribute('aria-checked',String(subscribed&&hasBrowserPush!==false));
   renderThread();
  }
  dialog.update=update;
@@ -785,7 +786,7 @@ if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>
  settingsDialog.show();
  window.dispatchEvent(new Event('umma:chat-settings-open'));
  settingsDialog.querySelector('h2').focus({preventScroll:true});
- await refresh();
+ await Promise.all([refresh(),inspectBrowserPush()]);
  if(settingsDialog.open)dialog?.update();
 };
 window.addEventListener('umma-menu:languagechange',()=>{button.textContent=chatTitle();if(dialog&&!dialog.open){dialog.releaseDraft();window.ummaConnectMedia.releaseAlbums(list);dialog.remove();dialog=null;}else if(dialog){window.ummaConnectMedia.releaseAlbums(list);list.replaceChildren();renderThread();}badge();renderSetup();});
