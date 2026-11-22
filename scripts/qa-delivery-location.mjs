@@ -129,6 +129,28 @@ try{
  w.maplibregl.supported=()=>true;$('cafeDeliveryMapOpen').click();await tick();
  const failed=vectors.at(-1);failed.gl.fire('error');failed.gl.fire('error');failed.gl.fire('error');
  assert.equal($('cafeDeliveryMap').dataset.basemap,'raster-fallback');assert.equal(failed.removed,true);$('cafeDeliveryMapClose').click();
+ const trackingCanvas=d.createElement('div');
+ const credits=new Set(),trackingMap={attributionControl:{
+  addAttribution(value){credits.add(value);},
+  removeAttribution(value){credits.delete(value);}
+ }};
+ let trackingReady=0,trackingFallback=0;
+ const rasterCount=rasters.length;
+ const stopTrackingMap=w.UmmaMaps.basemap(trackingMap,trackingCanvas,undefined,{
+  pane:'trackingVector',blueWater:true,onReady:()=>trackingReady++,onUnavailable:()=>trackingFallback++
+ });
+ await tick();
+ const trackingVector=vectors.at(-1);
+ assert.equal(trackingVector.options.pane,'trackingVector');
+ assert.equal(trackingVector.options.attributionControl,false);
+ trackingVector.gl.fire('load');
+ assert.equal(trackingReady,1);
+ assert.ok([...credits].some(credit=>credit.includes('OpenFreeMap')));
+ trackingVector.gl.fire('webglcontextlost');
+ assert.equal(trackingFallback,1);
+ assert.equal(rasters.length,rasterCount,'customer tracking retains its regional fallback');
+ assert.equal(credits.size,0);
+ stopTrackingMap();
  // Disabled external choices cannot bypass the UMMA delivery polygon.
  $('cafeCarrier').value='grab';$('cafeCarrier').dispatchEvent(new w.Event('change'));mode('delivery');
  assert.equal($('cafeCarrier').value,'umma');

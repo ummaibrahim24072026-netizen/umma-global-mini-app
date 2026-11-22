@@ -177,7 +177,7 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
   canvas:options=>options,
   polyline(initial,style){
    if(style.renderer?.pane==='tilePane')return {addTo(){localStreets=initial;return this;}};
-   if(style.weight===5){roadPath=initial;return {addTo(){return this;},remove(){}};}
+   if(style.weight===6){roadPath=initial;return {addTo(){return this;},remove(){}};}
    points=initial;return {addTo(){return this;},getLatLngs(){return points;},setLatLngs(next){points=next;}};
   }};
  w.UmmaMaps={marker:()=>({setZIndexOffset(){},setLatLng(fix){markerMoves.push(fix);}})};
@@ -248,7 +248,7 @@ for(const ending of ['delivered','cancelled','network','stale','moving','road','
   assert.equal(d.getElementById('map').hidden,false);
   w.close();continue;
  }
- if(ending==='road'){assert.equal(roadPath.length,2);w.close();continue;}
+ if(ending==='road'){assert.equal(roadPath.length,2);assert.equal(fitted.length,4,'route framing includes all path points and both pins');w.close();continue;}
  await queue.shift()();await tick();
  if(ending==='moving'){
   assert.equal(d.getElementById('map').hidden,false);

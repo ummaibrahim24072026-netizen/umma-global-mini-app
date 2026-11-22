@@ -7,7 +7,7 @@ The source was the OpenStreetMap API 0.6 map endpoint. Six bounding boxes covere
 
 ## Nha Trang delivery basemap
 
-`nha-trang-v1.pmtiles` contains roads and street names, buildings, land use, and water for the Nha Trang delivery area. The delivery tracking screen loads tiles from this archive on the same origin using HTTP Range requests and paints them on a Leaflet Canvas layer. The archive is a Produced Work distributed under ODbL 1.0. It comes from the [Protomaps basemap builds](https://maps.protomaps.com/builds/) with [OpenStreetMap attribution](https://www.openstreetmap.org/copyright).
+`nha-trang-v1.pmtiles` contains roads and street names, buildings, land use, and water for the Nha Trang delivery area. The delivery tracking screen uses the same OpenFreeMap Liberty style as courier navigation. While it loads, or when it is unavailable, tracking draws tiles from this archive using same-origin HTTP Range requests and a Leaflet Canvas layer. The archive is a Produced Work distributed under ODbL 1.0. It comes from the [Protomaps basemap builds](https://maps.protomaps.com/builds/) with [OpenStreetMap attribution](https://www.openstreetmap.org/copyright).
 
 Rebuild the archive with the same geographic coverage and change its version in `js/cafe/public-tracking.js` when replacing the published file:
 
@@ -18,3 +18,5 @@ pmtiles verify nha-trang-v1.pmtiles
 ```
 
 The vendored Leaflet renderer is the browser bundle from `protomaps-leaflet@5.1.0`. Its source-map reference was removed because source maps are omitted from the release.
+
+The browser bundles for MapLibre GL JS 5.24.0 and its Leaflet adapter 0.1.4 are vendored for the tracking screen. Their source-map references were removed because source maps are omitted from the release.

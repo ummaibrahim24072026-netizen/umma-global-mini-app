@@ -98,6 +98,53 @@ if(window.ResizeObserver){
  observer.observe($('map'));
 }
 function addBasemap(view){
+ let removeRegional=addRegionalBasemap(view);
+ if(!window.UmmaMaps.basemap)return removeRegional;
+ const pane=view.createPane('trackingVector');
+ pane.style.zIndex='250';
+ pane.style.pointerEvents='none';
+ pane.style.visibility='hidden';
+ const removeVector=window.UmmaMaps.basemap(view,$('map'),undefined,{
+  blueWater:true,pane:'trackingVector',localLibraries:true,
+  onReady(){
+   pane.style.visibility='visible';
+   removeRegional?.();removeRegional=null;
+   $('mapNotice').hidden=true;
+  },
+  onUnavailable(){
+   pane.style.visibility='hidden';
+   removeRegional??=addRegionalBasemap(view);
+  }
+ });
+ return ()=>{removeVector();removeRegional?.();};
+}
+function styleRegionalMap(layer,library){
+ layer.backgroundColor='#f5f3ec';
+ for(const rule of layer.paintRules){
+  const symbol=rule.symbolizer;
+  if(symbol instanceof library.PolygonSymbolizer){
+   if(rule.dataLayer==='water')symbol.fill.str='#91bdef';
+   if(rule.dataLayer==='buildings'){
+    symbol.fill.str='#d9d3c5';
+    symbol.stroke.str='#c5bcaa';
+    symbol.width.value=.65;
+    symbol.doStroke=true;
+   }
+  }
+  if(rule.dataLayer!=='roads'||!(symbol instanceof library.LineSymbolizer))continue;
+  if(['major_road','highway'].some(kind=>rule.filter?.(17,{props:{kind}})))
+   symbol.color.str='#ffdc8c';
+ }
+ if(!layer.labelRules)return;
+ layer.labelRules.push({
+  dataLayer:'pois',minzoom:16,
+  filter:(_zoom,feature)=>['school','kindergarten','hospital','library','museum','theatre','place_of_worship'].includes(feature.props.kind),
+  symbolizer:new library.CenteredTextSymbolizer({
+   labelProps:['name:vi','name'],font:'italic 12px system-ui',fill:'#434038',stroke:'#fffdf6',width:2
+  })
+ });
+}
+function addRegionalBasemap(view){
  const library=window.protomapsL;
  if(!library?.leafletLayer)return addRasterBasemap(view);
 
@@ -137,8 +184,7 @@ function addBasemap(view){
    url:source,flavor:'light',lang:'vi',bounds:coverage,noWrap:true,maxZoom:19,zIndex:2,
    devicePixelRatio:Math.min(window.devicePixelRatio||1,2)
   });
-  const water=layer.paintRules.find(rule=>rule.dataLayer==='water'&&rule.symbolizer instanceof library.PolygonSymbolizer);
-  if(water)water.symbolizer=new library.PolygonSymbolizer({fill:'#91bdef'});
+  styleRegionalMap(layer,library);
   local=layer;
   layer.on('loading',()=>{
    if(local!==layer)return;
@@ -167,6 +213,7 @@ function addBasemap(view){
   clearTimeout(timer);
   view.off('moveend',update);
   window.removeEventListener('online',reconnect);
+  local?.remove();
   raster?.();
  };
 }
@@ -247,7 +294,7 @@ function drawPosition(d){
  const initial=destination||courier||mapFallback;
  if(!map){
   map=L.map($('map'),{zoomControl:false,fadeAnimation:false}).setView([initial.lat,initial.lng],destination||courier?16:13);
-  map.attributionControl?.setPrefix(false).setPosition('topright');
+  map.attributionControl?.setPrefix(false).setPosition('bottomright');
   removeBasemap=addBasemap(map);
   requestAnimationFrame(()=>map?.invalidateSize());
  }
@@ -280,7 +327,10 @@ function updateRoad(courier,destination){
   if(result){
    const path=result.path.map(p=>[p.lat,p.lng]);
    if(road)road.setLatLngs(path);
-   else road=L.polyline(path,{color:'#007c61',weight:5}).addTo(map);
+   else{
+    road=L.polyline(path,{color:'#007c80',weight:6}).addTo(map);
+    map.fitBounds([...path,[courier.lat,courier.lng],[destination.lat,destination.lng]],{padding:[36,36],maxZoom:17});
+   }
   }else if(road){road.remove();road=null;}
  }).catch(()=>{
   if(request!==routeRequest||!map)return;
