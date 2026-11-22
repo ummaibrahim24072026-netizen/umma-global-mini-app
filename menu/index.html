@@ -1758,7 +1758,9 @@ function renderSuccess(){
   const tracking=$('receiptTracking');
   tracking.hidden=(lastOrder.orderType||lastOrder.order_type)!=='delivery'||terminal(lastOrder)||lastOrder.deliveryStatus==='delivered'||
     !/^[a-f0-9]{64}$/.test(lastOrder.trackingToken||'')||Boolean(lastOrder.greenSmStage);
-  const canTrack=!tracking.hidden&&(lastOrder.deliveryStatus==='picked_up'||lastOrder.delivery_status==='picked_up');
+  // The tracking page itself enforces the pickup milestone server-side.
+  // Never disable the navigation link merely because a locally cached receipt is stale.
+  const canTrack=!tracking.hidden;
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack)tracking.href=new URL('delivery-tracking.html',document.baseURI).href+'#token='+lastOrder.trackingToken;
   else tracking.removeAttribute('href');
