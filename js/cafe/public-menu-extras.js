@@ -9,15 +9,19 @@ let guestProofState=null;
 const proofFormats={pdf:'application/pdf',jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',webp:'image/webp'};
 const proofHint='Чек в PDF, JPG, PNG или WEBP · до 5 МБ';
 function renderGuestProof(required,value,{API,t}){
- const section=$('guestTransferProof');
+ const section=$('guestTransferProof'), receipt=$('success');
  section.hidden=!(required&&value.requestKey);
- if(section.hidden)return;
+ if(section.hidden){
+  receipt.removeAttribute('data-proof-sent');
+  return;
+ }
  const button=$('attachGuestTransferProof'),input=$('guestTransferProofFile'),status=$('guestTransferProofStatus');
  const refresh=state=>{
-  if(guestProofState!==state)return;
+  if(guestProofState!==state||order?.id!==value.id||section.hidden)return;
+  receipt.toggleAttribute('data-proof-sent',state.sent);
   button.hidden=state.sent;
   button.disabled=state.sending;
-  status.textContent=t(state.sent?'Чек отправлен кассиру на проверку.':state.sending?'Отправляем чек…':state.message);
+  status.textContent=t(state.sent?'Чек отправлен':state.sending?'Отправляем чек…':state.message);
  };
  const request=async(action,file={})=>{
   const res=await fetch(API+'cafe-transfer-proof',{

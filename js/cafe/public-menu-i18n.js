@@ -136,7 +136,7 @@ Object.assign(copy,{
  'Прикрепить чек':{en:'Attach receipt',vi:'Đính kèm biên lai'},
  'Чек в PDF, JPG, PNG или WEBP · до 5 МБ':{en:'PDF, JPG, PNG or WEBP receipt · up to 5 MB',vi:'Biên lai PDF, JPG, PNG hoặc WEBP · tối đa 5 MB'},
  'Отправляем чек…':{en:'Uploading receipt…',vi:'Đang gửi biên lai…'},
- 'Чек отправлен кассиру на проверку.':{en:'Receipt sent to the cashier for review.',vi:'Đã gửi biên lai cho thu ngân kiểm tra.'},
+ 'Чек отправлен':{en:'Receipt sent',vi:'Đã gửi biên lai'},
  'Не удалось отправить чек. Попробуйте ещё раз.':{en:'Receipt upload failed. Please try again.',vi:'Không gửi được biên lai. Vui lòng thử lại.'},
  'Курс':{en:'Exchange rate',vi:'Tỷ giá'},
  'Сумма перевода':{en:'Transfer amount',vi:'Số tiền chuyển khoản'},
