@@ -6,6 +6,7 @@ const $=id=>document.getElementById(id);
 const banks=[['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
 let installPrompt=null,translate,order=null,context=null,inFlight=false,lastQr='',lastPoll=0;
 let guestProofState=null;
+const receiptConfirmations=new Set();
 const proofFormats={pdf:'application/pdf',jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',webp:'image/webp'};
 const proofHint='Чек в PDF, JPG, PNG или WEBP · до 5 МБ';
 function renderGuestProof(required,value,{API,t}){
@@ -231,8 +232,37 @@ function renderNumberTransfer(value,waiting,t,previousOrderId){
   if(ruble&&account&&event.target.closest('a'))void copyAccount();
  };
 }
+function renderDeliveryConfirmation(value,ctx){
+ const button=$('confirmDeliveryReceipt');
+ if(!button)return;
+ button.hidden=value.orderType!=='delivery'||value.deliveryStatus!=='picked_up'||
+  value.status!=='ready'||value.paymentStatus!=='paid'||!value.requestKey||Boolean(value.greenSmStage);
+ button.disabled=receiptConfirmations.has(value.id);
+ if(button.hidden)return;
+ button.onclick=async()=>{
+  if(receiptConfirmations.has(value.id)||!window.confirm(ctx.t('Подтвердите, что курьер передал вам заказ.')))return;
+  receiptConfirmations.add(value.id);
+  button.disabled=true;
+  try{
+   const res=await fetch(ctx.API+'cafe-guest-receipt',{
+    method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({orderId:value.id,requestKey:value.requestKey}),signal:AbortSignal.timeout(15000)
+   });
+   const data=await res.json();
+   if(!res.ok||!data.ok)throw Error();
+   Object.assign(value,{status:data.status,deliveryStatus:data.deliveryStatus});
+   ctx.updated(value);
+  }catch{
+   if(order===value&&value.status!=='completed')$('syncState').textContent=ctx.t('Не удалось подтвердить получение. Попробуйте ещё раз.');
+  }finally{
+   receiptConfirmations.delete(value.id);
+   if(order===value)button.disabled=false;
+  }
+ };
+}
 function receipt(value,ctx){const previousOrderId=order?.id;order=value;context=ctx;const {t}=ctx;
 receiptDetails(value,ctx);
+renderDeliveryConfirmation(value,ctx);
 window.ummaOrderInbox?.publish(value,t);let reserve=$('orderReserveUntil');if(!reserve){reserve=document.createElement('p');reserve.id='orderReserveUntil';$('orderState').after(reserve);}reserve.hidden=!(value.status==='pending'&&value.paymentStatus!=='paid'&&Number.isFinite(Date.parse(value.stockReservedUntil)));if(!reserve.hidden)reserve.textContent=t('Резерв до {time}',{time:new Date(value.stockReservedUntil).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});window.ummaOrderAlerts?.setOrder(value);
 const statuses={pending:'Заказ отправлен',confirmed:'Заказ принят',preparing:'Готовится',ready:'Заказ готов',completed:value.orderType==='delivery'?'Заказ доставлен':'Заказ выдан',cancelled:'Заказ отменён'};
 const deliveryState=value.status==='ready'&&({courier_assigned:'Курьер назначен',picked_up:'Курьер в пути',delivered:'Заказ доставлен'})[value.deliveryStatus];
@@ -286,7 +316,7 @@ async function poll(){
       if(tr.ok&&state.ok&&!update.greenSmStage)update.deliveryStatus=state.state;
      }catch{}
     }
-    if(!context?.activeReceipts().includes(current))return;
+    if(!context?.activeReceipts().includes(current)||current.status==='completed')return;
     Object.assign(current,update);
     ctx.updated(current);
    }catch{

@@ -8,7 +8,7 @@ const w=dom.window,d=w.document,$=id=>d.getElementById(id);
 const router='js/maps/nha-trang-router.js';
 const parser='js/maps/delivery-location.js';
 assert.ok(html.includes(parser)&&html.indexOf(parser)<html.indexOf('js/maps/courier-route.js'));
-let gps,stopped=0,drawn=0,markerMoves=0;
+let gps,drag,stopped=0,drawn=0,markerMoves=0,pans=0;
 w.Response=Response;
 w.DecompressionStream=DecompressionStream;
 w.fetch=async url=>{
@@ -27,7 +27,7 @@ Object.defineProperty(w.navigator,'geolocation',{value:{
  watchPosition(fn){gps=fn;return 0;},clearWatch(){stopped++;}
 }});
 w.UmmaMaps={
- create:()=>({fitBounds(){},remove(){},getBounds:()=>({pad:()=>({contains:()=>true})})}),
+ create:()=>({fitBounds(){},remove(){},invalidateSize(){},panTo(){pans++;},on(name,fn){if(name==='dragstart')drag=fn;}}),
  marker:()=>({setLatLng(){markerMoves++;},remove(){}})
 };
 w.L={polyline(path){assert.ok(path.length>20);return {addTo(){drawn++;return this;},remove(){}};}};
@@ -44,6 +44,13 @@ try{
  assert.match($('courierMapMessage').textContent,/мин/);
  gps({coords:{latitude:cafe.lat+0.0001,longitude:cafe.lng,accuracy:10},timestamp:Date.now()});
  assert.equal(markerMoves,1);
+ assert.equal(pans,2,'route centers each GPS fix while following');
+ drag();
+ gps({coords:{latitude:cafe.lat+0.0002,longitude:cafe.lng,accuracy:10},timestamp:Date.now()});
+ assert.equal(markerMoves,2);
+ assert.equal(pans,2,'manual panning pauses following while the moped keeps moving');
+ $('courierRouteFollow').click();
+ assert.equal(pans,3,'follow button recenters the courier');
  w.UmmaCourierMap.close();
  assert.equal(stopped,1);
  assert.ok($('courierMapModal').hidden);

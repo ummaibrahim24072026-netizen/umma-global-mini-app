@@ -24,7 +24,7 @@ async function send(){
 }
 const card=()=>d.getElementById('cafeKitchenOrders');const btn=kind=>card().querySelector('[data-delivery-photo="'+kind+'"]');
 try {
- w.eval(readFileSync('js/maps/courier-route.js','utf8'));w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
+ w.eval(readFileSync('js/maps/delivery-location.js','utf8'));w.eval(readFileSync('js/maps/courier-route.js','utf8'));w.eval(readFileSync('js/cafe/kitchen.js','utf8'));w.eval(readFileSync('js/cafe/courier-workflow.js','utf8'));w.ummaKitchen.open(true);await until(()=>btn('pickup'));
  if(web)assert.match(card().querySelector('.courier-work-payment').textContent,/Подготовьте сдачу 80\D000.*200\D000/);
  btn('pickup').click();assert.ok(camera.isConnected);order.customer_note='Polling changed this card while camera was open';await w.ummaKitchen.refresh({silent:true});assert.ok(camera.isConnected);select();
  if(web){
@@ -43,7 +43,21 @@ try {
  }
  const payment=card().querySelector('[data-payment-status="paid"]');assert.match(payment.textContent,/120/);assert.equal(payment.closest('.kitchen-secondary-actions'),null,'courier cash button is a primary action');
  const route=card().querySelector('.kitchen-order-actions > [data-show-route]');
- assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Маршрут к клиенту');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.equal(navigationLink,undefined);d.getElementById('courierMapClose').click();
+ assert.ok(route,'navigation is visible next to payment after pickup photo');assert.equal(route.textContent,'Маршрут к клиенту');assert.equal(route.dataset.routeAddress,order.delivery_address);route.click();assert.equal(d.getElementById('courierMapModal').hidden,false);assert.equal(navigationLink,undefined);
+ if(web){
+  assert.equal(d.getElementById('courierExternalMaps').hidden,false);
+  assert.equal(d.getElementById('courierRouteTrackingNote').hidden,false);
+  for(const [id,host,path] of [
+   ['courierGoogleMaps','www.google.com','/maps/dir/'],
+   ['courierAppleMaps','maps.apple.com','/directions']
+  ]){
+   const url=new URL(d.getElementById(id).href);
+   assert.equal(url.hostname,host);
+   assert.equal(url.pathname,path);
+   assert.equal(url.searchParams.get('destination'),'12.250000,109.180000');
+  }
+ }
+ d.getElementById('courierMapClose').click();
  payment.click();const amount=d.getElementById('cashPayTendered');amount.value='150000';amount.dispatchEvent(new w.Event('input'));d.getElementById('cashPayConfirm').click();await until(()=>!card().querySelector('[data-payment-status="paid"]'));
  if(web)assert.doesNotMatch(card().querySelector('.courier-work-payment').textContent,/Подготовьте сдачу/);
  assert.ok(card().querySelector('.kitchen-order-actions > [data-show-route]'),'navigation remains visible after payment');

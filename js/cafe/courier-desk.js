@@ -94,7 +94,10 @@
   const availableTab='<button type="button" role="tab" data-courier-tab="available">'+(web?'Новые':'Доступные')+' · '+(web?newCount:available.length)+'</button>';
   const workTab='<button type="button" role="tab" data-courier-tab="work">В работе'+(!web||active?' · '+active:'')+'</button>';
   const personalOffers=personal.length?'<section class="courier-personal-offers"><h3>Предложено вам</h3>'+personal.map(o=>offerCard(o,true)).join('')+'</section>':'';
-  const html='<p id="courierConnection" class="courier-connection" role="status" hidden></p>'+shift+
+  const cashBalance=web&&board.cashReceivedTodayVnd!=null
+   ? '<p class="courier-cash-balance"><span>Принято наличными сегодня</span><strong>'+esc(money(board.cashReceivedTodayVnd))+'</strong></p>'
+   : '';
+  const html='<p id="courierConnection" class="courier-connection" role="status" hidden></p>'+shift+cashBalance+
    '<nav class="courier-desk-tabs" role="tablist" aria-label="Доставки курьера">'+(web?workTab+availableTab:availableTab+workTab)+'<button type="button" role="tab" data-courier-tab="history">История</button></nav>'+
    (web?'':personalOffers)+
    (web?'<p id="courierHistorySummary" hidden>Доставлено сегодня: '+Number(board.completedToday||0)+'</p>':'')+

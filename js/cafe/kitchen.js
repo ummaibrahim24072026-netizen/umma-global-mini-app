@@ -235,11 +235,11 @@
       const courierRoute = orderStaffRole === "courier" && Number(order.courier_telegram_id) === Number(actorTelegramId)
         && ["courier_assigned", "picked_up"].includes(order.delivery_status) && !["completed", "cancelled"].includes(order.status)
         && order.order_type === "delivery" && routeAddress
-        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '">' + (goingToCafe?'Маршрут к кафе':'Маршрут к клиенту') + '</button>' : "";
+        ? '<button type="button" class="kitchen-action" data-show-route="true" data-route-address="' + esc(routeAddress) + '" data-route-order-number="' + esc(order.order_number) + '"' + (webCourier?' data-route-order-id="'+esc(order.id)+'" data-route-stage="'+esc(order.delivery_status)+'" data-route-tracking="'+(!goingToCafe)+'" data-route-label="'+esc(goingToCafe?pickup?.address||pickup?.name||"":routeAddress)+'"':'') + '>' + (goingToCafe?'Маршрут к кафе':'Маршрут к клиенту') + '</button>' : "";
       const courierAssignAction = (!webBoard || counterRole) && !green && !waitingBatch(order) && order.order_type === "delivery" && ["manager","cashier","waiter","kitchen"].includes(orderStaffRole) && ["waiting_courier"].includes(order.delivery_status) && !["completed","cancelled"].includes(order.status)
         ? '<div class="kitchen-courier-assignment"><select aria-label="Выбрать курьера" data-courier-select="' + esc(order.id) + '" class="kitchen-courier-select"><option value="">Выберите курьера</option>' + availableCouriers.map(c => '<option value="' + esc(c.telegram_id) + '"' + (Number(c.telegram_id)===Number(order.courier_telegram_id)?' selected':'') + '>' + esc(c.name) + '</option>').join("") + '</select><button type="button" class="kitchen-action" data-assign-courier="' + esc(order.id) + '"' + (availableCouriers.length?'':' disabled') + '>Предложить курьеру</button></div>' : "";
       const canManagePayment = order.canAcceptPayments === true && ["manager","cashier","waiter","kitchen","courier"].includes(orderStaffRole) && !["completed","cancelled"].includes(order.status)
-        && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status)));
+        && (orderStaffRole !== "courier" || (Number(order.courier_telegram_id) === Number(actorTelegramId) && ["picked_up","delivered"].includes(order.delivery_status) && cashOnDelivery(order)));
       const paymentAction = canManagePayment && order.payment_status !== "paid"
         ? '<button type="button" class="kitchen-action" data-order-id="' + esc(order.id) + '" data-payment-status="paid">' + (orderStaffRole==="courier"?'Принять оплату · '+money(order.total_vnd):'Подтвердить оплату') + '</button>'
         : "";
@@ -377,12 +377,13 @@
       if (changed) {
         lastOrdersFingerprint = fingerprint;
         window.ummaKitchenLive?.update(preparationAlerts(), courierWorkspace);
-    window.ummaCourierTracking?.syncOrders(orders);
         render();
         renderOpenBills();
         renderStaffActiveOrders();
         renderStaffClosedOrders();
       }
+      window.ummaCourierTracking?.syncOrders(orders, courierWorkspace && !!byId("webOverview") ? actorTelegramId : null);
+      window.UmmaCourierMap?.syncOrders?.(orders);
     } catch (error) {
       if (!silent) showMessage(error instanceof Error ? error.message : "Не удалось загрузить заказы");
       else if (!byId("webBoardConnection")) console.warn("Kitchen background refresh failed:", error);
@@ -439,8 +440,9 @@
     window.ummaLocationPins = locations;
     actorTelegramId = result.actorTelegramId ?? null;
     window.ummaKitchenLive?.update(preparationAlerts(), courierWorkspace);
-    window.ummaCourierTracking?.syncOrders(orders);
     render();
+    window.ummaCourierTracking?.syncOrders(orders, courierWorkspace && !!byId("webOverview") ? actorTelegramId : null);
+    window.UmmaCourierMap?.syncOrders?.(orders);
     renderOpenBills();
     renderStaffActiveOrders();
     renderStaffClosedOrders();
@@ -1293,8 +1295,9 @@
     if(state.paymentStatus)order.payment_status=state.paymentStatus;
     if(state.status)order.status=state.status;
     if(proof && !order.deliveryProofs?.some(p=>p.id===proof.id))order.deliveryProofs=[...(order.deliveryProofs||[]),proof];
-    window.ummaCourierTracking?.syncOrders(orders);
-    render();renderStaffActiveOrders();renderStaffClosedOrders();
+    render();
+    window.ummaCourierTracking?.syncOrders(orders, courierWorkspace && !!byId("webOverview") ? actorTelegramId : null);
+    window.UmmaCourierMap?.syncOrders?.(orders);renderStaffActiveOrders();renderStaffClosedOrders();
   }
   window.ummaKitchen = { getLocationId: selectedStaffCafeId, open, refresh:loadOrders, rerender:render, applyCourierState, showPaymentProofs };
 })();

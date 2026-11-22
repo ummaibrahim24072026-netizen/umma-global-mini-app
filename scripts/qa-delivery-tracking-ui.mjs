@@ -23,5 +23,18 @@ try{
  w.ummaCourierTracking.syncOrders([{id:'qa-order',delivery_status:'delivered',status:'ready'}]);await tick();assert.equal(cleared,1);assert.ok(requests.some(b=>b.action==='setDeliveryTracking'&&b.enabled===false));
  holdEnable=true;const delayed=w.ummaCourierTracking.start('late');await tick();await w.ummaCourierTracking.stop();releaseEnable();await delayed;assert.equal(watchCount,1,'handover during GPS startup must cancel the late watcher');assert.equal(w.ummaCourierTracking.isSharing('late'),false);
  holdEnable=false;denyWatch=true;await w.ummaCourierTracking.start('denied');await tick();assert.equal(w.ummaCourierTracking.isSharing('denied'),false,'denied device permission must not report GPS as running');
+ denyWatch=false;
+ const active={id:'reload',courier_telegram_id:20,delivery_status:'picked_up',status:'ready'};
+ w.ummaCourierTracking.syncOrders([active],21);await tick();
+ assert.equal(w.ummaCourierTracking.isSharing('reload'),false,'another courier order must not start GPS');
+ w.ummaCourierTracking.syncOrders([active],20);await tick();
+ assert.equal(w.ummaCourierTracking.isSharing('reload'),true,'opening an active web delivery resumes GPS');
+ w.dispatchEvent(new w.Event('pagehide'));
+ assert.equal(w.ummaCourierTracking.isSharing('reload'),false);
+ w.dispatchEvent(new w.Event('pageshow'));await tick();
+ assert.equal(w.ummaCourierTracking.isSharing('reload'),true,'returning to an active delivery resumes GPS');
+ await w.ummaCourierTracking.stop();
+ w.ummaCourierTracking.syncOrders([active],20);await tick();
+ assert.equal(w.ummaCourierTracking.isSharing('reload'),false,'manual stop survives background order refreshes');
  console.log('PASS tracking UI: automatic pickup GPS start, idempotent start, denied permission/start-stop race, scoped ping, live marker, stale position hidden, back/focus and automatic stop after handover (simulated sensors only)');
 }finally{w.close();}

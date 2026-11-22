@@ -64,6 +64,11 @@ copy['Оставить отзыв в Google Maps']={
  ar:'اكتب مراجعة على خرائط Google',pt:'Deixar uma avaliação no Google Maps'
 };
 
+Object.assign(copy,{
+ 'Заказ получил':{en:'I received my order',vi:'Tôi đã nhận đơn',ko:'주문을 받았습니다',zh:'我已收到订单',de:'Bestellung erhalten',fr:'J’ai reçu ma commande',th:'ได้รับออเดอร์แล้ว',ms:'Pesanan sudah diterima',id:'Pesanan sudah diterima',ar:'استلمت طلبي',pt:'Recebi o meu pedido'},
+ 'Подтвердите, что курьер передал вам заказ.':{en:'Confirm that the courier handed you your order.',vi:'Xác nhận tài xế đã giao đơn cho bạn.'},
+ 'Не удалось подтвердить получение. Попробуйте ещё раз.':{en:'Could not confirm receipt. Try again.',vi:'Không thể xác nhận đã nhận đơn. Vui lòng thử lại.'}
+});
 // Keep the checkout and delivery controls in the selected language.
 copy['Мои заказы']={
  en:'My orders',vi:'Đơn hàng của tôi',ko:'내 주문',zh:'我的订单',de:'Meine Bestellungen',

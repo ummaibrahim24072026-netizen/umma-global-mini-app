@@ -7,6 +7,8 @@
  function close() {
   const view=active;
   active=null;
+  document.body.classList.remove('courier-map-open');
+  if(view?.resize)window.removeEventListener('resize',view.resize);
   if(view?.watch!=null)navigator.geolocation.clearWatch(view.watch);
   clearTimeout(view?.staleTimer);
   view?.map?.remove();
@@ -29,6 +31,7 @@
     view.line=L.polyline(path,{color:'#007c80',weight:6}).addTo(view.map);
     view.map.fitBounds([...path,[view.destination.lat,view.destination.lng]],{padding:[36,36],maxZoom:17});
    }else view.line.setLatLngs(path);
+   view.resize?.();
    view.routedFrom=origin;
    const km=(route.meters/1000).toLocaleString('ru',{maximumFractionDigits:1});
    status(km+' км · около '+Math.max(1,Math.ceil(route.seconds/60))+' мин');
@@ -62,11 +65,17 @@
   clearRoute(view,message);
   $('courierRouteRefresh').disabled=true;
  }
+ function follow(view,enabled){
+  view.follow=enabled;
+  $('courierRouteFollow')?.setAttribute('aria-pressed',String(enabled));
+  if(enabled&&view.position)view.map.panTo([view.position.lat,view.position.lng]);
+ }
  function open(button){
   close();
   if(!$('courierMapModal'))return;
   const destination=window.ummaMapLinks?.parseAddress(button.dataset.routeAddress);
-  const view={destination,opener:button};
+  const address=button.dataset.routeLabel;
+  const view={destination,opener:button,orderId:button.dataset.routeOrderId,follow:true,fullScreen:!!$('courierRouteFollow')};
   active=view;
   $('courierMapModal').hidden=false;
   $('courierMapTitle').textContent='Маршрут · Заказ №'+(button.dataset.routeOrderNumber||'');
@@ -75,10 +84,31 @@
   $('courierRouteWarnings').textContent='';
   $('courierRouteRefresh').disabled=true;
   $('courierMapClose').focus();
+  follow(view,true);
+  if(view.fullScreen){
+   document.body.classList.add('courier-map-open');
+   window.ummaScreenAwake?.retry();
+   const target=destination?window.ummaMapLinks.coords(destination):address;
+   $('courierExternalMaps').hidden=!target;
+   $('courierRouteTrackingNote').hidden=button.dataset.routeTracking!=='true';
+   if(target){
+    $('courierGoogleMaps').href='https://www.google.com/maps/dir/?'+new URLSearchParams({
+     api:'1',destination:target,travelmode:'two-wheeler',dir_action:'navigate'
+    });
+    $('courierAppleMaps').href='https://maps.apple.com/directions?'+new URLSearchParams({
+     destination:target,mode:'driving'
+    });
+   }
+  }
   if(!destination){status('В заказе нет точки на карте. Уточните её у кафе.');return;}
   try{
    view.map=window.UmmaMaps.create($('courierRouteMap'),destination,undefined,{blueWater:true});
    window.UmmaMaps.marker(view.map,destination);
+   if(view.fullScreen){
+    view.map.on('dragstart',()=>follow(view,false));
+    view.resize=()=>view.map.invalidateSize();
+    window.addEventListener('resize',view.resize);
+   }
    status('Ожидаем GPS. Разрешите геолокацию.');
    if(!navigator.geolocation?.watchPosition)throw Error('GPS недоступен в этом браузере.');
    view.watch=navigator.geolocation.watchPosition(fix=>{
@@ -92,7 +122,7 @@
     view.staleTimer=setTimeout(()=>gpsUnavailable(view,'Нет свежей позиции GPS. Ожидаем сигнал…'),30000);
     if(view.marker)view.marker.setLatLng([lat,lng]);
     else view.marker=window.UmmaMaps.marker(view.map,point,'courier');
-    if(!view.map.getBounds().pad(-0.15).contains([lat,lng]))view.map.panTo([lat,lng]);
+    if(view.fullScreen?view.follow:!view.map.getBounds().pad(-0.15).contains([lat,lng]))view.map.panTo([lat,lng]);
     const moved=!view.routedFrom||Math.hypot(lat-view.routedFrom.lat,lng-view.routedFrom.lng)>0.00065;
     if(!view.requestedAt||(moved&&Date.now()-view.requestedAt>=12000))void update(view);
    },error=>gpsUnavailable(view,error.code===1?'Разрешите геолокацию в настройках браузера.':'Ожидаем сигнал GPS…'),
@@ -104,8 +134,12 @@
   if(button){event.preventDefault();open(button);}
  });
  $('courierMapClose')?.addEventListener('click',close);
+ $('courierRouteFollow')?.addEventListener('click',()=>{if(active)follow(active,!active.follow);});
  $('courierRouteRefresh')?.addEventListener('click',()=>{if(active)void update(active);});
  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&active)close();});
  window.addEventListener('pagehide',close);
- window.UmmaCourierMap={open,close};
+ window.UmmaCourierMap={open,close,syncOrders(orders){
+  if(active?.orderId&&!orders.some(o=>String(o.id)===active.orderId&&
+    !['completed','cancelled'].includes(o.status)&&o.delivery_status===active.opener.dataset.routeStage))close();
+ }};
 })();

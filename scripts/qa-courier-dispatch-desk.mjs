@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto';
 import {readFileSync} from 'node:fs';import assert from 'node:assert/strict';
 export async function verifyCourierDispatchDesk(db,cafe,other,product,schema='public'){
  assert.match(schema,/^[a-z_][a-z0-9_]*$/);
@@ -32,4 +33,30 @@ export async function verifyCourierDispatchDesk(db,cafe,other,product,schema='pu
  await q("update cafe_courier_presence set last_seen_at=clock_timestamp()-interval '3 minutes' where courier_telegram_id=30");await assert.rejects(claim(stale.id,30),/Go online/);
  const privileges=(await q("select has_function_privilege('anon','claim_cafe_available_delivery(uuid,bigint)','execute') allowed")).rows[0];assert.equal(privileges.allowed,false);
  console.log('PASS dispatch desk SQL: online/offline, fresh nearest reservation, expiry-to-pool, self-choice/one winner, replay, one active delivery, stale GPS fallback, branch/privacy boundaries and restricted RPCs');
+ if(schema==='public'){
+  await db.exec("ALTER TABLE public.cafe_orders ADD COLUMN IF NOT EXISTS source_module text DEFAULT 'cafe'");
+  await db.exec('CREATE TABLE IF NOT EXISTS umma_private.public_guest_requests(request_key uuid PRIMARY KEY,order_id uuid NOT NULL)');
+  await db.exec(readFileSync('supabase/migrations/20261122101510_cafe_delivery_receipt_confirmation.sql','utf8'));
+  const key=randomUUID(),id=nearest.id;
+  const receive=(requestKey=key)=>call('select confirm_cafe_guest_delivery_received($1,$2)',[requestKey,id]);
+  await q('INSERT INTO umma_private.public_guest_requests(request_key,order_id) VALUES($1,$2)',[key,id]);
+  await q("UPDATE cafe_orders SET payment_timing='on_delivery' WHERE id=$1",[id]);
+  assert.equal((await receive(randomUUID())).code,'ORDER_UNAVAILABLE');
+  assert.equal((await receive()).code,'DELIVERY_NOT_READY','customer cannot close before pickup');
+  for(const status of ['confirmed','preparing','ready'])await q('select update_cafe_order_status($1,12,$2)',[id,status]);
+  const {proof:pickup}=await call("select begin_cafe_delivery_proof($1,31,$2,'pickup',repeat('a',64),'image/jpeg',1000)",[id,randomUUID()]);
+  await q('select confirm_cafe_delivery_proof($1,31)',[pickup.id]);
+  assert.equal((await receive()).code,'DELIVERY_NOT_READY','customer cannot close an unpaid order');
+  await q("select update_cafe_order_payment_cash($1,31,'paid',null,150000,30000)",[id]);
+  assert.equal((await board(31)).cashReceivedTodayVnd,120000);
+  assert.equal((await board(30)).cashReceivedTodayVnd,0);
+  const {proof:handover}=await call("select begin_cafe_delivery_proof($1,31,$2,'handover',repeat('b',64),'image/jpeg',1000)",[id,randomUUID()]);
+  assert.deepEqual(await receive(),{ok:true,status:'completed',deliveryStatus:'delivered'});
+  assert.equal((await call('select confirm_cafe_delivery_proof($1,31)',[handover.id])).order.status,'completed');
+  assert.equal((await receive()).status,'completed','guest confirmation replay is safe');
+  assert.equal(Number((await q("select count(*) n from cafe_order_events where order_id=$1 and to_status='completed'",[id])).rows[0].n),1);
+  assert.equal(Number((await q("select count(*) n from cafe_payment_receipts where order_id=$1",[id])).rows[0].n),1);
+  assert.equal((await q("select has_function_privilege('anon','confirm_cafe_guest_delivery_received(uuid,uuid)','execute') allowed")).rows[0].allowed,false);
+  console.log('PASS guest handover: private key, pickup and payment required, shared completion, replay, and courier cash total');
+ }
 }

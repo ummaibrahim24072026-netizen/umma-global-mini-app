@@ -3,14 +3,130 @@
  'use strict';
  const base='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/';
  async function api(endpoint,body){const initData=(window.ummaStaffAuth?.credential()||window.Telegram?.WebApp?.initData);if(!initData)throw Error('Откройте приложение через Telegram');const r=await fetch(base+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,initData}),signal:AbortSignal.timeout(10000)});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Не удалось обновить позицию');return data;}
- let sharing=null,starting=false,viewer=null,trackingGeneration=0;
- function notify(id,text){document.querySelectorAll('[data-tracking-status]').forEach(el=>{if(el.dataset.trackingStatus===id)el.textContent=text;});}
- function refreshButtons(){document.querySelectorAll('[data-share-delivery]').forEach(el=>{el.textContent=sharing?.id===el.dataset.shareDelivery?'Остановить передачу позиции':'Передавать позицию клиенту';});}
- function localStop(){if(!sharing)return;const s=sharing;sharing=null;navigator.geolocation?.clearWatch(s.watch);clearInterval(s.timer);refreshButtons();}
- async function stop(){trackingGeneration++;const s=sharing;if(!s)return;localStop();notify(s.id,'Передача позиции остановлена.');try{await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:s.id,enabled:false});}catch{notify(s.id,'Связь потеряна. Клиент увидит отсутствие свежей позиции через 60 секунд.');}}
- async function publish(position,s){if(sharing!==s||s.sending||Date.now()-position.timestamp>20000)return;if(!Number.isFinite(position.coords.accuracy)||position.coords.accuracy>500){notify(s.id,'GPS пока неточный. Ожидаем точную позицию.');return;}if(Date.now()-s.lastSent<5000)return;s.sending=true;s.lastSent=Date.now();try{await api('cafe-kitchen',{action:'deliveryPosition',orderId:s.id,sessionId:s.session,sequence:++s.sequence,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy});if(sharing===s)notify(s.id,'Позиция передаётся клиенту. Держите приложение открытым.');}catch(e){if(sharing===s){notify(s.id,e.message);if(/session stopped|only during delivery|access denied/i.test(e.message))localStop();}}finally{s.sending=false;}}
- async function start(id){if(starting||sharing?.id===id)return;if(!navigator.geolocation){notify(id,'GPS недоступен на этом устройстве.');return;}starting=true;try{await stop();const generation=trackingGeneration;const r=await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:true});if(generation!==trackingGeneration){await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:false}).catch(()=>{});return;}const s={id,session:r.sessionId,watch:null,timer:null,sequence:0,lastSent:0,sending:false};sharing=s;refreshButtons();notify(id,'Разрешите геопозицию. Передача работает пока приложение открыто.');const error=e=>{if(sharing!==s)return;if(e.code===1){notify(id,'Геопозиция запрещена. Разрешите её в настройках телефона.');localStop();api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:false}).catch(()=>{});}else notify(id,'GPS временно недоступен. Ожидаем новый сигнал.');};const options={enableHighAccuracy:true,maximumAge:5000,timeout:10000};s.watch=navigator.geolocation.watchPosition(p=>publish(p,s),error,options);if(sharing!==s){navigator.geolocation.clearWatch(s.watch);return;}s.timer=setInterval(()=>{if(sharing===s&&!document.hidden)navigator.geolocation.getCurrentPosition(p=>publish(p,s),error,options);},10000);}catch(e){notify(id,e.message);localStop();}finally{starting=false;}}
- function syncOrders(orders){if(sharing&&!orders.some(o=>String(o.id)===sharing.id&&o.delivery_status==='picked_up'&&!['completed','cancelled'].includes(o.status)))stop();refreshButtons();}
+ let sharing=null, starting=null, viewer=null, trackingGeneration=0, retryAt=0;
+ let activeOrder=null;
+ const paused=new Set();
+ const options={enableHighAccuracy:true,maximumAge:5000,timeout:10000};
+ const messages=new Map();
+ function notify(id,text){
+  messages.set(id,text);
+  document.querySelectorAll('[data-tracking-status]').forEach(el=>{
+   if(el.dataset.trackingStatus===id&&el.textContent!==text)el.textContent=text;
+  });
+ }
+ function refreshButtons(){
+  document.querySelectorAll('[data-share-delivery]').forEach(el=>{
+   const id=el.dataset.shareDelivery;
+   el.textContent=sharing?.id===id?'Остановить передачу позиции':'Передавать позицию клиенту';
+   if(messages.has(id))notify(id,messages.get(id));
+  });
+ }
+ function localStop(){
+  trackingGeneration++;
+  if(!sharing)return;
+  const s=sharing;
+  sharing=null;
+  if(s.watch!=null)navigator.geolocation?.clearWatch(s.watch);
+  clearInterval(s.timer);
+  refreshButtons();
+ }
+ async function disable(id){
+  try{await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:false});}
+  catch{notify(id,'Связь потеряна. Клиент увидит отсутствие свежей позиции через 60 секунд.');}
+ }
+ async function stop(){
+  const liveId=sharing?.id;
+  const id=liveId||starting;
+  if(id)paused.add(id);
+  localStop();
+  if(!id)return;
+  notify(id,'Передача позиции остановлена.');
+  if(liveId)await disable(liveId);
+ }
+ async function publish(position,s){
+  if(sharing!==s||s.sending||document.hidden||Date.now()-position.timestamp>20000)return;
+  const {latitude,longitude,accuracy}=position.coords;
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180||
+     !Number.isFinite(accuracy)||accuracy<0||accuracy>500){
+   notify(s.id,'GPS пока неточный. Ожидаем точную позицию.');
+   return;
+  }
+  if(Date.now()-s.lastSent<5000)return;
+  s.sending=true;
+  s.lastSent=Date.now();
+  try{
+   await api('cafe-kitchen',{action:'deliveryPosition',orderId:s.id,sessionId:s.session,sequence:++s.sequence,latitude,longitude,accuracy});
+   if(sharing===s)notify(s.id,'Позиция передаётся клиенту. Держите приложение открытым.');
+  }catch(e){
+   if(sharing!==s)return;
+   if(/session stopped|only during delivery|access denied/i.test(e.message)){
+    paused.add(s.id);
+    localStop();
+    notify(s.id,'Сеанс передачи GPS завершён. При необходимости включите передачу снова.');
+   }else notify(s.id,'Не удалось передать позицию. Повторим после восстановления связи.');
+  }finally{s.sending=false;}
+ }
+ function requestFix(s){
+  if(sharing===s&&!document.hidden&&!s.requesting){
+   s.requesting=true;
+   navigator.geolocation.getCurrentPosition(
+    position=>{s.requesting=false;void publish(position,s);},
+    error=>{s.requesting=false;s.onError(error);},options);
+  }
+ }
+ async function start(orderId){
+  const id=String(orderId);
+  if(starting||sharing?.id===id||document.hidden)return;
+  if(!navigator.geolocation){
+   paused.add(id);
+   notify(id,'GPS недоступен на этом устройстве.');
+   return;
+  }
+  if(sharing)await stop();
+  paused.delete(id);
+  starting=id;
+  const generation=trackingGeneration;
+  try{
+   const r=await api('cafe-kitchen',{action:'setDeliveryTracking',orderId:id,enabled:true});
+   if(generation!==trackingGeneration){
+    if(paused.has(id))await disable(id);
+    return;
+   }
+   const s={id,session:r.sessionId,watch:null,timer:null,sequence:0,lastSent:0,sending:false,requesting:false};
+   sharing=s;
+   refreshButtons();
+   notify(id,'Ожидаем GPS. Передача работает, пока UMMA открыто.');
+   s.onError=e=>{
+    if(sharing!==s)return;
+    if(e.code===1){
+     void stop();
+     notify(id,'Геопозиция запрещена. Разрешите её в настройках телефона и включите передачу.');
+    }else notify(id,'GPS временно недоступен. Ожидаем новый сигнал.');
+   };
+   s.watch=navigator.geolocation.watchPosition(p=>publish(p,s),s.onError,options);
+   if(sharing!==s){navigator.geolocation.clearWatch(s.watch);return;}
+   s.timer=setInterval(()=>requestFix(s),10000);
+  }catch{
+   if(generation!==trackingGeneration)return;
+   localStop();
+   retryAt=Date.now()+10000;
+   notify(id,'Не удалось включить GPS. Проверяем связь.');
+  }finally{starting=null;}
+ }
+ function resume(){
+  if(document.hidden)return;
+  if(sharing)requestFix(sharing);
+  else if(activeOrder&&!starting&&!paused.has(activeOrder)&&Date.now()>=retryAt)void start(activeOrder);
+ }
+ function syncOrders(orders,actorId){
+  const delivering=o=>o.delivery_status==='picked_up'&&!['completed','cancelled'].includes(o.status);
+  if(sharing&&!orders.some(o=>String(o.id)===sharing.id&&delivering(o)))void stop();
+  if(starting&&!paused.has(starting)&&!orders.some(o=>String(o.id)===starting&&delivering(o)))void stop();
+  const next=actorId==null?null:orders.find(o=>String(o.courier_telegram_id)===String(actorId)&&delivering(o));
+  activeOrder=next?String(next.id):null;
+  if(activeOrder&&!sharing&&!starting)resume();
+  refreshButtons();
+ }
  function close(){if(!viewer)return;const v=viewer;viewer=null;clearTimeout(v.timer);v.map?.remove();v.dialog.remove();v.opener?.focus();}
  const states={awaiting_pickup:'Курьер ещё не забрал заказ.',not_sharing:'Курьер пока не передаёт позицию.',stale:'Нет свежей позиции. GPS или связь временно недоступны.',delivered:'Заказ доставлен.',unavailable:'Отслеживание завершено или недоступно.'};
  async function poll(v){if(viewer!==v)return;try{const data=await api('cafe-my-orders',{action:'deliveryTracking',orderId:v.id});if(viewer!==v)return;if(data.state==='live'){
@@ -38,6 +154,9 @@
  dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.showModal();dialog.querySelector('button').focus();poll(v);
  }
  document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(b?.dataset.shareDelivery){const id=b.dataset.shareDelivery;if(b.disabled)return;b.disabled=true;b.setAttribute('aria-busy','true');b.textContent=sharing?.id===id?'Останавливаем GPS…':'Включаем GPS…';Promise.resolve(sharing?.id===id?stop():start(id)).finally(()=>{b.disabled=false;b.removeAttribute('aria-busy');refreshButtons();});}if(b?.dataset.trackDelivery)open(b.dataset.trackDelivery,b);});
+ document.addEventListener('visibilitychange',resume);
+ window.addEventListener('online',resume);
+ window.addEventListener('pageshow',resume);
  window.addEventListener('pagehide',localStop);
  window.ummaCourierTracking={start,stop,syncOrders,close,isOpen:()=>!!viewer,isSharing:id=>sharing?.id===id};
 })();
