@@ -1764,7 +1764,7 @@ function renderSuccess(){
   tracking.setAttribute('aria-disabled',String(!canTrack));
   if(canTrack){
    // <base href="../"> already points to the repository root; never traverse up again.
-   const url=new URL('delivery-tracking.html',document.baseURI);
+   const url=new URL('/umma-global-mini-app/delivery-tracking.html',location.origin);
    url.searchParams.set('token',lastOrder.trackingToken);
    if(lastOrder.id&&lastOrder.requestKey){
     url.searchParams.set('orderId',lastOrder.id);
