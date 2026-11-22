@@ -4,8 +4,23 @@
 const $=id=>document.getElementById(id),I=window.ummaMenuI18n,t=I.t;
 const query=new URLSearchParams(location.search);
 const token=query.get('token')||new URLSearchParams(location.hash.slice(1)).get('token')||'';
-const requestKey=query.get('requestKey')||'';
-const orderId=query.get('orderId')||'';
+let requestKey=query.get('requestKey')||'';
+let orderId=query.get('orderId')||'';
+// Old tracking links carried only a token. Recover the original order-bound
+// checkout key from this device's saved receipt, without ever guessing a key.
+if(!requestKey||!orderId){
+ try{
+  const stored=[localStorage.getItem('umma-menu-receipt'),sessionStorage.getItem('umma-menu-receipt')];
+  for(const store of [localStorage,sessionStorage]){
+   const list=JSON.parse(store.getItem('umma-menu-receipts')||'[]');
+   if(Array.isArray(list))stored.push(...list);
+  }
+  const receipts=stored.flatMap(v=>typeof v==='string'?(()=>{try{return [JSON.parse(v)];}catch{return [];}})():[v]);
+  const match=receipts.find(o=>o&&o.id&&o.requestKey&&
+   (token&&o.trackingToken===token||(!token&&String(o.id)===orderId)));
+  if(match){requestKey=requestKey||match.requestKey;orderId=orderId||match.id;}
+ }catch(error){console.warn('Receipt recovery unavailable',error);}
+}
 let road=null,routeRequest=0,routeOrigin=null;
 let liveSocket=null,liveChannel='',liveRetry=null,liveSequence=0,liveHeartbeat=null;
 let map=null,marker=null,trail=null,etaMinutes=null,lastFix=null,timer=null,controller=null,previous='',data=null,stopped=false,active=false,statusKey='',connectionKey='',notificationKey='Уведомления для открытой страницы';
@@ -176,11 +191,14 @@ $('notify').hidden=!('Notification'in window);$('notify').onclick=async()=>{if(!
 async function poll(){if(stopped||active)return;active=true;clearTimeout(timer);controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{
  const endpoint='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/umma-guest-delivery';
  const options=payload=>({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),cache:'no-store',signal:controller.signal});
- let r=await fetch(endpoint,options({action:'tracking',token}));
- if(r.status===404&&/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId)){
-  r=await fetch(endpoint,options({action:'tracking',requestKey,orderId}));
+ // Prefer the original order-bound checkout credential when available.
+ // This avoids stale or invalid token links; legacy token-only links still work.
+ const hasReceiptKey=/^[0-9a-f-]{36}$/i.test(requestKey)&&/^[0-9a-f-]{36}$/i.test(orderId);
+ let r=await fetch(endpoint,options(hasReceiptKey?{action:'tracking',requestKey,orderId}:{action:'tracking',token}));
+ if(r.status===404&&hasReceiptKey&&/^[a-f0-9]{64}$/.test(token)){
+  r=await fetch(endpoint,options({action:'tracking',token}));
  }
- if(r.status===404){statusKey='Не удалось подтвердить доступ к отслеживанию. Повторяем проверку…';connectionKey='Проверьте, что заказ открыт на устройстве, с которого он оформлен.';labels();return;}
+ if(r.status===404){statusKey='Доступ к отслеживанию не подтверждён';connectionKey='Откройте доставку через «Мои заказы» на устройстве оформления. Карта повторит подключение автоматически.';labels();return;}
  const d=await r.json();if(!r.ok||!d.ok)throw Error();if(stopped)return;
  data=d;statusKey='';connectionKey='';startRealtime(d.channel);
  try{drawPosition(d);}catch{hideMap();connectionKey='Не удалось загрузить карту';}
