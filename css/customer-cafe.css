@@ -683,7 +683,7 @@
   min-inline-size: 0;
   gap: 6px;
 }
-#customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #installApp) {
+#customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #profileDeliveryPhone, #installApp) {
   border-radius: 999px;
 }
 .profile-avatar-actions button {
@@ -697,6 +697,8 @@
 .profile-name-form {
   grid-column: 1 / -1;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-inline-size: 0;
   gap: 6px;
   padding-block-start: 10px;
   border-block-start: 1px solid var(--umma-brand-line);
@@ -707,7 +709,7 @@
   font-weight: 700;
 }
 .profile-name-controls { display: flex; flex-wrap: wrap; gap: 8px; }
-#profileDisplayName {
+:is(#profileDisplayName, #profileDeliveryPhone) {
   flex: 1 1 140px;
   min-inline-size: 0;
   min-block-size: 44px;
@@ -717,7 +719,9 @@
   color: var(--umma-brand-night);
   font-size: 16px;
 }
-#saveProfileName {
+:is(#saveProfileName, #saveProfilePhone) {
+  min-inline-size: 0;
+  white-space: normal;
   min-height: 44px;
   max-width: 100%;
   border-color: var(--umma-action);
@@ -725,8 +729,8 @@
   color: var(--umma-brand-on-primary);
   overflow-wrap: anywhere;
 }
-#profileNameStatus { margin: 0; font-size: 13px; }
-#profileNameStatus:empty { display: none; }
+:is(#profileNameStatus, #profilePhoneStatus) { margin: 0; font-size: 13px; }
+:is(#profileNameStatus, #profilePhoneStatus):empty { display: none; }
 #chooseProfileAvatar { background: var(--umma-action); color: var(--umma-brand-on-primary); }
 .profile-avatar-hint,
 #profileAvatarStatus {

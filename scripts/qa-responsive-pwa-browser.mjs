@@ -125,6 +125,17 @@ try {
   await page.goto(base + 'order.html?point=responsive-fixture');
   await page.locator('[data-card]').first().waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'), 'de', 'device language');
+  await page.setViewportSize({width:320,height:568});
+  await page.locator('#openProfile').click();
+  await fits(page, 'Delivery contact in profile', ['#profilePhoneForm', '#profileDeliveryPhone', '#saveProfilePhone']);
+  const savedPhone = '+84 901 234 567';
+  await page.locator('#profileDeliveryPhone').fill(savedPhone);
+  await page.locator('#saveProfilePhone').click();
+  await page.reload();
+  await page.locator('[data-card]').first().waitFor();
+  await page.locator('#openProfile').click();
+  assert.equal(await page.locator('#profileDeliveryPhone').inputValue(), savedPhone);
+  await page.locator('.dock-menu').click();
   await page.locator('[data-change="1"]').first().click();
   async function selectLanguage(language) {
     await page.locator('#openProfile').click();
@@ -188,6 +199,15 @@ try {
   await page.locator('#continueCheckout').click();
   await page.setViewportSize({width:320,height:568});
   await fits(page, 'Checkout form', ['#checkout','.checkout-body']);
+  await page.locator('label:has([name=checkoutOrderMode][value=delivery])').click();
+  const deliveryPhone = page.locator('#deliveryPhone');
+  assert.equal(await deliveryPhone.inputValue(), savedPhone);
+  await deliveryPhone.fill('+84 902 345 678');
+  await page.locator('label:has([name=checkoutOrderMode][value=pickup])').click();
+  assert.equal(await deliveryPhone.isVisible(), false);
+  await page.locator('label:has([name=checkoutOrderMode][value=delivery])').click();
+  assert.equal(await deliveryPhone.inputValue(), '+84 902 345 678');
+  await page.locator('label:has([name=checkoutOrderMode][value=pickup])').click();
   await page.locator('#submit').click();
   await page.locator('#successNumber').waitFor();
   assert.match(await page.locator('#successNumber').textContent(), /71/);
