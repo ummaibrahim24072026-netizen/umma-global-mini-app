@@ -6,7 +6,7 @@
  let sharing=null, starting=null, viewer=null, trackingGeneration=0, retryAt=0;
  let activeOrder=null;
  const paused=new Set();
- const options={enableHighAccuracy:true,maximumAge:5000,timeout:10000};
+ const options={enableHighAccuracy:true,maximumAge:2000,timeout:10000};
  const messages=new Map();
  function notify(id,text){
   messages.set(id,text);
@@ -51,7 +51,7 @@
    notify(s.id,'GPS пока неточный. Ожидаем точную позицию.');
    return;
   }
-  if(Date.now()-s.lastSent<5000)return;
+  if(Date.now()-s.lastSent<3000)return;
   s.sending=true;
   s.lastSent=Date.now();
   try{
@@ -105,7 +105,8 @@
    };
    s.watch=navigator.geolocation.watchPosition(p=>publish(p,s),s.onError,options);
    if(sharing!==s){navigator.geolocation.clearWatch(s.watch);return;}
-   s.timer=setInterval(()=>requestFix(s),10000);
+   s.timer=setInterval(()=>requestFix(s),3000);
+   requestFix(s);
   }catch{
    if(generation!==trackingGeneration)return;
    localStop();
