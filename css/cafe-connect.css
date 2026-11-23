@@ -1267,3 +1267,5 @@ body.public-cafe-menu #customerChatDialog .connect-compose{flex-shrink:0!importa
   padding: 5px 10px;
   font-size: .85rem;
 }
+
+.reply-notifications-setup .reply-notifications-offers:not([hidden]){display:flex;align-items:center;gap:8px;cursor:pointer}

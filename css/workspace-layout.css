@@ -161,7 +161,15 @@ body.web-work-app{height:auto;min-height:100dvh;overflow:visible;position:relati
 .web-work-app .work-thread .connect-thread:empty{display:none}
 .web-work-app .work-thread .connect-thread{max-height:min(45dvh,480px)}
 .web-work-app .work-thread form .primary,.web-work-app .work-campaign .primary{min-height:48px}
-.web-work-app .work-campaign{max-width:720px}
+.web-work-app .work-campaign{max-width:720px;overflow-wrap:anywhere}
+.work-campaign fieldset{min-width:0;margin:0;padding:0;border:0}
+.work-campaign input[type=file]{max-width:100%}
+.work-campaign fieldset>small{margin-bottom:12px}
+.work-campaign-preview{padding:16px;border:1px solid #b6cecd;border-radius:12px;background:#f1fafa}
+.work-campaign-preview h4{margin:0}
+.work-campaign-preview p{white-space:pre-wrap}
+.work-campaign-preview .connect-media{display:block;max-width:100%;max-height:320px;object-fit:contain}
+.work-campaign-actions{display:flex;flex-wrap:wrap;gap:8px}
 .web-work-app #webInvitePanel{margin-bottom:22px}
 .web-work-app #webInvitePanel>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;color:var(--work-accent)}
 .web-work-app #webInviteForm{max-width:none;padding:0;border:0;margin:12px 0}

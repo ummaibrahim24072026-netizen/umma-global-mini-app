@@ -169,6 +169,34 @@ assert.equal((await rpc('list',b)).messages.filter(m=>m.media_kind==='album').le
 assert.equal((await rpc('staffMediaGet','',1,{clientId:cb,messageId:album.id})).path,albumArgs.path);
 await assert.rejects(rpc('mediaGet',a,null,{messageId:album.id}),/Access denied/);
 await assert.rejects(rpc('staffMediaSend','',1,{...albumArgs,clientId:cb,requestKey:randomUUID()}));
+// Multimedia campaigns share a private file, use the installed audience and only queue eligible push.
+await db.exec(source('supabase/migrations/20261123110326_cafe_multimedia_campaigns.sql'));
+const third='e'.repeat(64);
+await visit(third,'',true);
+await rpc('join',third);
+await rpc('preferences',third,null,{promotions:true});
+await assert.rejects(rpc('staffCampaignAudience','',2,{language:'all',installedOnly:true}),/Access denied/);
+assert.deepEqual(await rpc('staffCampaignAudience','',1,{language:'all',installedOnly:true}),
+ {ok:true,recipients:2,pushRecipients:1});
+for(const [kind,body] of [['photo',''],['video','Подпись к видео'],['voice','']]){
+ await db.exec("update umma_private.cafe_connect_campaigns set created_at=now()-interval '1 minute'");
+ const requestKey=randomUUID(),path='campaign/'+requestKey+'/'+randomUUID();
+ const args={requestKey,path,kind,title:'Новое блюдо',body,language:'all',installedOnly:true};
+ await assert.rejects(rpc('staffCampaignPrepare','',2,args),/Access denied/);
+ assert.ok((await rpc('staffCampaignPrepare','',1,args)).ok);
+ const sent=await rpc('staffCampaign','',1,args);
+ assert.deepEqual(sent,{ok:true,recipients:2,pushRecipients:1,path});
+ assert.deepEqual(await rpc('staffCampaignPrepare','',1,args),sent);
+ assert.deepEqual(await rpc('staffCampaign','',1,{...args,path:'campaign/'+requestKey+'/'+randomUUID()}),sent);
+ const message=(await rpc('list',a)).messages.find(m=>m.direction==='campaign'&&m.media_kind===kind);
+ assert.equal(message.body,body);
+ assert.equal((await rpc('mediaGet',a,null,{messageId:message.id})).path,path);
+ await assert.rejects(rpc('mediaGet',b,null,{messageId:message.id}),/Access denied/);
+ assert.ok((await rpc('list',third)).messages.find(m=>m.media_kind===kind));
+ const job=(await rpc('lease')).find(j=>j.messageId===message.id);
+ assert.equal(job.body,body||({photo:'Фото',voice:'Голосовое сообщение'})[kind]);
+}
+assert.deepEqual((await rpc('news')).news.map(item=>item.title),['New dish']);
 await db.exec(`select set_config('request.jwt.claims','{"role":"anon"}',false)`);await assert.rejects(rpc('list',a),/Access denied/);await assert.rejects(rpc('news'),/Access denied/);
 await db.close();
 // Browser: no automatic prompt, explicit opt-in, idempotent feedback, literal rendering.
@@ -882,6 +910,62 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(circle.querySelector('video').hasAttribute('src'),false);
  staff.close();
 }
+// The web workspace previews an attachment and retries with the same campaign key.
+{
+ const app=new JSDOM('<main><section id="webMessages"></section></main>',{
+  url:'https://qa.invalid/staff.html',runScripts:'outside-only',pretendToBeVisual:true
+ });
+ const w=app.window,writes=[];
+ w.ummaRole='super_admin';
+ w.ummaStaffAuth={credential:()=> 'web:test',actorId:()=>1};
+ w.AbortSignal=AbortSignal;
+ w.URL.createObjectURL=()=> 'blob:https://qa.invalid/campaign';
+ w.URL.revokeObjectURL=()=>{};
+ w.fetch=async(url,init)=>{
+  if(init.headers['X-Umma-Campaign']){
+   writes.push(init.headers);
+   return writes.length===1?Response.json({ok:false},{status:502}):Response.json({ok:true,recipients:2,pushRecipients:1});
+  }
+  const request=JSON.parse(init.body);
+  if(request.action==='staffCampaignAudience'){
+   assert.equal(request.installedOnly,true);
+   return Response.json({ok:true,recipients:2,pushRecipients:1});
+  }
+  assert.equal(request.action,'staffInbox');
+  return Response.json({ok:true,clients:[]});
+ };
+ const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
+ loadConnect(w,'connect-admin');
+ w.document.dispatchEvent(new w.CustomEvent('umma:staff-tab',{detail:'messages'}));
+ await tick();
+ [...w.document.querySelectorAll('.work-section-switch button')].find(b=>b.textContent==='Рассылки').click();
+ await tick();
+ const panel=w.document.querySelector('.work-campaign');
+ assert.equal(panel.hidden,false);
+ panel.querySelector('input[maxlength]').value='Новое блюдо';
+ const file=panel.querySelector('[type=file]');
+ Object.defineProperty(file,'files',{value:[new w.File(['photo'],'dish.jpg',{type:'image/jpeg'})],configurable:true});
+ file.dispatchEvent(new w.Event('input',{bubbles:true}));
+ panel.querySelector('form').requestSubmit();
+ await tick();
+ const preview=panel.querySelector('.work-campaign-preview');
+ assert.equal(preview.hidden,false);
+ assert.equal(preview.querySelector('h4').textContent,'Новое блюдо');
+ assert.ok(preview.querySelector('img'));
+ assert.match(preview.textContent,/Устройств с push: 1/);
+ assert.equal(writes.length,0);
+ const confirm=preview.querySelector('button.primary');
+ confirm.click();
+ await tick();
+ assert.equal(preview.hidden,false);
+ confirm.click();
+ await tick();
+ assert.equal(preview.hidden,true);
+ assert.equal(writes.length,2);
+ assert.equal(writes[0]['X-Umma-Request'],writes[1]['X-Umma-Request']);
+ assert.match(w.document.getElementById('webMessages').textContent,/Push поставлены в очередь: 1/);
+ w.close();
+}
 // An existing profile photo syncs on menu startup even before the chat loads.
 {
  const app=new JSDOM('<input id="profileAvatarFile"><button id="chooseProfileAvatar"></button><button id="removeProfileAvatar"></button><p id="profileAvatarStatus"></p><img id="topbarAvatar"><img id="profileAvatar"><span id="topbarAvatarPlaceholder"></span><span id="profileAvatarPlaceholder"></span>',{url:'https://qa.invalid/menu/',runScripts:'outside-only'});
@@ -1014,6 +1098,7 @@ const profilePath=ca+'/profile-avatar';
 const avatarObjects=new Map();
 const edgeDb={
  rpc:async(name,args)=>({data:name==='cafe_web_rate_allow'?true:
+  args.p_action==='staffCampaign'?{ok:true,recipients:2,pushRecipients:1,path:args.p_data.path}:
   args.p_action==='mediaPrepare'?{clientId:ca}:
   args.p_action==='mediaSend'?{id:'media-message',path:args.p_data.path}:
   args.p_action==='list'||args.p_action==='staffThread'?{ok:true,client:{id:ca},messages:[]}:
@@ -1073,6 +1158,19 @@ for(const [mime,file] of [
 assert.equal((await sendAttachment('image/jpeg',Buffer.from('<svg/>'))).status,415);
 assert.equal((await sendAttachment('image/jpeg',Buffer.alloc(8*1024*1024+1))).status,413);
 assert.equal(uploaded.length,3);
+const sendCampaign=(staff,file)=>handler(new Request('https://qa.invalid',{method:'POST',headers:{
+ 'content-type':'audio/mpeg','x-umma-request':randomUUID(),'x-umma-staff':staff,
+ 'x-umma-campaign':encodeURIComponent(JSON.stringify({title:'Новое блюдо',language:'all',installedOnly:true}))
+},body:Buffer.concat([Buffer.from('""\n'),Buffer.from(file)])}));
+assert.equal((await sendCampaign('web:forged',[73,68,51])).status,403);
+assert.equal((await sendCampaign('web:avatar-staff',[0,0,0])).status,415);
+assert.equal(uploaded.length,3);
+const campaignResponse=await sendCampaign('web:avatar-staff',[73,68,51]);
+assert.equal(campaignResponse.status,200);
+assert.deepEqual(await campaignResponse.json(),{ok:true,recipients:2,pushRecipients:1});
+assert.match(uploaded.at(-1)[0],/^campaign\/[a-f0-9-]+\/[a-f0-9-]+$/);
+assert.equal(uploaded.at(-1)[2].contentType,'audio/mpeg');
+
 // The deployed handler chooses the recipient language, translates and caches private AI audio.
 const mediaId=randomUUID(),translationLease=randomUUID(),providerCalls=[],voiceRpcs=[];
 const translatedKey='qa/translations/vi.mp3';

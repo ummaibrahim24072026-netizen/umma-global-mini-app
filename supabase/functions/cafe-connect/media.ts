@@ -4,7 +4,7 @@ const maxSize={photo:8*1024*1024,video:20*1024*1024,voice:5*1024*1024};
 const mimes:Record<string,keyof typeof maxSize>={
  'image/jpeg':'photo','image/png':'photo','image/webp':'photo',
  'video/mp4':'video','video/webm':'video','video/quicktime':'video',
- 'audio/webm':'voice','audio/mp4':'voice','audio/ogg':'voice',
+ 'audio/webm':'voice','audio/mp4':'voice','audio/ogg':'voice','audio/mpeg':'voice',
 };
 
 const albumMime='application/octet-stream';

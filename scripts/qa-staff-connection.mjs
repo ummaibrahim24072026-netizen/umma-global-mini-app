@@ -33,7 +33,8 @@ for(const owner of [true,false]){
   assert.equal(badge.hidden,true);
   assert.equal(d.querySelector('#webMessages .work-inbox').hidden,false);
   const inbox=d.getElementById('webMessages');
-  assert.equal(inbox.querySelector('.work-section-switch, .work-campaign'),null);
+  assert.deepEqual([...inbox.querySelectorAll('.work-section-switch button')].map(tab=>tab.textContent),['Входящие','Рассылки']);
+  assert.equal(inbox.querySelector('.work-campaign').hidden,true);
   assert.equal(inbox.querySelector('input[type=search]').placeholder,'Найти переписку');
   assert.equal(inbox.querySelector('.work-inbox-controls button'),null);
   const settings=inbox.querySelector('.work-inbox-settings');

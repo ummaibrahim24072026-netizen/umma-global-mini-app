@@ -299,7 +299,7 @@ function renderThread(){
   const outgoing=m.direction==='customer';
   li.dataset.direction=m.direction;
   li.dataset.createdAt=m.created_at||'';
-  const voice=publicChat&&m.media_kind==='voice';
+  const voice=publicChat&&m.media_kind==='voice'&&m.direction!=='campaign';
   const textBubble=publicChat&&m.body&&!m.media_kind;
   const bubble=textBubble||voice;
   const author=outgoing?t(18):m.title||t(19);
@@ -307,7 +307,7 @@ function renderThread(){
   if(voice)li.classList.add('connect-chat-voice');
   if(textBubble)li.append(textAuthor(author,outgoing));
   else if(!publicChat||(!outgoing&&!voice))li.append(el('strong',author));
-  if(m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
+  if(m.direction!=='campaign'&&m.body==='◉ Видеосообщение')li.classList.add('connect-video-note');
   else if(m.body&&(m.media_kind||outgoing))li.append(el('div',m.body));
   else if(m.body){
    const [translateLabel,loading,error]=translateCopy[lang()]||translateCopy.en;
@@ -319,7 +319,7 @@ function renderThread(){
    const load=async()=> (await api('mediaGet',{messageId:m.id})).url;
    const avatar=outgoing?profilePhoto():brandAvatar;
    if(voice)voicePlayer=window.ummaConnectMedia.publicVoice(load,media.error,{lang:lang(),avatar});
-   li.append(voicePlayer||(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.media_kind==='video'&&m.body==='◉ Видеосообщение'
+   li.append(voicePlayer||(m.media_kind==='album'?window.ummaConnectMedia.inlineAlbum(media,load):m.direction!=='campaign'&&m.media_kind==='video'&&m.body==='◉ Видеосообщение'
     ?window.ummaConnectMedia.videoCircle(load,media.error)
     :window.ummaConnectMedia.inlineAttachment(m.media_kind,media[m.media_kind],load,media.error)));
   }
@@ -379,7 +379,10 @@ async function markRead(){
 }
 const setupHost=document.getElementById('replyNotificationsSetup');
 const setupButton=el('button',notice(0),'umma-connect-button'),later=el('button',null,'plain-btn');
-const setupHint=el('p'),setupStatus=el('p');setupStatus.setAttribute('role','status');
+const setupHint=el('p'),setupStatus=el('p'),setupOffers=el('input'),setupOffersText=el('span');
+setupOffers.type='checkbox';
+const setupOffersLabel=el('label',null,'reply-notifications-offers');
+setupOffersLabel.append(setupOffers,setupOffersText);setupStatus.setAttribute('role','status');
 const setupKey='umma:reply-notifications:setup-dismissed';
 let installed=navigator.standalone===true||window.matchMedia?.('(display-mode: standalone)').matches===true;
 let dismissed=false;
@@ -396,6 +399,8 @@ function renderSetup(){
  setupButton.textContent=notice(0);
  setupHint.textContent=copy[0];
  later.textContent=copy[1];
+ setupOffersText.textContent=(settingsCopy[lang()]||settingsCopy.en)[0];
+ setupOffersLabel.hidden=state?.client?.promotions===true;
  setupHost.hidden=!installed||dismissed||!pushSupported()||(!!token&&!state)||state?.client?.pushEnabled===true||
   (Notification.permission==='denied'&&!setupStatus.textContent);
 }
@@ -430,7 +435,7 @@ async function connectForMessage(){
   state=await api('preferences',{name:profileName,language:lang()});
  }
 }
-function enablePush(feedback,enableOrderAlerts=feedback===status){
+function enablePush(feedback,enableOrderAlerts=feedback===status,subscribeToOffers=false){
  if(busy)return;
  // Only a direct tap can ask for a new browser permission.
  const permission=pushSupported()?(Notification.permission==='granted'?'granted':Notification.requestPermission()):'unsupported';
@@ -443,7 +448,7 @@ function enablePush(feedback,enableOrderAlerts=feedback===status){
   const bytes=Uint8Array.from(atob(config.publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
   const subscription=await registration.pushManager.getSubscription()||await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
   await connect();
-  state=await api('preferences',{subscription:subscription.toJSON(),language:lang()});
+  state=await api('preferences',{subscription:subscription.toJSON(),language:lang(),...(subscribeToOffers?{promotions:true}:{})});
   hasBrowserPush=true;
   if(enableOrderAlerts)window.ummaOrderAlerts?.enableGranted?.();
   feedback.textContent=t(14)+' '+notice(2);
@@ -458,9 +463,9 @@ function installedSetup(){
 }
 if(setupHost){
  setupButton.type=later.type='button';
- setupButton.onclick=()=>enablePush(setupStatus);
+ setupButton.onclick=()=>enablePush(setupStatus,false,setupOffers.checked);
  later.onclick=dismissSetup;
- setupHost.append(setupHint,setupButton,later,setupStatus);
+ setupHost.append(setupHint,setupOffersLabel,setupButton,later,setupStatus);
  window.addEventListener('appinstalled',()=>{installed=true;installedSetup();});
  window.addEventListener('pageshow',installedSetup);
 }

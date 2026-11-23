@@ -4,9 +4,18 @@ import {sha256,verifyWebStaffSession} from '../_shared/web-staff-auth.ts';
 import {verifyTelegramInitData} from '../cafe-kiosk/auth.ts';
 import {connectMedia} from './media.ts';
 import {languageNames,transcribeMessage,translateMessage,speakMessage,validMedia} from '../delivery-chat/translation.ts';
-const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'content-type,x-umma-push-key,x-umma-token,x-umma-request,x-umma-staff,x-umma-client','Content-Type':'application/json','Cache-Control':'no-store'};
+const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'content-type,x-umma-push-key,x-umma-token,x-umma-request,x-umma-staff,x-umma-client,x-umma-campaign','Content-Type':'application/json','Cache-Control':'no-store'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const uuid=(s:unknown)=>typeof s==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+function campaignAudience(input:any){
+ if(typeof input?.language!=='string'||!/^(all|[a-z]{2})$/.test(input.language))return null;
+ return {language:input.language,installedOnly:input.installedOnly===true};
+}
+function campaignDetails(input:any){
+ const audience=campaignAudience(input);
+ if(!audience||typeof input.title!=='string'||!input.title.trim()||input.title.length>100)return null;
+ return {...audience,title:input.title.trim(),publicNews:input.publicNews===true};
+}
 const avatarPattern=/^data:(image\/(?:webp|png|jpeg));base64,([A-Za-z0-9+/]+={0,2})$/;
 const avatarLimit=400000;
 const avatarPath=(clientId:string)=>clientId+'/profile-avatar';
@@ -30,6 +39,27 @@ Deno.serve(async(req:Request)=>{
   if(req.headers.has('x-umma-request')){
    const token=req.headers.get('x-umma-token')||'',requestKey=req.headers.get('x-umma-request');
    const staff=req.headers.get('x-umma-staff'),clientId=req.headers.get('x-umma-client');
+   const campaignHeader=req.headers.get('x-umma-campaign');
+   if(campaignHeader!==null){
+    if(!staff||!uuid(requestKey)||campaignHeader.length>2400)return reply({ok:false},400);
+    let details;
+    try{details=campaignDetails(JSON.parse(decodeURIComponent(campaignHeader)));}catch{}
+    if(!details)return reply({ok:false},400);
+    const identity={p_actor:await staffActor(staff)};
+    const mediaData={...details,requestKey,publicNews:false};
+    const prepared=await rpc('cafe_connect',{p_action:'staffCampaignPrepare',...identity,p_data:mediaData});
+    if('recipients' in prepared)return reply({ok:true,recipients:prepared.recipients,pushRecipients:prepared.pushRecipients});
+    const {bytes,kind,body}=await connectMedia(req,mime);
+    if(kind==='album')throw Error('MEDIA_FORMAT');
+    const path='campaign/'+String(requestKey).toLowerCase()+'/'+crypto.randomUUID();
+    const upload=await bucket.upload(path,bytes,{contentType:mime,cacheControl:'0',upsert:false});
+    if(upload.error)throw Error('MEDIA_UPLOAD');
+    const saved=await db.rpc('cafe_connect',{p_action:'staffCampaign',...identity,p_data:{...mediaData,body,kind,path}});
+    // An uncertain database response may already have committed this object.
+    if(saved.error?.code==='P0001'||(!saved.error&&saved.data.path!==path))await bucket.remove([path]);
+    if(saved.error)throw Error(saved.error.message);
+    return reply({ok:true,recipients:saved.data.recipients,pushRecipients:saved.data.pushRecipients});
+   }
    if(!uuid(requestKey)||(staff?!uuid(clientId):!/^[a-f0-9]{64}$/.test(token)))return reply({ok:false},400);
    const identity=staff?{p_actor:await staffActor(staff)}:{p_hash:await sha256(token)};
    const mediaData={requestKey,clientId};
@@ -48,13 +78,13 @@ Deno.serve(async(req:Request)=>{
   }
   const raw=await req.text();if(raw.length>avatarLimit)return reply({ok:false},413);const b=JSON.parse(raw);
   if(raw.length>14000&&b.action!=='avatar')return reply({ok:false},413);
-  if(!['join','list','read','preferences','avatar','send','staffList','staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory','staffThread','staffRead','staffReply','staffCampaign','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
+  if(!['join','list','read','preferences','avatar','send','staffList','staffInbox','staffInboxDetails','staffInboxUpdate','staffInboxHistory','staffThread','staffRead','staffReply','staffCampaign','staffCampaignAudience','staffAudience','visit','dispatch','news','mediaGet','staffMediaGet','voice','staffVoice'].includes(b.action))return reply({ok:false},400);
 
   if(b.action==='news')return reply(await rpc('cafe_connect',{p_action:'news'}));
   if(b.action==='dispatch'){
    const config=await rpc('cafe_push_config');if(!config||req.headers.get('x-umma-push-key')!==config.dispatchKey)return reply({ok:false},403);
    const jobs=await rpc('cafe_connect',{p_action:'lease'});let sent=0;
-   await Promise.all(jobs.map(async(j:any)=>{let success=false,gone=false;try{if(!subscriptionValid(j.subscription))gone=true;else{await webpush.sendNotification(j.subscription,JSON.stringify({eventId:j.messageId,kind:'connect',title:j.title||'UMMA',body:j.body}),{TTL:86400,urgency:'normal',timeout:8000,vapidDetails:{subject:'https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/',publicKey:config.publicKey,privateKey:config.privateKey}});success=true;sent++;}}catch(e:any){gone=[404,410].includes(e.statusCode);}
+   await Promise.all(jobs.map(async(j:any)=>{let success=false,gone=false;try{if(!subscriptionValid(j.subscription))gone=true;else{await webpush.sendNotification(j.subscription,JSON.stringify({eventId:j.messageId,kind:'connect',title:j.title||'UMMA',body:Array.from(j.body||'').slice(0,220).join('')}),{TTL:86400,urgency:'normal',timeout:8000,vapidDetails:{subject:'https://ummaibrahim24072026-netizen.github.io/umma-global-mini-app/',publicKey:config.publicKey,privateKey:config.privateKey}});success=true;sent++;}}catch(e:any){gone=[404,410].includes(e.statusCode);}
     await rpc('cafe_connect',{p_action:'finish',p_data:{id:j.id,lease:j.lease,success,gone,subscription:j.subscription}});
    }));return reply({ok:true,sent});
   }
@@ -140,9 +170,15 @@ Deno.serve(async(req:Request)=>{
    if(typeof b.body!=='string'||!b.body.trim()||b.body.length>2000||!uuid(b.requestKey))return reply({ok:false,error:'Введите сообщение до 2000 символов.'},400);
    data.body=b.body.trim();data.requestKey=b.requestKey;
   }
+  if(b.action==='staffCampaignAudience'){
+   const audience=campaignAudience(b);
+   if(!audience)return reply({ok:false},400);
+   return reply(await rpc('cafe_connect',{p_action:b.action,p_actor:actor,p_data:audience}));
+  }
   if(b.action==='staffCampaign'){
-   if(typeof b.title!=='string'||!b.title.trim()||b.title.length>100||typeof b.language!=='string'||!/^(all|[a-z]{2})$/.test(b.language))return reply({ok:false},400);
-   data.title=b.title.trim();data.language=b.language;data.installedOnly=b.installedOnly===true;data.publicNews=b.publicNews===true;
+   const details=campaignDetails(b);
+   if(!details)return reply({ok:false},400);
+   Object.assign(data,details);
   }
   if(['read','staffRead'].includes(b.action)){
    if(typeof b.before!=='string'||!Number.isFinite(Date.parse(b.before)))return reply({ok:false},400);data.before=b.action==='staffRead'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(b.before)?b.before:new Date(b.before).toISOString();
@@ -214,5 +250,5 @@ Deno.serve(async(req:Request)=>{
  }catch(e){const msg=String(e);
   const mediaCode=msg.match(/MEDIA_(FORMAT|SIZE|UPLOAD)/)?.[0];
   if(mediaCode)return reply({ok:false,code:mediaCode},mediaCode==='MEDIA_SIZE'?413:mediaCode==='MEDIA_FORMAT'?415:502);
-  const denied=/Access denied|Web (session|access)|Telegram|signature|Channel unavailable|credential/i.test(msg);return reply({ok:false,error:denied?'Откройте связь с UMMA заново или войдите в рабочий кабинет.':/Please wait/.test(msg)?'Подождите минуту перед повторной отправкой.':'Не удалось выполнить действие. Повторите попытку.'},denied?403:400);}
+  const denied=/Access denied|Web (session|access)|Telegram|signature|Channel unavailable|credential/i.test(msg);return reply({ok:false,error:denied?'Откройте связь с UMMA заново или войдите в рабочий кабинет.':/Please wait/.test(msg)?'Подождите минуту перед повторной отправкой.':/No campaign recipients/.test(msg)?'Условиям рассылки сейчас не соответствует ни один клиент.':'Не удалось выполнить действие. Повторите попытку.'},denied?403:400);}
 });

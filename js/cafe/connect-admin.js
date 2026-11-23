@@ -188,7 +188,7 @@ async function translateChat(messageId,language,clientId){
 }
 const connection=node('p',null,'work-board-connection');connection.hidden=true;connection.setAttribute('role','status');
 const status=node('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-let clients,stats,messages,replyForm,replyBody,replyStatus,threadTitle,threadAvatar,avatarInitials,avatarImage,composer;
+let clients,messages,replyForm,replyBody,replyStatus,threadTitle,threadAvatar,avatarInitials,avatarImage,composer;
 let avatarCheckedAt=0;
 const clientInitials=name=>Array.from(name?.trim()||'').slice(0,2).join('').toLocaleUpperCase()||'U';
 function setAvatarPhoto(image,photo){
@@ -353,8 +353,8 @@ function showMessages(data,forceBottom=false){
    return li;
   }
   const li=node('li',null,'connect-chat-bubble');li.dataset.direction=m.direction;li.dataset.messageId=m.id;
-  const videoNote=m.media_kind==='video'&&(m.video_note===true||m.body==='◉ Видеосообщение');
-  const voice=m.media_kind==='voice';
+  const videoNote=m.direction!=='campaign'&&m.media_kind==='video'&&(m.video_note===true||m.body==='◉ Видеосообщение');
+  const voice=m.media_kind==='voice'&&m.direction!=='campaign';
   const incoming=m.direction==='customer';
   if(videoNote)li.classList.add('connect-video-note');
   if(voice)li.classList.add('connect-chat-voice');
@@ -562,7 +562,6 @@ async function refresh(){
  if(button)button.textContent='Сообщения клиентов'+(unread?' · '+unread:'');
  if(workspace)announceUnread(d.clients);
  if(workspace)document.dispatchEvent(new CustomEvent('umma:staff-inbox-counts',{detail:{unread}}));
- if(stats&&d.subscribers!==undefined)stats.textContent='Подписаны на новости: '+d.subscribers+' · Подписчики с push: '+d.pushDevices;
  inboxClients=d.clients;
  inboxLoaded=true;
  renderClients();
@@ -596,41 +595,127 @@ function openAssignee(){
 }
 async function refreshView(){
  if(view==='audience')await refreshAudience();
- else if(view==='campaign'){
-  const data=await api('staffList');
-  stats.textContent='Подписаны на новости: '+data.subscribers+' · Подписчики с push: '+data.pushDevices;
- }else {
+ else if(view!=='campaign'){
   await refresh();
   if(view==='inbox'&&thread)await readThread(thread);
  }
  connection.hidden=true;
  status.textContent='';
 }
-function buildLegacyNavigation(){
- const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
- panels.audience=buildAudience();
- panels.campaign=node('section',null,'work-campaign');
- for(const [key,label] of [['inbox','Входящие'],['audience','Посетители'],['campaign','Рассылки']]){
-  const tab=node('button',label);tab.type='button';tab.onclick=()=>run(async()=>{selectView(key);await refreshView();});
-  viewButtons[key]=tab;if(owner()||key==='inbox')nav.append(tab);
+const campaignFormats={
+ 'image/jpeg':['photo',8],'image/png':['photo',8],'image/webp':['photo',8],
+ 'video/mp4':['video',20],'video/webm':['video',20],'video/quicktime':['video',20],
+ 'audio/mpeg':['voice',5],'audio/mp4':['voice',5],'audio/webm':['voice',5],'audio/ogg':['voice',5]
+};
+function buildCampaign(){
+ const section=node('section',null,'work-campaign'),form=node('form'),fields=node('fieldset');
+ const title=node('input'),body=node('textarea'),language=node('select'),file=node('input');
+ title.required=true;title.maxLength=100;body.maxLength=2000;body.rows=4;
+ file.type='file';file.accept=Object.keys(campaignFormats).join(',')+',.m4a,.mp3,.mov';
+ const installedOnly=node('input');installedOnly.type='checkbox';installedOnly.defaultChecked=Boolean(workspace);
+ const installedLabel=label('Только клиенты с установленным приложением',installedOnly);installedLabel.className='connect-check';
+ const publicNews=node('input');publicNews.type='checkbox';publicNews.defaultChecked=!workspace;
+ const publicLabel=label('Показать текст всем посетителям меню',publicNews);publicLabel.className='connect-check';
+ for(const [code,name] of [['all','Все языки'],['ru','Русский'],['en','English'],['vi','Tiếng Việt'],['ko','한국어'],['zh','中文'],['de','Deutsch'],['fr','Français'],['th','ไทย'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['ar','العربية'],['pt','Português']]){
+  language.add(new Option(name,code));
  }
- stats=node('p');
- const form=node('form'),title=node('input'),body=node('textarea'),language=node('select');title.required=true;title.maxLength=100;body.required=true;body.maxLength=2000;
- for(const [v,t]of [['ru','Русский'],['en','English'],['vi','Tiếng Việt'],['ko','한국어'],['zh','中文'],['de','Deutsch'],['fr','Français'],['th','ไทย'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['ar','العربية'],['pt','Português'],['all','Все языки']]){const o=node('option',t);o.value=v;language.append(o);}
- language.value='all';
- const installedOnly=node('input');installedOnly.type='checkbox';
- const installedLabel=label('Только установившие приложение и включившие push',installedOnly);installedLabel.className='connect-check';
- const publicNews=node('input');publicNews.type='checkbox';publicNews.defaultChecked=true;
- const publicLabel=label('Показать всем в меню',publicNews);publicLabel.className='connect-check';
- const updatePublic=()=>{publicNews.disabled=installedOnly.checked||language.value!=='all';};
- language.addEventListener('change',updatePublic);installedOnly.addEventListener('change',updatePublic);
- const preview=node('section');preview.hidden=true;const previewTitle=node('h3'),previewBody=node('p'),previewWho=node('p'),confirm=node('button','Опубликовать','primary'),cancel=node('button','Изменить');confirm.type=cancel.type='button';preview.append(previewTitle,previewBody,previewWho,confirm,cancel);
- const submit=node('button','Проверить рассылку');submit.type='submit';
- form.append(node('h3','Акции, новинки и напоминания'),node('p','Публикацию в меню увидят все посетители. Сообщение в чат и push получат подписчики. Чтобы показать акцию всем, выберите «Все языки» и снимите ограничение по установке.'),label('Язык получателей',language),installedLabel,publicLabel,label('Заголовок',title),label('Сообщение',body),submit,preview);
- const resetPreview=()=>{preview.hidden=true;submit.hidden=false;campaign=null;};form.addEventListener('input',resetPreview);cancel.onclick=resetPreview;
- form.onsubmit=e=>{e.preventDefault();campaign={requestKey:crypto.randomUUID(),title:title.value.trim(),body:body.value.trim(),language:language.value,installedOnly:installedOnly.checked,publicNews:publicNews.checked&&!installedOnly.checked&&language.value==='all'};confirm.textContent=campaign.publicNews?'Опубликовать и отправить подписчикам':'Отправить подписчикам';previewTitle.textContent=campaign.title;previewBody.textContent=campaign.body;previewWho.textContent=(campaign.publicNews?'В меню увидят все. ':'')+'Получатели рассылки: '+language.selectedOptions[0].textContent+(campaign.installedOnly?' · только установили приложение и включили push':'')+'. После отправки отозвать push с телефона нельзя.';preview.hidden=false;submit.hidden=true;};
- confirm.onclick=()=>run(async()=>{if(!campaign)return;const d=await api('staffCampaign',campaign);status.textContent=(campaign.publicNews?'Опубликовано в меню. ':'')+'Сообщение добавлено в переписку '+d.recipients+' клиентам. Фоновая доставка выполняется для устройств с разрешёнными уведомлениями.';resetPreview();form.reset();language.value='all';updatePublic();});
- panels.campaign.append(stats,form);
+ function updateFields(){
+  body.required=!file.files.length;
+  publicNews.disabled=installedOnly.checked||language.value!=='all'||file.files.length>0;
+ }
+ const preview=node('section',null,'work-campaign-preview'),previewTitle=node('h4'),previewBody=node('p');
+ const previewMedia=node('div'),previewWho=node('p');
+ const confirm=node('button','Отправить рассылку','primary'),cancel=node('button','Изменить');
+ confirm.type=cancel.type='button';
+ preview.hidden=true;
+ const actions=node('div',null,'work-campaign-actions');actions.append(confirm,cancel);
+ preview.append(previewTitle,previewBody,previewMedia,previewWho,actions);
+ const submit=node('button','Предпросмотр','primary');submit.type='submit';
+ const hint=node('small','Фото до 8 МБ, видео до 20 МБ, аудио до 5 МБ. Без файла можно отправить текст.');
+ fields.append(label('Язык получателей',language),installedLabel,publicLabel,label('Заголовок',title),
+  label('Текст',body),label('Фото, видео или аудио',file),hint,submit);
+ form.append(fields,preview);
+ section.append(node('h3','Акции и новые блюда'),
+  node('p','Рассылку увидят в чате клиенты, подписанные на акции. Push получат устройства с разрешёнными уведомлениями.'),form);
+ let previewURL='';
+ function releasePreview(){
+  previewMedia.replaceChildren();
+  if(previewURL)URL.revokeObjectURL(previewURL);
+  previewURL='';
+ }
+ function resetPreview(){
+  releasePreview();
+  fields.hidden=false;
+  preview.hidden=true;
+  campaign=null;
+ }
+ fields.addEventListener('input',updateFields);
+ cancel.onclick=()=>{resetPreview();title.focus();};
+ form.onsubmit=event=>{
+  event.preventDefault();
+  if(busy||!preview.hidden)return;
+  void run(async()=>{
+   if(!title.value.trim())throw Error('Введите заголовок.');
+   const attachment=file.files[0];
+   const mime=attachment?.type==='audio/x-m4a'||(attachment&&!attachment.type&&/\.m4a$/i.test(attachment.name))?'audio/mp4':attachment?.type;
+   const format=Object.hasOwn(campaignFormats,mime)?campaignFormats[mime]:null;
+   if(attachment&&(!format||!attachment.size))throw Error('Выберите фото JPEG, PNG или WebP, видео MP4, WebM или MOV либо аудио MP3, M4A, WebM или OGG.');
+   if(attachment&&attachment.size>format[1]*1024*1024)throw Error('Размер файла превышает '+format[1]+' МБ.');
+   if(!attachment&&!body.value.trim())throw Error('Добавьте текст или файл.');
+   const details={title:title.value.trim(),body:body.value.trim(),language:language.value,
+    installedOnly:installedOnly.checked,publicNews:!publicNews.disabled&&publicNews.checked};
+   fields.disabled=true;
+   try{
+    const recipients=await api('staffCampaignAudience',{language:details.language,installedOnly:details.installedOnly});
+    if(!recipients.recipients&&!details.publicNews)throw Error('Условиям рассылки сейчас не соответствует ни один клиент.');
+    releasePreview();
+    if(attachment){
+     previewURL=URL.createObjectURL(attachment);
+     const [kind]=format;
+     previewMedia.append(window.ummaConnectMedia.player(kind,previewURL,mediaNames[kind]));
+    }
+    campaign={details,requestKey:crypto.randomUUID(),
+     attachment:attachment?{file:new Blob([attachment],{type:mime}),kind:format[0]}:null};
+    previewTitle.textContent=details.title;
+    previewBody.textContent=details.body;
+    previewBody.hidden=!details.body;
+    previewWho.textContent='Клиентов в чате: '+recipients.recipients+' · Устройств с push: '+recipients.pushRecipients;
+    confirm.textContent=details.publicNews?'Опубликовать и отправить':'Отправить рассылку';
+    preview.hidden=false;
+    fields.hidden=true;
+    status.textContent='';
+   }finally{fields.disabled=false;}
+  }).then(()=>{if(!preview.hidden)confirm.focus();});
+ };
+ confirm.onclick=()=>void run(async()=>{
+  if(!campaign)return;
+  const {details,requestKey,attachment}=campaign;
+  const result=attachment?await window.ummaConnectMedia.upload(API,{
+   'X-Umma-Staff':credential(),
+   'X-Umma-Campaign':encodeURIComponent(JSON.stringify({title:details.title,language:details.language,installedOnly:details.installedOnly}))
+  },attachment,requestKey,details.body,code=>({
+   MEDIA_SIZE:'Файл превышает допустимый размер.',
+   MEDIA_FORMAT:'Не удалось распознать формат файла.',
+   MEDIA_UPLOAD:'Не удалось загрузить файл. Повторите отправку.'
+  })[code]||'Не удалось отправить рассылку. Повторите попытку.')
+   :await api('staffCampaign',{...details,requestKey});
+  status.textContent=(details.publicNews?'Опубликовано в меню. ':'')+'Добавлено в чаты: '+result.recipients+
+   '. Push поставлены в очередь: '+result.pushRecipients+'.';
+  resetPreview();form.reset();updateFields();title.focus();
+ });
+ updateFields();
+ return section;
+}
+function buildNavigation(){
+ const nav=node('nav',null,'work-section-switch');nav.setAttribute('aria-label','Разделы связи с клиентами');
+ const tabs=[['inbox','Входящие']];
+ if(!workspace){panels.audience=buildAudience();tabs.push(['audience','Посетители']);}
+ panels.campaign=buildCampaign();
+ tabs.push(['campaign','Рассылки']);
+ for(const [key,label] of tabs){
+  const tab=node('button',label);tab.type='button';tab.onclick=()=>run(async()=>{selectView(key);await refreshView();});
+  viewButtons[key]=tab;nav.append(tab);
+ }
  return nav;
 }
 function build(){
@@ -826,7 +911,7 @@ function build(){
  renderClients();
  panels.inbox.append(listPanel,threadPanel);
  section.append(header);
- if(dialog)section.append(buildLegacyNavigation());
+ if(owner())section.append(buildNavigation());
  section.append(connection,status,...Object.values(panels));selectView('inbox');
  if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }
