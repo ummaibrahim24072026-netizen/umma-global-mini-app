@@ -24,3 +24,27 @@ jobs:
       - run: node scripts/qa-owner-manager.mjs
       - run: node scripts/qa-owner-manager-edge.mjs
       - run: node scripts/qa-owner-manager-ui.mjs
+
+  independent-sessions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: umma_owner_qa
+          POSTGRES_PASSWORD: owner_manager_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d umma_owner_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: UMMA_OWNER_QA_PG=1 node scripts/qa-owner-manager.mjs

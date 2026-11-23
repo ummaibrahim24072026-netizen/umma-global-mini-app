@@ -3,7 +3,15 @@ import {readFileSync} from "node:fs";
 import {randomUUID} from "node:crypto";
 import assert from "node:assert/strict";
 
-const db=new PGlite();
+const native=process.env.UMMA_OWNER_QA_PG==="1";
+const connections=[];
+let db;
+if(native){
+  const {default:pg}=await import("pg");
+  const config={host:"127.0.0.1",port:5432,database:"umma_owner_qa",user:"postgres",password:"owner_manager_fixture"};
+  for(let i=0;i<3;i++){const connection=new pg.Client(config);await connection.connect();connections.push(connection);}
+  db={query:(sql,args)=>connections[0].query(sql,args),exec:sql=>connections[0].query(sql),close:()=>Promise.all(connections.map(c=>c.end()))};
+}else db=new PGlite();
 const [cafe,product,rice,plov]=Array.from({length:4},()=>randomUUID());
 const q=(sql,args=[])=>db.query(sql,args);
 const result=async(sql,args=[])=>(await q(sql,args)).rows[0].result;
@@ -45,7 +53,20 @@ try{
   assert.equal((await balance(rice)).quantity,22);
   const transfer={kind:"transfer",lines:[row(rice,5,"kg")]};
   const transferId=randomUUID();
-  await Promise.all([post(transfer,transferId,12),post(transfer,transferId,12)]);
+  if(native){
+    const [,first,second]=connections;
+    const sql="select cafe_owner_post($1,$2,$3,$4::jsonb) result";
+    const params=[12,cafe,transferId,JSON.stringify({source:"manual",...transfer})];
+    await first.query("begin");
+    const posted=(await first.query(sql,params)).rows[0].result;
+    let settled=false;
+    const replay=second.query(sql,params).finally(()=>{settled=true;});
+    await new Promise(resolve=>setTimeout(resolve,70));
+    assert.equal(settled,false,"A separate staff connection must wait for the open transaction");
+    await first.query("commit");
+    assert.deepEqual((await replay).rows[0].result,posted);
+    console.log("PASS native PostgreSQL: simultaneous transfer replay records one movement pair.");
+  }else await Promise.all([post(transfer,transferId,12),post(transfer,transferId,12)]);
   assert.equal((await balance(rice)).quantity,17);
   assert.equal((await balance(rice)).kitchen,5);
   await assert.rejects(post({kind:"count",lines:[row(rice,17,"kg",{expected:22})]}),/изменился/);
