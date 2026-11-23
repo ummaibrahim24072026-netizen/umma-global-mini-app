@@ -3,7 +3,7 @@
   const root=document.getElementById("webOwnerManager");
   const api="https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-owner-manager";
   const operations={purchase:"Поступление",transfer:"Перемещение",production:"Выпуск партии",count:"Инвентаризация",
-    waste:"Списание",return:"Возврат",recipe:"Утвердить техкарту",mode:"Режим учёта"};
+    waste:"Списание",return:"Возврат",recipe:"Утвердить техкарту",mode:"Режим учёта",item:"Складская позиция",reorder:"Настроить закупку"};
   const units={kg:"кг",g:"г",l:"л",ml:"мл",pcs:"шт.",portion:"порций"};
   const areas={main:"Основной склад / готовая продукция",kitchen:"Кухня"};
   const vnd=new Intl.NumberFormat("ru-RU",{style:"currency",currency:"VND"});
@@ -102,7 +102,7 @@
     const manager=data.role!=="kitchen";
     root.querySelector("[data-owner-invoices]").hidden=!manager;
     const available=manager ? ["purchase","transfer","production","count","waste","return"] : ["transfer","production","waste","return"];
-    if(data.role==="owner") available.push("recipe","mode");
+    if(data.role==="owner") available.push("recipe","mode","item","reorder");
     const first=el("section",null,{className:"owner-card"});
     first.append(el("h2","Остатки"));
     if (data.valuation) first.append(el("p",vnd.format(data.valuation.knownValue)+(data.valuation.unpriced
@@ -113,6 +113,11 @@
     for (const kind of available) controls.append(btn(operations[kind],()=>open({kind,source:"manual",lines:[{}],mode:data.mode}),kind==="count"));
     first.append(controls,details("Остатки по позициям",data.stock.map(s=>s.name_ru+" · "+quantity(s.quantity,s.id)+
       (s.item_type==="finished_good" ? "" : " · кухня "+quantity(s.kitchen,s.id)))));
+    if(manager) first.append(details("Рекомендации по закупкам",(data.reorder || []).map(r=>[
+      product(r.itemId),"поставка "+r.leadDays+" дн., хранение "+r.shelfDays+" дн.",
+      r.runway==null ? "нужно больше данных о расходе" : "запас примерно на "+r.runway+" дн.",
+      r.suggested>0 ? "докупить "+quantity(r.suggested,r.itemId) : "",
+    ].filter(Boolean).join(" · "))));
     stats.append(first);
     if(!manager) return;
     const finance=el("section",null,{className:"owner-card"});
@@ -130,9 +135,14 @@
         return days<2 ? [s.name_ru+" · примерно "+days.toFixed(1)+" дн. по учтённому расходу"] : [];
       })),
       details("Нормы из измеренных партий",data.norms.map(n=>product(n.outputId)+" · "+product(n.itemId)+" · "+
-        (n.quantity==null ? "недостаточно данных" : quantity(n.quantity,n.itemId)+" на единицу")+
+        (n.quantity==null ? "недостаточно данных" : quantity(n.quantity,n.itemId)+" на единицу"+(n.confidence==="inventory" ? " · подтверждено инвентаризациями" : " · предварительная оценка"))+
         " · "+n.observations+" наблюдений · "+n.low+"–"+n.high)),
       details("Утверждённые техкарты",data.recipes.map(r=>product(r.output_id)+" · "+formatDate.format(new Date(r.approved_at)))));
+    finance.append(el("p","Оценённая себестоимость выданных заказов · "+vnd.format(data.sales.knownCost)+
+      " · порций без оценки: "+data.sales.unpricedPortions));
+    if(data.sales.grossProfit!=null) finance.append(el("p","Валовая прибыль по блюдам · "+vnd.format(data.sales.grossProfit)+
+      (data.sales.grossMargin==null ? "" : " · маржа "+data.sales.grossMargin+"%")));
+    if(data.sales.refunds>0) finance.append(el("p","Есть возвраты. Для расчёта маржи нужна сверка."));
     stats.append(finance);
     const journal=el("section",null,{className:"owner-card"});journal.append(el("h2","История операций"));
     function entry(h){
@@ -143,7 +153,8 @@
       if(r.kind==="production") box.append(el("p",product(r.outputId)+" · "+quantity(r.yield,r.outputId)+" · "+
         (r.total==null ? "себестоимость партии неизвестна" : vnd.format(r.total/r.yield)+" за единицу")+
         (r.usedRecipe ? " · по утверждённой техкарте" : "")));
-      else if(r.total!=null) box.append(el("span"," · "+vnd.format(r.total)));
+      if(r.packagingCost>0) box.append(el("p","Упаковка в партии · "+vnd.format(r.packagingCost)));
+      else if(r.kind!=="production" && r.total!=null) box.append(el("span"," · "+vnd.format(r.total)));
       if(r.kind==="count") box.append(details("Ведомость",r.rows.map(s=>product(s.itemId)+
         " · "+areas[s.area]+" · "+s.before+" → "+quantity(s.quantity,s.itemId))));
       if(h.hash) box.append(btn("Оригинал",()=>original(h.hash)));
@@ -182,6 +193,20 @@
     if(["transfer","return","waste"].includes(kind)) control("area",kind==="transfer" ? "Откуда перемещаем" : "Место хранения",select(areas,draft.area || "main"));
     if(["return","waste"].includes(kind)) control("note","Причина",el("input",null,{required:true,value:draft.note || ""}));
     if(kind==="mode") control("mode","Режим",select({A:"A · Фактический учёт",B:"B · Предварительная оценка",C:"C · Утверждённая техкарта"},draft.mode || "A"));
+    if(kind==="item"){
+      control("productId","Связать блюдо меню",select(Object.fromEntries((data.menuLinks || []).map(p=>[p.id,p.name])),null,"Самостоятельная позиция"));
+      control("name","Название",el("input"));
+      control("itemType","Категория",select({raw_material:"Сырьё",semi_finished:"Полуфабрикат",finished_good:"Готовая продукция",
+        packaging:"Упаковка",other:"Расходные материалы"},"raw_material"));
+      control("unit","Базовая единица",select(units,"kg"));
+    }
+    if(kind==="reorder"){
+      control("itemId","Позиция",select(Object.fromEntries(data.stock.filter(s=>["raw_material","packaging"].includes(s.item_type))
+        .map(s=>[s.id,s.name_ru])),null,"Выберите позицию")).required=true;
+      control("leadDays","Срок поставки, дней",number("","1")).required=true;
+      control("shelfDays","Срок хранения, дней",number("","1")).required=true;
+    }
+    const hasRows=!["mode","item","reorder"].includes(kind);
     form.append(group);
     const rows=[];
     const production=["production","recipe"].includes(kind);
@@ -214,7 +239,7 @@
       if(!draft.full && (!production || ingredient)) part.append(btn("Убрать",()=>{rows.splice(rows.indexOf(row),1);part.remove();}));
       list.append(part);
     }
-    if(kind!=="mode"){
+    if(hasRows){
       const list=el("div");
       (draft.lines?.length ? draft.lines : [{}]).forEach(row=>line(row,list));
       form.append(list);
@@ -239,7 +264,7 @@
         if(field==="full") payload.full=input.value==="full";
         else if(input.value!=="") payload[field]=input.value;
       }
-      if(kind!=="mode"){
+      if(hasRows){
         const encode=row=>{
           const item=catalog(row.item.value);
           const value={itemId:row.item.value,quantity:row.qty.value,unit:row.unit.value};
