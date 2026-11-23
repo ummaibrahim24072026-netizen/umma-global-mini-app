@@ -425,3 +425,24 @@ revoke all on function public.cafe_owner_post(bigint,uuid,uuid,jsonb),
 grant execute on function public.cafe_owner_post(bigint,uuid,uuid,jsonb),
   public.cafe_owner_dashboard(bigint,uuid,integer),public.cafe_owner_invoice_access(bigint,uuid,text,boolean)
   to service_role;
+
+create table umma_private.owner_ai_quota (
+  actor bigint not null,
+  hour timestamptz not null,
+  requests smallint not null,
+  primary key(actor,hour)
+);
+alter table umma_private.owner_ai_quota enable row level security;
+create function public.cafe_owner_ai_quota(p_actor bigint,p_location uuid) returns boolean
+language plpgsql security definer set search_path='' as $$
+declare allowed boolean;
+begin
+  if umma_private.owner_permission(p_actor,p_location) is null then raise exception 'Нет доступа' using errcode='42501'; end if;
+  delete from umma_private.owner_ai_quota where hour<now()-interval '2 days';
+  insert into umma_private.owner_ai_quota values(p_actor,date_trunc('hour',now()),1)
+    on conflict(actor,hour) do update set requests=owner_ai_quota.requests+1
+    where owner_ai_quota.requests<45 returning true into allowed;
+  return coalesce(allowed,false);
+end $$;
+revoke all on function public.cafe_owner_ai_quota(bigint,uuid) from public,anon,authenticated;
+grant execute on function public.cafe_owner_ai_quota(bigint,uuid) to service_role;

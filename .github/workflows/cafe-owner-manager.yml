@@ -1,0 +1,24 @@
+name: AI owner manager checks
+on:
+  pull_request:
+    paths:
+      - 'staff.html'
+      - 'js/cafe/owner-manager.js'
+      - 'scripts/qa-owner-manager.mjs'
+      - 'supabase/functions/cafe-owner-manager/**'
+      - 'supabase/migrations/*_cafe_owner_manager.sql'
+      - '.github/workflows/cafe-owner-manager.yml'
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node --check js/cafe/owner-manager.js
+      - run: node scripts/qa-owner-manager.mjs

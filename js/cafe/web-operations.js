@@ -1362,6 +1362,16 @@ const hasOrderDesk=owner||sell||roles.some(a=>['manager','cashier','waiter'].inc
 const stockLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&['kitchen','manager'].includes(a.staff_role)));
 hasCombinedRole=!owner&&roles.some(a=>isCombinedRole(a)&&stockLocations.some(l=>l.id===a.location_id));
 $('webStockLink').hidden=requested==='stock'||!stockLocations.length;
+$('webOwnerManagerLink').hidden=requested==='owner-manager'||!stockLocations.length;
+if(requested==='owner-manager'){
+ document.body.dataset.workspace='owner-manager';
+ $('webWorkspace').hidden=true;
+ const root=$('webOwnerManager');
+ root.hidden=false;
+ root.ummaLocations=stockLocations;
+ document.dispatchEvent(new Event('umma:owner-manager-open'));
+ return;
+}
 if(requested==='stock'){
  currentTab='stock';
  document.body.dataset.workspace='stock';
