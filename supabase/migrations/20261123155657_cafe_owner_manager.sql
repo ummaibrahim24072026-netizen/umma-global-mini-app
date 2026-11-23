@@ -1,6 +1,7 @@
 -- Immutable audit documents for the existing cafe stock and ready portions.
 create table umma_private.owner_operations (
   id uuid primary key,
+  operation_no bigint generated always as identity unique,
   location_id uuid not null references public.locations(id),
   actor bigint not null,
   kind text not null,
@@ -421,9 +422,10 @@ end $$;
 create function umma_private.owner_count_observations(p_location uuid)
 returns table(output text,ingredient text,per_unit numeric) language sql stable set search_path='' as $$
   with counts as (
-    select o.id,o.result,(o.result->>'postedAt')::timestamptz closed_at,
-      lag((o.result->>'postedAt')::timestamptz) over(order by o.created_at,o.id) opened_at,
-      lag(o.result) over(order by o.created_at,o.id) opening
+    select o.id,o.operation_no,o.result,(o.result->>'postedAt')::timestamptz closed_at,
+      lag((o.result->>'postedAt')::timestamptz) over(order by o.operation_no) opened_at,
+      lag(o.operation_no) over(order by o.operation_no) opened_no,
+      lag(o.result) over(order by o.operation_no) opening
     from umma_private.owner_operations o
     where o.location_id=p_location and o.kind='count' and (o.result->>'full')::boolean
       and o.created_at>=now()-interval '90 days'
@@ -431,7 +433,7 @@ returns table(output text,ingredient text,per_unit numeric) language sql stable 
     select c.*,x.dish,x.yield from counts c cross join lateral (
       select count(distinct o.result->>'outputId') dishes,min(o.result->>'outputId') dish,sum((o.result->>'yield')::numeric) yield
       from umma_private.owner_operations o where o.location_id=p_location and o.kind='production'
-        and o.created_at>c.opened_at and o.created_at<c.closed_at and jsonb_array_length(o.result->'rows')=0
+        and o.operation_no>c.opened_no and o.operation_no<c.operation_no and jsonb_array_length(o.result->'rows')=0
     ) x join public.stock_items f on f.id::text=x.dish and f.item_type='finished_good'
     where x.dishes=1 and x.yield>0 and not exists(select 1 from umma_private.owner_recipes r
       where r.location_id=p_location and r.output_id=f.id and r.approved_at>=c.opened_at)
@@ -448,7 +450,12 @@ returns table(output text,ingredient text,per_unit numeric) language sql stable 
       select coalesce(sum(m.quantity_delta) filter(where m.movement_type in ('purchase_in','production_out','waste_out')),0) delta,
         count(*) filter(where m.movement_type in ('adjustment_in','adjustment_out')) adjustments
       from public.stock_movements m where m.location_id=p_location and m.stock_item_id=s.id
-        and m.created_at>w.opened_at and m.created_at<=w.closed_at and m.source_id is distinct from w.id
+        and (
+          exists(select 1 from umma_private.owner_operations related where related.id=m.source_id
+            and related.location_id=p_location and related.operation_no>w.opened_no and related.operation_no<w.operation_no)
+          or (m.created_at>w.opened_at and m.created_at<=w.closed_at
+            and not exists(select 1 from umma_private.owner_operations related where related.id=m.source_id))
+        )
     ) ledger
     where s.item_type='raw_material' and ledger.adjustments=0
   )
