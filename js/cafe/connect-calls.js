@@ -2,6 +2,8 @@
   'use strict';
 
   const apiUrl = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-calls';
+  const turnUrl = /^turns?:/i;
+  const hasRelay = server => [server.urls].flat().some(url => turnUrl.test(url));
   const validId = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
   const icons = {
     audio: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 18 18 0 0 1-7.9-2.8 18 18 0 0 1-5.5-5.5A18 18 0 0 1 3.6 5.7 2 2 0 0 1 5.6 3.5h3a2 2 0 0 1 2 1.7l.4 2.5a2 2 0 0 1-.4 2l-1.3 1.3a14 14 0 0 0 5.5 5.5l1.3-1.3a2 2 0 0 1 2-.4l2.2.4a2 2 0 0 1 1.7 1.7Z"/>',
@@ -73,7 +75,9 @@
         resolve();
       };
       const onState = () => { if (peer.iceGatheringState === 'complete') finish(); };
-      const timer = setTimeout(finish, 8000);
+      // The signaling service exchanges complete SDP, so late relay candidates
+      // would otherwise never reach the other browser.
+      const timer = setTimeout(finish, 14000);
       peer.addEventListener('icegatheringstatechange', onState);
     });
   }
@@ -82,7 +86,7 @@
     if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia || !crypto.randomUUID) return null;
     const device = crypto.randomUUID();
     const t = key => (copy[language()] || copy.en)[key];
-    let current, modal, pollTimer, ringAudio, polling = false, pollFailures = 0;
+    let current, modal, pollTimer, ringAudio, iceCache, polling = false, pollAgain = false;
     const linkedId = new URL(location.href).searchParams.get('call');
     let requestedCall = validId(linkedId) ? linkedId : null;
     let pushedCall = null;
@@ -110,6 +114,17 @@
       if (result.busy) throw new Error('busy');
       if (!response.ok || !result.ok) throw new Error('unavailable');
       return result;
+    }
+
+    async function getIceServers(call) {
+      const account = call.credentials?.initData || call.credentials?.token;
+      if (iceCache && iceCache.account === account && iceCache.until > Date.now()) return iceCache.servers;
+      const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
+      if (!Array.isArray(servers) || !servers.length) throw new Error('unavailable');
+      if (servers.some(hasRelay)) {
+        iceCache = {account, servers, until: Date.now() + 10 * 60 * 1000};
+      }
+      return servers;
     }
 
     function action(label, handler, className) {
@@ -168,16 +183,17 @@
       release(call);
       if (notify) signalEnd(call, keepalive);
       if (!reason) {
-        modal?.close();
+        call.overlay?.close();
         return;
       }
-      modal?.classList.remove('umma-call-incoming', 'umma-call-has-video');
+      call.overlay.classList.remove('umma-call-incoming', 'umma-call-has-video');
       call.status.textContent = t(reason);
       call.duration.hidden = true;
       call.wave.hidden = true;
       call.media.hidden = true;
+      call.playback?.remove();
       call.mediaNotice.textContent = '';
-      call.controls.replaceChildren(action('close', () => modal.close()));
+      call.controls.replaceChildren(action('close', () => call.overlay.close()));
     }
 
     function startWave(call, stream) {
@@ -235,6 +251,7 @@
     function stopRinger(call) {
       clearInterval(call.ringer);
       clearInterval(call.ringbackTimer);
+      if (call.ringer) navigator.vibrate?.(0);
       call.ringer = null;
       for (const note of call.notes || []) note.stop();
       call.notes?.clear();
@@ -368,9 +385,9 @@
       }
     }
 
-    function armTimeout(call, key, ms) {
+    function armTimeout(call, key, ms, notify = true) {
       clearTimeout(call.deadline);
-      call.deadline = setTimeout(() => finish(call, key), ms);
+      call.deadline = setTimeout(() => finish(call, key, notify), ms);
     }
 
     async function mediaProblem(mode, error) {
@@ -408,7 +425,10 @@
         track.enabled = call.cameraEnabled;
         await call.videoSender.replaceTrack(track);
         if (current !== call) return;
-        for (const old of call.stream.getVideoTracks()) call.stream.removeTrack(old);
+        for (const old of call.stream.getVideoTracks()) {
+          old.stop();
+          call.stream.removeTrack(old);
+        }
         call.stream.addTrack(track);
         call.facing = track.getSettings().facingMode || facing;
         previewCamera(call, track);
@@ -426,14 +446,24 @@
       const old = call.stream.getVideoTracks()[0];
       const previous = old?.getSettings().deviceId;
       const facing = call.facing === 'user' ? 'environment' : 'user';
-      // Mobile browsers may require the previous camera to be released first.
-      old?.stop();
-      call.local.hidden = true;
+      const constraints = cameraConstraints({exact: facing});
       try {
-        await replaceCamera(call, facing, cameraConstraints({exact: facing}));
+        try {
+          await replaceCamera(call, facing, constraints);
+        } catch (error) {
+          if (current !== call) return;
+          // Some mobile devices cannot open two cameras at once.
+          if (old?.readyState !== 'live' || !['NotReadableError', 'AbortError'].includes(error.name)) throw error;
+          old.stop();
+          call.local.hidden = true;
+          await replaceCamera(call, facing, constraints);
+        }
       } catch {
         if (current !== call) return;
         call.mediaNotice.textContent = t('flipFailed');
+        if (old?.readyState === 'live' && !old.muted) return;
+        old?.stop();
+        call.local.hidden = true;
         try {
           const restore = cameraConstraints({ideal: call.facing});
           if (previous) restore.deviceId = {exact: previous};
@@ -446,7 +476,7 @@
         }
       } finally {
         button.disabled = false;
-        cameraToggle.disabled = !call.stream.getVideoTracks().length;
+        cameraToggle.disabled = !call.stream.getVideoTracks().some(track => track.readyState === 'live');
       }
     }
 
@@ -456,7 +486,7 @@
       audio.volume = 1;
       call.media.prepend(audio);
       call.media.hidden = false;
-      const playback = action('playback', () => void playAudio());
+      const playback = call.playback = action('playback', () => void playAudio());
       playback.hidden = true;
       const playAudio = async () => {
         if (current !== call || !audio.srcObject) return;
@@ -555,7 +585,9 @@
       });
       updateSpeaker(false);
       speaker.disabled = true;
-      call.controls.prepend(speaker, playback);
+      call.controls.prepend(speaker);
+      playback.className = 'umma-call-playback';
+      call.controls.before(playback);
 
       let video;
       if (call.mode === 'video') {
@@ -590,6 +622,7 @@
 
     async function establish(call) {
       stopRinger(call);
+      armTimeout(call, 'unavailable', 50000);
       call.overlay.classList.remove('umma-call-incoming');
       dismissNotification(call.id);
       call.status.textContent = t('connecting');
@@ -618,7 +651,9 @@
         stream?.getTracks().forEach(track => track.stop());
         const reason = await mediaProblem(call.mode, error);
         if (current !== call) return;
+        clearTimeout(call.deadline);
         if (call.incoming) {
+          armTimeout(call, 'unanswered', 75000, false);
           call.status.textContent = t(reason);
           call.controls.prepend(action('retry', () => void establish(call), 'umma-call-answer'));
         } else {
@@ -655,7 +690,7 @@
           if (current !== call) return;
           call.credentials = identity();
         }
-        const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
+        const servers = await getIceServers(call);
         if (current !== call) return;
         const peer = call.peer = new RTCPeerConnection({iceServers: servers});
         const playAudio = setupRemoteMedia(call, peer);
@@ -671,7 +706,8 @@
         }
         peer.onconnectionstatechange = () => {
           if (current !== call) return;
-          if (peer.connectionState === 'connected') {
+          const state = peer.connectionState;
+          if (state === 'connected') {
             clearTimeout(call.deadline);
             stopRinger(call);
             call.connected = true;
@@ -688,10 +724,10 @@
               tick();
               call.durationTimer = setInterval(tick, 1000);
             }
-          } else if (peer.connectionState === 'disconnected' && call.connected) {
+          } else if (state === 'disconnected' && call.connected) {
             call.status.textContent = t('reconnecting');
-            armTimeout(call, 'unavailable', 15000);
-          } else if (peer.connectionState === 'failed') {
+            armTimeout(call, 'unavailable', 25000);
+          } else if (state === 'failed') {
             finish(call, 'unavailable');
           }
         };
@@ -700,9 +736,18 @@
         await listenForIce(peer);
         if (current !== call) return;
         call.sent = true;
-        const result = await request(call.incoming ? 'answer' : 'start', {
+        const description = {
           id: call.id, clientId: call.clientId, mode: call.mode, sdp: peer.localDescription.sdp
-        }, call.credentials);
+        };
+        let result;
+        try {
+          result = await request(call.incoming ? 'answer' : 'start', description, call.credentials);
+        } catch (error) {
+          if (current !== call || error.message === 'busy') throw error;
+          // A lost HTTP response does not mean the offer or answer was lost.
+          result = await request('poll', {id: call.id}, call.credentials);
+          if (!result.call || (call.incoming && result.call.offer !== null)) throw error;
+        }
         if (current !== call) {
           // The first cancellation may have reached the server before this request.
           signalEnd(call);
@@ -729,13 +774,16 @@
     function start(mode, target) {
       if (current) return;
       void enableRinger();
-      pollFailures = 0;
       current = {id: crypto.randomUUID(), mode, ...target, credentials: identity()};
       show(current);
       void establish(current);
     }
 
     function schedule(delay) {
+      if (polling) {
+        if (delay === 0) pollAgain = true;
+        return;
+      }
       clearTimeout(pollTimer);
       pollTimer = setTimeout(poll, delay);
     }
@@ -745,21 +793,30 @@
       polling = true;
       const call = current;
       // An outgoing request is not visible until the offer has been posted.
-      const credentials = call ? call.credentials : identity();
+      const activeIdentity = identity();
+      const credentials = call?.credentials || activeIdentity;
       try {
+        if (call?.credentials && (!activeIdentity ||
+            activeIdentity.token !== credentials.token || activeIdentity.initData !== credentials.initData)) {
+          finish(call, 'ended');
+          return;
+        }
         if ((!call && document.hidden) || !credentials || (call && !call.ready && !call.incoming)) return;
         const linked = !call ? requestedCall : null;
         const hinted = !call && !linked ? pushedCall : null;
-        const {call: state} = await request('poll', {id: call?.id || linked || hinted}, credentials);
+        let {call: state} = await request('poll', {id: call?.id || linked || hinted}, credentials);
+        if (hinted && !state && current === call) {
+          dismissNotification(hinted);
+          ({call: state} = await request('poll', {}, credentials));
+        }
         if (hinted && pushedCall === hinted) pushedCall = null;
-        pollFailures = 0;
         if (current !== call) return;
         if (linked && requestedCall !== linked) return;
         if (linked) consumeLink();
         if (!call && state?.incoming && state.offer) {
-          pollFailures = 0;
           current = {...state, credentials};
           show(current);
+          armTimeout(current, 'unanswered', 75000, false);
         } else if (linked && !call) {
           current = {id: linked, mode: 'audio', credentials};
           show(current);
@@ -769,14 +826,21 @@
         } else if (call?.ready && !call.incoming && state?.answer && !call.peer.remoteDescription) {
           stopRinger(call);
           call.status.textContent = t('connecting');
-          armTimeout(call, 'unavailable', 22000);
-          await call.peer.setRemoteDescription({type: 'answer', sdp: state.answer});
+          armTimeout(call, 'unavailable', 25000);
+          try {
+            await call.peer.setRemoteDescription({type: 'answer', sdp: state.answer});
+          } catch {
+            finish(call, 'unavailable');
+          }
         }
       } catch {
-        if (call && ++pollFailures >= 3 && current === call) finish(call, 'unavailable');
+        // Signaling and media use different connections. A failed heartbeat
+        // must not end a conversation whose media is still connected.
       } finally {
         polling = false;
-        schedule(current?.connected ? 3500 : current ? 1100 : 3000);
+        const delay = pollAgain ? 0 : current?.connected ? 3500 : current ? 1100 : 3000;
+        pollAgain = false;
+        schedule(delay);
       }
     }
 

@@ -93,7 +93,8 @@ body > dialog.umma-call {
   box-sizing: border-box;
   position: relative;
   display: grid;
-  grid-template-rows: minmax(min-content, 1fr) auto;
+  grid-template: "identity" minmax(min-content, 1fr)
+                 "footer" auto / minmax(0, 1fr);
   justify-items: center;
   gap: 18px;
   width: 100%;
@@ -105,6 +106,7 @@ body > dialog.umma-call {
   text-align: center;
 }
 .umma-call-identity {
+  grid-area: identity;
   align-self: center;
   display: grid;
   justify-items: center;
@@ -171,6 +173,7 @@ body > dialog.umma-call {
   top: max(18px, env(safe-area-inset-top));
   right: max(14px, env(safe-area-inset-right));
   width: clamp(76px, 24vw, 156px);
+  height: auto;
   max-height: 38%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
@@ -194,6 +197,7 @@ body > dialog.umma-call {
   font-size: clamp(18px, 4.5vw, 26px);
 }
 .umma-call-footer {
+  grid-area: footer;
   align-self: end;
   display: grid;
   justify-items: center;
@@ -227,7 +231,8 @@ body > dialog.umma-call {
   border-radius: 28px;
   background: #002e39ec;
 }
-.umma-call-controls button {
+.umma-call-controls button,
+.umma-call-playback {
   display: grid;
   place-items: center;
   gap: 4px;
@@ -236,7 +241,7 @@ body > dialog.umma-call {
   max-width: 140px;
   padding: 7px 9px;
   color: #fff;
-  background: var(--umma-brand-primary);
+  background: var(--umma-brand-primary, #00b8c8);
   border: 1px solid #a1e7e253;
   border-radius: 20px;
   font: 600 12px/1.2 system-ui, sans-serif;
@@ -285,7 +290,13 @@ body > dialog.umma-call {
   background: #c5f3ed;
   color: #00363e;
 }
-.umma-call-controls button:focus-visible {
+.umma-call-playback {
+  min-height: 44px;
+  padding-inline: 16px;
+  background: #002e39ec;
+}
+.umma-call-controls button:focus-visible,
+.umma-call-playback:focus-visible {
   outline: 2px solid #ffe2a1;
   outline-offset: 2px;
 }
@@ -307,5 +318,19 @@ body > dialog.umma-call {
   }
   .umma-call-identity {
     margin-top: min(10vh, 60px);
+  }
+}
+@media (max-height: 440px) and (orientation: landscape) {
+  .umma-call-card {
+    gap: 8px;
+    padding-block: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-bottom));
+  }
+  .umma-call-identity {
+    gap: 4px;
+    margin-top: 0;
+    padding-block: 8px;
+  }
+  .umma-call-wave {
+    height: 18px;
   }
 }

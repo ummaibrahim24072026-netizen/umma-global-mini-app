@@ -1,7 +1,7 @@
 /* Device-bound customer channel. The opaque credential never appears in URLs or push payloads. */
 (()=>{'use strict';
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect',KEY='umma:connect:token:v1';
-let token='',state=null,dialog=null,busy=false,pending=null,reading=false,refreshing=null,hiddenMessages=new Set();
+let token='',joining=null,state=null,dialog=null,busy=false,pending=null,reading=false,refreshing=null,hiddenMessages=new Set();
 try{token=localStorage.getItem(KEY)||'';}catch{}
 const copy={ru:['Связь с UMMA','Закрыть','Сообщения кафе, акции и обратная связь','Начать переписку','Имя (необязательно)','Получать рассылку об акциях и новых блюдах','Сохранить настройки','Включить уведомления','Отключить уведомления кафе','Напишите нам','Отправить','Переписка сохранится на этом устройстве. Сообщения по заказам — в «Мои сообщения».','Пока сообщений нет.','Сохранено','Уведомления включены','Разрешите уведомления в настройках сайта. На iPhone откройте установленное приложение с экрана «Домой».','Не удалось соединиться. Повторите попытку.','Подключаем…','Вы','UMMA','Уведомления кафе отключены. Уведомления заказов настраиваются отдельно.','Не удалось сохранить доступ на этом устройстве. Разрешите хранение данных сайта.'],en:['Contact UMMA','Close','Cafe updates, offers and feedback','Start conversation','Name (optional)','Subscribe to offers and new dishes','Save preferences','Enable notifications','Disable cafe notifications','Write to us','Send','This conversation stays on this device. Order updates are in “Order updates”.','No messages yet.','Saved','Notifications enabled','Allow notifications in site settings. On iPhone, open the installed app from the Home Screen.','Could not connect. Please retry.','Connecting…','You','UMMA','Cafe notifications disabled. Order alerts have separate settings.','Could not save access on this device. Allow site storage.'],vi:['Liên hệ UMMA','Đóng','Tin tức, ưu đãi và phản hồi','Bắt đầu trò chuyện','Tên (không bắt buộc)','Đăng ký nhận ưu đãi và món mới','Lưu tùy chọn','Bật thông báo','Tắt thông báo quán','Nhắn cho chúng tôi','Gửi','Cuộc trò chuyện lưu trên thiết bị này. Thông báo đơn hàng ở mục “Thông báo”.','Chưa có tin nhắn.','Đã lưu','Đã bật thông báo','Cho phép thông báo trong cài đặt trang. Trên iPhone, mở ứng dụng từ Màn hình chính.','Không thể kết nối. Hãy thử lại.','Đang kết nối…','Bạn','UMMA','Đã tắt thông báo quán. Thông báo đơn hàng có cài đặt riêng.','Không lưu được quyền truy cập. Cho phép lưu dữ liệu trang.']};
 const notificationCopy={
@@ -26,7 +26,7 @@ const publicChat=document.body.classList.contains('public-cafe-menu');
 const profileAvatar=publicChat?document.getElementById('topbarAvatar'):null;
 const brandAvatar='logo/assets/umma-icon-192.png';
 const profilePhoto=()=>profileAvatar&&!profileAvatar.hidden?profileAvatar.getAttribute('src'):null;
-const calls=publicChat?window.ummaConnectCalls?.({identity:()=>token?{token}:null,language:lang,prepare:connect}):null;
+const calls=publicChat?window.ummaConnectCalls?.({identity:()=>token&&!joining?{token}:null,language:lang,prepare:connect}):null;
 const CHAT_THEME_KEY='umma:customer:chat:theme:v1';
 const chatThemes=[
  ['light','Светлый','Light','Sáng'],
@@ -408,14 +408,19 @@ async function run(fn,feedback=status,showProgress=true){
  finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
 }
 async function connect(){
+ if(joining)return joining;
  if(token)return;
  token=window.ummaMenuAudience?.identity()||
   Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
- try{
-  state=await api('join');
-  try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
-  if(publicChat)void window.ummaMenuSyncChatAvatar?.();
- }catch(error){token='';throw error;}
+ joining=(async()=>{
+  try{
+   state=await api('join');
+   try{localStorage.setItem(KEY,token);}catch{throw Error(t(21));}
+   if(publicChat)void window.ummaMenuSyncChatAvatar?.();
+  }catch(error){token='';throw error;}
+  finally{joining=null;}
+ })();
+ return joining;
 }
 async function connectForMessage(){
  await connect();
