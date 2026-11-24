@@ -824,17 +824,22 @@ function openOrderNotification(number){
 button.addEventListener('click',inspectBrowserPush);
  window.addEventListener('pageshow',inspectBrowserPush);
  button.onclick=open;
- window.ummaCustomerConnect={open,close:()=>dialog?.close(),openDraft(text){
-  void open();
-  const field=dialog?.querySelector('.connect-compose textarea');
-  if(!field)return;
+ window.ummaCustomerConnect={open,close:()=>dialog?.close(),openDraft(text,beforeOpen){
+  if(!dialog)build();
+  const field=dialog.querySelector('.connect-compose textarea');
+  if(!field)return false;
   const previous=field.value;
+  const alreadyPresent=previous.includes(text);
   const draft=previous.trim()?previous+'\n\n'+text:text;
-  if(draft.length<=field.maxLength&&!previous.includes(text)){
+  if(beforeOpen&&!alreadyPresent&&draft.length>field.maxLength)return false;
+  beforeOpen?.();
+  void open();
+  if(draft.length<=field.maxLength&&!alreadyPresent){
    field.value=draft;
    field.dispatchEvent(new Event('input',{bubbles:true}));
   }
   field.focus({preventScroll:true});
+  return alreadyPresent||draft.length<=field.maxLength;
  }};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
 if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>{
