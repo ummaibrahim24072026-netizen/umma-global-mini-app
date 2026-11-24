@@ -43,8 +43,9 @@ console.log('PASS storefront SQL: date, enabled, time-window validation and serv
 
 const html=fs.readFileSync('menu/index.html','utf8');
 const script=name=>fs.readFileSync('js/cafe/'+name+'.js','utf8');
+const reviewTime=new Date('2030-11-24T09:30:00Z');
 const products=[
-  {id:manti,sku:'UMMA-CAFE-MANTI',name_ru:'Манты с мясом',name_en:'Meat manti',price_vnd:150000,weight_value:400,weight_unit:'g',stockManaged:true,available:3,plannedQuantity:10,plannedAvailable:7,plannedReadyAt:new Date(Date.now()+3600000).toISOString(),planRevision:batch},
+  {id:manti,sku:'UMMA-CAFE-MANTI',name_ru:'Манты с мясом',name_en:'Meat manti',price_vnd:150000,weight_value:400,weight_unit:'g',stockManaged:true,available:3,plannedQuantity:10,plannedAvailable:7,plannedReadyAt:new Date(reviewTime.valueOf()+3600000).toISOString(),planRevision:batch},
   {id:plov,sku:'UMMA-CAFE-PLOV',name_ru:'Плов с бараниной',price_vnd:120000,stockManaged:true,available:4},
 ];
 const market={ok:true,categories:[{id:'meat',name_ru:'Мясо',name_en:'Meat'},{id:'empty',name_ru:'Овощи',name_en:'Vegetables'}],offers:[
@@ -144,6 +145,7 @@ if(browserModule){
       return route.fulfill({headers,json:{ok:true}});
     });
     const page=await context.newPage();
+    await page.clock.setFixedTime(reviewTime);
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.goto(origin+'/menu/');

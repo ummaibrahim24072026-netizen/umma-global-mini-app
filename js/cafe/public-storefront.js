@@ -96,12 +96,12 @@
       const sizes = [...new Map(units.map(unit => [unit.quantity+'|'+unit.price_vnd+'|'+unit.expires_on,unit])).values()];
       const localDate = date => new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium', timeZone:'UTC'})
         .format(new Date(date+'T00:00:00Z'));
-      const labels = {g:'г', ml:'мл', piece:'шт.', package:'Упаковка', set:'Набор', kg:'кг', l:'л'};
+      const labels = {g:'г', ml:'мл', pcs:'шт.', piece:'шт.', package:'Упаковка', set:'Набор', kg:'кг', l:'л'};
       const unit = t(labels[measure] || measure || 'шт.');
       const pack = sizes.map(item => '<li>'+esc(num(item.quantity)+' '+unit+' · '+money(item.price_vnd))+
         (item.expires_on&&/^\d{4}-\d{2}-\d{2}$/.test(item.expires_on)&&Number.isFinite(Date.parse(item.expires_on))?
           '<br>'+esc(t('Годен до {date}', {date:localDate(item.expires_on)})):'')+'</li>').join('');
-      const fixed = !sizes.length&&offer.fixed_quantity>0?' · '+num(offer.fixed_quantity)+' '+unit:'';
+      const fixed = sizes.length?'':offer.fixed_quantity>0?' · '+num(offer.fixed_quantity)+' '+unit:' / '+unit;
       const price = money(offer.price_vnd)+(offer.sale_mode==='individual_weight'?' / '+t('кг'):fixed);
       return '<article class="cafe-product storefront-market-offer" id="'+esc(key)+'">'+
         (image?'<img src="'+esc(image)+'" alt="" loading="lazy" decoding="async">':'')+
