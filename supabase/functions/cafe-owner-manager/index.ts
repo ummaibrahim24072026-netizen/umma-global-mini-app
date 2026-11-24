@@ -48,7 +48,7 @@ async function provider(path: string, body: FormData | Record<string,unknown>) {
     const safe = (value: unknown) => typeof value==="string" && /^[a-zA-Z0-9_.-]{1,100}$/.test(value) ? value : "";
     const code = safe(diagnostic?.error?.code);
     console.error("Owner recognition HTTP",path,result.status,code,safe(diagnostic?.error?.type),safe(diagnostic?.error?.param));
-    if (code==="insufficient_quota") throw new InputError("Лимит сервиса распознавания исчерпан. Введите данные вручную.",503);
+    if (code==="insufficient_quota" || code==="credit_balance_exhausted" || diagnostic?.error?.type==="insufficient_quota") throw new InputError("Лимит сервиса распознавания исчерпан. Введите данные вручную.",503);
     throw new InputError("Распознавание недоступно. Введите данные вручную.",503);
   }
   return result.json();
@@ -146,6 +146,7 @@ Deno.serve(async request => {
     if (!command || command.length>4000) throw new InputError("Введите команду до 4000 символов");
     const content: Record<string,unknown>[]=[{type:"input_text",text:"Reply in JSON.\n"+JSON.stringify({command,today:today(),catalog})}];
     let hash: string | undefined;
+    let original: {path: string; file: File} | undefined;
     if (isInvoice) {
       const file=body.file;
       if (!(file instanceof File) || !file.size || file.size>10000000) throw new InputError("Выберите фото или PDF до 10 МБ");
@@ -153,11 +154,7 @@ Deno.serve(async request => {
       if (!invoiceMime(bytes,file.type)) throw new InputError("Поддерживаются PDF, JPG, PNG и WebP");
       hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes)),byte=>byte.toString(16).padStart(2,"0")).join("");
       const {path}=await rpc("invoice_access",{p_hash:hash,p_write:true});
-      const {error}=await bucket.upload(path,file,{contentType:file.type,upsert:false});
-      if (error) {
-        const {error:readError}=await bucket.info(path);
-        if (readError) throw new InputError("Не удалось сохранить оригинал",503);
-      }
+      original={path,file};
       const data="data:"+file.type+";base64,"+encoded(bytes);
       content.push(file.type==="application/pdf" ? {type:"input_file",filename:"invoice.pdf",file_data:data}
         : {type:"input_image",image_url:data,detail:"high"});
@@ -189,6 +186,14 @@ Deno.serve(async request => {
         lineTotal:row?.lineTotal ?? null,area:row?.area==="kitchen" ? "kitchen" : "main",
         uncertain:row?.uncertain===true || !known.has(row?.itemId),
       }));
+    }
+    if (original) {
+      const {path,file}=original;
+      const {error}=await bucket.upload(path,file,{contentType:file.type,upsert:false});
+      if (error) {
+        const {error:readError}=await bucket.info(path);
+        if (readError) throw new InputError("Не удалось сохранить оригинал",503);
+      }
     }
     return json({ok:true,draft:{
       kind:result.kind,area:result.area==="kitchen" ? "kitchen" : "main",

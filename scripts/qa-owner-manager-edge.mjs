@@ -37,6 +37,7 @@ const fetch=async(url,options)=>{
     assert.equal(options.body.get("language"),"ru");
     return Response.json({text:"Привезли 20 килограммов риса по 25 тысяч"});
   }
+  if(providerResponse==="quota") return Response.json({error:{code:"credit_balance_exhausted",type:"insufficient_quota"}},{status:429});
   const request=JSON.parse(options.body);
   assert.equal(request.store,false);
   if(providerResponse==="invoice") assert.match(request.input[0].content[1].image_url,/^data:image\/png;base64,/);
@@ -80,6 +81,11 @@ role="kitchen";
 assert.equal((await request("invoice",{},png)).status,403);
 role="owner";
 assert.equal((await request("invoice",{},new Blob(["wrong"],{type:"image/png"}))).status,400);
+providerResponse="quota";
+const quota=await request("invoice",{},png);
+assert.equal(quota.status,503);
+assert.match((await quota.json()).error,/Лимит/);
+assert.ok(!calls.some(call=>call.name==="storage.upload"));
 providerResponse="invoice";
 const recognizedInvoice=await (await request("invoice",{},png)).json();
 assert.equal(recognizedInvoice.draft.lines[1].itemId,"");
