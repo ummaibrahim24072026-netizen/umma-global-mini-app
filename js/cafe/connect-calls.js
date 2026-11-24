@@ -2,7 +2,9 @@
   'use strict';
 
   const apiUrl = 'https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect-calls';
+  const backupStun = 'stun:stun.cloudflare.com:3478';
   const turnUrl = /^turns?:/i;
+  const hasCandidates = sdp => /^a=candidate:/m.test(sdp || '');
   const hasRelay = server => [server.urls].flat().some(url => turnUrl.test(url));
   const validId = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
   const icons = {
@@ -24,6 +26,7 @@
       cameraDenied: 'Разрешите этому сайту доступ к камере в настройках браузера.',
       microphoneUnavailable: 'Микрофон недоступен. Проверьте настройки телефона и закройте приложения, которые могут его использовать.',
       mediaUnavailable: 'Камера или микрофон недоступны. Проверьте настройки телефона и закройте приложения, которые могут их использовать.',
+      networkUnavailable: 'Не удалось соединить устройства. Попробуйте другую сеть Wi‑Fi или мобильный интернет.',
       retry: 'Повторить', playback: 'Включить звук', client: 'Клиент'
     },
     en: {
@@ -40,6 +43,7 @@
       cameraDenied: 'Allow this site to use the camera in your browser settings.',
       microphoneUnavailable: 'Microphone unavailable. Check your device settings and close any app that may be using it.',
       mediaUnavailable: 'Camera or microphone unavailable. Check your device settings and close any app that may be using them.',
+      networkUnavailable: 'Could not connect the devices. Try another Wi-Fi network or mobile data.',
       retry: 'Try again', playback: 'Play sound', client: 'Customer'
     },
     vi: {
@@ -56,6 +60,7 @@
       cameraDenied: 'Cho phép trang web dùng camera trong cài đặt trình duyệt.',
       microphoneUnavailable: 'Không dùng được micrô. Hãy kiểm tra cài đặt thiết bị và đóng ứng dụng có thể đang dùng micrô.',
       mediaUnavailable: 'Không dùng được camera hoặc micrô. Hãy kiểm tra cài đặt thiết bị và đóng ứng dụng có thể đang dùng chúng.',
+      networkUnavailable: 'Không thể kết nối hai thiết bị. Hãy thử mạng Wi-Fi khác hoặc dữ liệu di động.',
       retry: 'Thử lại', playback: 'Bật âm thanh', client: 'Khách hàng'
     }
   };
@@ -66,19 +71,22 @@
     return node;
   }
 
-  function listenForIce(peer) {
-    if (peer.iceGatheringState === 'complete') return Promise.resolve();
+  function listenForIce(peer, signal) {
+    if (peer.iceGatheringState === 'complete' || signal.aborted) return Promise.resolve();
     return new Promise(resolve => {
       const finish = () => {
         clearTimeout(timer);
         peer.removeEventListener('icegatheringstatechange', onState);
+        signal.removeEventListener('abort', finish);
         resolve();
       };
       const onState = () => { if (peer.iceGatheringState === 'complete') finish(); };
       // The signaling service exchanges complete SDP, so late relay candidates
       // would otherwise never reach the other browser.
-      const timer = setTimeout(finish, 14000);
+      const timer = setTimeout(finish, 20000);
       peer.addEventListener('icegatheringstatechange', onState);
+      signal.addEventListener('abort', finish, {once: true});
+      onState();
     });
   }
 
@@ -119,8 +127,10 @@
     async function getIceServers(call) {
       const account = call.credentials?.initData || call.credentials?.token;
       if (iceCache && iceCache.account === account && iceCache.until > Date.now()) return iceCache.servers;
-      const {servers} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
-      if (!Array.isArray(servers) || !servers.length) throw new Error('unavailable');
+      const {servers: configured} = await request('ice', {id: call.incoming ? call.id : null}, call.credentials);
+      if (!Array.isArray(configured) || !configured.length) throw new Error('unavailable');
+      const servers = configured.some(server => [server.urls].flat().includes(backupStun))
+        ? configured : [...configured, {urls: backupStun}];
       if (servers.some(hasRelay)) {
         iceCache = {account, servers, until: Date.now() + 10 * 60 * 1000};
       }
@@ -159,6 +169,7 @@
       call.waveFrame && cancelAnimationFrame(call.waveFrame);
       call.waveAudio?.close().catch(() => {});
       call.waveAudio = null;
+      call.iceGathering?.abort();
       call.peer?.close();
       call.stream?.getTracks().forEach(track => track.stop());
       if (call.remoteVideo) call.remoteVideo.srcObject = null;
@@ -194,6 +205,10 @@
       call.playback?.remove();
       call.mediaNotice.textContent = '';
       call.controls.replaceChildren(action('close', () => call.overlay.close()));
+      if (reason === 'networkUnavailable' && !call.incoming) {
+        const {clientId, name} = call;
+        call.controls.prepend(action('retry', () => start(call.mode, {clientId, name}), 'umma-call-answer'));
+      }
     }
 
     function startWave(call, stream) {
@@ -693,6 +708,7 @@
         const servers = await getIceServers(call);
         if (current !== call) return;
         const peer = call.peer = new RTCPeerConnection({iceServers: servers});
+        call.iceGathering = new AbortController();
         const playAudio = setupRemoteMedia(call, peer);
         peer.addTrack(microphone, stream);
         if (camera) {
@@ -726,19 +742,22 @@
             }
           } else if (state === 'disconnected' && call.connected) {
             call.status.textContent = t('reconnecting');
-            armTimeout(call, 'unavailable', 25000);
+            armTimeout(call, 'networkUnavailable', 25000);
           } else if (state === 'failed') {
-            finish(call, 'unavailable');
+            finish(call, 'networkUnavailable');
           }
         };
         if (call.incoming) await peer.setRemoteDescription({type: 'offer', sdp: call.offer});
         await peer.setLocalDescription(call.incoming ? await peer.createAnswer() : await peer.createOffer());
-        await listenForIce(peer);
+        await listenForIce(peer, call.iceGathering.signal);
         if (current !== call) return;
+        const sdp = peer.localDescription?.sdp;
+        if (!hasCandidates(sdp)) {
+          finish(call, 'networkUnavailable');
+          return;
+        }
         call.sent = true;
-        const description = {
-          id: call.id, clientId: call.clientId, mode: call.mode, sdp: peer.localDescription.sdp
-        };
+        const description = {id: call.id, clientId: call.clientId, mode: call.mode, sdp};
         let result;
         try {
           result = await request(call.incoming ? 'answer' : 'start', description, call.credentials);
@@ -763,7 +782,7 @@
           ringback(call);
           armTimeout(call, 'unanswered', 74000);
         } else if (!call.connected) {
-          armTimeout(call, 'unavailable', 22000);
+          armTimeout(call, 'networkUnavailable', 25000);
         }
         schedule(0);
       } catch (error) {
@@ -825,8 +844,12 @@
           finish(call, call.ready && !call.incoming && !call.peer?.remoteDescription ? 'unanswered' : 'ended', false);
         } else if (call?.ready && !call.incoming && state?.answer && !call.peer.remoteDescription) {
           stopRinger(call);
+          if (!hasCandidates(state.answer)) {
+            finish(call, 'networkUnavailable');
+            return;
+          }
           call.status.textContent = t('connecting');
-          armTimeout(call, 'unavailable', 25000);
+          armTimeout(call, 'networkUnavailable', 25000);
           try {
             await call.peer.setRemoteDescription({type: 'answer', sdp: state.answer});
           } catch {
