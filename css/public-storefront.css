@@ -486,3 +486,7 @@
 #cafeEventForm #cafeEventStatus {
   color: var(--umma-brand-deep);
 }
+
+.public-cafe-menu #cafePage [data-cafe-section="daily"][aria-pressed="false"] {
+  background: var(--storefront-gold);
+}
