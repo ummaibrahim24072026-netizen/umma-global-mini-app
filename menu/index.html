@@ -550,6 +550,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status{gap:10px!important;padding:14px!important}
   .public-cafe-menu #checkout[data-stage="receipt"] #success:not([hidden]) .receipt-status-icon{flex-basis:44px!important;width:44px!important;height:44px!important}
 }
+/* Keep the programmatic focus target for screen readers without drawing a ring around static titles. */
+.public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
+  outline: none;
+}
 </style><link rel="stylesheet" href="css/viewport.css?v=1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
