@@ -823,7 +823,19 @@ function openOrderNotification(number){
 }
 button.addEventListener('click',inspectBrowserPush);
  window.addEventListener('pageshow',inspectBrowserPush);
- button.onclick=open;window.ummaCustomerConnect={open,close:()=>dialog?.close()};
+ button.onclick=open;
+ window.ummaCustomerConnect={open,close:()=>dialog?.close(),openDraft(text){
+  void open();
+  const field=dialog?.querySelector('.connect-compose textarea');
+  if(!field)return;
+  const previous=field.value;
+  const draft=previous.trim()?previous+'\n\n'+text:text;
+  if(draft.length<=field.maxLength&&!previous.includes(text)){
+   field.value=draft;
+   field.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  field.focus({preventScroll:true});
+ }};
 window.addEventListener('umma:order-feed-change',()=>{if(dialog?.open)renderThread();badge();});
 if(profileSettingsButton&&settingsDialog)profileSettingsButton.onclick=async()=>{
  if(settingsDialog.open)return;
