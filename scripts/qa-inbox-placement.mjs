@@ -4,6 +4,16 @@ const inbox=d.getElementById('customerMessages');
 const trigger=d.getElementById('customerMessagesButton');
 w.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
 w.AbortSignal=AbortSignal;
+w.Notification=class {static permission='granted';};
+w.PushManager=class {};
+Object.defineProperty(w.navigator,'serviceWorker',{value:{
+ addEventListener(){},
+ async getRegistration(){
+  return {pushManager:{async getSubscription(){
+   return {async unsubscribe(){throw Error('Order notifications share the browser subscription');}};
+  }}};
+ }
+}});
 const observedChatRows=new Set();
 let notifyChatResize;
 w.ResizeObserver=class{
