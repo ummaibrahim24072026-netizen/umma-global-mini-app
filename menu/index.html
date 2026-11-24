@@ -5,7 +5,7 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <script src="js/cafe/menu-install.js?v=1"></script>
-<script src="js/cafe/public-menu-i18n.js?v=meal-collections-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=order-inquiry-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -554,7 +554,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=meal-collections-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=order-inquiry-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
@@ -632,6 +632,18 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </div>
 </section>
 <div id="cafeSections" class="storefront-sections" role="group" aria-label="Разделы меню" data-i18n-label="Разделы меню" hidden></div>
+<div id="cafeInquiryTiles" class="storefront-sections" role="group" aria-label="Индивидуальные заказы" data-i18n-label="Индивидуальные заказы">
+  <button type="button" id="cafeFamilyInquiry" class="cafe-category storefront-tile" data-inquiry="family">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8"/></svg>
+    <strong data-i18n="Для семьи">Для семьи</strong>
+    <small data-i18n="Подобрать блюда">Подобрать блюда</small>
+  </button>
+  <button type="button" class="cafe-category storefront-tile" data-inquiry="custom">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12a4 4 0 0 1 0-8c1 0 2 .4 2.6 1a4 4 0 0 1 6.8 0A4 4 0 1 1 18 12v8H6zm0 4h12"/></svg>
+    <strong data-i18n="На заказ">На заказ</strong>
+    <small data-i18n="Обсудить с кафе">Обсудить с кафе</small>
+  </button>
+</div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
 <div id="marketSections" class="storefront-sections" role="group" aria-label="Каталог" data-i18n-label="Каталог" hidden></div>
@@ -995,6 +1007,8 @@ function renderCafeSections(){
  const inCollection=insideCafe&&cafeSection!=='all';
  $('cafePage').classList.toggle('is-cafe-collection',inCollection);
  $('leaveCafeSection').hidden=!inCollection;
+ $('cafeInquiryTiles').hidden=!insideCafe||inCollection;
+ $('cafeFamilyInquiry').hidden=active.some(([id])=>id==='family');
  if(insideCafe){
   const heading=active.find(([id])=>id===cafeSection)?.[1]||'Меню';
   $('menuHeading').dataset.i18n=heading;
@@ -2084,12 +2098,22 @@ const marketStorefront=window.ummaPublicStorefront?.create({
   else {
    $('cafePage').classList.remove('is-cafe-collection');
    $('leaveCafeSection').hidden=true;
+   $('cafeInquiryTiles').hidden=true;
   }
  },
  onConfig(assignments){
   storefrontAssignments=assignments;
   if(menuState==='ready'){renderCategories();renderProducts();}
  }
+});
+$('cafeInquiryTiles').addEventListener('click',event=>{
+ const action=event.target.closest('[data-inquiry]');
+ if(!action)return;
+ const label=action.dataset.inquiry==='family'
+  ?'Здравствуйте! Помогите подобрать блюда для семьи. Человек: __. На дату и время: __.'
+  :'Здравствуйте! Хочу сделать заказ заранее. Блюда и количество: __. На дату и время: __.';
+ if(window.ummaCustomerConnect?.openDraft)window.ummaCustomerConnect.openDraft(t(label));
+ else $('customerMessagesButton').click();
 });
 $('leaveCafeSection').onclick=()=>{
  const previous=cafeSection;
@@ -2132,4 +2156,4 @@ window.ummaMenuAudience?.start(source);
 marketStorefront?.start();
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=offers-setup-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=order-inquiry-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>

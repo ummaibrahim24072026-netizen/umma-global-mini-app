@@ -408,3 +408,16 @@
   background: var(--umma-brand-primary);
   color: var(--umma-brand-white);
 }
+
+.public-cafe-menu #cafePage #cafeInquiryTiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.public-cafe-menu #cafePage :is(#cafeInquiryTiles, #cafeFamilyInquiry)[hidden] {
+  display: none !important;
+}
+
+#cafeInquiryTiles small {
+  font-size: .8em;
+  color: var(--umma-brand-muted);
+}

@@ -211,6 +211,20 @@ Object.assign(copy,{
  "Недоступные способы оплаты отмечены серым.":{"en":"Unavailable payment methods are greyed out.","vi":"Các phương thức chưa khả dụng được hiển thị màu xám."}
 });
 const storefrontLocales=['en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
+Object.assign(copy,{
+ 'Индивидуальные заказы':{en:'Custom orders',vi:'Đơn đặt riêng'},
+ 'На заказ':{en:'Made to order',vi:'Đặt làm riêng'},
+ 'Подобрать блюда':{en:'Choose dishes together',vi:'Chọn món cùng quán'},
+ 'Обсудить с кафе':{en:'Chat with the café',vi:'Trao đổi với quán'},
+ 'Здравствуйте! Помогите подобрать блюда для семьи. Человек: __. На дату и время: __.':{
+  en:'Hi! Could you help me choose dishes for my family? Number of people: __. Date and time: __.',
+  vi:'Xin chào! Quán giúp tôi chọn món cho gia đình nhé. Số người: __. Ngày và giờ: __.'
+ },
+ 'Здравствуйте! Хочу сделать заказ заранее. Блюда и количество: __. На дату и время: __.':{
+  en:'Hi! I’d like to place an advance order. Dishes and quantities: __. Date and time: __.',
+  vi:'Xin chào! Tôi muốn đặt món trước. Món ăn và số lượng: __. Ngày và giờ: __.'
+ }
+});
 const storefrontCopy={
  'Готовые блюда':['Prepared meals','Món ăn chế biến sẵn','조리된 요리','即食菜品','Fertige Gerichte','Plats préparés','อาหารพร้อมทาน','Hidangan siap','Hidangan siap saji','وجبات جاهزة','Pratos prontos'],
  'Продукты для дома':['Groceries for home','Thực phẩm cho gia đình','가정용 식재료','家庭食材','Lebensmittel für zu Hause','Produits pour la maison','วัตถุดิบสำหรับทำอาหาร','Barangan dapur','Bahan makanan di rumah','مواد غذائية للمنزل','Produtos para casa'],
