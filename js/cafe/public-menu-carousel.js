@@ -30,6 +30,7 @@
   const eyebrow = action.querySelector('.cafe-spotlight-eyebrow');
   const title = action.querySelector('strong');
   const detail = action.querySelector('.cafe-spotlight-detail');
+  const price = action.querySelector('.cafe-spotlight-price');
   const cta = action.querySelector('.cafe-spotlight-cta');
   const photo = action.querySelector('img');
   const controls = host.querySelector('.cafe-spotlight-controls');
@@ -44,6 +45,8 @@
   let current = 0;
   let signature;
   let catalog = [];
+  let direction = 'cafe';
+  let leading = [];
   let announcements = [];
   let openProduct;
   let gesture;
@@ -70,9 +73,10 @@
     const card = slides[current];
     eyebrow.textContent = card.badge;
     title.textContent = card.title;
-    detail.textContent = card.detail;
-    cta.textContent = labels()[card.news ? 2 : 1];
-    action.setAttribute('aria-haspopup', card.news ? 'false' : 'dialog');
+    detail.textContent = card.detail || '';
+    if (price) price.textContent = card.price || '';
+    cta.textContent = card.cta || labels()[card.news ? 2 : 1];
+    action.setAttribute('aria-haspopup', card.news || direction==='market' ? 'false' : 'dialog');
     if (card.image && photo.src !== card.image) photo.src = card.image;
     if (!card.image) photo.removeAttribute('src');
     photo.hidden = !card.image;
@@ -95,15 +99,16 @@
     const activeNews = announcements.map(item => ({
       key: item.key, title: item.title, detail: item.body, news: true
     }));
-    const next = [...activeNews, ...dishes];
-    const nextSignature = JSON.stringify([labels(), next]);
+    const next = direction==='market' ? catalog : [...leading, ...activeNews, ...dishes];
+    const nextSignature = JSON.stringify([direction, labels(), next]);
     if (nextSignature === signature) return;
     signature = nextSignature;
 
     const selected = slides[current]?.key;
     slides = next;
     action.hidden = !slides.length;
-    fallback.hidden = !!slides.length;
+    fallback.hidden = direction==='market' || !!slides.length;
+    host.hidden = direction==='market' && !slides.length;
     controls.hidden = slides.length < 2;
     if (!slides.length) {
       schedule();
@@ -125,7 +130,9 @@
   }
 
   window.ummaCafeSpotlight = {
-    setCatalog(rows, open) {
+    setCatalog(rows, open, options = {}) {
+      direction = options.direction || 'cafe';
+      leading = options.leading || [];
       catalog = rows;
       openProduct = open;
       render();

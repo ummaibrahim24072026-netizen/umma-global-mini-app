@@ -5,7 +5,7 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <script src="js/cafe/menu-install.js?v=1"></script>
-<script src="js/cafe/public-menu-i18n.js?v=delivery-receipt-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=menu-layout-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -554,10 +554,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=menu-layout-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
-  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA CAFE</small></span></div>
+  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
   <div class="topbar-actions">
     <button id="shareMenu" class="plain-btn share-menu-button" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></svg>
@@ -576,6 +576,16 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     <span data-i18n="На главный экран">На главный экран</span>
   </button>
 </div>
+<nav id="storefrontSwitch" class="storefront-switch" aria-label="UMMA GLOBAL" hidden>
+  <button type="button" class="cafe-category" data-storefront="cafe" aria-pressed="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18m11-10v10m0-10h3V3a6 6 0 0 0-6 6v2z"/></svg>
+    <span class="storefront-label"><strong>UMMA CAFE</strong><small data-i18n="Готовые блюда">Готовые блюда</small></span>
+  </button>
+  <button type="button" class="cafe-category" data-storefront="market" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18l-2 10H5zM7 10l3-6m7 6-3-6M9 14v3m6-3v3"/></svg>
+    <span class="storefront-label"><strong>UMMA MARKET</strong><small data-i18n="Продукты для дома">Продукты для дома</small></span>
+  </button>
+</nav>
 <section class="cafe-intro" id="cafeSpotlight" aria-label="UMMA Cafe">
   <div class="cafe-spotlight-fallback">
     <div class="cafe-intro-copy"><p data-i18n="Халяльная кухня">Халяльная кухня</p><strong>UMMA CAFE</strong><span data-i18n="Нячанг">Нячанг</span></div>
@@ -586,6 +596,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
       <span class="cafe-spotlight-eyebrow"></span>
       <strong></strong>
       <span class="cafe-spotlight-detail"></span>
+      <span class="cafe-spotlight-price"></span>
       <span class="cafe-spotlight-cta"></span>
     </span>
     <img alt="" width="240" height="240" decoding="async" draggable="false" hidden>
@@ -597,8 +608,11 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     </button>
   </div>
 </section>
+<section id="marketIntro" class="storefront-market-intro" aria-label="UMMA MARKET" hidden>
+  <img src="logo/assets/umma-market-owner-banner.jpg" alt="" width="1536" height="576" loading="lazy" decoding="async">
+</section>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
-<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Наше меню">Наше меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="plain-btn menu-search-button" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.3 15.3 4.2 4.2"/></svg><span data-i18n="Поиск">Поиск</span></button></div></div>
+<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Меню">Меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="plain-btn menu-search-button" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.3 15.3 4.2 4.2"/></svg><span data-i18n="Поиск">Поиск</span></button></div></div>
 <div id="searchPanel" class="menu-search-panel" role="search" hidden>
   <div class="menu-search-field">
     <input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off">
@@ -611,8 +625,17 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
   <p id="voiceSearchStatus" class="menu-search-status" role="status"></p>
 </div>
-<div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div></section>
+</section>
+<div id="cafeSections" class="storefront-sections" role="group" aria-label="Разделы меню" data-i18n-label="Разделы меню" hidden></div>
+<div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div>
 <div id="products" class="cafe-products" aria-label="Меню кафе" data-i18n-label="Меню кафе"><div class="message" role="status" data-i18n="Загружаем меню…">Загружаем меню…</div></div>
+<div id="marketSections" class="storefront-sections" role="group" aria-label="Каталог" data-i18n-label="Каталог" hidden></div>
+<div id="marketProducts" class="cafe-products" hidden></div>
+<section id="marketOpening" class="storefront-market-opening" hidden>
+  <h2 data-i18n="Готовим каталог">Готовим каталог</h2>
+  <p data-i18n="Здесь появятся продукты для дома с ценами и наличием.">Здесь появятся продукты для дома с ценами и наличием.</p>
+  <button type="button" class="plain-btn" id="marketBackToCafe" data-i18n="Перейти в меню кафе">Перейти в меню кафе</button>
+</section>
 <footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
 <p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
 <dialog id="customerProfile" class="customer-section" closedby="closerequest" aria-labelledby="profileTitle">
@@ -837,7 +860,8 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=direct-install-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
-<script src="js/cafe/public-menu-carousel.js?v=1"></script>
+<script src="js/cafe/public-menu-carousel.js?v=menu-layout-1"></script>
+<script src="js/cafe/public-storefront.js?v=menu-layout-1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
 <script src="js/cafe/public-menu-profile-name.js?v=3"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
@@ -907,10 +931,70 @@ try{
  }
 }catch{}
 const locationId='e22788bd-4734-4b3a-911e-ba103d52617a';
+const storefrontSections=[
+ ['breakfast','Завтраки','M2 19h20M4 15h16m-13 0a5 5 0 0 1 10 0M12 3v3M4 8l2 2m14-2-2 2'],
+ ['lunch','Обеды','M4 12h16a8 8 0 0 1-16 0zm4 9h8M9 4v4m6-4v4'],
+ ['dinner','Ужины','M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11z'],
+ ['dish-day','Блюдо дня','m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'],
+ ['family','Для семьи','M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8'],
+ ['daily','На каждый день','M4 6h16v14H4zm0 5h16M8 4v4m8-4v4m-8 7h2m4 0h2'],
+ ['cooking','Сегодня готовим','M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m9-5v5l3 2']
+];
+let cafeSection='all', storefrontAssignments=[];
+const cartStorageKey='umma-menu-cart-v1:'+locationId;
+
+function readCartDraft(){
+ try{
+  const rows=JSON.parse(sessionStorage.getItem(cartStorageKey)||'[]');
+  if(!Array.isArray(rows))return;
+  for(const row of rows.slice(0,25)){
+   if(!Array.isArray(row))continue;
+   const [id,quantity]=row;
+   if(typeof id==='string' && /^[0-9a-f-]{36}(?:~[0-9a-f-]{36})?$/i.test(id)&&
+      Number.isInteger(quantity)&&quantity>=1&&quantity<=20)cart.set(id,quantity);
+  }
+ }catch{}
+}
+function persistCart(){
+ try{sessionStorage.setItem(cartStorageKey,JSON.stringify([...cart]));}catch{}
+}
+
+function sectionPlacement(section,dish){
+ return storefrontAssignments.find(row=>row.section===section&&row.productId===dish.id);
+}
+function sectionIncludes(section,{dish,batch}){
+ if(section==='all')return true;
+ if(section==='cooking')return orderableFuture(batch)&&localDay(batch.plannedReadyAt)===localDay(Date.now());
+ const placement=sectionPlacement(section,dish);
+ if(!placement)return false;
+ const available=stockLeft(dish)>0&&(section!=='daily'||dish.stockManaged);
+ return available||placement.allowPreorder===true&&orderableFuture(batch);
+}
+function displayBatch(dish,batch){
+ return cafeSection==='daily'&&sectionPlacement('daily',dish)?.allowPreorder!==true?undefined:batch;
+}
+function orderableFuture(batch){
+ return batch&&stockLeft(batch)>0&&Date.parse(batch.plannedReadyAt)>Date.now();
+}
+function localDay(value){
+ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
+}
+function renderCafeSections(){
+ const dishes=menuDishes();
+ const active=storefrontSections.filter(([id])=>dishes.some(row=>sectionIncludes(id,row)));
+ if(cafeSection!=='all'&&!active.some(([id])=>id===cafeSection)){
+  cafeSection='all';
+  category='all';
+ }
+ const host=$('cafeSections');
+ host.hidden=!active.length||!!marketStorefront?.active;
+ host.innerHTML=active.map(([id,label,icon])=>'<button type="button" class="cafe-category storefront-tile" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+esc(t(label))+'</button>').join('');
+}
+
 const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+s))?.id||'other';
 const qty=id=>cart.get(id)||0;
 const count=()=>[...cart.values()].reduce((a,b)=>a+b,0);
-const total=()=>products.reduce((a,p)=>a+qty(p.id)*Number(p.price_vnd),0);
+const total=()=>products.reduce((a,p)=>a+qty(p.id)*(Number(p.price_vnd)||0),0);
 const paymentInputs=[...document.querySelectorAll('[name="paymentMethod"]')];
 const checkoutMethod=()=>pending?.paymentMethod||paymentInputs.find(input=>input.checked)?.value;
 const foreignMethods=new Set(['sber','kaspi','usdt','usd','eur']);
@@ -1038,7 +1122,13 @@ function receiptPhoto(item,order){
 function weight(p){return p.sku?.startsWith('UMMA-CAFE-BAKLAVA-')?t('1 шт.'):p.sku?.startsWith('UMMA-CAFE-DESSERT-')?t('1 порция'):p.weight_value?(p.weight_unit==='ml'?num(p.weight_value)+' '+t('мл'):'≈ '+num(p.weight_value)+' '+t('г')):'';}
 function batchTime(value){return new Intl.DateTimeFormat(I.locale(),{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
 function batchLabel(p){return t('Готовится · к {time}',{time:batchTime(p.plannedReadyAt)})+' · '+t('Время Нячанга');}
-function expandBatches(rows,metadata=new Map()){const expanded=rows.flatMap(p=>{const base={...metadata.get(p.id),...p};return [base,...(p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))?[{...base,id:p.id+'~'+p.planRevision,productId:p.id,isPreorder:true,stockManaged:true,available:p.plannedAvailable}]:[])];});for(const old of products)if(cart.has(old.id)&&!expanded.some(p=>p.id===old.id))expanded.push({...old,plannedQuantity:0,available:0,stockManaged:true});return expanded;}
+function expandBatches(rows,metadata=new Map()){const expanded=rows.flatMap(p=>{const base={...metadata.get(p.id),...p};return [base,...(p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))?[{...base,id:p.id+'~'+p.planRevision,productId:p.id,isPreorder:true,stockManaged:true,available:p.plannedAvailable}]:[])];});for(const id of cart.keys()){
+ if(expanded.some(p=>p.id===id))continue;
+ const old=products.find(p=>p.id===id);
+ const [productId,revision]=id.split('~');
+ const base=expanded.find(p=>p.id===productId);
+ expanded.push({...base,...old,id,productId,isPreorder:!!revision,plannedQuantity:0,available:0,stockManaged:true});
+ }return expanded;}
 function visibleDish(p){return stockLeft(p)>0||p.isPreorder&&p.plannedQuantity>0;}
 function stockLeft(p){return p.stockManaged?Math.max(0,Number(p.available)||0):99;}function shortages(){return [...cart].some(([id,n])=>n>stockLeft(products.find(p=>p.id===id)||{stockManaged:true}));}
 function stockSummary(p){
@@ -1047,8 +1137,7 @@ function stockSummary(p){
 }
 function preorderCard(p,n){
  const readyAt=new Date(p.plannedReadyAt),timeZone='Asia/Ho_Chi_Minh';
- const day=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'});
- const today=day.format(readyAt)===day.format(Date.now());
+ const today=localDay(readyAt)===localDay(Date.now());
  const time=new Intl.DateTimeFormat(I.locale(),{timeZone,hour:'2-digit',minute:'2-digit',...(today?{}:{day:'numeric',month:'short'})}).format(readyAt);
  return '<div class="cafe-preorder-card"><strong>'+esc(t(today?'Будет готово сегодня к {time}':'Будет готово к {time}',{time}))+'</strong><small>'+esc(t('Порций для предзаказа: {count}',{count:num(stockLeft(p))}))+'</small>'+cardQuantity(p,n)+'</div>';
 }
@@ -1058,7 +1147,7 @@ function showDish(p, focusSelector){
   const n=name(p);
   const portion=weight(p);
   const copy=description(p);
-  const future=menuDishes().find(({dish})=>dish===p)?.batch;
+  const future=displayBatch(p,menuDishes().find(({dish})=>dish===p)?.batch);
   $('dishTitle').textContent=n;
   $('dishDetailsBody').innerHTML=(image?'<img class="dish-detail-photo" src="'+esc(image)+'" alt="">':'')+
     '<div class="dish-detail-facts"><strong>'+money(p.price_vnd)+'</strong>'+
@@ -1083,7 +1172,7 @@ function showDish(p, focusSelector){
 }
 function cardQuantity(p,n,detail=false){
   const q=qty(p.id), id=esc(p.id);
-  if(p.isPreorder)n+=' · '+batchLabel(p);
+  if(p.isPreorder&&Number.isFinite(Date.parse(p.plannedReadyAt)))n+=' · '+batchLabel(p);
   if(q)return '<div class="cafe-card-quantity"><button type="button" class="cafe-qty-btn" data-change="-1" data-id="'+id+'" aria-label="'+esc(t('Уменьшить {dish}',{dish:n}))+'">−</button><strong>'+num(q)+'</strong><button type="button" class="cafe-qty-btn" data-add-product="'+id+'" data-change="1" data-id="'+id+'" aria-label="'+esc(t('Добавить ещё {dish}',{dish:n}))+'">+</button></div>';
   const label=p.isPreorder?t('Предзаказать'):detail?t('В корзину'):'+';
   const accessibleName=detail?'':' aria-label="'+esc(t('Добавить {dish}',{dish:n}))+'"';
@@ -1095,7 +1184,27 @@ function menuDishes(){
  return products.filter(p=>!p.isPreorder&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
 }
 
-function renderCategories(){const dishes=menuDishes().map(row=>row.dish);const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];$('categories').innerHTML=cats.map(c=>'<button type="button" class="cafe-category" data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products">'+esc(t(c.label))+'<span aria-hidden="true">'+num(c.id==='all'?dishes.length:dishes.filter(p=>categoryFor(p)===c.id).length)+'</span></button>').join('');}
+const categoryIcons={
+ all:'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z',
+ soups:'M3 12h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8zm6-8c-2 2 2 3 0 5m6-5c-2 2 2 3 0 5',
+ mains:'M3 18h18M5 16a7 7 0 0 1 14 0M12 9V6m-2 0h4',
+ grill:'M4 18l14-14m-8 9-3-3 3-3 3 3m1-1-3-3 3-3 3 3m-8 8 3 3 3-3-3-3m-4 4-3-3-2 2 3 3',
+ salads:'M4 15c0-6 5-10 15-10 0 9-5 14-10 14-3 0-5-2-5-4zm1 5 9-9',
+ bakery:'M3 15a11 11 0 0 1 11-11h3a4 4 0 0 1 4 4v2a9 9 0 0 1-9 9H7a4 4 0 0 1-4-4zm8-9 2 4m2-5 2 4m-9 1 2 4',
+ desserts:'M4 19h16v-5H4zm2-5v-3h12v3m-6-3V7m0 0c-3-1-1-3 0-4 1 1 3 3 0 4z',
+ drinks:'M5 8h14l-2 13H7zm7 0 2-5h4M8 12h8',
+ sauces:'M7 9h10l2 11H5zm2 0 1-5h4l1 5m-7 6h8',
+ other:'M4 12h16M12 4v16'
+};
+function renderCategories(){
+ renderCafeSections();
+ const dishes=menuDishes().filter(row=>sectionIncludes(cafeSection,row)).map(row=>row.dish);
+ const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];
+ if(!cats.some(c=>c.id===category))category='all';
+ $('categories').innerHTML=cats.map(c=>'<button type="button" class="cafe-category storefront-tile" data-category="'+c.id+
+   '" aria-pressed="'+(category===c.id)+'" aria-controls="products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+
+   categoryIcons[c.id]+'"/></svg>'+esc(t(c.label))+'</button>').join('');
+}
 // Search tags for ingredients shown in the supplied catalogue photos or confirmed in the menu.
 const menuIngredientTags = {
   'UMMA-CAFE-SALAD': 'помидор огурец',
@@ -1152,20 +1261,54 @@ function matchesMenuSearch(dish, terms) {
 }
 
 function renderSpotlight(dishes) {
-  if (!window.ummaCafeSpotlight) return;
-  const eligible = dishes.filter(({dish, batch}) => stockLeft(dish) > 0 || batch && stockLeft(batch) > 0);
-  window.ummaCafeSpotlight.setCatalog(eligible.map(({dish}) => ({
-    key: dish.id, sku: dish.sku, title: name(dish), detail: money(dish.price_vnd), image: safeImage(dish)
+  if (!window.ummaCafeSpotlight || marketStorefront?.active) return;
+  const candidates = dishes.filter(({dish,batch})=>stockLeft(dish)>0||orderableFuture(batch));
+  const upcoming = candidates.filter(({batch})=>orderableFuture(batch))
+    .sort((a,b)=>Date.parse(a.batch.plannedReadyAt)-Date.parse(b.batch.plannedReadyAt))
+    .slice(0,2).map(({dish,batch})=>({
+      key:batch.id,title:name(dish),badge:t(localDay(batch.plannedReadyAt)===localDay(Date.now())?'Сегодня готовим':'Предзаказать'),
+      detail:t('Будет готово к {time}',{time:localDay(batch.plannedReadyAt)===localDay(Date.now())
+        ?new Intl.DateTimeFormat(I.locale(),{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit'}).format(new Date(batch.plannedReadyAt))
+        :batchTime(batch.plannedReadyAt)}),
+      price:money(dish.price_vnd),
+      cta:t('Предзаказать'),image:safeImage(dish)
+    }));
+  window.ummaCafeSpotlight.setCatalog(candidates.filter(({dish})=>stockLeft(dish)>0).map(({dish})=>({
+    key:dish.id,sku:dish.sku,title:name(dish),
+    price:money(dish.price_vnd), detail:dish.stockManaged?t('В наличии: {count}',{count:num(stockLeft(dish))}):'',
+    image:safeImage(dish)
   })), id => {
-    const product = menuDishes().find(({dish}) => dish.id === id)?.dish;
-    if (product) {
-      showDish(product);
-      $('dishDetails').dataset.fromSpotlight = 'true';
+    const product=menuDishes().find(({dish,batch})=>dish.id===id||batch?.id===id)?.dish;
+    if(product){
+      if(cafeSection==='daily'&&id!==product.id&&sectionPlacement('daily',product)?.allowPreorder!==true){
+        cafeSection='all';
+        category='all';
+        renderCategories();
+        renderProducts();
+      }
+      showDish(product,id===product.id?undefined:'[data-change="1"][data-id="'+CSS.escape(id)+'"]');
+      $('dishDetails').dataset.fromSpotlight='true';
     }
-  });
+  }, {leading:upcoming});
 }
-function renderProducts(){const dishes=menuDishes();renderSpotlight(dishes);const terms=menuSearchTerms(query);const visible=dishes.filter(({dish:p})=>(category==='all'||categoryFor(p)===category)&&matchesMenuSearch(p,terms));$('products').innerHTML=menuCategories.map(c=>{const items=visible.filter(({dish})=>categoryFor(dish)===c.id);return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+items.map(({dish,batch})=>card(dish,batch)).join(''):'';}).join('')||'<div class="message"><p>'+t('Ничего не найдено')+'</p><button type="button" class="plain-btn" id="reset">'+t('Показать всё меню')+'</button></div>';lock();}
-function renderCart(){ $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
+
+function renderProducts(){
+ const dishes=menuDishes();
+ renderSpotlight(dishes);
+ const terms=menuSearchTerms(query);
+ const visible=dishes.filter(row=>sectionIncludes(cafeSection,row)&&
+   (category==='all'||categoryFor(row.dish)===category)&&matchesMenuSearch(row.dish,terms));
+ const renderCards=rows=>rows.map(({dish,batch})=>card(dish,displayBatch(dish,batch))).join('');
+ const contents=cafeSection==='cooking'
+  ?renderCards(visible.sort((a,b)=>Date.parse(a.batch.plannedReadyAt)-Date.parse(b.batch.plannedReadyAt)))
+  :menuCategories.map(c=>{
+    const items=visible.filter(({dish})=>categoryFor(dish)===c.id);
+    return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+renderCards(items):'';
+  }).join('');
+ $('products').innerHTML=contents||'<div class="message"><p>'+esc(t('Ничего не найдено'))+'</p><button type="button" class="plain-btn" id="reset">'+esc(t('Показать всё меню'))+'</button></div>';
+ lock();
+}
+function renderCart(){ persistCart(); $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
  const badge=$('cartCount');
  badge.hidden=n===0;
  badge.textContent=n?num(n):'';
@@ -1187,7 +1330,7 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
    batchHint.className='cafe-preorder-label';
    $('cartItems').before(batchHint);
  }
- const future=selected.filter(p=>p.isPreorder);
+ const future=selected.filter(p=>p.isPreorder&&Number.isFinite(Date.parse(p.plannedReadyAt)));
  batchHint.hidden=!future.length;
  if(future.length){
    const readyAt=Math.max(...future.map(p=>Date.parse(p.plannedReadyAt)));
@@ -1201,14 +1344,14 @@ function renderCart(){ $('submit').textContent=t(pending?'Повторить':'�
 }
 function renderCartRow(product){
  const photo=safeImage(product);
- const dish=name(product);
+ const dish=name(product)||t('Товар недоступен');
  const id=esc(product.id);
  const quantity=qty(product.id);
  return `<div class="cart-row">
    ${photo?`<img class="cart-photo" src="${esc(photo)}" alt="" width="72" height="72">`:''}
    <div class="cart-copy">
      <strong>${esc(dish)}</strong>
-     ${product.isPreorder?`<small class="cafe-preorder-label">${esc(batchLabel(product))}</small>`:''}
+     ${product.isPreorder&&Number.isFinite(Date.parse(product.plannedReadyAt))?`<small class="cafe-preorder-label">${esc(batchLabel(product))}</small>`:''}
      <small>${esc(money(product.price_vnd))}</small>
      <div class="cart-controls">
        <button type="button" data-change="-1" data-id="${id}" aria-label="${esc(t('Уменьшить {dish}',{dish}))}">−</button>
@@ -1222,7 +1365,7 @@ function lock(){$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!
 function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
 if(row){
   const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
-  if(cardNode)cardNode.outerHTML=card(row.dish,row.batch);
+  if(cardNode)cardNode.outerHTML=card(row.dish,displayBatch(row.dish,row.batch));
 }renderCart();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');if(b){
   const details=$('dishDetails');
@@ -1239,7 +1382,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-change]');
     if(p)showDish(p,'[data-change="'+b.dataset.change+'"][data-id="'+CSS.escape(b.dataset.id)+'"]');
   }
   return;
-}const dish=e.target.closest('[data-dish]');if(dish){const p=products.find(item=>item.id===dish.dataset.dish);if(p)showDish(p);return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(document.querySelector('.menu-sticky').getBoundingClientRect().bottom<=menuTopbar.getBoundingClientRect().bottom)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){category='all';query='';$('search').value='';renderCategories();renderProducts();}});
+}const dish=e.target.closest('[data-dish]');if(dish){const p=products.find(item=>item.id===dish.dataset.dish);if(p)showDish(p);return;}const c=e.target.closest('[data-category]');if(c){category=c.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));renderProducts();if(document.querySelector('.menu-sticky').getBoundingClientRect().bottom<=menuTopbar.getBoundingClientRect().bottom)document.querySelector('.menu-sticky').scrollIntoView();return;}if(e.target.id==='reset'){cafeSection='all';category='all';query='';$('search').value='';renderCategories();renderProducts();}});
 $('products').addEventListener('error',e=>{if(e.target.matches('.cafe-product-photo')){e.target.closest('.cafe-product-media').innerHTML='<span>UMMA · Halal</span>';}},true);
 const searchToggle = $('searchToggle');
 const searchPanel = $('searchPanel');
@@ -1265,8 +1408,7 @@ function closeSearch() {
   searchPanel.hidden = true;
   searchToggle.setAttribute('aria-expanded', 'false');
   searchInput.value = '';
-  query = '';
-  renderProducts();
+  applyMenuSearch('');
   searchToggle.focus({preventScroll:true});
 }
 
@@ -1287,8 +1429,10 @@ searchPanel.addEventListener('keydown', event => {
   }
 });
 function applyMenuSearch(value) {
+  if(marketStorefront?.active){marketStorefront.search(value);return;}
   query = value;
-  if (value.trim() && category !== 'all') {
+  if (value.trim() && (category !== 'all'||cafeSection!=='all')) {
+    cafeSection='all';
     category = 'all';
     renderCategories();
   }
@@ -1533,7 +1677,7 @@ $('newOrder').onclick=()=>{closeCart();$('checkoutContent').hidden=false;$('succ
 function status(key,error=false,suffix=''){lastStatus={key,error,suffix};$('result').hidden=false;$('result').dataset.state=error?'error':'pending';$('result').textContent=t(key)+(suffix?' '+t(suffix):'');}
 $('form').onsubmit=async e=>{
  e.preventDefault();
- if(!cart.size||busy||$('submit').disabled)return;
+ if(!cart.size||busy||$('submit').disabled||!pending&&shortages())return;
  const orderType=$('orderType').value;
  if(!pending){
   const hasCashChange=orderType==='delivery'&&checkoutMethod()==='cash';
@@ -1884,6 +2028,7 @@ for(const storage of [sessionStorage,localStorage]){
   }
 }
 lastOrder=activeReceipts()[0]||[...receipts.values()].at(-1)||null;
+readCartDraft();
 try{
  const saved=JSON.parse(sessionStorage.getItem('umma-menu-pending'));
  if(saved?.action==='create'&&/^[a-f0-9-]{36}$/i.test(saved.requestKey)&&Array.isArray(saved.items)){
@@ -1903,6 +2048,41 @@ for(const [code,[label]] of Object.entries(I.languages)){const option=document.c
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
+const marketStorefront=window.ummaPublicStorefront?.create({
+ endpoint:API+'cafe-guest-order', t, name, description, money, num, photo:safeImage,
+ onSwitch(active){
+  $('products').hidden=active;
+  $('categories').hidden=active;
+  $('cafeSections').hidden=active||!$('cafeSections').children.length;
+  $('menuHeading').dataset.i18n=active?'Каталог':'Меню';
+  $('menuHeading').textContent=t($('menuHeading').dataset.i18n);
+  $('search').dataset.i18nPlaceholder=active?'Название товара':'Название или ингредиент';
+  $('search').dataset.i18nLabel=active?'Название товара':'Найти блюдо';
+  $('search').placeholder=t($('search').dataset.i18nPlaceholder);
+  $('search').setAttribute('aria-label',t($('search').dataset.i18nLabel));
+  $('voiceSearch').hidden=active;
+  stopVoiceSearch();
+  $('search').value='';
+  query='';
+  if(!active){renderProducts();renderLoadState();}
+ },
+ onConfig(assignments){
+  storefrontAssignments=assignments;
+  if(menuState==='ready'){renderCategories();renderProducts();}
+ }
+});
+$('cafeSections').addEventListener('click',event=>{
+ const button=event.target.closest('[data-cafe-section]');
+ if(!button)return;
+ const id=button.dataset.cafeSection;
+ cafeSection=cafeSection===id?'all':id;
+ category='all';
+ query='';
+ $('search').value='';
+ renderCategories();
+ renderProducts();
+ $('cafeSections').querySelector('[data-cafe-section="'+id+'"]')?.focus({preventScroll:true});
+});
 window.addEventListener('umma-menu:languagechange',()=>{if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
 I.staticText();renderTables();renderSuccess();void syncDeliveryButton();
 const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent});
@@ -1918,6 +2098,7 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
  submit:()=>{$('form').requestSubmit($('submit'));}
 });
 window.ummaMenuAudience?.start(source);
+marketStorefront?.start();
 if (location.hash === '#orders') $('receiptButton').click();
 load();
 </script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=offers-setup-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
