@@ -994,54 +994,77 @@ w.document.querySelector('textarea').value='<img src=x onerror=alert(1)>';w.docu
  assert.equal(w.localStorage.getItem('umma-menu-avatar-remove'),null);
  w.close();
 }
-// Installed app: reuse an existing browser grant for a new chat, prompt only on a tap,
-// and respect the previous choice for an existing chat or a dismissed setup.
-for(const scenario of ['browser','default','granted','denied','existing','dismissed']){
- const app=new JSDOM('<html lang="ru"><body><div id="replyNotificationsSetup" hidden></div></body></html>',{
+// The menu offers dialog requires an explicit opt-in and a working push subscription.
+for(const scenario of ['unsupported','default','granted','denied','alreadySubscribed','later','retry']){
+ const app=new JSDOM('<html lang="ru"><body class="public-cafe-menu"><dialog id="replyNotificationsSetup"><h2></h2><div class="cafe-offers-body"><p id="cafeOffersHint"></p></div></dialog></body></html>',{
   url:'https://qa.invalid/app/menu/',runScripts:'outside-only',pretendToBeVisual:true
  });
  const client=app.window,host=client.document.getElementById('replyNotificationsSetup');
  client.AbortSignal=AbortSignal;
- client.matchMedia=()=>({matches:scenario!=='browser'});
- client.PushManager=class{};
- let prompts=0,subscriptions=0;
+ client.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ client.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new client.Event('close'));};
+ const schedule=client.setTimeout.bind(client);
+ client.setTimeout=(fn,delay)=>schedule(fn,delay===1800?0:delay);
+ let prompts=0,subscriptions=0,attempts=0;
+ if(scenario!=='unsupported')client.PushManager=class{};
  client.Notification={
-  permission:['granted','existing','dismissed'].includes(scenario)?'granted':scenario==='denied'?'denied':'default',
+  permission:['granted','alreadySubscribed'].includes(scenario)?'granted':scenario==='denied'?'denied':'default',
   async requestPermission(){prompts++;this.permission='granted';return this.permission;}
  };
- if(scenario==='existing')client.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
- if(scenario==='dismissed')client.localStorage.setItem('umma:reply-notifications:setup-dismissed','1');
+ const previousSubscription=scenario==='alreadySubscribed';
+ const key='umma:menu:offers-setup-completed:v1';
+ if(previousSubscription)client.localStorage.setItem('umma:connect:token:v1','a'.repeat(64));
  const registration={pushManager:{async getSubscription(){return {toJSON:()=>sub};}}};
  const worker=new client.EventTarget();
- worker.ready=Promise.resolve(registration);worker.register=async()=>registration;
+ worker.ready=Promise.resolve(registration);
+ worker.getRegistration=worker.register=async()=>registration;
  Object.defineProperty(client.navigator,'serviceWorker',{value:worker});
  client.fetch=async(url,init)=>{
   const request=JSON.parse(init.body);
   if(request.action==='config')return new Response(JSON.stringify({ok:true,publicKey:Buffer.alloc(65).toString('base64url')}));
   if(request.action==='preferences'){
    assert.deepEqual(request.subscription,sub);
-   assert.equal('promotions'in request,false);
+   assert.equal(request.promotions,true);
+   attempts++;
+   if(scenario==='retry'&&attempts===1)return new Response('{"ok":false}',{status:503});
    subscriptions++;
   }
-  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:false,pushEnabled:subscriptions>0},messages:[]}));
+  const subscribed=previousSubscription||subscriptions>0;
+  return new Response(JSON.stringify({ok:true,client:{name:'',promotions:subscribed,pushEnabled:subscribed},messages:[]}));
  };
  const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
  loadConnect(client,'customer-connect');
  await tick();
  assert.equal(prompts,0,scenario);
- assert.equal(subscriptions,scenario==='granted'?1:0,scenario);
- assert.equal(host.hidden,!['default','existing'].includes(scenario),scenario);
- if(scenario==='default'){
-  host.querySelector('button').click();
-  await tick();
-  assert.equal(prompts,1);
-  assert.equal(subscriptions,1);
-  assert.equal(host.hidden,true);
- }
- if(scenario==='existing'){
-  host.querySelectorAll('button')[1].click();
-  assert.equal(host.hidden,true);
-  assert.equal(client.localStorage.getItem('umma:reply-notifications:setup-dismissed'),'1');
+ assert.equal(subscriptions,0,scenario);
+ assert.equal(host.open,['default','granted','later','retry'].includes(scenario),scenario);
+ if(host.open){
+  const checkbox=host.querySelector('input');
+  const [later,enable]=host.querySelectorAll('button');
+  assert.equal(checkbox.checked,false);
+  assert.equal(enable.disabled,true);
+  if(scenario==='later'){
+   later.click();
+   client.dispatchEvent(new client.Event('pageshow'));
+   assert.equal(host.open,false);
+   assert.equal(client.localStorage.getItem(key),'1');
+   assert.equal(prompts,0);
+  }else{
+   checkbox.click();
+   enable.click();
+   await tick();
+   if(scenario==='retry'){
+    assert.equal(host.open,true);
+    assert.equal(client.localStorage.getItem(key),null);
+    assert.ok(host.querySelector('[role=status]').textContent);
+    enable.click();
+    await tick();
+   }
+   assert.equal(prompts,scenario==='granted'?0:1);
+   assert.equal(subscriptions,1);
+   assert.equal(host.open,false);
+   assert.equal(client.localStorage.getItem(key),'1');
+  }
  }
  app.window.close();
 }

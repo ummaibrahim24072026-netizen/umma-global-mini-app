@@ -4,7 +4,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const banks=[['vcb','Vietcombank'],['mb','MB Bank'],['bidv','BIDV'],['acb','ACB ONE'],['ocb','OCB OMNI'],['icb','VietinBank']];
-let installPrompt=null,translate,order=null,context=null,inFlight=false,lastQr='',lastPoll=0;
+let installPrompt=null,order=null,context=null,inFlight=false,lastQr='',lastPoll=0;
 let guestProofState=null;
 const receiptConfirmations=new Set();
 const proofFormats={pdf:'application/pdf',jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',webp:'image/webp'};
@@ -73,9 +73,63 @@ function renderGuestProof(required,value,{API,t}){
   }
  };
 }
-const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
-function installText(t){translate=t;$('installApp').hidden=standalone();if(!$('installHelp').hidden)$('installHelp').textContent=t(/iPad|iPhone|iPod/.test(navigator.userAgent)?'В Safari: Поделиться → На экран «Домой».':'В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».');}
-function install(t){installText(t);window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});window.addEventListener('appinstalled',()=>{installPrompt=null;$('installApp').hidden=true;$('installHelp').hidden=true;});$('installApp').onclick=async()=>{if(installPrompt){const prompt=installPrompt;installPrompt=null;try{await prompt.prompt();await prompt.userChoice;}catch{$('installHelp').hidden=false;installText(translate);}}else{$('installHelp').hidden=!$('installHelp').hidden;installText(translate);}};}
+const installKey='umma:menu:installed';
+const displayMode=window.matchMedia?.('(display-mode: standalone)');
+let installConfirmed=false;
+try{installConfirmed=localStorage.getItem(installKey)==='1';}catch{}
+const standalone=()=>displayMode?.matches||navigator.standalone===true;
+const appleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||
+ (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function showInstallHelp(show,t){
+ const help=$('installHelp');
+ help.hidden=!show;
+ $('installApp').setAttribute('aria-expanded',String(show));
+ if(show)help.textContent=t(appleMobile()
+  ?'В Safari: Поделиться → На экран «Домой».'
+  :'В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».');
+}
+function installText(t){
+ const button=$('installApp');
+ button.hidden=installConfirmed||standalone();
+ showInstallHelp(!button.hidden&&!$('installHelp').hidden,t);
+}
+function install(t){
+ const button=$('installApp');
+ const confirm=()=>{
+  installConfirmed=true;
+  installPrompt=null;
+  try{localStorage.setItem(installKey,'1');}catch{}
+  installText(t);
+ };
+ installText(t);
+ window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installPrompt=event;
+  // The browser offers installation again after the app was removed.
+  installConfirmed=false;
+  try{localStorage.removeItem(installKey);}catch{}
+  installText(t);
+ });
+ window.addEventListener('appinstalled',confirm);
+ window.addEventListener('pageshow',()=>installText(t));
+ displayMode?.addEventListener?.('change',()=>installText(t));
+ button.onclick=async()=>{
+  if(!installPrompt){
+   showInstallHelp($('installHelp').hidden,t);
+   return;
+  }
+  const prompt=installPrompt;
+  installPrompt=null;
+  button.disabled=true;
+  showInstallHelp(false,t);
+  try{
+   await prompt.prompt();
+   if((await prompt.userChoice).outcome==='accepted')confirm();
+  }catch{
+   if(!button.hidden)showInstallHelp(true,t);
+  }finally{button.disabled=false;}
+ };
+}
 function renderBankQr(payment){
  if(payment.qrPayload===lastQr)return;
  const qr=window.qrcode(0,'M');

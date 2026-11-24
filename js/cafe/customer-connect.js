@@ -10,9 +10,9 @@ const notificationCopy={
  vi:['Bật thông báo tin nhắn và cuộc gọi','Đã gửi tin nhắn. Bật thông báo để nhận phản hồi ngay cả khi đã đóng UMMA.','Phản hồi xuất hiện trong cuộc trò chuyện. Âm thanh, rung và huy hiệu theo cài đặt điện thoại.']
 };
 const setupCopy={
- ru:['Получайте сообщения и звонки от UMMA, даже когда приложение закрыто.','Позже'],
- en:['Get messages and calls from UMMA even when the app is closed.','Later'],
- vi:['Nhận tin nhắn và cuộc gọi từ UMMA ngay cả khi ứng dụng đã đóng.','Để sau']
+ ru:['Узнавайте о скидках и новых блюдах UMMA Cafe, даже когда приложение закрыто.','Позже'],
+ en:['Get UMMA Cafe offers and new dish alerts even when the app is closed.','Later'],
+ vi:['Nhận tin ưu đãi và món mới của UMMA Cafe ngay cả khi đã đóng ứng dụng.','Để sau']
 };
 const receiptCopy={
  ru:['Отправлено','Прочитано сотрудником'],
@@ -113,9 +113,10 @@ async function inspectBrowserPush(){
  if(!publicChat||!pushSupported()||Notification.permission!=='granted')return;
  try{
   const registration=await navigator.serviceWorker.getRegistration?.();
-  if(registration)hasBrowserPush=Boolean(await registration.pushManager.getSubscription());
+  hasBrowserPush=Boolean(await registration?.pushManager.getSubscription());
  }catch{}
  syncPushButton();
+ renderSetup();
 }
 const mediaCopy={
  ru:{album:'Открыть фото и видео',photo:'Открыть фото',video:'Открыть видео',voice:'Прослушать голосовое',error:'Не удалось открыть вложение. Попробуйте ещё раз.'},
@@ -378,31 +379,40 @@ async function markRead(){
  }catch{}finally{reading=false;}
 }
 const setupHost=document.getElementById('replyNotificationsSetup');
-const setupButton=el('button',notice(0),'umma-connect-button'),later=el('button',null,'plain-btn');
-const setupHint=el('p'),setupStatus=el('p'),setupOffers=el('input'),setupOffersText=el('span');
-setupOffers.type='checkbox';
-const setupOffersLabel=el('label',null,'reply-notifications-offers');
-setupOffersLabel.append(setupOffers,setupOffersText);setupStatus.setAttribute('role','status');
-const setupKey='umma:reply-notifications:setup-dismissed';
-let installed=navigator.standalone===true||window.matchMedia?.('(display-mode: standalone)').matches===true;
-let dismissed=false;
-try{dismissed=localStorage.getItem(setupKey)==='1';}catch{}
+const setupButton=el('button',null,'primary'),later=el('button',null,'plain-btn');
+const setupStatus=el('p'),setupOffers=el('input'),setupOffersText=el('span');
+const setupKey='umma:menu:offers-setup-completed:v1';
+const legacySetupKey='umma:reply-notifications:setup-dismissed';
+let dismissed=false,offersSetupCompleted=false,setupReady=false;
+try{
+ dismissed=localStorage.getItem(legacySetupKey)==='1';
+ offersSetupCompleted=localStorage.getItem(setupKey)==='1';
+}catch{}
 const pushSupported=()=> 'Notification'in window&&'PushManager'in window&&'serviceWorker'in navigator;
+function completeOffersSetup(){
+ offersSetupCompleted=true;
+ try{localStorage.setItem(setupKey,'1');}catch{}
+}
 function dismissSetup(){
  dismissed=true;
- try{localStorage.setItem(setupKey,'1');}catch{}
- renderSetup();
+ try{localStorage.setItem(legacySetupKey,'1');}catch{}
+ completeOffersSetup();
 }
 function renderSetup(){
  if(!setupHost)return;
- const copy=setupCopy[lang()]||setupCopy.en;
- setupButton.textContent=notice(0);
- setupHint.textContent=copy[0];
- later.textContent=copy[1];
- setupOffersText.textContent=(settingsCopy[lang()]||settingsCopy.en)[0];
- setupOffersLabel.hidden=state?.client?.promotions===true;
- setupHost.hidden=!installed||dismissed||!pushSupported()||(!!token&&!state)||state?.client?.pushEnabled===true||
-  (Notification.permission==='denied'&&!setupStatus.textContent);
+ const [hint,laterText]=setupCopy[lang()]||setupCopy.en;
+ const [title]=settingsCopy[lang()]||settingsCopy.en;
+ setupHost.querySelector('h2').textContent=title;
+ setupHost.querySelector('#cafeOffersHint').textContent=hint;
+ setupOffersText.textContent=t(5);
+ setupButton.textContent=t(7);
+ later.textContent=laterText;
+ if(!setupReady||offersSetupCompleted||document.hidden||busy||!pushSupported()||
+    Notification.permission==='denied'||(token&&!state)||document.querySelector('dialog[open]')||
+    (state?.client?.promotions&&state.client.pushEnabled&&Notification.permission==='granted'&&hasBrowserPush!==false))return;
+ setupOffers.checked=state?.client?.promotions===true;
+ setupButton.disabled=!setupOffers.checked;
+ setupHost.showModal();
 }
 async function run(fn,feedback=status,showProgress=true){
  if(busy)return;
@@ -410,7 +420,12 @@ async function run(fn,feedback=status,showProgress=true){
  const buttons=[...(dialog?.querySelectorAll('button')||[]),...(settingsDialog?.querySelectorAll('button[role=switch]')||[]),setupButton,later];
  buttons.forEach(b=>b.disabled=true);feedback.textContent=showProgress?t(17):'';
  try{await fn();}catch(e){feedback.textContent=e.message||t(16);}
- finally{busy=false;buttons.forEach(b=>b.disabled=false);renderSetup();}
+ finally{
+  busy=false;buttons.forEach(b=>b.disabled=false);
+  setupOffers.disabled=false;
+  setupButton.disabled=!setupOffers.checked;
+  renderSetup();
+ }
 }
 async function connect(){
  if(joining)return joining;
@@ -450,24 +465,47 @@ function enablePush(feedback,enableOrderAlerts=feedback===status,subscribeToOffe
   await connect();
   state=await api('preferences',{subscription:subscription.toJSON(),language:lang(),...(subscribeToOffers?{promotions:true}:{})});
   hasBrowserPush=true;
+  if(feedback===setupStatus){
+   completeOffersSetup();
+   setupHost.close();
+  }
   if(enableOrderAlerts)window.ummaOrderAlerts?.enableGranted?.();
   feedback.textContent=t(14)+' '+notice(2);
   if(dialog)dialog.update?.();else badge();
  },feedback);
 }
-function installedSetup(){
- if(!setupHost||!installed)return;
- renderSetup();
- // A new installation can reuse an existing browser grant. Existing chats may have opted out.
- if(!dismissed&&!token&&pushSupported()&&Notification.permission==='granted'&&!document.hidden)enablePush(setupStatus);
-}
 if(setupHost){
  setupButton.type=later.type='button';
- setupButton.onclick=()=>enablePush(setupStatus,false,setupOffers.checked);
- later.onclick=dismissSetup;
- setupHost.append(setupHint,setupOffersLabel,setupButton,later,setupStatus);
- window.addEventListener('appinstalled',()=>{installed=true;installedSetup();});
- window.addEventListener('pageshow',installedSetup);
+ later.autofocus=true;
+ setupOffers.type='checkbox';
+ setupOffers.onchange=()=>{setupButton.disabled=!setupOffers.checked;};
+ setupStatus.setAttribute('role','status');
+ setupButton.onclick=()=>{
+  if(!setupOffers.checked||busy)return;
+  setupOffers.disabled=true;
+  enablePush(setupStatus,false,true);
+ };
+ later.onclick=()=>{
+  completeOffersSetup();
+  setupHost.close();
+ };
+ setupHost.addEventListener('cancel',event=>{
+  if(setupOffers.disabled)event.preventDefault();
+  else completeOffersSetup();
+ });
+ const actions=el('div',null,'cafe-offers-actions');
+ actions.append(later,setupButton);
+ const offersLabel=el('label');
+ offersLabel.append(setupOffers,setupOffersText);
+ setupHost.querySelector('.cafe-offers-body').append(offersLabel,actions,setupStatus);
+ // Let the menu and its installation action appear before opening the offer.
+ setTimeout(()=>{setupReady=true;renderSetup();},1800);
+ window.addEventListener('appinstalled',renderSetup);
+ window.addEventListener('pageshow',renderSetup);
+ document.addEventListener('visibilitychange',renderSetup);
+ document.addEventListener('close',event=>{
+  if(event.target!==setupHost)renderSetup();
+ },true);
 }
 function label(text,input){const l=el('label',text);l.append(input);return l;}
 function build(){
@@ -805,7 +843,7 @@ navigator.serviceWorker?.addEventListener('message',e=>{
  if(publicChat&&e.data?.type==='UMMA_OPEN_INBOX')openOrderNotification();
 });
 navigator.serviceWorker?.addEventListener('controllerchange',badge);
-window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);document.addEventListener('umma:connect-realtime',()=>void refresh());setInterval(refresh,15000);void refresh();installedSetup();
+window.addEventListener('pageshow',refresh);window.addEventListener('online',refresh);window.addEventListener('offline',showReconnect);document.addEventListener('visibilitychange',refresh);document.addEventListener('umma:connect-realtime',()=>void refresh());setInterval(refresh,15000);void refresh();
 let resumeChat=false;
 if(publicChat){try{resumeChat=sessionStorage.getItem(CHAT_OPEN_KEY)==='1';}catch{}}
 const launchURL=new URL(location.href);

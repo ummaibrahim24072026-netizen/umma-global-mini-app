@@ -269,7 +269,30 @@ for(const method of ['cash','qr']){
  activeOrders[1].click();
  assert.equal(d.getElementById('customerOrders').open,false);
  assert.match(d.getElementById('successNumber').textContent,/101/);
- d.getElementById('newOrder').click();d.getElementById('installApp').click();assert.equal(d.getElementById('installHelp').hidden,false);dom.window.close();
+ d.getElementById('newOrder').click();
+ const install=d.getElementById('installApp'),help=d.getElementById('installHelp');
+ assert.ok(install.closest('.menu-install').previousElementSibling.contains(d.getElementById('shareMenu')));
+ assert.equal(install.hidden,false);
+ install.click();
+ assert.equal(help.hidden,false);
+ for(const outcome of ['dismissed','accepted']){
+  const event=new w.Event('beforeinstallprompt',{cancelable:true});
+  let prompted=false;
+  event.prompt=async()=>{prompted=true;};
+  event.userChoice=Promise.resolve({outcome});
+  w.dispatchEvent(event);
+  install.click();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(event.defaultPrevented,true);
+  assert.equal(prompted,true);
+  assert.equal(install.hidden,outcome==='accepted');
+ }
+ d.getElementById('menuLanguage').value='vi';
+ d.getElementById('menuLanguage').dispatchEvent(new w.Event('change'));
+ assert.equal(install.hidden,true);
+ assert.equal(help.hidden,true);
+ assert.equal(w.localStorage.getItem('umma:menu:installed'),'1');
+ dom.window.close();
 }
 console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status, receipt recovery and install guidance.');
 {

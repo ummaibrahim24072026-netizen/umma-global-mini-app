@@ -1707,3 +1707,65 @@
   border-radius: 22px !important;
   overflow: hidden;
 }
+
+.public-cafe-menu .menu-install {
+  text-align: end;
+}
+.public-cafe-menu .menu-install:has(#installApp:not([hidden])) {
+  margin-block: 4px 8px;
+}
+.public-cafe-menu #installApp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  max-inline-size: 100%;
+  min-block-size: 44px;
+  border-radius: 999px;
+  background: var(--umma-brand-pale);
+  overflow-wrap: anywhere;
+}
+.public-cafe-menu #installApp svg { flex: none; }
+.public-cafe-menu #installHelp {
+  margin: 5px 0 8px;
+  color: var(--umma-brand-strong);
+  font-size: .875rem;
+  line-height: 1.45;
+}
+.public-cafe-menu dialog.cafe-offers-setup {
+  max-inline-size: min(390px, calc(100vw - 24px));
+  background: white;
+}
+.cafe-offers-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--umma-brand-primary);
+  color: var(--umma-brand-on-primary);
+}
+.cafe-offers-heading img { flex: none; }
+.cafe-offers-heading h2 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+.cafe-offers-body { display: grid; gap: 14px; padding: 18px; }
+.cafe-offers-body p { margin: 0; line-height: 1.45; overflow-wrap: anywhere; }
+.cafe-offers-body p:empty { display: none; }
+.cafe-offers-body label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 12px;
+  background: var(--umma-brand-pale);
+  cursor: pointer;
+}
+.cafe-offers-body input {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin: 0;
+  accent-color: var(--umma-brand-strong);
+}
+.cafe-offers-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cafe-offers-actions button { flex: 1 1 auto; min-block-size: 44px; }
