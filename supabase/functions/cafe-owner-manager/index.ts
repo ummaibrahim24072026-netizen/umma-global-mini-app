@@ -44,7 +44,11 @@ async function provider(path: string, body: FormData | Record<string,unknown>) {
     body:multi ? body : JSON.stringify(body),signal:AbortSignal.timeout(45000),
   });
   if (!result.ok) {
-    console.error("Owner recognition HTTP",path,result.status);
+    const diagnostic = await result.json().catch(() => null);
+    const safe = (value: unknown) => typeof value==="string" && /^[a-zA-Z0-9_.-]{1,100}$/.test(value) ? value : "";
+    const code = safe(diagnostic?.error?.code);
+    console.error("Owner recognition HTTP",path,result.status,code,safe(diagnostic?.error?.type),safe(diagnostic?.error?.param));
+    if (code==="insufficient_quota") throw new InputError("Лимит сервиса распознавания исчерпан. Введите данные вручную.",503);
     throw new InputError("Распознавание недоступно. Введите данные вручную.",503);
   }
   return result.json();
@@ -52,7 +56,8 @@ async function provider(path: string, body: FormData | Record<string,unknown>) {
 async function interpret(instructions: string,input: unknown) {
   const result = await provider("responses",{
     model:Deno.env.get("UMMA_OWNER_DRAFT_MODEL") || "gpt-4.1-mini",store:false,max_output_tokens:11000,
-    text:{format:{type:"json_object"}},instructions,input,
+    text:{format:{type:"json_object"}},instructions,
+    input:typeof input==="string" ? "Reply in JSON.\n"+input : input,
   });
   const output = result.output?.flatMap((entry: any)=>entry.content || []).find((part: any)=>part.type==="output_text");
   if (result.status!=="completed" || typeof output?.text!=="string") throw new InputError("Не удалось разобрать данные",422);
@@ -139,7 +144,7 @@ Deno.serve(async request => {
     const catalog=dashboard.stock.map(({id,name_ru,name_vi,name_en,base_unit,item_type}:any)=>({id,name_ru,name_vi,name_en,base_unit,item_type}));
     const command=isInvoice ? "Распознай накладную, kind=purchase." : typeof body.text==="string" ? body.text.trim() : "";
     if (!command || command.length>4000) throw new InputError("Введите команду до 4000 символов");
-    const content: Record<string,unknown>[]=[{type:"input_text",text:JSON.stringify({command,today:today(),catalog})}];
+    const content: Record<string,unknown>[]=[{type:"input_text",text:"Reply in JSON.\n"+JSON.stringify({command,today:today(),catalog})}];
     let hash: string | undefined;
     if (isInvoice) {
       const file=body.file;
