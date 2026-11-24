@@ -5,7 +5,7 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <script src="js/cafe/menu-install.js?v=1"></script>
-<script src="js/cafe/public-menu-i18n.js?v=menu-layout-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=meal-collections-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -554,7 +554,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=menu-layout-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=meal-collections-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
@@ -609,10 +609,15 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   </div>
 </section>
 <section id="marketIntro" class="storefront-market-intro" aria-label="UMMA MARKET" hidden>
-  <img src="logo/assets/umma-market-owner-banner.jpg" alt="" width="1536" height="576" loading="lazy" decoding="async">
+  <strong data-i18n="Продукты для дома">Продукты для дома</strong>
+  <div class="storefront-market-art" aria-hidden="true">
+    <img src="assets/market/vegetables/tomato.jpg" alt="" width="100" height="100" loading="lazy" decoding="async">
+    <img src="assets/market/vegetables/cucumber.jpg" alt="" width="100" height="100" loading="lazy" decoding="async">
+    <img src="assets/market/vegetables/red-bell-pepper.jpg" alt="" width="100" height="100" loading="lazy" decoding="async">
+  </div>
 </section>
 <section id="cafeMenuNews" class="cafe-menu-news" hidden></section>
-<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><h1 id="menuHeading" tabindex="-1" data-i18n="Меню">Меню</h1><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="plain-btn menu-search-button" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.3 15.3 4.2 4.2"/></svg><span data-i18n="Поиск">Поиск</span></button></div></div>
+<section class="menu-sticky" aria-label="Категории меню" data-i18n-label="Категории меню"><div class="menu-tools"><div class="storefront-menu-heading"><button type="button" class="plain-btn" id="leaveCafeSection" aria-label="Вернуться в меню" data-i18n-label="Вернуться в меню" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><h1 id="menuHeading" tabindex="-1" data-i18n="Меню">Меню</h1></div><div class="menu-actions"><span id="voiceOrderHost"></span><button id="searchToggle" class="plain-btn menu-search-button" type="button" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.3 15.3 4.2 4.2"/></svg><span data-i18n="Поиск">Поиск</span></button></div></div>
 <div id="searchPanel" class="menu-search-panel" role="search" hidden>
   <div class="menu-search-field">
     <input id="search" type="search" placeholder="Название или ингредиент" data-i18n-placeholder="Название или ингредиент" aria-label="Найти блюдо" data-i18n-label="Найти блюдо" autocomplete="off">
@@ -861,7 +866,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=direct-install-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=menu-layout-1"></script>
-<script src="js/cafe/public-storefront.js?v=menu-layout-1"></script>
+<script src="js/cafe/public-storefront.js?v=meal-collections-1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
 <script src="js/cafe/public-menu-profile-name.js?v=3"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
@@ -986,9 +991,20 @@ function renderCafeSections(){
   cafeSection='all';
   category='all';
  }
+ const insideCafe=!marketStorefront?.active;
+ const inCollection=insideCafe&&cafeSection!=='all';
+ $('cafePage').classList.toggle('is-cafe-collection',inCollection);
+ $('leaveCafeSection').hidden=!inCollection;
+ if(insideCafe){
+  const heading=active.find(([id])=>id===cafeSection)?.[1]||'Меню';
+  $('menuHeading').dataset.i18n=heading;
+  $('menuHeading').textContent=t(heading);
+ }
  const host=$('cafeSections');
- host.hidden=!active.length||!!marketStorefront?.active;
- host.innerHTML=active.map(([id,label,icon])=>'<button type="button" class="cafe-category storefront-tile" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+esc(t(label))+'</button>').join('');
+ const visible=inCollection&&['breakfast','lunch','dinner'].includes(cafeSection)
+  ?active.filter(([id])=>['breakfast','lunch','dinner'].includes(id)):active;
+ host.hidden=!visible.length||!insideCafe;
+ host.innerHTML=visible.map(([id,label,icon])=>'<button type="button" class="cafe-category storefront-tile" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+esc(t(label))+'</button>').join('');
 }
 
 const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+s))?.id||'other';
@@ -1299,8 +1315,8 @@ function renderProducts(){
  const visible=dishes.filter(row=>sectionIncludes(cafeSection,row)&&
    (category==='all'||categoryFor(row.dish)===category)&&matchesMenuSearch(row.dish,terms));
  const renderCards=rows=>rows.map(({dish,batch})=>card(dish,displayBatch(dish,batch))).join('');
- const contents=cafeSection==='cooking'
-  ?renderCards(visible.sort((a,b)=>Date.parse(a.batch.plannedReadyAt)-Date.parse(b.batch.plannedReadyAt)))
+ const contents=cafeSection!=='all'
+  ?renderCards(cafeSection==='cooking'?visible.sort((a,b)=>Date.parse(a.batch.plannedReadyAt)-Date.parse(b.batch.plannedReadyAt)):visible)
   :menuCategories.map(c=>{
     const items=visible.filter(({dish})=>categoryFor(dish)===c.id);
     return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+renderCards(items):'';
@@ -2049,7 +2065,7 @@ $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
 const marketStorefront=window.ummaPublicStorefront?.create({
- endpoint:API+'cafe-guest-order', t, name, description, money, num, photo:safeImage,
+ endpoint:API+'cafe-web-storefront', t, name, description, money, num, photo:safeImage,
  onSwitch(active){
   $('products').hidden=active;
   $('categories').hidden=active;
@@ -2064,13 +2080,27 @@ const marketStorefront=window.ummaPublicStorefront?.create({
   stopVoiceSearch();
   $('search').value='';
   query='';
-  if(!active){renderProducts();renderLoadState();}
+  if(!active){renderCategories();renderProducts();renderLoadState();}
+  else {
+   $('cafePage').classList.remove('is-cafe-collection');
+   $('leaveCafeSection').hidden=true;
+  }
  },
  onConfig(assignments){
   storefrontAssignments=assignments;
   if(menuState==='ready'){renderCategories();renderProducts();}
  }
 });
+$('leaveCafeSection').onclick=()=>{
+ const previous=cafeSection;
+ cafeSection='all';
+ category='all';
+ query='';
+ $('search').value='';
+ renderCategories();
+ renderProducts();
+ ($('cafeSections').querySelector('[data-cafe-section="'+previous+'"]')||$('menuHeading')).focus({preventScroll:true});
+};
 $('cafeSections').addEventListener('click',event=>{
  const button=event.target.closest('[data-cafe-section]');
  if(!button)return;
@@ -2081,7 +2111,8 @@ $('cafeSections').addEventListener('click',event=>{
  $('search').value='';
  renderCategories();
  renderProducts();
- $('cafeSections').querySelector('[data-cafe-section="'+id+'"]')?.focus({preventScroll:true});
+ ($('cafeSections').querySelector('[data-cafe-section="'+id+'"]')||$('menuHeading')).focus({preventScroll:true});
+ window.scrollTo(0,0);
 });
 window.addEventListener('umma-menu:languagechange',()=>{if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
 I.staticText();renderTables();renderSuccess();void syncDeliveryButton();

@@ -101,7 +101,7 @@
   --storefront-shadow: 0 4px 16px rgb(var(--umma-brand-night-rgb) / .07);
 }
 
-.public-cafe-menu #cafePage [hidden]:is(#searchToggle, #marketIntro, #marketOpening) {
+.public-cafe-menu #cafePage [hidden]:is(#searchToggle, #marketIntro, #marketOpening, #leaveCafeSection) {
   display: none !important;
 }
 
@@ -156,7 +156,7 @@
 .public-cafe-menu #cafePage :is(.storefront-switch button, .storefront-tile)[aria-pressed="true"] {
   background: var(--umma-brand-primary);
   border-color: var(--umma-brand-outline);
-  color: var(--umma-brand-on-primary);
+  color: var(--umma-brand-white);
 }
 
 .public-cafe-menu #cafePage [aria-pressed="true"] > svg {
@@ -165,8 +165,8 @@
 
 .public-cafe-menu #cafePage #cafeSpotlight {
   --spotlight-height: clamp(210px, 56vw, 285px);
-  background: var(--umma-brand-strong);
-  color: var(--umma-brand-white);
+  background: var(--umma-brand-tint);
+  color: var(--umma-brand-deep);
   box-shadow: var(--storefront-shadow);
   margin-block-end: 14px;
 }
@@ -188,7 +188,7 @@
 }
 
 .public-cafe-menu #cafePage :is(.cafe-spotlight-eyebrow, .cafe-spotlight-pause, .cafe-spotlight-dots button) {
-  color: var(--storefront-gold);
+  color: var(--umma-brand-deep);
 }
 
 .cafe-spotlight-price {
@@ -246,17 +246,47 @@
 }
 
 .storefront-market-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 48%);
+  align-items: center;
+  gap: 8px;
+  min-height: clamp(165px, 52vw, 240px);
+  padding: clamp(13px, 4vw, 26px);
   margin-block-end: 14px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 22px;
+  background: var(--umma-brand-tint);
+  color: var(--umma-brand-deep);
   box-shadow: var(--storefront-shadow);
 }
 
-.storefront-market-intro img {
-  display: block;
-  width: 100%;
-  height: auto;
+.storefront-market-intro > strong {
+  font-size: clamp(1.3rem, 5vw, 2.1rem);
+  line-height: 1.13;
+  overflow-wrap: anywhere;
 }
+
+.storefront-market-art {
+  position: relative;
+  aspect-ratio: 1.16;
+  max-height: 192px;
+}
+
+.storefront-market-art img {
+  position: absolute;
+  display: block;
+  width: 64%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 2px solid var(--umma-brand-white);
+  border-radius: 50%;
+  box-shadow: var(--storefront-shadow);
+}
+
+.storefront-market-art img:nth-child(1) { inset: 0 auto auto 0; }
+.storefront-market-art img:nth-child(2) { inset: 9% 0 auto auto; }
+.storefront-market-art img:nth-child(3) { inset: auto auto 0 19%; }
 
 .storefront-market-opening {
   display: grid;
@@ -296,4 +326,85 @@
     justify-content: center;
     grid-template-columns: 24px auto;
   }
+}
+
+.public-cafe-menu #cafePage #cafeSpotlight :is(.cafe-spotlight-copy, .cafe-intro-copy, .cafe-spotlight-copy strong, .cafe-spotlight-eyebrow, .cafe-spotlight-detail, .cafe-spotlight-cta) {
+  color: var(--umma-brand-deep);
+  -webkit-text-fill-color: currentColor;
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection :is(#cafeSpotlight, #cafeMenuNews, #categories) {
+  display: none;
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection #products {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection #products .cafe-product {
+  grid-template-columns: minmax(74px, 28%) minmax(0, 1fr);
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection #products .cafe-product > :is(.cafe-product-media, .cafe-product-placeholder) {
+  grid-row: 1 / span 4;
+  align-self: center;
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection #products .cafe-product > .cafe-availability {
+  grid-column: 2;
+  margin-block-start: 0;
+}
+
+.public-cafe-menu #cafePage.is-cafe-collection #products .cafe-product h3 .dish-link {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.storefront-menu-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#leaveCafeSection {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+#leaveCafeSection svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[dir="rtl"] #leaveCafeSection svg { transform: scaleX(-1); }
+
+#menuHeading {
+  scroll-margin-block-start: calc(var(--menu-topbar-height) + 8px);
+}
+
+.storefront-pack-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.public-cafe-menu #cafePage .storefront-pack-options button {
+  padding: 6px 9px;
+  min-height: 44px;
+  font-size: .85rem;
+}
+
+.public-cafe-menu #cafePage .storefront-pack-options button[aria-pressed="true"] {
+  background: var(--umma-brand-primary);
+  color: var(--umma-brand-white);
 }
