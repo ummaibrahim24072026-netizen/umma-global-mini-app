@@ -5,7 +5,7 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <script src="js/cafe/menu-install.js?v=1"></script>
-<script src="js/cafe/public-menu-i18n.js?v=order-inquiry-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=event-inquiry-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -554,7 +554,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=order-inquiry-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=event-inquiry-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
@@ -641,7 +641,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <button type="button" class="cafe-category storefront-tile" data-inquiry="custom">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12a4 4 0 0 1 0-8c1 0 2 .4 2.6 1a4 4 0 0 1 6.8 0A4 4 0 1 1 18 12v8H6zm0 4h12"/></svg>
     <strong data-i18n="На заказ">На заказ</strong>
-    <small data-i18n="Обсудить с кафе">Обсудить с кафе</small>
+    <small data-i18n="На праздник или для компании">На праздник или для компании</small>
   </button>
 </div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div>
@@ -704,6 +704,39 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <dialog id="customerChatSettings" class="customer-section" closedby="closerequest" aria-labelledby="customerChatSettingsTitle">
   <div class="checkout-header"><div class="customer-heading"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="customerChatSettingsTitle" tabindex="-1" autofocus data-i18n="Настройки чата">Настройки чата</h2></div></div><button type="button" id="backChatSettings" class="chat-settings-back" aria-label="Назад к профилю" onclick="document.getElementById('customerChatSettings').close()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 18-6-6 6-6"/><path d="M9 12h12"/></svg><span data-i18n="Назад">Назад</span></button></div>
   <div class="checkout-body chat-settings-body"><div class="chat-settings-notifications"></div><p role="status"></p></div>
+</dialog>
+<dialog id="cafeEventInquiry" closedby="closerequest" aria-labelledby="cafeEventTitle">
+  <form id="cafeEventForm">
+    <header class="event-inquiry-heading">
+      <h2 id="cafeEventTitle" data-i18n="Заказ на праздник">Заказ на праздник</h2>
+      <button type="button" class="close" id="closeCafeEvent" aria-label="Закрыть" data-i18n-label="Закрыть">×</button>
+    </header>
+    <p data-i18n="Кафе подтвердит возможность приготовления, состав и цену в чате.">Кафе подтвердит возможность приготовления, состав и цену в чате.</p>
+    <label class="field"><span data-i18n="Что приготовить?">Что приготовить?</span>
+      <select name="selection">
+        <option data-i18n="Индивидуальный набор">Индивидуальный набор</option>
+        <option data-i18n="Плов на вес">Плов на вес</option>
+        <option data-i18n="Манты на заказ">Манты на заказ</option>
+        <option data-i18n="Шашлык на компанию">Шашлык на компанию</option>
+        <option data-i18n="Самса на заказ">Самса на заказ</option>
+        <option data-i18n="Торты и десерты">Торты и десерты</option>
+      </select>
+    </label>
+    <label class="field"><span data-i18n="Сколько гостей?">Сколько гостей?</span><input name="guests" type="number" inputmode="numeric" min="1" step="1" required></label>
+    <div class="event-inquiry-date">
+      <label class="field"><span data-i18n="Дата">Дата</span><input name="date" type="date" required></label>
+      <label class="field"><span data-i18n="Время Нячанга">Время Нячанга</span><input name="time" type="time" required></label>
+    </div>
+    <label class="field"><span data-i18n="Способ получения">Способ получения</span>
+      <select name="fulfillment">
+        <option data-i18n="Самовывоз">Самовывоз</option>
+        <option data-i18n="Доставка">Доставка</option>
+      </select>
+    </label>
+    <label class="field"><span data-i18n="Блюда, количество и пожелания">Блюда, количество и пожелания</span><textarea name="notes" rows="3" maxlength="800" data-i18n-placeholder="Например, 3 кг плова и 20 мантов" placeholder="Например, 3 кг плова и 20 мантов"></textarea></label>
+    <p id="cafeEventStatus" role="status" hidden></p>
+    <button type="submit" class="primary" data-i18n="Продолжить в чате">Продолжить в чате</button>
+  </form>
 </dialog>
 <dialog id="dishDetails" closedby="closerequest" aria-labelledby="dishTitle">
   <div class="checkout-header">
@@ -2109,12 +2142,54 @@ const marketStorefront=window.ummaPublicStorefront?.create({
 $('cafeInquiryTiles').addEventListener('click',event=>{
  const action=event.target.closest('[data-inquiry]');
  if(!action)return;
- const label=action.dataset.inquiry==='family'
-  ?'Здравствуйте! Помогите подобрать блюда для семьи. Человек: __. На дату и время: __.'
-  :'Здравствуйте! Хочу сделать заказ заранее. Блюда и количество: __. На дату и время: __.';
+ if(action.dataset.inquiry==='custom'){
+  const inquiry=$('cafeEventInquiry');
+  const form=$('cafeEventForm');
+  form.elements.date.min=localDay(Date.now());
+  $('cafeEventStatus').hidden=true;
+  inquiry.showModal();
+  return;
+ }
+ const label='Здравствуйте! Помогите подобрать блюда для семьи. Человек: __. На дату и время: __.';
  if(window.ummaCustomerConnect?.openDraft)window.ummaCustomerConnect.openDraft(t(label));
  else $('customerMessagesButton').click();
 });
+const eventForm=$('cafeEventForm');
+$('closeCafeEvent').onclick=()=>$('cafeEventInquiry').close();
+eventForm.addEventListener('input',()=>{$('cafeEventStatus').hidden=true;});
+eventForm.onsubmit=event=>{
+ event.preventDefault();
+ if(!eventForm.reportValidity())return;
+ const {selection,guests,date,time,fulfillment,notes}=eventForm.elements;
+ const status=$('cafeEventStatus');
+ const scheduled=Date.parse(date.value+'T'+time.value+':00+07:00');
+ if(!Number.isFinite(scheduled)||scheduled<=Date.now()){
+  status.textContent=t('Выберите будущие дату и время.');
+  status.hidden=false;
+  date.focus();
+  return;
+ }
+ const selectionLabel=selection.selectedOptions[0].textContent;
+ const fulfillmentLabel=fulfillment.selectedOptions[0].textContent;
+ const message=[
+  t('Здравствуйте! Хочу сделать заказ на праздник.'),
+  t('Что приготовить?')+' '+selectionLabel,
+  t('Гостей — {count}',{count:guests.value}),
+  t('Дата: {date}, время Нячанга: {time}',{date:date.value,time:time.value}),
+  t('Способ получения')+' — '+fulfillmentLabel,
+  notes.value.trim()?t('Блюда, количество и пожелания')+' — '+notes.value.trim():'',
+ ].filter(Boolean).join('\n');
+ const chat=window.ummaCustomerConnect;
+ if(!chat?.openDraft){
+  status.textContent=t('Чат пока недоступен. Попробуйте ещё раз.');
+  status.hidden=false;
+  return;
+ }
+ if(!chat.openDraft(message,()=>$('cafeEventInquiry').close())){
+  status.textContent=t('В чате уже есть длинный черновик. Сохраните или сократите его и попробуйте ещё раз.');
+  status.hidden=false;
+ }
+};
 $('leaveCafeSection').onclick=()=>{
  const previous=cafeSection;
  cafeSection='all';
@@ -2156,4 +2231,4 @@ window.ummaMenuAudience?.start(source);
 marketStorefront?.start();
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=order-inquiry-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=event-inquiry-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>

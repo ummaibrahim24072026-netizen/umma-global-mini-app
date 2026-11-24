@@ -421,3 +421,68 @@
   font-size: .8em;
   color: var(--umma-brand-muted);
 }
+
+#cafeEventInquiry {
+  width: min(calc(100% - 24px), 480px);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: 0;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 20px;
+  background: var(--umma-brand-canvas);
+  color: var(--umma-brand-ink);
+}
+
+#cafeEventForm {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.event-inquiry-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#cafeEventForm :is(h2, p, .field) {
+  margin: 0;
+}
+
+#cafeEventForm p {
+  color: var(--umma-brand-muted);
+  font-size: .875rem;
+}
+
+#cafeEventForm .close {
+  position: static;
+  flex: 0 0 44px;
+  min-height: 44px;
+}
+
+#cafeEventForm textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 12px;
+  background: var(--umma-brand-white);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.event-inquiry-date {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.event-inquiry-date :is(label, input) {
+  min-width: 0;
+  width: 100%;
+}
+
+#cafeEventForm #cafeEventStatus {
+  color: var(--umma-brand-deep);
+}

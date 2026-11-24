@@ -225,6 +225,30 @@ Object.assign(copy,{
   vi:'Xin chào! Tôi muốn đặt món trước. Món ăn và số lượng: __. Ngày và giờ: __.'
  }
 });
+Object.assign(copy,{
+ 'На праздник или для компании':{en:'For celebrations or groups',vi:'Cho tiệc hoặc nhóm'},
+ 'Заказ на праздник':{en:'Celebration order',vi:'Đặt món cho buổi tiệc'},
+ 'Кафе подтвердит возможность приготовления, состав и цену в чате.':{en:'The café will confirm availability, dishes and price in chat.',vi:'Quán sẽ xác nhận khả năng chuẩn bị, món ăn và giá qua trò chuyện.'},
+ 'Что приготовить?':{en:'What should we prepare?',vi:'Bạn muốn đặt món gì?'},
+ 'Индивидуальный набор':{en:'Custom set',vi:'Combo theo yêu cầu'},
+ 'Плов на вес':{en:'Plov by weight',vi:'Cơm plov bán theo cân'},
+ 'Манты на заказ':{en:'Manti made to order',vi:'Bánh manti đặt trước'},
+ 'Шашлык на компанию':{en:'Skewers for a group',vi:'Thịt xiên nướng cho nhóm'},
+ 'Самса на заказ':{en:'Samsa made to order',vi:'Bánh samsa đặt trước'},
+ 'Торты и десерты':{en:'Cakes and desserts',vi:'Bánh kem và món tráng miệng'},
+ 'Сколько гостей?':{en:'How many guests?',vi:'Bao nhiêu khách?'},
+ 'Дата':{en:'Date',vi:'Ngày'},
+ 'Способ получения':{en:'How to receive it',vi:'Cách nhận món'},
+ 'Блюда, количество и пожелания':{en:'Dishes, quantities and notes',vi:'Món ăn, số lượng và ghi chú'},
+ 'Например, 3 кг плова и 20 мантов':{en:'For example, 3 kg of plov and 20 manti',vi:'Ví dụ, 3 kg cơm plov và 20 bánh manti'},
+ 'Продолжить в чате':{en:'Continue in chat',vi:'Tiếp tục trong trò chuyện'},
+ 'Выберите будущие дату и время.':{en:'Choose a future date and time.',vi:'Chọn ngày và giờ trong tương lai.'},
+ 'Здравствуйте! Хочу сделать заказ на праздник.':{en:'Hi! I would like to order for a celebration.',vi:'Xin chào! Tôi muốn đặt món cho buổi tiệc.'},
+ 'Гостей — {count}':{en:'Guests — {count}',vi:'Số khách — {count}'},
+ 'Дата: {date}, время Нячанга: {time}':{en:'Date: {date}, Nha Trang time: {time}',vi:'Ngày: {date}, giờ Nha Trang: {time}'},
+ 'Чат пока недоступен. Попробуйте ещё раз.':{en:'Chat is unavailable. Please try again.',vi:'Chưa thể mở trò chuyện. Vui lòng thử lại.'},
+ 'В чате уже есть длинный черновик. Сохраните или сократите его и попробуйте ещё раз.':{en:'There is a long draft in chat. Save or shorten it and try again.',vi:'Có một bản nháp dài trong trò chuyện. Hãy lưu hoặc rút ngắn rồi thử lại.'}
+});
 const storefrontCopy={
  'Готовые блюда':['Prepared meals','Món ăn chế biến sẵn','조리된 요리','即食菜品','Fertige Gerichte','Plats préparés','อาหารพร้อมทาน','Hidangan siap','Hidangan siap saji','وجبات جاهزة','Pratos prontos'],
  'Продукты для дома':['Groceries for home','Thực phẩm cho gia đình','가정용 식재료','家庭食材','Lebensmittel für zu Hause','Produits pour la maison','วัตถุดิบสำหรับทำอาหาร','Barangan dapur','Bahan makanan di rumah','مواد غذائية للمنزل','Produtos para casa'],
