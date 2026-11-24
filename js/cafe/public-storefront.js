@@ -21,7 +21,7 @@
     const opening = document.getElementById('marketOpening');
     const searchToggle = document.getElementById('searchToggle');
     const cafeButton = switcher.querySelector('[data-storefront=cafe]');
-    let catalog, category = 'all', search = '', active = false, loading = false, checkedConfig = false;
+    let catalog, category = 'all', search = '', active = false, loadingSections = false, loadingMarket = false;
     let sectionSignature, catalogIssue = false, activeOffer;
     let preferred;
     try { preferred = localStorage.getItem('umma-menu-storefront'); } catch {}
@@ -37,15 +37,6 @@
 
     function offerKey(offer) {
       return offer.warehouse_id+':'+offer.variant_id;
-    }
-
-    function findOffer(id) {
-      const product=document.getElementById(id);
-      if (!product) return;
-      const details=product.querySelector('details');
-      details.open=true;
-      details.querySelector('summary').focus({preventScroll:true});
-      product.scrollIntoView({block:'center'});
     }
 
     function render() {
@@ -65,24 +56,11 @@
           (image?'<img src="'+esc(image)+'" alt="" loading="lazy">':'')+esc(item.id==='all'?t('Все'):name(item))+'</button>';
       }).join('');
 
-      const featured = [...new Map(offers.map(offer => [offer.product.id,offer])).values()].slice(0, 4);
-      if (intro) intro.hidden = featured.length > 0;
-      if (opening) opening.hidden = offers.length > 0 || catalogIssue;
+      if (intro) intro.hidden = false;
+      if (opening) opening.hidden = offers.length > 0 || catalogIssue || !catalog;
       searchToggle.hidden = offers.length === 0;
-      products.hidden = offers.length === 0 && !catalogIssue;
-      window.ummaCafeSpotlight?.setCatalog(featured.map(offer => ({
-        key:'market-'+offerKey(offer), title:name(offer.product), image:photo(offer.product),
-        detail:offer.sale_mode==='individual_weight'?money(offer.price_vnd)+' / '+t('кг'):money(offer.price_vnd),
-        badge:'UMMA MARKET', cta:t('Подробнее')
-      })), id => {
-        if (category!=='all'||search) {
-          category='all';
-          search='';
-          document.getElementById('search').value='';
-          render();
-        }
-        findOffer(id);
-      }, {direction:'market'});
+      products.hidden = offers.length === 0 && !catalogIssue && !!catalog;
+      window.ummaCafeSpotlight?.setCatalog([],null,{direction:'market'});
 
       const query = search.trim().toLocaleLowerCase();
       const visible = offers.filter(({product}) => {
@@ -113,6 +91,10 @@
       return '<article class="cafe-product storefront-market-offer" id="'+esc(key)+'">'+
         (image?'<img src="'+esc(image)+'" alt="" loading="lazy" decoding="async">':'')+
         '<h3>'+esc(name(product))+'</h3><strong class="cafe-product-price">'+esc(price)+'</strong>'+
+        (sizes.length?'<div class="storefront-pack-options" role="group" aria-label="'+esc(t('Упаковка'))+'">'+
+         [...new Map(sizes.map(item=>[item.quantity,item])).values()].map(item=>
+          '<button type="button" class="cafe-category" data-pack-price="'+esc(money(item.price_vnd))+'" aria-pressed="false">'+
+          esc(num(item.quantity)+' '+unit)+'</button>').join('')+'</div>':'')+
         '<details'+(activeOffer===key?' open':'')+'><summary>'+esc(t('Подробнее'))+'</summary>'+
         [description(product),offer.composition,offer.storage_conditions].filter(Boolean).map(value => '<p>'+esc(value)+'</p>').join('')+
         (pack?'<ul>'+pack+'</ul>':'')+'</details></article>';
@@ -146,39 +128,54 @@
       render();
     }
 
-    async function refresh() {
-      if (loading||document.hidden||checkedConfig) return;
-      loading=true;
+    async function refreshSections() {
+      if (loadingSections||document.hidden) return;
+      loadingSections=true;
       try {
-        const data=await request('storefront=1&catalog=1');
-        const signature=JSON.stringify(data.sections || []);
+        const data=await request('catalog=1');
+        if (!Array.isArray(data.sections)) return;
+        const signature=JSON.stringify(data.sections);
         if (signature!==sectionSignature) {
           sectionSignature=signature;
-          onConfig(Array.isArray(data.sections)?data.sections:[]);
-        }
-        if (!Object.hasOwn(data,'marketPreviewEnabled')) checkedConfig=true;
-        if (active && data.marketPreviewEnabled===true) {
-          const next=await request('marketCatalog=1');
-          const changed=JSON.stringify(next)!==JSON.stringify(catalog);
-          const hadIssue=catalogIssue;
-          catalog=next;
-          catalogIssue=false;
-          if (changed||hadIssue) render();
+          onConfig(data.sections);
         }
       } catch {
-        if (active&&catalog&&!catalogIssue) {
+        // The existing CAFE catalog remains usable during a configuration outage.
+      } finally {
+        loadingSections=false;
+      }
+    }
+
+    async function refreshMarket() {
+      if (!active||loadingMarket||document.hidden) return;
+      loadingMarket=true;
+      try {
+        const next=await request('marketCatalog=1');
+        const changed=JSON.stringify(next)!==JSON.stringify(catalog);
+        catalog=next;
+        if (changed||catalogIssue) {
+          catalogIssue=false;
+          render();
+        }
+      } catch {
+        if (!catalogIssue) {
           catalogIssue=true;
           render();
         }
       } finally {
-        loading=false;
+        loadingMarket=false;
       }
+    }
+
+    function refresh() {
+      void refreshSections();
+      void refreshMarket();
     }
     switcher.addEventListener('click', event => {
       const target=event.target.closest('[data-storefront]');
       if (!target) return;
       switchTo(target.dataset.storefront,true);
-      if (active) void refresh();
+      if (active) void refreshMarket();
     });
     document.getElementById('marketBackToCafe')?.addEventListener('click', () => {
       switchTo('cafe',true);
@@ -198,7 +195,14 @@
       else if (activeOffer===id) activeOffer=undefined;
     }, true);
     products.addEventListener('click', event => {
-      if (event.target.closest('[data-market-retry]')) void refresh();
+      if (event.target.closest('[data-market-retry]')) void refreshMarket();
+      const pack=event.target.closest('[data-pack-price]');
+      if (!pack) return;
+      const card=pack.closest('article');
+      card.querySelector('.cafe-product-price').textContent=pack.dataset.packPrice;
+      for (const item of card.querySelectorAll('[data-pack-price]')) {
+        item.setAttribute('aria-pressed',String(item===pack));
+      }
     });
     window.addEventListener('umma-menu:languagechange',render);
     window.addEventListener('online',refresh);

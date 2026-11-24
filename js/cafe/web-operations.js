@@ -1202,6 +1202,76 @@ function updateOverviewLinks() {
   !me || (me.user.role !== 'super_admin' && !me.assignments?.some(a =>
    a.location_id === overviewLocation.value && a.staff_role === 'manager' && a.can_accept_payments));
 }
+const storefrontPanel=$('webStorefront');
+if(storefrontPanel){
+ const form=$('webStorefrontForm'),status=$('webStorefrontStatus'),retry=$('webStorefrontRetry');
+ const fields=form.elements;
+ let placements=[], revision=0;
+
+ function fillPlacement(){
+  const row=placements.find(item=>item.product_id===fields.productId.value&&item.section===fields.section.value);
+  fields.enabled.checked=row?.enabled??true;
+  fields.allowPreorder.checked=row?.allow_preorder??false;
+  fields.serviceDate.required=fields.section.value==='dish-day';
+  fields.serviceDate.value=row?.service_date||'';
+  fields.startsAt.value=row?.starts_at?.slice(0,5)||'';
+  fields.endsAt.value=row?.ends_at?.slice(0,5)||'';
+ }
+
+ async function loadStorefront(){
+  const locationId=overviewLocation.value;
+  if(!locationId||!storefrontPanel.open)return;
+  const request=++revision;
+  form.hidden=true;
+  retry.hidden=true;
+  status.textContent='Загружаем разделы…';
+  try{
+   const data=await api('storefrontList',{locationId},'cafe-web-storefront');
+   if(request!==revision||locationId!==overviewLocation.value)return;
+   const selected=fields.productId.value;
+   fields.productId.replaceChildren(...data.products.map(item=>new Option(item.name_ru,item.id)));
+   if(data.products.some(item=>item.id===selected))fields.productId.value=selected;
+   placements=data.assignments;
+   fillPlacement();
+   form.hidden=!data.products.length;
+   status.textContent=data.products.length?'':'Нет активных блюд.';
+  }catch(error){
+   if(request!==revision||locationId!==overviewLocation.value)return;
+   status.textContent=error.message;
+   retry.hidden=false;
+  }
+ }
+
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(!form.reportValidity())return;
+  const request=++revision,locationId=overviewLocation.value;
+  const payload={locationId,productId:fields.productId.value,section:fields.section.value,
+   startsAt:fields.startsAt.value,endsAt:fields.endsAt.value,serviceDate:fields.serviceDate.value,
+   enabled:fields.enabled.checked,allowPreorder:fields.allowPreorder.checked};
+  for(const control of fields)control.disabled=true;
+  status.textContent='Сохраняем…';
+  try{
+   await api('storefrontSave',payload,'cafe-web-storefront');
+   if(request!==revision||locationId!==overviewLocation.value)return;
+   const index=placements.findIndex(item=>item.product_id===payload.productId&&item.section===payload.section);
+   const row={product_id:payload.productId,section:payload.section,starts_at:payload.startsAt,
+    ends_at:payload.endsAt,service_date:payload.serviceDate,enabled:payload.enabled,allow_preorder:payload.allowPreorder};
+   if(index<0)placements.push(row);
+   else placements[index]=row;
+   status.textContent='Раздел сохранён.';
+  }catch(error){
+   if(request===revision&&locationId===overviewLocation.value)status.textContent=error.message;
+  }finally{
+   for(const control of fields)control.disabled=false;
+  }
+ };
+
+ fields.productId.onchange=fields.section.onchange=fillPlacement;
+ storefrontPanel.addEventListener('toggle',loadStorefront);
+ overviewLocation.addEventListener('change',loadStorefront);
+ retry.onclick=loadStorefront;
+}
 overviewLocation.onchange = () => {
  clearOverview();
  updateOverviewLinks();
