@@ -4,6 +4,7 @@
 <meta name="theme-color" content="#00B8C8"><meta name="description" content="Халяльная кухня UMMA Cafe в Нячанге. Закажите блюда с собой, в кафе или с доставкой.">
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
+<script src="js/cafe/menu-install.js?v=1"></script>
 <script src="js/cafe/public-menu-i18n.js?v=delivery-receipt-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
@@ -501,7 +502,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=home-install-1"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=direct-install-1"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 #checkout[data-stage="receipt"] .checkout-header {
@@ -566,11 +567,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
 </div>
 <div class="menu-install">
-  <button type="button" id="installApp" class="plain-btn" aria-controls="installHelp" aria-expanded="false" hidden>
+  <button type="button" id="installApp" class="plain-btn" aria-haspopup="dialog" hidden>
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 11h6m-3-3v6m-1 4h2"/></svg>
     <span data-i18n="На главный экран">На главный экран</span>
   </button>
-  <p id="installHelp" role="status" hidden></p>
 </div>
 <section class="cafe-intro" id="cafeSpotlight" aria-label="UMMA Cafe">
   <div class="cafe-spotlight-fallback">
@@ -831,7 +831,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section><p id="syncState" class="guest-hint" role="status"></p><button type="button" id="newOrder" class="primary" data-i18n="Вернуться в меню">Вернуться к меню</button></section>
 </div></dialog>
 <script src="js/vendor/qrcode-generator.js?v=1"></script>
-<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=home-install-1"></script>
+<script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=direct-install-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
@@ -1899,8 +1899,8 @@ for(const [code,[label]] of Object.entries(I.languages)){const option=document.c
 $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 // Native selects may restore a stale value when navigating back to the menu.
 window.addEventListener('pageshow',()=>I.staticText());
-window.addEventListener('umma-menu:languagechange',()=>{window.ummaGuestExtras.installText(t);if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
-I.staticText();window.ummaGuestExtras.install(t);renderTables();renderSuccess();void syncDeliveryButton();
+window.addEventListener('umma-menu:languagechange',()=>{if(menuState==='ready'){renderCategories();renderProducts();}else renderLoadState();renderTables();renderCart();renderReceiptLinks();renderSuccess();if(lastStatus&&!$('result').hidden)status(lastStatus.key,lastStatus.error,lastStatus.suffix);});
+I.staticText();renderTables();renderSuccess();void syncDeliveryButton();
 const voiceContext=()=>({orderType:$('orderType').value,table:$('tableNumber').value,payment:document.querySelector('[name=paymentMethod]:checked')?.value,address:$('deliveryAddress').value,phone:$('deliveryPhone')?.value,delivery:window.ummaPublicDelivery?.point?.()||$('deliveryPointState').textContent});
 window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
  id:'menuVoice',host:$('voiceOrderHost'),reviewHost:$('voiceReviewHost'),language:()=>I.language,name,money,total,image:safeImage,

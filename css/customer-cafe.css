@@ -687,7 +687,7 @@
   min-inline-size: 0;
   gap: 6px;
 }
-#customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #profileDeliveryPhone, #installApp) {
+#customerProfile .profile-body :is(.plain-btn, select, #profileDisplayName, #profileDeliveryPhone) {
   border-radius: 999px;
 }
 .profile-avatar-actions button {
@@ -848,7 +848,6 @@
 #customerChatSettings :is(.chat-setting-row:disabled, input:disabled + .chat-setting-track) { opacity: .5; }
 #customerChatSettings [role=status] { margin: 0; font-size: 13px; }
 #customerChatSettings [role=status]:not(:empty) { margin-block-start: 8px; }
-.public-cafe-menu #customerProfile .install-row #installApp { min-height: 56px; border-color: #b8d8d6; }
 /* Dish details and their scrim share the space above the existing dock. */
 .public-cafe-menu:has(#dishDetails[open]) { overflow: hidden; }
 .dish-detail-scrim { display: none; }
@@ -1726,12 +1725,6 @@
   overflow-wrap: anywhere;
 }
 .public-cafe-menu #installApp svg { flex: none; }
-.public-cafe-menu #installHelp {
-  margin: 5px 0 8px;
-  color: var(--umma-brand-strong);
-  font-size: .875rem;
-  line-height: 1.45;
-}
 .public-cafe-menu dialog.cafe-offers-setup {
   max-inline-size: min(390px, calc(100vw - 24px));
   background: white;

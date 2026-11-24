@@ -270,31 +270,58 @@ for(const method of ['cash','qr']){
  assert.equal(d.getElementById('customerOrders').open,false);
  assert.match(d.getElementById('successNumber').textContent,/101/);
  d.getElementById('newOrder').click();
- const install=d.getElementById('installApp'),help=d.getElementById('installHelp');
- assert.ok(install.closest('.menu-install').previousElementSibling.contains(d.getElementById('shareMenu')));
- assert.equal(install.hidden,false);
- install.click();
- assert.equal(help.hidden,false);
- for(const outcome of ['dismissed','accepted']){
-  const event=new w.Event('beforeinstallprompt',{cancelable:true});
-  let prompted=false;
-  event.prompt=async()=>{prompted=true;};
-  event.userChoice=Promise.resolve({outcome});
-  w.dispatchEvent(event);
-  install.click();
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(event.defaultPrevented,true);
-  assert.equal(prompted,true);
-  assert.equal(install.hidden,outcome==='accepted');
- }
- d.getElementById('menuLanguage').value='vi';
- d.getElementById('menuLanguage').dispatchEvent(new w.Event('change'));
- assert.equal(install.hidden,true);
- assert.equal(help.hidden,true);
- assert.equal(w.localStorage.getItem('umma:menu:installed'),'1');
  dom.window.close();
 }
-console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status, receipt recovery and install guidance.');
+console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status and receipt recovery.');
+for(const scenario of ['readyEarly','readyLater','noBrowserPrompt','alreadyInstalled']){
+ const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
+ const w=dom.window,d=w.document;
+ Object.defineProperty(w.navigator,'standalone',{value:scenario==='alreadyInstalled'});
+ w.eval(read('js/cafe/menu-install.js'));
+ const install=d.getElementById('installApp');
+ assert.ok(install.closest('.menu-install').previousElementSibling.contains(d.getElementById('shareMenu')));
+ assert.equal(d.getElementById('installHelp'),null);
+ assert.equal(install.hidden,true);
+ let prompts=0,finishPrompt;
+ function browserOffer(){
+  const event=new w.Event('beforeinstallprompt',{cancelable:true});
+  event.prompt=()=>{prompts++;};
+  event.userChoice=new Promise(resolve=>{finishPrompt=resolve;});
+  w.dispatchEvent(event);
+  assert.equal(event.defaultPrevented,true);
+ }
+ if(scenario==='readyEarly'||scenario==='alreadyInstalled')browserOffer();
+ await new Promise(resolve=>d.addEventListener('DOMContentLoaded',resolve,{once:true}));
+ if(scenario==='readyLater'){
+  assert.equal(install.hidden,true);
+  browserOffer();
+ }
+ if(scenario==='readyEarly'||scenario==='readyLater'){
+  assert.equal(install.hidden,false);
+  install.click();
+  assert.equal(prompts,1,'open the native prompt within the same tap');
+  assert.equal(install.disabled,true);
+  install.click();
+  assert.equal(prompts,1);
+  if(scenario==='readyEarly'){
+   w.dispatchEvent(new w.Event('appinstalled'));
+   assert.equal(install.hidden,true);
+   finishPrompt({outcome:'accepted'});
+  }else finishPrompt({outcome:'dismissed'});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(install.hidden,true,'a consumed offer cannot be presented again');
+  if(scenario==='readyLater'){
+   browserOffer();
+   assert.equal(install.hidden,false);
+  }
+ }else{
+  assert.equal(install.hidden,true);
+  assert.equal(prompts,0);
+ }
+ dom.window.close();
+}
+console.log('PASS menu installation: early and late browser offers, immediate native prompt, no fallback hint, one-use prompt and installed-app hiding.');
+
 {
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
  const w=dom.window,d=w.document,$=id=>d.getElementById(id);
