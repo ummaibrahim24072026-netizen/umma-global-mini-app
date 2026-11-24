@@ -210,6 +210,36 @@ Object.assign(copy,{
  "Оплатите наличными на стойке до отправки заказа.":{"en":"Pay cash at the counter before dispatch.","vi":"Vui lòng thanh toán tiền mặt tại quầy trước khi giao đơn."},
  "Недоступные способы оплаты отмечены серым.":{"en":"Unavailable payment methods are greyed out.","vi":"Các phương thức chưa khả dụng được hiển thị màu xám."}
 });
+const storefrontLocales=['en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
+const storefrontCopy={
+ 'Готовые блюда':['Prepared meals','Món ăn chế biến sẵn','조리된 요리','即食菜品','Fertige Gerichte','Plats préparés','อาหารพร้อมทาน','Hidangan siap','Hidangan siap saji','وجبات جاهزة','Pratos prontos'],
+ 'Продукты для дома':['Groceries for home','Thực phẩm cho gia đình','가정용 식재료','家庭食材','Lebensmittel für zu Hause','Produits pour la maison','วัตถุดิบสำหรับทำอาหาร','Barangan dapur','Bahan makanan di rumah','مواد غذائية للمنزل','Produtos para casa'],
+ 'Готовим каталог':['Preparing the catalogue','Đang chuẩn bị danh mục','상품 목록 준비 중','目录准备中','Wir bereiten den Katalog vor','Catalogue en préparation','กำลังจัดเตรียมแคตตาล็อก','Katalog sedang disediakan','Katalog sedang disiapkan','نعمل على تجهيز الكتالوج','Catálogo em preparação'],
+ 'Здесь появятся продукты для дома с ценами и наличием.':['Groceries will appear here with prices and stock information.','Sản phẩm gia đình sẽ xuất hiện tại đây cùng giá và thông tin tồn kho.','이곳에 식재료와 가격, 재고 정보가 표시됩니다.','这里将显示家用食材、价格与库存。','Hier erscheinen Lebensmittel mit Preisen und Verfügbarkeit.','Les produits seront affichés ici avec leurs prix et leur disponibilité.','สินค้า ราคา และข้อมูลสต็อกจะแสดงที่นี่','Barangan dapur akan dipaparkan di sini bersama harga dan stok.','Bahan makanan akan ditampilkan di sini beserta harga dan stok.','ستظهر هنا المنتجات المنزلية مع الأسعار والتوفر.','Os produtos aparecerão aqui com preços e disponibilidade.'],
+ 'Перейти в меню кафе':['Browse the café menu','Xem thực đơn quán','카페 메뉴 보기','查看咖啡馆菜单','Zur Café-Speisekarte','Voir le menu du café','ดูเมนูคาเฟ่','Lihat menu kafe','Lihat menu kafe','عرض قائمة المقهى','Ver o menu do café'],
+ 'Каталог':['Catalogue','Danh mục','상품 목록','商品目录','Katalog','Catalogue','แคตตาล็อก','Katalog','Katalog','الكتالوج','Catálogo'],
+ 'Разделы меню':['Menu sections','Các mục thực đơn','메뉴 분류','菜单分区','Menübereiche','Rubriques du menu','หมวดเมนู','Bahagian menu','Bagian menu','أقسام القائمة','Secções do menu'],
+ 'Завтраки':['Breakfast','Bữa sáng','아침 식사','早餐','Frühstück','Petit-déjeuner','อาหารเช้า','Sarapan','Sarapan','الفطور','Pequeno-almoço'],
+ 'Обеды':['Lunch','Bữa trưa','점심 식사','午餐','Mittagessen','Déjeuner','อาหารกลางวัน','Makan tengah hari','Makan siang','الغداء','Almoço'],
+ 'Ужины':['Dinner','Bữa tối','저녁 식사','晚餐','Abendessen','Dîner','อาหารเย็น','Makan malam','Makan malam','العشاء','Jantar'],
+ 'Блюдо дня':['Dish of the day','Món ăn trong ngày','오늘의 요리','今日菜品','Tagesgericht','Plat du jour','เมนูประจำวัน','Hidangan hari ini','Menu hari ini','طبق اليوم','Prato do dia'],
+ 'Для семьи':['Family meals','Món cho gia đình','가족 메뉴','家庭餐','Für die Familie','Pour la famille','สำหรับครอบครัว','Untuk keluarga','Untuk keluarga','للعائلة','Para a família'],
+ 'На каждый день':['Everyday meals','Món ăn hằng ngày','일상 식사','日常餐品','Für jeden Tag','Au quotidien','เมนูประจำวัน','Hidangan harian','Hidangan harian','وجبات يومية','Refeições do dia a dia'],
+ 'Сегодня готовим':['Cooking today','Hôm nay có món','오늘 조리 예정','今日烹制','Heute in der Küche','En préparation aujourd’hui','กำลังทำวันนี้','Masakan hari ini','Dimasak hari ini','نطبخ اليوم','A preparar hoje'],
+ 'Название товара':['Product name','Tên sản phẩm','상품 이름','商品名称','Produktname','Nom du produit','ชื่อสินค้า','Nama produk','Nama produk','اسم المنتج','Nome do produto'],
+ 'Загружаем каталог…':['Loading catalogue…','Đang tải danh mục…','상품 목록 불러오는 중…','正在加载商品目录…','Katalog wird geladen…','Chargement du catalogue…','กำลังโหลดแคตตาล็อก…','Memuatkan katalog…','Memuat katalog…','جارٍ تحميل الكتالوج…','A carregar catálogo…'],
+ 'Не удалось обновить каталог':['Could not refresh catalogue','Không thể cập nhật danh mục','상품 목록을 새로 고치지 못했습니다','无法刷新商品目录','Katalog konnte nicht aktualisiert werden','Impossible d’actualiser le catalogue','อัปเดตแคตตาล็อกไม่สำเร็จ','Katalog tidak dapat dikemas kini','Gagal memperbarui katalog','تعذّر تحديث الكتالوج','Não foi possível atualizar o catálogo'],
+ 'Товар недоступен':['Product unavailable','Sản phẩm không có sẵn','상품을 구매할 수 없습니다','商品暂不可用','Produkt nicht verfügbar','Produit indisponible','สินค้าไม่พร้อมจำหน่าย','Produk tidak tersedia','Produk tidak tersedia','المنتج غير متاح','Produto indisponível'],
+ 'Годен до {date}':['Use by {date}','Hạn dùng {date}','소비기한 {date}','保质期至 {date}','Verbrauchsdatum {date}','À consommer avant le {date}','ควรบริโภคก่อน {date}','Guna sebelum {date}','Gunakan sebelum {date}','يُستخدم قبل {date}','Consumir até {date}'],
+ 'Подробнее':['Details','Chi tiết','자세히 보기','详情','Details','Détails','รายละเอียด','Butiran','Rincian','التفاصيل','Detalhes'],
+ 'кг':['kg','kg','kg','千克','kg','kg','กก.','kg','kg','كغ','kg'],
+ 'л':['L','l','L','升','l','L','ลิตร','L','L','لتر','L'],
+ 'Упаковка':['pack','gói','팩','包','Packung','paquet','แพ็ก','pek','kemasan','عبوة','embalagem'],
+ 'Набор':['set','bộ','세트','套','Set','lot','ชุด','set','set','طقم','conjunto']
+};
+for(const [key,values] of Object.entries(storefrontCopy)){
+ copy[key]={...copy[key],...Object.fromEntries(storefrontLocales.map((locale,index)=>[locale,values[index]]))};
+}
 function t(key,params={}){return String(language==='ru'?key:copy[key]?.[language]||copy[key]?.en||key).replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}
 function field(p,key){const specific=p[key+'_'+language];if(specific)return specific;if(language==='ru')return p[key+'_ru']||p[key+'_en']||p[key+'_vi']||'';if(language==='en'||language==='vi')return p[key+'_'+language]||p[key+'_en']||p[key+'_ru']||'';const source=p[key+'_ru'];return copy[source]?.[language]||p[key+'_en']||source||'';}
 function staticText(){document.documentElement.setAttribute('translate','no');document.documentElement.classList.add('notranslate');document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.title=t('Меню кафе')+' · UMMA Cafe';document.querySelector('meta[name=description]')?.setAttribute('content',t('Наше меню')+' · HALAL UMMA · Nha Trang');for(const node of document.querySelectorAll('[data-i18n]'))node.textContent=t(node.dataset.i18n);for(const node of document.querySelectorAll('[data-i18n-placeholder]'))node.placeholder=t(node.dataset.i18nPlaceholder);for(const node of document.querySelectorAll('[data-i18n-label]'))node.setAttribute('aria-label',t(node.dataset.i18nLabel));for(const node of document.querySelectorAll('[data-i18n-alt]'))node.alt=t(node.dataset.i18nAlt);const select=document.getElementById('menuLanguage');if(select)select.value=language;}
