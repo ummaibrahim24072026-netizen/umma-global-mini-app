@@ -55,6 +55,24 @@ Deno.serve(async req=>{
  const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false}});
  if(req.method==='GET'){
   const params=new URL(req.url).searchParams;
+  const marketPreviewEnabled=Deno.env.get('UMMA_WEB_MARKET_PREVIEW')==='true';
+  if(params.has('storefront')){
+   const {data,error}=await db.rpc('cafe_web_section_catalog',{p_location:cafeId});
+   if(error)return reply({ok:false,error:'Storefront unavailable'},503);
+   return reply({ok:true,sections:data,marketPreviewEnabled});
+  }
+  if(params.has('marketCatalog')){
+   if(!marketPreviewEnabled)return reply({ok:false},404);
+   const {data,error}=await db.rpc('market_catalog',{p_warehouse:null});
+   if(error||!data?.ok)return reply({ok:false,error:'Catalogue unavailable'},503);
+   const warehouses=data.warehouses.filter((warehouse:any)=>warehouse.location_id===cafeId);
+   const activeWarehouseIds=new Set(warehouses.map((warehouse:any)=>warehouse.id));
+   return reply({
+    ok:true,
+    categories:data.categories,
+    offers:data.offers.filter((offer:any)=>activeWarehouseIds.has(offer.warehouse_id)),
+   });
+  }
   if(params.has('paymentOptions')){
    const {data,error}=await db.rpc('cafe_guest_payment_rates',{p_location_id:cafeId});
    return error||!data?reply({ok:false},503):reply({ok:true,...data});

@@ -136,6 +136,48 @@ Deno.serve(async req=>{
   const {data,error}=await db.rpc(name,{p_actor:actor,p_location:b.locationId,p_day:b.date,...(b.action==='ingredientReceive'?{p_key:b.requestKey,p_supplier:b.supplier||'',p_items:b.items}:{})});
   if(error)return reply({ok:false,error:/access denied/i.test(error.message)?'Нет доступа к ингредиентам':/^(Проверьте|Укажите)/.test(error.message)?error.message:'Не удалось сохранить закупку. Проверьте данные и повторите.'},/access denied/i.test(error.message)?403:error.code==='P0001'||error.code?.startsWith('22')?400:503);return reply(data);
  }
+ if(['storefrontList','storefrontSave'].includes(b.action)){
+  const locationId=b.locationId;
+  const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+  if(typeof locationId!=='string'||!uuid.test(locationId))return reply({ok:false,error:'Выберите кафе'},400);
+  if(!isOwner&&!assignments?.some(a=>a.location_id===locationId&&a.staff_role==='manager'))
+   return reply({ok:false,error:'Нет доступа к витрине этого кафе'},403);
+  const {data:location,error:locationError}=await db.from('locations').select('id')
+    .eq('id',locationId).eq('location_type','cafe').eq('is_active',true).maybeSingle();
+  if(locationError)throw locationError;
+  if(!location)return reply({ok:false,error:'Кафе недоступно'},404);
+  const productQuery=()=>db.from('products').select('id,name_ru').eq('product_type','cafe').eq('is_active',true).eq('catalog_preview',false);
+  const columns='product_id,section,enabled,allow_preorder,service_date,starts_at,ends_at';
+  if(b.action==='storefrontList'){
+   const [products,assignments]=await Promise.all([
+    productQuery().order('name_ru'),
+    db.from('cafe_web_sections').select(columns).eq('location_id',locationId).order('section').order('product_id'),
+   ]);
+   if(products.error||assignments.error)throw products.error||assignments.error;
+   return reply({ok:true,products:products.data,assignments:assignments.data});
+  }
+  const section=b.section;
+  if(!['breakfast','lunch','dinner','dish-day','family','daily'].includes(section)||
+     typeof b.productId!=='string'||!uuid.test(b.productId)||
+     typeof b.enabled!=='boolean'||typeof b.allowPreorder!=='boolean')
+   return reply({ok:false,error:'Выберите блюдо и раздел'},400);
+  const start=b.startsAt||null,end=b.endsAt||null,date=b.serviceDate||null;
+  const time=/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/;
+  if(Boolean(start)!==Boolean(end)||start&&(typeof start!=='string'||typeof end!=='string'||!time.test(start)||!time.test(end)||start===end))
+   return reply({ok:false,error:'Укажите корректное время начала и окончания'},400);
+  if(section==='dish-day'&&!date||date&&(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||
+     !Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date))
+   return reply({ok:false,error:'Выберите корректную дату'},400);
+  const {data:product,error:productError}=await productQuery().eq('id',b.productId).maybeSingle();
+  if(productError)throw productError;
+  if(!product)return reply({ok:false,error:'Блюдо недоступно'},404);
+  const {error}=await db.from('cafe_web_sections').upsert({
+   location_id:locationId,product_id:b.productId,section,enabled:b.enabled,allow_preorder:b.allowPreorder,
+   service_date:date,starts_at:start,ends_at:end,
+  },{onConflict:'location_id,product_id,section'});
+  if(error)throw error;
+  return reply({ok:true});
+ }
  if(b.action==='managerOverview'){
   const locationId=b.locationId;
   if(typeof locationId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(locationId))return reply({ok:false,error:'Выберите кафе'},400);
