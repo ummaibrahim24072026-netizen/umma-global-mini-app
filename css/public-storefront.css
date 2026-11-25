@@ -164,7 +164,7 @@
 }
 
 .public-cafe-menu #cafePage #cafeSpotlight {
-  --spotlight-height: clamp(210px, 56vw, 285px);
+  --spotlight-height: clamp(150px, 40vw, 207px);
   background: var(--umma-brand-tint);
   color: var(--umma-brand-deep);
   box-shadow: var(--storefront-shadow);
@@ -172,19 +172,53 @@
 }
 
 .public-cafe-menu #cafePage .cafe-spotlight-slide {
-  padding: 13px clamp(14px, 4vw, 32px) 44px;
+  padding: 10px clamp(13px, 3.5vw, 24px);
+}
+
+.public-cafe-menu #cafePage #cafeSpotlight:has(.cafe-spotlight-controls:not([hidden])) .cafe-spotlight-slide {
+  padding-block-end: 38px;
 }
 
 .public-cafe-menu #cafePage .cafe-spotlight-slide.has-photo {
-  gap: clamp(7px, 3vw, 24px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
+  gap: clamp(7px, 2vw, 15px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
 }
 
 .public-cafe-menu #cafePage .cafe-spotlight-slide img {
-  width: min(100%, calc(var(--spotlight-height) - 76px));
-  object-fit: cover;
-  border-radius: 50%;
-  filter: drop-shadow(0 8px 11px rgb(var(--umma-brand-night-rgb) / .2));
+  width: 100%;
+  height: clamp(91px, 28vw, 146px);
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: none;
+}
+
+.public-cafe-menu #cafePage .cafe-spotlight-slide.has-cutout img {
+  border-radius: 0;
+  filter: drop-shadow(0 4px 5px rgb(var(--umma-brand-night-rgb) / .18));
+}
+
+.public-cafe-menu #cafePage .cafe-spotlight-copy {
+  gap: 4px;
+}
+
+.public-cafe-menu #cafePage .cafe-spotlight-copy strong {
+  font-size: clamp(1rem, 4.7vw, 1.75rem);
+}
+
+.cafe-spotlight-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+}
+
+.cafe-spotlight-meta:not(:has(:not(:empty))) {
+  display: none;
+}
+
+.cafe-spotlight-detail {
+  font-size: .75rem;
 }
 
 .public-cafe-menu #cafePage :is(.cafe-spotlight-eyebrow, .cafe-spotlight-pause, .cafe-spotlight-dots button) {
@@ -193,7 +227,7 @@
 
 .cafe-spotlight-price {
   font-weight: 800;
-  font-size: clamp(.95rem, 4vw, 1.45rem);
+  font-size: clamp(.95rem, 3.75vw, 1.35rem);
   unicode-bidi: isolate;
 }
 
@@ -203,7 +237,8 @@
 }
 
 .public-cafe-menu #cafePage .cafe-spotlight-cta {
-  padding: 7px 11px;
+  margin-block-start: 2px;
+  padding: 5px 10px;
   background: var(--storefront-gold);
 }
 

@@ -10,6 +10,11 @@
     { sku: 'UMMA-CAFE-MANTI' },
     { sku: 'UMMA-CAFE-SHURPA' }
   ];
+  const cutouts = new Map([
+    ['logo/assets/menu/plov-white-v2.webp', 'assets/menu-spotlight/plov.webp'],
+    ['logo/assets/menu/manti.png', 'assets/menu-spotlight/manti.webp'],
+    ['logo/assets/menu/shurpa-white-v2.webp', 'assets/menu-category-art/soups.webp']
+  ].map(([original, artwork]) => [new URL(original, document.baseURI).href, new URL(artwork, document.baseURI).href]));
   const language = {
     ru: ['Из меню UMMA', 'Открыть блюдо', 'Подробнее', 'Пауза', 'Продолжить', 'Слайд'],
     en: ['From the UMMA menu', 'View dish', 'Read more', 'Pause', 'Play', 'Slide'],
@@ -70,16 +75,19 @@
   function select(index) {
     current = (index + slides.length) % slides.length;
     const card = slides[current];
-    eyebrow.textContent = card.badge;
+    eyebrow.textContent = card.badge || '';
     title.textContent = card.title;
     detail.textContent = card.detail || '';
     if (price) price.textContent = card.price || '';
     cta.textContent = card.cta || labels()[card.news ? 2 : 1];
     action.setAttribute('aria-haspopup', card.news || direction==='market' ? 'false' : 'dialog');
-    if (card.image && photo.src !== card.image) photo.src = card.image;
-    if (!card.image) photo.removeAttribute('src');
-    photo.hidden = !card.image;
-    action.classList.toggle('has-photo', !!card.image);
+    const cutout = cutouts.get(card.image);
+    const image = cutout || card.image;
+    if (image && photo.src !== image) photo.src = image;
+    if (!image) photo.removeAttribute('src');
+    photo.hidden = !image;
+    action.classList.toggle('has-photo', !!image);
+    action.classList.toggle('has-cutout', !!cutout);
     for (const [i, dot] of [...dots.children].entries()) {
       if (i === current) dot.setAttribute('aria-current', 'true');
       else dot.removeAttribute('aria-current');
@@ -93,7 +101,7 @@
       (!item.start || Date.parse(item.start) <= now) && (!item.end || now < Date.parse(item.end))
     ).flatMap(item => {
       const dish = catalog.find(row => row.sku === item.sku);
-      return dish ? [{...dish, badge: item.badge || labels()[0]}] : [];
+      return dish ? [{...dish, badge: item.badge}] : [];
     });
     const activeNews = announcements.map(item => ({
       key: item.key, title: item.title, detail: item.body, news: true
