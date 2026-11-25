@@ -555,7 +555,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=category-art-2"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=meal-section-art-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
@@ -989,9 +989,9 @@ try{
 }catch{}
 const locationId='e22788bd-4734-4b3a-911e-ba103d52617a';
 const storefrontSections=[
- ['breakfast','Завтраки','M2 19h20M4 15h16m-13 0a5 5 0 0 1 10 0M12 3v3M4 8l2 2m14-2-2 2'],
- ['lunch','Обеды','M4 12h16a8 8 0 0 1-16 0zm4 9h8M9 4v4m6-4v4'],
- ['dinner','Ужины','M20 15a8 8 0 0 1-11-11 8.5 8.5 0 1 0 11 11z'],
+ ['breakfast','Завтраки'],
+ ['lunch','Обеды'],
+ ['dinner','Ужины'],
  ['daily','На каждый день','M4 6h16v14H4zm0 5h16M8 4v4m8-4v4m-8 7h2m4 0h2'],
  ['dish-day','Блюдо дня','m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'],
  ['family','Для семьи','M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8'],
@@ -1058,7 +1058,14 @@ function renderCafeSections(){
  const visible=inCollection&&['breakfast','lunch','dinner'].includes(cafeSection)
   ?active.filter(([id])=>['breakfast','lunch','dinner'].includes(id)):active;
  host.hidden=!visible.length||!insideCafe;
- host.innerHTML=visible.map(([id,label,icon])=>'<button type="button" class="cafe-category storefront-tile" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+esc(t(label))+'</button>').join('');
+ host.innerHTML=visible.map(([id,label,icon])=>{
+  const title=esc(t(label));
+  const content=icon
+   ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+title
+   : '<strong>'+title+'</strong><img src="assets/menu-category-art/'+id+'.webp" alt="" decoding="async">';
+  return '<button type="button" class="cafe-category storefront-tile'+(icon?'':' cafe-category-illustrated')+
+   '" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'">'+content+'</button>';
+ }).join('');
 }
 
 const categoryFor=p=>menuCategories.find(c=>c.skus.some(s=>p.sku==='UMMA-CAFE-'+s))?.id||'other';

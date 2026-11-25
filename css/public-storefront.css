@@ -247,6 +247,10 @@
   filter: drop-shadow(0 2px 2px rgb(var(--umma-brand-night-rgb) / .18));
 }
 
+.public-cafe-menu #cafePage #cafeSections .cafe-category-illustrated {
+  font-size: clamp(.625rem, 2.8vw, .88rem);
+}
+
 @media (max-width: 365px) {
   .public-cafe-menu #cafePage .cafe-category-illustrated {
     grid-template-columns: minmax(0, 1fr) minmax(0, 43%);
