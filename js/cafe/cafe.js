@@ -150,7 +150,8 @@
       return;
     }
     const availableProducts = [...products, ...dessertPreviews.filter(p => !products.some(product => product.sku === p.sku)).map(p => ({ ...p, photo_only: true, catalog_preview: true }))].map(p => {
-      if (p.catalog_preview || p.price_vnd == null) return locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled?null:{ ...p, catalog_preview: true };
+      if (p.catalog_preview && !p.photo_only) return p;
+      if (p.price_vnd == null) return locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled?null:{ ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
       const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;if(ready)return stock?{...p,stockAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false?Number(stock.quantity)-Number(stock.reserved_quantity||0):0,stockIsAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false}:null;
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };

@@ -213,6 +213,7 @@ QR-кодом|QR code|Mã QR
 Напитки|Drinks|Đồ uống
 Соусы|Sauces|Nước sốt
 Другое|Other|Khác
+Цена уточняется|Price to be confirmed|Giá đang được cập nhật
 Все|All|Tất cả
 Описание|Description|Mô tả
 В заказе|In your order|Trong đơn hàng
