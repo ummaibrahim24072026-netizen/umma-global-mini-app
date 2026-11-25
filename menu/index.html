@@ -555,7 +555,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=daily-first-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=category-art-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
   <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
@@ -1261,24 +1261,22 @@ function menuDishes(){
 
 const categoryIcons={
  all:'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z',
- soups:'M3 12h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8zm6-8c-2 2 2 3 0 5m6-5c-2 2 2 3 0 5',
- mains:'M3 18h18M5 16a7 7 0 0 1 14 0M12 9V6m-2 0h4',
- grill:'M4 18l14-14m-8 9-3-3 3-3 3 3m1-1-3-3 3-3 3 3m-8 8 3 3 3-3-3-3m-4 4-3-3-2 2 3 3',
- salads:'M4 15c0-6 5-10 15-10 0 9-5 14-10 14-3 0-5-2-5-4zm1 5 9-9',
- bakery:'M3 15a11 11 0 0 1 11-11h3a4 4 0 0 1 4 4v2a9 9 0 0 1-9 9H7a4 4 0 0 1-4-4zm8-9 2 4m2-5 2 4m-9 1 2 4',
- desserts:'M4 19h16v-5H4zm2-5v-3h12v3m-6-3V7m0 0c-3-1-1-3 0-4 1 1 3 3 0 4z',
- drinks:'M5 8h14l-2 13H7zm7 0 2-5h4M8 12h8',
- sauces:'M7 9h10l2 11H5zm2 0 1-5h4l1 5m-7 6h8',
- other:'M4 12h16M12 4v16'
+ soups:'M3 12h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8zm6-8c-2 2 2 3 0 5m6-5c-2 2 2 3 0 5'
 };
 function renderCategories(){
  renderCafeSections();
  const dishes=menuDishes().filter(row=>sectionIncludes(cafeSection,row)).map(row=>row.dish);
  const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];
  if(!cats.some(c=>c.id===category))category='all';
- $('categories').innerHTML=cats.map(c=>'<button type="button" class="cafe-category storefront-tile" data-category="'+c.id+
-   '" aria-pressed="'+(category===c.id)+'" aria-controls="products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+
-   categoryIcons[c.id]+'"/></svg>'+esc(t(c.label))+'</button>').join('');
+ $('categories').innerHTML=cats.map(c=>{
+   const icon=categoryIcons[c.id];
+   const label=esc(t(c.label));
+   const content=icon
+     ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+label
+     : '<strong>'+label+'</strong><img src="assets/menu-category-art/'+c.id+'.webp" alt="" decoding="async">';
+   return '<button type="button" class="cafe-category storefront-tile'+(icon?'':' cafe-category-illustrated')+
+     '" data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products">'+content+'</button>';
+ }).join('');
 }
 // Search tags for ingredients shown in the supplied catalogue photos or confirmed in the menu.
 const menuIngredientTags = {

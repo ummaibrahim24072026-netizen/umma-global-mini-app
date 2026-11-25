@@ -231,6 +231,26 @@
   box-shadow: var(--storefront-shadow);
 }
 
+.public-cafe-menu #cafePage .cafe-category-illustrated {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 41%);
+  align-items: center;
+  justify-items: stretch;
+  gap: 2px;
+  padding: 5px 4px 5px 7px;
+  padding-inline: 7px 4px;
+  text-align: start;
+  font-size: clamp(.69rem, 3.05vw, .88rem);
+}
+
+.public-cafe-menu #cafePage .cafe-category-illustrated img {
+  height: 52px;
+  filter: drop-shadow(0 2px 2px rgb(var(--umma-brand-night-rgb) / .18));
+}
+
+.public-cafe-menu #cafePage .cafe-category-illustrated[aria-pressed="true"] strong {
+  text-shadow: 0 1px 2px rgb(var(--umma-brand-night-rgb) / .55);
+}
+
 .public-cafe-menu #cafePage [data-cafe-section="cooking"] {
   grid-column: 1 / -1;
   grid-template-columns: auto auto;
