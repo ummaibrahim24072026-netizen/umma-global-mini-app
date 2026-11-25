@@ -684,3 +684,9 @@
 .storefront-request h2 {
   font-size: 1rem;
 }
+
+.storefront-request > button.primary,
+#cafeEventForm > button.primary[type="submit"] {
+  color: #fff;
+  -webkit-text-fill-color: currentColor;
+}
