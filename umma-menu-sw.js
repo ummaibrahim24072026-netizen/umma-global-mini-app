@@ -1,14 +1,13 @@
 // Keep live documents and transaction data out of Cache Storage.
 const base = new URL(self.registration.scope);
-const shellPaths = new Set(['menu/', 'menu/index.html', 'staff.html', 'delivery-tracking.html'].map(path => new URL(path, base).pathname));
+const menuPaths = new Set(['menu', 'menu/', 'menu/index.html'].map(path => new URL(path, base).pathname));
+const shellPaths = new Set([...menuPaths, ...['staff.html', 'delivery-tracking.html'].map(path => new URL(path, base).pathname)]);
 self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', event => {
-  event.waitUntil(Promise.all([
-    self.clients.claim(),
-    caches.keys().then(keys => Promise.all(keys
-      .filter(key => key.startsWith('umma-menu-shell-'))
-      .map(key => caches.delete(key))))
-  ]));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys
+    .filter(key => key.startsWith('umma-menu-shell-'))
+    .map(key => caches.delete(key))
+  )).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const { request } = event;
@@ -16,7 +15,8 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET' || request.mode !== 'navigate' ||
       url.origin !== base.origin || !shellPaths.has(url.pathname)) return;
 
-  event.respondWith(fetch(request, { cache: 'no-cache' }).catch(() => new Response(
+  const cache = menuPaths.has(url.pathname) ? 'no-store' : 'no-cache';
+  event.respondWith(fetch(request, { cache }).catch(() => new Response(
     '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>UMMA · Offline</title><main><h1>UMMA</h1><p lang="ru">Нет связи. Проверьте интернет и обновите страницу.</p>' +
     '<p>Offline. Check your connection and reload.</p><p lang="vi">Mất kết nối. Hãy kiểm tra mạng và tải lại trang.</p>' +

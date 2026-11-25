@@ -117,15 +117,6 @@
 .cafe-intro-copy p { margin: 0 0 7px; font-size: .85rem; font-weight: 650; }
 .cafe-intro-copy strong { display: block; font-size: clamp(1.45rem, 6vw, 3rem); line-height: 1.02; }
 .cafe-intro-copy span { display: block; margin-top: 8px; font-size: .85rem; }
-.cafe-spotlight-fallback img {
-  position: absolute;
-  z-index: -1;
-  inset-inline-end: 0;
-  bottom: -18%;
-  width: min(48%, 320px);
-  height: auto;
-  filter: drop-shadow(0 14px 15px rgb(var(--umma-brand-on-primary-rgb) / .5));
-}
 .cafe-spotlight-fallback { width: 100%; }
 .cafe-spotlight-slide {
   display: grid;
@@ -1019,15 +1010,6 @@
 .public-cafe-menu .umma-connect .connect-hero-icon img { width: 42px; height: 42px; }
 .public-cafe-menu :is(.checkout-header button, .topbar button):focus-visible { outline-color: #f5d481; }
 .public-cafe-menu #cafePage .cafe-product-bottom > .cafe-product-price { flex: 1 1 auto; }
-.cafe-spotlight-fallback img {
-  bottom: 50%;
-  inset-inline-end: 10px;
-  width: clamp(104px, 38%, 244px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  transform: translateY(50%);
-}
-
 .nearby-cafe-body {
   display: grid;
   gap: 14px;

@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Prepare static site
         run: |
           mkdir -p _site
@@ -25,6 +28,7 @@ jobs:
           cp -R css js assets logo menu _site/
           cp umma-menu.webmanifest umma-staff.webmanifest umma-menu-sw.js _site/
           touch _site/.nojekyll
+          node scripts/version-customer-menu.mjs _site "$GITHUB_SHA"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
