@@ -555,7 +555,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=spotlight-compact-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=sticky-storefront-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA</span></div>
@@ -926,12 +926,17 @@ const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/', $=id=>docume
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const I=window.ummaMenuI18n,t=I.t,num=I.number;
 const menuTopbar = document.querySelector('#cafePage .topbar');
-function syncTopbarHeight() {
+const storefrontSwitch = $('storefrontSwitch');
+function syncMenuHeaderHeights() {
   $('cafePage').style.setProperty('--menu-topbar-height', menuTopbar.offsetHeight + 'px');
+  $('cafePage').style.setProperty('--storefront-switch-height', storefrontSwitch.offsetHeight + 'px');
 }
-syncTopbarHeight();
-if (typeof ResizeObserver === 'function') new ResizeObserver(syncTopbarHeight).observe(menuTopbar);
-else window.addEventListener('resize', syncTopbarHeight);
+syncMenuHeaderHeights();
+if (typeof ResizeObserver === 'function') {
+  const headerObserver = new ResizeObserver(syncMenuHeaderHeights);
+  headerObserver.observe(menuTopbar);
+  headerObserver.observe(storefrontSwitch);
+} else window.addEventListener('resize', syncMenuHeaderHeights);
 document.querySelector('.dock-menu').onclick=event=>{
   event.preventDefault();
   $('menuHeading').focus({preventScroll:true});
@@ -2346,6 +2351,7 @@ window.ummaMenuVoice=window.UmmaVoiceOrder?.create({
 });
 window.ummaMenuAudience?.start(source);
 marketStorefront?.start();
+syncMenuHeaderHeights();
 if (location.hash === '#orders') $('receiptButton').click();
 load();
 </script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=storefront-order-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
