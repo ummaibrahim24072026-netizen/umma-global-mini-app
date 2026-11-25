@@ -6,7 +6,7 @@
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="logo/assets/umma-apple-touch-icon.png">
 <script src="js/cafe/menu-install.js?v=2"></script>
-<script src="js/cafe/public-menu-i18n.js?v=install-2"></script>
+<script src="js/cafe/public-menu-i18n.js?v=storefront-order-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -555,10 +555,10 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=meal-section-art-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=storefront-order-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <div class="topbar">
-  <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA<small>UMMA GLOBAL</small></span></div>
+ <div class="brand"><img src="logo/assets/umma-icon-192.png" alt="" width="42" height="42"><span>HALAL UMMA</span></div>
   <div class="topbar-actions">
     <button id="shareMenu" class="plain-btn share-menu-button" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></svg>
@@ -640,15 +640,13 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section>
 <div id="cafeSections" class="storefront-sections" role="group" aria-label="Разделы меню" data-i18n-label="Разделы меню" hidden></div>
 <div id="cafeInquiryTiles" class="storefront-sections" role="group" aria-label="Индивидуальные заказы" data-i18n-label="Индивидуальные заказы">
-  <button type="button" id="cafeFamilyInquiry" class="cafe-category storefront-tile" data-inquiry="family">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8"/></svg>
-    <strong data-i18n="Для семьи">Для семьи</strong>
-    <small data-i18n="Подобрать блюда">Подобрать блюда</small>
+  <button type="button" id="cafeFamilyInquiry" class="cafe-category storefront-tile storefront-inquiry-art" data-cafe-section="family" aria-controls="products" aria-pressed="false">
+    <span><strong data-i18n="Для семьи">Для семьи</strong><small data-i18n="Подобрать блюда">Подобрать блюда</small></span>
+    <img src="assets/menu-category-art/family.webp" alt="" decoding="async">
   </button>
-  <button type="button" class="cafe-category storefront-tile" data-inquiry="custom">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12a4 4 0 0 1 0-8c1 0 2 .4 2.6 1a4 4 0 0 1 6.8 0A4 4 0 1 1 18 12v8H6zm0 4h12"/></svg>
-    <strong data-i18n="На заказ">На заказ</strong>
-    <small data-i18n="На праздник или для компании">На праздник или для компании</small>
+  <button type="button" class="cafe-category storefront-tile storefront-inquiry-art" data-cafe-section="custom" aria-controls="products" aria-pressed="false">
+    <span><strong data-i18n="На заказ">На заказ</strong><small data-i18n="На праздник или для компании">На праздник или для компании</small></span>
+    <img src="assets/menu-category-art/custom.webp" alt="" decoding="async">
   </button>
 </div>
 <div id="categories" class="cafe-menu-categories" role="group" aria-label="Категории меню" data-i18n-label="Категории меню"></div>
@@ -715,34 +713,20 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <dialog id="cafeEventInquiry" closedby="closerequest" aria-labelledby="cafeEventTitle">
   <form id="cafeEventForm">
     <header class="event-inquiry-heading">
-      <h2 id="cafeEventTitle" data-i18n="Заказ на праздник">Заказ на праздник</h2>
+      <h2 id="cafeEventTitle" data-i18n="Запросить блюдо">Запросить блюдо</h2>
       <button type="button" class="close" id="closeCafeEvent" aria-label="Закрыть" data-i18n-label="Закрыть">×</button>
     </header>
     <p data-i18n="Кафе подтвердит возможность приготовления, состав и цену в чате.">Кафе подтвердит возможность приготовления, состав и цену в чате.</p>
-    <label class="field"><span data-i18n="Что приготовить?">Что приготовить?</span>
-      <select name="selection">
-        <option data-i18n="Индивидуальный набор">Индивидуальный набор</option>
-        <option data-i18n="Плов на вес">Плов на вес</option>
-        <option data-i18n="Манты на заказ">Манты на заказ</option>
-        <option data-i18n="Шашлык на компанию">Шашлык на компанию</option>
-        <option data-i18n="Самса на заказ">Самса на заказ</option>
-        <option data-i18n="Торты и десерты">Торты и десерты</option>
-      </select>
+    <label class="field"><span data-i18n="Какое блюдо хотите?">Какое блюдо хотите?</span>
+      <textarea name="dish" rows="3" maxlength="800" required></textarea>
     </label>
-    <label class="field"><span data-i18n="Сколько гостей?">Сколько гостей?</span><input name="guests" type="number" inputmode="numeric" min="1" step="1" required></label>
+    <label class="field"><span data-i18n="Сколько гостей?">Сколько гостей?</span><input name="guests" type="number" inputmode="numeric" min="1" max="1000" step="1"></label>
     <div class="event-inquiry-date">
-      <label class="field"><span data-i18n="Дата">Дата</span><input name="date" type="date" required></label>
-      <label class="field"><span data-i18n="Время Нячанга">Время Нячанга</span><input name="time" type="time" required></label>
+      <label class="field"><span data-i18n="Дата">Дата</span><input name="date" type="date"></label>
+      <label class="field"><span data-i18n="Время Нячанга">Время Нячанга</span><input name="time" type="time"></label>
     </div>
-    <label class="field"><span data-i18n="Способ получения">Способ получения</span>
-      <select name="fulfillment">
-        <option data-i18n="Самовывоз">Самовывоз</option>
-        <option data-i18n="Доставка">Доставка</option>
-      </select>
-    </label>
-    <label class="field"><span data-i18n="Блюда, количество и пожелания">Блюда, количество и пожелания</span><textarea name="notes" rows="3" maxlength="800" data-i18n-placeholder="Например, 3 кг плова и 20 мантов" placeholder="Например, 3 кг плова и 20 мантов"></textarea></label>
     <p id="cafeEventStatus" role="status" hidden></p>
-    <button type="submit" class="primary" data-i18n="Продолжить в чате">Продолжить в чате</button>
+    <button type="submit" class="primary" data-i18n="Отправить запрос">Отправить запрос</button>
   </form>
 </dialog>
 <dialog id="dishDetails" closedby="closerequest" aria-labelledby="dishTitle">
@@ -992,12 +976,18 @@ const storefrontSections=[
  ['breakfast','Завтраки'],
  ['lunch','Обеды'],
  ['dinner','Ужины'],
- ['daily','На каждый день','M4 6h16v14H4zm0 5h16M8 4v4m8-4v4m-8 7h2m4 0h2'],
+ ['daily','На каждый день'],
  ['dish-day','Блюдо дня','m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'],
  ['family','Для семьи','M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8'],
  ['cooking','Сегодня готовим','M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m9-5v5l3 2']
 ];
-let cafeSection='all', storefrontAssignments=[];
+let cafeSection='all', storefrontAssignments=[], preorderDate='';
+const familyDishSkus=['PLOV','MANTI','SALAD','FLATBREAD','AYRAN-500','TURKISH-AYRAN-1000'];
+const familySetRecipes=[
+ ['На 2–3 человек',{PLOV:2,SALAD:1,FLATBREAD:1,'AYRAN-500':1}],
+ ['На 4–5 человек',{PLOV:4,SALAD:2,FLATBREAD:2,'TURKISH-AYRAN-1000':1}]
+];
+const preorderSkus=['PLOV','MANTI','GRILLED-CHICKEN-WINGS','SAMSA','SAMSA-CHICKEN'];
 const cartStorageKey='umma-menu-cart-v1:'+locationId;
 
 function readCartDraft(){
@@ -1021,6 +1011,7 @@ function sectionPlacement(section,dish){
 }
 function sectionIncludes(section,{dish,batch}){
  if(section==='all')return true;
+ if(section==='family')return stockLeft(dish)>0&&(sectionPlacement(section,dish)||familyDishSkus.includes(cafeSku(dish)));
  if(section==='cooking')return orderableFuture(batch)&&localDay(batch.plannedReadyAt)===localDay(Date.now());
  const placement=sectionPlacement(section,dish);
  if(!placement)return false;
@@ -1038,8 +1029,8 @@ function localDay(value){
 }
 function renderCafeSections(){
  const dishes=menuDishes();
- const active=storefrontSections.filter(([id])=>dishes.some(row=>sectionIncludes(id,row)));
- if(cafeSection!=='all'&&!active.some(([id])=>id===cafeSection)){
+ const active=storefrontSections.filter(([id])=>id!=='family'&&dishes.some(row=>sectionIncludes(id,row)));
+ if(!['all','family','custom'].includes(cafeSection)&&!active.some(([id])=>id===cafeSection)){
   cafeSection='all';
   category='all';
  }
@@ -1048,22 +1039,23 @@ function renderCafeSections(){
  $('cafePage').classList.toggle('is-cafe-collection',inCollection);
  $('leaveCafeSection').hidden=!inCollection;
  $('cafeInquiryTiles').hidden=!insideCafe||inCollection;
- $('cafeFamilyInquiry').hidden=active.some(([id])=>id==='family');
+
  if(insideCafe){
-  const heading=active.find(([id])=>id===cafeSection)?.[1]||'Меню';
+  const heading={family:'Для семьи',custom:'На заказ'}[cafeSection]||active.find(([id])=>id===cafeSection)?.[1]||'Меню';
   $('menuHeading').dataset.i18n=heading;
   $('menuHeading').textContent=t(heading);
  }
  const host=$('cafeSections');
- const visible=inCollection&&['breakfast','lunch','dinner'].includes(cafeSection)
+ const visible=['family','custom'].includes(cafeSection)?[]:inCollection&&['breakfast','lunch','dinner'].includes(cafeSection)
   ?active.filter(([id])=>['breakfast','lunch','dinner'].includes(id)):active;
  host.hidden=!visible.length||!insideCafe;
  host.innerHTML=visible.map(([id,label,icon])=>{
   const title=esc(t(label));
   const content=icon
    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+title
-   : '<strong>'+title+'</strong><img src="assets/menu-category-art/'+id+'.webp" alt="" decoding="async">';
-  return '<button type="button" class="cafe-category storefront-tile'+(icon?'':' cafe-category-illustrated')+
+   : (id==='daily'?'<img src="assets/menu-category-art/daily.webp" alt="" decoding="async"><strong>'+title+'</strong>'
+     :'<strong>'+title+'</strong><img src="assets/menu-category-art/'+id+'.webp" alt="" decoding="async">');
+  return '<button type="button" class="cafe-category storefront-tile'+(icon?'':id==='daily'?' storefront-daily-art':' cafe-category-illustrated')+
    '" data-cafe-section="'+id+'" aria-controls="products" aria-pressed="'+(id===cafeSection)+'">'+content+'</button>';
  }).join('');
 }
@@ -1196,7 +1188,13 @@ function receiptPhoto(item,order){
   const saved=order.itemPhotos?.[item.name_ru];
   return (typeof saved==='string'&&safeImage({image_url:saved}))||catalogReceiptPhoto(item);
 }
-function weight(p){return p.sku?.startsWith('UMMA-CAFE-BAKLAVA-')?t('1 шт.'):p.sku?.startsWith('UMMA-CAFE-DESSERT-')?t('1 порция'):p.weight_value?(p.weight_unit==='ml'?num(p.weight_value)+' '+t('мл'):'≈ '+num(p.weight_value)+' '+t('г')):'';}
+function weight(p){
+ if(p.sku?.startsWith('UMMA-CAFE-BAKLAVA-'))return t('1 шт.');
+ if(p.sku?.startsWith('UMMA-CAFE-DESSERT-'))return t('1 порция');
+ if(!p.weight_value)return '';
+ const unit={g:'г',kg:'кг',ml:'мл',l:'л',pcs:'шт.'}[p.weight_unit]||'г';
+ return (unit==='г'?'≈ ':'')+num(p.weight_value)+' '+t(unit);
+}
 function batchTime(value){return new Intl.DateTimeFormat(I.locale(),{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
 function batchLabel(p){return t('Готовится · к {time}',{time:batchTime(p.plannedReadyAt)})+' · '+t('Время Нячанга');}
 function expandBatches(rows,metadata=new Map()){const expanded=rows.flatMap(p=>{const base={...metadata.get(p.id),...p};return [base,...(p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))?[{...base,id:p.id+'~'+p.planRevision,productId:p.id,isPreorder:true,stockManaged:true,available:p.plannedAvailable}]:[])];});for(const id of cart.keys()){
@@ -1214,7 +1212,8 @@ function visibleDish(p){return p.catalog_preview||stockLeft(p)>0||p.isPreorder&&
 function stockLeft(p){return p.catalog_preview?0:p.stockManaged?Math.max(0,Number(p.available)||0):99;}function shortages(){return [...cart].some(([id,n])=>n>stockLeft(products.find(p=>p.id===id)||{stockManaged:true}));}
 function stockSummary(p){
  if(p.catalog_preview||!p.stockManaged)return '';
- return '<div class="cafe-availability"><small class="cafe-stock-count">'+esc(t('В наличии: {count}',{count:num(stockLeft(p))}))+'</small></div>';
+ const ready=['daily','family'].includes(cafeSection)&&stockLeft(p)>0?t('Готово сегодня')+' · ':'';
+ return '<div class="cafe-availability"><small class="cafe-stock-count">'+esc(ready+t('В наличии: {count}',{count:num(stockLeft(p))}))+'</small></div>';
 }
 function preorderCard(p,n){
  const readyAt=new Date(p.plannedReadyAt),timeZone='Asia/Ho_Chi_Minh';
@@ -1266,22 +1265,15 @@ function menuDishes(){
  return products.filter(p=>!p.isPreorder&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
 }
 
-const categoryIcons={
- all:'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z'
-};
 function renderCategories(){
  renderCafeSections();
  const dishes=menuDishes().filter(row=>sectionIncludes(cafeSection,row)).map(row=>row.dish);
- const cats=[{id:'all',label:'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];
+ const cats=[{id:'all',label:I.language==='ru'?'Всё':'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];
  if(!cats.some(c=>c.id===category))category='all';
  $('categories').innerHTML=cats.map(c=>{
-   const icon=categoryIcons[c.id];
-   const label=esc(t(c.label));
-   const content=icon
-     ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+icon+'"/></svg>'+label
-     : '<strong>'+label+'</strong><img src="assets/menu-category-art/'+c.id+'.webp" alt="" decoding="async">';
-   return '<button type="button" class="cafe-category storefront-tile'+(icon?'':' cafe-category-illustrated')+
-     '" data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products">'+content+'</button>';
+   return '<button type="button" class="cafe-category storefront-tile cafe-category-illustrated"'+
+     ' data-category="'+c.id+'" aria-pressed="'+(category===c.id)+'" aria-controls="products"><strong>'+esc(t(c.label))+
+     '</strong><img src="assets/menu-category-art/'+c.id+'.webp" alt="" decoding="async"></button>';
  }).join('');
 }
 // Search tags for ingredients shown in the supplied catalogue photos or confirmed in the menu.
@@ -1371,10 +1363,84 @@ function renderSpotlight(dishes) {
   }, {leading:upcoming});
 }
 
+function cafeSku(dish){return dish.sku?.replace(/^UMMA-CAFE-/,'');}
+
+function familySetLines(recipe){
+ return Object.entries(recipe).map(([sku,quantity])=>({
+  dish:products.find(p=>!p.isPreorder&&!p.catalog_preview&&cafeSku(p)===sku),
+  quantity
+ }));
+}
+
+function canAddFamilySet(lines){
+ if(busy||pending||shortages())return false;
+ const positions=new Set(cart.keys());
+ for(const {dish,quantity} of lines){
+  if(!dish||qty(dish.id)+quantity>Math.min(20,stockLeft(dish)))return false;
+  if(products.some(p=>p.isPreorder&&p.productId===dish.id&&qty(p.id)))return false;
+  positions.add(dish.id);
+ }
+ return positions.size<=25;
+}
+
+function renderFamilySets(){
+ const sets=familySetRecipes.map(([title,recipe],index)=>{
+  const lines=familySetLines(recipe);
+  if(lines.some(({dish})=>!dish||!(dish.price_vnd>0)))return '';
+  const price=lines.reduce((sum,{dish,quantity})=>sum+Number(dish.price_vnd)*quantity,0);
+  const list=lines.map(({dish,quantity})=>'<li>'+esc(num(quantity)+' × '+name(dish)+(weight(dish)?' · '+weight(dish):''))+'</li>').join('');
+  const available=canAddFamilySet(lines);
+  return '<article class="storefront-family-set"><h3>'+esc(t(title))+'</h3><ul>'+list+'</ul><strong class="cafe-product-price">'+
+   esc(money(price))+'</strong><button type="button" class="primary" data-family-set="'+index+'"'+(available?'':' disabled')+'>'+
+   esc(t(available?'Добавить набор':'Сейчас недоступно'))+'</button></article>';
+ }).join('');
+ return sets?'<div class="storefront-family-sets">'+sets+'</div>':'';
+}
+
+function renderOrderCatalog(terms,dishes){
+ const isOffer=({dish,batch})=>orderableFuture(batch)||preorderSkus.includes(cafeSku(dish))||
+   /(?:^|-)CAKE(?:-|$)/.test(cafeSku(dish)||'');
+ const allOffers=dishes.filter(isOffer);
+ const slots=[...new Set(allOffers.filter(({batch})=>orderableFuture(batch)).map(({batch})=>localDay(batch.plannedReadyAt)))].sort();
+ if(preorderDate&&!slots.includes(preorderDate))preorderDate='';
+ const localDate=date=>new Intl.DateTimeFormat(I.locale(),{dateStyle:'medium',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z'));
+ const dateOptions=slots.map(date=>'<option value="'+date+'"'+(date===preorderDate?' selected':'')+'>'+esc(localDate(date))+'</option>').join('');
+ const dates=slots.length?'<label class="field storefront-order-date"><span>'+esc(t('Дата готовности'))+'</span><select id="preorderDate"><option value="">'+
+   esc(t('Все доступные даты'))+'</option>'+dateOptions+'</select></label>':'';
+ const offers=allOffers.filter(({dish,batch})=>matchesMenuSearch(dish,terms)&&(!preorderDate||orderableFuture(batch)&&localDay(batch.plannedReadyAt)===preorderDate));
+ const offerCards=offers.map(({dish,batch})=>{
+  const image=safeImage(dish), title=name(dish);
+  const scheduled=orderableFuture(batch);
+  const ready=dish.stockManaged&&stockLeft(dish)>0;
+  const unit=weight(dish);
+  return '<article class="storefront-order-card">'+(image?'<img src="'+esc(image)+'" alt="" loading="lazy">':'')+
+   '<div><h3>'+esc(title)+'</h3>'+(unit?'<p>'+esc(unit)+'</p>':'')+
+   (scheduled?'<strong class="cafe-product-price">'+esc(money(batch.price_vnd))+'</strong>'+preorderCard(batch,title):
+    ready?'<p>'+esc(t('Готово сегодня'))+'</p><strong class="cafe-product-price">'+esc(money(dish.price_vnd))+'</strong>'+cardQuantity(dish,title):
+    '<p>'+esc(t('Цену и время подтвердит кафе'))+'</p>')+
+   '<button class="plain-btn" type="button" data-dish-inquiry="'+esc(title)+'">'+esc(t(scheduled||ready?'Другой размер или время':'Уточнить заказ'))+'</button></div></article>';
+ }).join('');
+ const cakes=preorderDate?[]:['Медовик','Наполеон','Красный бархат','Шоколад'].filter(cake=>!terms.length||matchesMenuSearch({name_ru:t(cake)},terms));
+ const wholeCake=cakes.length?'<article class="storefront-order-card storefront-whole-cakes"><div><h3>'+esc(t('Торты целиком'))+'</h3><p>'+esc(t('20 порций · цену и время подтвердит кафе'))+'</p>'+
+   cakes.map(cake=>'<button class="plain-btn" type="button" data-dish-inquiry="'+esc(t('Торт целиком: {cake}',{cake:t(cake)}))+'">'+esc(t(cake))+'</button>').join('')+'</div></article>':'';
+ const cards=offerCards+wholeCake;
+ return dates+(cards||'<p class="message">'+esc(t('Ничего не найдено'))+'</p>')+
+  '<aside class="storefront-request"><h2>'+esc(t('Не нашли нужное блюдо?'))+'</h2><p>'+
+  esc(t('Напишите, что хотите заказать. Кафе уточнит возможность приготовления, цену и время.'))+
+  '</p><button class="primary" type="button" data-dish-inquiry="">'+esc(t('Запросить блюдо'))+'</button></aside>';
+}
+
 function renderProducts(){
  const dishes=menuDishes();
  renderSpotlight(dishes);
  const terms=menuSearchTerms(query);
+ if(cafeSection==='custom'){
+  const batches=new Map(products.filter(p=>p.isPreorder&&orderableFuture(p)).map(p=>[p.productId,p]));
+  const offered=products.filter(p=>!p.isPreorder&&!p.catalog_preview&&p.sku).map(dish=>({dish,batch:batches.get(dish.id)}));
+  $('products').innerHTML=renderOrderCatalog(terms,offered);
+  lock();
+  return;
+ }
  const visible=dishes.filter(row=>sectionIncludes(cafeSection,row)&&
    (category==='all'||categoryFor(row.dish)===category)&&matchesMenuSearch(row.dish,terms));
  const renderCards=rows=>rows.map(({dish,batch})=>card(dish,displayBatch(dish,batch))).join('');
@@ -1384,7 +1450,8 @@ function renderProducts(){
     const items=visible.filter(({dish})=>categoryFor(dish)===c.id);
     return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+renderCards(items):'';
   }).join('');
- $('products').innerHTML=contents||'<div class="message"><p>'+esc(t('Ничего не найдено'))+'</p><button type="button" class="plain-btn" id="reset">'+esc(t('Показать всё меню'))+'</button></div>';
+ const familySets=cafeSection==='family'&&!terms.length?renderFamilySets():'';
+ $('products').innerHTML=familySets+(contents||'<div class="message"><p>'+esc(t('Ничего не найдено'))+'</p><button type="button" class="plain-btn" id="reset">'+esc(t('Показать всё меню'))+'</button></div>');
  lock();
 }
 function renderCart(){ persistCart(); $('submit').textContent=t(pending?'Повторить':'Перейти к оплате');const amount=total(),n=count();renderCheckoutAmounts(amount);
@@ -1440,9 +1507,10 @@ function renderCartRow(product){
    </div>
  </div>`;
 }
-function lock(){$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
+function lock(){document.querySelectorAll('[data-family-set]').forEach(button=>{button.disabled=!canAddFamilySet(familySetLines(familySetRecipes[Number(button.dataset.familySet)][1]));});$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
 function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p||p.catalog_preview)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
-if(row){
+if(cafeSection==='custom')renderProducts();
+else if(row){
   const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
   if(cardNode)cardNode.outerHTML=card(row.dish,displayBatch(row.dish,row.batch));
 }renderCart();}
@@ -1510,7 +1578,7 @@ searchPanel.addEventListener('keydown', event => {
 function applyMenuSearch(value) {
   if(marketStorefront?.active){marketStorefront.search(value);return;}
   query = value;
-  if (value.trim() && (category !== 'all'||cafeSection!=='all')) {
+  if (value.trim() && !['family','custom','daily'].includes(cafeSection) && (category !== 'all'||cafeSection!=='all')) {
     cafeSection='all';
     category = 'all';
     renderCategories();
@@ -2022,7 +2090,7 @@ function renderSuccess(){
     $('receiptHint').textContent=t('Назовите сотруднику ваш номер заказа.');
   }else $('receiptHint').textContent=receiptHint(lastOrder);
 }
-function renderLoadState(){if(menuState==='empty')$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
+function renderLoadState(){if(menuState==='empty'&&!['family','custom'].includes(cafeSection))$('products').innerHTML='<div class="message">'+t('Сейчас нет доступных блюд.')+'</div>';if(menuState==='error'){$('products').innerHTML='<div class="message"><p>'+t('Не удалось загрузить меню. Проверьте подключение к интернету.')+'</p><button class="plain-btn" type="button" id="retry">'+t('Повторить')+'</button></div>';$('retry').onclick=load;}if(menuState==='loading')$('products').innerHTML='<div class="message" role="status">'+t('Загружаем меню…')+'</div>';}
 async function load(){if(loadingCatalog||busy)return;loadingCatalog=true;catalogRequest++;menuState='loading';renderLoadState();try{const [base,rich]=await Promise.all([fetch(API+'cafe-guest-order?catalog=1',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error();return r.json();}),fetch(API+'cafe-menu',{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>r.ok?r.json():null).catch(()=>null)]);if(!base.ok||!Array.isArray(base.products))throw Error();if(window.ummaCafeEpoch?.apply(base.cafeResetEpoch)){resetReceipts();pending=null;cart.clear();}const metadata=new Map((rich?.products||[]).map(p=>[p.id,p]));
 catalogPreviews=(rich?.products||[]).filter(p=>p.catalog_preview&&p.price_vnd==null);
 products=expandBatches(catalogRows(base.products.map(p=>({...p,catalog_preview:false,image_url:metadata.get(p.id)?.image_url||p.image_url}))),metadata);const loc=rich?.locations?.find(l=>l.id===locationId);window.ummaPublicDelivery?.setCafe(loc);window.ummaNearbyCafe?.setLocations(rich?.locations,locationId);if(loc?.address){$('location').innerHTML='<strong>'+esc(loc.name)+'</strong><a dir="ltr" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc.address)+'" target="_blank" rel="noopener">'+esc(loc.address)+' ↗</a>';delete $('pickupAddress').dataset.i18n;$('pickupAddress').dir='ltr';$('pickupAddress').textContent=loc.address;}menuState=products.some(p=>visibleDish(p))?'ready':'empty';renderCategories();renderProducts();renderCart();renderLoadState();if(lastOrder)renderSuccess();}catch{menuState='error';renderLoadState();}finally{loadingCatalog=false;}}
@@ -2157,57 +2225,84 @@ const marketStorefront=window.ummaPublicStorefront?.create({
   if(menuState==='ready'){renderCategories();renderProducts();}
  }
 });
-$('cafeInquiryTiles').addEventListener('click',event=>{
- const action=event.target.closest('[data-inquiry]');
- if(!action)return;
- if(action.dataset.inquiry==='custom'){
-  const inquiry=$('cafeEventInquiry');
-  const form=$('cafeEventForm');
-  form.elements.date.min=localDay(Date.now());
-  $('cafeEventStatus').hidden=true;
-  inquiry.showModal();
+const eventForm=$('cafeEventForm');
+let inquiryRequest=null;
+$('closeCafeEvent').onclick=()=>{if(!eventForm.querySelector('[type=submit]').disabled)$('cafeEventInquiry').close();};
+eventForm.addEventListener('input',()=>{inquiryRequest=null;$('cafeEventStatus').hidden=true;});
+eventForm.onsubmit=async event=>{
+ event.preventDefault();
+ const submit=eventForm.querySelector('[type=submit]');
+ if(submit.disabled||!eventForm.reportValidity())return;
+ const {dish,guests,date,time}=eventForm.elements;
+ const status=$('cafeEventStatus');
+ if(!dish.value.trim()){
+  status.textContent=t('Напишите название блюда.');
+  status.hidden=false;
+  dish.focus();
   return;
  }
- const label='Здравствуйте! Помогите подобрать блюда для семьи. Человек: __. На дату и время: __.';
- if(window.ummaCustomerConnect?.openDraft)window.ummaCustomerConnect.openDraft(t(label));
- else $('customerMessagesButton').click();
-});
-const eventForm=$('cafeEventForm');
-$('closeCafeEvent').onclick=()=>$('cafeEventInquiry').close();
-eventForm.addEventListener('input',()=>{$('cafeEventStatus').hidden=true;});
-eventForm.onsubmit=event=>{
- event.preventDefault();
- if(!eventForm.reportValidity())return;
- const {selection,guests,date,time,fulfillment,notes}=eventForm.elements;
- const status=$('cafeEventStatus');
- const scheduled=Date.parse(date.value+'T'+time.value+':00+07:00');
- if(!Number.isFinite(scheduled)||scheduled<=Date.now()){
+ if((time.value&&!date.value)||(date.value&&date.value<localDay(Date.now()))||
+    (time.value&&Date.parse(date.value+'T'+time.value+':00+07:00')<=Date.now())){
   status.textContent=t('Выберите будущие дату и время.');
   status.hidden=false;
   date.focus();
   return;
  }
- const selectionLabel=selection.selectedOptions[0].textContent;
- const fulfillmentLabel=fulfillment.selectedOptions[0].textContent;
- const message=[
-  t('Здравствуйте! Хочу сделать заказ на праздник.'),
-  t('Что приготовить?')+' '+selectionLabel,
-  t('Гостей — {count}',{count:guests.value}),
-  t('Дата: {date}, время Нячанга: {time}',{date:date.value,time:time.value}),
-  t('Способ получения')+' — '+fulfillmentLabel,
-  notes.value.trim()?t('Блюда, количество и пожелания')+' — '+notes.value.trim():'',
+ const body=[
+  t('Запрос на блюдо')+' · '+dish.value.trim(),
+  guests.value?t('Гостей — {count}',{count:guests.value}):'',
+  time.value?t('Дата: {date}, время Нячанга: {time}',{date:date.value,time:time.value}):
+    date.value?t('Дата')+' — '+date.value:'',
  ].filter(Boolean).join('\n');
- const chat=window.ummaCustomerConnect;
- if(!chat?.openDraft){
-  status.textContent=t('Чат пока недоступен. Попробуйте ещё раз.');
-  status.hidden=false;
-  return;
- }
- if(!chat.openDraft(message,()=>$('cafeEventInquiry').close())){
-  status.textContent=t('В чате уже есть длинный черновик. Сохраните или сократите его и попробуйте ещё раз.');
-  status.hidden=false;
+ if(!inquiryRequest||inquiryRequest.body!==body)inquiryRequest={body,requestKey:crypto.randomUUID()};
+ submit.disabled=true;
+ status.textContent=t('Отправляем запрос…');
+ status.hidden=false;
+ try{
+  const chat=window.ummaCustomerConnect;
+  if(!chat?.sendInquiry)throw Error();
+  await chat.sendInquiry(inquiryRequest,()=>$('cafeEventInquiry').close(),t('Запрос отправлен'));
+  inquiryRequest=null;
+  eventForm.reset();
+ }catch{
+  status.textContent=t('Не удалось отправить запрос. Попробуйте ещё раз.');
+ }finally{
+  submit.disabled=false;
  }
 };
+$('cafeEventInquiry').addEventListener('cancel',event=>{
+ if(eventForm.querySelector('[type=submit]').disabled)event.preventDefault();
+});
+$('products').addEventListener('click',event=>{
+ const inquiry=event.target.closest('[data-dish-inquiry]');
+ if(inquiry){
+  eventForm.elements.date.min=localDay(Date.now());
+  if(inquiry.dataset.dishInquiry&&eventForm.elements.dish.value!==inquiry.dataset.dishInquiry){
+   eventForm.elements.dish.value=inquiry.dataset.dishInquiry;
+   inquiryRequest=null;
+  }
+  if(preorderDate&&!eventForm.elements.date.value)eventForm.elements.date.value=preorderDate;
+  $('cafeEventStatus').hidden=true;
+  $('cafeEventInquiry').showModal();
+  return;
+ }
+ const button=event.target.closest('[data-family-set]');
+ if(!button)return;
+ const [,recipe]=familySetRecipes[Number(button.dataset.familySet)];
+ const lines=familySetLines(recipe);
+ if(!canAddFamilySet(lines))return;
+ dismissCartFeedback();
+ for(const {dish,quantity} of lines)cart.set(dish.id,qty(dish.id)+quantity);
+ renderProducts();
+ renderCart();
+ $('openCart').focus({preventScroll:true});
+});
+$('products').addEventListener('change',event=>{
+ if(event.target.id!=='preorderDate')return;
+ preorderDate=event.target.value;
+ renderProducts();
+ $('preorderDate')?.focus({preventScroll:true});
+});
 $('leaveCafeSection').onclick=()=>{
  const previous=cafeSection;
  cafeSection='all';
@@ -2216,13 +2311,14 @@ $('leaveCafeSection').onclick=()=>{
  $('search').value='';
  renderCategories();
  renderProducts();
- ($('cafeSections').querySelector('[data-cafe-section="'+previous+'"]')||$('menuHeading')).focus({preventScroll:true});
+ (document.querySelector('[data-cafe-section="'+previous+'"]')||$('menuHeading')).focus({preventScroll:true});
 };
-$('cafeSections').addEventListener('click',event=>{
+$('cafePage').addEventListener('click',event=>{
  const button=event.target.closest('[data-cafe-section]');
  if(!button)return;
  const id=button.dataset.cafeSection;
  cafeSection=cafeSection===id?'all':id;
+ preorderDate='';
  category='all';
  query='';
  $('search').value='';
@@ -2249,4 +2345,4 @@ window.ummaMenuAudience?.start(source);
 marketStorefront?.start();
 if (location.hash === '#orders') $('receiptButton').click();
 load();
-</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=event-inquiry-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>
+</script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=23"></script><script src="js/cafe/connect-composer.js?v=19"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-realtime.js?v=fulfillment-1" data-fulfillment-realtime></script><script src="js/cafe/customer-connect.js?v=storefront-order-1"></script><script src="js/cafe/customer-messages.js?v=5"></script><script src="js/cafe/menu-news.js?v=2"></script></body></html>

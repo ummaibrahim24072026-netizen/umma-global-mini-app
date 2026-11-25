@@ -824,7 +824,22 @@ function openOrderNotification(number){
 button.addEventListener('click',inspectBrowserPush);
  window.addEventListener('pageshow',inspectBrowserPush);
  button.onclick=open;
- window.ummaCustomerConnect={open,close:()=>dialog?.close(),openDraft(text,beforeOpen){
+ window.ummaCustomerConnect={open,close:()=>dialog?.close(),async sendInquiry(request,beforeOpen,confirmation){
+  if(!publicChat||busy)throw Error(t(16));
+  if(!dialog)build();
+  let sent=false;
+  await run(async()=>{
+   await connectForMessage();
+   state=await api('send',request);
+   sent=true;
+  },status,false);
+  if(!sent)throw Error(t(16));
+  beforeOpen();
+  void open();
+  renderThread();
+  followLatestMessage();
+  status.textContent=confirmation;
+ },openDraft(text,beforeOpen){
   if(!dialog)build();
   const field=dialog.querySelector('.connect-compose textarea');
   if(!field)return false;

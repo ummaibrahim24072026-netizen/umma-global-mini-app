@@ -250,6 +250,31 @@ Object.assign(copy,{
  'Чат пока недоступен. Попробуйте ещё раз.':{en:'Chat is unavailable. Please try again.',vi:'Chưa thể mở trò chuyện. Vui lòng thử lại.'},
  'В чате уже есть длинный черновик. Сохраните или сократите его и попробуйте ещё раз.':{en:'There is a long draft in chat. Save or shorten it and try again.',vi:'Có một bản nháp dài trong trò chuyện. Hãy lưu hoặc rút ngắn rồi thử lại.'}
 });
+Object.assign(copy,{
+ 'Готово сегодня':{en:'Ready today',vi:'Có sẵn hôm nay'},
+ 'На 2–3 человек':{en:'For 2–3 people',vi:'Cho 2–3 người'},
+ 'На 4–5 человек':{en:'For 4–5 people',vi:'Cho 4–5 người'},
+ 'Добавить набор':{en:'Add set',vi:'Thêm combo'},
+ 'Сейчас недоступно':{en:'Currently unavailable',vi:'Hiện chưa có'},
+ 'Дата готовности':{en:'Ready date',vi:'Ngày có món'},
+ 'Все доступные даты':{en:'All available dates',vi:'Tất cả ngày còn món'},
+ 'Цену и время подтвердит кафе':{en:'The café will confirm the price and time',vi:'Quán sẽ xác nhận giá và giờ nhận'},
+ 'Другой размер или время':{en:'Request another size or time',vi:'Yêu cầu cỡ khác hoặc giờ khác'},
+ 'Уточнить заказ':{en:'Ask about this order',vi:'Hỏi về món đặt trước'},
+ 'Торты целиком':{en:'Whole cakes',vi:'Bánh nguyên chiếc'},
+ '20 порций · цену и время подтвердит кафе':{en:'20 servings · the café will confirm the price and time',vi:'20 phần · quán sẽ xác nhận giá và giờ nhận'},
+ 'Торт целиком: {cake}':{en:'Whole cake: {cake}',vi:'Bánh nguyên chiếc: {cake}'},
+ 'Не нашли нужное блюдо?':{en:'Can’t find the dish you want?',vi:'Bạn chưa tìm thấy món muốn đặt?'},
+ 'Напишите, что хотите заказать. Кафе уточнит возможность приготовления, цену и время.':{en:'Tell us what you would like. The café will confirm availability, price and time.',vi:'Hãy cho biết món bạn muốn. Quán sẽ xác nhận khả năng chuẩn bị, giá và giờ nhận.'},
+ 'Запросить блюдо':{en:'Request a dish',vi:'Yêu cầu món ăn'},
+ 'Какое блюдо хотите?':{en:'Which dish would you like?',vi:'Bạn muốn món nào?'},
+ 'Отправить запрос':{en:'Send request',vi:'Gửi yêu cầu'},
+ 'Запрос на блюдо':{en:'Dish request',vi:'Yêu cầu món ăn'},
+ 'Напишите название блюда.':{en:'Enter the dish name.',vi:'Nhập tên món ăn.'},
+ 'Отправляем запрос…':{en:'Sending request…',vi:'Đang gửi yêu cầu…'},
+ 'Запрос отправлен':{en:'Request sent',vi:'Đã gửi yêu cầu'},
+ 'Не удалось отправить запрос. Попробуйте ещё раз.':{en:'Could not send your request. Please try again.',vi:'Không gửi được yêu cầu. Vui lòng thử lại.'}
+});
 const storefrontCopy={
  'Сохранить на главный экран':['Add to Home Screen','Thêm vào màn hình chính','홈 화면에 추가','添加到主屏幕','Zum Startbildschirm hinzufügen','Ajouter à l’écran d’accueil','เพิ่มไปยังหน้าจอโฮม','Tambah ke skrin utama','Tambahkan ke layar utama','إضافة إلى الشاشة الرئيسية','Adicionar ao ecrã principal'],
  'Включите «Открыть как веб-приложение», если есть такой переключатель, и нажмите «Добавить».':['Turn on “Open as Web App” if available, then tap “Add”.','Bật “Mở dưới dạng ứng dụng web” nếu có, rồi nhấn “Thêm”.','‘웹 앱으로 열기’가 있으면 켠 다음 ‘추가’를 누르세요.','如果有“作为网页 App 打开”选项，请开启，然后点按“添加”。','Aktiviere „Als Web-App öffnen“, falls verfügbar, und tippe auf „Hinzufügen“.','Activez « Ouvrir comme app web » si l’option est disponible, puis touchez « Ajouter ».','เปิด “เปิดเป็นเว็บแอป” หากมี แล้วแตะ “เพิ่ม”','Hidupkan “Buka sebagai App Web” jika tersedia, kemudian ketik “Tambah”.','Aktifkan “Buka sebagai App Web” jika tersedia, lalu ketuk “Tambah”.','فعّل «فتح كتطبيق ويب» إن ظهر الخيار، ثم اضغط على «إضافة».','Ative «Abrir como aplicação web», se a opção estiver disponível, e toque em «Adicionar».'],

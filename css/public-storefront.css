@@ -521,3 +521,114 @@
 .public-cafe-menu #cafePage [data-cafe-section="daily"][aria-pressed="false"] {
   background: var(--storefront-gold);
 }
+
+.public-cafe-menu #cafePage .topbar .brand img {
+  inline-size: 42px;
+  block-size: 42px;
+  flex: 0 0 42px;
+}
+
+.public-cafe-menu #cafePage .storefront-daily-art {
+  gap: 1px;
+  padding-block: 4px;
+  font-size: clamp(.625rem, 2.8vw, .88rem);
+}
+
+.public-cafe-menu #cafePage .storefront-daily-art img {
+  height: 42px;
+}
+
+.public-cafe-menu #cafePage .storefront-inquiry-art {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 41%);
+  gap: 3px;
+  align-items: center;
+  justify-items: stretch;
+  text-align: start;
+  padding: 5px 7px;
+}
+
+.public-cafe-menu #cafePage .storefront-inquiry-art > span {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: none;
+  font-size: inherit;
+}
+
+.public-cafe-menu #cafePage .storefront-inquiry-art img {
+  height: 56px;
+}
+
+.storefront-family-sets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 8px;
+}
+
+.storefront-family-set,
+.storefront-order-card,
+.storefront-request {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 16px;
+  background: var(--umma-brand-white);
+}
+
+.storefront-family-set {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.storefront-family-set :is(h3, ul),
+.storefront-order-card :is(h3, p),
+.storefront-request :is(h2, p) {
+  margin: 0;
+}
+
+.storefront-family-set ul {
+  padding-inline-start: 1.25em;
+}
+
+.storefront-family-set li,
+.storefront-order-card p,
+.storefront-request p {
+  color: var(--umma-brand-muted);
+  font-size: .875rem;
+}
+
+.storefront-order-card {
+  display: grid;
+  grid-template-columns: minmax(0, 86px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.storefront-order-card:not(:has(> img)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.storefront-order-card > img {
+  display: block;
+  max-width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.storefront-order-card > div,
+.storefront-request {
+  display: grid;
+  gap: 8px;
+}
+
+.storefront-request {
+  background: var(--umma-brand-pale);
+}
+
+.storefront-request h2 {
+  font-size: 1rem;
+}
