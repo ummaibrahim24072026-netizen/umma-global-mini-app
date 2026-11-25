@@ -328,7 +328,7 @@
   }
 }
 
-.public-cafe-menu #cafePage #cafeSpotlight :is(.cafe-spotlight-copy, .cafe-intro-copy, .cafe-spotlight-copy strong, .cafe-spotlight-eyebrow, .cafe-spotlight-detail, .cafe-spotlight-cta) {
+.public-cafe-menu #cafePage #cafeSpotlight :is(.cafe-spotlight-copy, .cafe-spotlight-copy strong, .cafe-spotlight-eyebrow, .cafe-spotlight-detail, .cafe-spotlight-cta) {
   color: var(--umma-brand-deep);
   -webkit-text-fill-color: currentColor;
 }

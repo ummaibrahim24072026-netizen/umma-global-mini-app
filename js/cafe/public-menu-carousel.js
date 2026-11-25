@@ -25,7 +25,6 @@
     pt: ['Do menu UMMA', 'Ver prato', 'Ler mais', 'Pausar', 'Retomar', 'Diapositivo']
   };
   const delay = 6500;
-  const fallback = host.querySelector('.cafe-spotlight-fallback');
   const action = host.querySelector('.cafe-spotlight-slide');
   const eyebrow = action.querySelector('.cafe-spotlight-eyebrow');
   const title = action.querySelector('strong');
@@ -107,8 +106,7 @@
     const selected = slides[current]?.key;
     slides = next;
     action.hidden = !slides.length;
-    fallback.hidden = direction==='market' || !!slides.length;
-    host.hidden = direction==='market' && !slides.length;
+    host.hidden = !slides.length;
     controls.hidden = slides.length < 2;
     if (!slides.length) {
       schedule();

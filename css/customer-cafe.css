@@ -31,8 +31,7 @@
   overflow-wrap: anywhere;
 }
 .public-cafe-menu #cafePage .brand span,
-.public-cafe-menu #cafePage .brand small,
-.public-cafe-menu .cafe-intro-copy {
+.public-cafe-menu #cafePage .brand small {
   color: var(--cafe-banner-gold);
   text-shadow: 0 1px 1px var(--umma-brand-on-primary), 0 2px 4px #002d2e66;
   -webkit-text-stroke: 1px var(--umma-brand-on-primary);
@@ -113,11 +112,6 @@
   background: var(--cafe-header);
   color: var(--umma-brand-on-primary);
 }
-.cafe-intro-copy { padding: 20px; max-width: 60%; }
-.cafe-intro-copy p { margin: 0 0 7px; font-size: .85rem; font-weight: 650; }
-.cafe-intro-copy strong { display: block; font-size: clamp(1.45rem, 6vw, 3rem); line-height: 1.02; }
-.cafe-intro-copy span { display: block; margin-top: 8px; font-size: .85rem; }
-.cafe-spotlight-fallback { width: 100%; }
 .cafe-spotlight-slide {
   display: grid;
   align-items: center;
