@@ -918,7 +918,7 @@ const menuCategories = [
     { id: "desserts", label: "Десерты", skus: ["CROISSANT", "BAKLAVA-ALMOND", "BAKLAVA-WALNUT", "DESSERT-PLOMBIR", "DESSERT-HONEY", "DESSERT-RED-VELVET", "DESSERT-CHOCOLATE", "DESSERT-NAPOLEON"] },
     { id: "drinks", label: "Напитки", skus: ["AYRAN", "AYRAN-500", "TURKISH-AYRAN-1000", "GREEN-TEA-900", "BLACK-TEA-LEMON-900", "BLACKBERRY-COMPOTE-500", "BLACKBERRY-COMPOTE-1000"] },
     { id: "sauces", label: "Соусы", skus: ["ADJIKA"] },
-    { id: "other", label: "Другое", skus: [] }
+    { id: "other", label: "На каждый день", skus: [] }
   ];
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/', $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1013,6 +1013,7 @@ function sectionIncludes(section,{dish,batch}){
  if(section==='all')return true;
  if(section==='family')return stockLeft(dish)>0&&(sectionPlacement(section,dish)||familyDishSkus.includes(cafeSku(dish)));
  if(section==='cooking')return orderableFuture(batch)&&localDay(batch.plannedReadyAt)===localDay(Date.now());
+ if(section==='daily'&&categoryFor(dish)==='other'&&(dish.catalog_preview||stockLeft(dish)>0))return true;
  const placement=sectionPlacement(section,dish);
  if(!placement)return false;
  const available=stockLeft(dish)>0&&(section!=='daily'||dish.stockManaged);
@@ -1268,7 +1269,7 @@ function menuDishes(){
 function renderCategories(){
  renderCafeSections();
  const dishes=menuDishes().filter(row=>sectionIncludes(cafeSection,row)).map(row=>row.dish);
- const cats=[{id:'all',label:I.language==='ru'?'Всё':'Все'},...menuCategories.filter(c=>dishes.some(p=>categoryFor(p)===c.id))];
+ const cats=[{id:'all',label:I.language==='ru'?'Всё':'Все'},...menuCategories.filter(c=>c.id!=='other'&&dishes.some(p=>categoryFor(p)===c.id))];
  if(!cats.some(c=>c.id===category))category='all';
  $('categories').innerHTML=cats.map(c=>{
    return '<button type="button" class="cafe-category storefront-tile cafe-category-illustrated"'+
