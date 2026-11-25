@@ -12,8 +12,17 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== 'GET' || request.mode !== 'navigate' ||
-      url.origin !== base.origin || !shellPaths.has(url.pathname)) return;
+  if (request.method !== 'GET' || url.origin !== base.origin) return;
+  if (request.mode !== 'navigate') {
+    if (!event.clientId || !['script', 'style', 'image'].includes(request.destination)) return;
+    event.respondWith(self.clients.get(event.clientId).then(client => {
+      // Validate the menu's resources even when Pages serves unchanged asset URLs.
+      const isMenu = client && menuPaths.has(new URL(client.url).pathname);
+      return isMenu ? fetch(request, { cache: 'no-cache' }) : fetch(request);
+    }));
+    return;
+  }
+  if (!shellPaths.has(url.pathname)) return;
 
   const cache = menuPaths.has(url.pathname) ? 'no-store' : 'no-cache';
   event.respondWith(fetch(request, { cache }).catch(() => new Response(

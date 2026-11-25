@@ -66,6 +66,59 @@ assert.equal(reload.ummaOrderAlerts.controls.hidden,true);
 assert.equal(reload.ummaOrderAlerts.controls.querySelector('p'),null);
 reload.close();w.close();
 }
+// An installed menu validates its resources and preserves push history across worker updates.
+{
+  const scope = 'https://qa.invalid/app/';
+  const callbacks = {};
+  const cacheNames = new Set(['umma-menu-shell-old', 'umma-order-events-v1', 'other-app']);
+  let lastCacheMode, offline = false, clientPath = 'menu/';
+  vm.runInNewContext(source('umma-menu-sw.js'), {
+    URL, Response,
+    self: {
+      registration: { scope },
+      addEventListener(name, callback) { callbacks[name] = callback; },
+      clients: {
+        async claim() { assert.equal(cacheNames.has('umma-menu-shell-old'), false); },
+        async get() { return { url: scope + clientPath }; },
+      },
+    },
+    caches: {
+      async keys() { return [...cacheNames]; },
+      async delete(name) { cacheNames.delete(name); },
+    },
+    async fetch(request, options) {
+      lastCacheMode = options?.cache;
+      if (offline) throw Error('Offline');
+      return new Response(request.url);
+    },
+  });
+  let activation;
+  callbacks.activate({ waitUntil(promise) { activation = promise; } });
+  await activation;
+  assert.deepEqual([...cacheNames], ['umma-order-events-v1', 'other-app']);
+
+  function request(path, mode, destination) {
+    let result;
+    callbacks.fetch({
+      clientId: 'client',
+      request: { url: new URL(path, scope).href, method: 'GET', mode, destination },
+      respondWith(response) { result = response; },
+    });
+    return result;
+  }
+  await request('menu/?order=12', 'navigate', 'document');
+  assert.equal(lastCacheMode, 'no-store');
+  await request('css/customer-cafe.css', 'no-cors', 'style');
+  assert.equal(lastCacheMode, 'no-cache');
+  clientPath = 'staff.html';
+  await request('css/customer-cafe.css', 'no-cors', 'style');
+  assert.equal(lastCacheMode, undefined);
+  assert.equal(request('https://cdn.invalid/app.js', 'no-cors', 'script'), undefined);
+  offline = true;
+  const fallback = await request('menu/index.html', 'navigate', 'document');
+  assert.equal(fallback.status, 503);
+  assert.match(await fallback.text(), /Нет связи/);
+}
 // Background push: persistence, deduplication, sound flag, badge, safe click target and clear.
 {
 const callbacks={},values=new Map(),shown=[],out=[],notifications=[];let badge=0,closed=0,windows=[];const cache={async match(k){const v=values.get(k);return v?new Response(v):undefined;},async put(k,r){values.set(k,await r.text());}};
