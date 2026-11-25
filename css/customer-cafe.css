@@ -1684,23 +1684,42 @@
 }
 
 .public-cafe-menu .menu-install {
-  text-align: end;
+  margin-block: 2px 10px;
 }
-.public-cafe-menu .menu-install:has(#installApp:not([hidden])) {
-  margin-block: 4px 8px;
+.menu-app-installed .public-cafe-menu .menu-install {
+  display: none;
+}
+@media (display-mode: standalone) {
+  .public-cafe-menu .menu-install { display: none; }
 }
 .public-cafe-menu #installApp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   max-inline-size: 100%;
   min-block-size: 44px;
-  border-radius: 999px;
+  padding-inline: 14px;
+  border-radius: 14px;
   background: var(--umma-brand-pale);
+  color: var(--umma-brand-ink);
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 .public-cafe-menu #installApp svg { flex: none; }
+.public-cafe-menu .menu-install-help {
+  margin-block-start: 6px;
+  padding: 10px 14px;
+  max-inline-size: 420px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 14px;
+  background: white;
+  color: var(--umma-brand-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.public-cafe-menu .menu-install-help p { margin: 0; }
+.public-cafe-menu .menu-install-help p + p { margin-block-start: 4px; }
 .public-cafe-menu dialog.cafe-offers-setup {
   max-inline-size: min(390px, calc(100vw - 24px));
   background: white;

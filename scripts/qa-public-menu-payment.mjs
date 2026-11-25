@@ -273,54 +273,83 @@ for(const method of ['cash','qr']){
  dom.window.close();
 }
 console.log('PASS public guest cash/QR: retry key, method, bank/amount/reference, local QR, 12-language labels, live preparation/payment status and receipt recovery.');
-for(const scenario of ['readyEarly','readyLater','noBrowserPrompt','alreadyInstalled']){
- const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});
- const w=dom.window,d=w.document;
- Object.defineProperty(w.navigator,'standalone',{value:scenario==='alreadyInstalled'});
- w.eval(read('js/cafe/menu-install.js'));
- const install=d.getElementById('installApp');
+for (const scenario of ['readyEarly', 'readyLater', 'noBrowserPrompt', 'promptFails', 'iphone', 'ipad', 'standalone', 'remembered']) {
+ const dom = new JSDOM(html, {url: 'https://example.com/menu/?point=counter', runScripts: 'outside-only'});
+ const w = dom.window, d = w.document;
+ const installedKey = 'umma:menu:installed';
+ Object.defineProperty(w.navigator, 'standalone', {value: scenario === 'standalone'});
+ if (scenario === 'iphone') Object.defineProperty(w.navigator, 'userAgent', {value: 'iPhone Safari'});
+ if (scenario === 'ipad') {
+  Object.defineProperty(w.navigator, 'platform', {value: 'MacIntel'});
+  Object.defineProperty(w.navigator, 'maxTouchPoints', {value: 5});
+ }
+ if (scenario === 'remembered') w.localStorage.setItem(installedKey, '1');
+
+ const install = d.getElementById('installApp');
+ const help = d.getElementById('installHelp');
+ const isHidden = () => d.documentElement.classList.contains('menu-app-installed');
  assert.ok(install.closest('.menu-install').previousElementSibling.contains(d.getElementById('shareMenu')));
- assert.equal(d.getElementById('installHelp'),null);
- assert.equal(install.hidden,true);
- let prompts=0,finishPrompt;
- function browserOffer(){
-  const event=new w.Event('beforeinstallprompt',{cancelable:true});
-  event.prompt=()=>{prompts++;};
-  event.userChoice=new Promise(resolve=>{finishPrompt=resolve;});
+ assert.equal(install.hidden, false, 'the first QR visit renders the button without a browser offer');
+ w.eval(read('js/cafe/menu-install.js'));
+
+ let prompts = 0, finishPrompt;
+ function browserOffer() {
+  const event = new w.Event('beforeinstallprompt', {cancelable: true});
+  event.prompt = () => {
+   prompts++;
+   if (scenario === 'promptFails') throw new Error('The browser withdrew the offer');
+  };
+  event.userChoice = new Promise(resolve => { finishPrompt = resolve; });
   w.dispatchEvent(event);
-  assert.equal(event.defaultPrevented,true);
+  assert.equal(event.defaultPrevented, true);
  }
- if(scenario==='readyEarly'||scenario==='alreadyInstalled')browserOffer();
- await new Promise(resolve=>d.addEventListener('DOMContentLoaded',resolve,{once:true}));
- if(scenario==='readyLater'){
-  assert.equal(install.hidden,true);
-  browserOffer();
- }
- if(scenario==='readyEarly'||scenario==='readyLater'){
-  assert.equal(install.hidden,false);
-  install.click();
-  assert.equal(prompts,1,'open the native prompt within the same tap');
-  assert.equal(install.disabled,true);
-  install.click();
-  assert.equal(prompts,1);
-  if(scenario==='readyEarly'){
-   w.dispatchEvent(new w.Event('appinstalled'));
-   assert.equal(install.hidden,true);
-   finishPrompt({outcome:'accepted'});
-  }else finishPrompt({outcome:'dismissed'});
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(install.hidden,true,'a consumed offer cannot be presented again');
-  if(scenario==='readyLater'){
+ if (scenario === 'readyEarly') browserOffer();
+ await new Promise(resolve => d.addEventListener('DOMContentLoaded', resolve, {once: true}));
+ if (scenario === 'standalone' || scenario === 'remembered') {
+  assert.equal(isHidden(), true);
+  if (scenario === 'remembered') {
    browserOffer();
-   assert.equal(install.hidden,false);
+   assert.equal(isHidden(), false, 'a fresh offer allows reinstalling');
+   assert.equal(w.localStorage.getItem(installedKey), null);
   }
- }else{
-  assert.equal(install.hidden,true);
-  assert.equal(prompts,0);
+ } else {
+  assert.equal(isHidden(), false);
+  assert.equal(help.hidden, true);
+  if (scenario === 'readyLater' || scenario === 'promptFails') browserOffer();
+  install.click();
+  if (scenario === 'readyEarly' || scenario === 'readyLater') {
+   assert.equal(prompts, 1, 'open the native prompt within the same tap');
+   assert.equal(install.disabled, true);
+   install.click();
+   assert.equal(prompts, 1);
+   if (scenario === 'readyEarly') {
+    w.dispatchEvent(new w.Event('appinstalled'));
+    finishPrompt({outcome: 'accepted'});
+    assert.equal(isHidden(), true);
+    assert.equal(w.localStorage.getItem(installedKey), '1');
+   } else {
+    finishPrompt({outcome: 'dismissed'});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(isHidden(), false, 'dismissing the system dialog keeps the button');
+    assert.equal(w.localStorage.getItem(installedKey), null);
+    install.click();
+    assert.equal(help.hidden, false, 'a spent offer falls back to browser instructions');
+    assert.equal(prompts, 1);
+   }
+  } else {
+   assert.equal(help.hidden, false);
+   const ios = scenario === 'iphone' || scenario === 'ipad';
+   assert.equal(d.getElementById('installHelpIOS').hidden, !ios);
+   assert.equal(d.getElementById('installHelpBrowser').hidden, ios);
+   assert.equal(install.getAttribute('aria-expanded'), 'true');
+   install.click();
+   assert.equal(help.hidden, true);
+   assert.equal(isHidden(), false);
+  }
  }
  dom.window.close();
 }
-console.log('PASS menu installation: early and late browser offers, immediate native prompt, no fallback hint, one-use prompt and installed-app hiding.');
+console.log('PASS menu installation: QR first visit, iPhone and iPad help, native offers, dismissal, browser fallback and installed state.');
 
 {
  const dom=new JSDOM(html,{url:'https://example.com/menu/',runScripts:'outside-only'});

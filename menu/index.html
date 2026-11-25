@@ -5,8 +5,8 @@
 <title>UMMA Cafe — Меню</title>
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="logo/assets/umma-apple-touch-icon.png">
-<script src="js/cafe/menu-install.js?v=1"></script>
-<script src="js/cafe/public-menu-i18n.js?v=catalog-preview-1"></script>
+<script src="js/cafe/menu-install.js?v=2"></script>
+<script src="js/cafe/public-menu-i18n.js?v=install-2"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -503,7 +503,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=fresh-spotlight-1"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
+</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=install-2"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 #checkout[data-stage="receipt"] .checkout-header {
@@ -572,10 +572,20 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <p id="shareMenuStatus" class="share-menu-status" role="status" data-i18n="Ссылка скопирована" hidden>Ссылка скопирована</p>
 </div>
 <div class="menu-install">
-  <button type="button" id="installApp" class="plain-btn" aria-haspopup="dialog" hidden>
+  <button type="button" id="installApp" class="plain-btn" aria-expanded="false" aria-controls="installHelp">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 11h6m-3-3v6m-1 4h2"/></svg>
-    <span data-i18n="На главный экран">На главный экран</span>
+    <span data-i18n="Сохранить на главный экран">Сохранить на главный экран</span>
   </button>
+  <div id="installHelp" class="menu-install-help" aria-live="polite" hidden>
+    <div id="installHelpIOS" hidden>
+      <p data-i18n="В Safari: Поделиться → На экран «Домой».">В Safari: Поделиться → На экран «Домой».</p>
+      <p data-i18n="Включите «Открыть как веб-приложение», если есть такой переключатель, и нажмите «Добавить».">Включите «Открыть как веб-приложение», если есть такой переключатель, и нажмите «Добавить».</p>
+    </div>
+    <div id="installHelpBrowser" hidden>
+      <p data-i18n="В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».">В меню браузера нажмите «Установить приложение» или «Добавить на главный экран».</p>
+      <p data-i18n="Если пункта нет, откройте эту ссылку в Chrome.">Если пункта нет, откройте эту ссылку в Chrome.</p>
+    </div>
+  </div>
 </div>
 <nav id="storefrontSwitch" class="storefront-switch" aria-label="UMMA GLOBAL" hidden>
   <button type="button" class="cafe-category" data-storefront="cafe" aria-pressed="true">
