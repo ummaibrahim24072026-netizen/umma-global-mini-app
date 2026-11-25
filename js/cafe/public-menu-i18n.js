@@ -275,6 +275,13 @@ Object.assign(copy,{
  'Запрос отправлен':{en:'Request sent',vi:'Đã gửi yêu cầu'},
  'Не удалось отправить запрос. Попробуйте ещё раз.':{en:'Could not send your request. Please try again.',vi:'Không gửi được yêu cầu. Vui lòng thử lại.'}
 });
+Object.assign(copy,{
+ 'Не выключать экран':{en:'Keep screen on',vi:'Giữ màn hình sáng'},
+ 'Экран остаётся включённым, пока меню открыто и видно на экране.':{en:'The screen stays on while this menu is open and visible.',vi:'Màn hình sẽ luôn sáng khi menu đang mở và hiển thị.'},
+ 'Этот браузер не поддерживает удержание экрана.':{en:'This browser cannot keep the screen on.',vi:'Trình duyệt này không hỗ trợ giữ màn hình sáng.'},
+ 'Не удалось удержать экран включённым.':{en:'Could not keep the screen on.',vi:'Không thể giữ màn hình sáng.'},
+ 'Вход для сотрудников':{en:'Staff sign-in',vi:'Đăng nhập cho nhân viên'}
+});
 const storefrontCopy={
  'Сохранить на главный экран':['Add to Home Screen','Thêm vào màn hình chính','홈 화면에 추가','添加到主屏幕','Zum Startbildschirm hinzufügen','Ajouter à l’écran d’accueil','เพิ่มไปยังหน้าจอโฮม','Tambah ke skrin utama','Tambahkan ke layar utama','إضافة إلى الشاشة الرئيسية','Adicionar ao ecrã principal'],
  'Включите «Открыть как веб-приложение», если есть такой переключатель, и нажмите «Добавить».':['Turn on “Open as Web App” if available, then tap “Add”.','Bật “Mở dưới dạng ứng dụng web” nếu có, rồi nhấn “Thêm”.','‘웹 앱으로 열기’가 있으면 켠 다음 ‘추가’를 누르세요.','如果有“作为网页 App 打开”选项，请开启，然后点按“添加”。','Aktiviere „Als Web-App öffnen“, falls verfügbar, und tippe auf „Hinzufügen“.','Activez « Ouvrir comme app web » si l’option est disponible, puis touchez « Ajouter ».','เปิด “เปิดเป็นเว็บแอป” หากมี แล้วแตะ “เพิ่ม”','Hidupkan “Buka sebagai App Web” jika tersedia, kemudian ketik “Tambah”.','Aktifkan “Buka sebagai App Web” jika tersedia, lalu ketuk “Tambah”.','فعّل «فتح كتطبيق ويب» إن ظهر الخيار، ثم اضغط على «إضافة».','Ative «Abrir como aplicação web», se a opção estiver disponível, e toque em «Adicionar».'],

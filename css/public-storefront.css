@@ -690,3 +690,90 @@
   color: #fff;
   -webkit-text-fill-color: currentColor;
 }
+
+.public-cafe-menu #cafePage .menu-footer {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  margin-block-start: 20px;
+  padding: 14px 12px 4px;
+  border-block-start: 1px solid var(--umma-brand-line);
+  text-align: center;
+}
+
+.menu-footer strong {
+  color: var(--umma-brand-deep);
+  font-size: .92rem;
+}
+
+.menu-footer p {
+  margin: 0;
+}
+
+.menu-footer a {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 10px;
+  min-block-size: 44px;
+  color: var(--umma-brand-strong);
+  font-weight: 650;
+  text-underline-offset: 3px;
+}
+
+.profile-screen-setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--umma-brand-line);
+  border-radius: 14px;
+  background: var(--umma-brand-white);
+}
+
+.profile-screen-setting small {
+  display: block;
+  margin-block-start: 3px;
+  color: var(--umma-brand-muted);
+}
+
+.profile-screen-setting small[hidden] {
+  display: none;
+}
+
+.profile-screen-setting input {
+  appearance: none;
+  position: relative;
+  inline-size: 44px;
+  block-size: 26px;
+  margin: 0;
+  border: 1px solid var(--umma-brand-line-strong);
+  border-radius: 999px;
+  background: var(--umma-brand-soft);
+  cursor: pointer;
+}
+
+.profile-screen-setting input:checked {
+  background: var(--umma-brand-primary);
+}
+
+.profile-screen-setting input::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #00404a35;
+}
+
+.profile-screen-setting input:checked::before {
+  inset-inline-start: 21px;
+}
+
+.profile-screen-setting input:disabled {
+  opacity: .55;
+  cursor: default;
+}

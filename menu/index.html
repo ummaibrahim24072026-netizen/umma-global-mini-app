@@ -6,7 +6,7 @@
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="logo/assets/umma-apple-touch-icon.png">
 <script src="js/cafe/menu-install.js?v=2"></script>
-<script src="js/cafe/public-menu-i18n.js?v=storefront-order-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=profile-screen-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -503,7 +503,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #paymentState:before{flex-basis:36px;width:36px;height:36px}
   .public-cafe-menu #checkout #success[data-cash-pending="true"] #receiptHint{margin-left:45px!important}
 }
-</style><script defer src="js/core/screen-awake.js?v=1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=install-2"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
+</style><script defer src="js/core/screen-awake.js?v=profile-screen-1"></script><link rel="stylesheet" href="css/interface-polish.css?v=palette-1"><link rel="stylesheet" href="css/cafe-connect.css?v=offers-setup-1"><link rel="stylesheet" href="css/connect-video-circles.css?v=palette-1"><script defer src="js/core/pwa-registration.js?v=1"></script><link rel="stylesheet" href="css/customer-cafe.css?v=install-2"><link rel="stylesheet" href="css/connect-calls.css?v=call-stability-1">
 <style id="umma-receipt-status-v49">
 /* Critical payment status styling: last in head to beat stale theme rules. */
 #checkout[data-stage="receipt"] .checkout-header {
@@ -555,7 +555,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=inquiry-button-text-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=profile-screen-1"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <header class="cafe-pinned-header" id="cafePinnedHeader">
 <div class="topbar">
@@ -662,8 +662,11 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
   <p data-i18n="Здесь появятся продукты для дома с ценами и наличием.">Здесь появятся продукты для дома с ценами и наличием.</p>
   <button type="button" class="plain-btn" id="marketBackToCafe" data-i18n="Перейти в меню кафе">Перейти в меню кафе</button>
 </section>
-<footer class="menu-footer">UMMA GLOBAL · Halal<br><span data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</span></footer>
-<p style="text-align:center;font-size:13px"><a href="staff.html">UMMA Work · Staff</a></p></main>
+<footer class="menu-footer">
+  <strong>HALAL UMMA</strong>
+  <p data-i18n="Мы кормим людей ради довольства Аллаха">Мы кормим людей ради довольства Аллаха</p>
+  <a href="staff.html" data-i18n="Вход для сотрудников">Вход для сотрудников</a>
+</footer></main>
 <dialog id="customerProfile" class="customer-section" closedby="closerequest" aria-labelledby="profileTitle">
   <div class="checkout-header"><div class="customer-heading"><span class="customer-heading-logo" aria-hidden="true"></span><div class="customer-heading-copy"><span class="customer-heading-brand">UMMA CAFE</span><h2 id="profileTitle" tabindex="-1" autofocus data-i18n="Профиль">Профиль</h2></div></div><form method="dialog" hidden><button class="close" aria-label="Закрыть" data-i18n-label="Закрыть">×</button></form></div>
   <div class="checkout-body profile-body">
@@ -697,6 +700,14 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
     </div>
     <div class="language-control"><label for="menuLanguage" data-i18n="Язык">Язык</label><select id="menuLanguage" aria-label="Выбрать язык" data-i18n-label="Выбрать язык"></select></div>
     <button type="button" id="openChatSettings" class="plain-btn" aria-haspopup="dialog" data-i18n="Настройки чата">Настройки чата</button>
+    <label class="profile-screen-setting">
+      <span>
+        <strong id="profileScreenAwakeLabel" data-i18n="Не выключать экран">Не выключать экран</strong>
+        <small id="profileScreenAwakeHint" data-i18n="Экран остаётся включённым, пока меню открыто и видно на экране.">Экран остаётся включённым, пока меню открыто и видно на экране.</small>
+        <small id="profileScreenAwakeStatus" role="status" hidden></small>
+      </span>
+      <input id="profileScreenAwake" type="checkbox" role="switch" aria-labelledby="profileScreenAwakeLabel" aria-describedby="profileScreenAwakeHint profileScreenAwakeStatus" disabled>
+    </label>
     <div id="location" class="location"><strong>HALAL UMMA</strong><span data-i18n="Нячанг">Нячанг</span></div>
     <a id="googleReviewLink" class="plain-btn google-review-link" href="https://search.google.com/local/writereview?placeid=ChIJ_frwDBpncDERwN-JH5kp4OY" target="_blank" rel="noopener noreferrer" data-i18n="Оставить отзыв в Google Maps">Оставить отзыв в Google Maps</a>
   </div>
