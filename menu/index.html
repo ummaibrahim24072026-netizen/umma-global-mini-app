@@ -6,7 +6,7 @@
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="logo/assets/umma-apple-touch-icon.png">
 <script src="js/cafe/menu-install.js?v=2"></script>
-<script src="js/cafe/public-menu-i18n.js?v=combo-1"></script>
+<script src="js/cafe/public-menu-i18n.js?v=combo-2"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -555,7 +555,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 .public-cafe-menu :is(#menuHeading, .customer-heading h2[tabindex="-1"]):focus {
   outline: none;
 }
-</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=combo-1"></head><body class="public-cafe-menu">
+</style><link rel="stylesheet" href="css/viewport.css?v=1"><link rel="stylesheet" href="css/public-storefront.css?v=combo-2"></head><body class="public-cafe-menu">
 <main id="cafePage">
 <header class="cafe-pinned-header" id="cafePinnedHeader">
 <div class="topbar">
@@ -917,7 +917,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=direct-install-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=spotlight-compact-1"></script>
-<script src="js/cafe/public-storefront.js?v=meal-collections-1"></script>
+<script src="js/cafe/public-storefront.js?v=combo-2"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
 <script src="js/cafe/public-menu-profile-name.js?v=3"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
@@ -997,16 +997,25 @@ const storefrontSections=[
  ['family','Для семьи','M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8'],
  ['cooking','Сегодня готовим','M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m9-5v5l3 2']
 ];
-let cafeSection='all', storefrontAssignments=[], preorderDate='';
+const showComboExample=new URLSearchParams(location.search).get('combo')==='preview';
+let cafeSection=showComboExample?'combo':'all', storefrontAssignments=[], preorderDate='';
 const familyDishSkus=['PLOV','MANTI','SALAD','FLATBREAD','AYRAN-500','TURKISH-AYRAN-1000'];
 const familySetRecipes=[
  ['На 2–3 человек',{PLOV:2,SALAD:1,FLATBREAD:1,'AYRAN-500':1}],
  ['На 4–5 человек',{PLOV:4,SALAD:2,FLATBREAD:2,'TURKISH-AYRAN-1000':1}]
 ];
+const comboPlov={name:'Плов с бараниной', weight:150, photo:'plov-white-v2.webp'};
+const comboSalad={name:'Салат Ачичук', weight:100, photo:'salad.png'};
 const comboPreviews=[
- {title:'Плов и манты', manti:2},
- {title:'Плов и самса', samsa:120},
- {title:'Крылышки с пловом', wings:4}
+ {title:'Плов и манты', totalWeight:450, example:{separate:145000, combo:129000}, dishes:[
+  comboPlov, {name:'Манты', quantity:2, weight:200, photo:'manti.png'}, comboSalad
+ ]},
+ {title:'Плов и самса', totalWeight:370, example:{separate:135000, combo:119000}, dishes:[
+  comboPlov, {name:'Самса с бараниной', quantity:1, weight:120, photo:'samsa-white.webp'}, comboSalad
+ ]},
+ {title:'Крылышки с пловом', example:{separate:125000, combo:109000}, dishes:[
+  {name:'Куриные крылышки на мангале', quantity:4, photo:'grilled-chicken-wings-white.webp'}, comboPlov, comboSalad
+ ]}
 ];
 const preorderSkus=['PLOV','MANTI','GRILLED-CHICKEN-WINGS','SAMSA','SAMSA-CHICKEN'];
 const cartStorageKey='umma-menu-cart-v1:'+locationId;
@@ -1419,28 +1428,34 @@ function renderFamilySets(){
  return sets?'<div class="storefront-family-sets">'+sets+'</div>':'';
 }
 
+function renderComboExamplePrice({separate,combo}){
+ const saving=separate-combo;
+ return '<div class="storefront-combo-pricing"><div><span>'+esc(t('По отдельности'))+'</span><s>'+esc(money(separate))+'</s></div>'+
+  '<div><span>'+esc(t('Цена комбо'))+'</span><strong>'+esc(money(combo))+'</strong></div>'+
+  (saving>0?'<p class="storefront-combo-saving">'+esc(t('Выгода {amount}',{amount:money(saving)}))+'</p>':'')+'</div>';
+}
+
 function renderComboPreviews(terms){
  const grams=value=>num(value)+' '+t('г');
  const pieces=value=>num(value)+' '+t('шт.');
- const cards=comboPreviews.map(({title,manti,samsa,wings})=>{
-  const plov=150,salad=100,mantiWeight=manti?manti*100:0;
-  const lines=[
-   [t('Плов с бараниной'), grams(plov)],
-   ...(manti?[[t('Манты'), pieces(manti)+' · '+grams(mantiWeight)]]:[]),
-   ...(samsa?[[t('Самса с бараниной'), pieces(1)+' · '+grams(samsa)]]:[]),
-   ...(wings?[[t('Куриные крылышки на мангале'), pieces(wings)]]:[]),
-   [t('Салат Ачичук'), grams(salad)]
-  ];
+ const cards=comboPreviews.map(({title,totalWeight,example,dishes})=>{
   const label=t(title);
-  if(!matchesMenuSearch({name_ru:title,name_en:label,description_ru:lines.map(([dish])=>dish).join(' ')},terms))return '';
-  const serving=t('1 порция')+(wings?'':' · '+grams(plov+salad+mantiWeight+(samsa||0)));
+  if(!matchesMenuSearch({name_ru:title,name_en:label,description_ru:dishes.map(dish=>dish.name+' '+t(dish.name)).join(' ')},terms))return '';
+  const serving=t('1 порция')+(totalWeight?' · '+grams(totalWeight):'');
+  const photos=dishes.map(({photo})=>'<img src="logo/assets/menu/'+esc(photo)+'" alt="" width="88" height="88" loading="lazy" decoding="async">').join('');
+  const lines=dishes.map(({name,quantity,weight})=>{
+   const amount=[quantity&&pieces(quantity),weight&&grams(weight)].filter(Boolean).join(' · ');
+   return '<li><span>'+esc(t(name))+'</span><strong>'+esc(amount)+'</strong></li>';
+  }).join('');
   return '<article class="storefront-family-set storefront-combo-card">'+
-   '<h3>'+esc(label)+'</h3><p>'+esc(serving)+'</p><ul>'+
-   lines.map(([dish,amount])=>'<li><span>'+esc(dish)+'</span><strong>'+esc(amount)+'</strong></li>').join('')+
-   '</ul><p class="storefront-combo-status">'+esc(t('Цена уточняется'))+'</p></article>';
+   '<div class="storefront-combo-photos">'+photos+'</div><h3>'+esc(label)+'</h3><p>'+esc(serving)+'</p>'+
+   '<ul>'+lines+'</ul>'+
+   (showComboExample?renderComboExamplePrice(example):'<p class="storefront-combo-status">'+esc(t('Цена уточняется'))+'</p>')+
+   '</article>';
  }).join('');
- return cards?'<div class="storefront-family-sets storefront-combos">'+cards+'</div>':
-   '<p class="message">'+esc(t('Ничего не найдено'))+'</p>';
+ if(!cards)return '<p class="message">'+esc(t('Ничего не найдено'))+'</p>';
+ const note=showComboExample?'<p class="storefront-combo-note">'+esc(t('Пример оформления. Цены демонстрационные.'))+'</p>':'';
+ return note+'<div class="storefront-family-sets storefront-combos">'+cards+'</div>';
 }
 
 function renderOrderCatalog(terms,dishes){
@@ -2250,6 +2265,7 @@ $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 window.addEventListener('pageshow',()=>I.staticText());
 const marketStorefront=window.ummaPublicStorefront?.create({
  endpoint:API+'cafe-web-storefront', t, name, description, money, num, photo:safeImage,
+ initialDirection:showComboExample?'cafe':undefined,
  onSwitch(active){
   $('products').hidden=active;
   $('categories').hidden=active;

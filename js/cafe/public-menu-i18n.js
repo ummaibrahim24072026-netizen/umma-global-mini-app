@@ -3,6 +3,10 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Цена комбо":{"en":"Combo price","vi":"Giá combo"},
+"По отдельности":{"en":"Ordered separately","vi":"Gọi từng món"},
+"Выгода {amount}":{"en":"Save {amount}","vi":"Tiết kiệm {amount}"},
+"Пример оформления. Цены демонстрационные.":{"en":"Design preview. Sample prices.","vi":"Bản xem trước thiết kế. Giá minh họa."},
 "Комбо":{"en":"Combos","vi":"Combo","ko":"세트 메뉴","zh":"套餐","de":"Kombimenüs","fr":"Menus combo","th":"ชุดคอมโบ","ms":"Set kombo","id":"Paket kombo","ar":"وجبات كومبو","pt":"Combos"},
 "Плов и манты":{"en":"Plov and manti","vi":"Cơm plov và bánh manti"},
 "Плов и самса":{"en":"Plov and samsa","vi":"Cơm plov và bánh samsa"},

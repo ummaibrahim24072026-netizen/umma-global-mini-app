@@ -12,7 +12,7 @@
     return Number(offer.available_quantity) >= (Number(offer.fixed_quantity) || 1);
   }
 
-  function create({endpoint, t, name, description, money, num, photo, onSwitch, onConfig}) {
+  function create({endpoint, t, name, description, money, num, photo, initialDirection, onSwitch, onConfig}) {
     const switcher = document.getElementById('storefrontSwitch');
     const sections = document.getElementById('marketSections');
     const products = document.getElementById('marketProducts');
@@ -212,7 +212,7 @@
       search(value){search=value;category='all';render();},
       start(){
         switcher.hidden=false;
-        if(preferred==='market') switchTo('market');
+        if((initialDirection||preferred)==='market') switchTo('market');
         void refresh();
         setInterval(refresh,15000);
       }
