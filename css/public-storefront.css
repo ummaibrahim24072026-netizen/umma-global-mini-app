@@ -619,6 +619,33 @@
   gap: 8px;
 }
 
+.storefront-combo-card p {
+  margin: 0;
+  color: var(--umma-brand-muted);
+}
+
+.storefront-family-set.storefront-combo-card ul {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.storefront-combo-card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.storefront-combo-card li strong {
+  flex-shrink: 0;
+}
+
+.storefront-combo-status {
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--umma-brand-line);
+}
+
 .storefront-family-set,
 .storefront-order-card,
 .storefront-request {

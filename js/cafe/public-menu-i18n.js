@@ -3,6 +3,12 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Комбо":{"en":"Combos","vi":"Combo","ko":"세트 메뉴","zh":"套餐","de":"Kombimenüs","fr":"Menus combo","th":"ชุดคอมโบ","ms":"Set kombo","id":"Paket kombo","ar":"وجبات كومبو","pt":"Combos"},
+"Плов и манты":{"en":"Plov and manti","vi":"Cơm plov và bánh manti"},
+"Плов и самса":{"en":"Plov and samsa","vi":"Cơm plov và bánh samsa"},
+"Крылышки с пловом":{"en":"Grilled wings and plov","vi":"Cánh gà nướng và cơm plov"},
+"Манты":{"en":"Manti dumplings","vi":"Bánh hấp manti"},
+"Куриные крылышки на мангале":{"en":"Charcoal-grilled chicken wings","vi":"Cánh gà nướng than"},
 "Цена уточняется":{"en":"Price to be confirmed","vi":"Giá đang được cập nhật"},
 "Имя или ник":{"en":"Name or nickname","vi":"Tên hoặc biệt danh","ko":"이름 또는 별명","zh":"姓名或昵称","de":"Name oder Spitzname","fr":"Nom ou pseudo","th":"ชื่อหรือชื่อเล่น","ms":"Nama atau nama panggilan","id":"Nama atau nama panggilan","ar":"الاسم أو اللقب","pt":"Nome ou alcunha"},
 "Сохранить имя":{"en":"Save name","vi":"Lưu tên","ko":"이름 저장","zh":"保存姓名","de":"Name speichern","fr":"Enregistrer le nom","th":"บันทึกชื่อ","ms":"Simpan nama","id":"Simpan nama","ar":"حفظ الاسم","pt":"Guardar nome"},
