@@ -134,10 +134,10 @@
       try {
         const data=await request('catalog=1');
         if (!Array.isArray(data.sections)) return;
-        const signature=JSON.stringify(data.sections);
+        const signature=JSON.stringify([data.sections,data.visibility]);
         if (signature!==sectionSignature) {
           sectionSignature=signature;
-          onConfig(data.sections);
+          onConfig(data.sections,data.visibility);
         }
       } catch {
         // The existing CAFE catalog remains usable during a configuration outage.

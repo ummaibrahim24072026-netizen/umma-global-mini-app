@@ -58,6 +58,21 @@
         <summary>Разделы веб-меню</summary>
         <p id="webStorefrontStatus" role="status"></p>
         <button id="webStorefrontRetry" type="button" class="plain-btn" hidden>Повторить загрузку</button>
+        <form id="webStorefrontVisibility" hidden>
+          <label>Раздел
+            <select name="section">
+              <option value="breakfast">Завтраки</option>
+              <option value="lunch">Обеды</option>
+              <option value="dinner">Ужины</option>
+              <option value="daily">На каждый день</option>
+              <option value="family">Для семьи</option>
+              <option value="dish-day">Блюдо дня</option>
+              <option value="cooking">Сегодня готовим</option>
+            </select>
+          </label>
+          <label><input name="enabled" type="checkbox"> Показывать раздел в клиентском меню</label>
+          <button type="submit" class="primary">Сохранить видимость</button>
+        </form>
         <form id="webStorefrontForm" hidden>
           <label>Блюдо <select name="productId" required></select></label>
           <label>Раздел
@@ -77,6 +92,29 @@
           <label><input name="allowPreorder" type="checkbox"> Показывать при доступном предзаказе</label>
           <button type="submit" class="primary">Сохранить раздел</button>
         </form>
+        <form id="webComboForm" hidden>
+          <h3>Комбо</h3>
+          <label>Набор <select name="comboId"></select></label>
+          <label>Название (RU) <input name="nameRu" maxlength="120" required></label>
+          <label>Название (EN) <input name="nameEn" maxlength="120"></label>
+          <label>Название (VI) <input name="nameVi" maxlength="120"></label>
+          <label>Ссылка на фото <input name="imageUrl" type="url" maxlength="1000" placeholder="https://" required></label>
+          <label>Цена, ₫ <input name="price" type="number" min="1" max="100000000" required></label>
+          <label>Количество персон <input name="persons" type="number" min="1" max="99"></label>
+          <label><input name="published" type="checkbox"> Опубликовать набор</label>
+          <div id="webComboComponents"></div>
+          <button type="button" id="webComboAddDish" class="plain-btn">Добавить блюдо</button>
+          <output id="webComboWeight"></output>
+          <button type="submit" class="primary">Сохранить комбо</button>
+        </form>
+        <template id="webComboComponent">
+          <fieldset>
+            <label>Блюдо <select data-combo-product required></select></label>
+            <label>Количество стандартных порций <input data-combo-portions type="number" min="0.001" max="20" step="0.001" value="1" required></label>
+            <label>Общий вес компонента в одном наборе, г <input data-combo-weight type="number" min="0.01" max="99999" step="0.01" required></label>
+            <button type="button" data-combo-remove class="plain-btn">Убрать блюдо</button>
+          </fieldset>
+        </template>
       </details>
       <section id="webOverviewStock" class="work-overview-card work-overview-stock" aria-labelledby="webOverviewStockTitle" hidden>
         <div class="work-overview-card-heading">
@@ -333,4 +371,4 @@
   <button type="button" id="cafeDeliveryMapConfirm" disabled>Доставить сюда</button>
 <div hidden><button id="cafeDeliveryMapOpen" type="button">Открыть карту</button><button id="cafeDeliveryPointClear" type="button">Сбросить</button><p id="cafeDeliveryPointSummary"></p></div>
 </dialog>
-<main id="webOwnerManager" class="owner-manager" hidden></main><script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/web-session.js?v=1"></script><script src="js/vendor/qrcode-generator.js?v=1"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="js/maps/umma-maps.js?v=moped-1"></script><script src="js/cafe/order-requests.js?v=counter-payments-1"></script><script src="js/cafe/courier-desk.js?v=cash-ledger-1"></script><script src="js/cafe/courier-workflow.js?v=handover-photo-1"></script><script src="js/cafe/delivery-tracking.js?v=gps-3s-2"></script><script src="js/cafe/product-photo.js?v=1"></script><script src="js/delivery/green-sm-adapter.js?v=inhouse-1"></script><script src="js/cafe/kitchen.js?v=courier-state-1"></script><script src="js/cafe/kitchen-live.js?v=counter-issue-1"></script><script src="js/maps/delivery-zone.js?v=1"></script><script src="js/maps/delivery-location.js?v=11"></script><script src="js/maps/nha-trang-router.js?v=1"></script><script src="js/maps/courier-route.js?v=navigation-2"></script><script src="js/cafe/ready-stock.js?v=portions-1"></script><script src="js/cafe/ingredients.js?v=2"></script><script src="js/cafe/owner-manager.js?v=1" defer></script><script src="js/cafe/web-operations.js?v=meal-collections-1"></script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=staff-mobile-1"></script><script src="js/cafe/connect-composer.js?v=13"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-admin.js?v=campaign-1"></script><script src="js/cafe/delivery-chat.js?v=staff-1"></script><script src="js/cafe/connect-realtime.js?v=staff-inbox-1" data-fulfillment-realtime></script></body></html>
+<main id="webOwnerManager" class="owner-manager" hidden></main><script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/web-session.js?v=1"></script><script src="js/vendor/qrcode-generator.js?v=1"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="js/maps/umma-maps.js?v=moped-1"></script><script src="js/cafe/order-requests.js?v=counter-payments-1"></script><script src="js/cafe/courier-desk.js?v=cash-ledger-1"></script><script src="js/cafe/courier-workflow.js?v=handover-photo-1"></script><script src="js/cafe/delivery-tracking.js?v=gps-3s-2"></script><script src="js/cafe/product-photo.js?v=1"></script><script src="js/delivery/green-sm-adapter.js?v=inhouse-1"></script><script src="js/cafe/kitchen.js?v=menu-combos-1"></script><script src="js/cafe/kitchen-live.js?v=counter-issue-1"></script><script src="js/maps/delivery-zone.js?v=1"></script><script src="js/maps/delivery-location.js?v=11"></script><script src="js/maps/nha-trang-router.js?v=1"></script><script src="js/maps/courier-route.js?v=navigation-2"></script><script src="js/cafe/ready-stock.js?v=menu-combos-1"></script><script src="js/cafe/ingredients.js?v=2"></script><script src="js/cafe/owner-manager.js?v=1" defer></script><script src="js/cafe/web-operations.js?v=menu-combos-1"></script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=staff-mobile-1"></script><script src="js/cafe/connect-composer.js?v=13"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-admin.js?v=campaign-1"></script><script src="js/cafe/delivery-chat.js?v=staff-1"></script><script src="js/cafe/connect-realtime.js?v=staff-inbox-1" data-fulfillment-realtime></script></body></html>

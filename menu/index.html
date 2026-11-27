@@ -6,7 +6,7 @@
 <link rel="manifest" href="umma-menu.webmanifest"><link rel="icon" href="logo/assets/umma-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="logo/assets/umma-apple-touch-icon.png">
 <script src="js/cafe/menu-install.js?v=2"></script>
-<script src="js/cafe/public-menu-i18n.js?v=combo-2"></script>
+<script src="js/cafe/public-menu-i18n.js?v=menu-combos-1"></script>
 <link rel="stylesheet" href="css/voice-order.css?v=palette-1"><link rel="stylesheet" href="css/brand.css?v=palette-2"><link rel="stylesheet" href="css/cafe-cards.css?v=2">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,sans-serif;--gold:#c4a356;--umma-surface:linear-gradient(155deg,#fff 40%,var(--umma-brand-pale));--umma-shadow-card:0 8px 28px #163d3e0b;--umma-action:var(--umma-brand-primary);color:var(--umma-brand-ink);background:var(--umma-brand-canvas)}
@@ -644,7 +644,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 </section>
 <div id="cafeSections" class="storefront-sections" role="group" aria-label="Разделы меню" data-i18n-label="Разделы меню" hidden></div>
 <div id="cafeInquiryTiles" class="storefront-sections" role="group" aria-label="Индивидуальные заказы" data-i18n-label="Индивидуальные заказы">
-  <button type="button" id="cafeFamilyInquiry" class="cafe-category storefront-tile storefront-inquiry-art" data-cafe-section="family" aria-controls="products" aria-pressed="false">
+  <button type="button" id="cafeFamilyInquiry" hidden class="cafe-category storefront-tile storefront-inquiry-art" data-cafe-section="family" aria-controls="products" aria-pressed="false">
     <span><strong data-i18n="Для семьи">Для семьи</strong><small data-i18n="Подобрать блюда">Подобрать блюда</small></span>
     <img src="assets/menu-category-art/family.webp" alt="" decoding="async">
   </button>
@@ -917,7 +917,7 @@ dialog{border:0;padding:0;width:calc(100% - 24px);max-width:520px;max-height:90d
 <script src="js/maps/delivery-zone.js"></script><script src="js/maps/umma-maps.js?v=5"></script><script src="js/cafe/public-menu-delivery.js?v=11"></script><script src="js/cafe/public-menu-nearby.js?v=6"></script><script src="js/cafe/data-epoch.js?v=2"></script><script src="js/cafe/order-alerts.js?v=8"></script><script src="js/cafe/order-inbox.js?v=35"></script><script src="js/cafe/public-menu-extras.js?v=direct-install-1"></script>
 <script src="js/cafe/product-photo.js?v=1"></script>
 <script src="js/cafe/public-menu-carousel.js?v=spotlight-compact-1"></script>
-<script src="js/cafe/public-storefront.js?v=combo-2"></script>
+<script src="js/cafe/public-storefront.js?v=menu-combos-1"></script>
 <script src="js/cafe/public-menu-avatar.js?v=4"></script>
 <script src="js/cafe/public-menu-profile-name.js?v=3"></script>
 <!-- Voice ordering is temporarily disabled. Load js/cafe/voice-order.js?v=4 to enable it. -->
@@ -997,25 +997,11 @@ const storefrontSections=[
  ['family','Для семьи','M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-4M6 8a4 4 0 1 0 8 0 4 4 0 1 0-8 0m11-4a4 4 0 0 1 0 8'],
  ['cooking','Сегодня готовим','M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m9-5v5l3 2']
 ];
-const showComboExample=new URLSearchParams(location.search).get('combo')==='preview';
-let cafeSection=showComboExample?'combo':'all', storefrontAssignments=[], preorderDate='';
+let cafeSection='all', storefrontAssignments=[], sectionVisibility={breakfast:true}, preorderDate='';
 const familyDishSkus=['PLOV','MANTI','SALAD','FLATBREAD','AYRAN-500','TURKISH-AYRAN-1000'];
 const familySetRecipes=[
  ['На 2–3 человек',{PLOV:2,SALAD:1,FLATBREAD:1,'AYRAN-500':1}],
  ['На 4–5 человек',{PLOV:4,SALAD:2,FLATBREAD:2,'TURKISH-AYRAN-1000':1}]
-];
-const comboPlov={name:'Плов с бараниной', weight:150, photo:'plov-white-v2.webp'};
-const comboSalad={name:'Салат Ачичук', weight:100, photo:'salad.png'};
-const comboPreviews=[
- {title:'Плов и манты', totalWeight:450, example:{separate:145000, combo:129000}, dishes:[
-  comboPlov, {name:'Манты', quantity:2, weight:200, photo:'manti.png'}, comboSalad
- ]},
- {title:'Плов и самса', totalWeight:370, example:{separate:135000, combo:119000}, dishes:[
-  comboPlov, {name:'Самса с бараниной', quantity:1, weight:120, photo:'samsa-white.webp'}, comboSalad
- ]},
- {title:'Крылышки с пловом', example:{separate:125000, combo:109000}, dishes:[
-  {name:'Куриные крылышки на мангале', quantity:4, photo:'grilled-chicken-wings-white.webp'}, comboPlov, comboSalad
- ]}
 ];
 const preorderSkus=['PLOV','MANTI','GRILLED-CHICKEN-WINGS','SAMSA','SAMSA-CHICKEN'];
 const cartStorageKey='umma-menu-cart-v1:'+locationId;
@@ -1060,8 +1046,9 @@ function localDay(value){
 }
 function renderCafeSections(){
  const dishes=menuDishes();
- const active=storefrontSections.filter(([id])=>id!=='family'&&(id==='combo'?comboPreviews.length:dishes.some(row=>sectionIncludes(id,row))));
- if(!['all','family','custom'].includes(cafeSection)&&!active.some(([id])=>id===cafeSection)){
+ const active=storefrontSections.filter(([id])=>id==='combo'?publishedCombos().length:
+   sectionVisibility[id]&&dishes.some(row=>sectionIncludes(id,row)));
+ if(!['all','custom'].includes(cafeSection)&&!active.some(([id])=>id===cafeSection)){
   cafeSection='all';
   category='all';
  }
@@ -1070,6 +1057,7 @@ function renderCafeSections(){
  $('cafePage').classList.toggle('is-cafe-collection',inCollection);
  $('leaveCafeSection').hidden=!inCollection;
  $('cafeInquiryTiles').hidden=!insideCafe||inCollection;
+ $('cafeFamilyInquiry').hidden=!active.some(([id])=>id==='family');
 
  if(insideCafe){
   const heading={family:'Для семьи',custom:'На заказ'}[cafeSection]||active.find(([id])=>id===cafeSection)?.[1]||'Меню';
@@ -1078,7 +1066,7 @@ function renderCafeSections(){
  }
  const host=$('cafeSections');
  const visible=['family','custom'].includes(cafeSection)?[]:inCollection&&['breakfast','lunch','dinner'].includes(cafeSection)
-  ?active.filter(([id])=>['breakfast','lunch','dinner'].includes(id)):active;
+  ?active.filter(([id])=>['breakfast','lunch','dinner'].includes(id)):active.filter(([id])=>id!=='family');
  host.hidden=!visible.length||!insideCafe;
  host.innerHTML=visible.map(([id,label,icon])=>{
   const title=esc(t(label));
@@ -1233,14 +1221,43 @@ function expandBatches(rows,metadata=new Map()){const expanded=rows.flatMap(p=>{
  const old=products.find(p=>p.id===id);
  const [productId,revision]=id.split('~');
  const base=expanded.find(p=>p.id===productId);
- expanded.push({...base,...old,id,productId,isPreorder:!!revision,plannedQuantity:0,available:0,stockManaged:true});
+ expanded.push({...base,...old,id,productId,isPreorder:!!revision,plannedQuantity:0,available:0,stockManaged:true,unlisted:true});
  }return expanded;}
 function catalogRows(rows){
  const pricedIds=new Set(rows.map(p=>p.id));
  return [...rows,...catalogPreviews.filter(p=>!pricedIds.has(p.id))];
 }
-function visibleDish(p){return p.catalog_preview||stockLeft(p)>0||p.isPreorder&&p.plannedQuantity>0;}
-function stockLeft(p){return p.catalog_preview?0:p.stockManaged?Math.max(0,Number(p.available)||0):99;}function shortages(){return [...cart].some(([id,n])=>n>stockLeft(products.find(p=>p.id===id)||{stockManaged:true}));}
+function visibleDish(p){return !p.unlisted&&(p.comboComponents?.length||p.catalog_preview||stockLeft(p)>0||p.isPreorder&&p.plannedQuantity>0);}
+function stockLeft(p){return p.catalog_preview?0:p.stockManaged?Math.max(0,Number(p.available)||0):99;}
+function componentLimits(){
+ const limits=new Map();
+ for(const combo of publishedCombos()){
+  for(const line of combo.comboComponents)limits.set(line.productId,line.availablePortions);
+ }
+ return limits;
+}
+function cartDemand(p){
+ if(!p||p.isPreorder)return [];
+ return p.comboComponents?.map(line=>[line.productId,line.portions])||[[p.id,1]];
+}
+function cartLimit(p,limits=componentLimits()){
+ let maximum=stockLeft(p);
+ for(const [id,portions] of cartDemand(p)){
+  if(!limits.has(id))continue;
+  let left=limits.get(id);
+  for(const [other,quantity] of cart){
+   if(other===p.id)continue;
+   const line=cartDemand(products.find(row=>row.id===other)).find(([component])=>component===id);
+   if(line)left-=line[1]*quantity;
+  }
+  maximum=Math.min(maximum,Math.floor((left+1e-8)/portions));
+ }
+ return Math.max(0,maximum);
+}
+function shortages(){
+ const limits=componentLimits();
+ return [...cart].some(([id,n])=>n>cartLimit(products.find(p=>p.id===id)||{stockManaged:true},limits));
+}
 function stockSummary(p){
  if(p.catalog_preview||!p.stockManaged)return '';
  const ready=['daily','family'].includes(cafeSection)&&stockLeft(p)>0?t('Готово сегодня')+' · ':'';
@@ -1253,7 +1270,8 @@ function preorderCard(p,n){
  return '<div class="cafe-preorder-card"><strong>'+esc(t(today?'Будет готово сегодня к {time}':'Будет готово к {time}',{time}))+'</strong><small>'+esc(t('Порций для предзаказа: {count}',{count:num(stockLeft(p))}))+'</small>'+cardQuantity(p,n)+'</div>';
 }
 function dishPrice(p){return p.catalog_preview?esc(t('Цена уточняется')):money(p.price_vnd);}
-function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<button type="button" class="cafe-product-media" data-dish="'+esc(p.id)+'" aria-label="'+esc(n)+'" aria-haspopup="dialog" tabindex="-1"><img class="cafe-product-photo" src="'+esc(img)+'" alt="" loading="lazy" decoding="async"></button>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+'<h3><button type="button" class="dish-link" data-dish="'+esc(p.id)+'" aria-haspopup="dialog">'+esc(n)+'</button></h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+dishPrice(p)+'</span>'+(!p.catalog_preview&&(stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+function card(p,future){const n=name(p),img=safeImage(p);return '<article class="cafe-product'+(qty(p.id)||future&&qty(future.id)?' cafe-product-selected':'')+(!img?' cafe-product-no-photo':'')+'" data-card="'+esc(p.id)+'">'+(img?'<button type="button" class="cafe-product-media" data-dish="'+esc(p.id)+'" aria-label="'+esc(n)+'" aria-haspopup="dialog" tabindex="-1"><img class="cafe-product-photo" src="'+esc(img)+'" alt="" loading="lazy" decoding="async"></button>':'<div class="cafe-product-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M5 17a7 7 0 0 1 14 0M10 5h4M12 5v3M6 21h12"/></svg></div>')+'<h3><button type="button" class="dish-link" data-dish="'+esc(p.id)+'" aria-haspopup="dialog">'+esc(n)+'</button></h3><div class="cafe-product-top"><span class="cafe-product-weight">'+esc(weight(p))+'</span></div>'+(p.comboComponents?comboPrice(p):'')+stockSummary(p)+'<div class="cafe-product-bottom"><span class="cafe-product-price">'+dishPrice(p)+'</span>'+(!p.catalog_preview&&(stockLeft(p)>0||qty(p.id))?cardQuantity(p,n):'')+'</div>'+(future?preorderCard(future,n):'')+'</article>';}
+let dishScrollY=0;
 function showDish(p, focusSelector){
   const image=safeImage(p);
   const n=name(p);
@@ -1265,13 +1283,15 @@ function showDish(p, focusSelector){
     '<div class="dish-detail-facts"><strong>'+dishPrice(p)+'</strong>'+
       (portion?'<span>'+esc(portion)+'</span>':'')+'</div>'+
     (copy?'<p class="dish-detail-description">'+esc(copy)+'</p>':'')+
+    (p.comboComponents?comboDetails(p):'')+
     '<div class="dish-detail-order">'+stockSummary(p)+
       (!p.catalog_preview&&(stockLeft(p)>0||qty(p.id))?cardQuantity(p,n,true):'')+'</div>'+
     (future?preorderCard(future,n):'');
   $('dishDetails').dataset.productId=p.id;
   if(!$('dishDetails').open){
     delete $('dishDetails').dataset.fromSpotlight;
-    $('dishDetails').show();
+    dishScrollY=window.scrollY;
+      $('dishDetails').show();
     $('dishDetails').querySelector('.close').focus({preventScroll:true});
     syncCustomerNavigation();
   }
@@ -1291,9 +1311,10 @@ function cardQuantity(p,n,detail=false){
   return '<button type="button" class="'+(p.isPreorder?'cafe-preorder-action':'cafe-add')+
     '" data-change="1" data-id="'+id+'"'+accessibleName+'>'+esc(label)+'</button>';
 }
+function publishedCombos(){return products.filter(p=>p.comboComponents?.length&&!p.catalog_preview&&!p.unlisted);}
 function menuDishes(){
  const batches=new Map(products.filter(p=>p.isPreorder&&visibleDish(p)).map(p=>[p.productId,p]));
- return products.filter(p=>!p.isPreorder&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
+ return products.filter(p=>!p.isPreorder&&!p.comboComponents&&(visibleDish(p)||batches.has(p.id))).map(p=>({dish:p,batch:batches.get(p.id)}));
 }
 
 function renderCategories(){
@@ -1356,6 +1377,7 @@ function matchesMenuSearch(dish, terms) {
   const text = normaliseMenuSearch([
     name(dish), description(dish), dish.name_ru, dish.name_vi, dish.name_en,
     dish.description_ru, dish.description_vi, dish.description_en, menuIngredientTags[dish.sku],
+    ...(dish.comboComponents||[]).flatMap(line=>[name(line),line.name_ru,line.name_vi,line.name_en]),
   ].join(' '));
   const words = new Set(text.split(' '));
   if (words.has('ягнятина')) words.add('баранина');
@@ -1407,7 +1429,7 @@ function canAddFamilySet(lines){
  if(busy||pending||shortages())return false;
  const positions=new Set(cart.keys());
  for(const {dish,quantity} of lines){
-  if(!dish||qty(dish.id)+quantity>Math.min(20,stockLeft(dish)))return false;
+  if(!dish||qty(dish.id)+quantity>Math.min(20,cartLimit(dish)))return false;
   if(products.some(p=>p.isPreorder&&p.productId===dish.id&&qty(p.id)))return false;
   positions.add(dish.id);
  }
@@ -1428,34 +1450,17 @@ function renderFamilySets(){
  return sets?'<div class="storefront-family-sets">'+sets+'</div>':'';
 }
 
-function renderComboExamplePrice({separate,combo}){
- const saving=separate-combo;
- return '<div class="storefront-combo-pricing"><div><span>'+esc(t('По отдельности'))+'</span><s>'+esc(money(separate))+'</s></div>'+
-  '<div><span>'+esc(t('Цена комбо'))+'</span><strong>'+esc(money(combo))+'</strong></div>'+
-  (saving>0?'<p class="storefront-combo-saving">'+esc(t('Выгода {amount}',{amount:money(saving)}))+'</p>':'')+'</div>';
+function comboPrice(p){
+ const fractional=p.comboComponents.some(line=>line.portions%1!==0);
+ return '<div class="storefront-combo-pricing"><div><span>'+esc(t(fractional?'Стоимость тех же порций':'По отдельности'))+
+  '</span>'+(p.savingVnd>0?'<s>'+esc(money(p.separatePriceVnd))+'</s>':'<strong>'+esc(money(p.separatePriceVnd))+'</strong>')+'</div>'+
+  (p.savingVnd>0?'<p class="storefront-combo-saving">'+esc(t('Выгода {amount}',{amount:money(p.savingVnd)}))+'</p>':'')+'</div>';
 }
-
-function renderComboPreviews(terms){
- const grams=value=>num(value)+' '+t('г');
- const pieces=value=>num(value)+' '+t('шт.');
- const cards=comboPreviews.map(({title,totalWeight,example,dishes})=>{
-  const label=t(title);
-  if(!matchesMenuSearch({name_ru:title,name_en:label,description_ru:dishes.map(dish=>dish.name+' '+t(dish.name)).join(' ')},terms))return '';
-  const serving=t('1 порция')+(totalWeight?' · '+grams(totalWeight):'');
-  const photos=dishes.map(({photo})=>'<img src="logo/assets/menu/'+esc(photo)+'" alt="" width="88" height="88" loading="lazy" decoding="async">').join('');
-  const lines=dishes.map(({name,quantity,weight})=>{
-   const amount=[quantity&&pieces(quantity),weight&&grams(weight)].filter(Boolean).join(' · ');
-   return '<li><span>'+esc(t(name))+'</span><strong>'+esc(amount)+'</strong></li>';
-  }).join('');
-  return '<article class="storefront-family-set storefront-combo-card">'+
-   '<div class="storefront-combo-photos">'+photos+'</div><h3>'+esc(label)+'</h3><p>'+esc(serving)+'</p>'+
-   '<ul>'+lines+'</ul>'+
-   (showComboExample?renderComboExamplePrice(example):'<p class="storefront-combo-status">'+esc(t('Цена уточняется'))+'</p>')+
-   '</article>';
- }).join('');
- if(!cards)return '<p class="message">'+esc(t('Ничего не найдено'))+'</p>';
- const note=showComboExample?'<p class="storefront-combo-note">'+esc(t('Пример оформления. Цены демонстрационные.'))+'</p>':'';
- return note+'<div class="storefront-family-sets storefront-combos">'+cards+'</div>';
+function comboDetails(p){
+ const lines=p.comboComponents.map(line=>'<li>'+esc(name(line)+' · '+
+  t('Порций: {count}',{count:num(line.portions)})+' · '+num(line.weightG)+' '+t('г')+' · '+money(line.priceVnd))+'</li>');
+ return (p.persons?'<p class="dish-detail-description">'+esc(t('Количество персон: {count}',{count:num(p.persons)}))+'</p>':'')+
+  '<ul>'+lines.join('')+'</ul>'+comboPrice(p);
 }
 
 function renderOrderCatalog(terms,dishes){
@@ -1495,14 +1500,15 @@ function renderProducts(){
  const dishes=menuDishes();
  renderSpotlight(dishes);
  const terms=menuSearchTerms(query);
+ const combos=publishedCombos().filter(p=>matchesMenuSearch(p,terms));
  if(cafeSection==='combo'){
-  $('products').innerHTML=renderComboPreviews(terms);
+  $('products').innerHTML=combos.map(p=>card(p)).join('')||'<p class="message">'+esc(t('Ничего не найдено'))+'</p>';
   lock();
   return;
  }
  if(cafeSection==='custom'){
   const batches=new Map(products.filter(p=>p.isPreorder&&orderableFuture(p)).map(p=>[p.productId,p]));
-  const offered=products.filter(p=>!p.isPreorder&&!p.catalog_preview&&p.sku).map(dish=>({dish,batch:batches.get(dish.id)}));
+  const offered=products.filter(p=>!p.isPreorder&&!p.comboComponents&&!p.catalog_preview&&p.sku).map(dish=>({dish,batch:batches.get(dish.id)}));
   $('products').innerHTML=renderOrderCatalog(terms,offered);
   lock();
   return;
@@ -1510,9 +1516,11 @@ function renderProducts(){
  const visible=dishes.filter(row=>sectionIncludes(cafeSection,row)&&
    (category==='all'||categoryFor(row.dish)===category)&&matchesMenuSearch(row.dish,terms));
  const renderCards=rows=>rows.map(({dish,batch})=>card(dish,displayBatch(dish,batch))).join('');
+ const searchCombos=cafeSection==='all'&&terms.length&&combos.length
+  ?'<h2 class="cafe-category-heading">'+esc(t('Комбо'))+'<span>'+num(combos.length)+'</span></h2>'+combos.map(p=>card(p)).join(''):'';
  const contents=cafeSection!=='all'
   ?renderCards(cafeSection==='cooking'?visible.sort((a,b)=>Date.parse(a.batch.plannedReadyAt)-Date.parse(b.batch.plannedReadyAt)):visible)
-  :menuCategories.map(c=>{
+  :searchCombos+menuCategories.map(c=>{
     const items=visible.filter(({dish})=>categoryFor(dish)===c.id);
     return items.length?'<h2 class="cafe-category-heading">'+esc(t(c.label))+'<span>'+num(items.length)+'</span></h2>'+renderCards(items):'';
   }).join('');
@@ -1573,9 +1581,9 @@ function renderCartRow(product){
    </div>
  </div>`;
 }
-function lock(){document.querySelectorAll('[data-family-set]').forEach(button=>{button.disabled=!canAddFamilySet(familySetLines(familySetRecipes[Number(button.dataset.familySet)][1]));});$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=stockLeft(p));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
-function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p||p.catalog_preview)return;const next=Math.min(delta>0?Math.min(20,stockLeft(p)):20,Math.max(0,qty(id)+delta));if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
-if(cafeSection==='custom')renderProducts();
+function lock(){const limits=componentLimits();document.querySelectorAll('[data-family-set]').forEach(button=>{button.disabled=!canAddFamilySet(familySetLines(familySetRecipes[Number(button.dataset.familySet)][1]));});$('backToCart').disabled=busy||!!pending;$('clearCart').hidden=!cart.size||busy||!!pending;$('customerFields').disabled=busy||!!pending;document.querySelectorAll('[data-change]').forEach(b=>{const p=products.find(p=>p.id===b.dataset.id);b.disabled=busy||!!pending||(Number(b.dataset.change)>0&&p&&qty(p.id)>=Math.min(20,cartLimit(p,limits)));});$('closeCart').disabled=busy;$('form').setAttribute('aria-busy',String(busy));}
+function change(id,delta){if(busy||pending)return;const p=products.find(p=>p.id===id);if(!p||p.catalog_preview)return;if(delta>0&&qty(id)>=Math.min(20,cartLimit(p)))return;const next=Math.max(0,qty(id)+delta);if(delta>0&&[...cart].some(([other,n])=>n>0&&other!==id&&(products.find(x=>x.id===other)?.productId||other)===(p.productId||p.id))){$('dishDetails').close();$('openCart').click();status('Для одного блюда выберите готовые порции или одну будущую партию.',true);return;}if(!qty(id)&&next&&cart.size>=25)return;dismissCartFeedback();if(next)cart.set(id,next);else cart.delete(id);const article=document.querySelector('[data-card="'+id+'"]');const row=menuDishes().find(({dish,batch})=>dish===p||batch===p);
+if(cafeSection==='custom'||p.comboComponents&&article)renderProducts();
 else if(row){
   const cardNode=article||[...$('products').querySelectorAll('[data-card]')].find(node=>node.dataset.card===row.dish.id);
   if(cardNode)cardNode.outerHTML=card(row.dish,displayBatch(row.dish,row.batch));
@@ -1644,7 +1652,7 @@ searchPanel.addEventListener('keydown', event => {
 function applyMenuSearch(value) {
   if(marketStorefront?.active){marketStorefront.search(value);return;}
   query = value;
-  if (value.trim() && !['family','custom','daily'].includes(cafeSection) && (category !== 'all'||cafeSection!=='all')) {
+  if (value.trim() && !['family','custom','daily','combo','breakfast'].includes(cafeSection) && (category !== 'all'||cafeSection!=='all')) {
     cafeSection='all';
     category = 'all';
     renderCategories();
@@ -1711,6 +1719,7 @@ document.querySelector('.dish-detail-scrim').addEventListener('click', () => dis
 dishDetails.addEventListener('close', () => {
   syncCustomerNavigation();
   const focus = document.activeElement;
+  if(!dishDetails.open&&window.scrollY!==dishScrollY)window.scrollTo(0,dishScrollY);
   if (dishDetails.open || $('cafePage').inert || (focus !== document.body && !dishDetails.contains(focus))) return;
   const link = $('products').querySelector('.dish-link[data-dish="' + CSS.escape(dishDetails.dataset.productId) + '"]');
   const spotlight = $('cafeSpotlight').querySelector('.cafe-spotlight-slide:not([hidden])');
@@ -2265,7 +2274,6 @@ $('menuLanguage').onchange=e=>I.setLanguage(e.target.value);
 window.addEventListener('pageshow',()=>I.staticText());
 const marketStorefront=window.ummaPublicStorefront?.create({
  endpoint:API+'cafe-web-storefront', t, name, description, money, num, photo:safeImage,
- initialDirection:showComboExample?'cafe':undefined,
  onSwitch(active){
   $('products').hidden=active;
   $('categories').hidden=active;
@@ -2287,9 +2295,10 @@ const marketStorefront=window.ummaPublicStorefront?.create({
    $('cafeInquiryTiles').hidden=true;
   }
  },
- onConfig(assignments){
+ onConfig(assignments,visibility){
   storefrontAssignments=assignments;
-  if(menuState==='ready'){renderCategories();renderProducts();}
+  sectionVisibility={breakfast:true,...visibility};
+  if(['ready','empty'].includes(menuState)){renderCategories();renderProducts();renderLoadState();}
  }
 });
 const eventForm=$('cafeEventForm');
