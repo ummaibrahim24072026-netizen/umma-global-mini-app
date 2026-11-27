@@ -116,11 +116,20 @@
     badge.textContent = String(count);
   }
 
+  function comboComposition(item) {
+    if (!item.combo_components?.length) return "";
+    const number = new Intl.NumberFormat("ru", {maximumFractionDigits: 3});
+    return '<br><small>' + item.combo_components.map(component =>
+      esc(component.name_ru + ' · ' + number.format(component.portions * item.quantity) +
+        ' порц. · ' + number.format(component.weightG * item.quantity) + ' г')
+    ).join('<br>') + '</small>';
+  }
+
   function renderPreparationCard(order, items, type, notice, action) {
     const batch = waitingBatch(order);
     const status = batch ? "Ждёт партию" : kitchenStatuses[order.status] || statusNames[order.status] || order.status;
     const itemHtml = items.map(item => '<li><span class="work-order-item-name">' + orderItemPhoto(item) +
-      '<span>' + esc(item.product_name_ru) + '</span></span><strong class="kitchen-item-quantity">× ' +
+      '<span>' + esc(item.product_name_ru) + comboComposition(item) + '</span></span><strong class="kitchen-item-quantity">× ' +
       esc(item.quantity) + '</strong></li>').join("");
     const note = order.customer_note ? '<p class="kitchen-prep-note"><strong>Комментарий</strong> ' + esc(order.customer_note) + '</p>' : "";
     const batchTime = batch ? '<p class="kitchen-prep-note">Предзаказ · партия к ' + esc(formatDate(order.preorder_expected_at)) + '</p>' : "";

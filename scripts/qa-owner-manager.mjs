@@ -33,8 +33,12 @@ try{
   await db.exec("alter table umma_runtime_settings add column cafe_reset_epoch uuid;create function cafe_guest_order_status(uuid,uuid) returns jsonb language plpgsql as $$declare v_order cafe_orders%rowtype;begin return jsonb_build_object('status',v_order.status);end$$;alter table products add column catalog_preview boolean not null default false;alter table cafe_orders add column source_module text not null default 'cafe';");
   await db.exec(readFileSync("supabase/proposals/cafe-ready-stock.sql","utf8"));
   await db.exec(readFileSync("supabase/migrations/20261123155657_cafe_owner_manager.sql","utf8"));
+  await db.exec("alter table cafe_order_items add column preorder_batch_revision uuid;");
+  await db.exec(readFileSync("supabase/migrations/20261127033208_cafe_menu_combos.sql","utf8"));
   await q("insert into stock_items(id,name_ru,item_type,base_unit,linked_product_id) values($1,'Рис','raw_material','kg',null),($2,'Плов','finished_good','portion',$3)",[rice,plov,product]);
   await q("update locations set ready_stock_enabled=true where id=$1",[cafe]);
+  assert.equal(Number(await result("select umma_private.owner_quantity('1.25','portion','portion',false) result")),1.25);
+  await assert.rejects(result("select umma_private.owner_quantity('1.25','pcs','pcs',false) result"),/точность/);
   await assert.rejects(dashboard(11),/Нет доступа/);
   await assert.rejects(post({kind:"mode",mode:"C"},randomUUID(),13),/Недостаточно прав/);
   assert.equal(await result("select has_function_privilege('anon','cafe_owner_post(bigint,uuid,uuid,jsonb)','execute') result"),false);
@@ -109,7 +113,28 @@ try{
   assert.equal((await balance(rice)).kitchen,1.5);
   await assert.rejects(post({kind:"production",lines:[row(plov,200,"portion")]}),/Недостаточно/);
   assert.equal((await balance(plov)).quantity,51);
-  console.log("PASS: owner receipt, duplicate invoice, roles, transfer, count, completed sale, write-off, measured norms and approved recipe.");
+  const side=randomUUID();
+  await q("insert into products(id,name_ru,name_vi,name_en,product_type,price_vnd) values($1,'Салат','Rau','Salad','cafe',50000)",[side]);
+  await q("insert into inventory(location_id,product_id,quantity,reserved_quantity,ready_stock_confirmed,ready_stock_state,is_available) values($1,$2,5,0,true,'ready',true) on conflict(location_id,product_id) do update set quantity=5,reserved_quantity=0,ready_stock_confirmed=true,ready_stock_state='ready',is_available=true",[cafe,side]);
+  await q("insert into umma_private.owner_ready_cost(location_id,product_id,quantity,unit_cost,event_type) values($1,$2,51,10000,'valuation'),($1,$3,5,5000,'valuation')",[cafe,product,side]);
+  const combo=await result("select cafe_combo_save($1,null,$2::jsonb) result",[cafe,JSON.stringify({
+    nameRu:"Набор",nameEn:"Combo",nameVi:"Combo",imageUrl:"https://example.com/combo.webp",price:90000,published:true,
+    components:[{productId:product,portions:0.5,weightG:150},{productId:side,portions:1,weightG:100}],
+  })]);
+  const mixed=(await result("select create_cafe_staff_order(11,$1,$2::jsonb,'pickup','QA',null,null,'cash') result",
+    [cafe,JSON.stringify([{productId:combo,quantity:1},{productId:product,quantity:1}])])).order;
+  const priorSales=(await dashboard()).sales;
+  for(const state of ["confirmed","preparing","ready"]) await result("select update_cafe_order_status($1,12,$2) result",[mixed.id,state]);
+  await result("select update_cafe_order_payment_cash($1,11,'paid',null,210000,0) result",[mixed.id]);
+  await result("select update_cafe_order_status($1,11,'completed') result",[mixed.id]);
+  const sales=(await dashboard()).sales;
+  assert.equal(sales.knownCost-priorSales.knownCost,20000);
+  assert.equal(sales.grossLineRevenue-priorSales.grossLineRevenue,210000);
+  assert.equal(sales.unpricedPortions,priorSales.unpricedPortions);
+  assert.equal((await balance(plov)).quantity,49.5);
+  await post({kind:"count",lines:[row(plov,49.25,"portion",{expected:49.5})]});
+  assert.equal((await balance(plov)).quantity,49.25);
+  console.log("PASS: owner receipt, duplicate invoice, roles, transfer, count, combo sale costing, write-off, measured norms and approved recipe.");
 }catch(error){
   console.error(error.message);
   if(error.where) console.error(error.where);

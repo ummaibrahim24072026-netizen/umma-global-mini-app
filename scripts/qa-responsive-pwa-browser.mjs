@@ -42,6 +42,17 @@ const product = {
 const sizes = [[320,568],[360,800],[375,812],[390,844],[412,915],[430,932],[768,1024],[1024,768],
   [1440,900],[1920,1080],[2560,1440],[1080,1920],[720,1280],[844,390]];
 const languages = ['ru','en','vi','ko','zh','de','fr','th','ms','id','ar','pt'];
+const side={...product,id:'22222222-2222-4222-8222-222222222222',sku:'UMMA-CAFE-SALAD',name_ru:'Салат',name_de:'Salat',available:1,price_vnd:50000};
+const combo={...product,id:'33333333-3333-4333-8333-333333333333',sku:'UMMA-COMBO-QA',
+  name_ru:'Комбо QA',name_en:'Combo QA',name_de:'Combo QA',name_ar:'كومبو',
+  price_vnd:100000,available:1,image_url:'../logo/assets/menu/plov-white-v2.webp',weight_value:325,weight_unit:'g',persons:2,
+  separatePriceVnd:110000,savingVnd:10000,comboComponents:[
+    {productId:product.id,name_ru:product.name_ru,portions:0.5,weightG:225,priceVnd:60000,availablePortions:9},
+    {productId:side.id,name_ru:side.name_ru,portions:1,weightG:100,priceVnd:50000,availablePortions:1},
+  ]};
+let sectionsFixture=false;
+let lunchVisible=false;
+let savedCombo;
 let available = 10;
 let catalogCalls = 0;
 let checkoutCalls = 0;
@@ -94,7 +105,7 @@ try {
     if (endpoint === 'cafe-menu') payload = { ...payload, products: [product], locations: [location], inventory: [] };
     if (endpoint === 'cafe-guest-order' && request.method() === 'GET') {
       catalogCalls++;
-      payload.products = [{ ...product, available }];
+      payload.products = [{ ...product, available },...(sectionsFixture?[side,combo]:[])];
     }
     if (endpoint === 'cafe-guest-order' && body.action === 'create') {
       checkoutCalls++;
@@ -103,7 +114,26 @@ try {
       payload.order = { id: 'qa-order', orderNumber: 71, totalVnd: 120000, paymentMethod: 'cash',
         status: 'pending', paymentStatus: 'pending' };
     }
-    if (endpoint === 'cafe-kiosk' && body.action === 'config') Object.assign(payload, { location, qrAvailable: true });
+    if (endpoint === 'cafe-web-storefront' && request.method() === 'GET' && sectionsFixture) {
+      Object.assign(payload,{sections:['breakfast','lunch','dinner','daily','family'].map(section=>({
+        section,productId:product.id,allowPreorder:false,
+      })),visibility:{breakfast:true,lunch:lunchVisible,dinner:false,daily:false,family:false}});
+    }
+    if (endpoint === 'cafe-web-storefront' && body.action === 'storefrontList') {
+      Object.assign(payload,{products:[product,side],assignments:[],visibility:{breakfast:true,lunch:lunchVisible},
+        combos:savedCombo?[{product_id:combo.id,persons:savedCombo.persons,
+         product:{name_ru:savedCombo.nameRu,image_url:savedCombo.imageUrl,price_vnd:savedCombo.price,is_active:savedCombo.published},
+         components:savedCombo.components.map(line=>({product_id:line.productId,portions:line.portions,weight_g:line.weightG}))}]:[]});
+    }
+    if (endpoint === 'cafe-web-storefront' && body.action === 'storefrontVisibility') {
+      assert.equal(body.section,'lunch');
+      lunchVisible=body.enabled;
+    }
+    if (endpoint === 'cafe-web-storefront' && body.action === 'comboSave') {
+      savedCombo=body.combo;
+      payload.comboId=combo.id;
+    }
+    if (endpoint === 'cafe-kiosk'  && body.action === 'config') Object.assign(payload, { location, qrAvailable: true });
     if (endpoint === 'cafe-web') {
       if (body.action === 'login') payload.token = 'a'.repeat(64);
       if (body.action === 'me') Object.assign(payload, {
@@ -224,6 +254,40 @@ try {
   await page.locator('button').click();
   await page.locator('[data-card]').first().waitFor();
 
+  sectionsFixture=true;
+  await page.reload();
+  await page.locator('[data-cafe-section=breakfast]').waitFor();
+  const specialSections=page.locator('[data-cafe-section]:visible');
+  assert.deepEqual(await specialSections.evaluateAll(nodes=>nodes.map(node=>node.dataset.cafeSection)),['breakfast','combo','custom']);
+  assert.equal(await page.locator('[data-card="'+combo.id+'"]').count(),0);
+  await page.locator('[data-cafe-section=combo]').click();
+  const comboCard=page.locator('[data-card="'+combo.id+'"]');
+  assert.equal(await page.locator('[data-card]').count(),1);
+  for (const [width,height] of [[320,568],[390,844],[412,915]]) {
+    await page.setViewportSize({width,height});
+    await fits(page,'Combo card',['.cafe-product','.cafe-product-bottom','.storefront-combo-pricing']);
+  }
+  await comboCard.locator('.dish-link').click();
+  await page.locator('#dishDetailsBody ul li').first().waitFor();
+  assert.equal(await page.locator('#dishDetailsBody ul li').count(),2);
+  assert.match(await page.locator('#dishDetailsBody').textContent(),/225/);
+  await fits(page,'Combo detail',['#dishDetails','#dishDetailsBody']);
+  await page.locator('#dishDetails .close').click();
+  await comboCard.locator('[data-change="1"]').click();
+  assert.equal(await page.locator('#cartCount').textContent(),'1');
+  await page.locator('#leaveCafeSection').click();
+  const sideCard=page.locator('[data-card="'+side.id+'"]');
+  assert.equal(await sideCard.locator('[data-change="1"]').isDisabled(),true,'shared component stock');
+  await page.locator('#searchToggle').click();
+  await page.locator('#search').fill('Combo QA');
+  assert.equal(await comboCard.count(),1);
+  assert.equal(await sideCard.count(),0);
+  await page.reload();
+  await page.locator('[data-cafe-section=breakfast]').waitFor();
+  assert.deepEqual(await specialSections.evaluateAll(nodes=>nodes.map(node=>node.dataset.cafeSection)),['breakfast','combo','custom']);
+  assert.equal(await page.locator('#cartCount').textContent(),'1');
+  sectionsFixture=false;
+
   await page.goto(base + 'staff.html');
   for (const [width,height] of sizes) {
     await page.setViewportSize({width,height});
@@ -232,6 +296,30 @@ try {
   await page.locator('#webLoginName').fill('qa');
   await page.locator('#webPassword').fill('test-only-password');
   await page.locator('#webLoginSubmit').click();
+  await page.locator('[data-web-tab=overview]').click();
+  await page.locator('#webStorefront summary').click();
+  const visibilityForm=page.locator('#webStorefrontVisibility');
+  await visibilityForm.locator('[name=section]').selectOption('lunch');
+  await visibilityForm.locator('[name=enabled]').check();
+  await visibilityForm.locator('button').click();
+  await page.waitForFunction(()=>document.getElementById('webStorefrontStatus').textContent==='Сохранено.');
+  assert.equal(lunchVisible,true);
+  const comboForm=page.locator('#webComboForm');
+  await comboForm.locator('[name=nameRu]').fill('Тестовый набор');
+  await comboForm.locator('[name=imageUrl]').fill('https://example.com/combo.webp');
+  await comboForm.locator('[name=price]').fill('100000');
+  await comboForm.locator('[name=persons]').fill('2');
+  await comboForm.locator('[data-combo-product]').nth(0).selectOption(product.id);
+  await comboForm.locator('[data-combo-product]').nth(1).selectOption(side.id);
+  await comboForm.locator('[data-combo-portions]').nth(0).fill('0.5');
+  await comboForm.locator('[data-combo-weight]').nth(0).fill('225');
+  await comboForm.locator('[data-combo-weight]').nth(1).fill('100');
+  await comboForm.locator('[type=submit]').click();
+  await page.waitForFunction(()=>document.getElementById('webStorefrontStatus').textContent==='Сохранено.');
+  assert.equal(savedCombo.published,false);
+  assert.equal(savedCombo.components[0].portions,0.5);
+  assert.equal(await comboForm.locator('[name=comboId]').inputValue(),combo.id);
+  await page.locator('#webStorefront summary').click();
   await page.locator('[data-web-tab=pos]').click();
   await page.locator('.pos-product').first().waitFor();
   await page.locator('.pos-product').first().click();
@@ -272,7 +360,7 @@ try {
   }
   assert.deepEqual(errors, []);
   assert.ok(requests.some(([endpoint, action]) => endpoint === 'cafe-web' && action === 'staffList'));
-  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, counter checkout, catalog refresh, offline fallback and recovery, eight staff tabs and kiosk. Isolated API fixtures.');
+  console.log('PASS '+checks+' Chromium layout checks, 12 menu locales, combo card and shared stock, manager publishing controls, counter checkout, catalog refresh, offline fallback and recovery, eight staff tabs and kiosk. Isolated API fixtures.');
 } finally {
   await browser?.close();
   server.closeAllConnections();

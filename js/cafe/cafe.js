@@ -153,7 +153,8 @@
       if (p.catalog_preview && !p.photo_only) return p;
       if (p.price_vnd == null) return locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled?null:{ ...p, catalog_preview: true };
       const stock = inventoryRows.find(i => String(i.product_id) === String(p.id) && String(i.location_id) === String(locationId));
-      const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;if(ready)return stock?{...p,stockAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false?Number(stock.quantity)-Number(stock.reserved_quantity||0):0,stockIsAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false}:null;
+      if(p.sku?.startsWith('UMMA-COMBO-'))return null;
+      const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;if(ready)return stock?{...p,stockAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false?Math.floor(Number(stock.quantity)-Number(stock.reserved_quantity||0)):0,stockIsAvailable:stock.ready_stock_confirmed&&stock.ready_stock_state==='ready'&&stock.is_available!==false}:null;
       if (!inventoryControlEnabled) return { ...p, stockAvailable: 99, stockIsAvailable: true };
       return stock ? { ...p, price_vnd: stock.price_vnd == null ? p.price_vnd : stock.price_vnd,
         stockAvailable: Number(stock.quantity) - Number(stock.reserved_quantity || 0), stockIsAvailable: stock.is_available !== false } : null;
@@ -752,12 +753,12 @@
     if(loading||locating||!locationId)return [];
     const ready=locations.find(l=>String(l.id)===String(locationId))?.ready_stock_enabled===true;
     return products.flatMap(p=>{
-      if(p.catalog_preview||p.price_vnd==null)return [];
+      if(p.catalog_preview||p.price_vnd==null||p.sku?.startsWith('UMMA-COMBO-'))return [];
       const stock=inventoryRows.find(i=>String(i.product_id)===String(p.id)&&String(i.location_id)===String(locationId));
       if(ready&&(!stock?.ready_stock_confirmed||stock.ready_stock_state!=='ready'||stock.is_available===false))return [];
       if(inventoryControlEnabled&&(!stock||stock.is_available===false))return [];
       const quantity=ready||inventoryControlEnabled?Number(stock?.quantity)-Number(stock?.reserved_quantity||0):99;
-      return quantity>0?[{...p,price_vnd:inventoryControlEnabled&&!ready&&stock?.price_vnd!=null?stock.price_vnd:p.price_vnd}]:[];
+      return quantity>=1?[{...p,price_vnd:inventoryControlEnabled&&!ready&&stock?.price_vnd!=null?stock.price_vnd:p.price_vnd}]:[];
     });
   }
   const voiceForm=byId("cafeOrderForm");

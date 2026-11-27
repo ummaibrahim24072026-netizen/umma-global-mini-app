@@ -84,9 +84,10 @@ async function loadAvailability(){
 }
 function available(){
  const id=$('posLocation').value,ready=me?.locations?.find(l=>l.id===id)?.ready_stock_enabled===true;
- return products.map(p=>{
+ return products.flatMap(p=>{
   const i=inventory.find(i=>i.location_id===id&&i.product_id===p.id),c=catalogLocation===id?catalog?.get(p.id):null;
-  const quantity=ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Number(i.quantity)-Number(i.reserved_quantity||0))):stockControl?(i?.is_available===false?0:Math.max(0,Number(i?.quantity||0)-Number(i?.reserved_quantity||0))):99;
+  if(p.sku?.startsWith('UMMA-COMBO-')&&!c?.comboComponents)return [];
+  const quantity=ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Math.floor(Number(i.quantity)-Number(i.reserved_quantity||0)))):stockControl?(i?.is_available===false?0:Math.max(0,Number(i?.quantity||0)-Number(i?.reserved_quantity||0))):99;
   return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),stockManaged:ready||stockControl,available:c?Math.max(0,Number(c.available)||0):quantity,plannedQuantity:c?.plannedQuantity||0,plannedAvailable:Math.max(0,Number(c?.plannedAvailable)||0),plannedReadyAt:c?.plannedReadyAt,planRevision:c?.planRevision};
  });
 }
@@ -1206,7 +1207,110 @@ const storefrontPanel=$('webStorefront');
 if(storefrontPanel){
  const form=$('webStorefrontForm'),status=$('webStorefrontStatus'),retry=$('webStorefrontRetry');
  const fields=form.elements;
- let placements=[], revision=0;
+ const visibilityForm=$('webStorefrontVisibility'),comboForm=$('webComboForm');
+ const comboFields=comboForm.elements,visibilityFields=visibilityForm.elements;
+ const components=$('webComboComponents');
+ let placements=[], visibility={}, dishes=[], combos=[], revision=0, saving=false;
+
+ function showTotalWeight(){
+  const grams=[...components.querySelectorAll('[data-combo-weight]')].reduce((sum,input)=>sum+(input.valueAsNumber||0),0);
+  $('webComboWeight').textContent='Общий вес: '+new Intl.NumberFormat('ru',{maximumFractionDigits:2}).format(grams)+' г';
+ }
+
+ function addComponent(line){
+  if(components.children.length>=20)return;
+  const row=$('webComboComponent').content.firstElementChild.cloneNode(true);
+  const select=row.querySelector('[data-combo-product]');
+  const choices=line&&!dishes.some(dish=>dish.id===line.product_id)
+   ?[...dishes,{id:line.product_id,name_ru:line.dish?.name_ru||'Блюдо скрыто'}]:dishes;
+  select.replaceChildren(new Option('Выберите блюдо',''),...choices.map(dish=>new Option(dish.name_ru,dish.id)));
+  if(line){
+   select.value=line.product_id;
+   row.querySelector('[data-combo-portions]').value=line.portions;
+   row.querySelector('[data-combo-weight]').value=line.weight_g;
+  }
+  row.querySelector('[data-combo-remove]').onclick=()=>{
+   if(components.children.length<=2)return;
+   row.remove();
+   showTotalWeight();
+  };
+  components.append(row);
+  showTotalWeight();
+ }
+
+ function fillCombo(){
+  const row=combos.find(item=>item.product_id===comboFields.comboId.value);
+  const dish=row?.product;
+  comboFields.nameRu.value=dish?.name_ru||'';
+  comboFields.nameEn.value=dish?.name_en||'';
+  comboFields.nameVi.value=dish?.name_vi||'';
+  comboFields.imageUrl.value=dish?.image_url||'';
+  comboFields.price.value=dish?.price_vnd??'';
+  comboFields.persons.value=row?.persons??'';
+  comboFields.published.checked=dish?.is_active===true;
+  components.replaceChildren();
+  for(const line of row?.components||[null,null])addComponent(line);
+ }
+
+ function fillVisibility(){visibilityFields.enabled.checked=visibility[visibilityFields.section.value]===true;}
+
+ async function saveStorefrontSettings(form,action,data){
+  if(saving||!form.reportValidity())return;
+  const locationId=overviewLocation.value;
+  const request=++revision;
+  saving=true;
+  const controls=[...form.elements];
+  controls.forEach(control=>control.disabled=true);
+  status.textContent='Сохраняем…';
+  let result;
+  try{
+   result=await api(action,{...data,locationId},'cafe-web-storefront');
+   if(request!==revision||locationId!==overviewLocation.value)return;
+  }catch(error){
+   if(request===revision&&locationId===overviewLocation.value)status.textContent=error.message;
+   return;
+  }finally{
+   saving=false;
+   controls.forEach(control=>control.disabled=false);
+  }
+  if(result.comboId){
+   await loadStorefront(result.comboId);
+   if(comboForm.hidden)return;
+  }
+  if(locationId!==overviewLocation.value)return;
+  status.textContent='Сохранено.';
+  return true;
+ }
+
+ visibilityFields.section.onchange=fillVisibility;
+ visibilityForm.onsubmit=async event=>{
+  event.preventDefault();
+  const section=visibilityFields.section.value,enabled=visibilityFields.enabled.checked;
+  if(await saveStorefrontSettings(visibilityForm,'storefrontVisibility',{section,enabled})){
+   visibility[section]=enabled;
+   fillVisibility();
+  }
+ };
+ comboFields.comboId.onchange=fillCombo;
+ $('webComboAddDish').onclick=()=>addComponent();
+ components.addEventListener('input',showTotalWeight);
+ comboForm.onsubmit=event=>{
+  event.preventDefault();
+  const lines=[...components.children].map(row=>({
+   productId:row.querySelector('[data-combo-product]').value,
+   portions:row.querySelector('[data-combo-portions]').valueAsNumber,
+   weightG:row.querySelector('[data-combo-weight]').valueAsNumber,
+  }));
+  if(new Set(lines.map(line=>line.productId)).size!==lines.length){
+   status.textContent='Укажите каждое блюдо один раз и задайте нужное количество порций.';
+   return;
+  }
+  return saveStorefrontSettings(comboForm,'comboSave',{comboId:comboFields.comboId.value||null,combo:{
+   nameRu:comboFields.nameRu.value,nameEn:comboFields.nameEn.value,nameVi:comboFields.nameVi.value,
+   imageUrl:comboFields.imageUrl.value,price:comboFields.price.valueAsNumber,
+   persons:comboFields.persons.valueAsNumber||null,published:comboFields.published.checked,components:lines,
+  }});
+ };
 
  function fillPlacement(){
   const row=placements.find(item=>item.product_id===fields.productId.value&&item.section===fields.section.value);
@@ -1218,11 +1322,11 @@ if(storefrontPanel){
   fields.endsAt.value=row?.ends_at?.slice(0,5)||'';
  }
 
- async function loadStorefront(){
+ async function loadStorefront(selectedCombo){
   const locationId=overviewLocation.value;
   if(!locationId||!storefrontPanel.open)return;
   const request=++revision;
-  form.hidden=true;
+  form.hidden=visibilityForm.hidden=comboForm.hidden=true;
   retry.hidden=true;
   status.textContent='Загружаем разделы…';
   try{
@@ -1232,8 +1336,17 @@ if(storefrontPanel){
    fields.productId.replaceChildren(...data.products.map(item=>new Option(item.name_ru,item.id)));
    if(data.products.some(item=>item.id===selected))fields.productId.value=selected;
    placements=data.assignments;
+   dishes=data.products;
+   visibility=data.visibility||{};
+   combos=data.combos||[];
    fillPlacement();
+   fillVisibility();
+   comboFields.comboId.replaceChildren(new Option('Новое комбо',''),...combos.map(row=>new Option(row.product.name_ru,row.product_id)));
+   if(typeof selectedCombo==='string')comboFields.comboId.value=selectedCombo;
+   fillCombo();
    form.hidden=!data.products.length;
+   visibilityForm.hidden=!data.visibility;
+   comboForm.hidden=!Array.isArray(data.combos)||(!dishes.length&&!combos.length);
    status.textContent=data.products.length?'':'Нет активных блюд.';
   }catch(error){
    if(request!==revision||locationId!==overviewLocation.value)return;
@@ -1244,7 +1357,8 @@ if(storefrontPanel){
 
  form.onsubmit=async event=>{
   event.preventDefault();
-  if(!form.reportValidity())return;
+  if(saving||!form.reportValidity())return;
+  saving=true;
   const request=++revision,locationId=overviewLocation.value;
   const payload={locationId,productId:fields.productId.value,section:fields.section.value,
    startsAt:fields.startsAt.value,endsAt:fields.endsAt.value,serviceDate:fields.serviceDate.value,
@@ -1263,6 +1377,7 @@ if(storefrontPanel){
   }catch(error){
    if(request===revision&&locationId===overviewLocation.value)status.textContent=error.message;
   }finally{
+   saving=false;
    for(const control of fields)control.disabled=false;
   }
  };
