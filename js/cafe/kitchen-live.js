@@ -9,7 +9,7 @@
   const kitchenOrders={known:new Set(),loaded:false};
   const voiceKey="umma_kitchen_order_voice";
   let voiceEnabled=true,playback=Promise.resolve();
-  let counterIssues=[],counterInteracted=false;
+  let counterIssues=[],counterInteracted=false,counterVoiceWorker,counterVoiceFailed=false;
   const issueQueued=new Set(),issueAnnounced=new Set();
   try { voiceEnabled=localStorage.getItem(voiceKey)!=="off"; } catch {}
   const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
@@ -27,14 +27,14 @@
       if(audio.state!=="running")await audio.resume();
     }catch{}
   }
-  function beep(newOrder=false){
+  function beep(newOrder=false,loud=false){
     try{
       if(audio?.state!=="running")return;
       const now=audio.currentTime;
       for(const [offset,frequency] of (newOrder?[[0,660],[.16,880]]:[[0,880]])){
         const tone=audio.createOscillator(),gain=audio.createGain();
         tone.frequency.value=frequency;
-        gain.gain.setValueAtTime(.08,now+offset);
+        gain.gain.setValueAtTime(loud ? .38 : .08,now+offset);
         gain.gain.exponentialRampToValueAtTime(.001,now+offset+.14);
         tone.connect(gain);gain.connect(audio.destination);
         tone.start(now+offset);tone.stop(now+offset+.15);
@@ -49,6 +49,7 @@
       try {
         const utterance=new window.SpeechSynthesisUtterance(message);
         utterance.lang="ru-RU";
+        utterance.volume=1;
         utterance.onend=()=>finish(true);
         utterance.onerror=()=>finish(false);
         window.speechSynthesis.speak(utterance);
@@ -56,17 +57,73 @@
     });
   }
 
+  function prepareCounterVoice(){
+    if(counterVoiceFailed||counterVoiceWorker||!window.Worker||!window.MessageChannel)return;
+    try {
+      counterVoiceWorker=new Worker(new URL("js/cafe/counter-order-voice-worker.js?v=1",document.baseURI),{type:"module"});
+      counterVoiceWorker.addEventListener("error",()=>{
+        counterVoiceFailed=true;
+        counterVoiceWorker.terminate();
+      },{once:true});
+    } catch { counterVoiceFailed=true; }
+  }
+
+  function synthesizeCounterVoice(message){
+    prepareCounterVoice();
+    if(!counterVoiceWorker||counterVoiceFailed)return Promise.resolve(null);
+    return new Promise(resolve=>{
+      const {port1,port2}=new MessageChannel();
+      const finish=result=>{clearTimeout(timeout);port1.close();resolve(result);};
+      const timeout=setTimeout(()=>finish(null),4000);
+      port1.onmessage=event=>finish(event.data);
+      try { counterVoiceWorker.postMessage(message,[port2]); }
+      catch { port2.close();finish(null); }
+    });
+  }
+
+  async function speakAtCounter(message,stillOnScreen){
+    try {
+      const wave=await synthesizeCounterVoice(message);
+      if(!wave)return stillOnScreen()&&speak(message);
+      if(!stillOnScreen()||audio.state!=="running")return false;
+      const buffer=await audio.decodeAudioData(wave);
+      if(!stillOnScreen()||audio.state!=="running")return false;
+      const source=audio.createBufferSource();
+      source.buffer=buffer;
+      const voiceBand=audio.createBiquadFilter();
+      voiceBand.type="highpass";
+      voiceBand.frequency.value=160;
+      const compressor=audio.createDynamicsCompressor();
+      compressor.threshold.value=-24;
+      compressor.ratio.value=6;
+      compressor.attack.value=.004;
+      compressor.release.value=.12;
+      const gain=audio.createGain();
+      gain.gain.value=4;
+      const limiter=audio.createWaveShaper();
+      limiter.curve=Float32Array.from({length:1025},(_,i)=>.95*Math.tanh((i/512-1)*1.65));
+      source.connect(voiceBand).connect(compressor).connect(gain).connect(limiter).connect(audio.destination);
+      await new Promise((resolve,reject)=>{
+        source.onended=resolve;
+        try { source.start(); } catch(error) { reject(error); }
+      });
+      return true;
+    } catch { return stillOnScreen()&&speak(message); }
+  }
+
   function announce(message){
     const kitchen=isKitchenQueue();
-    const stillOnScreen=()=>canAnnounce()&&kitchen===isKitchenQueue();
+    const counter=document.body.dataset.workspace==="pos";
+    const stillOnScreen=()=>canAnnounce()&&kitchen===isKitchenQueue()&&counter===(document.body.dataset.workspace==="pos");
     playback=playback.then(async()=>{
       if(!stillOnScreen())return;
       if(kitchen&&audio?.state!=="running")await unlockAudio();
       if(!stillOnScreen()||audio?.state!=="running")return;
-      beep(true);
+      beep(true,counter);
       if(!speechEnabled())return;
       await new Promise(resolve=>setTimeout(resolve,340));
-      if(stillOnScreen()&&speechEnabled())return speak(message);
+      const maySpeak=()=>stillOnScreen()&&speechEnabled();
+      if(maySpeak())return counter?speakAtCounter(message,maySpeak):speak(message);
     });
     return playback;
   }
@@ -130,6 +187,7 @@
     if(canAnnounce()&&audio?.state!=="running")void unlockAudio();
     if(document.body.dataset.workspace==="pos"){
       counterInteracted=true;
+      if(speechEnabled())prepareCounterVoice();
       announceCounterIssues();
     }
   }

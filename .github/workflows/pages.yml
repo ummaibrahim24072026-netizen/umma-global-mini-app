@@ -18,12 +18,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
       - name: Prepare static site
         run: |
           mkdir -p _site
           cp *.html _site/
           cp -R css js assets logo menu _site/
           cp umma-menu.webmanifest umma-staff.webmanifest umma-menu-sw.js _site/
+          mkdir -p _site/js/vendor/counter-speech
+          cp node_modules/espeak-ng/dist/espeak-ng.{js,wasm} _site/js/vendor/counter-speech/
+          cp node_modules/espeak-ng/{LICENSE,README.md} _site/js/vendor/counter-speech/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

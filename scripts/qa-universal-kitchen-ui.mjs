@@ -160,11 +160,11 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
  assert.equal(d.getElementById('webStockLink').getAttribute('href'),'staff.html?work=stock');
  assert.equal(requests.some(b=>b.action==='ingredientList'),false);
  if(role==='kitchen_cashier'){
-  const tones=[],speech=[];
+  const tones=[],speech=[],gains=[];
   w.AudioContext=class {
    state='running';currentTime=0;
    createOscillator(){return {frequency:{},connect(){},start(){tones.push(this.frequency.value);},stop(){}};}
-   createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}
+   createGain(){return {gain:{setValueAtTime(value){gains.push(value);},exponentialRampToValueAtTime(){}},connect(){}};}
   };
   w.SpeechSynthesisUtterance=class {constructor(text){this.text=text;}};
   w.speechSynthesis={speak(utterance){speech.push(utterance);utterance.onend();}};
@@ -178,6 +178,8 @@ for(const role of ['kitchen','cashier','kitchen_cashier']){
   d.getElementById('kitchenAudioTest').click();
   await new Promise(resolve=>setTimeout(resolve,400));
   assert.deepEqual(tones,[660,880]);
+  assert.deepEqual(gains,[.38,.38]);
+  assert.equal(speech[0].volume,1);
   assert.match(speech[0].text,/Проверка звука/);
   const breadPhoto=d.querySelector('[data-pos-product="bread"] img');
   assert.match(breadPhoto.src,/logo\/assets\/menu\/flatbread-white-v2.webp$/);
