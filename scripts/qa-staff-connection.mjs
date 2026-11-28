@@ -14,7 +14,10 @@ for(const owner of [true,false]){
  w.fetch=async(url,o)=>{const b=JSON.parse(o?.body||'{}');calls.push(b);
  if(url.endsWith('cafe-connect')){
   const people=['Гость QA','Второй клиент'];
-  const conversations=people.map((name,index)=>({id:'customer-'+index,name,unread:unread[index],last_id:'last-'+index+'-'+unread[index],last_message:'Проверка связи'}));
+  const conversations=people.map((name,index)=>({
+   id:'customer-'+index,name,unread:unread[index],last_id:'last-'+index+'-'+unread[index],
+   last_unread_id:unread[index]?'last-'+index+'-'+unread[index]:null,last_message:'Проверка связи'
+  }));
   const index=conversations.findIndex(c=>c.id===b.clientId);
   if(b.action==='staffRead')unread[index]=0;
   const result=b.action==='staffInbox'?{clients:conversations}:b.action==='staffThread'?{
