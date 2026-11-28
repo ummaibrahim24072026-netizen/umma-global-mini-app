@@ -23,7 +23,8 @@ function validCombo(data: any) {
    !Number.isInteger(data.price)||data.price<1||data.price>100000000||
    data.persons!==null&&(!Number.isInteger(data.persons)||data.persons<1||data.persons>99)||
    typeof data.published!=='boolean'||typeof data.imageUrl!=='string'||data.imageUrl.length>1000||
-   !Array.isArray(data.components)||data.components.length<2||data.components.length>20)return false;
+   !Array.isArray(data.components)||(!data.configuration&&data.components.length<2)||data.components.length>20)return false;
+ if(!data.imageUrl&&!data.published)return true;
  try{
   const url=new URL(data.imageUrl);
   return url.protocol==='https:'&&!url.username&&!url.password;
@@ -64,11 +65,12 @@ Deno.serve(async req=>{
   }
 
   const raw=await req.text();
-  if(raw.length>12000)return reply({ok:false,error:'Слишком большой запрос'},413);
+  if(raw.length>2_800_000)return reply({ok:false,error:'Слишком большой запрос'},413);
   let body;
   try{body=JSON.parse(raw);}catch{return reply({ok:false,error:'Некорректный запрос'},400);}
-  if(!body||!['storefrontList','storefrontSave','storefrontVisibility','comboSave'].includes(body.action)||typeof body.locationId!=='string'||!uuid.test(body.locationId))
+  if(!body||!['storefrontList','storefrontSave','storefrontVisibility','comboSave','comboPhoto','comboAnalytics'].includes(body.action)||typeof body.locationId!=='string'||!uuid.test(body.locationId))
     return reply({ok:false,error:'Выберите кафе'},400);
+  if(body.action!=='comboPhoto'&&raw.length>48000)return reply({ok:false,error:'Слишком большой запрос'},413);
   let actor;
   try{actor=await verifyWebStaffSession(db,String(body.initData||''));}
   catch{return reply({ok:false,error:'Войдите в UMMA Work'},401);}
@@ -82,6 +84,33 @@ Deno.serve(async req=>{
   if(!user||(user.role!=='super_admin'&&!manager))return reply({ok:false,error:'Нет доступа к витрине этого кафе'},403);
   if(!cafe)return reply({ok:false,error:'Кафе недоступно'},404);
 
+  if(body.action==='comboPhoto'){
+   const {mime,contents}=body;
+   const extension: Record<string,string>={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+   if(!Object.hasOwn(extension,mime)||typeof contents!=='string'||contents.length>2_796_204||
+      !/^[A-Za-z0-9+/]+={0,2}$/.test(contents))return reply({ok:false,error:'Выберите JPG, PNG или WebP до 2 МБ'},400);
+   let photo: Uint8Array;
+   try{photo=Uint8Array.from(atob(contents),char=>char.charCodeAt(0));}
+   catch{return reply({ok:false,error:'Файл фотографии повреждён'},400);}
+   const magic=Array.from(photo.slice(0,12));
+   const valid= mime==='image/jpeg'?magic[0]===255&&magic[1]===216&&magic[2]===255:
+     mime==='image/png'?[137,80,78,71,13,10,26,10].every((byte,i)=>magic[i]===byte):
+     [82,73,70,70,87,69,66,80].every((byte,i)=>magic[i+(i>=4?4:0)]===byte);
+   if(!valid||photo.length>2_097_152)return reply({ok:false,error:'Неподдерживаемый файл фотографии'},400);
+   const bucket=db.storage.from('cafe-combo-photos');
+   const path=locationId+'/'+crypto.randomUUID()+'.'+extension[mime];
+   const {error}=await bucket.upload(path,photo,{contentType:mime,upsert:false});
+   if(error)throw error;
+   return reply({ok:true,imageUrl:bucket.getPublicUrl(path).data.publicUrl});
+  }
+  if(body.action==='comboAnalytics'){
+   const days=Number(body.days);
+   if(![7,30,90].includes(days))return reply({ok:false,error:'Выберите период'},400);
+   const {data,error}=await db.rpc('cafe_combo_analytics',{p_location:locationId,p_days:days});
+   if(error)throw error;
+   return reply({ok:true,analytics:data});
+  }
+
   const productQuery=()=>db.from('products').select('id,name_ru,sku').eq('product_type','cafe').eq('is_active',true).eq('catalog_preview',false)
    .or('sku.is.null,sku.not.like.UMMA-COMBO-*');
   if(body.action==='storefrontList'){
@@ -89,7 +118,7 @@ Deno.serve(async req=>{
     productQuery().order('name_ru'),
     db.from('cafe_web_sections').select(placementFields).eq('location_id',locationId).order('section').order('product_id'),
     db.from('cafe_web_section_visibility').select('section,enabled').eq('location_id',locationId),
-    db.from('cafe_combos').select('product_id,persons,product:products(name_ru,name_en,name_vi,image_url,price_vnd,is_active),components:cafe_combo_components!cafe_combo_components_combo_id_fkey(product_id,portions,weight_g,dish:products(name_ru))').eq('location_id',locationId).order('product_id'),
+    db.from('cafe_combos').select('product_id,persons,configuration,product:products(name_ru,name_en,name_vi,image_url,price_vnd,is_active),components:cafe_combo_components!cafe_combo_components_combo_id_fkey(product_id,portions,weight_g,dish:products(name_ru))').eq('location_id',locationId).order('product_id'),
    ]);
    if(products.error||assignments.error||visibility.error||combos.error)
     throw products.error||assignments.error||visibility.error||combos.error;

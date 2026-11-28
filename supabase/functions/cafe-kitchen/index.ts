@@ -535,7 +535,9 @@ Deno.serve(async req => {
       const { data, error } = await submitCafeOperation(supabase, telegramId, body.requestKey, "addItems", {
         p_staff_telegram_id: telegramId,
         p_order_id: orderId,
-        p_items: items.map((item: { productId: string; quantity: number }) => ({ productId: item.productId, quantity: item.quantity })),
+        p_items: items.map(({productId, quantity, comboSelection, expectedUnitPriceVnd}) => ({
+          productId, quantity, ...(comboSelection == null ? {} : {comboSelection, expectedUnitPriceVnd}),
+        })),
       });
       if (error) {
         const clientError = /Invalid idempotent order request|Idempotency key reused|Staff operation access denied|Order operation access denied|Invalid staff|Staff access denied|Order not found|Only dine-in bills|Bill is already closed|Staff cannot add items|Invalid order items|Invalid item|Invalid item quantity|Product not found or unavailable/.test(error.message);

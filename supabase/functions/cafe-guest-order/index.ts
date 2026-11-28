@@ -25,7 +25,7 @@ async function guestPayment(db: ReturnType<typeof createClient>, order: any) {
 }
 async function receiptFor(db: ReturnType<typeof createClient>, orderId: string) {
  const {data,error}=await db.from('cafe_orders')
-  .select('subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,payment_method,payment_status,status,order_type,dispatch_mode,requires_prepayment,customer_telegram_id,courier_telegram_id,green_sm_stage,green_sm_tracking_url,cafe_order_items(product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd),cafe_payment_receipts(tendered_amount_vnd,change_given_vnd)')
+  .select('subtotal_vnd,delivery_fee_vnd,discount_vnd,total_vnd,payment_method,payment_status,status,order_type,dispatch_mode,requires_prepayment,customer_telegram_id,courier_telegram_id,green_sm_stage,green_sm_tracking_url,cafe_order_items(product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd,combo_components),cafe_payment_receipts(tendered_amount_vnd,change_given_vnd)')
   .eq('id',orderId)
   .eq('cafe_payment_receipts.payment_method','cash')
   .eq('cafe_payment_receipts.receipt_status','confirmed')
@@ -39,8 +39,8 @@ async function receiptFor(db: ReturnType<typeof createClient>, orderId: string) 
  const cash=data.cafe_payment_receipts[0];
  return {
   totalVnd:data.total_vnd,orderType:data.order_type,paymentMethod:data.payment_method,paymentStatus:data.payment_status,status:data.status,
-  items:data.cafe_order_items.map(({product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd})=>({
-   name_ru:product_name_ru,name_en:product_name_en,name_vi:product_name_vi,quantity,unitPriceVnd:unit_price_vnd,lineTotalVnd:line_total_vnd,
+  items:data.cafe_order_items.map(({product_name_ru,product_name_en,product_name_vi,quantity,unit_price_vnd,line_total_vnd,combo_components})=>({
+   name_ru:product_name_ru,name_en:product_name_en,name_vi:product_name_vi,quantity,unitPriceVnd:unit_price_vnd,lineTotalVnd:line_total_vnd,comboComponents:combo_components,
   })),
   isGreenSm:data.order_type==='delivery'&&data.dispatch_mode==='manual'&&data.requires_prepayment&&data.customer_telegram_id==null&&data.courier_telegram_id==null,
   greenSmStage:data.green_sm_stage,greenSmTrackingUrl:data.green_sm_tracking_url,
@@ -112,7 +112,7 @@ Deno.serve(async req=>{
    :b.paymentMethod==='bank_transfer'
    ?await db.rpc('submit_cafe_web_ruble_order',{p_args:args,p_vnd_per_rub:quote?.vndPerRub??null,p_quoted_at:quote?.quotedAt??null})
    :await db.rpc(delivery?'submit_cafe_guest_delivery_v4':'submit_cafe_guest_order_v3',args);
-  if(error){if(['CASH_AMOUNT_TOO_LOW','PAYMENT_METHOD_UNAVAILABLE','PAYMENT_RATE_UNAVAILABLE'].includes(error.message))return reply({ok:false,code:error.message},422);if(error.message?.includes('RUBLE_RATE_UNAVAILABLE'))return reply({ok:false,code:'RUBLE_RATE_UNAVAILABLE'},422);if(error.message?.includes('READY_STOCK_UNAVAILABLE'))return reply({ok:false,code:'STOCK_UNAVAILABLE',error:'Часть блюд уже закончилась. Обновите корзину.'},409);console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
+  if(error){if(['COMBO_PRICE_CHANGED','INVALID_COMBO_SELECTION'].includes(error.message))return reply({ok:false,code:error.message},409);if(['CASH_AMOUNT_TOO_LOW','PAYMENT_METHOD_UNAVAILABLE','PAYMENT_RATE_UNAVAILABLE'].includes(error.message))return reply({ok:false,code:error.message},422);if(error.message?.includes('RUBLE_RATE_UNAVAILABLE'))return reply({ok:false,code:'RUBLE_RATE_UNAVAILABLE'},422);if(error.message?.includes('READY_STOCK_UNAVAILABLE'))return reply({ok:false,code:'STOCK_UNAVAILABLE',error:'Часть блюд уже закончилась. Обновите корзину.'},409);console.error('Guest checkout rejected',error.code,error.message);return reply({ok:false,error:'Не удалось оформить заказ. Проверьте данные или позвоните в кафе.'},400);}
   if(delivery&&data?.order){data.trackingToken=trackingToken;data.order.orderType='delivery';}
   if(data?.order){
    const o=data.order;

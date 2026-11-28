@@ -8,7 +8,7 @@ export async function readyNativeDb(){
  return{query:(s,args=[])=>main.query(rewrite(s),args),exec:s=>main.query(rewrite(s)),async concurrent(cafe,product,firstProduct=product){
   const sql=`select ${schema}.create_cafe_staff_order(11,$1,$2::jsonb,'pickup','QA concurrency',null,null,'cash') result`,items=JSON.stringify([{productId:product,quantity:1}]);
   await main.query(`select ${schema}.cafe_ready_adjust(12,$1,gen_random_uuid(),'set',$2::jsonb)`,[cafe,JSON.stringify([{productId:product,quantity:1}])]);
-  await a.query('begin');await b.query('begin');const firstItems=JSON.stringify([{productId:firstProduct,quantity:1}]);const first=(await a.query(sql,[cafe,firstItems])).rows[0].result.order;
+  await a.query('begin');await b.query('begin');const firstItems=JSON.stringify([typeof firstProduct==="string"?{productId:firstProduct,quantity:1}:firstProduct]);const first=(await a.query(sql,[cafe,firstItems])).rows[0].result.order;
   let settled=false;const second=b.query(sql,[cafe,items]).then(r=>({r}),e=>({e})).finally(()=>settled=true);
   // The second statement holds its connection while waiting; use the observer connection.
   await new Promise(r=>setTimeout(r,100));assert.equal(settled,false,'last portion must be locked until the first order commits');

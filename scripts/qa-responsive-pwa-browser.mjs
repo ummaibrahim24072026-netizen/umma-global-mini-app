@@ -50,6 +50,15 @@ const combo={...product,id:'33333333-3333-4333-8333-333333333333',sku:'UMMA-COMB
     {productId:product.id,name_ru:product.name_ru,portions:0.5,weightG:225,priceVnd:60000,availablePortions:9},
     {productId:side.id,name_ru:side.name_ru,portions:1,weightG:100,priceVnd:50000,availablePortions:1},
   ]};
+const configurableCombo={...combo,comboComponents:null,
+ comboConfiguration:{mode:'fixed',basePriceVnd:100000,
+  fixed:[{...combo.comboComponents[0],name_de:'Reis',id:'plov',amount:225,unit:'g'}],
+  groups:[{id:'drink',kind:'drink',defaultId:'small',options:[
+   {...combo.comboComponents[1],id:'small',name_de:'Getränk',amount:300,unit:'ml',priceVnd:50000},
+   {...combo.comboComponents[1],id:'large',name_de:'Getränk',amount:500,unit:'ml',priceVnd:60000,surchargeVnd:10000},
+  ]}],
+  extras:[]}};
+let configurableFixture=false;
 let sectionsFixture=false;
 let lunchVisible=false;
 let savedCombo;
@@ -105,7 +114,7 @@ try {
     if (endpoint === 'cafe-menu') payload = { ...payload, products: [product], locations: [location], inventory: [] };
     if (endpoint === 'cafe-guest-order' && request.method() === 'GET') {
       catalogCalls++;
-      payload.products = [{ ...product, available },...(sectionsFixture?[side,combo]:[])];
+      payload.products = [{ ...product, available },...(sectionsFixture?[side,configurableFixture?configurableCombo:combo]:[])];
     }
     if (endpoint === 'cafe-guest-order' && body.action === 'create') {
       checkoutCalls++;
@@ -121,7 +130,7 @@ try {
     }
     if (endpoint === 'cafe-web-storefront' && body.action === 'storefrontList') {
       Object.assign(payload,{products:[product,side],assignments:[],visibility:{breakfast:true,lunch:lunchVisible},
-        combos:savedCombo?[{product_id:combo.id,persons:savedCombo.persons,
+        combos:savedCombo?[{product_id:combo.id,persons:savedCombo.persons,configuration:savedCombo.configuration,
          product:{name_ru:savedCombo.nameRu,image_url:savedCombo.imageUrl,price_vnd:savedCombo.price,is_active:savedCombo.published},
          components:savedCombo.components.map(line=>({product_id:line.productId,portions:line.portions,weight_g:line.weightG}))}]:[]});
     }
@@ -286,7 +295,26 @@ try {
   await page.locator('[data-cafe-section=breakfast]').waitFor();
   assert.deepEqual(await specialSections.evaluateAll(nodes=>nodes.map(node=>node.dataset.cafeSection)),['breakfast','combo','custom']);
   assert.equal(await page.locator('#cartCount').textContent(),'1');
-  sectionsFixture=false;
+  configurableFixture=true;
+  await page.evaluate(()=>sessionStorage.removeItem('umma-menu-cart-v1:e22788bd-4734-4b3a-911e-ba103d52617a'));
+  await page.reload();
+  await page.locator('[data-cafe-section=combo]').click();
+  await comboCard.locator('.dish-link').click();
+  const drink=page.locator('[data-combo-choice=drink]');
+  for(const [width,height] of [[320,568],[390,844],[412,915]]){
+    await page.setViewportSize({width,height});
+    await fits(page,'Configurable combo',['#dishDetails','#dishDetailsBody','#comboConfigurator']);
+  }
+  await drink.selectOption('large');
+  assert.match(await page.locator('[data-combo-submit]').textContent(),/110[^0-9]*000/);
+  await page.locator('[data-combo-submit]').click();
+  await page.locator('#openCart').click();
+  await page.locator('#cartItems [data-dish]').click();
+  assert.equal(await drink.inputValue(),'large');
+  await drink.selectOption('small');
+  await page.locator('[data-combo-submit]').click();
+  assert.match(await page.locator('#cartItems').textContent(),/100[^0-9]*000/);
+  configurableFixture=sectionsFixture=false;
 
   await page.goto(base + 'staff.html');
   for (const [width,height] of sizes) {
@@ -297,7 +325,7 @@ try {
   await page.locator('#webPassword').fill('test-only-password');
   await page.locator('#webLoginSubmit').click();
   await page.locator('[data-web-tab=overview]').click();
-  await page.locator('#webStorefront summary').click();
+  await page.locator('#webStorefront > summary').click();
   const visibilityForm=page.locator('#webStorefrontVisibility');
   await visibilityForm.locator('[name=section]').selectOption('lunch');
   await visibilityForm.locator('[name=enabled]').check();
@@ -319,7 +347,20 @@ try {
   assert.equal(savedCombo.published,false);
   assert.equal(savedCombo.components[0].portions,0.5);
   assert.equal(await comboForm.locator('[name=comboId]').inputValue(),combo.id);
-  await page.locator('#webStorefront summary').click();
+  await comboForm.locator('#webComboConfigEnabled').check();
+  await comboForm.getByRole('button',{name:'Добавить группу'}).click();
+  const group=comboForm.getByRole('group',{name:'Группы выбора'}).locator(':scope > fieldset');
+  await group.getByRole('button',{name:'Добавить позицию'}).click();
+  await group.getByLabel('Позиция меню').selectOption(side.id);
+  await group.getByLabel('Количество в наборе').fill('300');
+  await group.getByLabel('Единица').selectOption('ml');
+  await group.getByLabel('Рекомендованный вариант').check();
+  await comboForm.locator('[type=submit]').click();
+  await page.waitForFunction(()=>document.getElementById('webStorefrontStatus').textContent==='Сохранено.');
+  assert.equal(savedCombo.configuration.groups[0].options[0].amount,300);
+  assert.ok(savedCombo.configuration.groups[0].defaultId);
+
+  await page.locator('#webStorefront > summary').click();
   await page.locator('[data-web-tab=pos]').click();
   await page.locator('.pos-product').first().waitFor();
   await page.locator('.pos-product').first().click();

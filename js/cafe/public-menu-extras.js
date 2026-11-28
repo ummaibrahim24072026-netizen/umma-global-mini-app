@@ -121,7 +121,7 @@ function receiptDetails(value,{t,money,receiptPhoto}){
  const details=$('receiptDetails');
  details.hidden=!value.items?.length;
  const rows=[];
- const addRow=(label,amount,quantityPrice,photo)=>{
+ const addRow=(label,amount,quantityPrice,photo,components)=>{
   const row=document.createElement('div'),copy=document.createElement('span'),sum=document.createElement('strong');
   copy.textContent=label;
   if(quantityPrice){
@@ -129,6 +129,20 @@ function receiptDetails(value,{t,money,receiptPhoto}){
    const quantity=document.createElement('small');
    quantity.textContent=quantityPrice;
    copy.append(quantity);
+   if(components?.length){
+    const folded=document.createElement('details'), heading=document.createElement('summary');
+    heading.textContent=t('Состав');
+    folded.append(heading);
+    for(const component of components){
+     const line=document.createElement('small');
+     const i18n=window.ummaMenuI18n;
+     line.textContent=component.unit&&window.ummaCafeCombo
+      ? window.ummaCafeCombo.label(component,{name:p=>i18n.field(p,'name'),number:i18n.number,t})
+      : i18n.field(component,'name')+' · '+i18n.number(component.weightG)+' '+t('г');
+     folded.append(line);
+    }
+    copy.append(folded);
+   }
   }
   sum.textContent=money(amount);
   if(photo){
@@ -143,7 +157,7 @@ function receiptDetails(value,{t,money,receiptPhoto}){
   rows.push(row);
  };
  for(const item of value.items||[]){
-  addRow(window.ummaMenuI18n.field(item,'name'),item.lineTotalVnd,item.quantity+' × '+money(item.unitPriceVnd),receiptPhoto?.(item,value));
+  addRow(window.ummaMenuI18n.field(item,'name'),item.lineTotalVnd,item.quantity+' × '+money(item.unitPriceVnd),receiptPhoto?.(item,value),item.comboComponents);
  }
  if(value.deliveryFeeVnd||value.discountVnd)addRow(t('Стоимость блюд'),value.subtotalVnd);
  if(value.deliveryFeeVnd)addRow(t('Стоимость доставки'),value.deliveryFeeVnd);

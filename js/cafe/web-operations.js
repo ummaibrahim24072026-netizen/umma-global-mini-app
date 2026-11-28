@@ -86,7 +86,11 @@ function available(){
  const id=$('posLocation').value,ready=me?.locations?.find(l=>l.id===id)?.ready_stock_enabled===true;
  return products.flatMap(p=>{
   const i=inventory.find(i=>i.location_id===id&&i.product_id===p.id),c=catalogLocation===id?catalog?.get(p.id):null;
-  if(p.sku?.startsWith('UMMA-COMBO-')&&!c?.comboComponents)return [];
+  if(p.sku?.startsWith('UMMA-COMBO-')&&!c?.comboComponents&&!c?.comboConfiguration)return [];
+  if(c?.comboConfiguration&&window.ummaCafeCombo){
+    const config=c.comboConfiguration;
+    return {...p,...c,...window.ummaCafeCombo.quote(config,window.ummaCafeCombo.defaults(config))};
+  }
   const quantity=ready?(!i?.ready_stock_confirmed||i.ready_stock_state!=='ready'||i.is_available===false?0:Math.max(0,Math.floor(Number(i.quantity)-Number(i.reserved_quantity||0)))):stockControl?(i?.is_available===false?0:Math.max(0,Number(i?.quantity||0)-Number(i?.reserved_quantity||0))):99;
   return {...p,price_vnd:!ready&&stockControl&&i?.price_vnd!=null?Number(i.price_vnd):Number(p.price_vnd),stockManaged:ready||stockControl,available:c?Math.max(0,Number(c.available)||0):quantity,plannedQuantity:c?.plannedQuantity||0,plannedAvailable:Math.max(0,Number(c?.plannedAvailable)||0),plannedReadyAt:c?.plannedReadyAt,planRevision:c?.planRevision};
  });
@@ -100,7 +104,7 @@ function stockLabel(p){
 let lastMenuMarkup;
 function menu(){
   const query=$('posSearch').value.trim().toLocaleLowerCase();
-  const cards=available().filter(p=>p.available>0||p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))).filter(p=>[p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en,p.ingredients_ru].join(' ').toLocaleLowerCase().includes(query)).map(p=>{
+  const cards=available().filter(p=>p.comboConfiguration||p.available>0||p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))).filter(p=>[p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en,p.ingredients_ru].join(' ').toLocaleLowerCase().includes(query)).map(p=>{
     const photo=window.ummaCafeProductPhoto?.(p);
     const description=p.description_ru||p.description_en||p.description_vi;
     const details=[description,p.ingredients_ru].filter(Boolean).join('\n');
@@ -113,7 +117,7 @@ function menu(){
       (details?'<details class="pos-product-description"><summary>Состав и описание</summary><p>'+esc(details)+'</p></details>':'')+
       stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
       '<div class="pos-product-quantity"><button type="button" data-pos-remove="'+esc(p.id)+'" aria-label="Убрать '+esc(name)+'" hidden>−</button>'+
-      '<b data-pos-count hidden></b><button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0?' disabled':'')+
+      '<b data-pos-count hidden></b><button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0&&!p.comboConfiguration?' disabled':'')+
       ' aria-label="Добавить '+esc(name)+'">+</button></div></div></article>';
   });
   const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
@@ -131,8 +135,12 @@ $('posProducts').addEventListener('error',event=>{
   if(event.target.matches('.pos-product-media img'))event.target.hidden=true;
 },true);
 const amount=()=>[...cart.values()].reduce((sum,line)=>sum+line.quantity*line.product.price_vnd,0);
-const cartItems=()=>[...cart.values()].map(({product,quantity})=>({product_name_ru:product.name_ru||product.name_en||product.name_vi,quantity}));
-const itemsMarkup=items=>'<ul>'+items.map(item=>'<li>'+esc(item.product_name_ru)+' × '+esc(item.quantity)+'</li>').join('')+'</ul>';
+const cartItems=()=>[...cart.values()].map(({product,quantity})=>({product_name_ru:product.name_ru||product.name_en||product.name_vi,quantity,
+ combo_components:product.comboComponents}));
+const itemsMarkup=items=>'<ul>'+items.map(item=>'<li>'+esc(item.product_name_ru)+' × '+esc(item.quantity)+
+ (item.combo_components?.length?'<ul>'+item.combo_components.map(option=>'<li>'+
+   esc(option.unit?window.ummaCafeCombo.label(option,posComboView()):option.name_ru+' · '+option.weightG+' г')+'</li>').join('')+'</ul>':'')+
+ '</li>').join('')+'</ul>';
 const electronicPayment=method=>['qr','bank_transfer'].includes(method);
 const closedOrder=order=>['completed','cancelled'].includes(order.status);
 const counterCanIssue = order => ["manager", "cashier", "waiter"].includes(order.staffRole) ||
@@ -272,7 +280,10 @@ function renderCart(){
  renderProductCounts();
  $('posCart').innerHTML=cart.size?[...cart].map(([id,{product,quantity}])=>{
   const name=product.name_ru||product.name_en||product.name_vi;
-  return '<div class="pos-row"><strong>'+esc(name)+'</strong><span>'+money(product.price_vnd*quantity)+'</span><div><button type="button" data-pos-delta="-1" data-id="'+esc(id)+'" aria-label="Уменьшить количество: '+esc(name)+'">−</button><b>'+quantity+'</b><button type="button" data-pos-delta="1" data-id="'+esc(id)+'" aria-label="Добавить: '+esc(name)+'">+</button></div></div>';
+  return '<div class="pos-row"><strong>'+esc(name)+'</strong>'+
+    (product.comboSelection?'<details><summary>Состав</summary><ul>'+product.comboComponents.map(option=>'<li>'+
+       esc(window.ummaCafeCombo.label(option,posComboView()))+'</li>').join('')+'</ul></details>'+
+       '<button type="button" class="plain-btn" data-pos-combo-edit="'+esc(id)+'">Изменить</button>':'')+'<span>'+money(product.price_vnd*quantity)+'</span><div><button type="button" data-pos-delta="-1" data-id="'+esc(id)+'" aria-label="Уменьшить количество: '+esc(name)+'">−</button><b>'+quantity+'</b><button type="button" data-pos-delta="1" data-id="'+esc(id)+'" aria-label="Добавить: '+esc(name)+'">+</button></div></div>';
  }).join(''):'<p>Добавьте хотя бы один товар.</p>';
  $('posTotal').textContent=money(amount());
  $('posCartJump').textContent='Корзина · '+money(amount());
@@ -296,7 +307,13 @@ function paymentFields(){
  }
  const pending=payOrder?.paymentStatus==='pending'&&!closedOrder(payOrder);
  const validCash=fx?(fxReady()&&Number.isFinite(received)&&received>=0&&Math.abs(Math.round(received*100)/100-received)<1e-8&&Math.floor(received*activeFxQuote().vndPerUnit)>=due):Number.isSafeInteger(received)&&received>=due;
- const unavailable=[...cart].some(([id,line])=>line.quantity>(available().find(p=>p.id===id)?.available||0));
+ const currentProducts=new Map(available().map(product=>[product.id,product]));
+ const unavailable=[...cart].some(([id,line])=>{
+   const base=currentProducts.get(line.product.productId||id);
+   if(!line.product.comboSelection)return line.quantity>(base?.available||0);
+   const price=window.ummaCafeCombo.quote(base?.comboConfiguration,line.product.comboSelection);
+   return !price||line.quantity>price.available||price.price_vnd!==line.product.price_vnd;
+ });
  const activeCash=!switchingPayment&&(cash||fx)&&(draft||pending);
  const choosing=draft||switchingPayment;
  const cashReceipt=pending&&payOrder.paymentMethod==='cash';
@@ -528,7 +545,8 @@ async function sell(event){
     fulfillment.dispatchMode='manual';
    }
    const common={initData:auth.credential(),staffOrder:true,locationId:locationId(),...fulfillment,
-    items:[...cart].map(([productId,line])=>({productId,quantity:line.quantity}))};
+    items:[...cart].map(([id,{product,quantity}])=>({productId:product.productId||id,quantity,
+     ...(product.comboSelection?{comboSelection:product.comboSelection,expectedUnitPriceVnd:product.price_vnd}:{})}))};
    const response=await window.ummaCafeRequests.request(base+(foreign?'cafe-counter-payment':'create-cafe-order'),foreign
     ? {...common,action:'create',method}
     : {...common,paymentMethod:fx?'cash':method,paymentTiming:'now',customerName:'Гость',customerPhone:common.customerPhone||'',customerNote:''});
@@ -870,20 +888,73 @@ $('posLocation').onchange=()=>{
 };
 function changeQuantity(id,delta){
  if(busy)return;
- const product=available().find(item=>item.id===id);
  const current=cart.get(id);
+ const base=available().find(item=>item.id===(current?.product.productId||id));
+ const price=current?.product.comboSelection
+   ? window.ummaCafeCombo.quote(base?.comboConfiguration,current.product.comboSelection) : null;
+ const product=current?.product.comboSelection
+   ? {...current.product,...price,available:price?.available||0}
+   : base;
  const quantity=(current?.quantity||0)+delta;
  if(delta>0&&(!product||quantity>Math.min(99,product.available)))return;
  if(delta>0&&!cart.size&&payOrder)showPayment(null);
  if(quantity<=0)cart.delete(id);
- else cart.set(id,{product:current?.product||product,quantity});
+ else cart.set(id,{product:current?.product.comboSelection?product:current?.product||product,quantity});
  renderCart();
+}
+function posComboView(action){
+ return {name:option=>option.name_ru||option.name_en||option.name_vi,
+  number:value=>new Intl.NumberFormat('ru',{maximumFractionDigits:3}).format(value),
+  t:(text,params={})=>text.replace('{amount}',params.amount||''),escape:esc,money,action};
+}
+function editPosCombo(product,oldId){
+ if(busy)return;
+ const combo=window.ummaCafeCombo;
+ const productId=product.productId||product.id;
+ const base=available().find(item=>item.id===productId);
+ if(!base?.comboConfiguration)return;
+ const dialog=document.createElement('dialog');
+ const title=document.createElement('h2');
+ title.textContent=base.name_ru||base.name_en||base.name_vi;
+ const close=document.createElement('button');
+ close.className='plain-btn';
+ close.type='button';
+ close.textContent='Закрыть';
+ close.onclick=()=>dialog.close();
+ const fields=document.createElement('div');
+ dialog.append(title,close,fields);
+ document.body.append(dialog);
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+ combo.mount(fields,base.comboConfiguration,product.comboSelection||combo.defaults(base.comboConfiguration),
+   posComboView(oldId?'Сохранить':null),(selection,price)=>{
+   const id=combo.lineKey(productId,selection);
+   const quantity=(oldId===id?0:cart.get(id)?.quantity||0)+(oldId?cart.get(oldId)?.quantity||0:1);
+   if(busy||!quantity||quantity>price.available){
+     fields.querySelector('[data-combo-price]').textContent='Проверьте наличие компонентов.';
+     return;
+   }
+   if(oldId)cart.delete(oldId);
+   if(!cart.size&&payOrder)showPayment(null);
+   cart.set(id,{product:{...base,...price,productId,comboSelection:selection},quantity});
+   dialog.close();
+   renderCart();
+ });
+ dialog.showModal();
 }
 $('posProducts').onclick=event=>{
  const button=event.target.closest('[data-pos-add],[data-pos-remove]');
- if(button)changeQuantity(button.dataset.posAdd||button.dataset.posRemove,button.dataset.posAdd?1:-1);
+ if(!button)return;
+ const product=available().find(item=>item.id===button.dataset.posAdd);
+ if(product?.comboConfiguration)editPosCombo(product);
+ else changeQuantity(button.dataset.posAdd||button.dataset.posRemove,button.dataset.posAdd?1:-1);
 };
 $('posCart').onclick=event=>{
+ const edit=event.target.closest('[data-pos-combo-edit]');
+ if(edit){
+   const line=cart.get(edit.dataset.posComboEdit);
+   if(line)editPosCombo(line.product,edit.dataset.posComboEdit);
+   return;
+ }
  const button=event.target.closest('[data-pos-delta]');
  if(button)changeQuantity(button.dataset.id,Number(button.dataset.posDelta));
 };
@@ -1210,6 +1281,16 @@ if(storefrontPanel){
  const visibilityForm=$('webStorefrontVisibility'),comboForm=$('webComboForm');
  const comboFields=comboForm.elements,visibilityFields=visibilityForm.elements;
  const components=$('webComboComponents');
+ const configure=$('webComboConfigEnabled');
+ const configPanel=$('webComboConfig');
+ let readConfiguration;
+ function toggleConfiguration(){
+   components.hidden=$('webComboWeight').hidden=$('webComboAddDish').hidden=configure.checked;
+   components.querySelectorAll('input,select').forEach(field=>{field.disabled=configure.checked;});
+   configPanel.hidden=!configure.checked;
+   configPanel.querySelectorAll('input,select').forEach(field=>{field.disabled=!configure.checked;});
+ }
+ if(configure)configure.onchange=toggleConfiguration;
  let placements=[], visibility={}, dishes=[], combos=[], revision=0, saving=false;
 
  function showTotalWeight(){
@@ -1249,7 +1330,13 @@ if(storefrontPanel){
   comboFields.persons.value=row?.persons??'';
   comboFields.published.checked=dish?.is_active===true;
   components.replaceChildren();
-  for(const line of row?.components||[null,null])addComponent(line);
+  for(const line of row?.components?.length?row.components:[null,null])addComponent(line);
+  if(configure&&window.ummaCafeComboAdmin){
+   configure.checked=Boolean(row?.configuration);
+   readConfiguration=window.ummaCafeComboAdmin.mount(configPanel,dishes,row?.configuration);
+   $('webComboCopy').hidden=!row;
+   toggleConfiguration();
+  }
  }
 
  function fillVisibility(){visibilityFields.enabled.checked=visibility[visibilityFields.section.value]===true;}
@@ -1272,6 +1359,7 @@ if(storefrontPanel){
   }finally{
    saving=false;
    controls.forEach(control=>control.disabled=false);
+   if(configure)toggleConfiguration();
   }
   if(result.comboId){
    await loadStorefront(result.comboId);
@@ -1291,12 +1379,67 @@ if(storefrontPanel){
    fillVisibility();
   }
  };
+ const photo=$('webComboPhoto');
+ if(photo)photo.onchange=async()=>{
+   const file=photo.files[0];
+   if(!file)return;
+   if(file.size>2097152||!['image/jpeg','image/png','image/webp'].includes(file.type)){
+     status.textContent='Выберите JPG, PNG или WebP до 2 МБ.';
+     return;
+   }
+   const locationId=overviewLocation.value, comboId=comboFields.comboId.value, capturedRevision=revision;
+   photo.disabled=true;
+   status.textContent='Загружаем фото…';
+   try{
+     const contents=await new Promise((resolve,reject)=>{
+       const reader=new FileReader();
+       reader.onload=()=>resolve(reader.result.split(',')[1]);
+       reader.onerror=reject;
+       reader.readAsDataURL(file);
+     });
+     const uploaded=await api('comboPhoto',{locationId,mime:file.type,contents},'cafe-web-storefront');
+     if(locationId!==overviewLocation.value||comboId!==comboFields.comboId.value||capturedRevision!==revision)return;
+     comboFields.imageUrl.value=uploaded.imageUrl;
+     status.textContent='Фото загружено. Сохраните комбо.';
+   }catch(error){
+     if(capturedRevision===revision)status.textContent=error.message||'Не удалось загрузить фото.';
+   }finally{photo.value='';photo.disabled=false;}
+ };
+ const analytics=$('webComboAnalytics');
+ async function loadComboAnalytics(){
+   if(!analytics?.open||analytics.hidden)return;
+   const output=$('webComboAnalyticsResults'), locationId=overviewLocation.value;
+   const days=Number($('webComboAnalyticsDays').value);
+   output.textContent='Загружаем продажи…';
+   const amount=value=>value==null?'—':money(value);
+   try{
+     const {analytics:data}=await api('comboAnalytics',{locationId,days},'cafe-web-storefront');
+     if(locationId!==overviewLocation.value||days!==Number($('webComboAnalyticsDays').value))return;
+     output.innerHTML='<p>Средний чек с комбо · '+esc(amount(data.withCombo))+
+       '</p><p>Средний чек без комбо · '+esc(amount(data.withoutCombo))+'</p>'+
+       (data.combos.length?'<table><thead><tr><th>Комбо</th><th>Продано</th><th>Выручка</th><th>Скидка</th><th>Себестоимость</th><th>Валовая прибыль</th></tr></thead><tbody>'+
+        data.combos.map(row=>'<tr>'+[row.name,row.units,amount(row.revenue),amount(row.savings),amount(row.cost),amount(row.profit)]
+          .map(value=>'<td>'+esc(value)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>За этот период продаж комбо нет.</p>')+
+       (data.options.length?'<h4>Выбранные варианты</h4><ul>'+data.options.map(option=>'<li>'+
+         esc((data.combos.find(row=>row.product_id===option.product_id)?.name||'')+' · '+option.name+' × '+option.sets)+'</li>').join('')+'</ul>':'');
+   }catch(error){if(locationId===overviewLocation.value)output.textContent=error.message;}
+ }
+ if(analytics){
+   analytics.ontoggle=loadComboAnalytics;
+   $('webComboAnalyticsDays').onchange=loadComboAnalytics;
+ }
  comboFields.comboId.onchange=fillCombo;
+ if($('webComboCopy'))$('webComboCopy').onclick=()=>{
+   comboFields.comboId.value='';
+   comboFields.published.checked=false;
+   $('webComboCopy').hidden=true;
+   status.textContent='Копия готова. Сохраните её как черновик.';
+ };
  $('webComboAddDish').onclick=()=>addComponent();
  components.addEventListener('input',showTotalWeight);
  comboForm.onsubmit=event=>{
   event.preventDefault();
-  const lines=[...components.children].map(row=>({
+  const lines=configure?.checked?[]:[...components.children].map(row=>({
    productId:row.querySelector('[data-combo-product]').value,
    portions:row.querySelector('[data-combo-portions]').valueAsNumber,
    weightG:row.querySelector('[data-combo-weight]').valueAsNumber,
@@ -1305,10 +1448,12 @@ if(storefrontPanel){
    status.textContent='Укажите каждое блюдо один раз и задайте нужное количество порций.';
    return;
   }
+  const configuration=configure?.checked?readConfiguration():undefined;
+  if(configuration?.archived)comboFields.published.checked=false;
   return saveStorefrontSettings(comboForm,'comboSave',{comboId:comboFields.comboId.value||null,combo:{
    nameRu:comboFields.nameRu.value,nameEn:comboFields.nameEn.value,nameVi:comboFields.nameVi.value,
    imageUrl:comboFields.imageUrl.value,price:comboFields.price.valueAsNumber,
-   persons:comboFields.persons.valueAsNumber||null,published:comboFields.published.checked,components:lines,
+   persons:comboFields.persons.valueAsNumber||null,published:comboFields.published.checked,components:lines,configuration,
   }});
  };
 
@@ -1327,6 +1472,7 @@ if(storefrontPanel){
   if(!locationId||!storefrontPanel.open)return;
   const request=++revision;
   form.hidden=visibilityForm.hidden=comboForm.hidden=true;
+  if(analytics)analytics.hidden=true;
   retry.hidden=true;
   status.textContent='Загружаем разделы…';
   try{
@@ -1347,6 +1493,7 @@ if(storefrontPanel){
    form.hidden=!data.products.length;
    visibilityForm.hidden=!data.visibility;
    comboForm.hidden=!Array.isArray(data.combos)||(!dishes.length&&!combos.length);
+   if(analytics){analytics.hidden=comboForm.hidden;void loadComboAnalytics();}
    status.textContent=data.products.length?'':'Нет активных блюд.';
   }catch(error){
    if(request!==revision||locationId!==overviewLocation.value)return;
