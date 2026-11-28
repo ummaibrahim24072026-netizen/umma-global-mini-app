@@ -99,7 +99,12 @@ function restoreStaffTheme(){
 
 const mobileChat=()=>window.matchMedia?.('(max-width:760px)')?.matches===true;
 const limitedChat=()=>!!workspace&&(mobileChat()||navigator.userAgentData?.mobile||/Android|iPhone|iPad/.test(navigator.userAgent));
-function syncChatScreen(){if(workspace)workspace.classList.toggle('work-chat-open',visible()&&view==='inbox'&&!!thread&&mobileChat());}
+function syncChatScreen(){
+ if(!workspace)return;
+ const conversationOpen=visible()&&view==='inbox'&&!!thread;
+ workspace.classList.toggle('work-chat-open',conversationOpen&&!atCounter()&&mobileChat());
+ workspace.classList.toggle('work-counter-thread',conversationOpen&&atCounter());
+}
 window.addEventListener('resize',syncChatScreen);
 const workspace=document.getElementById('webMessages');
 const badge=document.getElementById('webInboxCount');
@@ -413,7 +418,6 @@ function showMessages(data,forceBottom=false){
   return li;
  },(m,row)=>{const marker=row.querySelector('.connect-receipt');const read=!!m.read_at,delivered=!!m.delivered_at;const label=read?'Прочитано клиентом':delivered?'Доставлено клиенту':'Отправлено';if(marker){marker.style.color=read?'#34B7F1':'#89979B';marker.style.fontWeight='700';marker.style.letterSpacing='-3px';marker.style.paddingRight='3px';marker.title=label+(read?' · '+dateTime.format(new Date(m.read_at)):'');marker.setAttribute('aria-label',label);}return read||delivered?'✓✓':'✓';});
  if(!messages.children.length)messages.append(node('li','Сообщений пока нет.'));
- if(nearBottom)messages.scrollTop=messages.scrollHeight;
  oldestButton.hidden=!workspace||historyFinished||(history.length===0&&(data.messages||[]).length<100);
  assigneeButton.hidden=!workflow?.canAssign;
  threadMenu.hidden=false;
@@ -428,6 +432,7 @@ function showMessages(data,forceBottom=false){
  }
  replyForm.hidden=false;
  if(callButtons)callButtons.hidden=!callIdentity();
+ if(nearBottom)messages.scrollTop=messages.scrollHeight;
 }
 async function loadEarlier(){
  if(!thread||!latestThread)return;
@@ -461,7 +466,7 @@ function closeThread(){
  if(workspace)renderThreadAvatar(null);
  syncChatScreen();renderClients();
 }
-async function readThread(id,background=false){
+async function readThread(id,background=false,focusReply=false){
  let data,details;
  const includeAvatar=!!workspace&&Date.now()-avatarCheckedAt>=30000;
  try{
@@ -481,6 +486,7 @@ async function readThread(id,background=false){
  if(includeAvatar)avatarCheckedAt=typeof data.client.avatar==='string'?Date.now():0;
  latestThread=data;
  showMessages(data,firstLoad);
+ if(focusReply)replyBody.focus({preventScroll:true});
  const latest=data.messages.filter(m=>m.direction==='customer'&&!m.read_at).at(-1);
  if(latest){await api('staffRead',{clientId:id,before:latest.created_at});await refresh();}
 }
@@ -489,8 +495,9 @@ async function openThread(id){
   closeThread();loadStaffHidden(id);thread=id;threadTitle.textContent='Загружаем переписку…';renderClients();
  }
  selectView('inbox');
- await readThread(id);
- if(thread===id)threadTitle.focus({preventScroll:true});
+ const counter=atCounter();
+ await readThread(id,false,counter);
+ if(thread===id&&!counter)threadTitle.focus({preventScroll:true});
  status.textContent='';
 }
 function renderClients(){
@@ -936,14 +943,19 @@ function build(){
  if(dialog){document.body.append(dialog);dialog.addEventListener('close',()=>{composer.close();button.focus();});}
 }
 function owner(){return window.ummaRole==='super_admin'||window.ummaUser?.role==='super_admin';}
-function openInbox(){
+function openInbox(openUnread=false){
  if(!panels)build();
  restoreStaffTheme();
  if(workspace)selectView('inbox');
  if(dialog&&!dialog.open)dialog.showModal();
- void run(refreshView);
+ void run(async()=>{
+  const unread=openUnread&&inboxClients.find(client=>client.unread>0);
+  if(unread)await openThread(unread.id);
+  else await refreshView();
+  status.textContent='';
+ });
 }
-if(button)button.onclick=openInbox;
+if(button)button.onclick=()=>openInbox();
 function syncVisibility(){
  if(callButtons)callButtons.hidden=!thread||!callIdentity();
  if(button){button.hidden=!owner();if(button.hidden&&dialog?.open)dialog.close();}
@@ -967,6 +979,9 @@ async function poll(){
 document.addEventListener('umma:staff-tab',e=>{
  if(e.detail==='messages'&&(inboxAccess||owner()))openInbox();
  else closeThread();
+});
+document.addEventListener('umma:counter-messages',event=>{
+ if(inboxAccess||owner())openInbox(event.detail.openUnread);
 });
 if(workspace){
  const unlock=()=>{

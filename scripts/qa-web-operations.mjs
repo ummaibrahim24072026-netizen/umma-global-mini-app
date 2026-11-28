@@ -569,21 +569,31 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
 {
  const {window:w}=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html?work=counter',pretendToBeVisual:true});
  const d=w.document,byId=id=>d.getElementById(id),spoken=[];
+ const viewport=new w.EventTarget();
+ Object.assign(viewport,{height:768,scale:1});
+ Object.defineProperty(w,'visualViewport',{value:viewport});
+ Object.defineProperty(d.documentElement,'clientHeight',{value:768});
  w.AbortSignal=AbortSignal;
  w.ummaKitchen={open(){}};
  w.ummaKitchenLive={speakCounterAlert:async text=>{spoken.push(text);return true;}};
  const product={id:'bread',name_ru:'Лепёшка',price_vnd:25000};
  let client={id:'customer',name:'Клиент',unread:0};
+ const message={id:'first',direction:'customer',body:'Есть плов?',created_at:'2026-11-28T12:00:00Z'};
  let confirmAccess;
  const access=new Promise(resolve=>{confirmAccess=resolve;});
  w.fetch=async(url,options)=>{
   if(url.endsWith('cafe-menu'))return Response.json({ok:true,products:[product],inventory:[],locations:[]});
-  const {action}=JSON.parse(options.body);
+  const {action,clientId}=JSON.parse(options.body);
   if(action==='me')return Response.json({ok:true,user:{id:42,name:'Гуля',role:'employee'},
    assignments:[{location_id:'cafe',staff_role:'kitchen',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]});
   if(action==='staffInbox'){
    await access;
    return Response.json({ok:true,clients:[client]});
+  }
+  if(action==='staffThread'||action==='staffRead'){
+   assert.equal(clientId,client.id);
+   if(action==='staffThread')return Response.json({ok:true,client,messages:[message]});
+   client={...client,unread:0,last_unread_id:null};
   }
   return Response.json({ok:true,orders:[]});
  };
@@ -616,12 +626,24 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  await refreshInbox();
  assert.equal(spoken.length,1);
  byId('counterMessageOpen').click();
+ assert.ok(byId('counterMessageAlert').hidden);
  await tick();
  assert.equal(byId('webMessages').parentElement,byId('counterMessagesHost'));
  assert.equal(byId('webMessages').hidden,false);
+ assert.ok(byId('webMessages').classList.contains('work-counter-thread'));
+ const reply=d.querySelector('#webMessages textarea');
+ assert.equal(d.activeElement,reply);
+ assert.equal(reply.form.hidden,false);
+ assert.match(d.querySelector('#webMessages .connect-thread').textContent,/Есть плов/);
+ assert.ok(byId('counterMessageBadge').hidden);
+ viewport.height=410;
+ viewport.dispatchEvent(new w.Event('resize'));
+ assert.equal(byId('webPos').style.getPropertyValue('--counter-chat-height'),'410px');
+ d.querySelector('#webMessages .work-chat-back').click();
+ assert.equal(byId('webMessages').classList.contains('work-counter-thread'),false);
  d.querySelector('[data-counter-view="sale"]').click();
  assert.match(byId('posTotal').textContent,/25/);
- client={...client,unread:0,last_unread_id:null};
+ assert.equal(byId('webPos').style.getPropertyValue('--counter-chat-height'),'');
  await refreshInbox();
  assert.ok(byId('counterMessageAlert').hidden);
  assert.ok(byId('counterMessageBadge').hidden);

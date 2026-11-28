@@ -19,6 +19,60 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-content > section, .counter-content > div {
   max-width: 1148px; margin-inline: auto;
 }
+#webPos[data-counter-screen="messages"] { height: var(--counter-chat-height, 100dvh); }
+#webPos[data-counter-screen="messages"] .counter-content {
+  display: flex;
+  overflow: hidden;
+  padding-block: 0;
+}
+#counterMessagesHost {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+}
+#counterMessagesHost #webMessages {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 8px 0;
+}
+#counterMessagesHost #webMessages .work-inbox,
+#counterMessagesHost #webMessages :is(.work-inbox-sidebar, .work-thread) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+#counterMessagesHost #webMessages .work-inbox { align-items: stretch; }
+#counterMessagesHost #webMessages .work-inbox-list {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#counterMessagesHost #webMessages:not(.work-counter-thread) .work-thread,
+#counterMessagesHost #webMessages.work-counter-thread :is(.work-messages-heading, .work-section-switch, .work-inbox-sidebar) {
+  display: none;
+}
+#counterMessagesHost #webMessages .work-thread {
+  padding: 0;
+  overflow: hidden;
+}
+#counterMessagesHost #webMessages .work-thread :is(.connect-chat-header, form.connect-compose) {
+  flex: 0 0 auto;
+}
+#counterMessagesHost #webMessages .work-thread .connect-chat-wallpaper {
+  flex: 1 1 0;
+}
+#counterMessagesHost #webMessages .work-thread .connect-thread {
+  max-height: none;
+  overflow-y: auto;
+}
+#webPos.counter-chat-keyboard :is(.counter-header, .counter-nav) { display: none; }
 #webPos h1 { margin: 0; font-size: clamp(20px, 4vw, 26px); }
 #webPos h2 { margin: 0; }
 #webPos button { border-radius: 999px; }

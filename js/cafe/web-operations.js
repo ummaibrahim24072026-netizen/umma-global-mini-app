@@ -284,6 +284,7 @@ function resetSaleService(){
  $('posDeliveryPhone').value='';
 }
 let counterView='sale',counterReturn='orders',counterOrders=[],loadedLocation='',orderFetch=null,payOrder=null;
+let counterUnread=0;
 let counterOrdersRevision=0,counterRefreshQueued=false,paymentFrom='sale';
 const paymentMethod=()=>payOrder?.paymentMethod==='cash'&&fxCash()?fxCurrency().toLowerCase():payOrder?.paymentMethod||selectedMethod;
 const orderMethod=order=>order.foreignPayment?.channel||order.paymentMethod;
@@ -846,10 +847,15 @@ async function refreshCounterOrders({afterMutation=false}={}){
   }
  }
 }
-function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
+function syncCounterMessageAlert(){
+ $('counterMessageAlert').hidden=counterView==='messages'||!counterUnread||$('counterMessagesTab').hidden;
+}
+function setCounterView(view,{draft=false,from='sale',refresh=true,openUnread=false}={}){
  if(currentTab!=='pos')return;
  const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders',messages:'webMessages'};
  counterView=view;
+ $('webPos').dataset.counterScreen=view;
+ syncCounterMessageAlert();
  if(view==='messages'){ $('counterMessagesHost').append($('webMessages')); }else if($('webMessages').parentElement===$('counterMessagesHost')) $('webPos').before($('webMessages'));
  $('counterMessagesHost').hidden=view!=='messages';
  if(view==='payment'){
@@ -875,8 +881,10 @@ function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  }else syncCounterReadyShortcut();
  updateCartJump();
  syncCustomerScreen();
- document.dispatchEvent(new CustomEvent('umma:staff-tab',{detail:view==='messages'?'messages':'pos'}));
+ if(view==='messages')document.dispatchEvent(new CustomEvent('umma:counter-messages',{detail:{openUnread}}));
+ else document.dispatchEvent(new CustomEvent('umma:staff-tab',{detail:'pos'}));
  $('counterContent').scrollTop=0;
+ syncCounterChatViewport();
  if(document.body.classList.contains('counter-cash-keyboard'))syncCashKeyboard();
 }
 async function counterOrderAction(event){
@@ -1702,6 +1710,27 @@ $('webInviteCopy')?.addEventListener('click',async()=>{try{await navigator.clipb
 function syncWorkKeyboard(){const viewport=window.visualViewport;const field=document.activeElement;const editing=field&&/^(INPUT|TEXTAREA|SELECT)$/.test(field.tagName);const closedHeight=document.documentElement.clientHeight||window.innerHeight;document.body.classList.toggle('work-keyboard-open',Boolean(viewport&&editing&&closedHeight-viewport.height>140));}
 window.visualViewport?.addEventListener('resize',syncWorkKeyboard);document.addEventListener('focusin',syncWorkKeyboard);document.addEventListener('focusout',()=>document.body.classList.remove('work-keyboard-open'));
 
+function syncCounterChatViewport(){
+ const viewport=window.visualViewport;
+ const counter=$('webPos');
+ const field=document.activeElement;
+ const editing=field?.matches('textarea, input[type="search"]')&&$('webMessages').contains(field);
+ const keyboard=currentTab==='pos'&&counterView==='messages'&&(editing||counter.classList.contains('counter-chat-keyboard'))&&
+  viewport?.scale===1&&document.documentElement.clientHeight-viewport.height>120;
+ const height=keyboard?Math.floor(viewport.height)+'px':'';
+ if(height===counter.style.getPropertyValue('--counter-chat-height'))return;
+ const history=counter.querySelector('.work-counter-thread .connect-thread');
+ const atLatest=history&&history.scrollHeight-history.scrollTop-history.clientHeight<4;
+ counter.classList.toggle('counter-chat-keyboard',Boolean(keyboard));
+ if(keyboard)counter.style.setProperty('--counter-chat-height',height);
+ else counter.style.removeProperty('--counter-chat-height');
+ if(atLatest)history.scrollTop=history.scrollHeight;
+}
+document.addEventListener('focusin',syncCounterChatViewport);
+document.addEventListener('focusout',()=>window.requestAnimationFrame(syncCounterChatViewport));
+window.visualViewport?.addEventListener('resize',syncCounterChatViewport);
+window.addEventListener('resize',syncCounterChatViewport);
+
 const cashField=$('posCash');
 const cashPanel=cashField.closest('.counter-payment-controls');
 const cashViewport=window.visualViewport;
@@ -1751,15 +1780,18 @@ $('posBackToProducts').onclick=()=>{
 };
 $('webLogout').onclick=async()=>{try{await api('logout');}catch{}auth.clear();location.replace(new URL('staff.html',location.href));};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});$('webInstall').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}else notice('В меню браузера выберите «Установить приложение» или «Добавить на главный экран». В Safari: «Поделиться» → «На экран Домой».');};
-$('counterMessageOpen').onclick=()=>$('counterMessagesTab').click();
+$('counterMessageOpen').onclick=()=>{
+ if(busy||$('counterMessagesTab').hidden)return;
+ setCounterView('messages',{openUnread:true});
+};
 document.addEventListener('umma:staff-inbox-counts',event=>{
- const unread=Number(event.detail?.unread)||0;
+ const unread=counterUnread=Number(event.detail?.unread)||0;
  const badge=$('counterMessageBadge'),tabButton=$('counterMessagesTab');
  const label=unread>99?'99+':String(unread);
  badge.hidden=!unread;
  badge.textContent=label;
  tabButton.setAttribute('aria-label',unread?'Сообщения, непрочитанных: '+label:'Сообщения');
- $('counterMessageAlert').hidden=!unread||tabButton.hidden;
+ syncCounterMessageAlert();
  const message=$('counterMessageAlertText');
  const text=unread===1?'Новое сообщение от клиента':unread?'Непрочитанные сообщения клиентов: '+label:'';
  if(message.textContent!==text)message.textContent=text;
