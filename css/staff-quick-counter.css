@@ -60,7 +60,26 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 }
 #webPos .web-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(270px, 335px); }
 #webPos :is(.web-pos-grid, .counter-payment-grid) > * { min-width: 0; }
-#webPos #posSearch { min-height: 48px; margin: 0 0 12px; padding: 10px 16px; border-radius: 999px; background: white; }
+#webPos .counter-catalog-toolbar {
+  position: sticky; top: 0; z-index: 2;
+  padding-block: 4px 10px;
+  background: var(--umma-brand-canvas);
+}
+#webPos #posSearch { min-height: 48px; margin: 0; padding: 10px 16px; border-radius: 999px; background: white; }
+#webPos .counter-categories {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 3px 3px;
+}
+#webPos .counter-categories button {
+  flex: none; min-height: 44px; padding: 6px 12px; font-size: 14px; font-weight: 650;
+  background: white; color: var(--counter-ink); border: 1px solid var(--counter-line);
+}
+#webPos .counter-categories [aria-pressed="true"] {
+  background: var(--counter-teal); color: white; border-color: var(--counter-teal);
+  text-shadow: 0 1px 2px #07595c;
+}
+#webPos #posProducts { display: grid; gap: 20px; }
+#webPos .counter-catalog-group h2 { margin: 0 0 8px; font-size: 17px; }
+#webPos .pos-product-volume { font-size: 13px; }
 #webPos .pos-products { grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 10px; }
 #webPos .pos-product { min-width: 0; overflow-wrap: anywhere; padding: 10px; border: 1px solid var(--counter-line); border-radius: 18px; gap: 6px; min-height: 0; background: white; }
 #webPos .pos-product-media { width: 100%; aspect-ratio: 1.6; border-radius: 11px; overflow: hidden; background: #f2f8f7; }
@@ -240,6 +259,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   #webPos #posBackToProducts { display: none; }
 }
 @media (max-width: 600px) {
+  #webPos .counter-categories { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 7px; }
   #webPos .pos-products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #webPos .counter-payment-grid, .counter-board { grid-template-columns: minmax(0, 1fr); }
   #webPos .counter-order-summary { padding-block: 8px; }
