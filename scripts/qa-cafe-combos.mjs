@@ -81,4 +81,92 @@ export async function verifyCafeCombos(db,cafe,main) {
   has_table_privilege('anon','cafe_combo_components','select') components`);
  assert.deepEqual(permissions,{save:false,components:false});
  console.log('PASS Cafe combos: draft/publish, live prices and fractional stock, mixed dish+combo, rollback, immutable kitchen snapshot, cancel, one-time sale and scope.');
+ const releaseCafe='e22788bd-4734-4b3a-911e-ba103d52617a';
+ await run("insert into locations(id,name,location_type,ready_stock_enabled) values($1,'QA release cafe','cafe',true)",[releaseCafe]);
+ await run(`insert into products(sku,product_type,name_ru,name_en,name_vi,price_vnd)
+   select sku,'cafe',sku,sku,sku,price from unnest(
+    array['UMMA-CAFE-PLOV','UMMA-CAFE-MANTI','UMMA-CAFE-FLATBREAD','UMMA-CAFE-SHURPA','UMMA-CAFE-GRILLED-CHICKEN-WINGS',
+     'UMMA-CAFE-AYRAN','UMMA-CAFE-AYRAN-500','UMMA-CAFE-BLACKBERRY-COMPOTE-500','UMMA-CAFE-ADJIKA','UMMA-CAFE-SAMSA-CHICKEN','UMMA-CAFE-SAMSA'],
+    array[120000,150000,25000,90000,120000,30000,40000,40000,10000,60000,70000]) p(sku,price)`);
+ await db.exec(readFileSync('supabase/migrations/20261128080903_cafe_configurable_combos.sql','utf8'));
+ const drafts=(await run(`select c.configuration,p.is_active,p.image_url from cafe_combos c
+   join products p on p.id=c.product_id where c.location_id=$1 order by c.configuration->>'draftNumber'`,[releaseCafe])).rows;
+ assert.equal(drafts.length,4);
+ assert.ok(drafts.every(row=>!row.is_active&&row.image_url===null));
+ const drinks=drafts[0].configuration.groups.find(group=>group.kind==='drink').options;
+ assert.deepEqual(drinks.map(option=>option.id),['ayran-300','ayran-500','compote-300','compote-500','herbs-300','herbs-500']);
+ assert.equal(drinks.find(option=>option.id==='compote-300').portions,0.6);
+ assert.equal(drinks.find(option=>option.id==='compote-300').productId,drinks.find(option=>option.id==='compote-500').productId);
+ const newDishes=(await run(`select p.image_url,i.quantity from products p left join inventory i on i.product_id=p.id and i.location_id=$1
+   where p.sku in ('UMMA-CAFE-GARLIC-SAUCE','UMMA-CAFE-AYRAN-HERBS-300','UMMA-CAFE-AYRAN-HERBS-500','UMMA-CAFE-SAMSA-BEEF')`,[releaseCafe])).rows;
+ assert.equal(newDishes.length,4);
+ assert.ok(newDishes.every(row=>row.image_url===null&&Number(row.quantity)===0));
+
+ await run('update inventory set is_available=true where location_id=$1 and product_id=$2',[cafe,side]);
+ const option=(id,productId,portions,unit,amount,referenceVnd,surchargeVnd=0)=>({id,productId,portions,unit,amount,referenceVnd,surchargeVnd});
+ const config={mode:'fixed',fixed:[option('main',main,0.25,'g',75,7000)],groups:[{id:'drink',kind:'drink',defaultId:'regular',
+  options:[option('regular',side,0.25,'ml',300,10000),option('large',side,0.5,'ml',500,15000,4000)]}],
+  extras:[option('extra',main,0.25,'pcs',1,7000,5000)]};
+ const configured=await save(null,{...payload,price:14500,components:[],configuration:config});
+ const configuration=(await products()).find(p=>p.id===configured).comboConfiguration;
+ assert.equal(configuration.groups[0].options[1].amount,500);
+ const choice={choices:{drink:'large'},extras:{extra:1}};
+ const itemRequest={productId:configured,quantity:1,comboSelection:choice,expectedUnitPriceVnd:23500};
+ const configuredCreate=async item=>(await one("select create_cafe_staff_order(11,$1,$2::jsonb,'pickup','QA',null,null,'cash') result",
+  [cafe,JSON.stringify([item])])).result.order;
+ await assert.rejects(configuredCreate({...itemRequest,expectedUnitPriceVnd:1}),/COMBO_PRICE_CHANGED/);
+ await assert.rejects(configuredCreate({...itemRequest,comboSelection:{...choice,extras:{invented:1}}}),/INVALID_COMBO_SELECTION/);
+ const configuredOrder=await configuredCreate(itemRequest);
+ assert.equal(configuredOrder.totalVnd,23500);
+ const snapshot=await one('select combo_components,combo_pricing from cafe_order_items where order_id=$1',[configuredOrder.id]);
+ assert.equal(snapshot.combo_components[1].amount,500);
+ assert.equal(snapshot.combo_pricing.savingVnd,3500);
+ assert.deepEqual(await stock(main),[1.25,0.5]);
+ assert.deepEqual(await stock(side),[1,0.5]);
+ await status(configuredOrder.id,'cancelled');
+ assert.deepEqual(await stock(main),[1.25,0]);
+ assert.deepEqual(await stock(side),[1,0]);
+
+ const snapshotBefore=await one('select combo_components,combo_pricing from cafe_order_items where order_id=$1',[configuredOrder.id]);
+ await save(configured,{...payload,price:14000,components:[],configuration:{...config,mode:'percent',discount:10}});
+ const alternative={choices:{drink:'regular'},extras:{}};
+ const percentItem={...itemRequest,comboSelection:alternative,expectedUnitPriceVnd:15300};
+ const larger={...itemRequest,comboSelection:{choices:{drink:'large'},extras:{}},expectedUnitPriceVnd:20200};
+ const checkoutKey=randomUUID();
+ const guestConfiguration=async()=> (await one("select submit_cafe_guest_order_v3($1,$2,$3,$4::jsonb,'QA web',null,'qa',null,'cash') result",
+  [checkoutKey,'a'.repeat(64),cafe,JSON.stringify([percentItem,larger])])).result.order;
+ const guestWithVariants=await guestConfiguration();
+ assert.equal(guestWithVariants.totalVnd,35500);
+ assert.equal((await guestConfiguration()).id,guestWithVariants.id);
+ assert.deepEqual(await stock(main),[1.25,0.5]);
+ assert.deepEqual(await stock(side),[1,0.75]);
+ await run("select update_cafe_order_payment_cash($1,11,'paid',null,35500,0)",[guestWithVariants.id]);
+ await status(guestWithVariants.id,'ready');
+ await run("select update_cafe_order_status($1,11,'completed')",[guestWithVariants.id]);
+ assert.deepEqual(await stock(main),[0.75,0]);
+ assert.deepEqual(await stock(side),[0.25,0]);
+ const report=(await one('select cafe_combo_analytics($1,30) report',[cafe])).report;
+ const configuredSales=report.combos.find(row=>row.product_id===configured);
+ assert.equal(configuredSales.units,2);
+ assert.equal(configuredSales.revenue,35500);
+ assert.equal(configuredSales.savings,3500);
+ assert.equal(configuredSales.cost,null);
+ assert.deepEqual(await one('select combo_components,combo_pricing from cafe_order_items where order_id=$1',[configuredOrder.id]),snapshotBefore);
+ assert.equal((await one("select has_function_privilege('anon','cafe_combo_analytics(uuid,integer)','execute') allowed")).allowed,false);
+
+ const deliveryKey=randomUUID();
+ const delivery=await one(`select submit_cafe_guest_delivery_v4($1,$2,$3,$4::jsonb,'QA',null,'combo-qa',null,'qr',
+  'QA delivery address',12.28,109.2,repeat('d',64)) result`,
+  [deliveryKey,'d'.repeat(64),cafe,JSON.stringify([percentItem])]);
+ assert.equal(delivery.result.order.orderType,'delivery');
+ assert.equal(delivery.result.order.totalVnd,45300);
+ assert.equal(Number((await one('select subtotal_vnd from cafe_orders where id=$1',[delivery.result.order.id])).subtotal_vnd),15300);
+ assert.deepEqual(await stock(main),[0.75,0.25]);
+ assert.deepEqual(await stock(side),[0.25,0.25]);
+ await status(delivery.result.order.id,'cancelled');
+ assert.deepEqual(await stock(main),[0.75,0]);
+ assert.deepEqual(await stock(side),[0.25,0]);
+ if(db.concurrent)await db.concurrent(cafe,side,{...larger,quantity:2});
+ console.log('PASS configurable combos: alternative volumes, extras, authoritative price, immutable line data and shared fractional stock.');
+
 }

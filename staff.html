@@ -98,15 +98,26 @@
           <label>Название (RU) <input name="nameRu" maxlength="120" required></label>
           <label>Название (EN) <input name="nameEn" maxlength="120"></label>
           <label>Название (VI) <input name="nameVi" maxlength="120"></label>
-          <label>Ссылка на фото <input name="imageUrl" type="url" maxlength="1000" placeholder="https://" required></label>
+          <label>Ссылка на фото <input name="imageUrl" type="url" maxlength="1000" placeholder="https://"></label>
+          <label>Загрузить фото <input type="file" id="webComboPhoto" accept="image/jpeg,image/png,image/webp"></label>
           <label>Цена, ₫ <input name="price" type="number" min="1" max="100000000" required></label>
           <label>Количество персон <input name="persons" type="number" min="1" max="99"></label>
           <label><input name="published" type="checkbox"> Опубликовать набор</label>
+          <label><input type="checkbox" id="webComboConfigEnabled"> Выбор комплектации</label>
+          <div id="webComboConfig"></div>
+          <button type="button" class="plain-btn" id="webComboCopy" hidden>Копировать в черновик</button>
           <div id="webComboComponents"></div>
           <button type="button" id="webComboAddDish" class="plain-btn">Добавить блюдо</button>
           <output id="webComboWeight"></output>
           <button type="submit" class="primary">Сохранить комбо</button>
         </form>
+        <details id="webComboAnalytics" hidden>
+          <summary>Продажи комбо</summary>
+          <label>Период <select id="webComboAnalyticsDays">
+            <option value="7">7 дней</option><option value="30" selected>30 дней</option><option value="90">90 дней</option>
+          </select></label>
+          <div id="webComboAnalyticsResults" aria-live="polite"></div>
+        </details>
         <template id="webComboComponent">
           <fieldset>
             <label>Блюдо <select data-combo-product required></select></label>
@@ -371,4 +382,4 @@
   <button type="button" id="cafeDeliveryMapConfirm" disabled>Доставить сюда</button>
 <div hidden><button id="cafeDeliveryMapOpen" type="button">Открыть карту</button><button id="cafeDeliveryPointClear" type="button">Сбросить</button><p id="cafeDeliveryPointSummary"></p></div>
 </dialog>
-<main id="webOwnerManager" class="owner-manager" hidden></main><script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/web-session.js?v=1"></script><script src="js/vendor/qrcode-generator.js?v=1"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="js/maps/umma-maps.js?v=moped-1"></script><script src="js/cafe/order-requests.js?v=counter-payments-1"></script><script src="js/cafe/courier-desk.js?v=cash-ledger-1"></script><script src="js/cafe/courier-workflow.js?v=handover-photo-1"></script><script src="js/cafe/delivery-tracking.js?v=gps-3s-2"></script><script src="js/cafe/product-photo.js?v=1"></script><script src="js/delivery/green-sm-adapter.js?v=inhouse-1"></script><script src="js/cafe/kitchen.js?v=menu-combos-1"></script><script src="js/cafe/kitchen-live.js?v=counter-issue-1"></script><script src="js/maps/delivery-zone.js?v=1"></script><script src="js/maps/delivery-location.js?v=11"></script><script src="js/maps/nha-trang-router.js?v=1"></script><script src="js/maps/courier-route.js?v=navigation-2"></script><script src="js/cafe/ready-stock.js?v=menu-combos-1"></script><script src="js/cafe/ingredients.js?v=2"></script><script src="js/cafe/owner-manager.js?v=1" defer></script><script src="js/cafe/web-operations.js?v=menu-combos-1"></script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=staff-mobile-1"></script><script src="js/cafe/connect-composer.js?v=13"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-admin.js?v=campaign-1"></script><script src="js/cafe/delivery-chat.js?v=staff-1"></script><script src="js/cafe/connect-realtime.js?v=staff-inbox-1" data-fulfillment-realtime></script></body></html>
+<main id="webOwnerManager" class="owner-manager" hidden></main><script src="js/cafe/data-epoch.js?v=1"></script><script src="js/cafe/web-session.js?v=1"></script><script src="js/vendor/qrcode-generator.js?v=1"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="js/maps/umma-maps.js?v=moped-1"></script><script src="js/cafe/order-requests.js?v=counter-payments-1"></script><script src="js/cafe/courier-desk.js?v=cash-ledger-1"></script><script src="js/cafe/courier-workflow.js?v=handover-photo-1"></script><script src="js/cafe/delivery-tracking.js?v=gps-3s-2"></script><script src="js/cafe/product-photo.js?v=1"></script><script src="js/delivery/green-sm-adapter.js?v=inhouse-1"></script><script src="js/cafe/kitchen.js?v=configurable-combo-1"></script><script src="js/cafe/kitchen-live.js?v=counter-issue-1"></script><script src="js/maps/delivery-zone.js?v=1"></script><script src="js/maps/delivery-location.js?v=11"></script><script src="js/maps/nha-trang-router.js?v=1"></script><script src="js/maps/courier-route.js?v=navigation-2"></script><script src="js/cafe/ready-stock.js?v=menu-combos-1"></script><script src="js/cafe/ingredients.js?v=2"></script><script src="js/cafe/owner-manager.js?v=1" defer></script><script src="js/cafe/combo-admin.js?v=1"></script><script src="js/cafe/combo-configurator.js?v=1"></script><script src="js/cafe/web-operations.js?v=combo-configurator-1"></script><script src="js/cafe/connect-local-translation.js?v=6"></script><script src="js/cafe/connect-media.js?v=staff-mobile-1"></script><script src="js/cafe/connect-composer.js?v=13"></script><script src="js/cafe/connect-calls.js?v=ice-recovery-1"></script><script src="js/cafe/connect-admin.js?v=campaign-1"></script><script src="js/cafe/delivery-chat.js?v=staff-1"></script><script src="js/cafe/connect-realtime.js?v=staff-inbox-1" data-fulfillment-realtime></script></body></html>

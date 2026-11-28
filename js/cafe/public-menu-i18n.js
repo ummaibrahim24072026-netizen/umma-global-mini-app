@@ -293,6 +293,17 @@ Object.assign(copy,{
  'Вход для сотрудников':{en:'Staff sign-in',vi:'Đăng nhập cho nhân viên'}
 });
 const storefrontCopy={
+ 'Цена комбо':['Combo price','Giá combo','세트 가격','套餐价','Kombipreis','Prix du menu combo','ราคาชุดคอมโบ','Harga kombo','Harga paket','سعر الكومبو','Preço do combo'],
+ 'Выгода {amount}':['Save {amount}','Tiết kiệm {amount}','{amount} 절약','节省 {amount}','{amount} sparen','Économisez {amount}','ประหยัด {amount}','Jimat {amount}','Hemat {amount}','وفّر {amount}','Poupe {amount}'],
+ 'Дополнения':['Extras','Món thêm','추가 항목','加购','Extras','Suppléments','รายการเพิ่มเติม','Tambahan','Tambahan','إضافات','Extras'],
+ 'Начинка':['Filling','Nhân bánh','속재료','馅料','Füllung','Garniture','ไส้','Inti','Isian','الحشوة','Recheio'],
+ 'Выберите вариант':['Choose an option','Chọn một tùy chọn','옵션 선택','请选择','Option auswählen','Choisissez une option','เลือกตัวเลือก','Pilih pilihan','Pilih opsi','اختر خيارًا','Escolha uma opção'],
+ 'Состав':['Contents','Thành phần','구성','套餐内容','Inhalt','Composition','รายการในชุด','Kandungan','Isi paket','المكونات','Composição'],
+ 'Сохранить':['Save','Lưu','저장','保存','Speichern','Enregistrer','บันทึก','Simpan','Simpan','حفظ','Guardar'],
+ 'Изменить':['Edit','Chỉnh sửa','수정','修改','Bearbeiten','Modifier','แก้ไข','Sunting','Ubah','تعديل','Editar'],
+ 'Заменить блюдо на комбо':['Replace dish with combo','Đổi món sang combo','메뉴를 세트로 변경','将单品换成套餐','Gericht durch Kombimenü ersetzen','Remplacer le plat par le combo','เปลี่ยนจานเป็นชุดคอมโบ','Tukar hidangan kepada kombo','Ganti hidangan dengan paket','استبدل الطبق بالكومبو','Substituir prato pelo combo'],
+ 'Проверьте комплектацию и цену комбо.':['Check the combo options and price.','Kiểm tra tùy chọn và giá combo.','세트 옵션과 가격을 확인하세요.','请确认套餐选项和价格。','Prüfen Sie Optionen und Preis des Kombimenüs.','Vérifiez les options et le prix du combo.','ตรวจสอบตัวเลือกและราคาชุดคอมโบ','Semak pilihan dan harga kombo.','Periksa opsi dan harga paket.','تحقق من خيارات الكومبو وسعره.','Verifique as opções e o preço do combo.'],
+
  'Стоимость тех же порций':['Price for the same portions','Giá cho cùng khẩu phần','동일한 분량의 가격','相同份量的价格','Preis für dieselben Portionsmengen','Prix des mêmes portions','ราคาสำหรับปริมาณเท่ากัน','Harga bagi saiz hidangan yang sama','Harga untuk porsi yang sama','سعر الحصص نفسها','Preço para as mesmas porções'],
  'Порций: {count}':['Portions: {count}','Số phần: {count}','분량: {count}','份数：{count}','Portionen: {count}','Portions : {count}','จำนวนเสิร์ฟ: {count}','Hidangan: {count}','Porsi: {count}','عدد الحصص: {count}','Porções: {count}'],
  'Количество персон: {count}':['Serves {count}','Dành cho {count} người','{count}인분','适合 {count} 人','Für {count} Personen','Pour {count} personnes','สำหรับ {count} คน','Untuk {count} orang','Untuk {count} orang','يكفي {count} أشخاص','Para {count} pessoas'],

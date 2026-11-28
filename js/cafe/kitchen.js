@@ -119,10 +119,14 @@
   function comboComposition(item) {
     if (!item.combo_components?.length) return "";
     const number = new Intl.NumberFormat("ru", {maximumFractionDigits: 3});
-    return '<br><small>' + item.combo_components.map(component =>
-      esc(component.name_ru + ' · ' + number.format(component.portions * item.quantity) +
-        ' порц. · ' + number.format(component.weightG * item.quantity) + ' г')
-    ).join('<br>') + '</small>';
+    const units = {g:"г", ml:"мл", pcs:"шт."};
+    return '<br><small>' + item.combo_components.map(component => {
+      const measure = component.amount != null
+        ? number.format(component.amount * item.quantity) + " " + units[component.unit]
+        : number.format(component.weightG * item.quantity) + " г";
+      return esc(component.name_ru + " · " + measure +
+        (component.pieceCount ? " (" + number.format(component.pieceCount * item.quantity) + " шт.)" : ""));
+    }).join('<br>') + '</small>';
   }
 
   function renderPreparationCard(order, items, type, notice, action) {

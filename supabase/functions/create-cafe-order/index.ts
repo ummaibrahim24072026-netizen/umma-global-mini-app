@@ -136,6 +136,13 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    const orderItems = items.map(({productId, quantity, comboSelection, expectedUnitPriceVnd}) => ({
+      productId, quantity, ...(comboSelection == null ? {} : {comboSelection, expectedUnitPriceVnd}),
+    }));
+    const comboErrors: Record<string,string> = {
+      INVALID_COMBO_SELECTION: "Проверьте комплектацию комбо.",
+      COMBO_PRICE_CHANGED: "Цена комбо изменилась. Обновите корзину.",
+    };
     const deliveryErrors: Record<string,string> = {
       DELIVERY_POINT_REQUIRED: "Выберите точку доставки на карте, чтобы проверить зону обслуживания.",
       DELIVERY_UNAVAILABLE: "Доставка из выбранного кафе пока недоступна. Выберите самовывоз.",
@@ -148,7 +155,7 @@ Deno.serve(async (req) => {
       const { data: staffData, error: staffError } = await submitCafeOperation(supabase, telegramId, body.requestKey, "staffOrder", {
         p_staff_telegram_id: telegramId,
         p_location_id: body.locationId,
-        p_items: items.map((item: { productId: string; quantity: number }) => ({ productId: item.productId, quantity: item.quantity })),
+        p_items: orderItems,
         p_order_type: orderType,
         p_customer_name: typeof body.customerName === "string" ? body.customerName.slice(0, 120) : null,
         p_customer_phone: typeof body.customerPhone === "string" ? body.customerPhone.slice(0, 40) : null,
@@ -160,6 +167,7 @@ Deno.serve(async (req) => {
       });
       if(!staffError&&orderType==="delivery"&&!staffGreenDelivery&&!staffData?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch(e){console.error("Courier notification deferred");}}
       if (staffError) {
+        if (comboErrors[staffError.message]) return response({ok:false,code:staffError.message,error:comboErrors[staffError.message]},409);
         if (deliveryErrors[staffError.message]) return response({ok:false,code:staffError.message,error:deliveryErrors[staffError.message]},400);
         if (staffError.code === "23505" && /cafe_one_open_bill_per_numbered_table/.test(staffError.message || "")) {
           return response({ok:false,error:"У этого стола уже есть открытый счёт. Обновите список заказов и добавьте блюда в существующий счёт."},409);
@@ -173,10 +181,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await submitCafeOperation(supabase, telegramId, body.requestKey, "customerOrder", {
       p_customer_telegram_id: telegramId,
-      p_items: items.map((item: { productId: string; quantity: number }) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
+      p_items: orderItems,
       p_order_type: orderType,
       p_location_id: typeof body.locationId === "string" ? body.locationId : null,
       p_customer_name: typeof body.customerName === "string" ? body.customerName.slice(0, 120) : null,
@@ -190,6 +195,7 @@ Deno.serve(async (req) => {
 
     if(!error&&orderType==="delivery"&&!data?.replayed){try{await dispatchCourierQueue(supabase,botToken);}catch{console.error("Courier notification deferred");}}
     if (error) {
+      if (comboErrors[error.message]) return response({ok:false,code:error.message,error:comboErrors[error.message]},409);
       if (deliveryErrors[error.message]) return response({ok:false,code:error.message,error:deliveryErrors[error.message]},400);
       console.error("Order creation rejected:", error.message);
       const clientErrors = [
