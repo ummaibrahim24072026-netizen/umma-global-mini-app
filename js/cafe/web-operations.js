@@ -14,7 +14,26 @@ function notice(s){$('webNotice').textContent=s;}
 async function api(action,extra={},endpoint='cafe-web'){const response=await fetch(base+endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,initData:auth.credential(),...extra}),cache:'no-store',signal:AbortSignal.timeout(20000)});const data=await response.json();if(!response.ok||!data.ok){const e=Error(data.error||'Нет связи с кафе');e.status=response.status;throw e;}return data;}
 const screenKey=()=> 'umma:pos-screen:'+auth.actorId()+':'+$('posLocation').value;
 function screen(){try{return JSON.parse(localStorage.getItem(screenKey())||'null');}catch{return null;}}
-function showPair(value){$('screenLayout').value=value?.layout||'auto';$('screenLanguageSetting').value=value?.language||'ru';$('screenUnpair').hidden=!value;$('screenPairLink').hidden=!value;$('screenPairQr').replaceChildren();if(!value)return;const url=new URL('payment-screen.html',location.href);url.hash=new URLSearchParams({screen:value.token});$('screenPairLink').href=url.href;drawQr($('screenPairQr'),url.href);$('screenPairState').textContent='Откройте эту ссылку на планшете или отсканируйте QR. Экран привязан к выбранному кафе.';}
+function showPair(value){
+ const link=$('screenPairLink'),qr=$('screenPairQr');
+ $('screenLayout').value=value?.layout||'auto';
+ $('screenLanguageSetting').value=value?.language||'ru';
+ $('counterDisplayOpen').textContent=value?'Табло клиента':'Подключить табло';
+ $('screenPair').hidden=Boolean(value);
+ $('screenUnpair').hidden=!value;
+ $('screenPairInstructions').hidden=!value;
+ link.hidden=!value;
+ link.removeAttribute('href');
+ qr.replaceChildren();
+ $('screenPairState').textContent='';
+ delete $('screenPairState').dataset.syncError;
+ $('screenLanguageError').textContent='';
+ if(!value)return;
+ const url=new URL('payment-screen.html',location.href);
+ url.hash=new URLSearchParams({screen:value.token});
+ link.href=url.href;
+ drawQr(qr,url.href);
+}
 function drawQr(root,payload){const qr=qrcode(0,'M');qr.addData(payload);qr.make();root.innerHTML=qr.createSvgTag({cellSize:5,margin:20,scalable:true});}
 let screenTimer,screenRevision=0;
 const publishedScreens=new Map();
@@ -48,7 +67,7 @@ async function publishScreen(client,snapshot,force=false){
   await api(request.action,{screenId:client.id,revision:screenRevision,...request.body});
   if(screen()?.id===client.id&&$('screenPairState').dataset.syncError){
    delete $('screenPairState').dataset.syncError;
-   $('screenPairState').textContent='Клиентский экран подключён.';
+   $('screenPairState').textContent='';
   }
  }catch(error){
   if(publishedScreens.get(client.id)===key)publishedScreens.delete(client.id);
@@ -63,6 +82,7 @@ function syncCustomerScreen(clear=false){
   if(screen()?.id!==client.id||currentTab!=='pos')return;
   const snapshot=screenSnapshot();
   void publishScreen(client,snapshot,clear&&!snapshot).catch(()=>{
+   if(screen()?.id!==client.id)return;
    $('screenPairState').dataset.syncError='true';
    $('screenPairState').textContent='Не удалось обновить клиентский экран. Повторим после восстановления связи.';
   });
@@ -1065,52 +1085,64 @@ $('posReloadQr').onclick=async()=>{
  finally{busy=false;$('posReloadQr').disabled=false;paymentFields();void refreshCounterOrders();}
 };
 $('posShowScreen').onclick=()=>displayOrder(payOrder?.id).then(()=>result('Заказ на клиентском экране.')).catch(error=>result(error.message));
-$('screenPair').onclick=async()=>{
- if(busy)return;
- busy=true;$('screenPair').disabled=true;paymentFields();
+const screenControls=['screenPair','screenUnpair','screenLayout','screenLanguageSetting'];
+let screenActionPending=false;
+async function changeScreen(action,status=$('screenPairState')){
+ const location=locationId(),key=screenKey(),client=screen();
+ if(!location||screenActionPending)return;
+ screenActionPending=true;
+ screenControls.forEach(id=>{$(id).disabled=true;});
+ status.textContent='';
  try{
-  const old=screen();if(old)await api('screenRevoke',{screenId:old.id});
-  const layout=$('screenLayout').value,language=$('screenLanguageSetting').value;
-  const data=await api('screenCreate',{locationId:locationId(),layout,language});
-  const value={id:data.id,token:data.screenToken,layout,language};
-  localStorage.setItem(screenKey(),JSON.stringify(value));showPair(value);
-  await publishScreen(value,screenSnapshot(),true);
-  if(payOrder?.paymentMethod==='qr'&&payOrder.paymentStatus==='pending'&&!closedOrder(payOrder))$('posShowScreen').hidden=false;
- }catch(error){$('screenPairState').textContent=error.message;}
- finally{busy=false;$('screenPair').disabled=false;paymentFields();}
-};
-$('screenLayout').onchange=async()=>{
- const client=screen();
- if(!client)return;
- const field=$('screenLayout'),layout=field.value,cafe=screenKey();
- field.disabled=true;
- try{
-  await api('screenSettings',{screenId:client.id,layout});
-  if(screenKey()===cafe&&screen()?.id===client.id){
-   localStorage.setItem(cafe,JSON.stringify({...client,layout}));
-   $('screenPairState').textContent='Размер клиентского табло обновлён.';
-  }
+  await action({location,key,client});
  }catch(error){
-  if(screenKey()===cafe)field.value=client.layout||'auto';
-  $('screenPairState').textContent=error.message;
- }finally{field.disabled=false;}
-};
-async function setCustomerLanguage(language){
- const client=screen();if(!client)return;
- const field=$('screenLanguageSetting'),key=screenKey();field.disabled=true;
- try{await api('screenSettings',{screenId:client.id,layout:client.layout||'auto',language});
-  if(screenKey()===key&&screen()?.id===client.id){localStorage.setItem(key,JSON.stringify({...client,language}));$('screenPairState').textContent='Язык клиентского табло обновлён.';}}
- catch(error){field.value=client.language||'ru';$('screenPairState').textContent=error.message;}
- finally{field.disabled=false;}
+  if(screenKey()===key)status.textContent=error.message;
+ }finally{
+  screenActionPending=false;
+  screenControls.forEach(id=>{$(id).disabled=false;});
+ }
 }
-$('screenLanguageSetting').onchange=()=>void setCustomerLanguage($('screenLanguageSetting').value);
-$('screenUnpair').onclick=async()=>{
- const client=screen();if(!client||busy)return;
- try{
-  await api('screenRevoke',{screenId:client.id});localStorage.removeItem(screenKey());showPair(null);
-  $('posShowScreen').hidden=true;$('screenPairState').textContent='Планшет отключён.';
- }catch(error){$('screenPairState').textContent=error.message;}
-};
+$('counterDisplayOpen').onclick=()=>$('counterDisplayDialog').showModal();
+$('screenPair').onclick=()=>changeScreen(async({location,key,client})=>{
+ if(client)return;
+ const layout=$('screenLayout').value,language=$('screenLanguageSetting').value;
+ const data=await api('screenCreate',{locationId:location,layout,language});
+ const value={id:data.id,token:data.screenToken,layout,language};
+ localStorage.setItem(key,JSON.stringify(value));
+ if(screenKey()!==key)return;
+ showPair(value);
+ syncCustomerScreen(true);
+ if(payOrder?.paymentMethod==='qr'&&payOrder.paymentStatus==='pending'&&!closedOrder(payOrder))$('posShowScreen').hidden=false;
+});
+function setScreenSetting(name,field,status){
+ const value=field.value;
+ status.textContent='';
+ if(!screen())return;
+ return changeScreen(async({key,client})=>{
+  const setting={layout:client.layout||'auto',[name]:value};
+  try{
+   await api('screenSettings',{screenId:client.id,...setting});
+   localStorage.setItem(key,JSON.stringify({...client,...setting}));
+  }catch(error){
+   if(screenKey()===key)field.value=client[name]||(name==='language'?'ru':'auto');
+   throw error;
+  }
+ },status);
+}
+$('screenLayout').onchange=()=>setScreenSetting('layout',$('screenLayout'),$('screenPairState'));
+$('screenLanguageSetting').onchange=()=>setScreenSetting('language',$('screenLanguageSetting'),$('screenLanguageError'));
+$('screenUnpair').onclick=()=>changeScreen(async({key,client})=>{
+ if(!client)return;
+ await api('screenRevoke',{screenId:client.id});
+ localStorage.removeItem(key);
+ publishedScreens.delete(client.id);
+ if(screenKey()!==key)return;
+ const language=$('screenLanguageSetting').value;
+ showPair(null);
+ $('screenLanguageSetting').value=language;
+ $('posShowScreen').hidden=true;
+ $('screenPairState').textContent='Табло отключено.';
+});
 const pickupBoardKey=()=> 'umma:pickup-screen:'+auth.actorId()+':'+locationId();
 function pickupBoardToken(){
  try{return localStorage.getItem(pickupBoardKey())||'';}catch{return '';}
@@ -1234,7 +1266,7 @@ $('counterAddProducts').onclick=()=>{
  setCounterView('sale');
  $('posSearch').focus({preventScroll:true});
 };
-$('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});$('screenLanguageSetting').value='ru';void setCustomerLanguage('ru');syncCustomerScreen(true);};
+$('counterNewSale').onclick=()=>{setCounterView('sale',{draft:true});syncCustomerScreen(true);};
 document.querySelectorAll('[data-counter-view]').forEach(button=>{
  button.onclick=()=>{
   if(busy)return;
@@ -1847,6 +1879,7 @@ $('webWorkspace').hidden=false;
 for(const [name,allowed]of [['overview',!!managerLocations.length],['pos',sell],['kitchen',hasKitchen],['portions',!!stockLocations.length],['orders',hasOrderDesk],['courier',courier],['admin',!!managerLocations.length],['messages',canMessage]])document.querySelector('[data-web-tab="'+name+'"]').hidden=!allowed;
 const options=(sell&& !owner?me.locations.filter(l=>roles.some(a=>a.location_id===l.id&&['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments)):me.locations).map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');$('posLocation').innerHTML=options;$('webStaffLocation').innerHTML=me.locations.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>').join('');
 $('counterCafeLabel').hidden=$('posLocation').options.length<2;
+if(sell)showPair(screen());
 counterReturn=managerLocations.length?'overview':roles.some(a=>a.staff_role==='cashier')?'cashOrders':hasKitchen?'kitchen':'orders';
 $('counterExit').textContent=hasCombinedRole?'Кухня':'К работе кафе';
 $('webInvitePanel').hidden=!owner;
@@ -1862,7 +1895,7 @@ if(sell){
   const r=await fetch(base+'cafe-menu',{signal:AbortSignal.timeout(15000)}),d=await r.json();
   if(!r.ok||!d.ok)throw Error('Не удалось загрузить меню');
   products=(d.products||[]).filter(p=>p.is_active!==false&&p.price_vnd!=null&&!p.catalog_preview&&!p.photo_only);
-  cafeLocations=d.locations||[];inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;try{await loadAvailability();}catch(error){notice(error.message);}renderCart();menu();showPair(screen());
+  cafeLocations=d.locations||[];inventory=d.inventory||[];stockControl=d.inventoryControlEnabled===true;try{await loadAvailability();}catch(error){notice(error.message);}renderCart();menu();
  }catch(error){$('posProducts').textContent=error.message+'. Обновите страницу для повторной загрузки.';}
 }
 }

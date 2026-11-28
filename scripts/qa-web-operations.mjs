@@ -66,14 +66,31 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.getElementById('webCashViews').hidden,true);
  assert.deepEqual([...d.querySelectorAll('[data-counter-view]:not([hidden])')].map(b=>b.textContent.trim()),['Продажа','Заказы','Сообщения']);
  if(method==='qr'){
-  d.getElementById('screenLayout').value='tablet-large';
+  const connect=d.getElementById('counterDisplayOpen'),dialog=d.getElementById('counterDisplayDialog');
+  const language=d.getElementById('screenLanguageSetting'),layout=d.getElementById('screenLayout');
+  dialog.showModal=()=>{dialog.open=true;};
+  dialog.close=()=>{dialog.open=false;};
+  assert.ok(connect.closest('.counter-header'));
+  assert.ok(language.closest('.counter-header'));
+  assert.equal(d.getElementById('counterPayment').hidden,true);
+  language.value='en';language.dispatchEvent(new w.Event('change'));
+  connect.click();
+  assert.equal(dialog.open,true);
+  layout.value='tablet-large';
   d.getElementById('screenPair').click();await tick();
-  assert.equal(requests.find(r=>r.b.action==='screenCreate').b.layout,'tablet-large');
+  const pair=requests.find(r=>r.b.action==='screenCreate').b;
+  assert.equal(pair.layout,'tablet-large');
+  assert.equal(pair.language,'en');
   assert.match(d.getElementById('screenPairLink').href,/payment-screen.html#screen=/);
-  const layout=d.getElementById('screenLayout');
-  layout.value='monitor';layout.dispatchEvent(new w.Event('change'));
-  await tick();
-  assert.equal(requests.find(r=>r.b.action==='screenSettings').b.layout,'monitor');
+  assert.equal(d.getElementById('screenPair').hidden,true);
+  assert.match(connect.textContent,/Табло клиента/);
+  layout.value='monitor';layout.dispatchEvent(new w.Event('change'));await tick();
+  dialog.close();
+  language.value='vi';language.dispatchEvent(new w.Event('change'));await tick();
+  const settings=requests.filter(r=>r.b.action==='screenSettings').map(r=>r.b);
+  assert.equal(settings[0].layout,'monitor');
+  assert.equal(settings[1].language,'vi');
+  assert.equal(settings[1].layout,'monitor');
  }
  d.querySelector('[data-pos-add="bread"]').click();
  if(method==='cash'){
@@ -344,7 +361,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  const w=dom.window,d=w.document;
  w.AbortSignal=AbortSignal;
  let callback,fail=false;
- const lines=[{name:'Лепёшка <из печи>',quantity:2,unitPrice:25000,sku:'UMMA-CAFE-FLATBREAD'}];
+ const lines=[{name:'Лепёшка <из печи>',name_ru:'Лепёшка <из печи>',name_en:'Flatbread',name_vi:'Bánh mì',quantity:2,unitPrice:25000,sku:'UMMA-CAFE-FLATBREAD'}];
  let view={order:null,draft:null,layout:'tablet-small'};
  w.setTimeout=fn=>{callback=fn;return 1;};w.clearTimeout=()=>{};
  w.qrcode=()=>({addData(p){assert.equal(p,'QR amount 50000');},make(){},createSvgTag(){return '<svg></svg>';}});
@@ -368,6 +385,13 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(w.localStorage.getItem('umma:customer-display-token'),'b'.repeat(64));
  assert.equal(d.documentElement.dataset.displayLayout,'tablet-small');
  assert.equal(d.getElementById('screenQr').hidden,true);
+ view.language='vi';await callback();
+ assert.equal(d.documentElement.lang,'vi');
+ assert.match(d.getElementById('screenNumber').textContent,/Đơn hàng của bạn/);
+ assert.match(d.getElementById('screenItems').textContent,/Bánh mì2 phần/);
+ view.language='en';await callback();
+ assert.match(d.getElementById('screenItems').textContent,/Flatbread2 portions/);
+ view.language='ru';await callback();
  view={order:{number:10,total:50000,paymentStatus:'pending',status:'pending',method:'qr',lines},
   payment:{qrPayload:'QR amount 50000',bankName:'VCB',account:'123',reference:'UMMA 10'}};
  await callback();

@@ -97,6 +97,20 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-brand img { width: 32px; height: 32px; border-radius: 50%; }
 #webPos #counterCafeLabel { margin: 0; max-width: 100%; font-size: 14px; }
 #webPos :is(#counterExit, #counterFullscreen, #counterMessageSound) { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+.counter-display-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 14px;
+}
+.counter-display-controls label { margin: 0; }
+#webPos .counter-display-controls :is(select, button) {
+  width: auto; min-height: 44px; padding: 6px 12px; font-size: inherit;
+}
+#screenLanguageError { flex: 1 0 100%; margin: 0; font-size: 14px; color: #953c24; }
+#screenLanguageError:empty, #screenPairState:empty { display: none; }
+#counterDisplayDialog h2 { margin-bottom: 12px; }
+#counterDisplayDialog label { margin-bottom: 4px; }
+#counterDisplayDialog :is(#screenPair, .counter-actions) { margin-top: 12px; }
+#screenPairLink { display: block; text-align: center; }
+#screenPairQr { display: block; }
 .counter-ready-strip:has(button:not([hidden])), .counter-message-alert:not([hidden]) {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1 0 100%; min-width: 0; padding: 2px 4px 2px 10px;
@@ -275,7 +289,6 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #webPos :is(.counter-order-actions, .counter-board) button {
   min-height: 44px; padding: 6px 10px; font-size: 14px;
 }
-.counter-customer-language label { margin-top: 8px; }
 #counterStatus:empty, #posResult:empty, #posChange:empty, #posPaymentHint:empty { display: none; }
 #webPos #posReceipt.counter-cash-actions {
   margin: 8px 0 0;
