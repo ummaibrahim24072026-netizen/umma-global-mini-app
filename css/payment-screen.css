@@ -253,16 +253,32 @@ body::after {
 }
 
 .is-idle .display-brand, .is-idle .display-heading, .is-idle .display-payment { display: none; }
-.is-idle { align-content: center; padding-block: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-bottom)); }
-.display-welcome { display: grid; place-items: center; }
+.customer-display.is-idle {
+  display: block;
+  max-width: none;
+  min-height: 0;
+  height: 100dvh;
+  padding: 0;
+}
+.display-welcome {
+  --scenery-height: min(calc(100vw * 219 / 758), 24dvh);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) var(--scenery-height);
+  height: 100%;
+}
 .display-welcome img {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: min(100%, 510px);
-  max-height: calc(100dvh - 32px);
-  border-radius: var(--radius);
-  box-shadow: 0 7px 30px #00576140;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  background: radial-gradient(ellipse at 50% 28%, #00b8c8, transparent 72%),
+    linear-gradient(#006c79, #009ba9 62%, #dff7f9);
+}
+.display-welcome::after {
+  background: url("../assets/umma-counter-shore.webp") center bottom / contain no-repeat,
+    linear-gradient(#dff7f9 4%, #c3edf1 37%, #008395 82%);
+  content: "";
 }
 
 :root[data-display-layout="tablet-small"] { --wide-display: 960px; }
@@ -270,16 +286,15 @@ body::after {
 :root[data-display-layout="monitor"] { --wide-display: 1440px; }
 
 @media (min-width: 740px) and (orientation: landscape) {
-  :root:not([data-display-layout="phone"]) .customer-display {
+  :root:not([data-display-layout="phone"]) .customer-display:not(.is-idle) {
     max-width: var(--wide-display, 1360px);
     grid-template-columns: minmax(0, 1fr) minmax(0, .95fr);
     align-items: start;
   }
-  .display-brand, .display-heading, .display-welcome { grid-column: 1 / -1; }
+  .display-brand, .display-heading { grid-column: 1 / -1; }
   :root:not([data-display-layout="phone"]) .display-order { grid-column: 1; }
   :root:not([data-display-layout="phone"]) .display-payment { grid-column: 2; }
   :root:not([data-display-layout="phone"]) .display-order[hidden] + .display-payment { grid-column: 1 / -1; width: min(100%, 700px); justify-self: center; }
-  .display-welcome img { max-height: calc(100dvh - 32px); }
   #screenItems li strong { font-size: var(--item-font, clamp(15px, 2vw, 23px)); }
   .display-food-photo { width: var(--item-photo, clamp(48px, 7vw, 88px)); }
 }
