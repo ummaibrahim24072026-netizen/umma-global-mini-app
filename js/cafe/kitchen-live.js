@@ -9,7 +9,7 @@
   const kitchenOrders={known:new Set(),loaded:false};
   const voiceKey="umma_kitchen_order_voice";
   let voiceEnabled=true,playback=Promise.resolve();
-  let counterIssues=[],counterInteracted=false,counterVoiceWorker,counterVoiceFailed=false;
+  let counterIssues=[],counterInteracted=false;
   const issueQueued=new Set(),issueAnnounced=new Set();
   try { voiceEnabled=localStorage.getItem(voiceKey)!=="off"; } catch {}
   const isKitchenQueue=()=>document.body.dataset.workspace==="kitchen";
@@ -42,7 +42,7 @@
     }catch{}
   }
 
-  function speak(message){
+  function speak(message,preferFemale=false){
     return new Promise(resolve=>{
       const timeout=setTimeout(()=>resolve(false),Math.max(15000,message.length*150));
       const finish=success=>{clearTimeout(timeout);resolve(success);};
@@ -50,65 +50,18 @@
         const utterance=new window.SpeechSynthesisUtterance(message);
         utterance.lang="ru-RU";
         utterance.volume=1;
+        if(preferFemale){
+          const voices=(window.speechSynthesis.getVoices?.()||[]).filter(v=>/^ru(?:[-_]|$)/i.test(v.lang));
+          const female=voices.find(v=>/female|milena|katya|irina|svetlana|tatyana|alena|anna|daria|женск/i.test(v.name));
+          const natural=voices.find(v=>/google|natural|neural/i.test(v.name)&&!/male|dmitry|pavel|yuri/i.test(v.name));
+          if(female||natural)utterance.voice=female||natural;
+          utterance.rate=0.96;
+        }
         utterance.onend=()=>finish(true);
         utterance.onerror=()=>finish(false);
         window.speechSynthesis.speak(utterance);
       } catch { finish(false); }
     });
-  }
-
-  function prepareCounterVoice(){
-    if(counterVoiceFailed||counterVoiceWorker||!window.Worker||!window.MessageChannel)return;
-    try {
-      counterVoiceWorker=new Worker(new URL("js/cafe/counter-order-voice-worker.js?v=1",document.baseURI),{type:"module"});
-      counterVoiceWorker.addEventListener("error",()=>{
-        counterVoiceFailed=true;
-        counterVoiceWorker.terminate();
-      },{once:true});
-    } catch { counterVoiceFailed=true; }
-  }
-
-  function synthesizeCounterVoice(message){
-    prepareCounterVoice();
-    if(!counterVoiceWorker||counterVoiceFailed)return Promise.resolve(null);
-    return new Promise(resolve=>{
-      const {port1,port2}=new MessageChannel();
-      const finish=result=>{clearTimeout(timeout);port1.close();resolve(result);};
-      const timeout=setTimeout(()=>finish(null),4000);
-      port1.onmessage=event=>finish(event.data);
-      try { counterVoiceWorker.postMessage(message,[port2]); }
-      catch { port2.close();finish(null); }
-    });
-  }
-
-  async function speakAtCounter(message,stillOnScreen){
-    try {
-      const wave=await synthesizeCounterVoice(message);
-      if(!wave)return stillOnScreen()&&speak(message);
-      if(!stillOnScreen()||audio.state!=="running")return false;
-      const buffer=await audio.decodeAudioData(wave);
-      if(!stillOnScreen()||audio.state!=="running")return false;
-      const source=audio.createBufferSource();
-      source.buffer=buffer;
-      const voiceBand=audio.createBiquadFilter();
-      voiceBand.type="highpass";
-      voiceBand.frequency.value=160;
-      const compressor=audio.createDynamicsCompressor();
-      compressor.threshold.value=-24;
-      compressor.ratio.value=6;
-      compressor.attack.value=.004;
-      compressor.release.value=.12;
-      const gain=audio.createGain();
-      gain.gain.value=4;
-      const limiter=audio.createWaveShaper();
-      limiter.curve=Float32Array.from({length:1025},(_,i)=>.95*Math.tanh((i/512-1)*1.65));
-      source.connect(voiceBand).connect(compressor).connect(gain).connect(limiter).connect(audio.destination);
-      await new Promise((resolve,reject)=>{
-        source.onended=resolve;
-        try { source.start(); } catch(error) { reject(error); }
-      });
-      return true;
-    } catch { return stillOnScreen()&&speak(message); }
   }
 
   function announce(message){
@@ -123,7 +76,7 @@
       if(!speechEnabled())return;
       await new Promise(resolve=>setTimeout(resolve,340));
       const maySpeak=()=>stillOnScreen()&&speechEnabled();
-      if(maySpeak())return counter?speakAtCounter(message,maySpeak):speak(message);
+      if(maySpeak())return speak(message,counter);
     });
     return playback;
   }
@@ -141,7 +94,7 @@
         issueAnnounced.add(id);
         beep(true);
         if(window.SpeechSynthesisUtterance&&window.speechSynthesis){
-          await speak("Выдать заказ номер "+order.order_number+".");
+          await speak("Выдать заказ номер "+order.order_number+".",true);
         }
       });
     }
@@ -187,7 +140,6 @@
     if(canAnnounce()&&audio?.state!=="running")void unlockAudio();
     if(document.body.dataset.workspace==="pos"){
       counterInteracted=true;
-      if(speechEnabled())prepareCounterVoice();
       announceCounterIssues();
     }
   }
