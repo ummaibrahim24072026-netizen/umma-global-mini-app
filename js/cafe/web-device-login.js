@@ -29,6 +29,7 @@
   let redeeming = false;
 
   window.ummaStaffDeviceLogin = {enable() { add.hidden = false; }};
+  if (get('webLogin').hidden) window.ummaStaffDeviceLogin.enable();
   scan.hidden = new URLSearchParams(location.hash.slice(1)).has('invite');
 
   async function request(body) {
@@ -127,10 +128,12 @@
       const {token} = await request({action: 'redeem', code});
       if (auth.credential()) throw new Error('На устройстве уже открыт аккаунт. Выйдите из него и повторите вход.');
       auth.save(token);
-      location.reload();
+      if (scanDialog.open) scanDialog.close();
+      document.dispatchEvent(new Event('umma:staff-device-login'));
     } catch (error) {
       status.textContent = error.message;
       loginStatus.textContent = error.message;
+    } finally {
       redeeming = false;
       scan.disabled = false;
       get('webLoginSubmit').disabled = false;
@@ -222,12 +225,18 @@
   };
   refresh.onclick = issue;
   codeDialog.addEventListener('close', clearCode);
-  scan.onclick = () => {
+  scan.onclick = async () => {
     loginStatus.textContent = '';
+    scan.disabled = true;
+    await window.ummaCounterFullscreen?.enter();
+    scan.disabled = false;
     scanDialog.showModal();
     void startCamera();
   };
-  scanDialog.addEventListener('close', stopCamera);
+  scanDialog.addEventListener('close', () => {
+    stopCamera();
+    if (!auth.credential()) window.ummaCounterFullscreen?.leave();
+  });
   window.addEventListener('pagehide', () => {
     stopCamera();
     clearCode();
