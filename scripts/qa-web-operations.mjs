@@ -17,7 +17,14 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  const currency=method==='usdt'?'USDT':['tenge','kaspi'].includes(method)?'KZT':'RUB';
  w.confirm=()=>assert.fail('Payment confirmation must stay on the page');
  w.fetch=async(url,opts)=>{const b=opts?.body?JSON.parse(opts.body):{};requests.push({url,b});assert.equal(w.Telegram,undefined);
- let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[{id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000}],inventory:[],locations:[{id:'cafe',delivery_zone:zones}]};
+ let out={ok:true};if(url.endsWith('cafe-menu'))out={ok:true,products:[
+  {id:'bread',name_ru:'Лепёшка',name_vi:'Bánh mì',price_vnd:25000,sku:'UMMA-CAFE-FLATBREAD'},
+  {id:'pilaf',name_ru:'Плов',price_vnd:120000,sku:'UMMA-CAFE-PLOV'},
+  {id:'ayran500',name_ru:'Айран с зеленью',price_vnd:40000,sku:'UMMA-CAFE-AYRAN-HERBS-500',weight_value:500,weight_unit:'ml'},
+  {id:'damlama',name_ru:'Дамлама с мясом',price_vnd:150000,sku:'UMMA-CAFE-DAMLAMA-MEAT'},
+  {id:'ayran300',name_ru:'Айран с зеленью',price_vnd:30000,sku:'UMMA-CAFE-AYRAN-HERBS-300',weight_value:300,weight_unit:'ml'},
+  {id:'ugro',name_ru:'Угро',price_vnd:90000,sku:'UMMA-CAFE-UGRO-NOODLE-SOUP'},
+ ],inventory:[],locations:[{id:'cafe',delivery_zone:zones}]};
  else{assert.ok(b.initData?.startsWith('web:'));if(b.action==='me')out={ok:true,user:{id:1000000000001,name:'Cashier',role:'employee'},assignments:[{location_id:'cafe',staff_role:'cashier',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]};
  else if(b.action==='list')out.orders=created?[{
   id:order.id,order_number:order.orderNumber,total_vnd:order.totalVnd,order_type:service,location_id:'cafe',
@@ -68,11 +75,33 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   await tick();
   assert.equal(requests.find(r=>r.b.action==='screenSettings').b.layout,'monitor');
  }
- d.querySelector('[data-pos-add]').click();
+ d.querySelector('[data-pos-add="bread"]').click();
+ if(method==='cash'){
+  const groups=()=>[...d.querySelectorAll('.counter-catalog-group h2')].map(heading=>heading.textContent);
+  const items=()=>[...d.querySelectorAll('[data-pos-product]')].map(card=>card.dataset.posProduct);
+  assert.deepEqual(groups(),['Супы','Горячее','Выпечка','Напитки']);
+  assert.deepEqual(items(),['ugro','damlama','pilaf','bread','ayran300','ayran500']);
+  const drinks=d.querySelector('[data-pos-category="drinks"]');
+  drinks.click();
+  assert.equal(drinks.getAttribute('aria-pressed'),'true');
+  assert.deepEqual(items(),['ayran300','ayran500']);
+  assert.match(d.querySelector('[data-pos-product="ayran500"]').textContent,/500 мл/);
+  const search=d.getElementById('posSearch');
+  const filter=value=>{search.value=value;search.dispatchEvent(new w.Event('input',{bubbles:true}));};
+  filter('Угро');
+  assert.deepEqual(items(),['ugro']);
+  assert.equal(d.querySelector('[data-pos-category="all"]').getAttribute('aria-pressed'),'true');
+  filter('айран 500');
+  assert.deepEqual(items(),['ayran500']);
+  filter('нет такого блюда');
+  assert.match(d.getElementById('posProducts').textContent,/ничего нет/);
+  filter('');
+  assert.equal(d.querySelector('[data-pos-product="bread"] [data-pos-count]').textContent,'1');
+ }
  if(method==='qr'){
   await new Promise(resolve=>setTimeout(resolve,135));
   const draft=requests.filter(r=>r.b.action==='screenDraft').at(-1).b;
-  assert.deepEqual(draft.lines,[{name:'Лепёшка',name_ru:'Лепёшка',name_en:'',name_vi:'Bánh mì',quantity:1,unitPrice:25000}]);
+  assert.deepEqual(draft.lines,[{name:'Лепёшка',name_ru:'Лепёшка',name_en:'',name_vi:'Bánh mì',quantity:1,unitPrice:25000,sku:'UMMA-CAFE-FLATBREAD'}]);
   assert.equal(draft.method,null);
  }
  assert.match(d.getElementById('posTotal').textContent,/25/);

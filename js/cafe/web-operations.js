@@ -101,26 +101,86 @@ function stockLabel(p){
  const time=planned?new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(p.plannedReadyAt)):'';
  return '<div class="pos-stock-info">'+ready+(planned?'<small class="pos-stock-plan">Следующая партия: '+p.plannedAvailable+' · '+esc(time)+' · время Нячанга</small>':'')+'</div>';
 }
-let lastMenuMarkup;
+const counterCategories=[
+  {id:'combo',label:'Комбо',sku:/^COMBO-/},
+  {id:'soups',label:'Супы',sku:/^(SHURPA|BORSCHT|UGRO|SOUP)(-|$)/},
+  {id:'mains',label:'Горячее',sku:/^(PLOV|MANTI|DAMLAMA|CHICKEN-LEG|BUCKWHEAT|SPAGHETTI|STEWED-FLATBREAD)(-|$)/},
+  {id:'grill',label:'Мангал',sku:/^(GRILL(?:ED)?|SHASHLIK|KEBAB|LYULYA)(-|$)/},
+  {id:'breakfast',label:'Завтраки',sku:/^(FRIED-EGGS|OMELET|OATMEAL|PANCAKES?)(-|$)/},
+  {id:'salads',label:'Салаты',sku:/^(SALAD|CRUNCHY-SALAD|OLIVIER|VINAIGRETTE)(-|$)/},
+  {id:'bakery',label:'Выпечка',sku:/^(FLATBREAD|SAMSA|CROISSANT|KHACHAPURI|CHEESE-KHACHAPURI)(-|$)/},
+  {id:'desserts',label:'Десерты',sku:/^(BAKLAVA|DESSERT)(-|$)/},
+  {id:'drinks',label:'Напитки',sku:/^(AYRAN|TURKISH-AYRAN|GREEN-TEA|BLACK-TEA|BLACKBERRY-COMPOTE|COMPOTE|WATER|COFFEE|JUICE)(-|$)/},
+  {id:'sauces',label:'Соусы',sku:/^(ADJIKA|GARLIC-SAUCE|SAUCE)(-|$)/},
+  {id:'other',label:'Другое'},
+];
+const categoryForCounterProduct=product=>{
+  const sku=String(product.sku||'').toUpperCase().replace(/^UMMA-(CAFE-)?/,'');
+  return counterCategories.find(category=>category.sku?.test(sku))?.id||'other';
+};
+const counterProductName=product=>product.name_ru||product.name_en||product.name_vi||'';
+const counterNameOrder=new Intl.Collator('ru',{numeric:true,sensitivity:'base'});
+const counterCategoryButtons=$('posCategories');
+let counterCategory='all',lastCategoryMarkup,lastMenuMarkup;
+function renderCounterCategories(groups){
+  const categories=counterCategories.filter(category=>groups.has(category.id)||category.id===counterCategory);
+  counterCategoryButtons.hidden=!categories.length;
+  const markup=[{id:'all',label:'Все'},...categories].map(({id,label})=>
+    '<button type="button" data-pos-category="'+id+'" aria-controls="posProducts">'+label+'</button>').join('');
+  if(lastCategoryMarkup!==markup){
+    counterCategoryButtons.innerHTML=markup;
+    lastCategoryMarkup=markup;
+  }
+  for(const button of counterCategoryButtons.children){
+    button.setAttribute('aria-pressed',String(button.dataset.posCategory===counterCategory));
+  }
+}
+function renderCounterProduct(p){
+  const photo=window.ummaCafeProductPhoto?.(p);
+  const description=p.description_ru||p.description_en||p.description_vi;
+  const details=[description,p.ingredients_ru].filter(Boolean).join('\n');
+  const name=counterProductName(p);
+  const volume=p.weight_unit==='ml'&&Number(p.weight_value)>0 ? p.weight_value+' мл' : '';
+  const itemLabel=volume ? name+', '+volume : name;
+  return '<article class="pos-product" data-pos-product="'+esc(p.id)+'">'+
+    '<span class="pos-product-media">'+
+    (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
+    '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
+    '<strong>'+esc(name)+'</strong>'+
+    (volume?'<small class="pos-product-volume">'+esc(volume)+'</small>':'')+
+    (details?'<details class="pos-product-description"><summary>Состав и описание</summary><p>'+esc(details)+'</p></details>':'')+
+    stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
+    '<div class="pos-product-quantity"><button type="button" data-pos-remove="'+esc(p.id)+'" aria-label="Убрать '+esc(itemLabel)+'" hidden>−</button>'+
+    '<b data-pos-count hidden></b><button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0&&!p.comboConfiguration?' disabled':'')+
+    ' aria-label="Добавить '+esc(itemLabel)+'">+</button></div></div></article>';
+}
 function menu(){
   const query=$('posSearch').value.trim().toLocaleLowerCase();
-  const cards=available().filter(p=>p.comboConfiguration||p.available>0||p.planRevision&&p.plannedQuantity>0&&Number.isFinite(Date.parse(p.plannedReadyAt))).filter(p=>[p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en,p.ingredients_ru].join(' ').toLocaleLowerCase().includes(query)).map(p=>{
-    const photo=window.ummaCafeProductPhoto?.(p);
-    const description=p.description_ru||p.description_en||p.description_vi;
-    const details=[description,p.ingredients_ru].filter(Boolean).join('\n');
-    const name=p.name_ru||p.name_en||p.name_vi;
-    return '<article class="pos-product" data-pos-product="'+esc(p.id)+'">'+
-      '<span class="pos-product-media">'+
-      (photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
-      '<span class="pos-product-no-photo">Фото пока нет</span></span>'+
-      '<strong>'+esc(name)+'</strong>'+
-      (details?'<details class="pos-product-description"><summary>Состав и описание</summary><p>'+esc(details)+'</p></details>':'')+
-      stockLabel(p)+'<div class="pos-product-bottom"><b>'+money(p.price_vnd)+'</b>'+
-      '<div class="pos-product-quantity"><button type="button" data-pos-remove="'+esc(p.id)+'" aria-label="Убрать '+esc(name)+'" hidden>−</button>'+
-      '<b data-pos-count hidden></b><button type="button" class="primary pos-product-add" data-pos-add="'+esc(p.id)+'"'+(p.available<=0&&!p.comboConfiguration?' disabled':'')+
-      ' aria-label="Добавить '+esc(name)+'">+</button></div></div></article>';
-  });
-  const markup=cards.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
+  const terms=query ? query.split(/\s+/) : [];
+  const groups=new Map();
+  for(const product of available()){
+    if(!product.comboConfiguration&&!(product.available>0)&&
+       !(product.planRevision&&product.plannedQuantity>0&&Number.isFinite(Date.parse(product.plannedReadyAt))))continue;
+    const group=categoryForCounterProduct(product);
+    if(!groups.has(group))groups.set(group,[]);
+    groups.get(group).push(product);
+  }
+  renderCounterCategories(groups);
+  const sections=[];
+  for(const {id,label} of counterCategories){
+    if(counterCategory!=='all'&&counterCategory!==id)continue;
+    const matches=(groups.get(id)||[]).filter(p=>{
+      const text=[p.name_ru,p.name_vi,p.name_en,p.description_ru,p.description_vi,p.description_en,
+        p.ingredients_ru,p.weight_value,p.weight_unit==='ml'?'мл':''].join(' ').toLocaleLowerCase();
+      return terms.every(term=>text.includes(term));
+    });
+    if(!matches.length)continue;
+    matches.sort((a,b)=>counterNameOrder.compare(counterProductName(a),counterProductName(b))||
+      (Number(a.weight_value)||0)-(Number(b.weight_value)||0)||counterNameOrder.compare(a.id,b.id));
+    sections.push('<section class="counter-catalog-group" aria-labelledby="pos-group-'+id+'"><h2 id="pos-group-'+id+'">'+label+'</h2>'+
+      '<div class="pos-products">'+matches.map(renderCounterProduct).join('')+'</div></section>');
+  }
+  const markup=sections.join('')||(query?'<p>По этому запросу ничего нет.</p>':'<p>Сейчас нет блюд, доступных для продажи.</p>');
   if(markup!==lastMenuMarkup){
     const expanded=new Set(Array.from($('posProducts').querySelectorAll('details[open]'),node=>node.closest('[data-pos-product]').dataset.posProduct));
     $('posProducts').innerHTML=markup;
@@ -876,7 +936,18 @@ $('counterMethodLabel').onclick=event=>{
  syncCustomerScreen();
 };
 $('posCash').oninput=()=>{paymentFields();syncCustomerScreen();};
-$('posSearch').oninput=menu;
+$('posSearch').oninput=()=>{
+ counterCategory='all';
+ $('counterContent').scrollTop=0;
+ menu();
+};
+counterCategoryButtons.onclick=event=>{
+ const button=event.target.closest('[data-pos-category]');
+ if(!button)return;
+ counterCategory=button.dataset.posCategory;
+ $('counterContent').scrollTop=0;
+ menu();
+};
 $('posLocation').onchange=()=>{
  counterOrdersRevision++;
  cart.clear();resetSaleService();counterOrders=[];loadedLocation='';result('');counterStatus('');
