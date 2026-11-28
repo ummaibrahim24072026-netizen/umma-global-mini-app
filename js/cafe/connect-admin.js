@@ -26,7 +26,16 @@ function playPendingSound(){
  if(!pendingSound||alertAudio?.state!=='running')return;
  pendingSound=false;
  playMessageSound();
+ if(document.body.dataset.workspace==='pos')window.ummaCounterSpeakAlert?.('Внимание! Новое сообщение от клиента. Требует внимания.');
 }
+window.ummaCounterSpeakAlert=message=>{
+ if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
+ const u=new SpeechSynthesisUtterance(message);u.lang='ru-RU';u.volume=1;u.rate=.96;
+ const voices=speechSynthesis.getVoices().filter(v=>/^ru(?:[-_]|$)/i.test(v.lang));
+ const voice=voices.find(v=>/female|milena|katya|irina|svetlana|alena|anna|daria|женск/i.test(v.name))||voices.find(v=>/google|natural|neural/i.test(v.name)&&!/male|pavel|dmitry/i.test(v.name));
+ if(voice)u.voice=voice;
+ speechSynthesis.speak(u);
+};
 function playMessageSound(){
  if(alertAudio?.state!=='running')return;
  const tone=alertAudio.createOscillator(),gain=alertAudio.createGain(),time=alertAudio.currentTime;
