@@ -42,7 +42,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-brand { flex: 1 0 auto; font-size: 20px; }
 .counter-brand img { width: 32px; height: 32px; border-radius: 50%; }
 #webPos #counterCafeLabel { margin: 0; max-width: 100%; font-size: 14px; }
-#webPos #counterExit { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+#webPos :is(#counterExit, #counterFullscreen) { min-height: 44px; padding: 8px 12px; font-size: 14px; }
 .counter-ready-strip:has(button:not([hidden])) {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1 0 100%; min-width: 0; padding: 2px 4px 2px 10px;
