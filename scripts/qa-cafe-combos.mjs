@@ -81,7 +81,27 @@ export async function verifyCafeCombos(db,cafe,main) {
   has_table_privilege('anon','cafe_combo_components','select') components`);
  assert.deepEqual(permissions,{save:false,components:false});
  console.log('PASS Cafe combos: draft/publish, live prices and fractional stock, mixed dish+combo, rollback, immutable kitchen snapshot, cancel, one-time sale and scope.');
+ const releaseCafe='e22788bd-4734-4b3a-911e-ba103d52617a';
+ await run("insert into locations(id,name,location_type,ready_stock_enabled) values($1,'QA release cafe','cafe',true)",[releaseCafe]);
+ await run(`insert into products(sku,product_type,name_ru,name_en,name_vi,price_vnd)
+   select sku,'cafe',sku,sku,sku,price from unnest(
+    array['UMMA-CAFE-PLOV','UMMA-CAFE-MANTI','UMMA-CAFE-FLATBREAD','UMMA-CAFE-SHURPA','UMMA-CAFE-GRILLED-CHICKEN-WINGS',
+     'UMMA-CAFE-AYRAN','UMMA-CAFE-AYRAN-500','UMMA-CAFE-BLACKBERRY-COMPOTE-500','UMMA-CAFE-ADJIKA','UMMA-CAFE-SAMSA-CHICKEN','UMMA-CAFE-SAMSA'],
+    array[120000,150000,25000,90000,120000,30000,40000,40000,10000,60000,70000]) p(sku,price)`);
  await db.exec(readFileSync('supabase/migrations/20261128080903_cafe_configurable_combos.sql','utf8'));
+ const drafts=(await run(`select c.configuration,p.is_active,p.image_url from cafe_combos c
+   join products p on p.id=c.product_id where c.location_id=$1 order by c.configuration->>'draftNumber'`,[releaseCafe])).rows;
+ assert.equal(drafts.length,4);
+ assert.ok(drafts.every(row=>!row.is_active&&row.image_url===null));
+ const drinks=drafts[0].configuration.groups.find(group=>group.kind==='drink').options;
+ assert.deepEqual(drinks.map(option=>option.id),['ayran-300','ayran-500','compote-300','compote-500','herbs-300','herbs-500']);
+ assert.equal(drinks.find(option=>option.id==='compote-300').portions,0.6);
+ assert.equal(drinks.find(option=>option.id==='compote-300').productId,drinks.find(option=>option.id==='compote-500').productId);
+ const newDishes=(await run(`select p.image_url,i.quantity from products p left join inventory i on i.product_id=p.id and i.location_id=$1
+   where p.sku in ('UMMA-CAFE-GARLIC-SAUCE','UMMA-CAFE-AYRAN-HERBS-300','UMMA-CAFE-AYRAN-HERBS-500','UMMA-CAFE-SAMSA-BEEF')`,[releaseCafe])).rows;
+ assert.equal(newDishes.length,4);
+ assert.ok(newDishes.every(row=>row.image_url===null&&Number(row.quantity)===0));
+
  await run('update inventory set is_available=true where location_id=$1 and product_id=$2',[cafe,side]);
  const option=(id,productId,portions,unit,amount,referenceVnd,surchargeVnd=0)=>({id,productId,portions,unit,amount,referenceVnd,surchargeVnd});
  const config={mode:'fixed',fixed:[option('main',main,0.25,'g',75,7000)],groups:[{id:'drink',kind:'drink',defaultId:'regular',

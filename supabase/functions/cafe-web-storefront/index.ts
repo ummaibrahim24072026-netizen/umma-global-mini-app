@@ -24,7 +24,7 @@ function validCombo(data: any) {
    data.persons!==null&&(!Number.isInteger(data.persons)||data.persons<1||data.persons>99)||
    typeof data.published!=='boolean'||typeof data.imageUrl!=='string'||data.imageUrl.length>1000||
    !Array.isArray(data.components)||(!data.configuration&&data.components.length<2)||data.components.length>20)return false;
- if(!data.imageUrl&&!data.published)return true;
+ if(!data.imageUrl)return true;
  try{
   const url=new URL(data.imageUrl);
   return url.protocol==='https:'&&!url.username&&!url.password;

@@ -316,8 +316,8 @@ BEGIN
  END IF;
 END $storage$;
 
--- Drafts use the actual catalogue SKUs. Pending items can be linked by a manager once
--- they exist in the menu. This never creates stand-alone items or publishes prices.
+-- New recipes start as drafts. New standalone dishes have no ready stock until
+-- the kitchen confirms it. The smaller compote uses the existing 500 ml stock.
 DO $drafts$
 DECLARE
  loc constant uuid:='e22788bd-4734-4b3a-911e-ba103d52617a';
@@ -332,6 +332,17 @@ DECLARE
  metadata jsonb;
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.locations WHERE id=loc AND is_active AND ready_stock_enabled) THEN RETURN; END IF;
+ INSERT INTO public.products(category_id,sku,product_type,name_ru,name_en,name_vi,price_vnd,weight_value,weight_unit,is_active)
+ SELECT existing.category_id,v.sku,'cafe',v.ru,v.en,v.vi,v.price,v.amount,v.unit,true
+ FROM (VALUES
+   ('UMMA-CAFE-GARLIC-SAUCE','UMMA-CAFE-ADJIKA','Белый чесночный соус','White garlic sauce','Sốt tỏi trắng',10000,NULL::numeric,NULL::text),
+   ('UMMA-CAFE-AYRAN-HERBS-300','UMMA-CAFE-AYRAN','Айран с зеленью','Ayran with herbs','Ayran rau thơm',30000,300,'ml'),
+   ('UMMA-CAFE-AYRAN-HERBS-500','UMMA-CAFE-AYRAN-500','Айран с зеленью','Ayran with herbs','Ayran rau thơm',40000,500,'ml'),
+   ('UMMA-CAFE-SAMSA-BEEF','UMMA-CAFE-SAMSA','Самса с говядиной','Beef samsa','Bánh samsa nhân bò',70000,120,'g')
+ ) v(sku,source_sku,ru,en,vi,price,amount,unit)
+ JOIN public.products existing ON existing.sku=v.source_sku AND existing.product_type='cafe'
+ WHERE NOT EXISTS(SELECT 1 FROM public.products p WHERE p.sku=v.sku);
+
  CREATE TEMP TABLE combo_draft_options ON COMMIT DROP AS
  SELECT v.id,jsonb_strip_nulls(jsonb_build_object(
    'id',v.id,'productId',p.id,'portions',v.portions,'unit',v.unit,'amount',v.amount,
@@ -344,10 +355,15 @@ BEGIN
    ('wings','UMMA-CAFE-GRILLED-CHICKEN-WINGS',.500,'pcs',4,60000,0),
    ('ayran-300','UMMA-CAFE-AYRAN',1,'ml',300,NULL,0),
    ('ayran-500','UMMA-CAFE-AYRAN-500',1,'ml',500,NULL,10000),
+   ('herbs-300','UMMA-CAFE-AYRAN-HERBS-300',1,'ml',300,NULL,0),
+   ('herbs-500','UMMA-CAFE-AYRAN-HERBS-500',1,'ml',500,NULL,10000),
+   ('compote-300','UMMA-CAFE-BLACKBERRY-COMPOTE-500',.600,'ml',300,NULL,0),
    ('compote-500','UMMA-CAFE-BLACKBERRY-COMPOTE-500',1,'ml',500,NULL,10000),
    ('adjika','UMMA-CAFE-ADJIKA',1,'pcs',1,NULL,0),
+   ('garlic','UMMA-CAFE-GARLIC-SAUCE',1,'pcs',1,NULL,0),
    ('chicken','UMMA-CAFE-SAMSA-CHICKEN',1,'pcs',1,NULL,0),
    ('lamb','UMMA-CAFE-SAMSA',1,'pcs',1,NULL,10000),
+   ('beef','UMMA-CAFE-SAMSA-BEEF',1,'pcs',1,NULL,10000),
    ('extra-manti','UMMA-CAFE-MANTI',.250,'g',100,NULL,37500),
    ('extra-bread-100','UMMA-CAFE-FLATBREAD',.455,'g',100,NULL,15000),
    ('extra-bread-220','UMMA-CAFE-FLATBREAD',1,'g',220,NULL,25000),
@@ -355,6 +371,10 @@ BEGIN
    ('extra-adjika','UMMA-CAFE-ADJIKA',1,'pcs',1,NULL,10000),
    ('extra-ayran-300','UMMA-CAFE-AYRAN',1,'ml',300,NULL,30000),
    ('extra-ayran-500','UMMA-CAFE-AYRAN-500',1,'ml',500,NULL,40000),
+   ('extra-garlic','UMMA-CAFE-GARLIC-SAUCE',1,'pcs',1,NULL,10000),
+   ('extra-herbs-300','UMMA-CAFE-AYRAN-HERBS-300',1,'ml',300,NULL,30000),
+   ('extra-herbs-500','UMMA-CAFE-AYRAN-HERBS-500',1,'ml',500,NULL,40000),
+   ('extra-compote-300','UMMA-CAFE-BLACKBERRY-COMPOTE-500',.600,'ml',300,NULL,24000),
    ('extra-compote-500','UMMA-CAFE-BLACKBERRY-COMPOTE-500',1,'ml',500,NULL,40000)
  ) v(id,sku,portions,unit,amount,reference,surcharge)
  JOIN public.products p ON p.sku=v.sku AND p.is_active AND p.product_type='cafe' AND NOT p.catalog_preview AND p.price_vnd>0;
@@ -363,18 +383,18 @@ BEGIN
     'ru','Плов с квашеным салатом','en','Plov with fermented salad','vi','Cơm plov với rau củ muối chua')) WHERE id='plov';
  UPDATE combo_draft_options SET option=option||jsonb_build_object('pieceCount',CASE WHEN id='manti' THEN 2 ELSE 1 END,
     'labels',jsonb_build_object('ru','Манты','en','Manti','vi','Bánh hấp manti')) WHERE id IN ('manti','extra-manti');
- UPDATE combo_draft_options SET option=option||jsonb_build_object('exclusiveGroup','extra-sauce') WHERE id='extra-adjika';
+ UPDATE combo_draft_options SET option=option||jsonb_build_object('exclusiveGroup','extra-sauce') WHERE id IN ('extra-adjika','extra-garlic');
 
- SELECT jsonb_agg(option ORDER BY id) INTO drinks FROM combo_draft_options WHERE id IN ('ayran-300','ayran-500','compote-500');
- SELECT jsonb_agg(option) INTO sauces FROM combo_draft_options WHERE id='adjika';
- SELECT jsonb_agg(option ORDER BY id) INTO fillings FROM combo_draft_options WHERE id IN ('chicken','lamb');
+ SELECT jsonb_agg(option ORDER BY id) INTO drinks FROM combo_draft_options WHERE id IN ('ayran-300','ayran-500','herbs-300','herbs-500','compote-300','compote-500');
+ SELECT jsonb_agg(option) INTO sauces FROM combo_draft_options WHERE id IN ('adjika','garlic');
+ SELECT jsonb_agg(option ORDER BY id) INTO fillings FROM combo_draft_options WHERE id IN ('chicken','lamb','beef');
  IF drinks IS NULL OR sauces IS NULL OR fillings IS NULL THEN RETURN; END IF;
  FOR draft IN SELECT * FROM (VALUES
   (1,'Классическое','Classic','Truyền thống',170000,ARRAY['plov','manti','bread'],ARRAY['plov','manti'],true,false,
    ARRAY['클래식','经典','Klassisch','Classique','คลาสสิก','Klasik','Klasik','كلاسيكي','Clássico']),
   (2,'Полноценный обед','Full lunch','Bữa trưa đầy đủ',180000,ARRAY['shurpa','plov','bread'],ARRAY['shurpa','plov'],false,false,
    ARRAY['든든한 점심','丰盛午餐','Komplettes Mittagessen','Déjeuner complet','มื้อกลางวันครบชุด','Makan tengah hari lengkap','Makan siang lengkap','غداء متكامل','Almoço completo']),
-  (3,'Быстрый перекус','Quick bite','Bữa ăn nhẹ',99000,ARRAY[]::text[],ARRAY['chicken','lamb'],false,true,
+  (3,'Быстрый перекус','Quick bite','Bữa ăn nhẹ',99000,ARRAY[]::text[],ARRAY['chicken','lamb','beef'],false,true,
    ARRAY['간단한 간식','快捷小食','Schneller Imbiss','En-cas rapide','ของว่างจานด่วน','Snek ringkas','Camilan cepat','وجبة خفيفة سريعة','Lanche rápido']),
   (4,'Крылышки на мангале','Charcoal-grilled wings','Cánh gà nướng than',175000,ARRAY['wings','plov','bread'],ARRAY['wings'],true,false,
    ARRAY['숯불 닭날개','炭烤鸡翅','Holzkohle-Hähnchenflügel','Ailes grillées au charbon','ปีกไก่ย่างถ่าน','Kepak panggang arang','Sayap bakar arang','أجنحة دجاج على الفحم','Asas grelhadas no carvão'])
@@ -391,7 +411,7 @@ BEGIN
   IF draft.with_filling THEN options:=jsonb_build_array(jsonb_strip_nulls(jsonb_build_object('id','filling','kind','filling',
     'options',fillings,'defaultId',(SELECT id FROM combo_draft_options WHERE id='chicken'))))||options; END IF;
   SELECT coalesce(jsonb_agg(option ORDER BY id),'[]'::jsonb) INTO extras FROM combo_draft_options
-    WHERE id LIKE 'extra-%' AND (id<>'extra-adjika' OR draft.with_sauce);
+    WHERE id LIKE 'extra-%' AND (id NOT IN ('extra-adjika','extra-garlic') OR draft.with_sauce);
   SELECT coalesce(jsonb_agg(option->'productId'),'[]'::jsonb) INTO suggestions FROM combo_draft_options WHERE id=ANY(draft.related);
   SELECT jsonb_object_agg('name_'||v.lang,'COMBO №'||draft.number||' — '||v.title)
     INTO metadata FROM unnest(ARRAY['ko','zh','de','fr','th','ms','id','ar','pt'],draft.translations) v(lang,title);
