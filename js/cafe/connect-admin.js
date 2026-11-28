@@ -3,7 +3,7 @@
 const API='https://zwzojugspldexyyljwpr.supabase.co/functions/v1/cafe-connect';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 let dialog=null,busy=false,polling=false,thread=null,replyKey=null,campaign=null,view='inbox';
-let panels,viewButtons,clientSnapshot='',inboxClients=[],inboxAccess=false;
+let panels,viewButtons,clientSnapshot='',inboxClients=[],inboxAccess=false,checkingCounterAccess=false;
 let inboxSearch,assigneeButton,workflow,threadMenu,alertAudio,soundButton;
 const Audio=window.AudioContext||window.webkitAudioContext;
 let inboxLoaded=false,avatarRefreshAt=0;
@@ -14,27 +14,29 @@ const deviceTranslationLanguage=()=>[navigator.language,...(navigator.languages|
 const translationPreferenceKey='umma:staff:translation-language:'+String(window.ummaStaffAuth?.actorId?.()||'staff');
 let translationLanguage=(()=>{try{const saved=localStorage.getItem(translationPreferenceKey);return translationLanguages.includes(saved)?saved:deviceTranslationLanguage();}catch{return deviceTranslationLanguage();}})();
 let inboxSeen=null,pendingSound=false,oldestButton,history=[],latestThread=null,historyFinished=false;
+const counterMessageText='Внимание! Новое сообщение от клиента. Требует внимания.';
+const atCounter=()=>document.body.dataset.workspace==='pos';
+const counterSound=document.getElementById('counterMessageSound');
+let soundInteracted=false;
 function announceUnread(clients){
- const next=new Map(clients.filter(c=>c.last_id).map(c=>[c.id,c.last_id]));
- const incoming=inboxSeen&&clients.some(c=>c.unread>0&&c.last_id&&inboxSeen.get(c.id)!==c.last_id);
+ const next=new Map(clients.filter(c=>c.unread>0&&c.last_unread_id).map(c=>[c.id,c.last_unread_id]));
+ const incoming=inboxSeen&&[...next].some(([id,message])=>inboxSeen.get(id)!==message);
  inboxSeen=next;
  if(incoming)pendingSound=true;
- if(pendingSound&&!clients.some(client=>client.unread>0))pendingSound=false;
+ if(!next.size)pendingSound=false;
  playPendingSound();
 }
 function playPendingSound(){
- if(!pendingSound||alertAudio?.state!=='running')return;
+ if(document.hidden||!pendingSound)return;
+ const counter=atCounter();
+ if(counter?!soundInteracted:alertAudio?.state!=='running')return;
  pendingSound=false;
- playMessageSound();
- if(document.body.dataset.workspace==='pos')window.ummaCounterSpeakAlert?.('Внимание! Новое сообщение от клиента. Требует внимания.');
+ if(counter)window.ummaCounterSpeakAlert(counterMessageText);
+ else playMessageSound();
 }
-window.ummaCounterSpeakAlert=message=>{
- if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
- const u=new SpeechSynthesisUtterance(message);u.lang='ru-RU';u.volume=1;u.rate=.96;
- const voices=speechSynthesis.getVoices().filter(v=>/^ru(?:[-_]|$)/i.test(v.lang));
- const voice=voices.find(v=>/female|milena|katya|irina|svetlana|alena|anna|daria|женск/i.test(v.name))||voices.find(v=>/google|natural|neural/i.test(v.name)&&!/male|pavel|dmitry/i.test(v.name));
- if(voice)u.voice=voice;
- speechSynthesis.speak(u);
+window.ummaCounterSpeakAlert=async message=>{
+ const spoken=await window.ummaKitchenLive?.speakCounterAlert(message);
+ if(!spoken&&atCounter())playMessageSound();
 };
 function playMessageSound(){
  if(alertAudio?.state!=='running')return;
@@ -46,6 +48,7 @@ function playMessageSound(){
 }
 function updateSoundButton(){
  if(soundButton)soundButton.textContent=alertAudio?.state==='running'?'Проверить звук':'Включить звук';
+ if(counterSound)counterSound.hidden=!inboxAccess||soundInteracted;
 }
 async function enableMessageSound(){
  if(!Audio)return;
@@ -553,6 +556,14 @@ async function refresh(){
  const includeAvatars=!!workspace&&visible()&&view==='inbox'&&
   (Date.now()>=avatarRefreshAt||inboxClients.some(c=>!inboxAvatars.has(c.id)));
  const d=await api(workspace?'staffInbox':'staffList',includeAvatars?{includeAvatars:true}:{});
+ if(checkingCounterAccess){
+  checkingCounterAccess=false;
+  inboxAccess=true;
+  document.dispatchEvent(new Event('umma:staff-counter-inbox-access'));
+  syncCallAlerts();
+  void updateCallAlerts(false);
+  updateSoundButton();
+ }
  if(workspace){
   const ids=new Set(d.clients.map(c=>c.id));
   for(const id of inboxAvatars.keys())if(!ids.has(id))inboxAvatars.delete(id);
@@ -938,13 +949,14 @@ function syncVisibility(){
  if(button){button.hidden=!owner();if(button.hidden&&dialog?.open)dialog.close();}
 }
 async function poll(){
- if(!(workspace?inboxAccess||owner():owner())||polling||busy||document.hidden||(!workspace&&!visible()))return;
+ if(!(workspace?inboxAccess||checkingCounterAccess||owner():owner())||polling||busy||document.hidden||(!workspace&&!visible()))return;
  polling=true;
  try{
   await refresh();
   if(visible()&&view==='inbox'&&thread&&!busy)await readThread(thread,true);
   connection.hidden=true;
  }catch(error){
+  if(error.status===403)checkingCounterAccess=false;
   if(error.status===403&&thread)closeThread();
   if(visible()){
    connection.textContent='Сообщения пока не обновились. Повторим попытку автоматически.';
@@ -956,15 +968,26 @@ document.addEventListener('umma:staff-tab',e=>{
  if(e.detail==='messages'&&(inboxAccess||owner()))openInbox();
  else closeThread();
 });
-if(workspace&&Audio){
+if(workspace){
  const unlock=()=>{
-  if((inboxAccess||owner())&&alertAudio?.state!=='running')void enableMessageSound();
+  if(!inboxAccess&&!checkingCounterAccess&&!owner())return;
+  soundInteracted=true;
+  updateSoundButton();
+  if(alertAudio?.state!=='running')void enableMessageSound();
+  playPendingSound();
  };
  document.addEventListener('click',unlock,true);
  document.addEventListener('keydown',unlock,true);
+ counterSound?.addEventListener('click',()=>{
+  const message='Звук сообщений включён.';
+  void window.ummaCounterSpeakAlert(message);
+ });
 }
 document.addEventListener('umma:staff-ready',event=>{
- inboxAccess=Boolean(event.detail?.assignments?.some(a=>['manager','cashier','waiter'].includes(a.staff_role)));
+ const roles=event.detail?.assignments||[];
+ inboxAccess=owner()||roles.some(a=>['manager','cashier','waiter'].includes(a.staff_role));
+ checkingCounterAccess=!inboxAccess&&roles.some(a=>a.staff_role==='kitchen'&&a.can_accept_payments);
+ updateSoundButton();
  syncCallAlerts();
  void updateCallAlerts(false);
  restoreStaffTheme();
@@ -975,6 +998,7 @@ function resumeMessages(){
  if(!callAlertsReady)void updateCallAlerts(false);
  if(workspace&&thread&&visible())avatarCheckedAt=0;
  if(alertAudio)void enableMessageSound();
+ playPendingSound();
  void poll();
 }
 document.addEventListener('visibilitychange',resumeMessages);

@@ -42,8 +42,8 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 .counter-brand { flex: 1 0 auto; font-size: 20px; }
 .counter-brand img { width: 32px; height: 32px; border-radius: 50%; }
 #webPos #counterCafeLabel { margin: 0; max-width: 100%; font-size: 14px; }
-#webPos :is(#counterExit, #counterFullscreen) { min-height: 44px; padding: 8px 12px; font-size: 14px; }
-.counter-ready-strip:has(button:not([hidden])) {
+#webPos :is(#counterExit, #counterFullscreen, #counterMessageSound) { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+.counter-ready-strip:has(button:not([hidden])), .counter-message-alert:not([hidden]) {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1 0 100%; min-width: 0; padding: 2px 4px 2px 10px;
   border: 1px solid #8ccfc9; border-radius: 18px; background: #def7f3; color: #075b60;
@@ -53,11 +53,12 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
 }
 #counterReadyMessage { min-width: 0; overflow-wrap: anywhere; }
-#webPos #counterReadyOpen {
+#webPos :is(#counterReadyOpen, #counterMessageOpen) {
   flex: none; min-height: 44px; padding: 6px 12px; border-color: #087276;
   color: #fff; background: var(--umma-brand-primary); font-weight: 750;
   text-shadow: var(--umma-brand-light-label-shadow);
 }
+.counter-message-alert:not([hidden]) { border-color: #edbf62; background: #fff4d7; color: #5c3b00; }
 #webPos .web-pos-grid { gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(270px, 335px); }
 #webPos :is(.web-pos-grid, .counter-payment-grid) > * { min-width: 0; }
 #webPos .counter-catalog-toolbar {
@@ -234,6 +235,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   padding: 4px max(8px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
   background: #fff; border-top: 1px solid var(--counter-line);
 }
+.counter-nav:has(#counterMessagesTab:not([hidden])) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #webPos .counter-nav button {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   min-width: 0; min-height: 50px; padding: 4px 2px; font-size: 13px; font-weight: 750; color: var(--counter-ink); background: transparent; border-color: transparent;
@@ -244,6 +246,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
   min-width: 19px; padding-inline: 4px; border: 1px solid white; border-radius: 999px;
   background: #176642; color: #fff; font-size: 12px; line-height: 17px; font-weight: 800;
 }
+#counterMessageBadge { background: #ffd477; color: #533400; }
 .counter-nav svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 820px) {
   .counter-nav { padding-inline: max(16px, calc((100vw - 640px) / 2)); }

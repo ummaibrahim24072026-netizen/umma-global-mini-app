@@ -64,7 +64,7 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
  assert.equal(d.getElementById('webWorkspace').hidden,false);assert.equal(d.querySelector('[data-web-tab="courier"]').hidden,true);
  assert.equal(d.body.dataset.workspace,'pos');
  assert.equal(d.getElementById('webCashViews').hidden,true);
- assert.deepEqual([...d.querySelectorAll('[data-counter-view]')].map(b=>b.textContent.trim()),['Продажа','Заказы']);
+ assert.deepEqual([...d.querySelectorAll('[data-counter-view]:not([hidden])')].map(b=>b.textContent.trim()),['Продажа','Заказы','Сообщения']);
  if(method==='qr'){
   d.getElementById('screenLayout').value='tablet-large';
   d.getElementById('screenPair').click();await tick();
@@ -565,4 +565,66 @@ for(const [method,service] of [['cash','dine_in'],['qr','pickup'],['qr','deliver
   console.log('PASS two staff sessions: live queue badges, shared cash payment winner, counter-to-kitchen handoff, one issue, and stale response reconciliation.');
  }finally{first.close();second.close();}
 }
-console.log('PASS counter payment and customer display: live basket, exact draft total, method switching, QR cleanup, successful order receipt, idempotent recovery and read-only customer capability.');
+// A kitchen/counter employee sees the inbox only after the server authorizes it.
+{
+ const {window:w}=new JSDOM(html,{runScripts:'outside-only',url:'https://qa.invalid/staff.html?work=counter',pretendToBeVisual:true});
+ const d=w.document,byId=id=>d.getElementById(id),spoken=[];
+ w.AbortSignal=AbortSignal;
+ w.ummaKitchen={open(){}};
+ w.ummaKitchenLive={speakCounterAlert:async text=>{spoken.push(text);return true;}};
+ const product={id:'bread',name_ru:'Лепёшка',price_vnd:25000};
+ let client={id:'customer',name:'Клиент',unread:0};
+ let confirmAccess;
+ const access=new Promise(resolve=>{confirmAccess=resolve;});
+ w.fetch=async(url,options)=>{
+  if(url.endsWith('cafe-menu'))return Response.json({ok:true,products:[product],inventory:[],locations:[]});
+  const {action}=JSON.parse(options.body);
+  if(action==='me')return Response.json({ok:true,user:{id:42,name:'Гуля',role:'employee'},
+   assignments:[{location_id:'cafe',staff_role:'kitchen',can_accept_payments:true}],locations:[{id:'cafe',name:'UMMA'}]});
+  if(action==='staffInbox'){
+   await access;
+   return Response.json({ok:true,clients:[client]});
+  }
+  return Response.json({ok:true,orders:[]});
+ };
+ for(const script of ['web-session','order-requests']){
+  w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
+ }
+ w.ummaStaffAuth.save('a'.repeat(64));
+ for(const script of ['web-operations','connect-media','connect-composer','connect-admin']){
+  w.eval(readFileSync('js/cafe/'+script+'.js','utf8'));
+ }
+ const refreshInbox=async()=>{
+  d.dispatchEvent(new w.Event('umma:connect-realtime'));
+  await tick();
+ };
+ await tick();
+ assert.equal(d.body.dataset.workspace,'pos');
+ assert.ok(byId('counterMessagesTab').hidden);
+ confirmAccess();
+ await tick();
+ assert.equal(byId('counterMessagesTab').hidden,false);
+ assert.ok(d.querySelector('[data-web-tab="admin"]').hidden);
+ d.querySelector('[data-pos-add="bread"]').click();
+ client={...client,unread:1,last_id:'first',last_unread_id:'first'};
+ await refreshInbox();
+ assert.equal(byId('counterMessageAlert').hidden,false);
+ assert.equal(byId('counterMessageAlertText').textContent,'Новое сообщение от клиента');
+ assert.equal(byId('counterMessageBadge').textContent,'1');
+ assert.deepEqual(spoken,['Внимание! Новое сообщение от клиента. Требует внимания.']);
+ client={...client,last_id:'outgoing'};
+ await refreshInbox();
+ assert.equal(spoken.length,1);
+ byId('counterMessageOpen').click();
+ await tick();
+ assert.equal(byId('webMessages').parentElement,byId('counterMessagesHost'));
+ assert.equal(byId('webMessages').hidden,false);
+ d.querySelector('[data-counter-view="sale"]').click();
+ assert.match(byId('posTotal').textContent,/25/);
+ client={...client,unread:0,last_unread_id:null};
+ await refreshInbox();
+ assert.ok(byId('counterMessageAlert').hidden);
+ assert.ok(byId('counterMessageBadge').hidden);
+ w.close();
+}
+console.log('PASS counter payment, customer display and authorized incoming message alerts.');

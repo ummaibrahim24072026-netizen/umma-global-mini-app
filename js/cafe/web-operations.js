@@ -1751,14 +1751,31 @@ $('posBackToProducts').onclick=()=>{
 };
 $('webLogout').onclick=async()=>{try{await api('logout');}catch{}auth.clear();location.replace(new URL('staff.html',location.href));};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});$('webInstall').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}else notice('В меню браузера выберите «Установить приложение» или «Добавить на главный экран». В Safari: «Поделиться» → «На экран Домой».');};
+$('counterMessageOpen').onclick=()=>$('counterMessagesTab').click();
+document.addEventListener('umma:staff-inbox-counts',event=>{
+ const unread=Number(event.detail?.unread)||0;
+ const badge=$('counterMessageBadge'),tabButton=$('counterMessagesTab');
+ const label=unread>99?'99+':String(unread);
+ badge.hidden=!unread;
+ badge.textContent=label;
+ tabButton.setAttribute('aria-label',unread?'Сообщения, непрочитанных: '+label:'Сообщения');
+ $('counterMessageAlert').hidden=!unread||tabButton.hidden;
+ const message=$('counterMessageAlertText');
+ const text=unread===1?'Новое сообщение от клиента':unread?'Непрочитанные сообщения клиентов: '+label:'';
+ if(message.textContent!==text)message.textContent=text;
+});
+document.addEventListener('umma:staff-counter-inbox-access',()=>{
+ $('counterMessagesTab').hidden=false;
+ document.querySelector('[data-web-tab="messages"]').hidden=false;
+ if(requested==='messages'&&currentTab==='workModes')tab('messages');
+});
 async function boot(){me=await api('me');window.ummaCafeEpoch?.apply(me.cafeResetEpoch);auth.setActor(Number(me.user.id));window.ummaRole=me.user.role;window.ummaUser=me.user;$('webIdentity').textContent=me.user.name||'Сотрудник';$('webLogin').hidden=true;$('webLogout').hidden=false;window.ummaStaffDeviceLogin?.enable();
 const owner=me.user.role==='super_admin',roles=me.assignments||[],sell=owner||roles.some(a=>['cashier','manager','kitchen'].includes(a.staff_role)&&a.can_accept_payments),courier=owner||roles.some(a=>a.staff_role==='courier'),kitchen=owner||roles.some(a=>a.staff_role!=='courier');
 const roleLabels={manager:'Менеджер',cashier:'Кассир',kitchen:'Кухня',waiter:'Официант',courier:'Курьер'};
 const isCombinedRole=a=>a.staff_role==='kitchen'&&a.can_accept_payments===true;
 $('webRole').textContent=owner?'Владелец':Array.from(new Set(roles.map(a=>isCombinedRole(a)?'Стойка и кухня':roleLabels[a.staff_role]).filter(Boolean))).join(' · ');
 const canMessage=owner||roles.some(a=>['manager','cashier','waiter'].includes(a.staff_role));
- $('counterMessagesTab').hidden=!canMessage;
- document.addEventListener('umma:staff-inbox-counts',e=>{const n=Number(e.detail?.unread)||0; $('counterMessageBadge').hidden=!n; $('counterMessageBadge').textContent=n>99?'99+':String(n); $('counterMessagesTab').setAttribute('aria-label',n?'Сообщения. Требует внимания: '+n:'Сообщения');});
+$('counterMessagesTab').hidden=!canMessage;
 const managerLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&a.staff_role==='manager'));
 overviewLocation.replaceChildren(...managerLocations.map(l=>{
  const option=document.createElement('option');option.value=l.id;option.textContent=l.name;return option;

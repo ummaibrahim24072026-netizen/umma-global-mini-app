@@ -81,6 +81,15 @@
     return playback;
   }
 
+  function speakCounterAlert(message){
+    playback=playback.then(()=>{
+      if(document.hidden||document.body.dataset.workspace!=="pos")return false;
+      if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
+      return speak(message,true);
+    });
+    return playback;
+  }
+
   function announceCounterIssues(){
     const atCounter=()=>!document.hidden&&document.body.dataset.workspace==="pos";
     if(!atCounter()||(!counterInteracted&&!navigator.userActivation?.hasBeenActive))return;
@@ -227,5 +236,5 @@
   }
   const refreshVisible=()=>{if(!document.hidden&&visible())window.ummaKitchen?.refresh({silent:true});};
   document.addEventListener("umma:cafe-events",refreshVisible);document.addEventListener("visibilitychange",refreshVisible);window.addEventListener("online",refreshVisible);
-  window.ummaKitchenLive={update,notice,start,updateCounterIssues};
+  window.ummaKitchenLive={update,notice,start,updateCounterIssues,speakCounterAlert};
 })();
