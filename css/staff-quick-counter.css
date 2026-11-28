@@ -82,7 +82,7 @@ body.web-work-app[data-workspace="pos"] { min-height: 0; height: 100dvh; overflo
 #webPos .pos-product-volume { font-size: 13px; }
 #webPos .pos-products { grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 10px; }
 #webPos .pos-product { min-width: 0; overflow-wrap: anywhere; padding: 10px; border: 1px solid var(--counter-line); border-radius: 18px; gap: 6px; min-height: 0; background: white; }
-#webPos .pos-product-media { width: 100%; aspect-ratio: 1.6; border-radius: 11px; overflow: hidden; background: #f2f8f7; }
+#webPos .pos-product-media { width: 100%; aspect-ratio: 1.6; border-radius: 11px; overflow: hidden; background: white; }
 #webPos .pos-product-media img { object-fit: contain; }
 #webPos .pos-product strong { font-size: 16px; line-height: 1.2; }
 #webPos .pos-product-description { width: 100%; }
