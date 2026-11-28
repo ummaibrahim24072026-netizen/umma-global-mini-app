@@ -13,7 +13,7 @@ self.onmessage = async ({data: message, ports: [reply]}) => {
     if (!wasm) throw new Error('Counter speech unavailable');
     const engine = await synthesize({
       wasmBinary: new Uint8Array(wasm),
-      arguments: ['-v', 'ru', '-s', '158', '-w', 'order.wav', '--', message],
+      arguments: ['-v', 'ru+f3', '-a', '160', '-s', '158', '-w', 'order.wav', '--', message],
     });
     const wave = engine.FS.readFile('order.wav').buffer;
     reply.postMessage(wave, [wave]);
