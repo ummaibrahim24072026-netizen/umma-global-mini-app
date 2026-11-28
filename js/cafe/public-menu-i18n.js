@@ -3,6 +3,14 @@
 "use strict";
 const languages={"ru": ["Русский", "ru-RU"], "en": ["English", "en-GB"], "vi": ["Tiếng Việt", "vi-VN"], "ko": ["한국어", "ko-KR"], "zh": ["简体中文", "zh-CN"], "de": ["Deutsch", "de-DE"], "fr": ["Français", "fr-FR"], "th": ["ไทย", "th-TH"], "ms": ["Bahasa Melayu", "ms-MY"], "id": ["Bahasa Indonesia", "id-ID"], "ar": ["العربية", "ar"], "pt": ["Português", "pt-PT"]};
 const copy={
+"Выбрать комбо":{"en":"Choose combo","vi":"Chọn combo","ko":"세트 선택","zh":"选择套餐","de":"Kombimenü wählen","fr":"Choisir le combo","th":"เลือกชุดคอมโบ","ms":"Pilih kombo","id":"Pilih paket kombo","ar":"اختر الكومبو","pt":"Escolher combo"},
+"В составе комбо":{"en":"Included in the combo","vi":"Bao gồm trong combo","ko":"세트 구성","zh":"套餐包含","de":"Im Kombimenü enthalten","fr":"Inclus dans le combo","th":"รวมในชุดคอมโบ","ms":"Termasuk dalam kombo","id":"Isi paket kombo","ar":"محتويات الكومبو","pt":"Incluído no combo"},
+"Начинка":{"en":"Filling","vi":"Nhân"},
+"Выберите вариант":{"en":"Choose an option","vi":"Chọn một tùy chọn"},
+"Дополнения":{"en":"Extras","vi":"Món thêm"},
+"Товар недоступен":{"en":"Unavailable","vi":"Hiện không có"},
+"Сохранить":{"en":"Save","vi":"Lưu"},
+"Заменить блюдо на комбо":{"en":"Replace with combo","vi":"Đổi món sang combo"},
 "Цена комбо":{"en":"Combo price","vi":"Giá combo"},
 "По отдельности":{"en":"Ordered separately","vi":"Gọi từng món"},
 "Выгода {amount}":{"en":"Save {amount}","vi":"Tiết kiệm {amount}"},
