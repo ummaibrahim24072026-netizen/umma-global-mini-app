@@ -65,7 +65,7 @@
 
   function label(option, view) {
     return view.name(option) + " · " + view.number(option.amount) + " " + view.t(unitLabels[option.unit]) +
-      (option.pieceCount ? " (" + view.number(option.pieceCount) + " " + view.t("шт.") + ")" : "");
+      (option.pieceCount && option.unit !== "pcs" ? " (" + view.number(option.pieceCount) + " " + view.t("шт.") + ")" : "");
   }
 
   function summary(value, view) {
@@ -81,17 +81,19 @@
 
   function mount(container, config, selection, view, save) {
     const {escape, t, money} = view;
-    container.innerHTML = '<ul>' + config.fixed.map(option => '<li>' + escape(label(option, view)) + '</li>').join('') + '</ul>' +
-      config.groups.map(group => '<p><label>' + escape(t(groupLabels[group.kind])) +
+    container.innerHTML = (config.fixed.length ? '<div class="storefront-combo-included">' +
+      (view.customer ? '<h3>' + escape(t("В составе комбо")) + '</h3>' : '') +
+      '<ul class="storefront-combo-contents">' + config.fixed.map(option => '<li>' + escape(label(option, view)) + '</li>').join('') + '</ul></div>' : '') +
+      config.groups.map(group => '<p class="storefront-combo-field"><label>' + escape(t(groupLabels[group.kind])) +
         ' <select data-combo-choice="' + escape(group.id) + '">' + group.options.map(option => {
           const surcharge = Number(option.surchargeVnd || 0);
           return '<option value="' + escape(option.id) + '"' + (hasStock(option) ? '' : ' disabled') +
             (selection.choices[group.id] === option.id ? ' selected' : '') + '>' + escape(label(option, view) +
              (surcharge ? ' +' + money(surcharge) : '')) + '</option>';
         }).join('') + '</select></label></p>').join('') +
-      (config.extras.length ? '<details' + (Object.keys(selection.extras).length ? ' open' : '') + '><summary>' +
+      (config.extras.length ? '<details class="storefront-combo-extras"' + (Object.keys(selection.extras).length ? ' open' : '') + '><summary>' +
         escape(t("Дополнения")) + '</summary>' + config.extras.map(option =>
-          '<p><label>' + escape(label(option, view) + ' +' + money(option.surchargeVnd)) +
+          '<p class="storefront-combo-field"><label>' + escape(label(option, view) + ' +' + money(option.surchargeVnd)) +
           ' <select data-combo-extra="' + escape(option.id) + '"' + (hasStock(option) ? '' : ' disabled') + '>' +
           Array.from({length:(option.maxQuantity || 1) + 1}, (_, quantity) =>
            '<option value="' + quantity + '"' + ((selection.extras[option.id] || 0) === quantity ? ' selected' : '') +
@@ -108,7 +110,9 @@
       };
       currentQuote = quote(config,draft);
       const available = currentQuote?.available > 0;
-      price.innerHTML = (currentQuote ? summary(currentQuote,view) : '') +
+      const saving = currentQuote?.savingVnd > 0
+        ? '<p class="storefront-combo-saving">' + escape(t("Выгода {amount}", {amount:money(currentQuote.savingVnd)})) + '</p>' : '';
+      price.innerHTML = (view.customer ? saving : currentQuote ? summary(currentQuote,view) : '') +
          (available ? '' : '<p>' + escape(t("Товар недоступен")) + '</p>');
       button.disabled = !available;
       button.textContent = t(view.action || "В корзину") + (currentQuote ? ' · ' + money(currentQuote.price_vnd) : '');
