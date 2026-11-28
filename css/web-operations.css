@@ -50,3 +50,14 @@
 .web-fulfillment-dialog select { width: 100%; box-sizing: border-box; }
 .green-delivery-controls { flex-basis: 100%; }
 .green-delivery-controls p { margin: 0; }
+
+#webScanDevice { margin-top: 12px; width: 100%; }
+.web-device-dialog h2 { margin-top: 0; }
+.web-device-dialog :is(video, svg) {
+  display: block;
+  width: min(100%, 300px);
+  height: auto;
+  margin: 0 auto;
+}
+.web-device-dialog video { border-radius: 12px; }
+.web-device-dialog form { margin-top: 10px; }
