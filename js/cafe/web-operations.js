@@ -848,8 +848,10 @@ async function refreshCounterOrders({afterMutation=false}={}){
 }
 function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  if(currentTab!=='pos')return;
- const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders'};
+ const ids={sale:'counterSale',payment:'counterPayment',orders:'counterOrders',messages:'webMessages'};
  counterView=view;
+ if(view==='messages'){ $('counterMessagesHost').append($('webMessages')); }else if($('webMessages').parentElement===$('counterMessagesHost')) $('webPos').before($('webMessages'));
+ $('counterMessagesHost').hidden=view!=='messages';
  if(view==='payment'){
   if(!$('counterStatus').dataset.offline)counterStatus('');
   paymentFrom=from;
@@ -873,6 +875,7 @@ function setCounterView(view,{draft=false,from='sale',refresh=true}={}){
  }else syncCounterReadyShortcut();
  updateCartJump();
  syncCustomerScreen();
+ document.dispatchEvent(new CustomEvent('umma:staff-tab',{detail:view==='messages'?'messages':'pos'}));
  $('counterContent').scrollTop=0;
  if(document.body.classList.contains('counter-cash-keyboard'))syncCashKeyboard();
 }
@@ -1652,6 +1655,7 @@ function tab(name, cafeId, orderFilter){
  $('posCartJump').hidden=name!=='pos'||!cart.size;
  document.querySelector('.web-account-menu')?.removeAttribute('open');
  $('webPos').hidden=name!=='pos';$('webAdmin').hidden=name!=='admin';
+ if($('webMessages').parentElement===$('counterMessagesHost')) $('webPos').before($('webMessages'));
  $('webMessages').hidden=name!=='messages';
  $('webCashViews').hidden=name!=='cashOrders';
  $('cafeKitchenPage').hidden=!['cashOrders','orders','kitchen','courier'].includes(name);
@@ -1753,6 +1757,8 @@ const roleLabels={manager:'Менеджер',cashier:'Кассир',kitchen:'К�
 const isCombinedRole=a=>a.staff_role==='kitchen'&&a.can_accept_payments===true;
 $('webRole').textContent=owner?'Владелец':Array.from(new Set(roles.map(a=>isCombinedRole(a)?'Стойка и кухня':roleLabels[a.staff_role]).filter(Boolean))).join(' · ');
 const canMessage=owner||roles.some(a=>['manager','cashier','waiter'].includes(a.staff_role));
+ $('counterMessagesTab').hidden=!canMessage;
+ document.addEventListener('umma:staff-inbox-counts',e=>{const n=Number(e.detail?.unread)||0; $('counterMessageBadge').hidden=!n; $('counterMessageBadge').textContent=n>99?'99+':String(n); $('counterMessagesTab').setAttribute('aria-label',n?'Сообщения. Требует внимания: '+n:'Сообщения');});
 const managerLocations=me.locations.filter(l=>owner||roles.some(a=>a.location_id===l.id&&a.staff_role==='manager'));
 overviewLocation.replaceChildren(...managerLocations.map(l=>{
  const option=document.createElement('option');option.value=l.id;option.textContent=l.name;return option;
