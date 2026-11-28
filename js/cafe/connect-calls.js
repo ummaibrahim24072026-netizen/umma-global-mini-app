@@ -835,6 +835,7 @@
         if (!call && state?.incoming && state.offer) {
           current = {...state, credentials};
           show(current);
+          if(document.body.dataset.workspace==='pos')window.ummaCounterSpeakAlert?.('Внимание! Вам звонит клиент.');
           armTimeout(current, 'unanswered', 75000, false);
         } else if (linked && !call) {
           current = {id: linked, mode: 'audio', credentials};
